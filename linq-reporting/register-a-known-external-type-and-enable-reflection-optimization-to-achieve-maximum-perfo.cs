@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -9,62 +7,67 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required by Aspose.Words for some encodings)
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Enable reflection optimization for maximum performance.
+        ReportingEngine.UseReflectionOptimization = true;
 
-        // Create sample data
-        ReportModel model = new()
+        // Create a template document programmatically.
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+
+        // Insert a simple foreach loop that uses the registered external type.
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("<<[item.Name]>> - <<[ExternalFormatter.Format(item.Price)]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
+        templateDoc.Save(templatePath);
+
+        // Load the template back (required before building the report).
+        var loadedTemplate = new Document(templatePath);
+
+        // Prepare sample data with a large collection.
+        var model = new ReportModel
         {
-            Orders = new()
+            Items = new()
         };
-        for (int i = 1; i <= 10000; i++)
+        for (int i = 1; i <= 1000; i++)
         {
-            model.Orders.Add(new Order
+            model.Items.Add(new Item
             {
-                Id = i,
-                CustomerName = $"Customer {i}",
-                Amount = Math.Round(1000 * new Random(i).NextDouble(), 2)
+                Name = $"Product {i}",
+                Price = i * 1.23m
             });
         }
 
-        // Build template document programmatically
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-        Document templateDoc = new();
-        DocumentBuilder builder = new(templateDoc);
+        // Create the reporting engine and register the external type.
+        var engine = new ReportingEngine();
+        engine.KnownTypes.Add(typeof(ExternalFormatter));
 
-        builder.Writeln("<<foreach [order in Orders]>>");
-        builder.Writeln("Id: <<[order.Id]>>, Customer: <<[order.CustomerName]>>, Amount: <<[order.Amount]>>");
-        builder.Writeln("<</foreach>>");
+        // Build the report.
+        engine.BuildReport(loadedTemplate, model, "model");
 
-        templateDoc.Save(templatePath);
-
-        // Load template for reporting
-        Document reportDoc = new(templatePath);
-
-        // Enable reflection optimization and register known external type
-        ReportingEngine.UseReflectionOptimization = true;
-        ReportingEngine engine = new();
-        engine.KnownTypes.Add(typeof(Order));
-
-        // Build the report
-        engine.BuildReport(reportDoc, model, "model");
-
-        // Save the generated report
-        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        reportDoc.Save(reportPath);
+        // Save the generated report.
+        const string outputPath = "Report.docx";
+        loadedTemplate.Save(outputPath);
     }
 }
 
-// Wrapper model for the report
-public class ReportModel
+// External type to be registered and used in the template.
+public static class ExternalFormatter
 {
-    public List<Order> Orders { get; set; } = new();
+    public static string Format(decimal price) => $"${price:F2}";
 }
 
-// Sample data class
-public class Order
+// Root data model.
+public class ReportModel
 {
-    public int Id { get; set; }
-    public string CustomerName { get; set; } = string.Empty;
-    public double Amount { get; set; }
+    public List<Item> Items { get; set; } = new();
+}
+
+// Item class used in the foreach loop.
+public class Item
+{
+    public string Name { get; set; } = string.Empty;
+    public decimal Price { get; set; }
 }

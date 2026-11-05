@@ -1,57 +1,63 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Fields;
 
-public class Program
+namespace AsposeWordsFieldSumExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert a table with a header row and three data rows.
-        Table table = builder.StartTable();
-
-        // Header row.
-        builder.InsertCell();
-        builder.Writeln("Number");
-        builder.InsertCell();
-        builder.Writeln("Description");
-        builder.EndRow();
-
-        // Data rows.
-        int[] numbers = { 10, 20, 30 };
-        for (int i = 0; i < numbers.Length; i++)
+        public static void Main()
         {
-            // First column – start bookmark on the first data cell.
-            builder.InsertCell();
-            if (i == 0)
-                builder.StartBookmark("ColNumbers");
-            builder.Writeln(numbers[i].ToString());
-            if (i == numbers.Length - 1)
-                builder.EndBookmark("ColNumbers");
+            // Create a new document and a DocumentBuilder for editing.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Second column.
+            // Insert a table with two columns.
+            Table table = builder.StartTable();
+
+            // Header row.
             builder.InsertCell();
-            builder.Writeln($"Item {i + 1}");
+            builder.Write("Number");
+            builder.InsertCell();
+            builder.Write("Description");
             builder.EndRow();
+
+            // Data rows. Place a bookmark around the first column cells to sum them.
+            for (int i = 1; i <= 3; i++)
+            {
+                builder.InsertCell();
+
+                // Start bookmark on the first cell of the column.
+                if (i == 1)
+                    builder.StartBookmark("ColSum");
+
+                builder.Write((i * 10).ToString());
+
+                // End bookmark on the last cell of the column.
+                if (i == 3)
+                    builder.EndBookmark("ColSum");
+
+                builder.InsertCell();
+                builder.Write($"Item {i}");
+                builder.EndRow();
+            }
+
+            builder.EndTable();
+
+            // Insert a paragraph after the table.
+            builder.Writeln();
+            builder.Writeln("Sum of the \"Number\" column:");
+
+            // Insert a formula field that calculates the sum of the bookmarked cells.
+            // Use the string overload of InsertField to specify the field code directly.
+            builder.InsertField("=SUM(ColSum)");
+
+            // Update fields to calculate the result.
+            doc.UpdateFields();
+
+            // Save the document.
+            const string outputPath = "Output.docx";
+            doc.Save(outputPath);
         }
-
-        builder.EndTable();
-
-        // Insert a paragraph after the table.
-        builder.Writeln();
-
-        // Insert a formula field that sums the bookmarked column.
-        // Use the overload that takes a FieldType, then write the formula code.
-        builder.InsertField(FieldType.FieldFormula, true);
-        builder.Write("=SUM(ColNumbers)");
-        builder.Writeln(); // Optional line break after the field result.
-
-        // Save the document.
-        string outputPath = "Output.docx";
-        doc.Save(outputPath);
     }
 }

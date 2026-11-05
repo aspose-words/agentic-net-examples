@@ -1,60 +1,79 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class TaskItem
-{
-    public string Name { get; set; } = string.Empty;
-    public TimeSpan Deadline { get; set; }
-
-    // Helper property used in the template to flag upcoming tasks.
-    public bool IsUpcoming => Deadline < TimeSpan.FromDays(7);
-}
-
-public class ReportModel
-{
-    public List<TaskItem> Tasks { get; set; } = new();
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Create the template document with LINQ Reporting tags.
-        var templatePath = "Template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Register code page provider for Aspose.Words.
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        builder.Writeln("<<foreach [t in Tasks]>>");
-        builder.Writeln("Task: <<[t.Name]>>");
-        builder.Writeln("Deadline: <<[t.Deadline]>>");
-        builder.Writeln("<<if [t.IsUpcoming]>>Upcoming!<</if>>");
+        // -----------------------------------------------------------------
+        // Create the template document programmatically.
+        // -----------------------------------------------------------------
+        string templatePath = "template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Begin foreach over Tasks collection.
+        builder.Writeln("<<foreach [task in Tasks]>>");
+        // Task name.
+        builder.Writeln("Task: <<[task.Name]>>");
+        // Deadline.
+        builder.Writeln("Deadline: <<[task.Deadline]>>");
+        // Conditional flag for upcoming tasks (deadline within 7 days).
+        builder.Writeln("<<if [task.IsUpcoming]>>");
+        builder.Writeln("<<textColor [\"Red\"]>>Upcoming<</textColor>>");
+        builder.Writeln("<</if>>");
+        // End foreach.
         builder.Writeln("<</foreach>>");
 
-        doc.Save(templatePath);
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
 
-        // Load the template for report generation.
-        var reportDoc = new Document(templatePath);
+        // -----------------------------------------------------------------
+        // Load the template and build the report.
+        // -----------------------------------------------------------------
+        Document doc = new Document(templatePath);
 
-        // Prepare sample data.
-        var model = new ReportModel
+        // Sample data.
+        ReportModel model = new()
         {
             Tasks = new()
             {
-                new TaskItem { Name = "Prepare presentation", Deadline = TimeSpan.FromDays(3) },
-                new TaskItem { Name = "Submit report", Deadline = TimeSpan.FromDays(10) },
-                new TaskItem { Name = "Team meeting", Deadline = TimeSpan.FromDays(5) }
+                new TaskItem { Name = "Task A", Deadline = DateTime.Now.AddDays(3) },
+                new TaskItem { Name = "Task B", Deadline = DateTime.Now.AddDays(10) },
+                new TaskItem { Name = "Task C", Deadline = DateTime.Now.AddDays(1) }
             }
         };
 
         // Build the report.
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        engine.BuildReport(reportDoc, model, "model");
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
         // Save the generated report.
-        var outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+        string outputPath = "report.docx";
+        doc.Save(outputPath);
+
+        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
     }
+}
+
+// Root data model.
+public class ReportModel
+{
+    public List<TaskItem> Tasks { get; set; } = new();
+}
+
+// Individual task item.
+public class TaskItem
+{
+    public string Name { get; set; } = string.Empty;
+    public DateTime Deadline { get; set; }
+
+    // Flag indicating the task deadline is within the next 7 days.
+    public bool IsUpcoming => Deadline < DateTime.Now.AddDays(7);
 }

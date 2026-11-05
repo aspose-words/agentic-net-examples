@@ -9,23 +9,23 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Add sample content to the document.
+        // Add a simple paragraph to demonstrate content.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Automated report content goes here.");
+        builder.Writeln("Automated report generated on " + DateTime.Now);
 
-        // Apply a confidential text watermark.
+        // Apply a confidential text watermark to the entire document.
         doc.Watermark.SetText("CONFIDENTIAL");
 
-        // Define the output file path.
+        // Define output path.
         string outputPath = "ReportWithWatermark.docx";
 
-        // Save the document with the watermark.
+        // Save the document.
         doc.Save(outputPath);
 
-        // Validate that the file was created.
+        // Simple validation: ensure the file was created.
         if (File.Exists(outputPath))
         {
-            Console.WriteLine($"Document saved successfully: {outputPath}");
+            Console.WriteLine("Document saved successfully with watermark: " + outputPath);
         }
         else
         {

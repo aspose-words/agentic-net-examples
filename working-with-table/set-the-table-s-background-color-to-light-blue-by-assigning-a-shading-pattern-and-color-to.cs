@@ -1,19 +1,18 @@
 using System;
-using System.IO;
 using System.Drawing;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Drawing; // For TextureIndex
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple one‑cell table.
+        // Build a simple 1x1 table.
         builder.StartTable();
         builder.InsertCell();
         builder.Write("Sample cell");
@@ -23,14 +22,11 @@ public class Program
         // Retrieve the created table.
         Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
-        // Apply light blue solid shading to every cell.
-        foreach (Row row in table.Rows)
+        // Apply solid light‑blue shading to every cell in the table.
+        foreach (Cell cell in table.GetChildNodes(NodeType.Cell, true))
         {
-            foreach (Cell cell in row.Cells)
-            {
-                cell.CellFormat.Shading.Texture = TextureIndex.TextureSolid;
-                cell.CellFormat.Shading.ForegroundPatternColor = Color.LightBlue;
-            }
+            cell.CellFormat.Shading.Texture = TextureIndex.TextureSolid;
+            cell.CellFormat.Shading.ForegroundPatternColor = Color.LightBlue;
         }
 
         // Save the document.
@@ -39,8 +35,17 @@ public class Program
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
+            throw new Exception("Failed to create the output document.");
+
+        // Reload the document and verify the shading of the first cell.
+        Document loadedDoc = new Document(outputPath);
+        Table loadedTable = (Table)loadedDoc.GetChildNodes(NodeType.Table, true)[0];
+        Cell firstCell = (Cell)loadedTable.GetChildNodes(NodeType.Cell, true)[0];
+
+        if (firstCell.CellFormat.Shading.Texture != TextureIndex.TextureSolid ||
+            firstCell.CellFormat.Shading.ForegroundPatternColor.ToArgb() != Color.LightBlue.ToArgb())
         {
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+            throw new Exception("Table shading was not applied correctly.");
         }
     }
 }

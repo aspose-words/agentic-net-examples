@@ -6,57 +6,69 @@ public class SplitDocumentExample
 {
     public static void Main()
     {
-        // -------------------------------------------------
-        // 1. Create a sample source document with three sections.
-        // -------------------------------------------------
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        // Create a sample source document with multiple sections.
+        const string sourcePath = "Source.docx";
+        CreateSampleDocument(sourcePath);
 
-        builder.Writeln("Content of Section 1");
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
-        builder.Writeln("Content of Section 2");
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
-        builder.Writeln("Content of Section 3");
+        // Load the source document.
+        Document sourceDoc = new Document(sourcePath);
 
-        // Save the source document locally.
-        string sourcePath = "Source.docx";
-        sourceDoc.Save(sourcePath);
+        // Prepare output folder.
+        string outputFolder = "SplitOutput";
+        Directory.CreateDirectory(outputFolder);
 
-        // -------------------------------------------------
-        // 2. Load the source document.
-        // -------------------------------------------------
-        Document loadedDoc = new Document(sourcePath);
-
-        // -------------------------------------------------
-        // 3. Split the document by its sections.
-        // -------------------------------------------------
-        for (int i = 0; i < loadedDoc.Sections.Count; i++)
+        // Split the document by sections.
+        int sectionIndex = 1;
+        foreach (Section section in sourceDoc.Sections)
         {
-            Section sourceSection = loadedDoc.Sections[i];
-
             // Create a new empty document for the current section.
             Document splitDoc = new Document();
-            splitDoc.Sections.Clear(); // Remove the default empty section.
+            splitDoc.RemoveAllChildren(); // remove the default empty section
 
             // Import the section from the source document into the new document.
-            NodeImporter importer = new NodeImporter(loadedDoc, splitDoc, ImportFormatMode.KeepSourceFormatting);
-            Section importedSection = (Section)importer.ImportNode(sourceSection, true);
-
-            // Add the imported section to the split document.
-            splitDoc.Sections.Add(importedSection);
+            NodeImporter importer = new NodeImporter(sourceDoc, splitDoc, ImportFormatMode.KeepSourceFormatting);
+            Section importedSection = (Section)importer.ImportNode(section, true);
+            splitDoc.AppendChild(importedSection);
 
             // Save the split document.
-            string splitPath = $"Section_{i + 1}.docx";
+            string splitPath = Path.Combine(outputFolder, $"Section_{sectionIndex}.docx");
             splitDoc.Save(splitPath);
 
             // Verify that the file was created.
             if (!File.Exists(splitPath))
-                throw new Exception($"Failed to create split file: {splitPath}");
+                throw new InvalidOperationException($"Failed to create split file: {splitPath}");
+
+            sectionIndex++;
         }
 
-        // -------------------------------------------------
-        // 4. Indicate successful completion.
-        // -------------------------------------------------
-        Console.WriteLine("Document split completed successfully.");
+        // Verify the expected number of split files.
+        int expectedFiles = sourceDoc.Sections.Count;
+        int actualFiles = Directory.GetFiles(outputFolder, "Section_*.docx").Length;
+        if (actualFiles != expectedFiles)
+            throw new InvalidOperationException($"Expected {expectedFiles} split files, but found {actualFiles}.");
+    }
+
+    // Helper method to create a sample document with three sections.
+    private static void CreateSampleDocument(string filePath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        for (int i = 1; i <= 3; i++)
+        {
+            // Add a header to the current section.
+            builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+            builder.Writeln($"Header for Section {i}");
+
+            // Move to the main body and write section content.
+            builder.MoveToDocumentEnd();
+            builder.Writeln($"This is the content of Section {i}.");
+
+            // Insert a section break (new page) after each section except the last.
+            if (i < 3)
+                builder.InsertBreak(BreakType.SectionBreakNewPage);
+        }
+
+        doc.Save(filePath);
     }
 }

@@ -2,107 +2,98 @@ using System;
 using System.IO;
 using System.Linq;
 using Aspose.Words;
+using Aspose.Words.Drawing;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document with two sections, each containing a paragraph and a comment.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Section 1
-        builder.Writeln("Paragraph in Section 1.");
+        // ---------- Section 1 ----------
+        builder.Writeln("Section 1 - Paragraph 1.");
+
+        // Create a comment for the first paragraph.
         Comment comment1 = new Comment(doc)
         {
             Author = "Alice",
             Initial = "A",
             DateTime = DateTime.Now
         };
+        // Add visible text to the comment.
         comment1.AppendChild(new Paragraph(doc));
         comment1.FirstParagraph?.AppendChild(new Run(doc, "Comment for Section 1."));
+
         // Anchor the comment to the current paragraph.
-        builder.CurrentParagraph?.AppendChild(comment1);
+        Paragraph para1 = builder.CurrentParagraph;
+        para1?.AppendChild(comment1);
 
         // Insert a section break to start Section 2.
         builder.InsertBreak(BreakType.SectionBreakNewPage);
 
-        // Section 2
-        builder.Writeln("Paragraph in Section 2.");
+        // ---------- Section 2 ----------
+        builder.Writeln("Section 2 - Paragraph 1.");
+
+        // Create a comment for the second paragraph.
         Comment comment2 = new Comment(doc)
         {
             Author = "Bob",
             Initial = "B",
-            DateTime = DateTime.Now.AddMinutes(-5)
+            DateTime = DateTime.Now
         };
         comment2.AppendChild(new Paragraph(doc));
         comment2.FirstParagraph?.AppendChild(new Run(doc, "Comment for Section 2."));
-        builder.CurrentParagraph?.AppendChild(comment2);
 
-        // Save the original document (optional, for verification).
-        doc.Save("OriginalDocument.docx");
+        // Anchor the comment to the current paragraph.
+        Paragraph para2 = builder.CurrentParagraph;
+        para2?.AppendChild(comment2);
 
-        // -----------------------------------------------------------------
-        // Reorder sections: move the second section to be the first one.
-        // -----------------------------------------------------------------
-        if (doc.Sections.Count >= 2)
+        // Save the original document.
+        string originalPath = "original.docx";
+        doc.Save(originalPath);
+
+        // ---------- Reorder Sections ----------
+        // Capture references to the existing sections.
+        Section firstSection = doc.Sections[0];
+        Section secondSection = doc.Sections[1];
+
+        // Remove sections from the document (order matters).
+        doc.Sections.RemoveAt(1); // Remove second section.
+        doc.Sections.RemoveAt(0); // Remove first section.
+
+        // Insert them back in swapped order.
+        doc.Sections.Insert(0, secondSection);
+        doc.Sections.Insert(1, firstSection);
+
+        // After reordering, verify that each comment is still anchored to a paragraph
+        // within the correct (new) section.
+        var comments = doc.GetChildNodes(NodeType.Comment, true)
+                          .OfType<Comment>()
+                          .ToList();
+
+        Console.WriteLine("Comments after section reordering:");
+        foreach (Comment c in comments)
         {
-            Section secondSection = doc.Sections[1];
-            doc.Sections.RemoveAt(1);
-            doc.Sections.Insert(0, secondSection);
-        }
-
-        // -----------------------------------------------------------------
-        // Synchronize comment positions after reordering.
-        // Capture existing comment data, remove all comments,
-        // then re‑insert them anchored to the first paragraph of each section
-        // in the new order.
-        // -----------------------------------------------------------------
-
-        // Capture comment data.
-        var capturedComments = doc.GetChildNodes(NodeType.Comment, true)
-            .OfType<Comment>()
-            .Select(c => new
+            // The comment should be a child of a Paragraph.
+            Paragraph? parentParagraph = c.ParentNode as Paragraph;
+            if (parentParagraph == null)
             {
-                Text = c.GetText().Trim(),
-                Author = c.Author,
-                Initial = c.Initial,
-                DateTime = c.DateTime
-            })
-            .ToList();
-
-        // Remove existing comments safely.
-        foreach (Comment c in doc.GetChildNodes(NodeType.Comment, true).OfType<Comment>().ToList())
-        {
-            c.Remove();
-        }
-
-        // Re‑insert comments, one per section, anchored to the first paragraph.
-        int commentIndex = 0;
-        foreach (Section section in doc.Sections)
-        {
-            Paragraph? firstParagraph = section.Body?.FirstParagraph;
-            if (firstParagraph == null || commentIndex >= capturedComments.Count)
+                Console.WriteLine($"Comment by {c.Author} is not attached to a paragraph.");
                 continue;
+            }
 
-            var data = capturedComments[commentIndex];
+            // Find the section that contains this paragraph.
+            Section? parentSection = parentParagraph.ParentNode as Section;
+            int sectionIndex = parentSection != null ? doc.Sections.IndexOf(parentSection) + 1 : -1;
 
-            Comment newComment = new Comment(doc)
-            {
-                Author = data.Author,
-                Initial = data.Initial,
-                DateTime = data.DateTime
-            };
-            newComment.AppendChild(new Paragraph(doc));
-            newComment.FirstParagraph?.AppendChild(new Run(doc, data.Text));
-
-            // Anchor the comment to the first paragraph of the current section.
-            firstParagraph.AppendChild(newComment);
-
-            commentIndex++;
+            Console.WriteLine($"Author: {c.Author}, Section: {sectionIndex}, Text: {c.GetText().Trim()}");
         }
 
-        // Save the final document with reordered sections and synchronized comments.
-        doc.Save("ReorderedComments.docx");
+        // Save the reordered document.
+        string reorderedPath = "reordered.docx";
+        doc.Save(reorderedPath);
     }
 }

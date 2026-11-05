@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
@@ -12,57 +11,63 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a text input form field with a unique name.
-        builder.Writeln("Please enter your name:");
-        FormField textField = builder.InsertTextInput(
-            "TextField1",                     // Unique name
-            TextFormFieldType.Regular,        // Field type
-            "",                               // Format
-            "John Doe",                       // Default text
-            0);                               // Max length (0 = unlimited)
+        builder.InsertTextInput("TextField_Unique_001", TextFormFieldType.Regular, "", "Default Text", 0);
+        builder.Writeln(); // Add a line break.
 
         // Insert a checkbox form field with a unique name.
+        builder.InsertCheckBox("CheckBox_Unique_001", false, 0);
         builder.Writeln();
-        builder.Writeln("Accept terms:");
-        FormField checkBox = builder.InsertCheckBox(
-            "CheckBox1",                      // Unique name
-            false,                            // Default state
-            0);                               // Size (0 = default)
 
-        // Insert a dropdown (combo box) form field with a unique name and items.
+        // Insert a combo box (dropdown) form field with a unique name.
+        // Provide at least one initial item to satisfy the selectedIndex requirement.
+        builder.InsertComboBox("ComboBox_Unique_001", new[] { "Option A" }, 0);
         builder.Writeln();
-        builder.Writeln("Select country:");
-        string[] countries = { "USA", "Canada", "Mexico" };
-        FormField comboBox = builder.InsertComboBox(
-            "DropDown1",                      // Unique name
-            countries,                        // Items
-            0);                               // Selected index (first item)
 
-        // Ensure at least one form field exists.
-        if (doc.Range.FormFields.Count == 0)
+        // Add additional items to the combo box.
+        FormField comboField = doc.Range.FormFields["ComboBox_Unique_001"];
+        if (comboField != null && comboField.Type == FieldType.FieldFormDropDown)
         {
-            throw new InvalidOperationException("No form fields were created.");
+            // The first item ("Option A") is already present; add the rest.
+            comboField.DropDownItems.Add("Option B");
+            comboField.DropDownItems.Add("Option C");
+        }
+        else
+        {
+            throw new InvalidOperationException("Combo box field not found.");
         }
 
-        // Validate that each form field has a distinct, non‑empty name.
-        HashSet<string> fieldNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (FormField field in doc.Range.FormFields)
-        {
-            if (string.IsNullOrEmpty(field.Name))
-                throw new InvalidOperationException("A form field has an empty name.");
+        // Validate that all fields exist.
+        FormField textField = doc.Range.FormFields["TextField_Unique_001"];
+        FormField checkBoxField = doc.Range.FormFields["CheckBox_Unique_001"];
+        if (textField == null) throw new InvalidOperationException("Text input field not found.");
+        if (checkBoxField == null) throw new InvalidOperationException("Checkbox field not found.");
 
-            if (!fieldNames.Add(field.Name))
-                throw new InvalidOperationException($"Duplicate form field name detected: {field.Name}");
-        }
+        // Update field values.
+        textField.Result = "Updated Text";
+        checkBoxField.Checked = true;
+        comboField.Result = "Option B";
+
+        // Verify updates.
+        if (textField.Result != "Updated Text")
+            throw new InvalidOperationException("Text field update failed.");
+        if (!checkBoxField.Checked)
+            throw new InvalidOperationException("Checkbox field update failed.");
+        if (comboField.Result != "Option B")
+            throw new InvalidOperationException("Combo box field update failed.");
 
         // Save the document.
-        const string outputPath = "FormFields.docx";
+        const string outputPath = "FormFieldsExample.docx";
         doc.Save(outputPath);
 
-        // Output the names of the created form fields.
-        Console.WriteLine("Form fields created with unique names:");
+        // Output summary to console.
+        Console.WriteLine($"Form fields created, updated, and saved to '{outputPath}'.");
+        Console.WriteLine("Fields present in the document:");
         foreach (FormField field in doc.Range.FormFields)
         {
-            Console.WriteLine($"- {field.Name}");
+            string value = field.Type == FieldType.FieldFormCheckBox
+                ? field.Checked.ToString()
+                : field.Result;
+            Console.WriteLine($"- Name: {field.Name}, Type: {field.Type}, Value: {value}");
         }
     }
 }

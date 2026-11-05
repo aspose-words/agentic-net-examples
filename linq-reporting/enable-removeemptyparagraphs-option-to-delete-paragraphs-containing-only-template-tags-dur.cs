@@ -1,46 +1,60 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Newtonsoft.Json;
+using System.Text;
 
-public class Model
+public class ReportModel
 {
-    public string Name { get; set; } = "John Doe";
+    // Property used in a normal paragraph.
+    public string Name { get; set; } = "";
+
+    // Property used in a paragraph that contains only a tag.
+    public string EmptyTag { get; set; } = "";
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for any required encodings.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Prepare folders.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
 
-        // Create sample data model.
-        var model = new Model();
+        // Create a template document programmatically.
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Create a new Word document and insert LINQ Reporting tags.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Paragraph with regular text and a tag.
+        builder.Writeln("Hello <<[model.Name]>>!");
 
-        // Paragraph that contains only a template tag – should be removed.
-        builder.Writeln("<<[model.Name]>>");
+        // Paragraph that contains only a tag – should be removed if the tag resolves to empty.
+        builder.Writeln("<<[model.EmptyTag]>>");
 
-        // Paragraph with static text – should remain.
-        builder.Writeln("Report generated successfully.");
+        // Save the template.
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        templateDoc.Save(templatePath);
 
-        // Initialize the reporting engine.
-        var engine = new ReportingEngine();
+        // Load the template for reporting.
+        Document reportDoc = new Document(templatePath);
 
-        // Enable the option to remove empty paragraphs that contain only tags.
+        // Prepare the data model with empty values.
+        ReportModel model = new ReportModel
+        {
+            Name = "",          // Empty string – the tag will render nothing but the paragraph stays because it has other text.
+            EmptyTag = ""       // Empty string – the whole paragraph should be removed.
+        };
+
+        // Configure the reporting engine to remove empty paragraphs.
+        ReportingEngine engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
 
-        // Build the report using the model as the root object named "model".
-        engine.BuildReport(doc, model, "model");
+        // Build the report.
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Save the generated document.
-        const string outputPath = "Report_Output.docx";
-        doc.Save(outputPath);
+        // Save the generated report.
+        string resultPath = Path.Combine(outputDir, "result.docx");
+        reportDoc.Save(resultPath);
     }
 }

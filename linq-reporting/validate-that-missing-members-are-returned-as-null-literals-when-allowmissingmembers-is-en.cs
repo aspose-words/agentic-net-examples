@@ -7,46 +7,49 @@ public class Program
 {
     public static void Main()
     {
-        // Ensure the output directory exists.
-        string outputDir = "output";
-        Directory.CreateDirectory(outputDir);
+        // Prepare working directories.
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "LinqReportingExample");
+        Directory.CreateDirectory(workDir);
+        string templatePath = Path.Combine(workDir, "template.docx");
+        string outputPath = Path.Combine(workDir, "output.docx");
 
-        // Create a template document with LINQ Reporting tags.
-        string templatePath = Path.Combine(outputDir, "template.docx");
+        // -----------------------------------------------------------------
+        // 1. Create the template document with a missing member tag.
+        // -----------------------------------------------------------------
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Write a line that references an existing member.
-        builder.Writeln("Existing: <<[model.Existing]>>");
-        // Write a line that references a missing member.
-        builder.Writeln("Missing: <<[model.Missing]>>");
-        // Save the template.
+        builder.Writeln("Existing: <<[model.Existing]>>; Missing: <<[model.Missing]>>.");
         templateDoc.Save(templatePath);
 
-        // Load the template for reporting.
-        Document doc = new Document(templatePath);
-
-        // Prepare the data model with only the Existing property.
+        // -----------------------------------------------------------------
+        // 2. Define the data model (Missing property is intentionally absent).
+        // -----------------------------------------------------------------
         var model = new ReportModel
         {
-            Existing = "Hello World"
-            // Note: Missing property is intentionally not defined.
+            Existing = "Value"
+            // No Missing property.
         };
 
-        // Configure the reporting engine to allow missing members.
+        // -----------------------------------------------------------------
+        // 3. Load the template and build the report with AllowMissingMembers.
+        // -----------------------------------------------------------------
+        Document doc = new Document(templatePath);
         ReportingEngine engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.AllowMissingMembers;
-
-        // Build the report.
         engine.BuildReport(doc, model, "model");
 
         // Save the generated report.
-        string resultPath = Path.Combine(outputDir, "result.docx");
-        doc.Save(resultPath);
+        doc.Save(outputPath);
 
-        // Output the resulting document text to the console.
+        // -----------------------------------------------------------------
+        // 4. Verify that the missing member was rendered as an empty string.
+        // -----------------------------------------------------------------
+        string resultText = doc.GetText();
         Console.WriteLine("Generated document text:");
-        Console.WriteLine(doc.GetText());
+        Console.WriteLine(resultText.Trim());
+
+        bool testPassed = resultText.Contains("Existing: Value") && resultText.Contains("Missing: .");
+        Console.WriteLine(testPassed ? "Test passed: missing member rendered as null literal." : "Test failed.");
     }
 
     // Public data model class.
@@ -54,6 +57,6 @@ public class Program
     {
         // Existing member used in the template.
         public string Existing { get; set; } = string.Empty;
-        // No Missing member defined; it will be treated as null when AllowMissingMembers is enabled.
+        // No Missing property – this is intentional for the test.
     }
 }

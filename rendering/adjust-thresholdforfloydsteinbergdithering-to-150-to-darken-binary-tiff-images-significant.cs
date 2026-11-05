@@ -10,18 +10,19 @@ public class Program
         // Create a simple document with some text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample text to render as a binary TIFF image.");
+        builder.Writeln("This is a sample document to demonstrate TIFF dithering threshold adjustment.");
         builder.Writeln("The quick brown fox jumps over the lazy dog.");
+        builder.Writeln("Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
 
-        // Configure image save options for TIFF with black‑and‑white color mode.
+        // Configure image save options for binary TIFF.
         ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            // Render the pages as black‑and‑white (binary) images.
+            // Render the document as a black‑and‑white image.
             ImageColorMode = ImageColorMode.BlackAndWhite,
-            // Set the threshold for Floyd‑Steinberg dithering to 150 to darken the output.
-            ThresholdForFloydSteinbergDithering = 150,
-            // Save only the first page (single‑page example).
-            PageSet = new PageSet(0)
+            // Increase the threshold to 150 to darken the binary output.
+            ThresholdForFloydSteinbergDithering = 150
+            // The default dithering method for black‑and‑white TIFF is Floyd‑Steinberg,
+            // so no explicit Dithering property is required.
         };
 
         // Define output file path.
@@ -32,10 +33,12 @@ public class Program
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The TIFF file was not created.", outputPath);
+        {
+            throw new InvalidOperationException($"Failed to create the TIFF file at '{outputPath}'.");
+        }
 
-        // Report the file size to indicate that rendering succeeded.
+        // Report the file size to confirm that rendering occurred.
         long fileSize = new FileInfo(outputPath).Length;
-        Console.WriteLine($"TIFF image saved successfully: {outputPath} ({fileSize} bytes)");
+        Console.WriteLine($"TIFF file saved successfully. Size: {fileSize} bytes.");
     }
 }

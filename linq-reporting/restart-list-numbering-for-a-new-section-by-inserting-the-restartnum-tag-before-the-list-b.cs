@@ -5,69 +5,74 @@ using Aspose.Words;
 using Aspose.Words.Reporting;
 using System.Text;
 
-public class Program
+namespace RestartNumberingExample
 {
-    public static void Main()
+    // Data model classes
+    public class ReportModel
     {
-        // Register code page provider (required for some Aspose.Words features)
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Prepare sample data
-        ReportModel model = new()
-        {
-            Sections = new()
-            {
-                new Section
-                {
-                    Title = "Section A",
-                    Items = new() { "Item A1", "Item A2", "Item A3" }
-                },
-                new Section
-                {
-                    Title = "Section B",
-                    Items = new() { "Item B1", "Item B2" }
-                }
-            }
-        };
-
-        // Create the template document programmatically
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Begin outer foreach over sections
-        builder.Writeln("<<foreach [section in Model.Sections]>>");
-        // Section title
-        builder.Writeln("<<[section.Title]>>");
-        // Numbered list of items with restartNum before inner foreach
-        builder.Writeln("1. <<restartNum>><<foreach [item in section.Items]>> <<[item]>> <</foreach>>");
-        // End outer foreach
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk
-        string templatePath = "Template.docx";
-        templateDoc.Save(templatePath);
-
-        // Load the template for reporting
-        Document reportDoc = new Document(templatePath);
-
-        // Build the report using LINQ Reporting Engine
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "Model");
-
-        // Save the generated report
-        string outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+        public List<Section> Sections { get; set; } = new();
     }
-}
 
-// Data model classes
-public class ReportModel
-{
-    public List<Section> Sections { get; set; } = new();
-}
+    public class Section
+    {
+        public string Title { get; set; } = string.Empty;
+        public List<string> Items { get; set; } = new();
+    }
 
-public class Section
-{
-    public string Title { get; set; } = string.Empty;
-    public List<string> Items { get; set; } = new();
+    public class Program
+    {
+        public static void Main()
+        {
+            // Register code page provider (required for some environments)
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Prepare sample data
+            var model = new ReportModel
+            {
+                Sections = new List<Section>
+                {
+                    new Section
+                    {
+                        Title = "Section A",
+                        Items = new List<string> { "Item A1", "Item A2", "Item A3" }
+                    },
+                    new Section
+                    {
+                        Title = "Section B",
+                        Items = new List<string> { "Item B1", "Item B2", "Item B3", "Item B4" }
+                    }
+                }
+            };
+
+            // Create template document programmatically
+            var templatePath = "Template.docx";
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+
+            // Begin outer foreach over sections
+            builder.Writeln("<<foreach [section in Model.Sections]>>");
+            // Section title
+            builder.Writeln("<<[section.Title]>>");
+            // Numbered list with restartNum before inner foreach
+            builder.Writeln("1. <<restartNum>><<foreach [item in section.Items]>> <<[item]>>");
+            // Close inner foreach
+            builder.Writeln("<</foreach>>");
+            // Close outer foreach
+            builder.Writeln("<</foreach>>");
+
+            // Save the template
+            doc.Save(templatePath);
+
+            // Load the template for reporting
+            var template = new Document(templatePath);
+
+            // Build the report
+            var engine = new ReportingEngine();
+            engine.BuildReport(template, model, "Model");
+
+            // Save the generated report
+            var outputPath = "Report.docx";
+            template.Save(outputPath);
+        }
+    }
 }

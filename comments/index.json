@@ -4,12 +4,12 @@
     "slug": "comments",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Use native Aspose.Words APIs directly. Prefer simple, verifiable operations over ambitious markup-preservation tricks. Create realistic local sample inputs inside the example whenever external files, folders, streams, or templates are required.",
+    "preferred_workflow": "Use the native Aspose.Words API: load or create a Document, obtain comments via doc.GetChildNodes(NodeType.Comment, true).OfType<Comment>(), manipulate Comment objects directly (AddReply, SetText, AppendChild), copy collections to List before bulk updates, and reset any MemoryStream.Position before reuse. Save the document with the appropriate SaveFormat and, when exporting, write plain data to the target format.",
     "required_packages": [
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.9.0"
+      "Aspose.Words": "26.10.0"
     },
     "required_namespaces": [
       "System",
@@ -17,32 +17,30 @@
       "System.Linq",
       "Aspose.Words",
       "Aspose.Words.Drawing",
+      "Aspose.Words.Tables",
       "System.Xml.Linq",
       "System.Collections.Generic",
       "System.Text.Json",
       "System.Drawing",
-      "Aspose.Words.Tables",
       "Aspose.Words.Layout",
-      "Aspose.Words.Saving",
-      "Aspose.Words.Fields",
       "Aspose.Words.Notes",
-      "Aspose.Words.Comparing"
+      "Aspose.Words.Saving"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
       "NodeType",
       "Directory",
-      "File",
       "Path",
       "Paragraph",
       "Run",
-      "Node",
       "Font",
-      "Style",
       "SaveFormat",
-      "Range",
-      "PdfSaveOptions",
+      "File",
+      "Style",
+      "Node",
+      "CompositeNode",
+      "HtmlSaveOptions",
       "MemoryStream"
     ]
   },
@@ -58,50 +56,56 @@
   },
   "rules_summary": {
     "strict_api_bans": [
-      "Do not use Document.Comments. Enumerate comments with doc.GetChildNodes(NodeType.Comment, true).OfType<Comment>().",
-      "Do not invent an Aspose.Words.Comments namespace or any invented comment collection namespace.",
-      "Do not invent DocumentBuilder.StartComment, DocumentBuilder.EndComment, AddComment, InsertComment, or similar builder shortcut APIs unless the exact Aspose.Words API is known and supported.",
-      "Do not use CommentReference in this category.",
-      "Do not use HtmlSaveOptions.ExportComments."
+      "Do not reference a non-existent Document.Comments collection or an invented Aspose.Words.Comments namespace.",
+      "Do not call DocumentBuilder.StartComment, EndComment, InsertComment, AddComment, or any similar shortcut that is not part of the official API.",
+      "Do not use CommentReference, HtmlSaveOptions.ExportComments, or any undocumented save-option flags."
     ],
     "canonical_patterns": [
       "Enumerate comments with doc.GetChildNodes(NodeType.Comment, true).OfType<Comment>().",
-      "Append at least one Paragraph and Run inside a Comment when creating comment content.",
-      "Use safe ToList copies before deleting or bulk-updating comments.",
-      "For report/export scenarios, extract plain data first and recreate destination content from that data.",
-      "For stream workflows, reset MemoryStream.Position before reloading or resaving."
+      "When creating a comment, always add at least one Paragraph and one Run to hold visible text.",
+      "Create a ToList() snapshot before deleting or bulk-updating comments to avoid mutating a live collection."
     ],
     "nullable_warning_prevention": [
-      "Avoid CS8600, CS8602, and CS8604 by checking for null before assignment, dereference, indexing, or method calls.",
-      "Do not assign maybe-null values directly to non-nullable variables.",
-      "Declare nullable locals such as Paragraph? when a value may legitimately be null."
+      "Declare locals as nullable (e.g., Paragraph? para) when a value may be absent and check for null before dereferencing.",
+      "Guard results of FirstOrDefault, CurrentParagraph, or similar queries with explicit null checks.",
+      "Avoid assigning maybe-null expressions directly to non-nullable variables."
     ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "Wrong Node.Text usage",
-      "symptom": "error CS1061: 'Node' does not contain a definition for 'Text'",
-      "fix": "Use Comment.GetText() for whole-comment content, or cast to a concrete node type such as Run before reading .Text."
+      "pattern": "Use of non-existent comment APIs",
+      "symptom": "Compile errors such as CS0234 or CS1061 referencing Document.Comments, Aspose.Words.Comments, DocumentBuilder.StartComment/EndComment, or HtmlSaveOptions.ExportComments.",
+      "cause": "The referenced members are not defined in the Aspose.Words 26.10.0 API.",
+      "fix": "Replace invented calls with the supported pattern doc.GetChildNodes(NodeType.Comment, true).OfType<Comment>() and manipulate Comment objects directly.",
+      "prevention": "Consult the official Aspose.Words documentation and restrict code to members that appear in IntelliSense."
     },
     {
-      "pattern": "Invented comment collection APIs",
-      "symptom": "Compile failures caused by Document.Comments or Aspose.Words.Comments usage.",
-      "fix": "Enumerate comments with doc.GetChildNodes(NodeType.Comment, true).OfType<Comment>()."
+      "pattern": "Mutating a live comment collection",
+      "symptom": "Runtime NotSupportedException stating that adding nodes is not supported for deep node collections, or unstable behavior when deleting during forward iteration.",
+      "cause": "NodeCollection.Add or removal is performed on the original comment collection, which Aspose.Words treats as read-only for deep hierarchies.",
+      "fix": "Create a snapshot with .ToList() and perform all Add, Remove, or Update operations on that list.",
+      "prevention": "Never iterate over a live NodeCollection while modifying it; always work on a copied list."
     },
     {
-      "pattern": "Unsupported comment-reference or save-option APIs",
-      "symptom": "Compile failures caused by CommentReference or undocumented save-option flags.",
-      "fix": "Prefer simpler comment workflows and documented Aspose.Words save options only."
+      "pattern": "Incorrect member access on base Node",
+      "symptom": "Compile errors CS1061 for members like .Text, .InsertAfter, or .ParentComment on a Node instance.",
+      "cause": "Node is an abstract base class; those members exist only on derived types such as Run, Paragraph, or Comment.",
+      "fix": "Cast to the appropriate derived type or use Comment.GetText() for comment content; use Paragraph.InsertAfter only on Paragraph objects.",
+      "prevention": "Inspect the concrete type before accessing members and rely on type-specific APIs."
     },
     {
-      "pattern": "Unsafe live-collection mutation",
-      "symptom": "Unstable behavior while deleting comments during forward iteration over a live collection.",
-      "fix": "Create a ToList copy first, then update or remove matching comments."
+      "pattern": "Nullable reference warnings",
+      "symptom": "CS8600, CS8602, or CS8604 warnings about possible null dereference or assignment.",
+      "cause": "Code assigns or dereferences values that may be null without null checks.",
+      "fix": "Declare variables as nullable, add explicit null checks, and use the null-conditional operator where appropriate.",
+      "prevention": "Enable nullable reference types and consistently validate results of queries that can return null."
     },
     {
-      "pattern": "Nullable-reference warnings",
-      "symptom": "CS8600, CS8602, or CS8604 around maybe-null values such as CurrentParagraph or FirstOrDefault results.",
-      "fix": "Use nullable locals where needed and guard maybe-null values before dereference or assignment."
+      "pattern": "Improper reply handling",
+      "symptom": "Compile errors for missing Comment.ParentComment property and runtime NotSupportedException when trying to add a reply via NodeCollection.Add.",
+      "cause": "Replies must be added using the Comment.AddReply method; treating replies as regular nodes in a deep collection is unsupported.",
+      "fix": "Create a reply with topComment.AddReply(author, initials, date, text) and avoid manual insertion into the comment collection.",
+      "prevention": "Use the dedicated AddReply API for nested comments and do not manipulate reply nodes directly."
     }
   ],
   "examples": [
@@ -220,7 +224,7 @@
     {
       "id": 11,
       "file_name": "extract-comment-metadata-author-date-and-text-and-write-it-to-a-json-file.cs",
-      "task": "Extract comment metadata—author, date, and text—and write it to a JSON file.",
+      "task": "Extract comment metadata-author, date, and text-and write it to a JSON file.",
       "workflow": "export-report",
       "outputs": [
         "docx",
@@ -237,8 +241,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 13,
@@ -282,8 +286,8 @@
         "docx",
         "html"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 17,
@@ -350,8 +354,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 23,
@@ -443,5 +447,15 @@
       "selected_engine": "mcp",
       "winner": "mcp"
     }
-  ]
+  ],
+  "narrative": {
+    "overview": "The Comments category covers all operations that create, enumerate, modify, and export Aspose.Words comment nodes. Verified examples demonstrate reliable techniques for adding top-level comments, replying, filtering by author, exporting to CSV, highlighting, and generating printable reports.",
+    "purpose": "Provide an AI coding agent with clear, safe patterns for working with Aspose.Words comments, ensuring compilable code, correct comment hierarchy handling, and robust export or transformation workflows.",
+    "validation_priorities": [
+      "Ensure the code compiles against Aspose.Words 26.10.0 and runs without NotSupportedException or null-reference failures."
+    ],
+    "maintenance_notes": [
+      "Periodically verify that the Aspose.Words version used in the repository matches the version documented in the rules; update the strict API bans and canonical patterns when new comment features are added."
+    ]
+  }
 }

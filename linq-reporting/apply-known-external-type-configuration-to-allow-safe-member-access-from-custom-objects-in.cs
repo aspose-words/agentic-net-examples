@@ -3,69 +3,57 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+public class Person
 {
-    public static void Main()
-    {
-        // Ensure output directory exists
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
-
-        // Create template document
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("Customer Report");
-        builder.Writeln("Name: <<[root.Person.Name]>>");
-        builder.Writeln("Age: <<[root.Person.Age]>>");
-        builder.Writeln("Info: <<[root.Person.CustomInfo.Info]>>");
-
-        templateDoc.Save(templatePath);
-
-        // Load template for reporting
-        Document doc = new Document(templatePath);
-
-        // Prepare data model
-        RootModel root = new()
-        {
-            Person = new Person
-            {
-                Name = "John Doe",
-                Age = 30,
-                CustomInfo = new CustomInfo()
-            }
-        };
-
-        // Build the report
-        ReportingEngine engine = new ReportingEngine();
-        bool success = engine.BuildReport(doc, root, "root");
-
-        // Save the generated report
-        string reportPath = Path.Combine(outputDir, "report.docx");
-        doc.Save(reportPath);
-
-        // Indicate completion (no interactive input)
-        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to: {reportPath}");
-    }
+    public string Name { get; set; } = "";
+    public DateTime BirthDate { get; set; }
 }
 
-// Root wrapper class
-public class RootModel
+public class Model
 {
     public Person Person { get; set; } = new();
 }
 
-// Person data class
-public class Person
+public class Program
 {
-    public string Name { get; set; } = string.Empty;
-    public int Age { get; set; }
-    public CustomInfo CustomInfo { get; set; } = new();
-}
+    public static void Main()
+    {
+        // Sample data.
+        var model = new Model
+        {
+            Person = new Person
+            {
+                Name = "John Doe",
+                BirthDate = new DateTime(1990, 5, 23)
+            }
+        };
 
-// Custom class whose members are accessed safely via a property
-public class CustomInfo
-{
-    public string Info => "Additional custom information.";
+        // Create the template document.
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        // Insert LINQ Reporting tags.
+        builder.Writeln("Name: <<[model.Person.Name]>>");
+        builder.Writeln("Year of Birth: <<[model.Person.BirthDate.Year]>>");
+
+        // Save the template.
+        doc.Save(templatePath);
+
+        // Load the template for reporting.
+        var reportDoc = new Document(templatePath);
+
+        // Configure the reporting engine to allow safe access to DateTime members.
+        var engine = new ReportingEngine();
+
+        // Add DateTime as a known external type (new API uses KnownTypes collection).
+        engine.KnownTypes.Add(typeof(DateTime));
+
+        // Build the report.
+        engine.BuildReport(reportDoc, model, "model");
+
+        // Save the generated report.
+        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        reportDoc.Save(reportPath);
+    }
 }

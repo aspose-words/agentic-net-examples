@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
 public class Program
@@ -10,21 +9,16 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // 1 inch = 72 points, so 2 inches = 144 points.
-        // Add a left-aligned tab stop at 2 inches. Specify TabLeader.None as required.
-        builder.CurrentParagraph.ParagraphFormat.TabStops.Add(144, TabAlignment.Left, TabLeader.None);
+        // Clear any existing tab stops and add a custom tab stop at 2 inches (144 points).
+        // The third argument specifies the tab leader; use None for a plain tab.
+        builder.ParagraphFormat.TabStops.Clear();
+        builder.ParagraphFormat.TabStops.Add(144, TabAlignment.Left, TabLeader.None);
 
         // Insert a paragraph with a tab character so the text aligns to the custom tab stop.
-        builder.Writeln("\tText aligned to 2‑inch tab stop");
+        builder.Writeln("\tThis text aligns to the custom tab stop at 2 inches.");
 
-        // Save the document to a file.
+        // Save the document to disk.
         string outputPath = "CustomTabStop.docx";
         doc.Save(outputPath);
-
-        // Optional verification that the file was created.
-        if (File.Exists(outputPath))
-        {
-            // Document successfully created.
-        }
     }
 }

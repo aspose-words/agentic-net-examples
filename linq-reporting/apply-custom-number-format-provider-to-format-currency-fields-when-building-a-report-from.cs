@@ -2,20 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-#nullable enable
 
 public class Program
 {
     public static void Main()
     {
-        // Create sample XML data.
-        const string xmlFileName = "orders.xml";
-        var xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<Orders>
+        // Prepare sample XML data (not used directly by the reporting engine in this example,
+        // but kept to illustrate the original source).
+        string xmlPath = "orders.xml";
+        File.WriteAllText(xmlPath,
+@"<Orders>
     <Order>
         <CustomerName>John Doe</CustomerName>
         <Total>1234.56</Total>
@@ -24,95 +22,65 @@ public class Program
         <CustomerName>Jane Smith</CustomerName>
         <Total>7890.12</Total>
     </Order>
-</Orders>";
-        File.WriteAllText(xmlFileName, xmlContent);
+</Orders>");
 
-        // Load XML and map to objects.
-        var xDoc = XDocument.Load(xmlFileName);
-        var model = new ReportModel
-        {
-            Orders = new List<Order>()
-        };
-        foreach (var elem in xDoc.Root!.Elements("Order"))
-        {
-            var order = new Order
-            {
-                CustomerName = (string)elem.Element("CustomerName")!,
-                Total = (decimal)elem.Element("Total")!
-            };
-            model.Orders.Add(order);
-        }
+        // Create a template document programmatically.
+        string templatePath = "template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Create template document programmatically.
-        const string templateFileName = "template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        builder.Writeln("Order Report");
+        builder.Writeln("Customer Report");
         builder.Writeln("==============");
+        builder.Writeln();
         builder.Writeln("<<foreach [order in Orders]>>");
         builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("Total: <<[order.FormattedTotal]>>");
+        builder.Writeln("Total: <<[order.TotalFormatted]>>");
         builder.Writeln("<</foreach>>");
 
-        doc.Save(templateFileName);
+        templateDoc.Save(templatePath);
 
-        // Load the template and build the report.
-        var template = new Document(templateFileName);
-        var engine = new ReportingEngine();
-        engine.BuildReport(template, model, "model");
+        // Load the template.
+        Document doc = new Document(templatePath);
 
-        const string outputFileName = "report.docx";
-        template.Save(outputFileName);
+        // Create a custom number format provider (custom currency symbol).
+        NumberFormatInfo customNfi = (NumberFormatInfo)CultureInfo.InvariantCulture.NumberFormat.Clone();
+        customNfi.CurrencySymbol = "€";
+        customNfi.CurrencyDecimalDigits = 2;
+        CultureInfo customCulture = (CultureInfo)CultureInfo.InvariantCulture.Clone();
+        customCulture.NumberFormat = customNfi;
+        CultureInfo.CurrentCulture = customCulture;
+
+        // Build the data model.
+        ReportModel model = new ReportModel
+        {
+            Orders = new List<Order>
+            {
+                new Order { CustomerName = "John Doe", Total = 1234.56 },
+                new Order { CustomerName = "Jane Smith", Total = 7890.12 }
+            }
+        };
+
+        // Build the report using the data model.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
+
+        // Save the generated report.
+        string outputPath = "report.docx";
+        doc.Save(outputPath);
     }
 }
 
-// Wrapper model for the report.
+// Data model classes.
 public class ReportModel
 {
     public List<Order> Orders { get; set; } = new();
 }
 
-// Data model representing an order.
 public class Order
 {
     public string CustomerName { get; set; } = string.Empty;
-    public decimal Total { get; set; }
+    public double Total { get; set; }
 
-    // Returns the total formatted with a custom currency format provider.
-    public string FormattedTotal => Total.ToString("C", new MyCurrencyFormatProvider());
-}
-
-// Custom format provider that uses a custom currency symbol.
-public class MyCurrencyFormatProvider : IFormatProvider, ICustomFormatter
-{
-    public object? GetFormat(Type? formatType) =>
-        formatType == typeof(ICustomFormatter) ? this : null;
-
-    public string Format(string? format, object? arg, IFormatProvider? provider)
-    {
-        if (arg is null)
-            return string.Empty;
-
-        // Use custom formatting only for currency ("C") or when format is null/empty.
-        if (string.IsNullOrEmpty(format) || format.Equals("C", StringComparison.OrdinalIgnoreCase))
-        {
-            const string customSymbol = "¤";
-
-            if (arg is IFormattable formattable)
-            {
-                // Format number with two decimal places and invariant culture.
-                var number = formattable.ToString("N2", CultureInfo.InvariantCulture);
-                return $"{customSymbol}{number}";
-            }
-
-            return $"{customSymbol}{arg}";
-        }
-
-        // Fallback to default formatting.
-        if (arg is IFormattable defaultFormattable)
-            return defaultFormattable.ToString(format, provider);
-
-        return arg.ToString() ?? string.Empty;
-    }
+    // Returns the total formatted as currency using the current culture.
+    public string TotalFormatted => Total.ToString("C", CultureInfo.CurrentCulture);
 }

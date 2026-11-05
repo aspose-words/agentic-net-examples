@@ -11,10 +11,14 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 1x1 table.
+        // Start a new table.
         builder.StartTable();
+
+        // Insert a single cell with some text.
         builder.InsertCell();
-        builder.Write("Sample cell");
+        builder.Writeln("Sample cell");
+
+        // End the row and the table.
         builder.EndRow();
         builder.EndTable();
 
@@ -22,11 +26,13 @@ public class Program
         Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
         // Set the top padding of the table to three points.
-        // This provides the visual effect of a top margin for the table.
+        // This provides a vertical offset similar to a top margin.
         table.TopPadding = 3f;
 
-        // Save the document to a file.
+        // Define output file path.
         string outputPath = "TableTopMargin.docx";
+
+        // Save the document.
         doc.Save(outputPath);
 
         // Verify that the file was created.

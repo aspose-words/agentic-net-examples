@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Aspose.Words;
 
 public class Program
@@ -17,25 +18,27 @@ public class Program
         doc.StartTrackRevisions(targetAuthor, DateTime.Now);
 
         // Make a change that will be recorded as a revision.
-        builder.Writeln("Added text.");
+        builder.Writeln("Inserted text.");
 
         // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Reject revisions authored by the target author.
-        // Iterate backwards to avoid modifying the collection during enumeration.
-        for (int i = doc.Revisions.Count - 1; i >= 0; i--)
+        // Collect revisions authored by the target author, then reject them.
+        var revisionsToReject = doc.Revisions
+                                   .Cast<Revision>()
+                                   .Where(r => r.Author == targetAuthor)
+                                   .ToList();
+
+        foreach (Revision rev in revisionsToReject)
         {
-            Revision rev = doc.Revisions[i];
-            if (rev.Author == targetAuthor)
-                rev.Reject();
+            rev.Reject();
         }
 
-        // Validate that the rejected revision is no longer present.
-        if (doc.GetText().Contains("Added text"))
-            throw new Exception("The revision was not successfully rejected.");
+        // Verify that the inserted text has been removed.
+        if (doc.GetText().Contains("Inserted text"))
+            throw new Exception("The revision was not rejected correctly.");
 
         // Save the resulting document.
-        doc.Save("Result.docx");
+        doc.Save("result.docx");
     }
 }

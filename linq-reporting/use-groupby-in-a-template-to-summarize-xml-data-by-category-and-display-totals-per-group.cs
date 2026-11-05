@@ -12,7 +12,7 @@ public class Item
     public decimal Amount { get; set; }
 }
 
-public class ReportModel
+public class ReportData
 {
     public List<Item> Items { get; set; } = new();
 }
@@ -21,74 +21,54 @@ public class Program
 {
     public static void Main()
     {
-        // Ensure code page provider is available (required for some environments)
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Ensure the working directories exist.
+        string outputDir = "output";
+        Directory.CreateDirectory(outputDir);
 
-        // 1. Create sample XML data file.
-        const string xmlPath = "data.xml";
-        var xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<Items>
-    <Item>
-        <Category>Food</Category>
-        <Amount>12.50</Amount>
-    </Item>
-    <Item>
-        <Category>Travel</Category>
-        <Amount>45.00</Amount>
-    </Item>
-    <Item>
-        <Category>Food</Category>
-        <Amount>8.75</Amount>
-    </Item>
-    <Item>
-        <Category>Office</Category>
-        <Amount>23.40</Amount>
-    </Item>
-    <Item>
-        <Category>Travel</Category>
-        <Amount>15.30</Amount>
-    </Item>
-</Items>";
-        File.WriteAllText(xmlPath, xmlContent);
+        // 1. Create sample XML data.
+        string xmlPath = Path.Combine(outputDir, "data.xml");
+        File.WriteAllText(xmlPath,
+@"<Items>
+    <Item><Category>Food</Category><Amount>12.5</Amount></Item>
+    <Item><Category>Food</Category><Amount>7.3</Amount></Item>
+    <Item><Category>Books</Category><Amount>15.0</Amount></Item>
+    <Item><Category>Books</Category><Amount>9.99</Amount></Item>
+    <Item><Category>Electronics</Category><Amount>199.99</Amount></Item>
+</Items>");
 
-        // 2. Load XML and map to model.
-        XDocument doc = XDocument.Load(xmlPath);
-        var model = new ReportModel
-        {
-            Items = doc.Root!
-                .Elements("Item")
-                .Select(x => new Item
-                {
-                    Category = (string?)x.Element("Category") ?? "",
-                    Amount = decimal.TryParse((string?)x.Element("Amount"), out var v) ? v : 0m
-                })
-                .ToList()
-        };
+        // 2. Load XML into objects.
+        XDocument xdoc = XDocument.Load(xmlPath);
+        var items = xdoc.Root!
+            .Elements("Item")
+            .Select(x => new Item
+            {
+                Category = (string?)x.Element("Category") ?? "",
+                Amount = decimal.TryParse((string?)x.Element("Amount"), out var a) ? a : 0m
+            })
+            .ToList();
 
-        // 3. Create the LINQ Reporting template programmatically.
-        const string templatePath = "template.docx";
+        var data = new ReportData { Items = items };
+
+        // 3. Create the LINQ Reporting template.
+        string templatePath = Path.Combine(outputDir, "template.docx");
         var templateDoc = new Document();
         var builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("Summary by Category:");
-        // Begin foreach over grouped items.
-        builder.Writeln("<<foreach [g in Items.GroupBy(i => i.Category)]>>");
+        builder.Writeln("Category Summary Report");
+        builder.Writeln("<<foreach [g in data.Items.GroupBy(i => i.Category)]>>");
         builder.Writeln("Category: <<[g.Key]>>");
-        builder.Writeln("Total Amount: <<[g.Sum(i => i.Amount)]>>");
+        builder.Writeln("Total: <<[g.Sum(i => i.Amount)]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template.
         templateDoc.Save(templatePath);
 
-        // 4. Load the template for report generation.
+        // 4. Load the template and build the report.
         var reportDoc = new Document(templatePath);
-
-        // 5. Build the report using ReportingEngine.
         var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+        engine.BuildReport(reportDoc, data, "data");
 
-        // 6. Save the generated report.
-        const string outputPath = "report.docx";
-        reportDoc.Save(outputPath);
+        // 5. Save the generated report.
+        string resultPath = Path.Combine(outputDir, "output.docx");
+        reportDoc.Save(resultPath);
     }
 }

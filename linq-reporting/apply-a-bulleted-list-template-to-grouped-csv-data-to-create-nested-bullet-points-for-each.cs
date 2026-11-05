@@ -10,90 +10,90 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for CSV handling.
+        // Register code page provider for CSV encoding support.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create sample CSV data.
+        // Prepare sample CSV data.
         string csvPath = "data.csv";
         File.WriteAllText(csvPath,
-@"Category,Item
-Fruits,Apple
-Fruits,Banana
-Fruits,Orange
-Vegetables,Carrot
-Vegetables,Tomato
-Vegetables,Spinach
-Grains,Rice
-Grains,Wheat");
+            "Category,Item\r\n" +
+            "Fruits,Apple\r\n" +
+            "Fruits,Banana\r\n" +
+            "Vegetables,Carrot\r\n" +
+            "Vegetables,Tomato\r\n" +
+            "Fruits,Orange");
 
         // Load CSV and group by Category.
-        var lines = File.ReadAllLines(csvPath);
-        var data = lines.Skip(1)
-                        .Select(l => l.Split(','))
-                        .Select(parts => new { Category = parts[0].Trim(), Item = parts[1].Trim() })
-                        .ToList();
+        var groups = File.ReadAllLines(csvPath)
+                         .Skip(1) // Skip header
+                         .Select(line => line.Split(','))
+                         .Where(parts => parts.Length >= 2)
+                         .Select(parts => new { Category = parts[0].Trim(), Item = parts[1].Trim() })
+                         .GroupBy(x => x.Category)
+                         .Select(g => new CategoryGroup
+                         {
+                             Category = g.Key,
+                             Items = g.Select(x => x.Item).ToList()
+                         })
+                         .ToList();
 
+        // Build the root model.
         var model = new ReportModel
         {
-            Categories = data.GroupBy(d => d.Category)
-                            .Select(g => new Category
-                            {
-                                Name = g.Key,
-                                Items = g.Select(x => x.Item).ToList()
-                            })
-                            .ToList()
+            Categories = groups
         };
 
-        // Create the template document programmatically.
+        // Create the LINQ Reporting template programmatically.
         string templatePath = "template.docx";
         var templateDoc = new Document();
         var builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("Grouped Items Report");
-        builder.Writeln();
+        // Begin outer foreach over categories.
+        builder.Writeln("<<foreach [cat in model.Categories]>>");
 
-        // Outer foreach for categories.
-        builder.Writeln("<<foreach [cat in Categories]>>");
+        // First-level bullet for category name.
         builder.ListFormat.ApplyBulletDefault();
-        builder.Writeln("<<[cat.Name]>>");
+        builder.Writeln("<<[cat.Category]>>");
 
-        // Inner foreach for items (indented bullet).
-        builder.ListFormat.ListLevelNumber = 1; // Indent one level.
-        builder.Writeln("<<foreach [item in cat.Items]>>");
-        builder.Writeln("<<[item]>>");
+        // Indent for second-level bullets (items).
+        builder.ListFormat.ListIndent();
+
+        // Begin inner foreach over items.
+        builder.Writeln("<<foreach [itm in cat.Items]>>");
+        builder.Writeln("<<[itm]>>");
         builder.Writeln("<</foreach>>");
 
-        // Reset indentation and close outer foreach.
-        builder.ListFormat.ListLevelNumber = 0;
+        // Outdent back to first level.
+        builder.ListFormat.ListOutdent();
+
+        // End outer foreach.
         builder.Writeln("<</foreach>>");
-        builder.ListFormat.RemoveNumbers();
 
         // Save the template.
         templateDoc.Save(templatePath);
 
-        // Load the template for reporting.
+        // Load the template for report generation.
         var doc = new Document(templatePath);
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
 
-        // Build the report.
+        // Build the report using LINQ Reporting engine.
+        var engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
-        // Save the final document.
-        string outputPath = Path.Combine("output", "report.docx");
-        Directory.CreateDirectory("output");
+        // Save the final report.
+        string outputPath = "report.docx";
         doc.Save(outputPath);
     }
 }
 
-// Data model classes.
+// Root model class.
 public class ReportModel
 {
-    public List<Category> Categories { get; set; } = new();
+    public List<CategoryGroup> Categories { get; set; } = new();
 }
 
-public class Category
+// Category group class.
+public class CategoryGroup
 {
-    public string Name { get; set; } = "";
+    public string Category { get; set; } = "";
     public List<string> Items { get; set; } = new();
 }

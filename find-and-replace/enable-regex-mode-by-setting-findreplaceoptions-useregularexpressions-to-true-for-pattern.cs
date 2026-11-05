@@ -8,32 +8,30 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with text that matches a pattern.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-        builder.Writeln("Order 123 has been shipped.");
-        builder.Writeln("Order 456 is pending.");
+        // Create a sample document with text that matches a regex pattern.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Order 123 and Order 456");
 
+        // Save the source document locally.
         const string inputPath = "input.docx";
         doc.Save(inputPath);
 
-        // Load the document for find‑and‑replace.
-        var loadedDoc = new Document(inputPath);
+        // Load the document for processing.
+        Document loaded = new Document(inputPath);
 
-        // Pattern to find: "Order " followed by one or more digits.
-        var regex = new Regex(@"Order \d+");
-        // Replacement text.
-        const string replacement = "Order ###";
+        // Define the regex pattern to find "Order <digits>".
+        Regex pattern = new Regex(@"Order \d+");
 
-        // Perform the replacement using a regular expression.
-        int replacedCount = loadedDoc.Range.Replace(regex, replacement, new FindReplaceOptions());
+        // Perform the replacement using the regex overload.
+        int replacedCount = loaded.Range.Replace(pattern, "Order ###", new FindReplaceOptions());
 
-        // Ensure that at least one replacement was made.
-        if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one replacement, but none were made.");
+        // Validate that the expected number of replacements occurred.
+        if (replacedCount != 2)
+            throw new InvalidOperationException($"Expected 2 replacements, but got {replacedCount}.");
 
         // Save the modified document.
         const string outputPath = "output.docx";
-        loadedDoc.Save(outputPath);
+        loaded.Save(outputPath);
     }
 }

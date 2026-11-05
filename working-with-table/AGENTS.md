@@ -10,30 +10,25 @@ product: Aspose.Words
 
 ## Purpose
 
-This folder is a live, curated example set for Working With Table scenarios. Treat every `.cs` file as a standalone console application. The goal is correct, warning-free examples that use documented Aspose APIs and match the original task intent.
+Provide an AI coding assistant with clear, version-compatible patterns for all common table operations in Aspose.Words, ensuring generated code compiles, runs, and produces the expected document output without relying on unavailable APIs or external assets.
 
 ## Non-negotiable conventions
 
-- Always use documented Aspose.Words APIs directly.
-- Always create local sample source documents when a task refers to an existing file, folder, stream, template, or input asset.
-- Prefer `DocumentBuilder.StartTable`, `InsertCell`, `EndRow`, and `EndTable` for builder-based creation.
-- Keep validation narrow and task-specific.
-- Do not invent unsupported table, row, cell, or style-option APIs.
+- Never reference members that are not present in Aspose.Words 26.10.0, such as Table.AutoFit as a property, Table.Borders, Table.VerticalAlignment, Table.Columns, Cell.PreferredWidth, TableStyleOptions members, BorderCollection.Clear, TextureIndex.None, LoadOptions, or VerticalAlignment enum.
+- Do not use DocumentBuilder.InsertTable; prefer the explicit StartTable workflow.
+- Bootstrap local sample inputs for existing-file, folder, stream, image, and data workflows.
+- Prefer simple, verifiable workflows over speculative formatting shortcuts.
 
 ## Recommended workflow selection
 
-- Table Workflow workflow: 197 examples
-- Table Dom Api workflow: 1 examples
+- **Table Workflow workflow**: 197 examples
+- **Table DOM API workflow**: 1 examples
 
 Use the simplest workflow that satisfies the task.
 
 ## Validation priorities
 
-1. The code must compile and run without manual input.
-2. API usage must be supported by the configured package versions.
-3. Exported outputs must actually be written by the example.
-4. Validation scenarios must inspect only the behavior requested by the task.
-5. Examples that depend on files, folders, streams, images, or data should bootstrap those inputs locally during the example run.
+1. Confirm that the output document file exists and that the table contains the expected number of rows and cells.
 
 ## File-to-task reference
 
@@ -51,7 +46,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Add a new row to an existing table by calling Table.Rows.Add and then inserting cells with Row.Cells.Add.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `insert-a-table-at-a-bookmark-location-by-moving-the-documentbuilder-cursor-to-the-bookmark.cs`
   - Task: Insert a table at a bookmark location by moving the DocumentBuilder cursor to the bookmark and calling InsertTable.
   - Workflow: table-workflow
@@ -106,17 +101,17 @@ Use the simplest workflow that satisfies the task.
   - Task: Clone a table from a template document and replace placeholder text in each cell using FindReplaceOptions.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `load-an-html-file-with-a-complex-table-and-convert-it-to-a-word-document-preserving-merged.cs`
   - Task: Load an HTML file with a complex table and convert it to a Word document preserving merged cells.
   - Workflow: table-workflow
   - Outputs: html
-  - Selected engine: mcp
+  - Selected engine: llm
 - `insert-a-table-from-an-html-string-using-documentbuilder-inserthtml-while-preserving-cell.cs`
   - Task: Insert a table from an HTML string using DocumentBuilder.InsertHtml while preserving cell formatting.
   - Workflow: table-workflow
   - Outputs: html
-  - Selected engine: llm
+  - Selected engine: mcp
 - `set-table-autofit-to-autofitbehavior-autofittowindow-to-automatically-adjust-column-widths.cs`
   - Task: Set Table.AutoFit to AutoFitBehavior.AutoFitToWindow to automatically adjust column widths to page margins.
   - Workflow: table-workflow
@@ -161,7 +156,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Set the table's vertical alignment within the page by adjusting Table.VerticalAlignment property to Middle.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `align-a-table-to-the-center-of-the-page-by-setting-table-alignment-to-tablealignment-cente.cs`
   - Task: Align a table to the center of the page by setting Table.Alignment to TableAlignment.Center.
   - Workflow: table-workflow
@@ -186,7 +181,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply a table style that includes bold text for the first row by enabling Table.StyleOptions.FirstRowBold.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `apply-a-table-style-that-includes-bold-formatting-for-the-first-column-by-enabling-table-s.cs`
   - Task: Apply a table style that includes bold formatting for the first column by enabling Table.StyleOptions.FirstColumnBold.
   - Workflow: table-workflow
@@ -196,7 +191,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply a table style that includes alternating row shading by enabling Table.StyleOptions.RowBanding.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `apply-a-table-style-that-adds-a-thick-top-border-and-thin-bottom-border-by-configuring-tab.cs`
   - Task: Apply a table style that adds a thick top border and thin bottom border by configuring Table.Borders.
   - Workflow: table-workflow
@@ -206,12 +201,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply a table style that hides borders by setting Table.StyleOptions to TableStyleOptions.NoBorders.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `apply-a-table-style-that-disables-all-cell-shading-by-setting-table-styleoptions-to-tables.cs`
   - Task: Apply a table style that disables all cell shading by setting Table.StyleOptions to TableStyleOptions.NoShading.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `apply-a-table-style-that-disables-row-banding-by-setting-table-styleoptions-to-tablestyleo.cs`
   - Task: Apply a table style that disables row banding by setting Table.StyleOptions to TableStyleOptions.NoRowBanding.
   - Workflow: table-workflow
@@ -221,7 +216,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply a table style that enforces fixed column widths by disabling AutoFit and defining PreferredWidth for each column.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `apply-a-custom-border-thickness-of-two-points-to-all-sides-of-a-table-by-setting-table-bor.cs`
   - Task: Apply a custom border thickness of two points to all sides of a table by setting Table.Borders.LineWidth.
   - Workflow: table-workflow
@@ -246,7 +241,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Set the table's background color to light blue by assigning a shading pattern and color to Table.Shading.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `set-cell-text-alignment-to-center-horizontally-and-vertically-by-configuring-cellformat-ho.cs`
   - Task: Set cell text alignment to center horizontally and vertically by configuring CellFormat.HorizontalAlignment and VerticalAlignment.
   - Workflow: table-workflow
@@ -256,7 +251,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Set cell vertical alignment to bottom by configuring CellFormat.VerticalAlignment property for each cell.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `set-cell-text-direction-to-right-to-left-for-arabic-content-by-configuring-cellformat-text.cs`
   - Task: Set cell text direction to right-to-left for Arabic content by configuring CellFormat.TextDirection property.
   - Workflow: table-workflow
@@ -271,17 +266,17 @@ Use the simplest workflow that satisfies the task.
   - Task: Set the table's text direction to top-to-bottom for vertical Asian scripts by configuring Table.TextDirection property.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `set-individual-cell-margins-to-five-points-on-all-sides-by-adjusting-cellformat-margintop.cs`
   - Task: Set individual cell margins to five points on all sides by adjusting CellFormat.MarginTop, Bottom, Left, and Right.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `adjust-cell-padding-to-three-points-on-all-sides-by-setting-cellformat-paddingtop-bottom-l.cs`
   - Task: Adjust cell padding to three points on all sides by setting CellFormat.PaddingTop, Bottom, Left, and Right.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `set-the-table-s-default-cell-margins-to-two-points-by-configuring-table-defaultcellmargin.cs`
   - Task: Set the table's default cell margins to two points by configuring Table.DefaultCellMargin globally.
   - Workflow: table-workflow
@@ -341,7 +336,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Prevent a table from being split across columns in a multi-column layout by setting AllowBreakAcrossColumns to false.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `merge-two-adjacent-cells-horizontally-by-setting-the-first-cell-s-mergehorizontal-property.cs`
   - Task: Merge two adjacent cells horizontally by setting the first cell's MergeHorizontal property to true.
   - Workflow: table-workflow
@@ -376,7 +371,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Create a table with a merged cell spanning the entire first row by merging all first-row cells horizontally.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `insert-a-table-with-a-cell-spanning-two-rows-and-three-columns-by-setting-mergehorizontal.cs`
   - Task: Insert a table with a cell spanning two rows and three columns by setting MergeHorizontal and MergeVertical.
   - Workflow: table-workflow
@@ -391,12 +386,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Split a table into two separate tables at the third row using the Table.Split method.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `split-a-table-into-three-parts-by-calling-table-split-twice-at-specified-row-indices-for-c.cs`
   - Task: Split a table into three parts by calling Table.Split twice at specified row indices for custom pagination.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `join-adjacent-tables-by-inserting-an-empty-paragraph-between-them.cs`
   - Task: Join adjacent tables by inserting an empty paragraph between them.
   - Workflow: table-workflow
@@ -456,7 +451,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Insert a table with a caption that automatically updates numbering when new tables are added.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `insert-a-table-at-a-specific-bookmark-location-by-moving-documentbuilder-to-the-bookmark-b.cs`
   - Task: Insert a table at a specific bookmark location by moving DocumentBuilder to the bookmark before building.
   - Workflow: table-workflow
@@ -541,12 +536,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Translate a TableStyle into direct formatting by reading its properties and applying them to Table, Row, and Cell.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `join-two-adjacent-tables-into-a-single-continuous-table-using-the-table-join-method.cs`
   - Task: Join two adjacent tables into a single continuous table using the Table.Join method.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `split-a-large-table-at-a-specific-row-index-into-smaller-tables-using-table-split.cs`
   - Task: Split a large table at a specific row index into smaller tables using Table.Split.
   - Workflow: table-workflow
@@ -566,7 +561,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Enable table text wrapping around images by setting Table.AllowOverlap to true and adjusting layout.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `prevent-row-deletion-by-setting-row-rowformat-allowbreakacrosspages-to-false-in-the-docume.cs`
   - Task: Prevent row deletion by setting Row.RowFormat.AllowBreakAcrossPages to false in the document.
   - Workflow: table-workflow
@@ -611,7 +606,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Convert a DOCX with complex tables to HTML, ensuring borders and cell padding are retained.
   - Workflow: table-workflow
   - Outputs: docx, html
-  - Selected engine: mcp
+  - Selected engine: llm
 - `serialize-a-table-s-structure-and-content-to-json-by-iterating-rows-and-cells-and-capturin.cs`
   - Task: Serialize a table's structure and content to JSON by iterating rows and cells and capturing formatting.
   - Workflow: table-workflow
@@ -641,7 +636,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Insert a caption above a table using DocumentBuilder.InsertCaption with appropriate label and numbering.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `update-all-table-captions-after-adding-new-tables-by-iterating-tables-and-refreshing-capti.cs`
   - Task: Update all table captions after adding new tables by iterating tables and refreshing caption numbers.
   - Workflow: table-workflow
@@ -671,7 +666,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Set table to repeat header row on each page by enabling Row.IsHeader property for the first row.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `remove-all-empty-rows-from-a-table-by-checking-row-rowformat-height-and-deleting-rows-with.cs`
   - Task: Remove all empty rows from a table by checking Row.RowFormat.Height and deleting rows with zero height.
   - Workflow: table-workflow
@@ -741,12 +736,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply a diagonal line across a cell by setting CellFormat.DiagonalDown and DiagonalUp properties.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `set-cell-text-direction-to-vertical-for-east-asian-languages-by-configuring-cellformat-tex.cs`
   - Task: Set cell text direction to vertical for East Asian languages by configuring CellFormat.TextDirection property.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `apply-a-custom-margin-around-the-entire-table-by-setting-table-leftindent-and-table-righti.cs`
   - Task: Apply a custom margin around the entire table by setting Table.LeftIndent and Table.RightIndent properties.
   - Workflow: table-workflow
@@ -761,7 +756,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply a table style that includes banded rows and columns by configuring TableStyle.BandedRows and BandedColumns.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `generate-a-report-with-multiple-tables-each-using-a-distinct-tablestyle-and-ensure-consist.cs`
   - Task: Generate a report with multiple tables, each using a distinct TableStyle, and ensure consistent spacing between them.
   - Workflow: table-workflow
@@ -786,12 +781,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Enable table overlapping with other floating objects by setting Table.AllowOverlap to true.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `add-a-comment-to-a-specific-table-cell-by-locating-the-cell-and-using-documentbuilder-inse.cs`
   - Task: Add a comment to a specific table cell by locating the cell and using DocumentBuilder.InsertComment.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `retrieve-the-list-of-all-tables-in-a-document-by-iterating-nodes-of-type-nodetype-table.cs`
   - Task: Retrieve the list of all tables in a document by iterating nodes of type NodeType.Table.
   - Workflow: table-workflow
@@ -806,12 +801,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply custom cell margins by setting Cell.CellFormat.MarginTop, MarginBottom, MarginLeft, and MarginRight properties.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `set-table-background-shading-to-light-blue-by-configuring-table-shading-backgroundpatternc.cs`
   - Task: Set table background shading to light blue by configuring Table.Shading.BackgroundPatternColor property.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `export-each-table-in-a-document-to-separate-docx-files-while-preserving-their-individual-s.cs`
   - Task: Export each table in a document to separate DOCX files while preserving their individual styles.
   - Workflow: table-workflow
@@ -936,7 +931,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Define cell margins by configuring Cell.CellFormat.MarginTop, MarginBottom, MarginLeft, and MarginRight.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `set-table-top-and-bottom-spacing-using-table-spacebefore-and-table-spaceafter-properties.cs`
   - Task: Set table top and bottom spacing using Table.SpaceBefore and Table.SpaceAfter properties.
   - Workflow: table-workflow
@@ -946,7 +941,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply table background shading to the entire table by setting Table.Shading.BackgroundPatternColor.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `prevent-rows-from-breaking-across-pages-by-setting-row-rowformat-keeptogether-to-true.cs`
   - Task: Prevent rows from breaking across pages by setting Row.RowFormat.KeepTogether to true.
   - Workflow: table-workflow
@@ -1016,7 +1011,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply a custom table style that includes alternating row shading by setting TableStyle.BandedRows to true.
   - Workflow: table-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `enable-table-to-allow-overlapping-with-other-floating-objects-by-setting-table-allowoverla.cs`
   - Task: Enable table to allow overlapping with other floating objects by setting Table.AllowOverlap to true.
   - Workflow: table-workflow
@@ -1030,47 +1025,47 @@ Use the simplest workflow that satisfies the task.
 
 ## Common failure patterns and preferred agent fixes
 
-- **Unsupported API invention**
-  - Symptom: Generated code references members that do not exist in the selected package version.
-  - Preferred fix: Replace invented members with documented Aspose.Words APIs already proven in this category.
+- **Missing Node argument in collection Add**
+  - Symptom: CS7036 errors indicating that NodeCollection.Add was called without a Node parameter.
+  - Root cause: The code attempted to add rows or cells using Rows.Add() or Cells.Add() without supplying a new Row or Cell instance.
+  - Preferred fix: Instantiate the required node (e.g., new Row(doc) or new Cell(doc)) and pass it to the Add method.
+  - Prevention: Always create the node first and supply it as the argument to Rows.Add and Cells.Add.
 
-- **Missing local bootstrap inputs**
-  - Symptom: The example assumes source files, folders, images, or data already exist.
-  - Preferred fix: Create deterministic local inputs before loading, processing, or validating them.
+- **Incorrect InsertAfter usage**
+  - Symptom: CS1061 or CS7036 errors stating that InsertAfter is missing or that the refChild argument is absent.
+  - Root cause: The code called InsertAfter on the target node itself or omitted the reference child parameter.
+  - Preferred fix: Call InsertAfter on the parent CompositeNode: parentNode.InsertAfter(newNode, referenceNode).
+  - Prevention: Locate the parent of the reference paragraph and use its InsertAfter method with both arguments.
 
-- **Over-broad validation**
-  - Symptom: The example fails at runtime while checking unrelated document internals.
-  - Preferred fix: Validate only the requested behavior and the existence of expected outputs.
+- **Invented or outdated API members**
+  - Symptom: Multiple CS0117, CS1061, CS0234, CS1656, CS1729, and CS0200 errors for members such as Table.AutoFit property, Table.Borders, Table.VerticalAlignment, Table.Columns, Cell.PreferredWidth, TableStyleOptions flags, BorderCollection.Clear, TextureIndex.None, LoadOptions, and PreferredWidth constructors.
+  - Root cause: The generated code referenced members that do not exist in Aspose.Words 26.10.0 or were mis-typed.
+  - Preferred fix: Use the documented APIs: call table.AutoFit(AutoFitBehavior...), set table.PreferredWidth via PreferredWidth.FromPoints or FromPercent, apply styles with table.StyleIdentifier, and configure borders through table.SetBorder(BorderType, LineStyle, width, color, true).
+  - Prevention: Consult the official Aspose.Words 26.10.0 API reference and avoid guessing member names; rely on the key APIs list provided.
+
+- **Missing paragraph in a new cell**
+  - Symptom: Runtime NullReferenceException when attempting to append a Run to a cell that has no Paragraph.
+  - Root cause: The code created a Cell but did not add a Paragraph before inserting text.
+  - Preferred fix: After creating a Cell, call cell.AppendChild(new Paragraph(doc)) and then add Run objects to cell.FirstParagraph.
+  - Prevention: Always ensure each new Cell contains at least one Paragraph before writing content.
 
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.9.0`
-- Package: `Newtonsoft.Json`
+- Primary package: `Aspose.Words` `26.10.0`
 
 ## Command reference
-
-### Create a temporary console project
 
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-```
-
-### Add required packages
-
-```bash
-dotnet add package Aspose.Words --version 26.9.0
+dotnet add package Aspose.Words --version 26.10.0
 dotnet add package Newtonsoft.Json
 ```
-
-### Copy a category example into the temp project
 
 ```powershell
 Copy-Item ..\working-with-table\<example-file>.cs .\Program.cs
 ```
-
-### Build and run
 
 ```bash
 dotnet build --configuration Release --verbosity minimal
@@ -1079,6 +1074,4 @@ dotnet run --configuration Release --no-build
 
 ## Category update guidance
 
-- Preserve file-to-task traceability. Any future update should keep the original task text associated with the file in metadata.
-- When replacing a file, prefer the latest verified publish-ready version rather than a merely compiling draft.
-- Keep examples standalone, bootstrap missing inputs locally, and prefer documented Aspose APIs over speculative shortcuts.
+- Periodically verify the Aspose.Words version used in the environment; update the rule set if new members are added or existing ones are deprecated.

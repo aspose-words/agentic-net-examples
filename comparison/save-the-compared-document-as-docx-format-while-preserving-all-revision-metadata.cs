@@ -10,25 +10,25 @@ public class Program
         Document original = new Document();
         DocumentBuilder builderOriginal = new DocumentBuilder(original);
         builderOriginal.Writeln("This is the original document.");
-        builderOriginal.Writeln("It contains a few lines of text.");
+        builderOriginal.Writeln("It contains two paragraphs.");
 
-        // Create the revised document with differences.
+        // Create the revised document that has differences.
         Document revised = new Document();
         DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.Writeln("This is the revised document."); // Modified line.
-        builderRevised.Writeln("It contains a few lines of text."); // Same line.
-        builderRevised.Writeln("An additional line is added."); // New line.
+        builderRevised.Writeln("This is the revised document."); // Modified first line.
+        builderRevised.Writeln("It contains two paragraphs.");   // Same as original.
+        builderRevised.Writeln("Additional paragraph added in revised version."); // New line.
 
-        // Perform comparison. Revisions will be added to the original document.
-        original.Compare(revised, "Comparer", DateTime.Now);
+        // Compare the documents, providing author name and comparison date.
+        original.Compare(revised, "ComparisonAuthor", DateTime.Now);
 
-        // Verify that revisions were created.
+        // Ensure that revisions were generated.
         if (original.Revisions.Count == 0)
         {
-            throw new InvalidOperationException("Expected at least one revision after comparison.");
+            throw new InvalidOperationException("Expected revisions after comparison, but none were found.");
         }
 
-        // Save the compared document preserving all revision metadata.
+        // Save the compared document as DOCX, preserving all revision metadata.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ComparedDocument.docx");
         original.Save(outputPath, SaveFormat.Docx);
     }

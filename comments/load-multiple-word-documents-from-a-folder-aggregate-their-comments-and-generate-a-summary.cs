@@ -1,94 +1,113 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Tables;
-using Aspose.Words.Saving;
 
-class Program
+namespace CommentAggregator
 {
-    static void Main()
+    public class Program
     {
-        // Prepare a temporary folder for sample documents.
-        string tempFolder = Path.Combine(Directory.GetCurrentDirectory(), "TempDocs");
-        Directory.CreateDirectory(tempFolder);
-
-        // Create sample documents with comments.
-        CreateSampleDocument(Path.Combine(tempFolder, "Doc1.docx"), "First document", "Alice", "AL");
-        CreateSampleDocument(Path.Combine(tempFolder, "Doc2.docx"), "Second document", "Bob", "BO");
-        CreateSampleDocument(Path.Combine(tempFolder, "Doc3.docx"), "Third document", "Charlie", "CH");
-
-        // Aggregate comments from all documents in the folder.
-        var aggregatedComments = new List<(string SourceFile, Comment Comment)>();
-
-        foreach (string filePath in Directory.GetFiles(tempFolder, "*.docx"))
+        public static void Main()
         {
-            Document doc = new Document(filePath);
-            var comments = doc.GetChildNodes(NodeType.Comment, true)
-                              .OfType<Comment>()
-                              .ToList();
+            // Create a temporary folder for sample documents.
+            string tempFolder = Path.Combine(Directory.GetCurrentDirectory(), "TempDocs");
+            Directory.CreateDirectory(tempFolder);
 
-            foreach (Comment c in comments)
+            // Generate sample Word documents with comments.
+            CreateSampleDocument(Path.Combine(tempFolder, "Document1.docx"), "First document content.", "Alice", "AL", "Comment on first document.");
+            CreateSampleDocument(Path.Combine(tempFolder, "Document2.docx"), "Second document content.", "Bob", "BO", "Comment on second document.");
+
+            // Aggregate comments from all documents in the folder.
+            List<CommentInfo> aggregatedComments = new List<CommentInfo>();
+
+            foreach (string filePath in Directory.GetFiles(tempFolder, "*.docx"))
             {
-                aggregatedComments.Add((Path.GetFileName(filePath), c));
+                Document doc = new Document(filePath);
+                var comments = doc.GetChildNodes(NodeType.Comment, true)
+                                  .OfType<Comment>()
+                                  .ToList();
+
+                foreach (Comment comment in comments)
+                {
+                    string text = comment.GetText()?.Trim() ?? string.Empty;
+                    aggregatedComments.Add(new CommentInfo
+                    {
+                        SourceFile = Path.GetFileName(filePath),
+                        Author = comment.Author,
+                        DateTime = comment.DateTime,
+                        Text = text
+                    });
+                }
             }
-        }
 
-        // Create a summary report document.
-        Document reportDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(reportDoc);
+            // Create a summary report document.
+            Document reportDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(reportDoc);
 
-        builder.Writeln("Comments Summary Report");
-        builder.Writeln($"Generated on: {DateTime.Now:O}");
-        builder.Writeln();
-
-        foreach (var entry in aggregatedComments)
-        {
-            Comment c = entry.Comment;
-            builder.Writeln($"Source Document: {entry.SourceFile}");
-            builder.Writeln($"Author: {c.Author}");
-            builder.Writeln($"Date: {c.DateTime:O}");
-            builder.Writeln($"Text: {c.GetText().Trim()}");
+            builder.Writeln("Comments Summary Report");
+            builder.Writeln($"Generated on: {DateTime.Now:O}");
             builder.Writeln();
+
+            foreach (CommentInfo info in aggregatedComments)
+            {
+                builder.Writeln($"Source File: {info.SourceFile}");
+                builder.Writeln($"Author     : {info.Author}");
+                builder.Writeln($"Date       : {info.DateTime:O}");
+                builder.Writeln($"Text       : {info.Text}");
+                builder.Writeln(); // Blank line between entries.
+            }
+
+            // Save the report.
+            string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "CommentsReport.docx");
+            reportDoc.Save(reportPath);
         }
 
-        // Save the report.
-        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "CommentsReport.docx");
-        reportDoc.Save(reportPath, SaveFormat.Docx);
-    }
-
-    // Helper method to create a document with a single comment.
-    private static void CreateSampleDocument(string filePath, string paragraphText, string author, string initials)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Write a paragraph that will hold the comment.
-        builder.Writeln(paragraphText);
-
-        // Create a comment node.
-        Comment comment = new Comment(doc)
+        // Helper method to create a sample document with a single comment.
+        private static void CreateSampleDocument(string filePath, string bodyText, string author, string initials, string commentText)
         {
-            Author = author,
-            Initial = initials,
-            DateTime = DateTime.Now
-        };
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add visible content to the comment.
-        Paragraph commentParagraph = new Paragraph(doc);
-        commentParagraph.AppendChild(new Run(doc, $"Comment by {author} on {paragraphText}."));
-        comment.AppendChild(commentParagraph);
+            // Write main content.
+            builder.Writeln(bodyText);
 
-        // Attach the comment to the last paragraph of the document.
-        Paragraph? targetParagraph = doc.FirstSection?.Body?.LastParagraph;
-        if (targetParagraph != null)
-        {
-            targetParagraph.AppendChild(comment);
+            // Create a comment node.
+            Comment comment = new Comment(doc)
+            {
+                Author = author,
+                Initial = initials,
+                DateTime = DateTime.Now
+            };
+
+            // Add a paragraph and run inside the comment to hold its text.
+            comment.AppendChild(new Paragraph(doc));
+            Paragraph? commentParagraph = comment.FirstParagraph;
+            if (commentParagraph != null)
+            {
+                commentParagraph.AppendChild(new Run(doc, commentText));
+            }
+
+            // Attach the comment to the first paragraph of the document body.
+            Paragraph? targetParagraph = doc.FirstSection?.Body?.FirstParagraph;
+            if (targetParagraph != null)
+            {
+                targetParagraph.AppendChild(comment);
+            }
+
+            // Save the document.
+            doc.Save(filePath);
         }
 
-        // Save the document.
-        doc.Save(filePath, SaveFormat.Docx);
+        // Simple DTO to hold comment information for the report.
+        private class CommentInfo
+        {
+            public string SourceFile { get; set; } = string.Empty;
+            public string Author { get; set; } = string.Empty;
+            public DateTime DateTime { get; set; }
+            public string Text { get; set; } = string.Empty;
+        }
     }
 }

@@ -1,20 +1,20 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Notes;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with several comments from different authors.
+        // Create a sample document with a few paragraphs and comments.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // First paragraph with a comment from Alice.
-        builder.Writeln("This is the first paragraph.");
+        builder.Writeln("First paragraph with a comment.");
         Comment commentAlice = new Comment(doc)
         {
             Author = "Alice",
@@ -27,55 +27,63 @@ public class Program
         doc.FirstSection.Body.FirstParagraph?.AppendChild(commentAlice);
 
         // Second paragraph with a comment from Charlie.
-        builder.Writeln("This is the second paragraph.");
+        builder.Writeln("Second paragraph with another comment.");
         Comment commentCharlie = new Comment(doc)
         {
             Author = "Charlie",
             Initial = "C",
-            DateTime = DateTime.Now
+            DateTime = DateTime.Now.AddDays(-1)
         };
         commentCharlie.AppendChild(new Paragraph(doc));
         commentCharlie.FirstParagraph?.AppendChild(new Run(doc, "Consider rephrasing this sentence."));
         // Attach the comment to the second paragraph.
-        doc.FirstSection.Body.Paragraphs[1]?.AppendChild(commentCharlie);
+        doc.FirstSection.Body.LastParagraph?.AppendChild(commentCharlie);
 
         // Third paragraph with a comment from Bob.
-        builder.Writeln("This is the third paragraph.");
+        builder.Writeln("Third paragraph with a third comment.");
         Comment commentBob = new Comment(doc)
         {
             Author = "Bob",
             Initial = "B",
-            DateTime = DateTime.Now
+            DateTime = DateTime.Now.AddHours(-5)
         };
         commentBob.AppendChild(new Paragraph(doc));
-        commentBob.FirstParagraph?.AppendChild(new Run(doc, "Add a citation here."));
+        commentBob.FirstParagraph?.AppendChild(new Run(doc, "Check the data accuracy."));
         // Attach the comment to the third paragraph.
-        doc.FirstSection.Body.Paragraphs[2]?.AppendChild(commentBob);
+        doc.FirstSection.Body.LastParagraph?.AppendChild(commentBob);
+
+        // Ensure output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
 
         // Save the original document.
-        string originalPath = "original.docx";
+        string originalPath = Path.Combine(outputDir, "OriginalDocument.docx");
         doc.Save(originalPath);
 
-        // Load the document for processing (simulating a separate workflow).
-        Document processedDoc = new Document(originalPath);
-
         // Define authors whose comments should be accepted (kept).
-        string[] acceptedAuthors = { "Alice", "Bob" };
+        HashSet<string> acceptedAuthors = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Alice",
+            "Bob"
+        };
 
-        // Find comments that do NOT match the accepted authors.
-        var commentsToRemove = processedDoc.GetChildNodes(NodeType.Comment, true)
+        // Enumerate all comments safely.
+        List<Comment> allComments = doc.GetChildNodes(NodeType.Comment, true)
             .OfType<Comment>()
-            .Where(c => !acceptedAuthors.Contains(c.Author, StringComparer.OrdinalIgnoreCase))
             .ToList();
 
-        // Remove the unwanted comments safely.
-        foreach (Comment c in commentsToRemove)
+        // Remove comments whose author is not in the accepted list.
+        foreach (Comment c in allComments)
         {
-            c.Remove();
+            string author = c.Author ?? string.Empty;
+            if (!acceptedAuthors.Contains(author))
+            {
+                c.Remove();
+            }
         }
 
-        // Save the revised document.
-        string revisedPath = "revised.docx";
-        processedDoc.Save(revisedPath);
+        // Save the revised document with only accepted comments.
+        string revisedPath = Path.Combine(outputDir, "RevisedDocument.docx");
+        doc.Save(revisedPath);
     }
 }

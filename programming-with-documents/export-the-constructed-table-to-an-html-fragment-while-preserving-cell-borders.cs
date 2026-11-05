@@ -1,56 +1,77 @@
 using System;
+using System.IO;
 using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Saving;
 using Aspose.Words.Tables;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
-        builder.StartTable();
+        // Start a new table.
+        Table table = builder.StartTable();
 
-        // First row – header cells.
+        // Set borders for the whole table.
+        table.SetBorders(LineStyle.Single, 1.0, Color.Black);
+
+        // First row, first cell.
         builder.InsertCell();
+        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        builder.Font.Bold = true;
         builder.Write("Header 1");
+
+        // First row, second cell.
         builder.InsertCell();
+        builder.Font.Bold = false;
         builder.Write("Header 2");
+
+        // End the first row.
         builder.EndRow();
 
-        // Second row – data cells.
+        // Second row, first cell.
         builder.InsertCell();
-        builder.Write("Cell 1");
+        builder.Write("Row 1, Cell 1");
+
+        // Second row, second cell.
         builder.InsertCell();
-        builder.Write("Cell 2");
+        builder.Write("Row 1, Cell 2");
+
+        // End the second row.
         builder.EndRow();
 
-        // End the table.
+        // Finish the table.
         builder.EndTable();
 
-        // Retrieve the created table to apply borders.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        table.SetBorder(BorderType.Left, LineStyle.Single, 1.0, Color.Black, true);
-        table.SetBorder(BorderType.Right, LineStyle.Single, 1.0, Color.Black, true);
-        table.SetBorder(BorderType.Top, LineStyle.Single, 1.0, Color.Black, true);
-        table.SetBorder(BorderType.Bottom, LineStyle.Single, 1.0, Color.Black, true);
-        table.SetBorder(BorderType.Horizontal, LineStyle.Single, 1.0, Color.Black, true);
-        table.SetBorder(BorderType.Vertical, LineStyle.Single, 1.0, Color.Black, true);
-
-        // Configure HTML save options to produce a fragment (no full HTML document wrapper).
+        // Prepare HTML save options to generate a fragment (no full HTML document).
         HtmlSaveOptions saveOptions = new HtmlSaveOptions
         {
-            ExportHeadersFootersMode = ExportHeadersFootersMode.None,
-            PrettyFormat = true,
-            ExportImagesAsBase64 = true
+            // Export only the document body as a fragment (no headers/footers).
+            // The ExportHeadersFootersMode property is omitted because the enum may not be available
+            // in older Aspose.Words versions; the default behavior is sufficient for this example.
+            ExportImagesAsBase64 = true,
+            // Produce readable (pretty) HTML.
+            PrettyFormat = true
         };
 
-        // Save the table as an HTML fragment.
-        const string outputPath = "TableFragment.html";
+        // Define output file path.
+        string outputPath = "TableFragment.html";
+
+        // Save the document as an HTML fragment.
         doc.Save(outputPath, saveOptions);
+
+        // Verify that the file was created.
+        if (File.Exists(outputPath))
+        {
+            Console.WriteLine($"HTML fragment saved successfully to '{outputPath}'.");
+        }
+        else
+        {
+            Console.WriteLine("Failed to save the HTML fragment.");
+        }
     }
 }

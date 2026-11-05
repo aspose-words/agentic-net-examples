@@ -1,73 +1,65 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class LinkModel
+{
+    // URL to link to – required.
+    public string Url { get; set; } = "https://example.com";
+
+    // Optional display text – can be null or empty.
+    public string? LinkText { get; set; } = "Visit Example";
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words (required for some encodings).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Prepare folders.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Paths for template and result.
+        string templatePath = Path.Combine(outputDir, "LinkTemplate.docx");
+        string resultPath = Path.Combine(outputDir, "LinkReport.docx");
 
-        // Build the LINQ Reporting template.
-        builder.Writeln("Link examples:");
-        builder.Writeln("<<foreach [item in Items]>>");
-        // Link with explicit display text.
-        builder.Writeln("- <<link [item.Url] [item.LinkText]>>");
-        // Link without display text – should default to the URL.
-        builder.Writeln("- <<link [item.Url]>>");
-        builder.Writeln("<</foreach>>");
+        // -----------------------------------------------------------------
+        // 1. Create the template document with LINQ Reporting tags.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Save the template (optional, can be omitted if building directly).
-        const string templatePath = "Template.docx";
-        doc.Save(templatePath);
+        // Paragraph with link that provides explicit display text.
+        builder.Writeln("Link with custom text:");
+        builder.Writeln("<<link [model.Url] [model.LinkText]>>");
 
-        // Load the template back (demonstrates load step).
-        Document templateDoc = new Document(templatePath);
+        // Paragraph with link that omits display text – engine should use URL as text.
+        builder.Writeln("Link with default text (URL will be shown):");
+        builder.Writeln("<<link [model.Url]>>");
 
-        // Prepare sample data.
-        ReportModel model = new ReportModel
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template and build the report.
+        // -----------------------------------------------------------------
+        Document doc = new Document(templatePath);
+
+        // Sample data: first instance has custom text, second will use default.
+        LinkModel model = new LinkModel
         {
-            Items = new List<Item>
-            {
-                new Item
-                {
-                    Url = "https://example.com/page1",
-                    LinkText = "Example Page 1"
-                },
-                new Item
-                {
-                    Url = "https://example.com/page2",
-                    LinkText = null // No display text; engine will use the URL.
-                }
-            }
+            Url = "https://www.openai.com",
+            LinkText = "OpenAI Homepage"
         };
 
-        // Build the report.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(templateDoc, model, "model");
+        engine.BuildReport(doc, model, "model");
 
-        // Save the generated report.
-        const string outputPath = "Report.docx";
-        templateDoc.Save(outputPath);
+        // -----------------------------------------------------------------
+        // 3. Save the generated report.
+        // -----------------------------------------------------------------
+        doc.Save(resultPath);
     }
-}
-
-// Root data model.
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
-
-// Item model used in the foreach loop.
-public class Item
-{
-    public string Url { get; set; } = "";
-    public string? LinkText { get; set; }
 }

@@ -1,39 +1,35 @@
 using System;
 using Aspose.Words;
 
-public class Program
+public class ComparisonExample
 {
     public static void Main()
     {
-        // Create the original document.
+        // Create the original document with some content.
         Document original = new Document();
         DocumentBuilder builderOriginal = new DocumentBuilder(original);
-        builderOriginal.Writeln("Hello world.");
+        builderOriginal.Writeln("This is the original document.");
+        builderOriginal.Writeln("It contains a line that will be changed.");
 
-        // Create the revised document with a difference.
+        // Create the revised document with a modification.
         Document revised = new Document();
         DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.Writeln("Hello revised world.");
+        builderRevised.Writeln("This is the original document.");
+        // Changed line.
+        builderRevised.Writeln("It contains a line that has been modified.");
 
-        // Perform the comparison so that revisions appear in the revised (new) document.
-        // By calling Compare on the revised document and passing the original as the source,
-        // the revisions are stored in the revised document.
+        // Perform the comparison. Revisions will be added to the revised document
+        // because we invoke Compare on the revised document.
         revised.Compare(original, "Comparer", DateTime.Now);
 
-        // Verify that revisions are present in the revised document.
-        int revisionCount = revised.Revisions.Count;
-        if (revisionCount == 0)
+        // Verify that revisions exist in the revised document.
+        if (revised.Revisions.Count == 0)
         {
-            throw new InvalidOperationException(
-                "Expected revisions in the revised document, but none were found.");
+            throw new InvalidOperationException("Expected revisions in the revised document, but none were found.");
         }
 
         // Save both documents.
-        string outputDir = Environment.CurrentDirectory;
-        original.Save(System.IO.Path.Combine(outputDir, "Original.docx"));
-        revised.Save(System.IO.Path.Combine(outputDir, "Revised_With_Revisions.docx"));
-
-        // Output revision count to console (non‑interactive).
-        Console.WriteLine($"Revisions in revised document: {revisionCount}");
+        original.Save("Original.docx");
+        revised.Save("Revised_With_Revisions.docx");
     }
 }

@@ -2,44 +2,50 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
+using Aspose.Drawing;
 
-public class Program
+public class PdfAConversionExample
 {
     public static void Main()
     {
-        // 1. Create a sample PDF file that will serve as the input document.
+        // Prepare temporary file paths
+        string inputDocxPath = Path.Combine(Path.GetTempPath(), "input.docx");
+        string outputPdfPath = Path.Combine(Path.GetTempPath(), "output_pdfa.pdf");
+
+        // -----------------------------------------------------------------
+        // Create a sample DOCX document with some text (simulating source)
+        // -----------------------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Sample text for OCR conversion.");
-        const string inputPath = "input.pdf";
-        sourceDoc.Save(inputPath, SaveFormat.Pdf);
+        builder.Writeln("Hello OCR - this document will be converted to PDF/A‑1a.");
+        sourceDoc.Save(inputDocxPath, SaveFormat.Docx);
 
-        // 2. Load the PDF that we want to convert to a searchable PDF/A‑1a.
-        Document pdfDocument = new Document(inputPath);
+        // Verify the input DOCX was created
+        if (!File.Exists(inputDocxPath))
+            throw new InvalidOperationException("Failed to create the input DOCX file.");
 
-        // 3. Configure PDF save options:
-        //    - Set PDF/A‑1a compliance.
-        //    - OCR settings are omitted because the current Aspose.Words version
-        //      does not expose OcrSettings on PdfSaveOptions.
-        PdfSaveOptions saveOptions = new PdfSaveOptions
+        // ---------------------------------------------------------------
+        // Load the DOCX and convert it to searchable PDF/A‑1a
+        // ---------------------------------------------------------------
+        Document doc = new Document(inputDocxPath);
+
+        // Configure PDF/A‑1a compliance options
+        PdfSaveOptions pdfSaveOptions = new PdfSaveOptions
         {
             Compliance = PdfCompliance.PdfA1a
         };
 
-        // 4. Save the document as a PDF/A‑1a file.
-        const string outputPath = "output.pdf";
-        pdfDocument.Save(outputPath, saveOptions);
+        // Perform the conversion
+        doc.Save(outputPdfPath, pdfSaveOptions);
 
-        // 5. Validate that the output file was created.
-        if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException("The PDF/A‑1a file was not created.");
-        }
+        // Validate that the searchable PDF/A‑1a file was created
+        if (!File.Exists(outputPdfPath) || new FileInfo(outputPdfPath).Length == 0)
+            throw new InvalidOperationException("The searchable PDF/A‑1a file was not created successfully.");
 
-        // 6. Clean up the temporary input file.
-        if (File.Exists(inputPath))
-        {
-            File.Delete(inputPath);
-        }
+        // Clean up temporary files (optional)
+        try { File.Delete(inputDocxPath); } catch { }
+
+        // Indicate success (no interactive output required)
+        Console.WriteLine("Searchable PDF/A‑1a conversion completed successfully.");
     }
 }

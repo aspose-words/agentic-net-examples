@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
@@ -11,110 +10,123 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for any encoding needs.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Ensure the output directory exists.
+        Directory.CreateDirectory("output");
 
-        // Sample XML data.
-        string xmlContent = @"
-<Report>
-    <Section>
-        <Title>Fruits</Title>
-        <Entry>
-            <Name>Apple</Name>
-            <Type>Important</Type>
-        </Entry>
-        <Entry>
-            <Name>Banana</Name>
-            <Type>Regular</Type>
-        </Entry>
-        <Entry>
-            <Name>Cherry</Name>
-            <Type>Important</Type>
-        </Entry>
-    </Section>
-    <Section>
-        <Title>Vegetables</Title>
-        <Entry>
-            <Name>Carrot</Name>
-            <Type>Regular</Type>
-        </Entry>
-        <Entry>
-            <Name>Broccoli</Name>
-            <Type>Important</Type>
-        </Entry>
-    </Section>
-</Report>";
+        // 1. Create sample XML data.
+        const string xmlPath = "sample.xml";
+        var xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<Root>
+  <Category>
+    <Name>Alpha</Name>
+    <Item>
+      <Title>Item A1</Title>
+      <Description>Description for A1</Description>
+    </Item>
+    <Item>
+      <Title>Item A2</Title>
+      <Description>Description for A2</Description>
+    </Item>
+  </Category>
+  <Category>
+    <Name>Beta</Name>
+    <Item>
+      <Title>Item B1</Title>
+      <Description>Description for B1</Description>
+    </Item>
+  </Category>
+  <Category>
+    <Name>Gamma</Name>
+    <Item>
+      <Title>Item G1</Title>
+      <Description>Description for G1</Description>
+    </Item>
+    <Item>
+      <Title>Item G2</Title>
+      <Description>Description for G2</Description>
+    </Item>
+    <Item>
+      <Title>Item G3</Title>
+      <Description>Description for G3</Description>
+    </Item>
+  </Category>
+</Root>";
+        File.WriteAllText(xmlPath, xmlContent);
 
-        // Parse XML into a strongly‑typed model.
-        ReportModel model = ParseXmlToModel(xmlContent);
+        // 2. Load XML and filter categories whose name starts with 'A' (case‑insensitive).
+        XDocument xDoc = XDocument.Load(xmlPath);
+        var filteredCategories = xDoc.Root!
+            .Elements("Category")
+            .Where(c => ((string?)c.Element("Name"))?.StartsWith("A", StringComparison.OrdinalIgnoreCase) == true)
+            .Select(c => new Category
+            {
+                Name = (string?)c.Element("Name") ?? string.Empty,
+                Items = c.Elements("Item")
+                         .Select(i => new Item
+                         {
+                             Title = (string?)i.Element("Title") ?? string.Empty,
+                             Description = (string?)i.Element("Description") ?? string.Empty
+                         })
+                         .ToList()
+            })
+            .ToList();
 
-        // Build the template document.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // 3. Prepare the root model.
+        var model = new ReportModel { Categories = filteredCategories };
 
-        // Outer numbered list for sections.
-        builder.Writeln("<<foreach [section in model.Sections]>>");
-        builder.Writeln("1. <<[section.Title]>>");
+        // 4. Create the LINQ Reporting template programmatically.
+        const string templatePath = "output/template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Inner numbered list for filtered entries (restart numbering for each section).
-        builder.Writeln("   <<restartNum>><<foreach [entry in section.Entry]>>");
-        builder.Writeln("      <<if [entry.Type == \"Important\"]>><<[entry.Name]>> <</if>>");
+        // Outer numbered list for categories.
+        builder.ListFormat.ApplyNumberDefault();
+        builder.Writeln("<<foreach [cat in Model.Categories]>>");
+        builder.Writeln("<<restartNum>><<[cat.Name]>>");
+
+        // Inner numbered list for items.
+        builder.ListFormat.ListIndent();
+        builder.Writeln("<<foreach [itm in cat.Items]>>");
+        builder.Writeln("<<restartNum>><<[itm.Title]>> - <<[itm.Description]>>");
         builder.Writeln("<</foreach>>");
+        builder.ListFormat.ListOutdent();
+
         builder.Writeln("<</foreach>>");
+        builder.ListFormat.RemoveNumbers();
 
         // Save the template.
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-        template.Save(templatePath);
+        templateDoc.Save(templatePath);
 
-        // Load the template and generate the report.
-        Document report = new Document(templatePath);
+        // 5. Load the template for report generation.
+        Document reportDoc = new Document(templatePath);
+
+        // 6. Build the report.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(report, model, "model");
+        engine.Options = ReportBuildOptions.None;
+        engine.BuildReport(reportDoc, model, "Model");
 
-        // Save the generated report.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        report.Save(outputPath);
-    }
-
-    private static ReportModel ParseXmlToModel(string xml)
-    {
-        XDocument doc = XDocument.Parse(xml);
-        ReportModel model = new ReportModel();
-
-        foreach (XElement sectionElem in doc.Root?.Elements("Section") ?? Enumerable.Empty<XElement>())
-        {
-            Section section = new Section
-            {
-                Title = (string?)sectionElem.Element("Title") ?? string.Empty,
-                Entry = sectionElem.Elements("Entry")
-                                   .Select(e => new Entry
-                                   {
-                                       Name = (string?)e.Element("Name") ?? string.Empty,
-                                       Type = (string?)e.Element("Type") ?? string.Empty
-                                   })
-                                   .ToList()
-            };
-            model.Sections.Add(section);
-        }
-
-        return model;
+        // 7. Save the final report.
+        const string reportPath = "output/report.docx";
+        reportDoc.Save(reportPath);
     }
 }
 
-// Data model classes.
+// Root wrapper class.
 public class ReportModel
 {
-    public List<Section> Sections { get; set; } = new();
+    public List<Category> Categories { get; set; } = new();
 }
 
-public class Section
-{
-    public string Title { get; set; } = string.Empty;
-    public List<Entry> Entry { get; set; } = new();
-}
-
-public class Entry
+// Category class.
+public class Category
 {
     public string Name { get; set; } = string.Empty;
-    public string Type { get; set; } = string.Empty;
+    public List<Item> Items { get; set; } = new();
+}
+
+// Item class.
+public class Item
+{
+    public string Title { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
 }

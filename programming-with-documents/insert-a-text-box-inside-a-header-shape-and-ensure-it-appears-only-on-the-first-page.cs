@@ -1,6 +1,7 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using System.Drawing;
 
 public class Program
 {
@@ -8,27 +9,37 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Ensure the first page has a different header/footer.
-        doc.FirstSection.PageSetup.DifferentFirstPageHeaderFooter = true;
-
-        // Use DocumentBuilder to work with the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Move to the first page header.
+        // Enable a different header/footer for the first page.
+        builder.PageSetup.DifferentFirstPageHeaderFooter = true;
+
+        // Move the builder to the first page header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderFirst);
 
-        // Insert a text box shape into the header.
-        // Width = 200 points, Height = 50 points.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 50);
+        // Create a text box shape.
+        Shape textBox = new Shape(doc, ShapeType.TextBox);
+        textBox.Width = 200;
+        textBox.Height = 50;
+        textBox.WrapType = WrapType.Inline; // Ensure it stays within the header.
+        textBox.StrokeColor = Color.Black;
+        textBox.FillColor = Color.LightYellow;
 
-        // Add text inside the text box.
-        // Move the cursor inside the shape.
-        builder.MoveTo(textBox.FirstParagraph);
-        builder.Writeln("First page header text");
+        // Add a paragraph to the text box to hold text.
+        Paragraph para = new Paragraph(doc);
+        textBox.AppendChild(para);
+
+        // Insert the text box into the header.
+        builder.InsertNode(textBox);
+
+        // Write text inside the text box.
+        DocumentBuilder shapeBuilder = new DocumentBuilder(doc);
+        shapeBuilder.MoveTo(textBox.FirstParagraph);
+        shapeBuilder.Font.Size = 12;
+        shapeBuilder.Writeln("First page header text box");
 
         // Save the document.
-        string outputPath = "Output.docx";
+        string outputPath = "FirstPageHeaderWithTextBox.docx";
         doc.Save(outputPath);
     }
 }

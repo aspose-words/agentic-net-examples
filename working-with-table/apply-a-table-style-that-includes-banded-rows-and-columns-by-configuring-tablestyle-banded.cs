@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using System.Drawing;
 
 public class Program
 {
@@ -12,48 +11,36 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table. The first call to InsertCell creates the first row.
-        Table table = builder.StartTable();
-        builder.InsertCell(); // first cell of the first row
-
-        // Apply a built‑in table style that supports banding.
-        table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
-
-        // Enable both row banding and column banding.
-        table.StyleOptions = TableStyleOptions.RowBands | TableStyleOptions.ColumnBands;
-
-        // Let the table size itself to its contents.
-        table.AutoFit(AutoFitBehavior.AutoFitToContents);
-
-        // Fill the first row (header).
-        builder.Writeln("Header 1");
-        builder.InsertCell();
-        builder.Writeln("Header 2");
-        builder.InsertCell();
-        builder.Writeln("Header 3");
-        builder.EndRow();
-
-        // Add two more rows with sample data.
-        for (int row = 2; row <= 3; row++)
+        // Build a 4x4 table.
+        builder.StartTable();
+        for (int row = 0; row < 4; row++)
         {
-            builder.InsertCell();
-            builder.Writeln($"R{row}C1");
-            builder.InsertCell();
-            builder.Writeln($"R{row}C2");
-            builder.InsertCell();
-            builder.Writeln($"R{row}C3");
+            for (int col = 0; col < 4; col++)
+            {
+                builder.InsertCell();
+                builder.Writeln($"R{row + 1}C{col + 1}");
+            }
             builder.EndRow();
         }
-
-        // Finish the table.
         builder.EndTable();
 
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
+
+        // Apply a built‑in style that supports banding.
+        table.Style = doc.Styles["Table Grid"];
+
+        // Enable banded rows and columns using the correct enum members.
+        table.StyleOptions = TableStyleOptions.RowBands | TableStyleOptions.ColumnBands;
+
         // Save the document.
-        string outputPath = "TableWithBandedRowsAndColumns.docx";
+        string outputPath = "TableBanded.docx";
         doc.Save(outputPath);
 
-        // Simple validation to ensure the file was created.
+        // Verify that the file was saved.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+            throw new FileNotFoundException("The output document was not created.", outputPath);
     }
 }

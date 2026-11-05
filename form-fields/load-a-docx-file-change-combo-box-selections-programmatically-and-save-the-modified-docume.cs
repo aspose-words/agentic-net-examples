@@ -1,57 +1,49 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Fields;
 
 public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a sample DOCX with a combo box (dropdown) form field.
-        Document createDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(createDoc);
+        const string originalPath = "ComboBoxForm.docx";
+        const string modifiedPath = "ComboBoxForm_Modified.docx";
+        const string comboName = "MyCombo";
 
-        // Insert a combo box named "MyCombo" with three options, defaulting to the first one.
-        string[] items = new string[] { "Option A", "Option B", "Option C" };
-        builder.InsertComboBox("MyCombo", items, 0);
+        // -----------------------------------------------------------------
+        // Create a new document and insert a combo box (drop‑down) form field.
+        // -----------------------------------------------------------------
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Save the initial document.
-        const string inputPath = "input.docx";
-        createDoc.Save(inputPath);
+        // Insert a combo box with three items and select the first one by default.
+        builder.InsertComboBox(comboName, new[] { "Option1", "Option2", "Option3" }, 0);
 
-        // Step 2: Load the document we just created.
-        Document loadDoc = new Document(inputPath);
+        // Save the document that now contains the form field.
+        doc.Save(originalPath);
 
-        // Access the form fields collection.
-        var formFields = loadDoc.Range.FormFields;
+        // ---------------------------------------------------------------
+        // Load the document from disk and modify the combo box selection.
+        // ---------------------------------------------------------------
+        Document loadedDoc = new Document(originalPath);
 
-        // Retrieve the combo box by name.
-        var comboField = formFields["MyCombo"];
+        // Retrieve the combo box form field by its name.
+        FormField comboField = loadedDoc.Range.FormFields[comboName];
         if (comboField == null)
         {
-            throw new InvalidOperationException("Combo box 'MyCombo' was not found in the document.");
+            throw new InvalidOperationException($"Form field '{comboName}' was not found in the document.");
         }
 
-        // Change the selected value programmatically.
-        // Ensure the new value exists in the dropdown items.
-        string newSelection = "Option C";
-        bool exists = false;
-        foreach (string item in comboField.DropDownItems)
+        // Change the selected value of the combo box.
+        comboField.Result = "Option3";
+
+        // Verify that the value was updated correctly.
+        if (comboField.Result != "Option3")
         {
-            if (item == newSelection)
-            {
-                exists = true;
-                break;
-            }
+            throw new InvalidOperationException("Failed to update the combo box selection.");
         }
 
-        if (!exists)
-        {
-            throw new InvalidOperationException($"The value '{newSelection}' is not a valid option for the combo box.");
-        }
-
-        comboField.Result = newSelection; // Update the selection.
-
-        // Step 3: Save the modified document.
-        const string outputPath = "output.docx";
-        loadDoc.Save(outputPath);
+        // Save the modified document.
+        loadedDoc.Save(modifiedPath);
     }
 }

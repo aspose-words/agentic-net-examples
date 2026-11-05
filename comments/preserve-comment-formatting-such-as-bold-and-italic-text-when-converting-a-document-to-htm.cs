@@ -1,46 +1,87 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+public class PreserveCommentFormatting
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and add a paragraph.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This paragraph will have a comment with formatted text.");
 
-        // Add a paragraph that will contain the comment.
-        builder.Writeln("This paragraph has a comment with formatted text.");
+        // Create a comment with bold and italic runs.
+        Comment comment = new Comment(doc)
+        {
+            Author = "John Doe",
+            Initial = "JD",
+            DateTime = DateTime.Now
+        };
 
-        // Create a comment with author metadata.
-        Comment comment = new Comment(doc, "Alice", "A", DateTime.Now);
-        // Append the comment to the current paragraph.
-        builder.CurrentParagraph.AppendChild(comment);
+        // The comment must contain at least one paragraph.
+        Paragraph commentParagraph = new Paragraph(doc);
+        Run boldRun = new Run(doc, "Bold text");
+        boldRun.Font.Bold = true;
+        Run italicRun = new Run(doc, " and italic text");
+        italicRun.Font.Italic = true;
 
-        // Add a paragraph inside the comment to hold the formatted runs.
-        builder.MoveTo(comment.AppendChild(new Paragraph(doc)));
+        commentParagraph.AppendChild(boldRun);
+        commentParagraph.AppendChild(italicRun);
+        comment.AppendChild(commentParagraph);
 
-        // Bold text inside the comment.
-        builder.Font.Bold = true;
-        builder.Write("Bold text");
+        // Attach the comment to the current paragraph.
+        Paragraph? anchorParagraph = builder.CurrentParagraph;
+        if (anchorParagraph != null)
+        {
+            anchorParagraph.AppendChild(comment);
+        }
 
-        // Italic text inside the comment.
-        builder.Font.Bold = false;
-        builder.Font.Italic = true;
-        builder.Write(" Italic text");
+        // Make the comment content visible in the document by copying its formatted runs.
+        var comments = doc.GetChildNodes(NodeType.Comment, true)
+            .OfType<Comment>()
+            .ToList();
 
-        // Reset formatting for any further content.
-        builder.Font.Italic = false;
+        foreach (Comment c in comments)
+        {
+            // The comment is attached to a paragraph.
+            Paragraph? parentPara = c.ParentNode as Paragraph;
+            if (parentPara == null)
+                continue;
 
-        // Prepare output folder.
+            // The comment's first paragraph holds the formatted runs.
+            Paragraph? sourcePara = c.FirstParagraph;
+            if (sourcePara == null)
+                continue;
+
+            // Create a new paragraph that will hold the copied runs.
+            Paragraph visiblePara = new Paragraph(doc);
+            foreach (Node runNode in sourcePara.GetChildNodes(NodeType.Run, true))
+            {
+                visiblePara.AppendChild(runNode.Clone(true));
+            }
+
+            // Insert the new paragraph after the paragraph that contains the comment.
+            Node? parentNode = parentPara.ParentNode;
+            if (parentNode is CompositeNode compositeParent)
+            {
+                compositeParent.InsertAfter(visiblePara, parentPara);
+            }
+        }
+
+        // Ensure output directory exists.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
         Directory.CreateDirectory(outputDir);
 
-        // Save the document to HTML. The comment's formatting is preserved in the HTML output.
-        string htmlPath = Path.Combine(outputDir, "DocumentWithComment.html");
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Html);
-        doc.Save(htmlPath, saveOptions);
+        // Save the document as HTML (comments are preserved with formatting).
+        HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html);
+        string htmlPath = Path.Combine(outputDir, "DocumentWithComments.html");
+        doc.Save(htmlPath, htmlOptions);
+
+        // Also save as DOCX for reference.
+        string docxPath = Path.Combine(outputDir, "DocumentWithComments.docx");
+        doc.Save(docxPath);
     }
 }

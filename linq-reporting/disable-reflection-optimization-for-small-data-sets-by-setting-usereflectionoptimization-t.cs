@@ -1,44 +1,53 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using System.Text;
 
 namespace LinqReportingReflectionOptimization
 {
-    // Simple data model used by the template.
-    public class Model
+    // Sample data model
+    public class Customer
     {
-        // Initialize to avoid nullable warnings.
         public string Name { get; set; } = "John Doe";
+    }
+
+    public class ReportModel
+    {
+        public Customer Customer { get; set; } = new Customer();
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Create a template document with a LINQ Reporting tag.
-            var template = new Document();
-            var builder = new DocumentBuilder(template);
-            builder.Writeln("Customer name: <<[model.Name]>>");
+            // Ensure code page support (required by Aspose.Words for some encodings)
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            // Save the template to disk.
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
+            // Paths for template and output
+            string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "Report.docx");
 
-            // Load the template back for reporting.
-            var doc = new Document(templatePath);
+            // Create a simple template document with a LINQ Reporting tag
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            builder.Writeln("Customer Name: <<[model.Customer.Name]>>");
+            templateDoc.Save(templatePath);
 
-            // Disable reflection optimization for small data sets.
+            // Load the template document
+            Document doc = new Document(templatePath);
+
+            // Prepare the data model
+            ReportModel model = new ReportModel();
+
+            // Disable reflection optimization for small data sets
             ReportingEngine.UseReflectionOptimization = false;
 
-            // Prepare the data source.
-            var model = new Model();
-
-            // Build the report.
-            var engine = new ReportingEngine();
+            // Build the report
+            ReportingEngine engine = new ReportingEngine();
             engine.BuildReport(doc, model, "model");
 
-            // Save the generated report.
-            const string outputPath = "Report.docx";
+            // Save the generated report
             doc.Save(outputPath);
         }
     }

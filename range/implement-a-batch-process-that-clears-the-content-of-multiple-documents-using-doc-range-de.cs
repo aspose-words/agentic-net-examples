@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 
@@ -7,44 +6,34 @@ public class Program
 {
     public static void Main()
     {
-        // Create a folder for the sample documents.
-        string folder = Path.Combine(Directory.GetCurrentDirectory(), "Docs");
-        Directory.CreateDirectory(folder);
+        // Define source document file names.
+        string[] sourceFiles = { "Doc1.docx", "Doc2.docx" };
 
-        // Names of the documents to process.
-        string[] docNames = { "Doc1.docx", "Doc2.docx", "Doc3.docx" };
-        List<string> docPaths = new List<string>();
+        // Create sample documents with some content.
+        CreateSampleDocument(sourceFiles[0], "Hello World in Document 1.");
+        CreateSampleDocument(sourceFiles[1], "Sample text for Document 2.");
 
-        // Create sample documents with some text.
-        foreach (string name in docNames)
+        // Batch process: clear the content of each document.
+        foreach (string filePath in sourceFiles)
         {
-            string path = Path.Combine(folder, name);
-            CreateSampleDocument(path, $"This is sample content for {name}");
-            docPaths.Add(path);
-        }
+            // Load the document.
+            Document doc = new Document(filePath);
 
-        // Batch process: clear the content of each document using Document.Range.Delete().
-        foreach (string path in docPaths)
-        {
-            Document doc = new Document(path);
-            doc.Range.Delete();               // Remove all nodes from the document.
-            doc.Save(path);                    // Overwrite the original file.
-        }
+            // Delete all content in the document's range.
+            doc.Range.Delete();
 
-        // Simple verification: output the length of the remaining text (should be 0 or minimal).
-        foreach (string path in docPaths)
-        {
-            Document doc = new Document(path);
-            Console.WriteLine($"{Path.GetFileName(path)} text length after clear: {doc.Range.Text.Length}");
+            // Save the cleared document with a new name.
+            string clearedPath = Path.GetFileNameWithoutExtension(filePath) + "_cleared.docx";
+            doc.Save(clearedPath);
         }
     }
 
-    // Helper method to create a simple document with a single paragraph of text.
-    private static void CreateSampleDocument(string filePath, string text)
+    // Helper method to create a simple document with given text.
+    private static void CreateSampleDocument(string path, string text)
     {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln(text);
-        doc.Save(filePath);
+        doc.Save(path);
     }
 }

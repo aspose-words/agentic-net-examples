@@ -5,95 +5,78 @@ using Aspose.Words.Drawing;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 using Aspose.Drawing.Drawing2D;
+using Aspose.Drawing.Text;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a folder to hold sample PNG images.
-        string imagesFolder = "Images";
+        // Prepare a folder for sample PNG images.
+        string imagesFolder = Path.Combine(Directory.GetCurrentDirectory(), "Images");
         Directory.CreateDirectory(imagesFolder);
 
-        // Generate sample PNG images using Aspose.Drawing.
-        int imageCount = 3;
-        string[] imagePaths = new string[imageCount];
-        for (int i = 0; i < imageCount; i++)
+        // Create three sample PNG images using Aspose.Drawing.
+        for (int i = 1; i <= 3; i++)
         {
-            string filePath = Path.Combine(imagesFolder, $"Image{i + 1}.png");
-            CreateSamplePng(filePath, i + 1);
-            imagePaths[i] = filePath;
+            string imagePath = Path.Combine(imagesFolder, $"image{i}.png");
+            using (Bitmap bitmap = new Bitmap(400, 300, PixelFormat.Format32bppArgb))
+            {
+                using (Graphics graphics = Graphics.FromImage(bitmap))
+                {
+                    // Fill background.
+                    using (SolidBrush backgroundBrush = new SolidBrush(Color.LightBlue))
+                    {
+                        graphics.FillRectangle(backgroundBrush, 0, 0, bitmap.Width, bitmap.Height);
+                    }
+
+                    // Draw text.
+                    using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 24))
+                    {
+                        using (SolidBrush textBrush = new SolidBrush(Color.Black))
+                        {
+                            string text = $"Image {i}";
+                            SizeF textSize = graphics.MeasureString(text, font);
+                            PointF location = new PointF((bitmap.Width - textSize.Width) / 2, (bitmap.Height - textSize.Height) / 2);
+                            graphics.DrawString(text, font, textBrush, location);
+                        }
+                    }
+                }
+
+                // Save as PNG.
+                bitmap.Save(imagePath, ImageFormat.Png);
+            }
+
+            if (!File.Exists(imagePath))
+                throw new InvalidOperationException($"Failed to create sample image: {imagePath}");
         }
 
         // Create a new empty Word document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        Document pdfDocument = new Document();
+        DocumentBuilder builder = new DocumentBuilder(pdfDocument);
 
-        // Insert each PNG on a separate page.
-        for (int i = 0; i < imagePaths.Length; i++)
+        // Insert each PNG image on a separate page.
+        string[] pngFiles = Directory.GetFiles(imagesFolder, "*.png");
+        for (int index = 0; index < pngFiles.Length; index++)
         {
-            if (i > 0)
-            {
-                // Insert a page break before adding the next image.
+            if (index > 0)
                 builder.InsertBreak(BreakType.PageBreak);
-            }
 
-            // Insert the image. The image will be scaled to fit the page width.
-            builder.InsertImage(imagePaths[i]);
+            // Center the image on the page.
+            builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+
+            // Insert the image.
+            builder.InsertImage(pngFiles[index]);
         }
 
         // Save the document as a single PDF file.
-        string outputPdf = "CombinedImages.pdf";
-        doc.Save(outputPdf, SaveFormat.Pdf);
+        string outputPdfPath = Path.Combine(Directory.GetCurrentDirectory(), "ImagesCombined.pdf");
+        pdfDocument.Save(outputPdfPath, SaveFormat.Pdf);
 
         // Validate that the PDF was created.
-        if (!File.Exists(outputPdf))
-        {
-            throw new InvalidOperationException("Expected output PDF was not created.");
-        }
+        if (!File.Exists(outputPdfPath))
+            throw new InvalidOperationException("The combined PDF file was not created.");
 
-        // Clean up generated images (optional).
+        // Optionally, clean up the temporary images folder.
         // Directory.Delete(imagesFolder, true);
-    }
-
-    private static void CreateSamplePng(string filePath, int index)
-    {
-        const int width = 400;
-        const int height = 300;
-
-        // Create a bitmap with a 32bpp ARGB pixel format.
-        using (Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format32bppArgb))
-        {
-            // Obtain a graphics object for drawing.
-            using (Graphics graphics = Graphics.FromImage(bitmap))
-            {
-                // Fill background.
-                using (SolidBrush backgroundBrush = new SolidBrush(Color.White))
-                {
-                    graphics.FillRectangle(backgroundBrush, new Rectangle(0, 0, width, height));
-                }
-
-                // Draw a colored rectangle.
-                using (Pen pen = new Pen(Color.Blue, 5))
-                {
-                    Rectangle rect = new Rectangle(50, 50, width - 100, height - 100);
-                    graphics.DrawRectangle(pen, rect);
-                }
-
-                // Draw sample text.
-                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 24))
-                {
-                    using (SolidBrush textBrush = new SolidBrush(Color.Black))
-                    {
-                        string text = $"Sample Image {index}";
-                        SizeF textSize = graphics.MeasureString(text, font);
-                        PointF textPosition = new PointF((width - textSize.Width) / 2, (height - textSize.Height) / 2);
-                        graphics.DrawString(text, font, textBrush, textPosition);
-                    }
-                }
-            }
-
-            // Save the bitmap as a PNG file.
-            bitmap.Save(filePath, ImageFormat.Png);
-        }
     }
 }

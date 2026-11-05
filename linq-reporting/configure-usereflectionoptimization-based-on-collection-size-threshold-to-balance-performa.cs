@@ -1,73 +1,75 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class Program
 {
+    // Sample data model classes
+    public class Order
+    {
+        public string CustomerName { get; set; } = "John Doe";
+        public List<Item> Items { get; set; } = new();
+    }
+
+    public class Item
+    {
+        public int Index { get; set; }
+        public string Name { get; set; } = "";
+    }
+
     public static void Main()
     {
-        // Register code page provider for encoding support.
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Ensure output directory exists
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
 
-        // Prepare sample data.
+        // Paths for template and result documents
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        string resultPath = Path.Combine(outputDir, "report.docx");
+
+        // Create sample data
         var order = new Order
         {
-            CustomerName = "John Doe",
-            Items = new List<Item>()
+            Items = GenerateItems(150) // Adjust count to test threshold behavior
         };
 
-        // Populate the collection with sample items.
-        for (int i = 1; i <= 7; i++)
-        {
-            order.Items.Add(new Item { Name = $"Product {i}", Price = i * 10 });
-        }
-
-        // Define a threshold to decide whether to enable reflection optimization.
-        const int threshold = 5;
+        // Configure reflection optimization based on collection size threshold
+        const int threshold = 100;
         ReportingEngine.UseReflectionOptimization = order.Items.Count > threshold;
 
-        // Create the template document.
-        const string templatePath = "Template.docx";
-        CreateTemplate(templatePath);
+        // Build the template document programmatically
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // Load the template.
-        var doc = new Document(templatePath);
-
-        // Build the report.
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, order, "order");
-
-        // Save the generated report.
-        const string outputPath = "Report.docx";
-        doc.Save(outputPath);
-    }
-
-    private static void CreateTemplate(string path)
-    {
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        // Insert LINQ Reporting tags.
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("Items:");
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("- <<[item.Name]>> : $<<[item.Price]>>");
+        builder.Writeln($"Customer: <<[order.CustomerName]>>");
+        builder.Writeln("<<foreach [item in order.Items]>>");
+        builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
         builder.Writeln("<</foreach>>");
 
-        doc.Save(path);
+        // Save the template to disk
+        templateDoc.Save(templatePath);
+
+        // Load the template for reporting
+        var loadedTemplate = new Document(templatePath);
+
+        // Build the report
+        var engine = new ReportingEngine();
+        engine.BuildReport(loadedTemplate, order, "order");
+
+        // Save the generated report
+        loadedTemplate.Save(resultPath);
     }
-}
 
-// Data model classes.
-public class Order
-{
-    public string CustomerName { get; set; } = "";
-    public List<Item> Items { get; set; } = new();
-}
-
-public class Item
-{
-    public string Name { get; set; } = "";
-    public decimal Price { get; set; }
+    // Helper method to generate a list of items
+    private static List<Item> GenerateItems(int count)
+    {
+        var items = new List<Item>();
+        for (int i = 1; i <= count; i++)
+        {
+            items.Add(new Item { Index = i, Name = $"Product {i}" });
+        }
+        return items;
+    }
 }

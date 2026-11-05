@@ -1,6 +1,6 @@
 using System;
-using System.Drawing;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -8,39 +8,39 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a DocumentBuilder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
-        builder.StartTable();
-
-        int rowCount = 10;
+        // Define table dimensions.
+        int rowCount = 6;
         int columnCount = 3;
 
-        // Build the table rows and cells.
-        for (int i = 0; i < rowCount; i++)
+        // Build the table.
+        builder.StartTable();
+        for (int r = 0; r < rowCount; r++)
         {
-            for (int j = 0; j < columnCount; j++)
+            for (int c = 0; c < columnCount; c++)
             {
                 builder.InsertCell();
-                builder.Writeln($"Row {i + 1}, Cell {j + 1}");
+                builder.Writeln($"Row {r + 1}, Cell {c + 1}");
             }
             builder.EndRow();
         }
-
-        // End the table.
         builder.EndTable();
 
         // Retrieve the created table.
-        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
 
         // Apply shading to every second row (index 1,3,5,...).
         for (int i = 0; i < table.Rows.Count; i++)
         {
-            if (i % 2 == 1) // every second row (1‑based even rows)
+            if (i % 2 == 1) // Every second row (1‑based even rows)
             {
                 Row row = table.Rows[i];
+                // Apply shading to each cell in the row.
                 foreach (Cell cell in row.Cells)
                 {
                     cell.CellFormat.Shading.Texture = TextureIndex.TextureSolid;
@@ -53,8 +53,8 @@ public class Program
         string outputPath = "AlternatingRows.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify that the file was saved.
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not saved correctly.");
+            throw new FileNotFoundException("The output file was not created.", outputPath);
     }
 }

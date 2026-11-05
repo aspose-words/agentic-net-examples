@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
@@ -13,44 +12,30 @@ public class Program
         string workDir = Path.Combine(Directory.GetCurrentDirectory(), "ChartsBatch");
         Directory.CreateDirectory(workDir);
 
-        // Create sample input documents if the folder is empty.
-        if (!Directory.GetFiles(workDir, "*.docx").Any())
+        // Generate a few sample Word documents to process.
+        for (int i = 1; i <= 3; i++)
         {
-            for (int i = 1; i <= 3; i++)
-            {
-                Document sampleDoc = new Document();
-                DocumentBuilder sampleBuilder = new DocumentBuilder(sampleDoc);
-                sampleBuilder.Writeln($"Sample document {i}");
-                string samplePath = Path.Combine(workDir, $"input-{i}.docx");
-                sampleDoc.Save(samplePath);
-            }
+            Document sampleDoc = new Document();
+            sampleDoc.Save(Path.Combine(workDir, $"input-{i}.docx"));
         }
 
-        // Process each DOCX file in the folder.
+        // Process each document: add a predefined bar chart to the first page.
         foreach (string filePath in Directory.GetFiles(workDir, "*.docx"))
         {
-            // Load the document.
             Document doc = new Document(filePath);
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Move to the start of the document (first page) and insert a bar chart.
+            // Move the builder to the start of the document (first page).
             builder.MoveToDocumentStart();
+
+            // Insert a bar chart with explicit size.
             Shape chartShape = builder.InsertChart(ChartType.Bar, 432, 252);
+            Chart chart = chartShape.Chart;
 
-            // Ensure the inserted shape actually contains a chart before modifying it.
-            if (chartShape.HasChart)
-            {
-                Chart chart = chartShape.Chart;
-
-                // Clear any default series.
-                chart.Series.Clear();
-
-                // Add a single series with predefined categories and values.
-                chart.Series.Add(
-                    "Sales",
-                    new string[] { "Q1", "Q2", "Q3" },
-                    new double[] { 15, 25, 35 });
-            }
+            // Define the chart data: clear any default series and add custom series.
+            chart.Series.Clear();
+            chart.Series.Add("Q1 Sales", new double[] { 12000, 15000, 18000 });
+            chart.Series.Add("Q2 Sales", new double[] { 13000, 16000, 19000 });
 
             // Save the modified document back to the same file.
             doc.Save(filePath);

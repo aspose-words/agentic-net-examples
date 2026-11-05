@@ -1,5 +1,6 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Fields;
 
 public class Program
 {
@@ -9,11 +10,22 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a checkbox form field named "AgreementCheckBox",
-        // set it to be checked by default, and give it a custom size of 20 points.
-        builder.InsertCheckBox("AgreementCheckBox", true, 20);
+        // Insert a checkbox form field with a name, default checked state, and custom size (points).
+        string fieldName = "AcceptTerms";
+        bool defaultChecked = true;
+        int sizeInPoints = 15; // Custom size – InsertCheckBox expects an int.
 
-        // Save the document to the output file.
+        builder.InsertCheckBox(fieldName, defaultChecked, sizeInPoints);
+
+        // Validate that the checkbox was added and its properties are correct.
+        FormField checkBox = doc.Range.FormFields[fieldName];
+        if (checkBox == null)
+            throw new InvalidOperationException($"Form field '{fieldName}' was not found.");
+
+        if (!checkBox.Checked)
+            throw new InvalidOperationException("Checkbox default checked state is not set correctly.");
+
+        // Save the document to disk.
         doc.Save("CheckboxFormField.docx");
     }
 }

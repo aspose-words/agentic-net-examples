@@ -1,123 +1,111 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Sample data model.
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Sample data.
         var model = new ReportModel
         {
-            Groups = new()
+            Sections = new List<Section>
             {
-                new Group
+                new Section
                 {
-                    Name = "Group A",
-                    Items = new()
+                    HeaderGroup = "Fruits",
+                    Items = new List<Item>
                     {
-                        new Item { Description = "Item 1", Quantity = 10 },
-                        new Item { Description = "Item 2", Quantity = 20 }
+                        new Item { Name = "Apple", Quantity = 10 },
+                        new Item { Name = "Banana", Quantity = 20 }
                     }
                 },
-                new Group
+                new Section
                 {
-                    Name = "Group B",
-                    Items = new()
+                    HeaderGroup = "Vegetables",
+                    Items = new List<Item>
                     {
-                        new Item { Description = "Item 3", Quantity = 30 }
+                        new Item { Name = "Carrot", Quantity = 15 },
+                        new Item { Name = "Tomato", Quantity = 25 }
                     }
                 }
             }
         };
 
-        // -----------------------------------------------------------------
-        // Create the template document programmatically.
-        // -----------------------------------------------------------------
-        string templatePath = "Template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Create template.
+        const string templatePath = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Outer foreach – iterate over groups.
-        builder.Writeln("<<foreach [group in Groups]>>");
+        // Outer foreach – one table per section.
+        builder.Writeln("<<foreach [section in Sections]>>");
 
-        // -------------------------------------------------------------
-        // Header table – contains a single row with merged cells.
-        // -------------------------------------------------------------
-        Table headerTable = builder.StartTable();
+        // Table for the section header and column titles.
+        builder.StartTable();
+
+        // Header row with merged cells.
         builder.InsertCell();
-        builder.Write("<<cellMerge -horz>><<[group.Name]>>");
+        builder.Writeln("<<cellMerge>><<[section.HeaderGroup]>>");
         builder.InsertCell();
-        builder.Write("<<cellMerge -horz>><<[group.Name]>>");
+        builder.Writeln("<<cellMerge>><<[section.HeaderGroup]>>");
         builder.EndRow();
+
+        // Column titles row.
+        builder.InsertCell();
+        builder.Writeln("Item");
+        builder.InsertCell();
+        builder.Writeln("Quantity");
+        builder.EndRow();
+
         builder.EndTable();
 
-        // -------------------------------------------------------------
-        // Items tables – one table per item (simplified safe pattern).
-        // -------------------------------------------------------------
-        builder.Writeln("<<foreach [item in group.Items]>>");
-        Table itemsTable = builder.StartTable();
-
-        // Column titles (appears for each item – acceptable for demo).
+        // Inner foreach – rows for each item.
+        builder.Writeln("<<foreach [item in section.Items]>>");
+        builder.StartTable();
         builder.InsertCell();
-        builder.Writeln("Description");
-        builder.InsertCell();
-        builder.Writeln("Qty");
-        builder.EndRow();
-
-        // Data row.
-        builder.InsertCell();
-        builder.Writeln("<<[item.Description]>>");
+        builder.Writeln("<<[item.Name]>>");
         builder.InsertCell();
         builder.Writeln("<<[item.Quantity]>>");
         builder.EndRow();
-
         builder.EndTable();
         builder.Writeln("<</foreach>>");
 
-        // Close outer foreach.
+        // End outer foreach.
         builder.Writeln("<</foreach>>");
 
         // Save the template.
-        templateDoc.Save(templatePath);
+        doc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // Load the template and build the report.
-        // -----------------------------------------------------------------
+        // Build the report.
         var reportDoc = new Document(templatePath);
-        var engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.None
-        };
+        var engine = new ReportingEngine();
         engine.BuildReport(reportDoc, model, "model");
 
-        // Save the final report.
-        string reportPath = "Report.docx";
-        reportDoc.Save(reportPath);
-
-        Console.WriteLine($"Report generated: {Path.GetFullPath(reportPath)}");
+        // Save the generated report.
+        const string outputPath = "report.docx";
+        reportDoc.Save(outputPath);
     }
 }
 
-// ---------------------------------------------------------------------
 // Data model classes.
-// ---------------------------------------------------------------------
 public class ReportModel
 {
-    public List<Group> Groups { get; set; } = new();
+    public List<Section> Sections { get; set; } = new();
 }
 
-public class Group
+public class Section
 {
-    public string Name { get; set; } = "";
+    public string HeaderGroup { get; set; } = string.Empty;
     public List<Item> Items { get; set; } = new();
 }
 
 public class Item
 {
-    public string Description { get; set; } = "";
+    public string Name { get; set; } = string.Empty;
     public int Quantity { get; set; }
 }

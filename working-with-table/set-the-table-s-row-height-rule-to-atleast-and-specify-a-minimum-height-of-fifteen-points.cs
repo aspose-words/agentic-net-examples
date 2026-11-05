@@ -11,20 +11,35 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple table with one row and one cell.
+        // Build a simple 2x2 table.
         builder.StartTable();
+
+        // First row, first cell.
         builder.InsertCell();
-        builder.Writeln("Sample cell");
+        builder.Writeln("Cell 1");
+
+        // End first row.
         builder.EndRow();
+
+        // Second row, first cell.
+        builder.InsertCell();
+        builder.Writeln("Cell 2");
+
+        // End second row.
+        builder.EndRow();
+
+        // Finish the table.
         builder.EndTable();
 
-        // Retrieve the first table and its first row.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        Row row = table.Rows[0];
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
-        // Set the row height rule to AtLeast and specify a minimum height of 15 points.
-        row.RowFormat.HeightRule = HeightRule.AtLeast; // Use HeightRule enum.
-        row.RowFormat.Height = 15; // Height is measured in points.
+        // Set each row's height rule to AtLeast with a minimum height of 15 points.
+        foreach (Row row in table.Rows)
+        {
+            row.RowFormat.HeightRule = HeightRule.AtLeast;
+            row.RowFormat.Height = 15; // Height is measured in points.
+        }
 
         // Save the document to a file.
         string outputPath = "TableRowHeight.docx";
@@ -33,7 +48,7 @@ public class Program
         // Verify that the file was created.
         if (!File.Exists(outputPath))
         {
-            throw new Exception($"Failed to create the output file: {outputPath}");
+            throw new Exception("The output document was not created.");
         }
     }
 }

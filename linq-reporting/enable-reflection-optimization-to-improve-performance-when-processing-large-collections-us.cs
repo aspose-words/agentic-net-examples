@@ -7,64 +7,64 @@ using Aspose.Words.Reporting;
 
 namespace LinqReportingReflectionOptimization
 {
-    // Sample data model
-    public class Order
+    // Data model classes
+    public class ReportData
     {
-        public string CustomerName { get; set; } = "John Doe";
-        public List<Item> Items { get; set; } = new();
+        public string CustomerName { get; set; } = "Acme Corp";
+        public List<Order> Orders { get; set; } = new();
     }
 
-    public class Item
+    public class Order
     {
-        public int Index { get; set; }
-        public string Name { get; set; } = "";
+        public int Id { get; set; }
+        public decimal Total { get; set; }
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Register code page provider for Aspose.Words (required for some environments)
+            // Register code page provider (required for some encodings)
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            // Prepare sample data
-            var order = new Order
-            {
-                CustomerName = "Acme Corp",
-                Items = new List<Item>
-                {
-                    new Item { Index = 1, Name = "Widget A" },
-                    new Item { Index = 2, Name = "Widget B" },
-                    new Item { Index = 3, Name = "Widget C" }
-                }
-            };
+            // Create a template document with LINQ Reporting tags
+            var templatePath = "Template.docx";
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
 
-            // Create a template document programmatically
-            var template = new Document();
-            var builder = new DocumentBuilder(template);
-
-            builder.Writeln("Customer: <<[order.CustomerName]>>");
-            builder.Writeln("<<foreach [item in order.Items]>>");
-            builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
+            builder.Writeln("Customer Report");
+            builder.Writeln("Customer: <<[data.CustomerName]>>");
+            builder.Writeln("Orders:");
+            builder.Writeln("<<foreach [order in data.Orders]>>");
+            builder.Writeln("- Order ID: <<[order.Id]>>, Total: $<<[order.Total]>>");
             builder.Writeln("<</foreach>>");
 
-            // Save the template to disk
-            const string templatePath = "template.docx";
-            template.Save(templatePath);
+            doc.Save(templatePath);
 
-            // Load the template for reporting
-            var doc = new Document(templatePath);
+            // Load the template for report generation
+            var templateDoc = new Document(templatePath);
+
+            // Prepare sample data
+            var data = new ReportData
+            {
+                Orders = new List<Order>
+                {
+                    new Order { Id = 101, Total = 250.75m },
+                    new Order { Id = 102, Total = 89.99m },
+                    new Order { Id = 103, Total = 1234.00m }
+                }
+            };
 
             // Enable reflection optimization for better performance on large collections
             ReportingEngine.UseReflectionOptimization = true;
 
             // Build the report
             var engine = new ReportingEngine();
-            engine.BuildReport(doc, order, "order");
+            engine.BuildReport(templateDoc, data, "data");
 
             // Save the generated report
-            const string outputPath = "report.docx";
-            doc.Save(outputPath);
+            var outputPath = "Report.docx";
+            templateDoc.Save(outputPath);
         }
     }
 }

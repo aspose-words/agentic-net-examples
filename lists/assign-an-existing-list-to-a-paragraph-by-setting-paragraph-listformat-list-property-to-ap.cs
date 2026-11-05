@@ -1,37 +1,55 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Lists;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a numbered list to the document's list collection.
-        List list = doc.Lists.Add(ListTemplate.NumberDefault);
+        // -------------------------------------------------
+        // Create a bullet list and assign it to paragraphs.
+        // -------------------------------------------------
+        List bulletList = doc.Lists.Add(ListTemplate.BulletDefault);
 
-        // First paragraph – assign the list to this paragraph.
-        builder.Writeln("First item");
-        Paragraph para1 = builder.CurrentParagraph; // Get the paragraph just created.
-        para1.ListFormat.List = list;               // Apply the list style.
-        para1.ListFormat.ListLevelNumber = 0;       // Use the first level of the list.
+        // Apply the existing list to the builder.
+        builder.ListFormat.List = bulletList;
+        builder.Writeln("Bullet item 1");
+        builder.Writeln("Bullet item 2");
 
-        // Second paragraph – also part of the same list.
-        builder.Writeln("Second item");
-        Paragraph para2 = builder.CurrentParagraph;
-        para2.ListFormat.List = list;
-        para2.ListFormat.ListLevelNumber = 0;
+        // Finish the bullet list.
+        builder.ListFormat.RemoveNumbers();
 
-        // Third paragraph – a sub‑item (level 1).
-        builder.Writeln("Sub‑item");
-        Paragraph para3 = builder.CurrentParagraph;
-        para3.ListFormat.List = list;
-        para3.ListFormat.ListLevelNumber = 1;
+        // -------------------------------------------------
+        // Create a numbered list and assign it to paragraphs.
+        // -------------------------------------------------
+        List numberList = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // Save the document to disk.
-        doc.Save("ListExample.docx");
+        // Apply the existing numbered list.
+        builder.ListFormat.List = numberList;
+        builder.Writeln("Numbered item 1");
+        builder.Writeln("Numbered item 2");
+
+        // Finish the numbered list.
+        builder.ListFormat.RemoveNumbers();
+
+        // -------------------------------------------------
+        // Validation: count paragraphs that are part of a list.
+        // -------------------------------------------------
+        int listParagraphCount = 0;
+        foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
+        {
+            if (para.ListFormat.IsListItem)
+                listParagraphCount++;
+        }
+
+        Console.WriteLine($"Document contains {listParagraphCount} list paragraphs.");
+
+        // Save the document to a file.
+        doc.Save("Output.docx");
     }
 }

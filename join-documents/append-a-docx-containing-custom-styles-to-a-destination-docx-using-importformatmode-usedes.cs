@@ -6,65 +6,75 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the sample files
-        string destDocPath = "Destination.docx";
-        string sourceDocPath = "Source.docx";
-        string mergedPdfPath = "Merged.pdf";
+        // Paths for the sample documents and the merged PDF.
+        string destinationPath = "Destination.docx";
+        string sourcePath = "Source.docx";
+        string outputPdfPath = "Merged.pdf";
 
-        // -----------------------------------------------------------------
-        // Create destination document with a custom style
-        // -----------------------------------------------------------------
-        Document destDoc = new Document();
-        Style destStyle = destDoc.Styles.Add(StyleType.Paragraph, "CustomStyleDest");
-        destStyle.Font.Name = "Courier New";
+        // -------------------------------------------------------------
+        // Create the destination document with a custom paragraph style.
+        // -------------------------------------------------------------
+        Document destinationDoc = new Document();
+        DocumentBuilder destBuilder = new DocumentBuilder(destinationDoc);
+
+        // Add a custom style named "MyCustomStyle" with specific formatting.
+        Style destStyle = destinationDoc.Styles.Add(StyleType.Paragraph, "MyCustomStyle");
         destStyle.Font.Size = 14;
-        destStyle.Font.Color = System.Drawing.Color.DarkBlue;
+        destStyle.Font.Bold = true;
 
-        DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
-        destBuilder.ParagraphFormat.Style = destStyle;
-        destBuilder.Writeln("This is a paragraph in the destination document using CustomStyleDest.");
-        destDoc.Save(destDocPath, SaveFormat.Docx);
+        // Apply the custom style and write a paragraph.
+        destBuilder.ParagraphFormat.StyleName = "MyCustomStyle";
+        destBuilder.Writeln("This paragraph is in the destination document using MyCustomStyle.");
 
-        // -----------------------------------------------------------------
-        // Create source document with its own custom style
-        // -----------------------------------------------------------------
+        // Save the destination document as DOCX.
+        destinationDoc.Save(destinationPath, SaveFormat.Docx);
+
+        // -------------------------------------------------------------
+        // Create the source document with its own version of the same style.
+        // -------------------------------------------------------------
         Document sourceDoc = new Document();
-        Style sourceStyle = sourceDoc.Styles.Add(StyleType.Paragraph, "CustomStyleSource");
-        sourceStyle.Font.Name = "Times New Roman";
-        sourceStyle.Font.Size = 12;
-        sourceStyle.Font.Color = System.Drawing.Color.Maroon;
+        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
 
-        DocumentBuilder sourceBuilder = new DocumentBuilder(sourceDoc);
-        sourceBuilder.ParagraphFormat.Style = sourceStyle;
-        sourceBuilder.Writeln("This is a paragraph in the source document using CustomStyleSource.");
-        sourceDoc.Save(sourceDocPath, SaveFormat.Docx);
+        // Add a custom style with the same name but different formatting.
+        Style srcStyle = sourceDoc.Styles.Add(StyleType.Paragraph, "MyCustomStyle");
+        srcStyle.Font.Size = 12;
+        srcStyle.Font.Italic = true;
 
-        // -----------------------------------------------------------------
-        // Load the documents (optional, they are already in memory)
-        // -----------------------------------------------------------------
-        Document destination = new Document(destDocPath);
-        Document source = new Document(sourceDocPath);
+        // Apply the source custom style and write a paragraph.
+        srcBuilder.ParagraphFormat.StyleName = "MyCustomStyle";
+        srcBuilder.Writeln("This paragraph is in the source document using its own MyCustomStyle.");
 
-        // Append source to destination using destination styles
-        destination.AppendDocument(source, ImportFormatMode.UseDestinationStyles);
+        // Save the source document as DOCX.
+        sourceDoc.Save(sourcePath, SaveFormat.Docx);
 
-        // Save the merged document as PDF
-        destination.Save(mergedPdfPath, SaveFormat.Pdf);
+        // -------------------------------------------------------------
+        // Load the saved documents from disk.
+        // -------------------------------------------------------------
+        Document destDocLoaded = new Document(destinationPath);
+        Document srcDocLoaded = new Document(sourcePath);
 
-        // -----------------------------------------------------------------
+        // Append the source document to the destination using destination styles.
+        destDocLoaded.AppendDocument(srcDocLoaded, ImportFormatMode.UseDestinationStyles);
+
+        // Save the merged result as PDF.
+        destDocLoaded.Save(outputPdfPath, SaveFormat.Pdf);
+
+        // -------------------------------------------------------------
         // Validation
-        // -----------------------------------------------------------------
-        if (!File.Exists(mergedPdfPath))
+        // -------------------------------------------------------------
+        if (!File.Exists(outputPdfPath))
         {
-            throw new InvalidOperationException($"The merged PDF file was not created at '{mergedPdfPath}'.");
+            throw new InvalidOperationException($"The PDF file '{outputPdfPath}' was not created.");
         }
 
-        // Verify that the merged document contains sections from both source documents
-        if (destination.Sections.Count < 2)
+        // Ensure that the merged document contains at least two sections (original + appended).
+        if (destDocLoaded.Sections.Count < 2)
         {
             throw new InvalidOperationException("The merged document does not contain the expected number of sections.");
         }
 
-        // Program completed successfully
+        // Optional cleanup of intermediate DOCX files.
+        // File.Delete(destinationPath);
+        // File.Delete(sourcePath);
     }
 }

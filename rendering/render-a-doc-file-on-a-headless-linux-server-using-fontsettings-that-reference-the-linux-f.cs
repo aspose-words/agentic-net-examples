@@ -3,46 +3,40 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fonts;
 
-public class RenderDocWithLinuxFonts
+public class Program
 {
     public static void Main()
     {
-        // Path to a Linux fonts folder (common location). Adjust if necessary.
-        string linuxFontsFolder = "/usr/share/fonts/truetype";
+        // Paths for the sample document and rendered PDF.
+        string sourcePath = "sample.docx";
+        string outputPath = "rendered.pdf";
 
-        // Configure FontSettings to use the Linux fonts folder.
-        FontSettings fontSettings = new FontSettings();
-        if (Directory.Exists(linuxFontsFolder))
-        {
-            // The second parameter indicates that subfolders should be searched recursively.
-            fontSettings.SetFontsFolder(linuxFontsFolder, true);
-        }
-
-        // Create a simple DOC document.
+        // 1. Create a simple DOCX document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        // Use a font that is typically available in Linux installations.
+        // Use a font that is commonly available on Linux (e.g., DejaVu Sans).
         builder.Font.Name = "DejaVu Sans";
-        builder.Writeln("This document is rendered on a headless Linux server using custom FontSettings.");
+        builder.Writeln("Hello, world! This document is rendered on a headless Linux server.");
+        doc.Save(sourcePath);
 
-        // Assign the configured FontSettings to the document.
-        doc.FontSettings = fontSettings;
+        // 2. Load the document with FontSettings pointing to the Linux fonts folder.
+        Document loadedDoc = new Document(sourcePath);
+        FontSettings fontSettings = new FontSettings();
+        // Set the folder that contains system fonts on most Linux distributions.
+        // The second parameter (true) enables recursive search in subfolders.
+        fontSettings.SetFontsFolder("/usr/share/fonts", true);
+        loadedDoc.FontSettings = fontSettings;
 
-        // Render the document to PDF.
-        string outputPdfPath = "RenderedDocument.pdf";
-        doc.Save(outputPdfPath, SaveFormat.Pdf);
+        // 3. Render the document to PDF.
+        loadedDoc.Save(outputPath, SaveFormat.Pdf);
 
-        // Verify that the PDF file was created.
-        if (!File.Exists(outputPdfPath))
-            throw new FileNotFoundException("The PDF file was not created.", outputPdfPath);
+        // 4. Verify that the PDF was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new InvalidOperationException($"Failed to create the rendered PDF at '{outputPath}'.");
+        }
 
-        // Simple validation: check that the PDF contains an embedded font marker.
-        // This does not guarantee full font embedding but confirms that the PDF was generated.
-        string pdfContent = File.ReadAllText(outputPdfPath);
-        if (!pdfContent.Contains("/FontFile") && !pdfContent.Contains("/FontFile2") && !pdfContent.Contains("/FontFile3"))
-            Console.WriteLine("Warning: No embedded font markers were found in the PDF.");
-
-        // Indicate successful completion.
-        Console.WriteLine($"Document rendered successfully to '{outputPdfPath}'.");
+        // Optional: indicate success (no interactive prompts).
+        Console.WriteLine("Document rendered successfully to PDF.");
     }
 }

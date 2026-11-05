@@ -7,60 +7,57 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a table with four rows: two with content, two empty.
+        // Build a table with five rows.
         builder.StartTable();
 
-        // Row 1 – contains text.
+        // Row 0 – normal height.
         builder.InsertCell();
-        builder.Writeln("Row 1, Cell 1");
+        builder.Write("Row 0, Cell 0");
         builder.EndRow();
 
-        // Row 2 – empty row (will be marked with zero height).
+        // Row 1 – will be set to zero height (empty row).
         builder.InsertCell();
-        // No text written – cell remains empty.
+        builder.Write("Row 1, Cell 0");
         builder.EndRow();
 
-        // Row 3 – contains text.
+        // Row 2 – normal height.
         builder.InsertCell();
-        builder.Writeln("Row 3, Cell 1");
+        builder.Write("Row 2, Cell 0");
         builder.EndRow();
 
-        // Row 4 – empty row (will be marked with zero height).
+        // Row 3 – will be set to zero height (empty row).
         builder.InsertCell();
-        // No text written.
+        builder.Write("Row 3, Cell 0");
         builder.EndRow();
 
-        // Finish the table.
+        // Row 4 – normal height.
+        builder.InsertCell();
+        builder.Write("Row 4, Cell 0");
+        builder.EndRow();
+
         builder.EndTable();
 
         // Retrieve the created table.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (table == null)
-            throw new InvalidOperationException("Table was not created.");
 
-        // Mark empty rows with zero height.
-        foreach (Row row in table.Rows)
-        {
-            // A row is considered empty if its first cell contains only the end-of-cell marker.
-            string cellText = row.Cells[0].GetText().Replace("\a", string.Empty).Trim();
-            if (string.IsNullOrEmpty(cellText))
-            {
-                row.RowFormat.Height = 0;
-                row.RowFormat.HeightRule = HeightRule.Exactly;
-            }
-        }
+        // Set zero height for rows 1 and 3.
+        table.Rows[1].RowFormat.Height = 0;
+        table.Rows[1].RowFormat.HeightRule = HeightRule.Exactly;
 
-        // Remove rows that have zero height.
+        table.Rows[3].RowFormat.Height = 0;
+        table.Rows[3].RowFormat.HeightRule = HeightRule.Exactly;
+
+        // Remove rows whose height is zero.
         for (int i = table.Rows.Count - 1; i >= 0; i--)
         {
             Row row = table.Rows[i];
-            if (row.RowFormat.Height == 0)
+            if (row.RowFormat.Height == 0 && row.RowFormat.HeightRule == HeightRule.Exactly)
             {
-                table.Rows.RemoveAt(i);
+                row.Remove();
             }
         }
 
@@ -70,6 +67,6 @@ public class Program
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not saved.", outputPath);
+            throw new Exception("The output document was not saved correctly.");
     }
 }

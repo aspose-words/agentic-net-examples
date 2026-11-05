@@ -1,4 +1,5 @@
 using System;
+using System.Drawing;
 using Aspose.Words;
 
 public class Program
@@ -9,21 +10,23 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert several paragraphs to have content to navigate.
-        for (int i = 1; i <= 5; i++)
-        {
-            builder.Writeln($"Paragraph {i}");
-        }
+        // Insert sample paragraphs.
+        builder.Writeln("Paragraph 1: Introduction.");
+        builder.Writeln("Paragraph 2: Details.");
+        builder.Writeln("Paragraph 3: Conclusion.");
 
-        // Move the builder to the third paragraph (zero‑based index = 2) at the start of the paragraph.
-        builder.MoveToParagraph(2, 0);
+        // Move to the second paragraph (index 1, zero‑based) at the start of the paragraph.
+        builder.MoveToParagraph(1, 0);
 
-        // Apply formatting to the selected paragraph.
+        // Apply formatting to the paragraph at the current position.
+        // For example, make the text bold and red.
         builder.Font.Bold = true;
-        builder.Font.Size = 16;
-        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        builder.Font.Color = Color.Red;
 
-        // Save the resulting document.
-        doc.Save("Output.docx");
+        // Insert a new line to demonstrate the applied formatting.
+        builder.Writeln("This line inherits the formatting of the moved paragraph.");
+
+        // Save the document to disk.
+        doc.Save("FormattedParagraph.docx");
     }
 }

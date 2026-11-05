@@ -7,72 +7,69 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with several paragraphs.
+        // Create a sample document with three paragraphs.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
         builder.Writeln("Paragraph 1");
         builder.Writeln("Paragraph 2");
         builder.Writeln("Paragraph 3");
-        builder.Writeln("Paragraph 4");
-        const string sourcePath = "sample.docx";
-        sourceDoc.Save(sourcePath);
+        sourceDoc.Save("input.docx");
 
         // Load the document for extraction.
-        Document loadedDoc = new Document(sourcePath);
+        Document loadedDoc = new Document("input.docx");
         Body body = loadedDoc.FirstSection.Body;
 
-        // Intentionally select start node after end node to trigger error handling.
-        Paragraph startParagraph = body.Paragraphs[2]; // "Paragraph 3"
-        Paragraph endParagraph = body.Paragraphs[1];   // "Paragraph 2"
+        // Attempt extraction where start node appears after end node (should raise error).
+        Paragraph startAfterEnd = body.Paragraphs[2]; // Third paragraph
+        Paragraph endBeforeStart = body.Paragraphs[1]; // Second paragraph
 
         try
         {
-            // Attempt extraction with invalid node order.
-            ExtractRange(loadedDoc, startParagraph, endParagraph, "extracted-invalid.docx");
+            ExtractRange(loadedDoc, startAfterEnd, endBeforeStart, "invalid-extraction.docx");
         }
         catch (InvalidOperationException ex)
         {
-            Console.WriteLine($"Error during extraction: {ex.Message}");
+            // Expected error handling.
+            Console.WriteLine($"Error: {ex.Message}");
         }
 
-        // Now perform a valid extraction where start precedes end.
-        startParagraph = body.Paragraphs[1]; // "Paragraph 2"
-        endParagraph = body.Paragraphs[2];   // "Paragraph 3"
+        // Correct extraction where start node precedes end node.
+        Paragraph validStart = body.Paragraphs[0]; // First paragraph
+        Paragraph validEnd = body.Paragraphs[1];   // Second paragraph
 
-        ExtractRange(loadedDoc, startParagraph, endParagraph, "extracted-valid.docx");
+        ExtractRange(loadedDoc, validStart, validEnd, "extracted.docx");
 
-        // Verify that the valid extraction output was created.
-        if (!File.Exists("extracted-valid.docx"))
+        // Validate that the extraction output file was created.
+        if (!File.Exists("extracted.docx"))
             throw new InvalidOperationException("Expected extraction output was not created.");
     }
 
-    private static void ExtractRange(Document source, Paragraph start, Paragraph end, string outputPath)
+    private static void ExtractRange(Document source, Paragraph startNode, Paragraph endNode, string outputPath)
     {
-        if (source == null) throw new ArgumentNullException(nameof(source));
-        if (start == null) throw new ArgumentNullException(nameof(start));
-        if (end == null) throw new ArgumentNullException(nameof(end));
-        if (string.IsNullOrEmpty(outputPath)) throw new ArgumentException("Output path must be provided.", nameof(outputPath));
+        // Ensure both nodes are not null.
+        if (startNode == null || endNode == null)
+            throw new InvalidOperationException("Start or end node is null.");
 
-        // Determine the parent Body that contains both paragraphs.
-        Body parentBody = start.ParentNode as Body ?? end.ParentNode as Body;
-        if (parentBody == null)
-            throw new InvalidOperationException("Start or end paragraph does not belong to a Body node.");
+        // Ensure both nodes belong to the same body.
+        Body body = startNode.ParentNode as Body;
+        if (body == null || endNode.ParentNode != body)
+            throw new InvalidOperationException("Start and end nodes must be within the same body.");
 
-        int startIndex = parentBody.Paragraphs.IndexOf(start);
-        int endIndex = parentBody.Paragraphs.IndexOf(end);
+        // Determine the positions of the nodes within the body.
+        int startIndex = body.Paragraphs.IndexOf(startNode);
+        int endIndex = body.Paragraphs.IndexOf(endNode);
 
         if (startIndex == -1 || endIndex == -1)
-            throw new InvalidOperationException("Start or end paragraph not found in the document body.");
+            throw new InvalidOperationException("Start or end node not found in the body.");
 
-        // Validate ordering: start must come before or be the same as end.
+        // Validate ordering.
         if (startIndex > endIndex)
             throw new InvalidOperationException("Start node appears after the end node. Extraction aborted.");
 
-        // Create a new empty document to hold the extracted content.
+        // Create a new document to hold the extracted content.
         Document result = new Document();
         result.RemoveAllChildren();
 
-        // Build the minimal required structure: Section -> Body.
         Section section = new Section(result);
         result.AppendChild(section);
         Body resultBody = new Body(result);
@@ -81,13 +78,12 @@ public class Program
         // Use NodeImporter to import nodes from the source document into the result document.
         NodeImporter importer = new NodeImporter(source, result, ImportFormatMode.KeepSourceFormatting);
 
-        // Clone and import each paragraph from start to end inclusive.
+        // Clone and import paragraphs from start to end inclusive.
         for (int i = startIndex; i <= endIndex; i++)
         {
-            Paragraph para = parentBody.Paragraphs[i];
-            Paragraph importedPara = importer.ImportNode(para, true) as Paragraph;
-            if (importedPara != null)
-                resultBody.AppendChild(importedPara);
+            Paragraph para = body.Paragraphs[i];
+            Node importedNode = importer.ImportNode(para, true);
+            resultBody.AppendChild(importedNode);
         }
 
         // Save the extracted content.

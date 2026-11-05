@@ -6,48 +6,34 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a Table of Contents at the beginning of the document.
+        // Insert a Table of Contents field at the beginning of the document.
+        // The TOC will include headings of levels 1 through 3.
         builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
 
-        // Add a page break after the TOC.
+        // Insert a page break so that the following content starts on a new page.
         builder.InsertBreak(BreakType.PageBreak);
 
-        // First chapter with Heading 1.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 1: Introduction");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("This is the introduction content.");
+        // Add several sections with headings that will be captured by the TOC.
+        for (int i = 1; i <= 3; i++)
+        {
+            // Set the style to Heading 1 for the chapter title.
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+            builder.Writeln($"Chapter {i}");
 
-        // Second chapter with Heading 1 and a subheading with Heading 2.
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 2: Details");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Section 2.1: Overview");
-        builder.Writeln("Details about the overview.");
+            // Add some body text under the heading.
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+            builder.Writeln($"This is the content of chapter {i}. It contains some sample text to demonstrate the Table of Contents update functionality.");
+        }
 
-        // Third chapter with Heading 1.
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 3: Conclusion");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Final remarks.");
-
-        // Update all fields in the document, including the TOC.
+        // After adding new headings, update all fields in the document (including the TOC).
         doc.UpdateFields();
 
-        // Save the document to disk.
+        // Save the updated document to disk.
         string outputPath = "UpdatedTOC.docx";
         doc.Save(outputPath);
-
-        // Simple verification that the file was saved.
-        if (System.IO.File.Exists(outputPath))
-        {
-            Console.WriteLine("Document saved and fields updated successfully.");
-        }
     }
 }

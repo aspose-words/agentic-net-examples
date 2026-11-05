@@ -6,21 +6,43 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add three paragraphs that will become bulleted list items.
-        for (int i = 1; i <= 3; i++)
-        {
-            // Start a new paragraph.
-            builder.Writeln($"List item {i}");
+        // Create a bulleted list using the BulletDefault template.
+        List bulletList = doc.Lists.Add(ListTemplate.BulletDefault);
 
-            // Apply the default bullet formatting to the current paragraph.
-            builder.ListFormat.ApplyBulletDefault();
+        // Assign the list to the builder.
+        builder.ListFormat.List = bulletList;
+
+        // First list item.
+        builder.ListFormat.ApplyBulletDefault();
+        builder.Writeln("First bullet item");
+
+        // Second list item.
+        builder.ListFormat.ApplyBulletDefault();
+        builder.Writeln("Second bullet item");
+
+        // Third list item.
+        builder.ListFormat.ApplyBulletDefault();
+        builder.Writeln("Third bullet item");
+
+        // Remove list formatting after the list is complete.
+        builder.ListFormat.RemoveNumbers();
+
+        // Validate that the document contains the expected number of list paragraphs.
+        int listParagraphCount = 0;
+        foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
+        {
+            if (para.ListFormat.IsListItem)
+                listParagraphCount++;
         }
 
-        // Save the document to the output file.
+        // Output validation result.
+        builder.Writeln($"The document contains {listParagraphCount} bulleted list items.");
+
+        // Save the document to a file.
         doc.Save("BulletedList.docx");
     }
 }

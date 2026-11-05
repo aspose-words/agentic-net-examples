@@ -11,30 +11,38 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 1x1 table.
+        // Build a simple 2x1 table.
         builder.StartTable();
         builder.InsertCell();
-        builder.Write("Sample cell");
+        builder.Writeln("First cell");
+        builder.EndRow();
+
+        builder.InsertCell();
+        builder.Writeln("Second cell");
         builder.EndRow();
         builder.EndTable();
 
         // Retrieve the created table.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
         if (table == null)
-            throw new InvalidOperationException("Table was not created.");
+            throw new Exception("Table was not created.");
 
-        // NOTE: The Table.VerticalAlignment property is not available in the current Aspose.Words version.
-        // If vertical alignment of the table on the page is required, it must be achieved through layout tricks
-        // (e.g., adding empty paragraphs before/after the table). Here we simply leave the table with default alignment.
-
-        // Define output path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableVerticalAlignment.docx");
+        // Set the table's horizontal alignment to the center of the page.
+        // (The current Aspose.Words version does not expose a direct vertical alignment property for tables.)
+        table.Alignment = TableAlignment.Center;
 
         // Save the document.
+        string outputPath = "TableAlignment.docx";
         doc.Save(outputPath);
 
         // Verify that the file was saved.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The document was not saved.", outputPath);
+            throw new Exception("The output document was not saved.");
+
+        // Reload the document and confirm the alignment.
+        Document loadedDoc = new Document(outputPath);
+        Table loadedTable = (Table)loadedDoc.GetChild(NodeType.Table, 0, true);
+        if (loadedTable.Alignment != TableAlignment.Center)
+            throw new Exception("Table alignment was not set correctly.");
     }
 }

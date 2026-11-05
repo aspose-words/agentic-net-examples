@@ -4,86 +4,87 @@ using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
 using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
+using Newtonsoft.Json; // Included as per required packages
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for temporary files
-        string imagePath = "sample.png";
-        string inputDocPath = "input.docx";
-        string outputHtmlPath = "output.html";
+        // Define deterministic file names
+        const string inputImagePath = "input.png";
+        const string placeholderImagePath = "placeholder.png";
+        const string inputDocPath = "input.docx";
+        const string outputHtmlPath = "output.html";
 
-        // -------------------------------------------------
-        // Create a deterministic sample image (100x100 white)
-        // -------------------------------------------------
-        int imgWidth = 100;
-        int imgHeight = 100;
-        Bitmap bitmap = new Bitmap(imgWidth, imgHeight);
-        Graphics graphics = Graphics.FromImage(bitmap);
-        graphics.Clear(Color.White);
-        // Optionally draw something simple
-        // Save the image
-        bitmap.Save(imagePath);
-        graphics.Dispose();
-        bitmap.Dispose();
+        // Ensure a clean environment
+        DeleteIfExists(inputImagePath);
+        DeleteIfExists(placeholderImagePath);
+        DeleteIfExists(inputDocPath);
+        DeleteIfExists(outputHtmlPath);
 
-        // -------------------------------------------------
-        // Create a DOCX document and insert the sample image twice
-        // -------------------------------------------------
+        // 1. Create a sample image to be inserted into the document
+        CreateSampleImage(inputImagePath, 300, 200, Aspose.Drawing.Color.LightBlue);
+
+        // 2. Create a placeholder image that will replace existing images
+        CreateSampleImage(placeholderImagePath, 300, 200, Aspose.Drawing.Color.LightGray);
+
+        // 3. Create a DOCX file containing the sample image
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Document with images:");
-        builder.InsertImage(imagePath);
-        builder.Writeln();
-        builder.InsertImage(imagePath);
+        builder.Writeln("Document with an image:");
+        builder.InsertImage(inputImagePath);
         doc.Save(inputDocPath);
 
-        // -------------------------------------------------
-        // Load the DOCX, replace all images with placeholders
-        // -------------------------------------------------
+        // 4. Load the DOCX file
         Document loadedDoc = new Document(inputDocPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
 
+        // 5. Replace all images with the placeholder image
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
         foreach (Shape shape in shapeNodes)
         {
             if (shape.HasImage)
             {
-                // Create a placeholder rectangle with same size
-                Shape placeholder = new Shape(loadedDoc, ShapeType.Rectangle);
-                placeholder.Width = shape.Width;
-                placeholder.Height = shape.Height;
-                placeholder.WrapType = shape.WrapType;
-                placeholder.RelativeHorizontalPosition = shape.RelativeHorizontalPosition;
-                placeholder.RelativeVerticalPosition = shape.RelativeVerticalPosition;
-                placeholder.HorizontalAlignment = shape.HorizontalAlignment;
-                placeholder.VerticalAlignment = shape.VerticalAlignment;
-
-                // Add text "[Image]" inside the placeholder
-                Paragraph para = new Paragraph(loadedDoc);
-                Run run = new Run(loadedDoc, "[Image]");
-                para.AppendChild(run);
-                placeholder.AppendChild(para);
-
-                // Replace the original image shape with the placeholder
-                shape.ParentNode.InsertAfter(placeholder, shape);
-                shape.Remove();
+                shape.ImageData.SetImage(placeholderImagePath);
             }
         }
 
-        // -------------------------------------------------
-        // Save the modified document as HTML preserving layout
-        // -------------------------------------------------
+        // 6. Export the modified document to HTML while preserving layout
         loadedDoc.Save(outputHtmlPath, SaveFormat.Html);
 
-        // -------------------------------------------------
-        // Validate that the HTML file was created
-        // -------------------------------------------------
+        // 7. Validate that the HTML output was created
         if (!File.Exists(outputHtmlPath))
-            throw new Exception("HTML output was not created.");
+            throw new Exception("HTML output file was not created.");
 
-        // Clean up temporary files (optional)
-        // File.Delete(imagePath);
-        // File.Delete(inputDocPath);
+        // Optional: Indicate success (no interactive prompts)
+        Console.WriteLine("Processing completed successfully.");
+    }
+
+    private static void CreateSampleImage(string path, int width, int height, Aspose.Drawing.Color backgroundColor)
+    {
+        using (Bitmap bitmap = new Bitmap(width, height))
+        {
+            using (Graphics graphics = Graphics.FromImage(bitmap))
+            {
+                graphics.Clear(backgroundColor);
+                // Draw a simple border
+                using (Pen pen = new Pen(Aspose.Drawing.Color.Black, 5))
+                {
+                    graphics.DrawRectangle(pen, 0, 0, width - 1, height - 1);
+                }
+            }
+            // Save as PNG
+            bitmap.Save(path, ImageFormat.Png);
+        }
+
+        // Validate that the image file exists
+        if (!File.Exists(path))
+            throw new Exception($"Failed to create image file: {path}");
+    }
+
+    private static void DeleteIfExists(string path)
+    {
+        if (File.Exists(path))
+            File.Delete(path);
     }
 }

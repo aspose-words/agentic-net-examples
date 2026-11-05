@@ -1,57 +1,67 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Person
+namespace LinqReportingExample
 {
-    public string Name { get; set; } = "";
-    public int Age { get; set; }
-}
-
-public class ReportModel
-{
-    public List<Person> Persons { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main()
+    // Data model classes
+    public class Item
     {
-        // Create a DOCX template with LINQ Reporting tags.
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
+        public string Name { get; set; } = string.Empty;
+        public int Quantity { get; set; }
+    }
 
-        builder.Writeln("Persons Report");
-        builder.Writeln("<<foreach [person in Persons]>>");
-        builder.Writeln("Name: <<[person.Name]>>   Age: <<[person.Age]>>");
-        builder.Writeln("<</foreach>>");
+    public class Model
+    {
+        public List<Item> Items { get; set; } = new();
+    }
 
-        // Save the template to disk.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
-
-        // Load the template for report generation.
-        var doc = new Document(templatePath);
-
-        // Prepare sample data.
-        var model = new ReportModel
+    public class Program
+    {
+        public static void Main()
         {
-            Persons = new List<Person>
+            // Register code page provider (required for some encodings)
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Prepare sample data
+            Model model = new()
             {
-                new Person { Name = "Alice", Age = 30 },
-                new Person { Name = "Bob", Age = 25 },
-                new Person { Name = "Charlie", Age = 28 }
-            }
-        };
+                Items = new()
+                {
+                    new Item { Name = "Apple", Quantity = 5 },
+                    new Item { Name = "Banana", Quantity = 3 },
+                    new Item { Name = "Cherry", Quantity = 12 }
+                }
+            };
 
-        // Build the report using the LINQ Reporting engine.
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        bool success = engine.BuildReport(doc, model, "model");
+            // Create template document with LINQ Reporting tags
+            string templatePath = "Template.docx";
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Save the generated report.
-        const string reportPath = "Report.docx";
-        doc.Save(reportPath);
+            builder.Writeln("Items Report");
+            builder.Writeln("<<foreach [item in Items]>>");
+            builder.Writeln("- <<[item.Name]>>: <<[item.Quantity]>>");
+            builder.Writeln("<</foreach>>");
+
+            templateDoc.Save(templatePath);
+
+            // Load the template for report generation
+            Document reportDoc = new Document(templatePath);
+
+            // Build the report using the model as the root object named "model"
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(reportDoc, model, "model");
+
+            // Save the generated report
+            string outputPath = "Report.docx";
+            reportDoc.Save(outputPath);
+
+            // Indicate completion (no interactive input)
+            Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+        }
     }
 }

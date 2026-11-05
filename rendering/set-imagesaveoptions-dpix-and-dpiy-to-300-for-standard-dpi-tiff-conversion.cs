@@ -7,31 +7,26 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple document with one paragraph.
+        // Define output file path
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.tiff");
+
+        // Create a simple document
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello, Aspose.Words TIFF rendering with 300 DPI.");
+        builder.Writeln("Sample text for TIFF rendering.");
 
-        // Path for the output TIFF file.
-        string outputPath = "output.tiff";
-
-        // Configure ImageSaveOptions for TIFF format with 300 DPI.
+        // Configure image save options for TIFF with 300 DPI.
+        // In Aspose.Words the DPI is set via the Resolution property (applies to both X and Y).
         ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            // The Resolution property sets both DpiX and DpiY.
             Resolution = 300
         };
 
-        // Save the document as a TIFF image.
+        // Save the document as a TIFF image
         doc.Save(outputPath, saveOptions);
 
-        // Verify that the TIFF file was created.
+        // Verify that the file was created
         if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException("Failed to create the TIFF file.");
-        }
-
-        // Output the location and size of the generated file.
-        Console.WriteLine($"TIFF saved to: {Path.GetFullPath(outputPath)} (Size: {new FileInfo(outputPath).Length} bytes)");
+            throw new InvalidOperationException("TIFF file was not created.");
     }
 }

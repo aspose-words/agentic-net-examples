@@ -3,52 +3,64 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Aspose.Words;
+using Aspose.Words.Reporting;
+
+public class ReportModel
+{
+    public string BookmarkName { get; set; } = "";
+    public string Title { get; set; } = "";
+}
 
 public class Program
 {
     public static void Main()
     {
         // Prepare file paths.
-        string folder = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(folder);
-        string docPath = Path.Combine(folder, "GeneratedDocument.docx");
+        string templatePath = "template.docx";
+        string outputPath = "output.docx";
 
-        // Create a new document and add bookmarks.
-        Document doc = new();
-        DocumentBuilder builder = new(doc);
+        // 1. Create a template document with a bookmark tag.
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("<<bookmark [model.BookmarkName]>>");
+        builder.Writeln("<<[model.Title]>>");
+        builder.Writeln("<</bookmark>>");
+        templateDoc.Save(templatePath);
 
-        // First bookmark.
-        builder.Writeln("This is the first paragraph.");
-        builder.StartBookmark("FirstBookmark");
-        builder.Writeln("Content inside first bookmark.");
-        builder.EndBookmark("FirstBookmark");
+        // 2. Load the template for reporting.
+        Document doc = new Document(templatePath);
 
-        // Second bookmark.
-        builder.Writeln("This is the second paragraph.");
-        builder.StartBookmark("SecondBookmark");
-        builder.Writeln("Content inside second bookmark.");
-        builder.EndBookmark("SecondBookmark");
+        // 3. Prepare the data model.
+        ReportModel model = new ReportModel
+        {
+            BookmarkName = "SampleBookmark",
+            Title = "Hello World"
+        };
 
-        // Save the document.
-        doc.Save(docPath);
+        // 4. Build the report using LINQ Reporting engine.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-        // Load the document back (demonstrating load step).
-        Document loadedDoc = new(docPath);
+        // 5. Save the generated document.
+        doc.Save(outputPath);
 
-        // Extract bookmark names.
-        List<string> actualBookmarkNames = loadedDoc.Range.Bookmarks
+        // 6. Extract bookmark names from the generated document.
+        List<string> actualBookmarks = doc.Range.Bookmarks
             .Select(b => b.Name)
             .ToList();
 
-        // Expected bookmark names.
-        List<string> expectedBookmarkNames = new() { "FirstBookmark", "SecondBookmark" };
+        // 7. Define expected bookmark names.
+        List<string> expectedBookmarks = new() { "SampleBookmark" };
 
-        // Compare (order‑independent).
-        bool match = actualBookmarkNames.OrderBy(n => n).SequenceEqual(expectedBookmarkNames.OrderBy(n => n));
+        // 8. Verify that the actual bookmarks match the expected ones.
+        bool match = actualBookmarks.SequenceEqual(expectedBookmarks);
+        Console.WriteLine($"Bookmarks match: {match}");
 
-        // Output verification result.
-        Console.WriteLine($"Bookmark extraction {(match ? "succeeded" : "failed")}.");
-        Console.WriteLine("Expected: " + string.Join(", ", expectedBookmarkNames));
-        Console.WriteLine("Actual:   " + string.Join(", ", actualBookmarkNames));
+        // Optional: print the extracted bookmark names.
+        Console.WriteLine("Extracted bookmarks:");
+        foreach (string name in actualBookmarks)
+        {
+            Console.WriteLine($"- {name}");
+        }
     }
 }

@@ -6,28 +6,28 @@ public class Program
 {
     public static void Main()
     {
-        // Folder containing Word documents
-        string folderPath = Path.Combine(Directory.GetCurrentDirectory(), "WordDocs");
-        // Path to the Excel file to embed
-        string excelPath = Path.Combine(Directory.GetCurrentDirectory(), "Sample.xlsx");
+        string baseDir = Directory.GetCurrentDirectory();
+        string docsFolder = Path.Combine(baseDir, "Docs");
+        Directory.CreateDirectory(docsFolder);
 
-        // Ensure the folder exists
-        if (!Directory.Exists(folderPath))
-        {
-            Console.WriteLine($"Folder not found: {folderPath}");
-            return;
-        }
-
-        // Ensure the Excel file exists
+        string excelPath = Path.Combine(baseDir, "Sample.xlsx");
         if (!File.Exists(excelPath))
         {
-            Console.WriteLine($"Excel file not found: {excelPath}");
-            return;
+            // Create a minimal empty Excel file (just an empty zip structure)
+            File.WriteAllBytes(excelPath, new byte[] { });
         }
 
-        // Create Word Application via late binding (no compile‑time reference to Interop)
-        Type wordAppType = Type.GetTypeFromProgID("Word.Application");
-        if (wordAppType == null)
+        // Ensure there is at least one Word document to process
+        string[] existingDocs = Directory.GetFiles(docsFolder, "*.docx");
+        if (existingDocs.Length == 0)
+        {
+            CreateSampleWordDocument(Path.Combine(docsFolder, "Document1.docx"));
+            CreateSampleWordDocument(Path.Combine(docsFolder, "Document2.docx"));
+        }
+
+        // Start Word application via COM
+        Type wordType = Type.GetTypeFromProgID("Word.Application");
+        if (wordType == null)
         {
             Console.WriteLine("Microsoft Word is not installed on this machine.");
             return;
@@ -36,72 +36,39 @@ public class Program
         dynamic wordApp = null;
         try
         {
-            wordApp = Activator.CreateInstance(wordAppType);
+            wordApp = Activator.CreateInstance(wordType);
             wordApp.Visible = false;
 
-            foreach (string docPath in Directory.GetFiles(folderPath, "*.docx"))
+            string[] docFiles = Directory.GetFiles(docsFolder, "*.docx");
+            foreach (string docPath in docFiles)
             {
-                dynamic doc = null;
+                dynamic document = null;
                 try
                 {
-                    // Open the document (ReadOnly = false, Visible = false)
-                    object readOnly = false;
-                    object isVisible = false;
-                    object missing = Type.Missing;
+                    // Open the document (ReadOnly: false, Visible: false)
+                    document = wordApp.Documents.Open(docPath, ReadOnly: false, Visible: false);
 
-                    doc = wordApp.Documents.Open(
-                        docPath,
-                        ref missing,          // ConfirmConversions
-                        ref readOnly,         // ReadOnly
-                        ref missing,          // AddToRecentFiles
-                        ref missing,          // PasswordDocument
-                        ref missing,          // PasswordTemplate
-                        ref missing,          // Revert
-                        ref missing,          // WritePasswordDocument
-                        ref missing,          // WritePasswordTemplate
-                        ref missing,          // Format
-                        ref missing,          // Encoding
-                        ref isVisible,        // Visible
-                        ref missing,          // OpenAndRepair
-                        ref missing,          // DocumentDirection
-                        ref missing,          // NoEncodingDialog
-                        ref missing);         // XMLTransform
-
-                    // Get a range at the end of the document
-                    dynamic range = doc.Content;
-                    // wdCollapseEnd = 0
+                    // Get the end of the document content
+                    dynamic range = document.Content;
+                    // Collapse to the end (wdCollapseEnd = 0)
                     range.Collapse(0);
 
-                    // Prepare parameters for AddOLEObject
-                    object classType = "Excel.Sheet";
-                    object fileName = excelPath;
-                    object linkToFile = false;
-                    object displayAsIcon = false;
-                    object iconFileName = missing;
-                    object iconIndex = missing;
-                    object iconLabel = missing;
-                    object oleRange = range;
-
                     // Insert the Excel OLE object
-                    dynamic ole = doc.InlineShapes.AddOLEObject(
-                        classType,
-                        fileName,
-                        linkToFile,
-                        displayAsIcon,
-                        iconFileName,
-                        iconIndex,
-                        iconLabel,
-                        oleRange);
+                    range.InlineShapes.AddOLEObject(
+                        Class: "Excel.Sheet",
+                        FileName: excelPath,
+                        LinkToFile: false,
+                        DisplayAsIcon: false);
 
                     // Save and close the document
-                    doc.Save();
+                    document.Save();
+                    document.Close();
                 }
                 finally
                 {
-                    if (doc != null)
+                    if (document != null && Marshal.IsComObject(document))
                     {
-                        doc.Close();
-                        Marshal.FinalReleaseComObject(doc);
+                        Marshal.FinalReleaseComObject(document);
                     }
                 }
             }
@@ -114,7 +81,33 @@ public class Program
                 Marshal.FinalReleaseComObject(wordApp);
             }
         }
+    }
 
-        Console.WriteLine("Processing completed.");
+    private static void CreateSampleWordDocument(string filePath)
+    {
+        Type wordType = Type.GetTypeFromProgID("Word.Application");
+        if (wordType == null) return;
+
+        dynamic wordApp = null;
+        dynamic doc = null;
+        try
+        {
+            wordApp = Activator.CreateInstance(wordType);
+            wordApp.Visible = false;
+            doc = wordApp.Documents.Add();
+            doc.Content.Text = "Sample document created for OLE insertion test.";
+            doc.SaveAs2(filePath);
+            doc.Close();
+        }
+        finally
+        {
+            if (doc != null && Marshal.IsComObject(doc))
+                Marshal.FinalReleaseComObject(doc);
+            if (wordApp != null)
+            {
+                wordApp.Quit();
+                Marshal.FinalReleaseComObject(wordApp);
+            }
+        }
     }
 }

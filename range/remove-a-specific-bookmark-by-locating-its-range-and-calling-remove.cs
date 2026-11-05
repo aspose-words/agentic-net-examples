@@ -5,34 +5,28 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder.
         Document doc = new Document();
-
-        // Build a simple paragraph with a bookmark.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a paragraph before the bookmark.");
 
-        // Insert a bookmark named "MyBookmark" around some text.
+        // Add some text and a bookmark named "MyBookmark".
+        builder.Writeln("Hello world.");
         builder.StartBookmark("MyBookmark");
-        builder.Writeln("This text is inside the bookmark.");
+        builder.Writeln("This is bookmarked text.");
         builder.EndBookmark("MyBookmark");
 
-        builder.Writeln("This is a paragraph after the bookmark.");
+        // Save the original document (optional, just for reference).
+        doc.Save("Original.docx");
 
-        // Save the document before removing the bookmark (optional verification step).
-        string beforePath = "DocumentBeforeRemoval.docx";
-        doc.Save(beforePath);
-
-        // Locate the specific bookmark by name.
+        // Locate the bookmark by its name.
         Bookmark bookmark = doc.Range.Bookmarks["MyBookmark"];
         if (bookmark != null)
         {
-            // Remove the bookmark by calling its Remove method.
+            // Remove the bookmark using its Remove method.
             bookmark.Remove();
         }
 
         // Save the document after the bookmark has been removed.
-        string afterPath = "DocumentAfterRemoval.docx";
-        doc.Save(afterPath);
+        doc.Save("AfterRemoval.docx");
     }
 }

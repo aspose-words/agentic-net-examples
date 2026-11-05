@@ -1,67 +1,125 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
 using Newtonsoft.Json;
+
+public class Order
+{
+    public int OrderId { get; set; } = 0;
+    public string CustomerName { get; set; } = "";
+    public List<OrderItem> Items { get; set; } = new();
+}
+
+public class OrderItem
+{
+    public string ProductName { get; set; } = "";
+    public int Quantity { get; set; } = 0;
+    public decimal UnitPrice { get; set; } = 0m;
+}
+
+public class RootData
+{
+    public List<Order> Orders { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words (required for some encodings)
+        // Register code page provider for Aspose.Words.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Sample JSON data: an array of orders, each with a list of items.
+        // Sample JSON data.
         string json = @"
 [
   {
-    ""Id"": 1,
-    ""CustomerName"": ""Alice"",
+    ""OrderId"": 1001,
+    ""CustomerName"": ""Alice Smith"",
     ""Items"": [
-      { ""ProductName"": ""Widget"", ""Quantity"": 2, ""UnitPrice"": 10.5 },
-      { ""ProductName"": ""Gadget"", ""Quantity"": 1, ""UnitPrice"": 20.0 }
+      { ""ProductName"": ""Widget A"", ""Quantity"": 2, ""UnitPrice"": 9.99 },
+      { ""ProductName"": ""Widget B"", ""Quantity"": 1, ""UnitPrice"": 19.95 }
     ]
   },
   {
-    ""Id"": 2,
-    ""CustomerName"": ""Bob"",
+    ""OrderId"": 1002,
+    ""CustomerName"": ""Bob Johnson"",
     ""Items"": [
-      { ""ProductName"": ""Thing"", ""Quantity"": 5, ""UnitPrice"": 3.0 }
+      { ""ProductName"": ""Gadget X"", ""Quantity"": 5, ""UnitPrice"": 4.50 },
+      { ""ProductName"": ""Gadget Y"", ""Quantity"": 3, ""UnitPrice"": 7.25 }
     ]
   }
 ]";
+        // Write JSON to a file.
+        const string jsonPath = "orders.json";
+        File.WriteAllText(jsonPath, json, Encoding.UTF8);
 
-        // Create a template document programmatically.
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Deserialize JSON.
+        var orders = JsonConvert.DeserializeObject<List<Order>>(File.ReadAllText(jsonPath, Encoding.UTF8)) ?? new();
+        var root = new RootData { Orders = orders };
 
-        // Insert a foreach loop over the orders array.
-        builder.Writeln("<<foreach [order in orders]>>");
-        builder.Writeln("Order ID: <<[order.Id]>>");
+        // Create the template document.
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+
+        builder.Writeln("Orders Report");
+        builder.Writeln();
+
+        // Begin foreach over orders.
+        builder.Writeln("<<foreach [order in Orders]>>");
+        builder.Writeln("Order ID: <<[order.OrderId]>>");
         builder.Writeln("Customer: <<[order.CustomerName]>>");
-        // Inline arithmetic expression calculates total amount for each order.
-        builder.Writeln("Total Amount: <<[order.Items.Sum(i => i.Quantity * i.UnitPrice)]>>");
+        builder.Writeln("Items:");
+
+        // Begin foreach over items – the table is created inside this block.
+        builder.Writeln("<<foreach [item in order.Items]>>");
+
+        // Start table for the current order's items.
+        Table table = builder.StartTable();
+
+        // Header row.
+        builder.InsertCell(); builder.Writeln("Product");
+        builder.InsertCell(); builder.Writeln("Qty");
+        builder.InsertCell(); builder.Writeln("Unit Price");
+        builder.InsertCell(); builder.Writeln("Line Total");
+        builder.EndRow();
+
+        // Data row for the current item.
+        builder.InsertCell(); builder.Writeln("<<[item.ProductName]>>");
+        builder.InsertCell(); builder.Writeln("<<[item.Quantity]>>");
+        builder.InsertCell(); builder.Writeln("<<[item.UnitPrice]>>");
+        builder.InsertCell(); builder.Writeln("<<[item.Quantity * item.UnitPrice]>>");
+        builder.EndRow();
+
+        // End table for this item.
+        builder.EndTable();
+
+        // End inner foreach (items).
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
-        string templatePath = "template.docx";
+        // Total amount per order.
+        builder.Writeln("Total Amount: <<[order.Items.Sum(i => i.Quantity * i.UnitPrice)]>>");
+        builder.Writeln(); // Blank line between orders.
+
+        // End outer foreach (orders).
+        builder.Writeln("<</foreach>>");
+
+        // Save the template.
+        const string templatePath = "template.docx";
         templateDoc.Save(templatePath);
 
-        // Load the template back for reporting.
-        Document reportDoc = new Document(templatePath);
+        // Load the template for reporting.
+        var doc = new Document(templatePath);
 
-        // Create a JSON data source from the JSON string using a memory stream.
-        using MemoryStream jsonStream = new MemoryStream(Encoding.UTF8.GetBytes(json));
-        JsonDataSource jsonDataSource = new JsonDataSource(jsonStream);
+        // Build the report.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, root, "root");
 
-        // Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        // The root name "orders" matches the array name used in the template tags.
-        engine.BuildReport(reportDoc, jsonDataSource, "orders");
-
-        // Save the generated report.
-        string outputPath = "report.docx";
-        reportDoc.Save(outputPath);
+        // Save the final report.
+        const string outputPath = "report.docx";
+        doc.Save(outputPath);
     }
 }

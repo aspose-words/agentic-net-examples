@@ -6,52 +6,99 @@ public class OlePackageDemo
 {
     public static void Main()
     {
-        string tempFile = Path.Combine(Path.GetTempPath(), "OlePackageDemo.tmp");
-        string originalFileName = "sample.txt";
+        // Create a temporary source file
+        string tempDir = Path.GetTempPath();
+        string sourceFileName = "source.txt";
+        string sourcePath = Path.Combine(tempDir, sourceFileName);
+        File.WriteAllText(sourcePath, "Sample content for OLE package demo.");
 
-        // 1. Create a minimal Ole10Native binary file containing the file name.
-        CreateOlePackage(tempFile, originalFileName);
+        // Build a simple Ole10Native stream that mimics an OLE package
+        byte[] oleStream = BuildOle10NativeStream(sourcePath);
 
-        // 2. Read the file name back from the binary file.
-        string extractedFileName = ReadFileNameFromOlePackage(tempFile);
+        // Write the stream to a package file (for demo purposes)
+        string packagePath = Path.Combine(tempDir, "package.bin");
+        File.WriteAllBytes(packagePath, oleStream);
 
-        // 3. Compare and output result.
-        bool match = string.Equals(originalFileName, extractedFileName, StringComparison.Ordinal);
-        Console.WriteLine($"Original:  {originalFileName}");
-        Console.WriteLine($"Extracted: {extractedFileName}");
-        Console.WriteLine($"Match: {match}");
+        // Read the filename property from the package
+        string extractedFileName = ExtractFileNameFromOle10Native(packagePath);
 
-        // Clean up
-        try { File.Delete(tempFile); } catch { }
+        // Compare with the original source file name
+        bool isMatch = string.Equals(extractedFileName, sourceFileName, StringComparison.OrdinalIgnoreCase);
+        Console.WriteLine(isMatch ? "Match" : "Mismatch");
+
+        // Clean up temporary files
+        try { File.Delete(sourcePath); } catch { }
+        try { File.Delete(packagePath); } catch { }
     }
 
-    private static void CreateOlePackage(string filePath, string fileName)
+    private static byte[] BuildOle10NativeStream(string sourcePath)
     {
-        // Build Ole10Native data (simplified: only file name, no source/temp paths, no file data)
-        byte[] fileNameBytes = Encoding.Default.GetBytes(fileName);
-        int nameLen = fileNameBytes.Length + 1; // include terminating null
+        // Ole10Native format (simplified):
+        // DWORD totalSize
+        // DWORD unknown (0)
+        // DWORD fileNameLength (bytes, Unicode)
+        // Unicode file name + null terminator
+        // DWORD sourcePathLength (bytes, Unicode)
+        // Unicode source path + null terminator
+        // DWORD tempPathLength (bytes, Unicode) - set to 0
+        // DWORD fileDataLength
+        // file data bytes
 
-        using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None))
-        using (var bw = new BinaryWriter(fs, Encoding.Default, true))
+        string fileName = Path.GetFileName(sourcePath);
+        string sourcePathUnicode = sourcePath;
+        byte[] fileNameBytes = Encoding.Unicode.GetBytes(fileName + "\0");
+        byte[] sourcePathBytes = Encoding.Unicode.GetBytes(sourcePathUnicode + "\0");
+        byte[] fileData = File.ReadAllBytes(sourcePath);
+        int fileDataLength = fileData.Length;
+
+        using (var ms = new MemoryStream())
+        using (var bw = new BinaryWriter(ms, Encoding.Unicode, true))
         {
-            bw.Write(nameLen);                     // DWORD: length of file name (including null)
-            bw.Write(fileNameBytes);               // file name bytes
-            bw.Write((byte)0);                     // null terminator
-            bw.Write(0);                           // DWORD: length of source path (0)
-            bw.Write(0);                           // DWORD: length of temporary path (0)
-            // No file data follows in this minimal example
+            // Placeholder for totalSize (will fill later)
+            bw.Write(0u);
+            bw.Write(0u); // unknown
+
+            bw.Write((uint)fileNameBytes.Length);
+            bw.Write(fileNameBytes);
+
+            bw.Write((uint)sourcePathBytes.Length);
+            bw.Write(sourcePathBytes);
+
+            bw.Write(0u); // tempPathLength (no temp path)
+
+            bw.Write((uint)fileDataLength);
+            bw.Write(fileData);
+
+            // Calculate totalSize (size of the rest of the structure)
+            uint totalSize = (uint)(ms.Length - 4);
+            ms.Position = 0;
+            bw.Write(totalSize);
+
+            return ms.ToArray();
         }
     }
 
-    private static string ReadFileNameFromOlePackage(string filePath)
+    private static string ExtractFileNameFromOle10Native(string packagePath)
     {
-        using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-        using (var br = new BinaryReader(fs, Encoding.Default, true))
+        using (var fs = new FileStream(packagePath, FileMode.Open, FileAccess.Read))
+        using (var br = new BinaryReader(fs, Encoding.Unicode))
         {
-            int nameLen = br.ReadInt32();               // includes null terminator
-            byte[] nameBytes = br.ReadBytes(nameLen);   // read the name + null
-            string extractedName = Encoding.Default.GetString(nameBytes).TrimEnd('\0');
-            return extractedName;
+            // Read totalSize (ignore)
+            br.ReadUInt32();
+
+            // Read unknown
+            br.ReadUInt32();
+
+            // Read file name length (in bytes)
+            uint fileNameLength = br.ReadUInt32();
+            byte[] fileNameBytes = br.ReadBytes((int)fileNameLength);
+            string fileName = Encoding.Unicode.GetString(fileNameBytes);
+            // Trim the terminating null character if present
+            int nullIndex = fileName.IndexOf('\0');
+            if (nullIndex >= 0)
+                fileName = fileName.Substring(0, nullIndex);
+
+            return fileName;
         }
     }
 }

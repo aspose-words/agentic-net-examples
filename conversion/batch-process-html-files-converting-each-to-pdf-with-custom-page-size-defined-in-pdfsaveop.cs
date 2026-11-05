@@ -3,57 +3,63 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class BatchHtmlToPdf
+public class Program
 {
     public static void Main()
     {
         // Define input and output folders.
-        string inputFolder = "InputHtml";
-        string outputFolder = "OutputPdf";
+        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "HtmlInput");
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "PdfOutput");
 
-        // Ensure folders exist.
+        // Ensure clean environment.
+        if (Directory.Exists(inputFolder))
+            Directory.Delete(inputFolder, true);
+        if (Directory.Exists(outputFolder))
+            Directory.Delete(outputFolder, true);
+
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
         // Create sample HTML files.
-        string html1Path = Path.Combine(inputFolder, "sample1.html");
-        string html2Path = Path.Combine(inputFolder, "sample2.html");
-
-        File.WriteAllText(html1Path,
-            "<html><body><h1>Sample 1</h1><p>This is the first HTML file.</p></body></html>");
-        File.WriteAllText(html2Path,
-            "<html><body><h1>Sample 2</h1><p>This is the second HTML file.</p></body></html>");
-
-        // Process each HTML file in the input folder.
-        string[] htmlFiles = Directory.GetFiles(inputFolder, "*.html");
-        foreach (string htmlFile in htmlFiles)
+        for (int i = 1; i <= 3; i++)
         {
-            // Load the HTML document.
+            string htmlPath = Path.Combine(inputFolder, $"sample{i}.html");
+            string htmlContent = $"<html><body><h1>Sample {i}</h1><p>This is HTML file number {i}.</p></body></html>";
+            File.WriteAllText(htmlPath, htmlContent);
+        }
+
+        // Process each HTML file and convert to PDF with custom page size.
+        foreach (string htmlFile in Directory.GetFiles(inputFolder, "*.html"))
+        {
+            // Load HTML document.
             Document doc = new Document(htmlFile);
 
-            // Set a custom page size (A5: 420x595 points) for the first section.
-            // Aspose.Words uses points for page dimensions.
-            Section firstSection = doc.FirstSection;
-            if (firstSection != null)
-            {
-                PageSetup pageSetup = firstSection.PageSetup;
-                pageSetup.PageWidth = 420;   // Width in points.
-                pageSetup.PageHeight = 595;  // Height in points.
-            }
+            // Set a custom page size (width and height in points).
+            // Example: 500 points wide x 700 points tall.
+            doc.FirstSection.PageSetup.PageWidth = 500f;
+            doc.FirstSection.PageSetup.PageHeight = 700f;
+
+            // Prepare PDF save options (no special options needed beyond defaults).
+            PdfSaveOptions pdfOptions = new PdfSaveOptions();
 
             // Determine output PDF path.
             string pdfFileName = Path.GetFileNameWithoutExtension(htmlFile) + ".pdf";
             string pdfPath = Path.Combine(outputFolder, pdfFileName);
 
-            // Save the document as PDF.
-            doc.Save(pdfPath, SaveFormat.Pdf);
+            // Save as PDF.
+            doc.Save(pdfPath, pdfOptions);
 
             // Validate that the PDF was created.
             if (!File.Exists(pdfPath))
-                throw new InvalidOperationException($"Expected PDF file was not created: {pdfPath}");
+                throw new InvalidOperationException($"PDF file was not created: {pdfPath}");
         }
 
-        // Indicate completion.
-        Console.WriteLine("Batch conversion completed successfully.");
+        // Final validation: ensure at least one PDF exists.
+        string[] pdfFiles = Directory.GetFiles(outputFolder, "*.pdf");
+        if (pdfFiles.Length == 0)
+            throw new InvalidOperationException("No PDF files were generated.");
+
+        // Example completed successfully.
+        Console.WriteLine("Batch HTML to PDF conversion completed.");
     }
 }

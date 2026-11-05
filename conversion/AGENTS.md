@@ -10,34 +10,30 @@ product: Aspose.Words
 
 ## Purpose
 
-This folder is a live, curated example set for Conversion scenarios. Treat every `.cs` file as a standalone console application. The goal is correct, warning-free examples that use documented Aspose APIs and match the original task intent.
+Provide concise, version-aware code snippets that load a source document or image, apply the appropriate Aspose.Words SaveFormat or SaveOptions, validate the generated output, and terminate without external dependencies, enabling an AI coding agent to generate reliable conversion solutions.
 
 ## Non-negotiable conventions
 
-- Use native Aspose.Words conversion APIs directly.
-- Bootstrap local input files or documents whenever the task implies an existing source file, folder, stream, or source format.
-- Use `Aspose.Drawing`, not `System.Drawing`, when drawing-related types are needed.
-- For drawing fonts, prefer explicit declarations such as `Aspose.Drawing.Font font = new Aspose.Drawing.Font(...)`.
-- For response-stream tasks, simulate the response with a `MemoryStream`; do not start a real server or listener.
-- Guard maybe-null values to avoid nullable-reference warnings such as `CS8600`, `CS8602`, and `CS8604`.
+- Do not use System.Drawing in this category.
+- Do not assume input files already exist; bootstrap them locally when needed.
+- Do not start a real web server or HTTP listener for response-stream tasks.
+- Do not use an incorrect SaveFormat for the requested output extension.
+- Bootstrap local sample inputs for existing-file, folder, stream, image, and data workflows.
+- Prefer simple, verifiable workflows over speculative formatting shortcuts.
 
 ## Recommended workflow selection
 
-- Input Bootstrap workflow: 30 examples
-- Stream Response workflow: 8 examples
-- Batch Bootstrap workflow: 24 examples
-- Native Conversion Api workflow: 22 examples
-- Save Options workflow: 24 examples
+- **Input Bootstrap workflow**: 30 examples
+- **Stream Response workflow**: 8 examples
+- **Batch Bootstrap workflow**: 24 examples
+- **Native Conversion API workflow**: 22 examples
+- **Save Options workflow**: 24 examples
 
 Use the simplest workflow that satisfies the task.
 
 ## Validation priorities
 
-1. The code must compile and run without manual input.
-2. API usage must be supported by the configured package versions.
-3. Exported outputs must actually be written by the example.
-4. Validation scenarios must inspect only the behavior requested by the task.
-5. Examples that depend on files, folders, streams, images, or data should bootstrap those inputs locally during the example run.
+1. Confirm that the output file or stream is created and non-empty before the program terminates.
 
 ## File-to-task reference
 
@@ -90,7 +86,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Save a PDF as PDF/UA compliant file by configuring PdfSaveOptions.Compliance to PdfCompliance.Ua.
   - Workflow: save-options
   - Outputs: pdf
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `load-a-pdf-and-export-it-to-docx-format-for-further-editing-using-saveformat-docx.cs`
   - Task: Load a PDF and export it to DOCX format for further editing using SaveFormat.Docx.
   - Workflow: save-options
@@ -120,12 +116,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Enable ExportRoundTripInfo when saving DOCX to HTML to retain editing capabilities after round-trip.
   - Workflow: input-bootstrap
   - Outputs: docx, html
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `export-fonts-as-separate-files-while-saving-a-document-to-html-by-setting-exportfontresour.cs`
   - Task: Export fonts as separate files while saving a document to HTML by setting ExportFontResources true.
   - Workflow: input-bootstrap
   - Outputs: html
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `convert-a-docx-file-to-mhtml-format-automatically-embedding-images-and-fonts-within-the-ou.cs`
   - Task: Convert a DOCX file to MHTML format, automatically embedding images and fonts within the output.
   - Workflow: input-bootstrap
@@ -160,7 +156,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Stream a large PDF directly to a MemoryStream as PDF/A-2b without loading the entire file into memory.
   - Workflow: stream-response
   - Outputs: pdf
-  - Selected engine: mcp
+  - Selected engine: llm
 - `convert-multiple-image-files-png-jpeg-into-a-single-pdf-document-using-documentbuilder-and.cs`
   - Task: Convert multiple image files (PNG, JPEG) into a single PDF document using DocumentBuilder and InsertImage.
   - Workflow: batch-bootstrap
@@ -180,7 +176,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Convert an XPS document to PDF by loading XPS and saving with SaveFormat.Pdf.
   - Workflow: native-conversion-api
   - Outputs: pdf, xps
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `batch-convert-all-html-files-in-a-directory-to-mhtml-embedding-resources-automatically-for.cs`
   - Task: Batch convert all HTML files in a directory to MHTML, embedding resources automatically for each file.
   - Workflow: batch-bootstrap
@@ -220,7 +216,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Batch process PDFs to generate JPEG thumbnails of the first page using JpegSaveOptions with low quality.
   - Workflow: batch-bootstrap
   - Outputs: pdf, jpeg
-  - Selected engine: mcp
+  - Selected engine: llm
 - `convert-a-docx-to-pdf-and-embed-a-custom-font-by-setting-fontembeddingmode-to-embedallfont.cs`
   - Task: Convert a DOCX to PDF and embed a custom font by setting FontEmbeddingMode to EmbedAllFonts.
   - Workflow: native-conversion-api
@@ -230,7 +226,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Save a PDF as PDF/A-3b with embedded XML metadata using PdfSaveOptions.CustomMetadataExport for archival.
   - Workflow: input-bootstrap
   - Outputs: pdf, xml
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `convert-a-large-docx-to-pdf-using-streaming-to-minimize-memory-consumption-during-conversi.cs`
   - Task: Convert a large DOCX to PDF using streaming to minimize memory consumption during conversion.
   - Workflow: stream-response
@@ -285,7 +281,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Convert a PDF to HTML with embedded fonts as Base64 by enabling ExportEmbeddedFonts option.
   - Workflow: input-bootstrap
   - Outputs: pdf, html
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `stream-a-doc-file-directly-to-a-network-response-as-pdf-without-intermediate-storage-on-se.cs`
   - Task: Stream a DOC file directly to a network response as PDF without intermediate storage on server.
   - Workflow: stream-response
@@ -305,7 +301,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Convert a DOCX to MHTML and automatically embed all linked CSS files within the output.
   - Workflow: input-bootstrap
   - Outputs: docx, mhtml
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `save-a-pdf-as-an-image-sequence-in-png-format-with-transparent-background-using-pngsaveopt.cs`
   - Task: Save a PDF as an image sequence in PNG format with transparent background using PngSaveOptions.
   - Workflow: save-options
@@ -355,7 +351,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Export a Word document to HTML with external CSS files by disabling ExportEmbeddedCss option.
   - Workflow: input-bootstrap
   - Outputs: docx, html
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `convert-a-pdf-to-an-epub-while-preserving-chapter-hierarchy-and-navigation-metadata.cs`
   - Task: Convert a PDF to an EPUB while preserving chapter hierarchy and navigation metadata.
   - Workflow: native-conversion-api
@@ -365,7 +361,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Save a PDF as a PDF/A-1b compliant file with embedded ICC color profile using PdfSaveOptions.
   - Workflow: save-options
   - Outputs: pdf
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `load-a-docx-from-a-cloud-storage-stream-and-convert-it-to-pdf-for-client-download.cs`
   - Task: Load a DOCX from a cloud storage stream and convert it to PDF for client download.
   - Workflow: stream-response
@@ -405,12 +401,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Convert a PDF to HTML with embedded fonts as Base64 and images as external files for web use.
   - Workflow: input-bootstrap
   - Outputs: pdf, html
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `save-a-pdf-as-a-pdf-a-3u-document-and-embed-an-associated-xml-file-for-enhanced-metadata.cs`
   - Task: Save a PDF as a PDF/A-3u document and embed an associated XML file for enhanced metadata.
   - Workflow: input-bootstrap
   - Outputs: pdf, xml
-  - Selected engine: mcp
+  - Selected engine: llm
 - `batch-convert-a-collection-of-html-files-to-mhtml-ensuring-all-linked-resources-are-embedd.cs`
   - Task: Batch convert a collection of HTML files to MHTML, ensuring all linked resources are embedded automatically.
   - Workflow: batch-bootstrap
@@ -450,7 +446,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Batch process DOCX files, applying a company-wide header before converting each to PDF for distribution.
   - Workflow: batch-bootstrap
   - Outputs: pdf, docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `save-a-pdf-as-an-image-sequence-in-png-format-with-lossless-compression-for-archival-purpo.cs`
   - Task: Save a PDF as an image sequence in PNG format with lossless compression for archival purposes.
   - Workflow: native-conversion-api
@@ -475,17 +471,17 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply a custom PDF/A-2b compliance level when converting DOC to PDF using PdfSaveOptions.
   - Workflow: save-options
   - Outputs: pdf
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `convert-a-pdf-to-a-searchable-pdf-a-1a-by-enabling-ocr-and-setting-appropriate-compliance.cs`
   - Task: Convert a PDF to a searchable PDF/A-1a by enabling OCR and setting appropriate compliance.
   - Workflow: save-options
   - Outputs: pdf
-  - Selected engine: mcp
+  - Selected engine: llm
 - `save-a-docx-as-html-with-external-javascript-disabled-to-improve-security-of-the-generated.cs`
   - Task: Save a DOCX as HTML with external JavaScript disabled to improve security of the generated page.
   - Workflow: input-bootstrap
   - Outputs: docx, html
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `batch-convert-multiple-png-images-to-a-single-pdf-arranging-each-image-on-a-separate-page.cs`
   - Task: Batch convert multiple PNG images to a single PDF, arranging each image on a separate page.
   - Workflow: batch-bootstrap
@@ -495,7 +491,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Load a PDF and convert it to an XPS document while preserving annotations for review.
   - Workflow: native-conversion-api
   - Outputs: pdf, xps
-  - Selected engine: mcp
+  - Selected engine: llm
 - `convert-a-docx-to-mhtml-and-then-embed-it-in-an-email-body-using-aspose-email-html-body-su.cs`
   - Task: Convert a DOCX to MHTML and then embed it in an email body using Aspose.Email HTML body support.
   - Workflow: input-bootstrap
@@ -505,7 +501,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Save a PDF as a PDF/A-3u file and attach an associated XML metadata file for compliance.
   - Workflow: input-bootstrap
   - Outputs: pdf, xml
-  - Selected engine: mcp
+  - Selected engine: llm
 - `batch-process-html-files-converting-each-to-pdf-with-custom-page-size-defined-in-pdfsaveop.cs`
   - Task: Batch process HTML files, converting each to PDF with custom page size defined in PdfSaveOptions.
   - Workflow: batch-bootstrap
@@ -540,7 +536,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Load a PDF with password protection, provide password via PdfLoadOptions, and convert to PNG without errors.
   - Workflow: save-options
   - Outputs: pdf, png
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `load-multiple-pdf-files-from-a-list-convert-each-to-docx-and-write-results-to-an-output-fo.cs`
   - Task: Load multiple PDF files from a list, convert each to DOCX, and write results to an output folder.
   - Workflow: batch-bootstrap
@@ -555,7 +551,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Export a PDF to a single high-quality JPEG image using MultiPageLayout.Horizontal and custom JpegQuality.
   - Workflow: save-options
   - Outputs: pdf, jpeg
-  - Selected engine: mcp
+  - Selected engine: llm
 - `export-a-pdf-as-a-series-of-png-files-using-pageset-to-export-only-even-numbered-pages.cs`
   - Task: Export a PDF as a series of PNG files, using PageSet to export only even-numbered pages.
   - Workflow: save-options
@@ -565,12 +561,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Export selected pages 1,4,7 of a PDF as separate PNG images with custom resolution settings.
   - Workflow: save-options
   - Outputs: pdf, png
-  - Selected engine: mcp
+  - Selected engine: llm
 - `save-a-pdf-as-markdown-extracting-images-to-a-temporary-folder-and-embedding-relative-path.cs`
   - Task: Save a PDF as Markdown, extracting images to a temporary folder and embedding relative paths in the output.
   - Workflow: batch-bootstrap
   - Outputs: pdf, md
-  - Selected engine: mcp
+  - Selected engine: llm
 - `convert-a-pdf-to-markdown-ensuring-that-all-extracted-images-are-saved-in-a-subfolder-name.cs`
   - Task: Convert a PDF to Markdown, ensuring that all extracted images are saved in a subfolder named "assets".
   - Workflow: batch-bootstrap
@@ -580,59 +576,63 @@ Use the simplest workflow that satisfies the task.
   - Task: Convert a PDF to TIFF, using LZW compression and setting ImageContrast to 10 for improved clarity.
   - Workflow: native-conversion-api
   - Outputs: pdf, tiff
-  - Selected engine: mcp
+  - Selected engine: llm
 
 ## Common failure patterns and preferred agent fixes
 
-- **System.Drawing or Font ambiguity**
-  - Symptom: Compile errors caused by System.Drawing usage or ambiguous Font references between Aspose.Drawing.Font and Aspose.Words.Font.
-  - Preferred fix: Use Aspose.Drawing only, and declare drawing fonts explicitly as Aspose.Drawing.Font.
+- **Missing API member**
+  - Symptom: Compilation fails because the referenced type, property, or enum value does not exist in the installed Aspose.Words version.
+  - Root cause: The code targets an API that was removed, renamed, or introduced in a different version of the library.
+  - Preferred fix: Reference the correct member available in the installed version or upgrade the package to a version that provides the member.
+  - Prevention: Consult the official Aspose.Words documentation for the exact version and avoid hard-coding members that may not exist.
+
+- **Enum ambiguity**
+  - Symptom: The compiler reports an ambiguous reference between System.IO.Compression.CompressionLevel and Aspose.Words.Saving.CompressionLevel.
+  - Root cause: Both namespaces define a CompressionLevel enum and the code does not qualify the intended one.
+  - Preferred fix: Fully qualify the enum with its namespace or create an alias for the Aspose.Words enum.
+  - Prevention: Always reference Aspose.Words.Saving.CompressionLevel when configuring compression options for Aspose.Words.
+
+- **System.Drawing conflict**
+  - Symptom: Compilation errors arise from ambiguous Font types between Aspose.Drawing.Font and System.Drawing.Font.
+  - Root cause: The example imports System.Drawing while also using Aspose.Drawing, causing type collisions.
+  - Preferred fix: Remove System.Drawing usage and declare fonts explicitly as Aspose.Drawing.Font.
+  - Prevention: Do not import System.Drawing in conversion samples; rely solely on Aspose.Drawing for graphics.
 
 - **Missing input bootstrap**
-  - Symptom: Conversion task assumes a DOC, DOCX, HTML, TXT, XML, folder, or other source already exists.
-  - Preferred fix: Create the local source file, source document, or input folder inside the example before loading it.
-
-- **Response-stream task hangs**
-  - Symptom: Example starts a server or waits for a request instead of finishing.
-  - Preferred fix: Simulate the response with a MemoryStream, write conversion output to it, validate length, and exit.
-
-- **Incorrect SaveFormat or extension pairing**
-  - Symptom: Output format does not match the requested target type or file extension.
-  - Preferred fix: Use the correct SaveFormat or specialized SaveOptions for the requested output.
+  - Symptom: Runtime throws a file-not-found exception because the example assumes a source file already exists.
+  - Root cause: The sample does not create the required input document or image before loading it.
+  - Preferred fix: Generate the input file locally within the example prior to loading.
+  - Prevention: Always bootstrap required input files in the code to make the example self-contained.
 
 - **Stream position or disposal issue**
-  - Symptom: Reloading or reading a stream fails because Position was not reset or the stream was disposed too early.
-  - Preferred fix: Reset MemoryStream.Position before reading and keep the stream alive until validation is complete.
+  - Symptom: Reading from a MemoryStream after saving fails because the stream position is at the end or the stream has been disposed.
+  - Root cause: The stream is not reset to position 0 or is disposed before validation.
+  - Preferred fix: Reset MemoryStream.Position to 0 and keep the stream alive until after validation is complete.
+  - Prevention: Validate stream length after resetting position and dispose the stream only after all checks are finished.
+
+- **Incorrect SaveFormat pairing**
+  - Symptom: The generated file has an extension that does not match the SaveFormat used, leading to invalid output or runtime errors.
+  - Root cause: The code selects a SaveFormat that does not correspond to the desired output type.
+  - Preferred fix: Use the SaveFormat or specialized SaveOptions that exactly matches the target file extension.
+  - Prevention: Map each target format to its corresponding SaveFormat constant before saving.
 
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.9.0`
-- Package: `Aspose.Drawing.Common` `26.8.0`
+- Primary package: `Aspose.Words` `26.10.0`
 
 ## Command reference
-
-### Create a temporary console project
 
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
+dotnet add package Aspose.Words --version 26.10.0
+dotnet add package Aspose.Drawing.Common --version 26.10.0
 ```
-
-### Add required packages
-
-```bash
-dotnet add package Aspose.Words --version 26.9.0
-dotnet add package Aspose.Drawing.Common --version 26.8.0
-```
-
-### Copy a category example into the temp project
 
 ```powershell
 Copy-Item ..\conversion\<example-file>.cs .\Program.cs
 ```
-
-### Build and run
 
 ```bash
 dotnet build --configuration Release --verbosity minimal
@@ -641,6 +641,6 @@ dotnet run --configuration Release --no-build
 
 ## Category update guidance
 
-- Preserve file-to-task traceability. Any future update should keep the original task text associated with the file in metadata.
-- When replacing a file, prefer the latest verified publish-ready version rather than a merely compiling draft.
-- Keep examples standalone, bootstrap missing inputs locally, and prefer documented Aspose APIs over speculative shortcuts.
+- Upgrade to newer Aspose.Words releases when additional API members become available and adjust code accordingly.
+- After each code change, recompile and verify that all referenced types and members exist in the current package version.
+- Keep the input-bootstrap logic synchronized with the conversion workflow to ensure examples remain self-contained.

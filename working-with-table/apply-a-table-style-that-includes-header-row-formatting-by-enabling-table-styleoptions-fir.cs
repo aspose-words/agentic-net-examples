@@ -3,7 +3,7 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class TableStyleExample
+public class Program
 {
     public static void Main()
     {
@@ -11,7 +11,7 @@ public class TableStyleExample
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table with a header row.
+        // Start a table.
         builder.StartTable();
 
         // Header row.
@@ -21,27 +21,32 @@ public class TableStyleExample
         builder.Writeln("Header 2");
         builder.EndRow();
 
-        // Data row.
+        // First data row.
         builder.InsertCell();
-        builder.Writeln("Data 1");
+        builder.Writeln("Data 1A");
         builder.InsertCell();
-        builder.Writeln("Data 2");
+        builder.Writeln("Data 1B");
+        builder.EndRow();
+
+        // Second data row.
+        builder.InsertCell();
+        builder.Writeln("Data 2A");
+        builder.InsertCell();
+        builder.Writeln("Data 2B");
         builder.EndRow();
 
         // End the table.
         builder.EndTable();
 
         // Retrieve the created table.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
-        // Apply a built‑in table style.
+        // Apply a built‑in style and enable the FirstRow option to format the header row.
         table.StyleIdentifier = StyleIdentifier.TableGrid;
-
-        // Enable the FirstRow option so the header row receives special formatting.
-        table.StyleOptions |= TableStyleOptions.FirstRow;
+        table.StyleOptions = TableStyleOptions.FirstRow;
 
         // Save the document.
-        string outputPath = "TableStyleExample.docx";
+        string outputPath = "TableStyleFirstRow.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.

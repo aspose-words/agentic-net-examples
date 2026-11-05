@@ -1,5 +1,5 @@
 using System;
-using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,44 +7,43 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for any required encodings.
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Register code page provider (required for Aspose.Words)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create a simple template with a missing member reference.
-        string templatePath = "template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Customer Name: <<[model.Name]>>");
-        builder.Writeln("Missing Property: <<[model.MissingProperty]>>");
-        templateDoc.Save(templatePath);
+        // Create a simple template document with a missing member tag.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Load the template for reporting.
-        Document doc = new Document(templatePath);
+        builder.Writeln("Existing property: <<[model.ExistingProperty]>>");
+        builder.Writeln("Missing property: <<[model.MissingProperty]>>");
 
-        // Prepare the data model.
-        var model = new ReportModel
+        // Prepare the data model (does not contain MissingProperty).
+        ReportModel model = new()
         {
-            Name = "John Doe"
+            ExistingProperty = "Sample value"
         };
 
-        // Configure the reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-
-        // Enable inline error messages so missing members are shown in the output.
+        // Configure the reporting engine to show inline error messages.
+        ReportingEngine engine = new();
         engine.Options = ReportBuildOptions.InlineErrorMessages;
+        // Note: In older versions of Aspose.Words the custom fallback message property
+        // may not be available. The inline error messages will indicate missing members.
 
-        // Build the report. The method returns true if the report was built without fatal errors.
+        // Build the report.
         bool success = engine.BuildReport(doc, model, "model");
 
         // Save the generated document.
         string outputPath = "output.docx";
         doc.Save(outputPath);
+
+        // Output result information.
+        Console.WriteLine($"Report generation success: {success}");
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 
-    // Public data model class.
     public class ReportModel
     {
-        // Initialized to avoid nullable warnings.
-        public string Name { get; set; } = "";
+        public string ExistingProperty { get; set; } = string.Empty;
+        // MissingProperty is intentionally omitted to trigger the fallback message.
     }
 }

@@ -1,6 +1,4 @@
 using System;
-using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -8,70 +6,48 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some Aspose.Words features).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Register code page provider (required by Aspose.Words for some encodings)
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        // Paths for the template and the generated report.
-        string templatePath = "Template.docx";
-        string reportPath = "ReportWithErrors.docx";
+        // Create a template document with LINQ Reporting tags
+        const string templatePath = "Template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // -----------------------------------------------------------------
-        // Step 1: Create a template document with LINQ Reporting tags.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Write a heading.
-        builder.Writeln("LINQ Reporting Inline Error Example");
-        builder.Writeln();
-
-        // Correct tag – will be replaced with the model's Name.
+        // Correct tag – will be replaced with the model's Name property
         builder.Writeln("Customer Name: <<[model.Name]>>");
 
-        // Incorrect tag – references a non‑existent property, will trigger an error.
-        builder.Writeln("Missing Property: <<[model.MissingProperty]>>");
+        // Incorrect tag – malformed expression to trigger an inline error message
+        builder.Writeln("Faulty Tag: <<[model.Missing>>");
 
-        // Save the template to disk.
+        // Save the template to disk
         templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // Step 2: Load the template for report generation.
-        // -----------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
+        // Load the template for report generation
+        var doc = new Document(templatePath);
 
-        // -----------------------------------------------------------------
-        // Step 3: Prepare the data model.
-        // -----------------------------------------------------------------
-        var model = new SampleModel
-        {
-            Name = "John Doe"
-        };
+        // Prepare the data model
+        var model = new ReportModel { Name = "John Doe" };
 
-        // -----------------------------------------------------------------
-        // Step 4: Configure the ReportingEngine to inline error messages.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
+        // Configure the reporting engine to inline error messages
+        var engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-        // Build the report. The method returns false because there is an error.
-        bool success = engine.BuildReport(reportDoc, model, "model");
+        // Build the report; the returned flag indicates overall success
+        bool success = engine.BuildReport(doc, model, "model");
 
-        // -----------------------------------------------------------------
-        // Step 5: Save the generated report.
-        // -----------------------------------------------------------------
-        reportDoc.Save(reportPath);
+        // Save the generated report
+        const string outputPath = "Report.docx";
+        doc.Save(outputPath);
 
-        // Output the result status.
+        // Output the result status
         Console.WriteLine($"Report generation success: {success}");
-        Console.WriteLine($"Report saved to: {Path.GetFullPath(reportPath)}");
+        Console.WriteLine($"Report saved to {outputPath}");
     }
-}
 
-// ---------------------------------------------------------------------
-// Data model used by the template.
-// ---------------------------------------------------------------------
-public class SampleModel
-{
-    // Non‑nullable property with an initializer to avoid warnings.
-    public string Name { get; set; } = string.Empty;
+    // Public data model used by the template
+    public class ReportModel
+    {
+        public string Name { get; set; } = string.Empty;
+    }
 }

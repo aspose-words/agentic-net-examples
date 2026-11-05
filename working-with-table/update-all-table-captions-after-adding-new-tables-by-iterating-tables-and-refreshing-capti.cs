@@ -13,65 +13,71 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Helper method to insert a table with a caption.
-        void InsertTableWithCaption(string captionText, string[,] data)
+        void InsertTableWithCaption(string captionText, int rows, int cols)
         {
-            // Insert a paragraph for the caption.
-            // Insert a SEQ field for table numbering.
-            builder.Writeln(); // Ensure we are on a new paragraph.
-            builder.InsertField("SEQ Table \\* ARABIC");
-            // Append the caption text after the field.
-            builder.Writeln($" {captionText}");
-            builder.Writeln(); // Blank line before the table.
+            // Ensure the caption starts on a new paragraph.
+            builder.Writeln();
+
+            // Insert the caption: "Table {SEQ Table \\* ARABIC}: {captionText}"
+            builder.Write("Table ");
+            builder.InsertField("SEQ Table \\* ARABIC", "1");
+            builder.Writeln($": {captionText}");
 
             // Build the table.
             builder.StartTable();
-            for (int i = 0; i < data.GetLength(0); i++)
+            for (int r = 0; r < rows; r++)
             {
-                for (int j = 0; j < data.GetLength(1); j++)
+                for (int c = 0; c < cols; c++)
                 {
                     builder.InsertCell();
-                    builder.Writeln(data[i, j]);
+                    builder.Writeln($"R{r + 1}C{c + 1}");
                 }
                 builder.EndRow();
             }
             builder.EndTable();
-            builder.Writeln(); // Paragraph after the table.
         }
 
-        // Insert initial tables.
-        InsertTableWithCaption("Table Caption", new string[,] { { "A1", "B1" }, { "A2", "B2" } });
-        InsertTableWithCaption("Table Caption", new string[,] { { "C1", "D1" }, { "C2", "D2" } });
+        // Insert initial tables with captions.
+        InsertTableWithCaption("First table", 2, 2);
+        InsertTableWithCaption("Second table", 3, 3);
 
-        // Add a new table later in the document.
-        InsertTableWithCaption("Table Caption", new string[,] { { "E1", "F1" }, { "E2", "F2" } });
+        // Insert a new table after the initial ones.
+        InsertTableWithCaption("Newly added table", 2, 3);
 
-        // Iterate all tables and refresh their caption numbers.
-        foreach (Table table in doc.GetChildNodes(NodeType.Table, true))
-        {
-            // Find the preceding paragraph that should contain the caption.
-            Node previousNode = table.PreviousSibling;
-            while (previousNode != null && !(previousNode is Paragraph))
-                previousNode = previousNode.PreviousSibling;
+        // Refresh all table captions to reflect the new ordering.
+        RefreshTableCaptions(doc);
 
-            if (previousNode is Paragraph captionParagraph)
-            {
-                // Update all fields (including SEQ fields) in the caption paragraph.
-                foreach (Field field in captionParagraph.Range.Fields)
-                {
-                    field.Update();
-                }
-            }
-        }
-
-        // Ensure any remaining fields are up‑to‑date.
-        doc.UpdateFields();
-
-        // Save the document.
+        // Save the resulting document.
         string outputPath = "UpdatedCaptions.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not saved correctly.");
+            throw new Exception("The output file was not created.");
+    }
+
+    // Iterates through all tables and updates any preceding caption SEQ fields.
+    private static void RefreshTableCaptions(Document doc)
+    {
+        NodeCollection tables = doc.GetChildNodes(NodeType.Table, true);
+        foreach (Node node in tables)
+        {
+            Table table = (Table)node;
+
+            // The caption paragraph is expected to be the immediate previous sibling.
+            Paragraph captionParagraph = table.PreviousSibling as Paragraph;
+            if (captionParagraph == null)
+                continue;
+
+            // Update each SEQ field that references Table captions.
+            foreach (Field field in captionParagraph.Range.Fields)
+            {
+                // Check the field code for the SEQ Table identifier.
+                if (field.GetFieldCode().Contains("SEQ Table"))
+                {
+                    field.Update();
+                }
+            }
+        }
     }
 }

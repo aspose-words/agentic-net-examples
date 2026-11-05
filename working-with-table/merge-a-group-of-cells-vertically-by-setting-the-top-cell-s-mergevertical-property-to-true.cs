@@ -11,52 +11,55 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
+        // Build a simple 3x2 table.
         builder.StartTable();
 
-        // ---------- First Row ----------
-        // Insert the first cell that will be merged vertically.
+        // Row 1
         builder.InsertCell();
-        // Get the cell just created.
-        Cell topCell = (Cell)builder.CurrentParagraph.ParentNode;
-        // Enable vertical merge for the top cell (first cell in the merge group).
-        topCell.CellFormat.VerticalMerge = CellMerge.First;
-        builder.Writeln("Top merged cell");
-
-        // Insert a regular cell in the same row.
+        builder.Write("Row 1, Cell 1");
         builder.InsertCell();
-        builder.Writeln("Cell 1,2");
-
-        // End the first row.
+        builder.Write("Row 1, Cell 2");
         builder.EndRow();
 
-        // ---------- Second Row ----------
-        // Insert the cell that continues the vertical merge.
+        // Row 2
         builder.InsertCell();
-        Cell mergedContinuation = (Cell)builder.CurrentParagraph.ParentNode;
-        // Continue the vertical merge for this cell (previous cell in the merge group).
-        mergedContinuation.CellFormat.VerticalMerge = CellMerge.Previous;
-        builder.Writeln("Continued merged cell");
-
-        // Insert another regular cell.
+        builder.Write("Row 2, Cell 1");
         builder.InsertCell();
-        builder.Writeln("Cell 2,2");
-
-        // End the second row.
+        builder.Write("Row 2, Cell 2");
         builder.EndRow();
 
-        // End the table.
+        // Row 3
+        builder.InsertCell();
+        builder.Write("Row 3, Cell 1");
+        builder.InsertCell();
+        builder.Write("Row 3, Cell 2");
+        builder.EndRow();
+
         builder.EndTable();
 
-        // Save the document to a file.
-        string outputPath = "MergedTable.docx";
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+
+        // Merge the first column vertically (cells in rows 1-3).
+        // Set the top cell to start the merge.
+        Cell topCell = table.Rows[0].Cells[0];
+        topCell.CellFormat.VerticalMerge = CellMerge.First;
+
+        // Set the cells below to continue the merge.
+        for (int i = 1; i < table.Rows.Count; i++)
+        {
+            Cell cell = table.Rows[i].Cells[0];
+            cell.CellFormat.VerticalMerge = CellMerge.Previous;
+        }
+
+        // Save the document.
+        string outputPath = "MergedCells.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
             throw new Exception("The output file was not created.");
 
-        // Indicate success.
-        Console.WriteLine("Document created successfully: " + Path.GetFullPath(outputPath));
+        // Optionally, you could add further validation here.
     }
 }

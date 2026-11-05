@@ -1,51 +1,56 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public static class DecimalExtensions
+namespace LinqReportingCurrencyExample
 {
-    public static string ToCurrencyString(this decimal amount) => $"${amount:F2}";
-}
-
-public class Order
-{
-    public string CustomerName { get; set; } = "John Doe";
-    public decimal Amount { get; set; } = 1234.56m;
-
-    // Helper property that uses the extension method for formatting.
-    public string FormattedAmount => Amount.ToCurrencyString();
-}
-
-public class Program
-{
-    public static void Main()
+    // Data model
+    public class Order
     {
-        // Register code page provider required by Aspose.Words for some encodings.
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        public decimal Amount { get; set; } = 0m;
 
-        // Create a template document with LINQ Reporting tags.
-        string templatePath = "Template.docx";
-        var builder = new DocumentBuilder();
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("Amount: <<[order.FormattedAmount]>>");
-        builder.Document.Save(templatePath);
+        // Exposes the formatted amount using the extension method.
+        public string AmountFormatted => Amount.ToCurrencyString();
+    }
 
-        // Load the template.
-        var doc = new Document(templatePath);
+    // Extension method for formatting currency.
+    public static class DecimalExtensions
+    {
+        public static string ToCurrencyString(this decimal amount) => $"${amount:F2}";
+    }
 
-        // Prepare sample data.
-        var order = new Order();
+    public class Program
+    {
+        public static void Main()
+        {
+            // -----------------------------------------------------------------
+            // Create the template document programmatically.
+            // -----------------------------------------------------------------
+            var template = new Document();
+            var builder = new DocumentBuilder(template);
+            builder.Writeln("Order Report");
+            // Use the formatted property in the LINQ Reporting tag.
+            builder.Writeln("Amount: <<[order.AmountFormatted]>>");
 
-        // Build the report.
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, order, "order");
+            // Save the template and reload it as required by the engine.
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
+            var doc = new Document(templatePath);
 
-        // Save the generated report.
-        string outputPath = "Report.docx";
-        doc.Save(outputPath);
+            // -----------------------------------------------------------------
+            // Prepare sample data.
+            // -----------------------------------------------------------------
+            var order = new Order { Amount = 1234.56m };
 
-        // Indicate completion.
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+            // -----------------------------------------------------------------
+            // Build the report.
+            // -----------------------------------------------------------------
+            var engine = new ReportingEngine();
+            engine.BuildReport(doc, order, "order");
+
+            // Save the generated report.
+            const string outputPath = "Report.docx";
+            doc.Save(outputPath);
+        }
     }
 }

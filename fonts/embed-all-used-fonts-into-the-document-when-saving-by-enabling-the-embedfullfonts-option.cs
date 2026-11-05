@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -7,22 +6,21 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document.
+        // Create a new blank document.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a paragraph with a run of text.
-        Paragraph paragraph = new Paragraph(doc);
-        doc.FirstSection.Body.AppendChild(paragraph);
-        Run run = new Run(doc, "Hello, world with embedded font!");
-        paragraph.AppendChild(run);
+        // Set the font for the text that will be added.
+        builder.Font.Name = "Arial";
+        builder.Font.Size = 24;
 
-        // Set the font for the run using Aspose.Words.Font.
-        run.Font.Name = "Arial";
+        // Add a paragraph with sample text.
+        builder.Writeln("Hello, world with embedded font!");
 
-        // Validate that the font name was set correctly.
-        if (run.Font.Name != "Arial")
+        // Validate that the font properties were applied.
+        if (builder.Font.Name != "Arial" || builder.Font.Size != 24)
         {
-            throw new InvalidOperationException("Font name was not set correctly.");
+            throw new InvalidOperationException("Font properties were not set correctly.");
         }
 
         // Configure PDF save options to embed all used fonts.
@@ -32,16 +30,13 @@ public class Program
         };
 
         // Save the document as PDF.
-        string outputPath = "EmbeddedFontDocument.pdf";
+        const string outputPath = "EmbeddedFonts.pdf";
         doc.Save(outputPath, saveOptions);
 
-        // Verify that the output file exists.
-        if (!File.Exists(outputPath))
+        // Verify that the file was created.
+        if (!System.IO.File.Exists(outputPath))
         {
-            throw new FileNotFoundException("Failed to create the output PDF.", outputPath);
+            throw new System.IO.FileNotFoundException("The PDF file was not created.", outputPath);
         }
-
-        // Indicate successful completion.
-        Console.WriteLine($"Document saved successfully to {Path.GetFullPath(outputPath)}");
     }
 }

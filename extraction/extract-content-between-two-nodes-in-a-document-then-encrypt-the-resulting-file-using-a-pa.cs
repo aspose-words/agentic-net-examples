@@ -2,40 +2,43 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
+using Aspose.Words.Tables;
+using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a sample source document with several paragraphs.
+        // ------------------------------------------------------------
+        // 1. Create a sample source document with identifiable boundaries.
+        // ------------------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Paragraph 1 - before");
-        builder.Writeln("Paragraph 2 - start");
-        builder.Writeln("Paragraph 3 - middle");
-        builder.Writeln("Paragraph 4 - end");
-        builder.Writeln("Paragraph 5 - after");
-        sourceDoc.Save("source.docx");
 
-        // Step 2: Load the created document.
-        Document loadedDoc = new Document("source.docx");
+        builder.Writeln("Paragraph before start.");
+        // Start boundary.
+        builder.Writeln("Start paragraph.");
+        // Content to be extracted.
+        builder.Writeln("Extracted paragraph 1.");
+        builder.Writeln("Extracted paragraph 2.");
+        // End boundary.
+        builder.Writeln("End paragraph.");
+        builder.Writeln("Paragraph after end.");
 
-        // Step 3: Identify the start and end paragraphs for extraction.
-        Paragraph startPara = loadedDoc.FirstSection.Body.Paragraphs[1]; // "Paragraph 2 - start"
-        Paragraph endPara = loadedDoc.FirstSection.Body.Paragraphs[3];   // "Paragraph 4 - end"
+        // ------------------------------------------------------------
+        // 2. Locate the start and end paragraphs (inclusive boundaries).
+        // ------------------------------------------------------------
+        Paragraph startPara = sourceDoc.FirstSection.Body.Paragraphs[1];
+        Paragraph endPara = sourceDoc.FirstSection.Body.Paragraphs[4];
 
         if (startPara == null || endPara == null)
             throw new InvalidOperationException("Boundary paragraphs not found.");
 
-        // Step 4: Determine the indices of the start and end paragraphs.
-        int startIndex = loadedDoc.FirstSection.Body.Paragraphs.IndexOf(startPara);
-        int endIndex = loadedDoc.FirstSection.Body.Paragraphs.IndexOf(endPara);
-        if (startIndex < 0 || endIndex < 0 || startIndex > endIndex)
-            throw new InvalidOperationException("Invalid paragraph range.");
-
-        // Step 5: Create a new document to hold the extracted content.
+        // ------------------------------------------------------------
+        // 3. Prepare a new empty document that will hold the extracted range.
+        // ------------------------------------------------------------
         Document resultDoc = new Document();
-        resultDoc.RemoveAllChildren(); // Remove default empty section.
+        resultDoc.RemoveAllChildren(); // Remove the default empty section.
 
         Section resultSection = new Section(resultDoc);
         resultDoc.AppendChild(resultSection);
@@ -43,25 +46,50 @@ public class Program
         Body resultBody = new Body(resultDoc);
         resultSection.AppendChild(resultBody);
 
-        // Step 6: Import and append each paragraph within the range (inclusive).
-        NodeImporter importer = new NodeImporter(loadedDoc, resultDoc, ImportFormatMode.KeepSourceFormatting);
+        // ------------------------------------------------------------
+        // 4. Import the paragraphs between the boundaries (inclusive) into the new document.
+        // ------------------------------------------------------------
+        // Use a NodeImporter to transfer nodes between documents safely.
+        NodeImporter importer = new NodeImporter(sourceDoc, resultDoc, ImportFormatMode.KeepSourceFormatting);
+
+        // Determine the indices of the start and end paragraphs.
+        int startIndex = sourceDoc.FirstSection.Body.Paragraphs.IndexOf(startPara);
+        int endIndex = sourceDoc.FirstSection.Body.Paragraphs.IndexOf(endPara);
+
+        if (startIndex < 0 || endIndex < 0 || endIndex < startIndex)
+            throw new InvalidOperationException("Invalid paragraph range.");
+
         for (int i = startIndex; i <= endIndex; i++)
         {
-            Paragraph para = loadedDoc.FirstSection.Body.Paragraphs[i];
-            Node importedNode = importer.ImportNode(para, true);
+            Paragraph srcParagraph = sourceDoc.FirstSection.Body.Paragraphs[i];
+            // Import the paragraph into the destination document.
+            Node importedNode = importer.ImportNode(srcParagraph, true);
             resultBody.AppendChild(importedNode);
         }
 
-        // Step 7: Encrypt the resulting document with a password.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
+        // ------------------------------------------------------------
+        // 5. Verify that something was extracted.
+        // ------------------------------------------------------------
+        if (resultBody.Paragraphs.Count == 0)
+            throw new InvalidOperationException("No content was extracted.");
+
+        // ------------------------------------------------------------
+        // 6. Save the extracted document encrypted with a password.
+        // ------------------------------------------------------------
+        string outputPath = "extracted-encrypted.docx";
+        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions
         {
-            Password = "Secret123"
+            Password = "Secret123",
+            SaveFormat = SaveFormat.Docx
         };
-        string outputPath = "extracted_encrypted.docx";
         resultDoc.Save(outputPath, saveOptions);
 
-        // Step 8: Validate that the encrypted file was created.
+        // ------------------------------------------------------------
+        // 7. Validate that the encrypted file was created.
+        // ------------------------------------------------------------
         if (!File.Exists(outputPath))
             throw new InvalidOperationException("Encrypted output file was not created.");
+
+        Console.WriteLine("Extraction and encryption completed.");
     }
 }

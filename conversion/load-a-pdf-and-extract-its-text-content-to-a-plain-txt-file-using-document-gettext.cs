@@ -2,35 +2,36 @@ using System;
 using System.IO;
 using Aspose.Words;
 
-public class PdfToTextExtractor
+public class Program
 {
-    public static void Main()
+    public static void Main(string[] args)
     {
-        // Create a sample PDF file.
-        Document sampleDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        // Create a sample PDF file as input.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
         builder.Writeln("This is a sample PDF document.");
-        builder.Writeln("It contains multiple lines of text.");
-        string pdfPath = "sample.pdf";
-        sampleDoc.Save(pdfPath, SaveFormat.Pdf);
+        sourceDoc.Save("input.pdf", SaveFormat.Pdf);
 
         // Load the PDF document.
-        Document pdfDocument = new Document(pdfPath);
+        Document pdfDoc = new Document("input.pdf");
 
         // Extract text from the PDF.
-        string extractedText = pdfDocument.GetText();
+        string extractedText = pdfDoc.GetText();
 
         // Save the extracted text to a TXT file.
-        string txtPath = "output.txt";
-        File.WriteAllText(txtPath, extractedText);
+        string outputPath = "output.txt";
+        File.WriteAllText(outputPath, extractedText);
 
-        // Validate that the TXT file was created and contains data.
-        if (!File.Exists(txtPath) || new FileInfo(txtPath).Length == 0)
+        // Validate that the output file was created.
+        if (!File.Exists(outputPath))
         {
-            throw new InvalidOperationException("The text extraction failed; output file was not created or is empty.");
+            throw new InvalidOperationException("Expected output TXT file was not created.");
         }
 
-        // Optionally, clean up the sample PDF (comment out if you want to keep it).
-        // File.Delete(pdfPath);
+        // Optionally, you could verify that the file is not empty.
+        if (new FileInfo(outputPath).Length == 0)
+        {
+            throw new InvalidOperationException("The extracted text file is empty.");
+        }
     }
 }

@@ -11,32 +11,32 @@ public class Program
     {
         // Create a sample document with several content controls.
         Document seedDoc = new Document();
-        Paragraph firstPara = seedDoc.FirstSection.Body.FirstParagraph;
+        Body body = seedDoc.FirstSection.Body;
 
-        // Plain text content control.
-        StructuredDocumentTag plainSdt = new StructuredDocumentTag(seedDoc, SdtType.PlainText, MarkupLevel.Inline);
-        plainSdt.Title = "Customer Name";
-        plainSdt.Tag = "custName";
-        plainSdt.RemoveAllChildren();
-        plainSdt.AppendChild(new Run(seedDoc, "Alice"));
-        firstPara.AppendChild(plainSdt);
+        // First content control: plain text, inline.
+        StructuredDocumentTag sdt1 = new StructuredDocumentTag(seedDoc, SdtType.PlainText, MarkupLevel.Inline);
+        sdt1.Title = "Customer Name";
+        sdt1.Tag = "old-tag-1";
+        sdt1.RemoveAllChildren();
+        sdt1.AppendChild(new Run(seedDoc, "Alice"));
+        body.FirstParagraph.AppendChild(sdt1);
 
-        // Rich text content control.
-        StructuredDocumentTag richSdt = new StructuredDocumentTag(seedDoc, SdtType.RichText, MarkupLevel.Block);
-        richSdt.Title = "Address Block";
-        richSdt.Tag = "addrBlk";
-        Paragraph richPara = new Paragraph(seedDoc);
-        richPara.AppendChild(new Run(seedDoc, "123 Main St"));
-        richSdt.AppendChild(richPara);
-        seedDoc.FirstSection.Body.AppendChild(richSdt);
+        // Second content control: rich text, block.
+        StructuredDocumentTag sdt2 = new StructuredDocumentTag(seedDoc, SdtType.RichText, MarkupLevel.Block);
+        sdt2.Title = "Address";
+        sdt2.Tag = "old-tag-2";
+        Paragraph para2 = new Paragraph(seedDoc);
+        para2.AppendChild(new Run(seedDoc, "123 Main St"));
+        sdt2.AppendChild(para2);
+        body.AppendChild(sdt2);
 
-        // Drop-down list content control.
-        StructuredDocumentTag dropDownSdt = new StructuredDocumentTag(seedDoc, SdtType.DropDownList, MarkupLevel.Inline);
-        dropDownSdt.Title = "Country Selector";
-        dropDownSdt.Tag = "cntSel";
-        dropDownSdt.ListItems.Add(new SdtListItem("USA", "US"));
-        dropDownSdt.ListItems.Add(new SdtListItem("Canada", "CA"));
-        firstPara.AppendChild(dropDownSdt);
+        // Third content control: dropdown list, inline.
+        StructuredDocumentTag sdt3 = new StructuredDocumentTag(seedDoc, SdtType.DropDownList, MarkupLevel.Inline);
+        sdt3.Title = "Country";
+        sdt3.Tag = "old-tag-3";
+        sdt3.ListItems.Add(new SdtListItem("USA", "US"));
+        sdt3.ListItems.Add(new SdtListItem("Canada", "CA"));
+        body.FirstParagraph.AppendChild(sdt3);
 
         // Save the seed document.
         const string inputPath = "input.docx";
@@ -45,31 +45,28 @@ public class Program
         // Load the document for processing.
         Document doc = new Document(inputPath);
 
-        // Enumerate all content controls and update their Tag property.
+        // Enumerate all StructuredDocumentTag nodes.
         var sdtNodes = doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
-                          .OfType<StructuredDocumentTag>();
+                          .OfType<StructuredDocumentTag>()
+                          .ToList();
 
-        foreach (StructuredDocumentTag sdt in sdtNodes)
+        // Update each content control's Tag to a standardized format.
+        int index = 1;
+        foreach (var sdt in sdtNodes)
         {
-            // Standardized tag: Title with spaces replaced by underscores, suffixed with "_Tag".
-            string baseTitle = sdt.Title ?? "Unnamed";
-            string standardizedTag = $"{baseTitle.Replace(' ', '_')}_Tag";
+            // Use the Title if available; otherwise fall back to an index-based tag.
+            string baseTag = !string.IsNullOrEmpty(sdt.Title)
+                ? sdt.Title.Trim().ToLowerInvariant().Replace(' ', '_')
+                : $"sdt_{index}";
+
+            // Ensure uniqueness by appending the index.
+            string standardizedTag = $"{baseTag}_{index}";
             sdt.Tag = standardizedTag;
+            index++;
         }
 
         // Save the updated document.
         const string outputPath = "updated.docx";
         doc.Save(outputPath);
-
-        // Optional: write a JSON report of the updated tags.
-        var report = sdtNodes.Select(s => new
-        {
-            Title = s.Title,
-            Tag = s.Tag,
-            Type = s.SdtType.ToString()
-        }).ToList();
-
-        string json = JsonConvert.SerializeObject(report, Formatting.Indented);
-        File.WriteAllText("tags-report.json", json);
     }
 }

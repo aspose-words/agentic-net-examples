@@ -6,33 +6,40 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a new numbered list to the document's list collection.
-        // Use a built‑in list template (NumberDefault) as the base.
+        // Create a numbered list based on a built‑in template.
         List list = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // Configure the first level of the list to start numbering at five.
-        ListLevel level = list.ListLevels[0];
-        level.NumberStyle = NumberStyle.Arabic; // Arabic numerals.
-        level.StartAt = 5;                     // Start numbering at five.
+        // Set the starting number of the first level to 5.
+        ListLevel level0 = list.ListLevels[0];
+        level0.StartAt = 5; // Correct property to define the starting number.
 
-        // Add first list item.
-        Paragraph para1 = new Paragraph(doc);
-        para1.ListFormat.List = list;
-        para1.ListFormat.ListLevelNumber = 0;
-        para1.AppendChild(new Run(doc, "First item"));
-        doc.FirstSection.Body.AppendChild(para1);
+        // Apply the list to the builder.
+        builder.ListFormat.List = list;
 
-        // Add second list item.
-        Paragraph para2 = new Paragraph(doc);
-        para2.ListFormat.List = list;
-        para2.ListFormat.ListLevelNumber = 0;
-        para2.AppendChild(new Run(doc, "Second item"));
-        doc.FirstSection.Body.AppendChild(para2);
+        // Write three list items.
+        builder.Writeln("First item");
+        builder.Writeln("Second item");
+        builder.Writeln("Third item");
 
-        // Save the document to disk.
+        // End the list formatting.
+        builder.ListFormat.RemoveNumbers();
+
+        // Validate that three paragraphs are list items.
+        int listItemCount = 0;
+        foreach (Paragraph para in doc.FirstSection.Body.Paragraphs)
+        {
+            if (para.ListFormat.IsListItem)
+                listItemCount++;
+        }
+
+        // Output validation result.
+        Console.WriteLine($"List items written: {listItemCount}");
+
+        // Save the document to a file.
         doc.Save("ListStartingNumber.docx");
     }
 }

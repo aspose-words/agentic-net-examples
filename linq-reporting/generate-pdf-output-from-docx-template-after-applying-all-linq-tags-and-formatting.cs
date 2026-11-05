@@ -3,135 +3,127 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Aspose.Words;
-using Aspose.Words.Reporting;
 using Aspose.Words.Drawing;
+using Aspose.Words.Reporting;
 using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for any required encodings.
+        // Register code page provider for Aspose.Words if needed.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare sample image (1x1 PNG) as a byte array.
-        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
-        byte[] pngBytes = Convert.FromBase64String(base64Png);
-        // Optional: write the image to disk for reference.
-        File.WriteAllBytes("sample.png", pngBytes);
+        // Create a simple DOCX template with LINQ Reporting tags.
+        var templatePath = "template.docx";
+        CreateTemplate(templatePath);
 
-        // Build sample data model.
-        ReportModel model = new()
+        // Load the template.
+        var doc = new Document(templatePath);
+
+        // Prepare sample data.
+        var model = new ReportModel
         {
-            Title = "Sales Report",
-            CustomerName = "Acme Corp",
-            DescriptionHtml = "<b>Quarterly performance summary.</b>",
-            Items = new()
+            Items = new List<Item>
             {
-                new Item { Index = 1, Name = "Widget", Price = 75.00m },
-                new Item { Index = 2, Name = "Gadget", Price = 150.00m },
-                new Item { Index = 3, Name = "Doohickey", Price = 45.00m }
-            },
-            Images = new()
-            {
-                new ImageData { Data = pngBytes },
-                new ImageData { Data = pngBytes }
+                new()
+                {
+                    Name = "Item One",
+                    Description = "First sample item.",
+                    ImageData = SamplePngBytes()
+                },
+                new()
+                {
+                    Name = "Item Two",
+                    Description = "Second sample item.",
+                    ImageData = SamplePngBytes()
+                }
             }
         };
 
-        // -----------------------------------------------------------------
-        // Create DOCX template with LINQ Reporting tags.
-        // -----------------------------------------------------------------
-        Document template = new();
-        DocumentBuilder builder = new(template);
+        // Build the report using LINQ Reporting Engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-        // Simple text fields.
-        builder.Writeln("<<[model.Title]>>");
-        builder.Writeln("Customer: <<[model.CustomerName]>>");
-        builder.Writeln("<<[model.DescriptionHtml] -html>>");
+        // Save the generated report as PDF.
+        var outputPath = "report.pdf";
+        doc.Save(outputPath);
+    }
+
+    private static void CreateTemplate(string path)
+    {
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        // Title
+        builder.Writeln("Sample LINQ Reporting PDF");
         builder.Writeln();
 
-        // Items table – repeated rows.
+        // Begin foreach over Items
         builder.Writeln("<<foreach [item in Items]>>");
-        Table itemsTable = builder.StartTable();
 
-        // Index cell.
+        // Begin table with header
+        Table table = builder.StartTable();
+
+        // Header row
         builder.InsertCell();
-        builder.Writeln("<<[item.Index]>>");
+        builder.Writeln("Name");
+        builder.InsertCell();
+        builder.Writeln("Description");
+        builder.InsertCell();
+        builder.Writeln("Image");
+        builder.EndRow();
 
-        // Name cell.
+        // Data row for each item
         builder.InsertCell();
         builder.Writeln("<<[item.Name]>>");
 
-        // Price cell with conditional background.
         builder.InsertCell();
-        builder.Writeln(
-            "<<if [item.Price > 100]>>" +
-            "<<backColor [\"LightGray\"]>><<[item.Price]>> <</backColor>><</if>>" +
-            "<<if [item.Price <= 100]>>" +
-            "<<[item.Price]>> <</if>>");
+        builder.Writeln("<<[item.Description]>>");
+
+        builder.InsertCell();
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 100, 100);
+        builder.MoveTo(textBox.FirstParagraph);
+        builder.Write("<<image [item.ImageData] -fitSize>>");
 
         builder.EndRow();
+
+        // End table
         builder.EndTable();
-        builder.Writeln("<</foreach>>");
-        builder.Writeln();
 
-        // Images section – each image inside a textbox within a table cell.
-        builder.Writeln("<<foreach [img in Images]>>");
-        Table imgTable = builder.StartTable();
-        builder.InsertCell();
-
-        Shape txtBox = builder.InsertShape(ShapeType.TextBox, 200, 200);
-        builder.MoveTo(txtBox.FirstParagraph);
-        builder.Writeln("<<image [img.Data] -fitSize>>");
-
-        builder.EndRow();
-        builder.EndTable();
+        // End foreach
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        // Save the template
+        doc.Save(path);
+    }
 
-        // -----------------------------------------------------------------
-        // Load the template and generate the final report.
-        // -----------------------------------------------------------------
-        Document reportDoc = new(templatePath);
-        ReportingEngine engine = new()
+    // Returns a byte array of a 1x1 pixel PNG (red color).
+    private static byte[] SamplePngBytes()
+    {
+        return new byte[]
         {
-            Options = ReportBuildOptions.None
+            0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,
+            0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52,
+            0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,
+            0x08,0x02,0x00,0x00,0x00,0x90,0x77,0x53,
+            0xDE,0x00,0x00,0x00,0x0A,0x49,0x44,0x41,
+            0x54,0x08,0xD7,0x63,0xF8,0xCF,0xC0,0x00,
+            0x00,0x04,0x00,0x01,0xE2,0x26,0x05,0x9B,
+            0x00,0x00,0x00,0x00,0x49,0x45,0x4E,0x44,
+            0xAE,0x42,0x60,0x82
         };
-        engine.BuildReport(reportDoc, model, "model");
-
-        // Ensure output directory exists.
-        Directory.CreateDirectory("output");
-
-        // Save the final report as PDF.
-        string pdfPath = Path.Combine("output", "Report.pdf");
-        reportDoc.Save(pdfPath);
     }
 }
 
-// ---------------------------------------------------------------------
-// Data model classes.
-// ---------------------------------------------------------------------
 public class ReportModel
 {
-    public string Title { get; set; } = "";
-    public string CustomerName { get; set; } = "";
-    public string DescriptionHtml { get; set; } = "";
     public List<Item> Items { get; set; } = new();
-    public List<ImageData> Images { get; set; } = new();
 }
 
 public class Item
 {
-    public int Index { get; set; }
     public string Name { get; set; } = "";
-    public decimal Price { get; set; }
-}
-
-public class ImageData
-{
-    public byte[] Data { get; set; } = Array.Empty<byte>();
+    public string Description { get; set; } = "";
+    public byte[] ImageData { get; set; } = Array.Empty<byte>();
 }

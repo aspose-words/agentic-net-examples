@@ -6,59 +6,61 @@ using Aspose.Words;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
 
-namespace LinqReportingExample
+public class Customer
 {
-    // Data model classes
-    public class Customer
-    {
-        public string Name { get; set; } = string.Empty;
-    }
+    public string Name { get; set; } = "";
+}
 
-    public class ReportModel
-    {
-        public List<Customer> Customers { get; set; } = new();
-    }
+public class ReportModel
+{
+    public List<Customer> Customers { get; set; } = new();
+}
 
-    public class Program
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
+        // Register code page provider (required for some Aspose.Words features)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Paths for template and output
+        string templatePath = "Template.docx";
+        string outputPath = "Report.docx";
+
+        // Create the template document with LINQ Reporting tags
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        builder.Writeln("Customer Report");
+        builder.Writeln("<<foreach [c in Customers]>>");
+        // Use an expression that converts the name to upper case directly
+        builder.Writeln("<<[c.Name.ToUpper()]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk
+        templateDoc.Save(templatePath);
+
+        // Load the template (simulating a separate load step)
+        Document doc = new Document(templatePath);
+
+        // Prepare sample data
+        ReportModel model = new()
         {
-            // Register code page provider for Aspose.Words
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            // Prepare sample data
-            var model = new ReportModel
+            Customers = new()
             {
-                Customers = new List<Customer>
-                {
-                    new Customer { Name = "Alice Johnson" },
-                    new Customer { Name = "Bob Smith" },
-                    new Customer { Name = "Charlie Davis" }
-                }
-            };
+                new Customer { Name = "Alice" },
+                new Customer { Name = "Bob" },
+                new Customer { Name = "Charlie" }
+            }
+        };
 
-            // Create a template document programmatically
-            var templatePath = "Template.docx";
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
+        // Build the report
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-            builder.Writeln("Customer List:");
-            builder.Writeln("<<foreach [c in Customers]>>");
-            builder.Writeln(" - <<[c.Name]>>");
-            builder.Writeln("<</foreach>>");
+        // Save the generated report
+        doc.Save(outputPath);
 
-            doc.Save(templatePath);
-
-            // Load the template for reporting
-            var reportDoc = new Document(templatePath);
-            var engine = new ReportingEngine();
-
-            // Build the report using the model as the root object named "model"
-            engine.BuildReport(reportDoc, model, "model");
-
-            // Save the generated report
-            var outputPath = "Report.docx";
-            reportDoc.Save(outputPath);
-        }
+        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
     }
 }

@@ -1,101 +1,38 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
+using Aspose.Words;
 
-namespace MailMergeDemo
+public class Program
 {
-    // Arguments for the ImageFieldMerging event
-    public class ImageFieldMergingArgs : EventArgs
+    public static void Main()
     {
-        public string FieldName { get; }
-        public object FieldValue { get; }
-        public string ImagePath { get; set; }
-        public bool Handled { get; set; }
+        // Create a new document and add a merge field for an image.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Below is the merged image:");
+        builder.InsertField("MERGEFIELD ImageField \\* MERGEFORMAT");
 
-        public ImageFieldMergingArgs(string fieldName, object fieldValue)
+        // Prepare a simple PNG image (a red dot) as a byte array.
+        const string base64Png =
+            "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFklEQVQoU2NkYGD4z0AEYBxVSFIAAQAA//8DAF6cB6cAAAAASUVORK5CYII=";
+        byte[] imageBytes = Convert.FromBase64String(base64Png);
+
+        // Execute mail merge. Provide the image bytes directly as the field value.
+        string[] fieldNames = { "ImageField" };
+        object[] fieldValues = { imageBytes };
+        doc.MailMerge.Execute(fieldNames, fieldValues);
+
+        // Save the merged document.
+        string outputPath = "MergedDocument.docx";
+        doc.Save(outputPath);
+
+        // Validate that the output file was created and is not empty.
+        FileInfo info = new FileInfo(outputPath);
+        if (!info.Exists || info.Length == 0)
         {
-            FieldName = fieldName;
-            FieldValue = fieldValue;
-            ImagePath = string.Empty;
-            Handled = false;
-        }
-    }
-
-    // Delegate for the ImageFieldMerging event
-    public delegate void ImageFieldMergingEventHandler(object sender, ImageFieldMergingArgs e);
-
-    // Simple mail‑merge engine that raises ImageFieldMerging for image fields
-    public class MailMergeEngine
-    {
-        private readonly Dictionary<string, object> _fields = new Dictionary<string, object>();
-
-        // Event raised when an image field is being merged
-        public event ImageFieldMergingEventHandler ImageFieldMerging;
-
-        // Add a field to the data source
-        public void AddField(string name, object value)
-        {
-            _fields[name] = value;
+            throw new InvalidOperationException("The merged document was not created correctly.");
         }
 
-        // Execute the merge (simulated)
-        public void Execute()
-        {
-            foreach (var kvp in _fields)
-            {
-                // For this demo we treat any field whose name ends with "Image" as an image field
-                if (kvp.Key.EndsWith("Image", StringComparison.OrdinalIgnoreCase))
-                {
-                    var args = new ImageFieldMergingArgs(kvp.Key, kvp.Value);
-                    OnImageFieldMerging(args);
-
-                    if (args.Handled)
-                    {
-                        Console.WriteLine($"Image field '{args.FieldName}' merged with custom image path: {args.ImagePath}");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Image field '{args.FieldName}' merged with default handling.");
-                    }
-                }
-                else
-                {
-                    Console.WriteLine($"Text field '{kvp.Key}' merged with value: {kvp.Value}");
-                }
-            }
-        }
-
-        protected virtual void OnImageFieldMerging(ImageFieldMergingArgs e)
-        {
-            ImageFieldMerging?.Invoke(this, e);
-        }
-    }
-
-    public class Program
-    {
-        public static void Main()
-        {
-            var engine = new MailMergeEngine();
-
-            // Add sample fields
-            engine.AddField("FirstName", "John");
-            engine.AddField("LastName", "Doe");
-            engine.AddField("ProfileImage", "john_doe"); // value used to build image file name
-
-            // Subscribe to the ImageFieldMerging event to provide a custom image path
-            engine.ImageFieldMerging += (sender, e) =>
-            {
-                // Custom logic: build an image path based on the field value
-                if (e.FieldValue is string imageKey && !string.IsNullOrWhiteSpace(imageKey))
-                {
-                    e.ImagePath = $"./Images/{imageKey}.png";
-                    e.Handled = true; // indicate that we have handled the insertion
-                }
-            };
-
-            // Run the merge simulation
-            engine.Execute();
-
-            // Program ends automatically
-        }
+        Console.WriteLine($"Document merged successfully. Output file: {outputPath}");
     }
 }

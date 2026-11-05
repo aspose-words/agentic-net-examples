@@ -10,43 +10,54 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start the outer table.
+        // Start the outer table (2 rows x 2 columns).
         Table outerTable = builder.StartTable();
 
-        // First cell of the outer table.
+        // ----- First row of outer table -----
+        // Cell (1,1)
         builder.InsertCell();
-        builder.Writeln("Outer Cell 1");
+        builder.Writeln("Outer Cell 1,1");
 
-        // Second cell of the outer table – this will contain the nested table.
+        // Cell (1,2) - this cell will contain a nested table.
         builder.InsertCell();
 
-        // Start the nested table inside the current cell.
+        // Start the nested table inside the current outer cell.
         Table nestedTable = builder.StartTable();
 
-        // First row of the nested table.
+        // First row of nested table.
         builder.InsertCell();
-        builder.Writeln("Nested Cell 1");
+        builder.Writeln("Nested Cell 1,1");
         builder.InsertCell();
-        builder.Writeln("Nested Cell 2");
+        builder.Writeln("Nested Cell 1,2");
         builder.EndRow();
 
-        // Second row of the nested table.
+        // Second row of nested table.
         builder.InsertCell();
-        builder.Writeln("Nested Cell 3");
+        builder.Writeln("Nested Cell 2,1");
         builder.InsertCell();
-        builder.Writeln("Nested Cell 4");
+        builder.Writeln("Nested Cell 2,2");
         builder.EndRow();
 
         // End the nested table.
         builder.EndTable();
 
-        // End the row of the outer table.
+        // End the first row of the outer table.
+        builder.EndRow();
+
+        // ----- Second row of outer table -----
+        // Cell (2,1)
+        builder.InsertCell();
+        builder.Writeln("Outer Cell 2,1");
+
+        // Cell (2,2)
+        builder.InsertCell();
+        builder.Writeln("Outer Cell 2,2");
         builder.EndRow();
 
         // End the outer table.
         builder.EndTable();
 
-        // Save the document to disk.
+        // Save the document to a file.
         string outputPath = "NestedTable.docx";
         doc.Save(outputPath);
     }

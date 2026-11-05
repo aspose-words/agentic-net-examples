@@ -1,113 +1,136 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Xml.Linq;
+using System.Xml;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words.
+        // Register code page provider for Aspose.Words if needed
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare directories.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(workDir);
 
-        // 1. Create a large XML data set.
-        string xmlPath = Path.Combine(outputDir, "products.xml");
+        string xmlPath = Path.Combine(workDir, "data.xml");
+        string templatePath = Path.Combine(workDir, "template.docx");
+        string reportPath = Path.Combine(workDir, "report.docx");
+
+        // Create sample large XML data set
         CreateSampleXml(xmlPath, 200);
 
-        // 2. Parse XML with progress reporting.
-        ReportData data = new();
-        Action<int, int> progressCallback = (processed, total) =>
+        // Load data with progress reporting
+        Order order = LoadProducts(xmlPath, (processed, total) =>
         {
-            Console.WriteLine($"Parsing XML: {processed}/{total} items processed.");
-        };
-        ParseXmlWithProgress(xmlPath, data, progressCallback);
+            Console.WriteLine($"Loading XML: {processed}/{total} ({processed * 100 / total}%)");
+        });
 
-        // 3. Create a LINQ Reporting template.
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        CreateTemplate(templatePath);
+        // Build template document programmatically
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+        builder.Writeln("Product Report");
+        builder.Writeln("<<foreach [p in Products]>>");
+        builder.Writeln("Name: <<[p.Name]>>");
+        builder.Writeln("Description: <<[p.Description]>>");
+        builder.Writeln("<</foreach>>");
+        template.Save(templatePath);
 
-        // 4. Load the template and build the report.
-        Document doc = new(templatePath);
-        ReportingEngine engine = new();
-        engine.BuildReport(doc, data, "data");
+        // Load template (optional, we already have it)
+        Document doc = new Document(templatePath);
 
-        // 5. Save the generated report.
-        string reportPath = Path.Combine(outputDir, "report.docx");
+        // Configure reporting engine
+        ReportingEngine.UseReflectionOptimization = true;
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None;
+
+        // Build report
+        engine.BuildReport(doc, order, "order");
+
+        // Save final report
         doc.Save(reportPath);
         Console.WriteLine($"Report generated at: {reportPath}");
     }
 
-    private static void CreateSampleXml(string path, int count)
+    private static void CreateSampleXml(string filePath, int count)
     {
-        XDocument doc = new(
-            new XElement("Products",
-                Enumerable.Range(1, count).Select(i =>
-                    new XElement("Product",
-                        new XElement("Id", i),
-                        new XElement("Name", $"Product {i}"),
-                        new XElement("Price", (i * 1.23).ToString("F2")),
-                        new XElement("Description", $"Description for product {i}.")
-                    ))
-            )
-        );
-        doc.Save(path);
-    }
-
-    private static void ParseXmlWithProgress(string xmlPath, ReportData data, Action<int, int> progress)
-    {
-        XDocument doc = XDocument.Load(xmlPath);
-        var productElements = doc.Root?.Elements("Product") ?? Enumerable.Empty<XElement>();
-        int total = productElements.Count();
-        int processed = 0;
-
-        foreach (var elem in productElements)
+        using (var writer = XmlWriter.Create(filePath, new XmlWriterSettings { Indent = true, Encoding = Encoding.UTF8 }))
         {
-            Product p = new()
+            writer.WriteStartDocument();
+            writer.WriteStartElement("Products");
+            for (int i = 1; i <= count; i++)
             {
-                Id = (int)elem.Element("Id")!,
-                Name = (string)elem.Element("Name")!,
-                Price = decimal.Parse((string)elem.Element("Price")!),
-                Description = (string)elem.Element("Description")!
-            };
-            data.Products.Add(p);
-            processed++;
-            progress?.Invoke(processed, total);
+                writer.WriteStartElement("Product");
+                writer.WriteElementString("Name", $"Product {i}");
+                writer.WriteElementString("Description", $"Description for product {i}");
+                writer.WriteEndElement(); // Product
+            }
+            writer.WriteEndElement(); // Products
+            writer.WriteEndDocument();
         }
     }
 
-    private static void CreateTemplate(string path)
+    private static Order LoadProducts(string xmlPath, Action<int, int> progressCallback)
     {
-        Document doc = new();
-        DocumentBuilder builder = new(doc);
+        int total = 0;
+        using (var countReader = XmlReader.Create(xmlPath))
+        {
+            while (countReader.Read())
+            {
+                if (countReader.NodeType == XmlNodeType.Element && countReader.Name == "Product")
+                    total++;
+            }
+        }
 
-        builder.Writeln("Product Report");
-        builder.Writeln("Total Products: <<[data.Products.Count]>>");
-        builder.Writeln("<<foreach [p in data.Products]>>");
-        builder.Writeln("Id: <<[p.Id]>>, Name: <<[p.Name]>>, Price: $<<[p.Price]>>");
-        builder.Writeln("Description: <<[p.Description]>>");
-        builder.Writeln("<</foreach>>");
-
-        doc.Save(path);
+        var order = new Order();
+        int processed = 0;
+        using (var reader = XmlReader.Create(xmlPath))
+        {
+            while (reader.Read())
+            {
+                if (reader.NodeType == XmlNodeType.Element && reader.Name == "Product")
+                {
+                    var product = new Product();
+                    while (reader.Read())
+                    {
+                        if (reader.NodeType == XmlNodeType.Element)
+                        {
+                            switch (reader.Name)
+                            {
+                                case "Name":
+                                    product.Name = reader.ReadElementContentAsString();
+                                    break;
+                                case "Description":
+                                    product.Description = reader.ReadElementContentAsString();
+                                    break;
+                            }
+                        }
+                        else if (reader.NodeType == XmlNodeType.EndElement && reader.Name == "Product")
+                        {
+                            break;
+                        }
+                    }
+                    order.Products.Add(product);
+                    processed++;
+                    progressCallback?.Invoke(processed, total);
+                }
+            }
+        }
+        return order;
     }
 }
 
-public class ReportData
+public class Order
 {
     public List<Product> Products { get; set; } = new();
 }
 
 public class Product
 {
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public decimal Price { get; set; }
-    public string Description { get; set; } = string.Empty;
+    public string Name { get; set; } = "";
+    public string Description { get; set; } = "";
 }

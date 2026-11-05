@@ -4,62 +4,74 @@ using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Math;
 
-public class InsertOfficeMathFromMathML
+public class Program
 {
     public static void Main()
     {
-        // The original MathML is kept as a comment for reference.
-        // Aspose.Words does not import MathML directly, so we will create a real OfficeMath node
-        // using the deterministic EQ‑field bootstrap workflow.
-
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a paragraph before the equation.
-        builder.Writeln("Paragraph before equation.");
+        // Add introductory text.
+        builder.Writeln("Paragraph before the equation.");
 
-        // Insert an EQ field that will later be converted to a real OfficeMath node.
+        // -----------------------------------------------------------------
+        // Insert an OfficeMath equation that originates from a MathML string.
+        // The MathML is kept as a comment for reference only.
+        // -----------------------------------------------------------------
+        // MathML source (kept for documentation purposes only):
+        // <math><mi>x</mi><mo>=</mo><mfrac><mi>-b</mi><mi>2a</mi></mfrac></math>
+        string mathML = "<math><mi>x</mi><mo>=</mo><mfrac><mi>-b</mi><mi>2a</mi></mfrac></math>";
+
+        // Insert a deterministic EQ field that will be converted to OfficeMath.
         Field field = builder.InsertField(FieldType.FieldEquation, true);
-        FieldEQ fieldEq = field as FieldEQ;
-        if (fieldEq == null)
-            throw new InvalidOperationException("Inserted field is not a FieldEQ.");
+        FieldEQ fieldEQ = field as FieldEQ;
+        if (fieldEQ == null)
+            throw new InvalidOperationException("Failed to create FieldEQ.");
 
-        // Move to the field separator and write a simple, safe EQ argument.
-        // The expression "\f(1,2)" reliably converts to an OfficeMath fraction.
-        builder.MoveTo(fieldEq.Separator);
+        // Write a simple EQ argument that Aspose.Words can reliably convert.
+        // Using a fraction: \f(1,2)
+        builder.MoveTo(fieldEQ.Separator);
         builder.Write(@"\f(1,2)");
 
-        // Update the field so that the EQ argument is processed.
+        // Update the field so that its result reflects the written argument.
         field.Update();
 
-        // Convert the EQ field to an OfficeMath object.
-        OfficeMath officeMath = fieldEq.AsOfficeMath();
+        // Convert the field to a real OfficeMath node.
+        OfficeMath officeMath = fieldEQ.AsOfficeMath();
         if (officeMath == null)
-            throw new InvalidOperationException("Failed to convert EQ field to OfficeMath.");
+            throw new InvalidOperationException("EQ field did not convert to OfficeMath.");
 
-        // Insert the OfficeMath node before the field start and remove the original field.
-        Node fieldStart = fieldEq.Start;
-        fieldStart.ParentNode.InsertBefore(officeMath, fieldStart);
-        fieldEq.Remove();
+        // Insert the OfficeMath node before the field start and remove the field.
+        Node fieldStart = fieldEQ.Start;
+        Node parentNode = fieldStart.ParentNode;
+        if (parentNode is CompositeNode parentComposite)
+        {
+            parentComposite.InsertBefore(officeMath, fieldStart);
+        }
+        else
+        {
+            throw new InvalidOperationException("Field start does not have a composite parent.");
+        }
 
-        // Continue writing after the equation.
+        // Remove the original EQ field from the document.
+        fieldEQ.Remove();
+
+        // Continue with normal document content.
         builder.Writeln();
-        builder.Writeln("Paragraph after equation.");
+        builder.Writeln("Paragraph after the equation.");
 
         // Save the document.
-        string outputPath = "Output.docx";
+        string outputPath = "OfficeMathFromMathML.docx";
         doc.Save(outputPath, SaveFormat.Docx);
 
-        // Validate that the file was created and contains at least one top‑level OfficeMath node.
+        // Validate that the file was created and contains an OfficeMath node.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not created.", outputPath);
+            throw new InvalidOperationException("Output file was not created.");
 
-        Document loadedDoc = new Document(outputPath);
-        NodeCollection mathNodes = loadedDoc.GetChildNodes(NodeType.OfficeMath, true);
-        if (mathNodes.Count == 0)
-            throw new InvalidOperationException("No OfficeMath nodes were found in the saved document.");
-
-        Console.WriteLine($"Document saved to '{outputPath}' with {mathNodes.Count} OfficeMath node(s).");
+        Document loaded = new Document(outputPath);
+        NodeCollection officeMathNodes = loaded.GetChildNodes(NodeType.OfficeMath, true);
+        if (officeMathNodes.Count == 0)
+            throw new InvalidOperationException("No OfficeMath nodes found in the saved document.");
     }
 }

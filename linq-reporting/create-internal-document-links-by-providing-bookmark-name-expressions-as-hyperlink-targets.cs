@@ -1,68 +1,67 @@
 using System;
-using System.IO;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using System.Text;
 
-namespace InternalLinkExample
+public class Program
 {
-    // Data model for the report.
-    public class ReportModel
+    public static void Main()
     {
-        public string BookmarkName { get; set; } = "MyBookmark";
-        public string Title { get; set; } = "Section Title";
-        public string LinkText { get; set; } = "Go to Section";
-    }
+        // Create the template document with LINQ Reporting tags.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-    public class Program
-    {
-        public static void Main()
+        // Table of contents with internal links.
+        builder.Writeln("Table of Contents");
+        builder.Writeln("<<foreach [section in model.Sections]>>");
+        builder.Writeln("<<link [section.BookmarkName] [section.Title]>>");
+        builder.Writeln("<</foreach>>");
+        builder.Writeln(); // empty paragraph
+
+        // Sections with bookmarks.
+        builder.Writeln("<<foreach [section in model.Sections]>>");
+        builder.Writeln("<<bookmark [section.BookmarkName]>>");
+        builder.Writeln("<<[section.Title]>>");
+        builder.Writeln("<</bookmark>>");
+        builder.Writeln(); // empty paragraph
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
+
+        // Load the template for report generation.
+        Document doc = new Document(templatePath);
+
+        // Prepare sample data.
+        ReportModel model = new()
         {
-            // Register code page provider (required for Aspose.Words).
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            Sections = new()
+            {
+                new Section { Title = "Introduction", BookmarkName = "bmIntro" },
+                new Section { Title = "Chapter 1", BookmarkName = "bmChapter1" },
+                new Section { Title = "Conclusion", BookmarkName = "bmConclusion" }
+            }
+        };
 
-            // Prepare folders.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-            Directory.CreateDirectory(outputDir);
+        // Build the report.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-            // Paths for template and result.
-            string templatePath = Path.Combine(outputDir, "Template.docx");
-            string resultPath = Path.Combine(outputDir, "Result.docx");
-
-            // -----------------------------------------------------------------
-            // Create the LINQ Reporting template programmatically.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-            // Intro text.
-            builder.Writeln("Document demonstrating internal links using bookmarks.");
-
-            // Bookmark definition with expressions.
-            builder.Writeln("<<bookmark [model.BookmarkName]>>");
-            builder.Writeln("<<[model.Title]>>");
-            builder.Writeln("<</bookmark>>");
-
-            // Some spacing.
-            builder.Writeln();
-
-            // Hyperlink that points to the bookmark defined above.
-            builder.Writeln("<<link [model.BookmarkName] [model.LinkText]>>");
-
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // Load the template and build the report.
-            // -----------------------------------------------------------------
-            Document doc = new Document(templatePath);
-            ReportModel model = new ReportModel();
-
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
-
-            // Save the generated document.
-            doc.Save(resultPath);
-        }
+        // Save the generated document.
+        const string outputPath = "Output.docx";
+        doc.Save(outputPath);
     }
+}
+
+// Data model classes.
+public class ReportModel
+{
+    public List<Section> Sections { get; set; } = new();
+}
+
+public class Section
+{
+    public string Title { get; set; } = "";
+    public string BookmarkName { get; set; } = "";
 }

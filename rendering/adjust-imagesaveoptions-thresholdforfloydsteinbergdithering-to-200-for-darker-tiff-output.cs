@@ -7,28 +7,29 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple document with some content.
+        // Create a simple document with some text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample text for TIFF rendering with a higher dithering threshold.");
+        builder.Writeln("Sample text for TIFF rendering with custom dithering threshold.");
 
-        // Configure ImageSaveOptions for TIFF and set the dithering threshold to 200.
+        // Configure ImageSaveOptions for TIFF output.
         ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff);
+        // Set the threshold for Floyd‑Steinberg dithering to a higher value (darker output).
         saveOptions.ThresholdForFloydSteinbergDithering = 200;
 
-        string outputFile = "output.tiff";
+        // Define output file path.
+        string outputPath = "output.tiff";
 
-        // Render the document to a TIFF file using the configured options.
-        doc.Save(outputFile, saveOptions);
+        // Render the document to a TIFF image using the configured options.
+        doc.Save(outputPath, saveOptions);
 
         // Verify that the TIFF file was created.
-        if (!File.Exists(outputFile))
+        if (!File.Exists(outputPath))
         {
-            throw new InvalidOperationException("Failed to create the TIFF file.");
+            throw new InvalidOperationException($"Failed to create the TIFF file at '{outputPath}'.");
         }
 
-        // Output the file size as a simple confirmation.
-        long fileSize = new FileInfo(outputFile).Length;
-        Console.WriteLine($"TIFF saved successfully. Size: {fileSize} bytes.");
+        // Optionally, report success (no user interaction required).
+        Console.WriteLine($"TIFF file saved successfully to '{Path.GetFullPath(outputPath)}'.");
     }
 }

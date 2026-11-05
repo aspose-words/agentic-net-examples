@@ -6,18 +6,19 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a new paragraph and add a DATE field.
-        builder.Writeln();                     // Ensure we are on a new paragraph.
+        // Set paragraph formatting that will affect the field result.
+        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        builder.ParagraphFormat.SpaceAfter = 12; // points
+
+        // Insert a DATE field; the field result will inherit the paragraph formatting.
         builder.InsertField(FieldType.FieldDate, true);
 
-        // Apply paragraph formatting to the paragraph that contains the field.
-        Paragraph paragraph = builder.CurrentParagraph;
-        paragraph.ParagraphFormat.Alignment = ParagraphAlignment.Center; // Center the text.
-        paragraph.ParagraphFormat.SpaceAfter = 12; // Add space after the paragraph (points).
+        // Add a line break after the field for clarity.
+        builder.Writeln();
 
         // Save the document.
         doc.Save("Output.docx");

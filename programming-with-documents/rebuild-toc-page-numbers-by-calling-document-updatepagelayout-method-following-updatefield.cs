@@ -1,6 +1,5 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Tables;
 
 public class Program
 {
@@ -10,41 +9,43 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a Table of Contents field at the start of the document.
-        builder.InsertParagraph();
+        // Insert a Table of Contents at the beginning of the document.
         builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
-        builder.Writeln(); // Add a blank line after the TOC.
 
-        // Add sample headings and content to generate TOC entries.
-        for (int i = 1; i <= 3; i++)
-        {
-            // Heading (will appear in the TOC).
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-            builder.Writeln($"Chapter {i}");
+        // Add a page break after the TOC.
+        builder.InsertBreak(BreakType.PageBreak);
 
-            // Normal paragraph content.
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-            builder.Writeln($"Content of chapter {i}.");
+        // Insert some headings that will appear in the TOC.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Chapter 1: Introduction");
+        builder.Writeln("This is the introduction chapter content.");
 
-            // Add extra lines to force pagination.
-            for (int j = 0; j < 30; j++)
-            {
-                builder.Writeln($"Line {j + 1} of chapter {i}.");
-            }
+        builder.InsertBreak(BreakType.PageBreak);
 
-            // Insert a page break after each chapter except the last.
-            if (i < 3)
-                builder.InsertBreak(BreakType.PageBreak);
-        }
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Chapter 2: Getting Started");
+        builder.Writeln("Content for the second chapter.");
 
-        // Update all fields in the document (including the TOC).
+        builder.InsertBreak(BreakType.PageBreak);
+
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+        builder.Writeln("Section 2.1: Installation");
+        builder.Writeln("Details about installation.");
+
+        // Update all fields (including the TOC) to reflect the current document structure.
         doc.UpdateFields();
 
-        // Rebuild page layout so the TOC page numbers are refreshed.
+        // Rebuild page layout so that TOC page numbers are recalculated.
         doc.UpdatePageLayout();
 
-        // Save the resulting document.
-        const string outputPath = "RebuiltTOC.docx";
+        // Save the document to disk.
+        string outputPath = "RebuiltTOC.docx";
         doc.Save(outputPath);
+
+        // Optional: Verify that the file was saved successfully.
+        if (System.IO.File.Exists(outputPath))
+        {
+            Console.WriteLine($"Document saved successfully to '{outputPath}'.");
+        }
     }
 }

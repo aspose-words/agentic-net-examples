@@ -3,64 +3,64 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Step 1: Create sample TIFF images.
-        const int imageCount = 3;
-        const int width = 600;
-        const int height = 800;
-        string[] tiffFiles = new string[imageCount];
+        // Create sample TIFF images.
+        CreateSampleTiff("sample1.tif", 600, 800, Aspose.Drawing.Color.LightBlue);
+        CreateSampleTiff("sample2.tif", 800, 600, Aspose.Drawing.Color.LightGreen);
 
-        for (int i = 0; i < imageCount; i++)
-        {
-            string fileName = $"sample{i + 1}.tif";
-            using (Bitmap bitmap = new Bitmap(width, height))
-            {
-                using (Graphics g = Graphics.FromImage(bitmap))
-                {
-                    // Fill background with a distinct color.
-                    Aspose.Drawing.Color bgColor = i % 2 == 0 ? Aspose.Drawing.Color.LightBlue : Aspose.Drawing.Color.LightGreen;
-                    g.Clear(bgColor);
-                }
-                bitmap.Save(fileName);
-            }
-            tiffFiles[i] = Path.GetFullPath(fileName);
-        }
+        // Gather all TIFF files in the current directory.
+        string[] tiffFiles = Directory.GetFiles(Directory.GetCurrentDirectory(), "*.tif");
+        if (tiffFiles.Length == 0)
+            throw new Exception("No TIFF files found to convert.");
 
-        // Step 2: Create a new Word document that will be saved as PDF.
+        // Create a new Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Ensure each image occupies a full page.
-        double pageWidth = builder.PageSetup.PageWidth;
-        double pageHeight = builder.PageSetup.PageHeight;
-
+        // Insert each TIFF image on a separate full page.
         for (int i = 0; i < tiffFiles.Length; i++)
         {
-            // Insert the TIFF image scaled to page size.
-            builder.InsertImage(tiffFiles[i], pageWidth, pageHeight);
-
-            // Add a page break after each image except the last one.
-            if (i < tiffFiles.Length - 1)
+            if (i > 0)
                 builder.InsertBreak(BreakType.PageBreak);
+
+            // Calculate image size to fill the page (respecting margins).
+            double pageWidth = builder.PageSetup.PageWidth - builder.PageSetup.LeftMargin - builder.PageSetup.RightMargin;
+            double pageHeight = builder.PageSetup.PageHeight - builder.PageSetup.TopMargin - builder.PageSetup.BottomMargin;
+
+            // Insert the image with the calculated dimensions.
+            builder.InsertImage(tiffFiles[i], pageWidth, pageHeight);
         }
 
-        // Step 3: Save the document as PDF.
-        string outputPdf = "output.pdf";
-        doc.Save(outputPdf, SaveFormat.Pdf);
+        // Save the document as PDF.
+        string outputPath = "output.pdf";
+        doc.Save(outputPath);
 
-        // Validation: ensure the PDF was created.
-        if (!File.Exists(outputPdf) || new FileInfo(outputPdf).Length == 0)
-            throw new Exception("Failed to create the PDF output.");
+        // Validate that the PDF was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("Failed to create the PDF output file.");
 
-        // Cleanup: optional removal of temporary TIFF files.
-        foreach (var file in tiffFiles)
+        // Clean up sample images (optional).
+        foreach (string file in tiffFiles)
+            File.Delete(file);
+    }
+
+    private static void CreateSampleTiff(string fileName, int width, int height, Aspose.Drawing.Color backgroundColor)
+    {
+        // Create a bitmap and fill it with a solid color.
+        using (Bitmap bitmap = new Bitmap(width, height))
         {
-            if (File.Exists(file))
-                File.Delete(file);
+            using (Graphics graphics = Graphics.FromImage(bitmap))
+            {
+                graphics.Clear(backgroundColor);
+            }
+
+            // Save the bitmap as a TIFF image.
+            bitmap.Save(fileName, ImageFormat.Tiff);
         }
     }
 }

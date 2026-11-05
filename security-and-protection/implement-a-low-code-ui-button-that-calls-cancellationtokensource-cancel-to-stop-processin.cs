@@ -4,40 +4,46 @@ using System.Threading.Tasks;
 
 public class Program
 {
-    public static async Task Main()
+    private static readonly CancellationTokenSource _cts = new CancellationTokenSource();
+
+    // Simulated UI button click that cancels the operation.
+    private static void CancelButton_Click()
     {
-        var cts = new CancellationTokenSource();
-
-        // Simulate a UI button that cancels the operation after a short delay
-        Task buttonTask = Task.Run(async () =>
-        {
-            await Task.Delay(1000); // wait 1 second before "click"
-            cts.Cancel(); // button click triggers cancellation
-        });
-
-        // Long-running work that observes the cancellation token
-        Task workTask = Task.Run(() => DoWork(cts.Token));
-
-        await Task.WhenAll(buttonTask, workTask);
+        Console.WriteLine("Cancel button clicked.");
+        _cts.Cancel();
     }
 
-    private static void DoWork(CancellationToken token)
+    // Example long‑running operation that respects cancellation.
+    private static async Task LongRunningOperation(CancellationToken token)
     {
+        Console.WriteLine("Operation started.");
         try
         {
-            for (int i = 0; i < 10; i++)
+            for (int i = 1; i <= 10; i++)
             {
                 token.ThrowIfCancellationRequested();
-                // Simulate work
-                Thread.Sleep(500);
-                Console.WriteLine($"Working... step {i + 1}");
+                Console.WriteLine($"Processing step {i}");
+                await Task.Delay(500, token); // Simulate work.
             }
 
-            Console.WriteLine("Work completed.");
+            Console.WriteLine("Operation completed.");
         }
         catch (OperationCanceledException)
         {
-            Console.WriteLine("Work was cancelled.");
+            Console.WriteLine("Operation was cancelled.");
         }
+    }
+
+    public static async Task Main()
+    {
+        // Start the long‑running task.
+        Task operationTask = LongRunningOperation(_cts.Token);
+
+        // Simulate a user pressing the cancel button after a short delay.
+        await Task.Delay(1500);
+        CancelButton_Click();
+
+        // Wait for the operation to finish handling cancellation.
+        await operationTask;
     }
 }

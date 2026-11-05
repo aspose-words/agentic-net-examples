@@ -1,70 +1,60 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
-using Aspose.Words.Drawing;
-using Aspose.Words.Loading;
-using Aspose.Words.Saving;
-using Aspose.Words.Replacing;
-using Aspose.Words.Fonts;
 
-namespace FontReplacementExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Define the font names to replace.
+        string oldFontName = "Arial";
+        string newFontName = "Times New Roman";
+
+        // Create a new document and add sample text.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Paragraph with the old font.
+        builder.Font.Name = oldFontName;
+        builder.Writeln($"This line uses the old font: {oldFontName}.");
+
+        // Paragraph with a different font that should remain unchanged.
+        builder.Font.Name = "Calibri";
+        builder.Writeln("This line uses Calibri and should stay unchanged.");
+
+        // Another paragraph with the old font.
+        builder.Font.Name = oldFontName;
+        builder.Writeln($"Another occurrence of the old font: {oldFontName}.");
+
+        // Replace all occurrences of the old font with the new font.
+        foreach (Node node in doc.GetChildNodes(NodeType.Run, true))
         {
-            // Paths for the sample and result documents
-            string originalPath = "Original.docx";
-            string resultPath = "Modified.docx";
-
-            // Create a sample document with two different fonts
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // First paragraph uses the font we want to replace
-            builder.Font.Name = "Arial";
-            builder.Writeln("This paragraph is in Arial font.");
-
-            // Second paragraph uses a different font (should remain unchanged)
-            builder.Font.Name = "Times New Roman";
-            builder.Writeln("This paragraph is in Times New Roman font.");
-
-            // Save the original document
-            doc.Save(originalPath, SaveFormat.Docx);
-
-            // Load the document back (demonstrates load rule usage)
-            Document loadedDoc = new Document(originalPath);
-
-            // Replace all occurrences of the source font with the target font
-            string sourceFont = "Arial";
-            string targetFont = "Calibri";
-
-            foreach (Run run in loadedDoc.GetChildNodes(NodeType.Run, true))
+            Run run = (Run)node;
+            if (!string.IsNullOrEmpty(run.Font.Name) &&
+                run.Font.Name.Equals(oldFontName, StringComparison.OrdinalIgnoreCase))
             {
-                if (string.Equals(run.Font.Name, sourceFont, StringComparison.OrdinalIgnoreCase))
+                run.Font.Name = newFontName;
+
+                // Validate that the font was set correctly.
+                if (!run.Font.Name.Equals(newFontName, StringComparison.OrdinalIgnoreCase))
                 {
-                    run.Font.Name = targetFont;
+                    Console.WriteLine("Warning: Failed to set the new font on a run.");
                 }
             }
+        }
 
-            // Validate that the replacement was successful
-            bool replacementSucceeded = true;
-            foreach (Run run in loadedDoc.GetChildNodes(NodeType.Run, true))
-            {
-                if (string.Equals(run.Font.Name, sourceFont, StringComparison.OrdinalIgnoreCase))
-                {
-                    replacementSucceeded = false;
-                    break;
-                }
-            }
+        // Save the modified document.
+        string outputPath = "Output.docx";
+        doc.Save(outputPath);
 
-            // Save the modified document
-            loadedDoc.Save(resultPath, SaveFormat.Docx);
-
-            // Validate that the output file exists
-            bool fileExists = File.Exists(resultPath);
-            Console.WriteLine($"Font replacement completed. Output file exists: {fileExists}. Replacement succeeded: {replacementSucceeded}");
+        // Verify that the file was created.
+        if (File.Exists(outputPath))
+        {
+            Console.WriteLine("Document saved successfully: " + Path.GetFullPath(outputPath));
+        }
+        else
+        {
+            Console.WriteLine("Failed to save the document.");
         }
     }
 }

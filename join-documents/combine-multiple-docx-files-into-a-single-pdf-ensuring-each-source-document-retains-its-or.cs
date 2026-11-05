@@ -7,57 +7,59 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare a folder for sample source documents.
-        string inputFolder = "InputDocs";
-        Directory.CreateDirectory(inputFolder);
+        // Prepare a temporary working directory.
+        string workDir = Path.Combine(Path.GetTempPath(), "AsposeJoinDemo");
+        Directory.CreateDirectory(workDir);
 
-        // Create first sample DOCX document.
-        string doc1Path = Path.Combine(inputFolder, "Doc1.docx");
+        // Paths for the sample source DOCX files.
+        string docPath1 = Path.Combine(workDir, "Document1.docx");
+        string docPath2 = Path.Combine(workDir, "Document2.docx");
+
+        // Create first sample DOCX.
         var doc1 = new Document();
         var builder1 = new DocumentBuilder(doc1);
-        builder1.Font.Name = "Arial";
-        builder1.Font.Size = 14;
-        builder1.Writeln("This is the first document. It uses Arial 14pt.");
-        doc1.Save(doc1Path, SaveFormat.Docx);
+        builder1.Writeln("First document - Heading");
+        builder1.Font.Size = 12;
+        builder1.Writeln("This is the content of the first document.");
+        doc1.Save(docPath1, SaveFormat.Docx);
 
-        // Create second sample DOCX document.
-        string doc2Path = Path.Combine(inputFolder, "Doc2.docx");
+        // Create second sample DOCX.
         var doc2 = new Document();
         var builder2 = new DocumentBuilder(doc2);
-        builder2.Font.Name = "Times New Roman";
+        builder2.Writeln("Second document - Heading");
         builder2.Font.Size = 12;
-        builder2.Writeln("This is the second document. It uses Times New Roman 12pt.");
-        doc2.Save(doc2Path, SaveFormat.Docx);
+        builder2.Writeln("This is the content of the second document.");
+        doc2.Save(docPath2, SaveFormat.Docx);
 
-        // Load the first document as the destination.
-        var combinedDoc = new Document(doc1Path);
+        // Load the source documents.
+        var sourceDoc1 = new Document(docPath1);
+        var sourceDoc2 = new Document(docPath2);
 
-        // Load the second document to be appended.
-        var docToAppend = new Document(doc2Path);
+        // Append the second document to the first, preserving source formatting.
+        sourceDoc1.AppendDocument(sourceDoc2, ImportFormatMode.KeepSourceFormatting);
 
-        // Append the second document while preserving its original formatting.
-        combinedDoc.AppendDocument(docToAppend, ImportFormatMode.KeepSourceFormatting);
+        // Path for the merged PDF output.
+        string pdfPath = Path.Combine(workDir, "MergedOutput.pdf");
 
         // Save the combined document as PDF.
-        string outputPdfPath = "Combined.pdf";
-        combinedDoc.Save(outputPdfPath, SaveFormat.Pdf);
+        sourceDoc1.Save(pdfPath, SaveFormat.Pdf);
 
         // Validation: ensure the PDF file was created.
-        if (!File.Exists(outputPdfPath))
+        if (!File.Exists(pdfPath))
         {
-            throw new InvalidOperationException($"Failed to create the output PDF at '{outputPdfPath}'.");
+            throw new InvalidOperationException("Merged PDF was not created.");
         }
 
-        // Validation: ensure the combined document contains sections from both source documents.
-        int expectedSections = doc1.Sections.Count + doc2.Sections.Count;
-        if (combinedDoc.Sections.Count != expectedSections)
+        // Validation: ensure the merged document contains sections from both sources.
+        if (sourceDoc1.Sections.Count < 2)
         {
-            throw new InvalidOperationException($"The combined document contains {combinedDoc.Sections.Count} sections, but {expectedSections} were expected.");
+            throw new InvalidOperationException("Merged document does not contain expected sections.");
         }
 
-        // Clean up sample documents (optional).
-        // File.Delete(doc1Path);
-        // File.Delete(doc2Path);
-        // Directory.Delete(inputFolder, true);
+        // Cleanup: optional removal of temporary files (comment out if inspection is needed).
+        // File.Delete(docPath1);
+        // File.Delete(docPath2);
+        // File.Delete(pdfPath);
+        // Directory.Delete(workDir);
     }
 }

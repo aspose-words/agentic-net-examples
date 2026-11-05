@@ -5,50 +5,58 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and add initial paragraphs.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("First paragraph.");
-        builder.Writeln("Second paragraph.");
 
-        // Enable track changes.
-        doc.StartTrackRevisions("AuthorName", DateTime.Now);
+        // Add initial paragraphs.
+        builder.Writeln("Paragraph 1");
+        builder.Writeln("Paragraph 2");
+        builder.Writeln("Paragraph 3");
 
-        // Insert a new paragraph (this will be an insertion revision).
-        builder.Writeln("Inserted paragraph while tracking.");
+        // Start tracking revisions.
+        doc.StartTrackRevisions("John Doe", DateTime.Now);
 
-        // Modify text of the first paragraph (creates insertion/deletion revisions).
+        // 1. Insert a new paragraph after the first one.
         Paragraph firstPara = (Paragraph)doc.GetChild(NodeType.Paragraph, 0, true);
-        if (firstPara.Runs.Count > 0)
-            firstPara.Runs[0].Text = "First paragraph modified.";
+        builder.MoveTo(firstPara);
+        builder.Writeln("Inserted Paragraph");
 
-        // Change formatting of the second paragraph (format change revision).
+        // 2. Delete the original second paragraph.
         Paragraph secondPara = (Paragraph)doc.GetChild(NodeType.Paragraph, 1, true);
-        secondPara.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        secondPara.Remove();
 
-        // Stop tracking changes.
+        // 3. Change formatting of the third paragraph (make it bold).
+        // The third paragraph is now at index 2 because we removed one paragraph.
+        Paragraph thirdPara = (Paragraph)doc.GetChild(NodeType.Paragraph, 2, true);
+        foreach (Run run in thirdPara.Runs)
+        {
+            run.Font.Bold = true; // This creates a format‑change revision.
+        }
+
+        // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Save the document (required by lifecycle rule).
-        doc.Save("SampleRevisions.docx");
-
-        // Prepare a collection of all paragraphs for paragraph number lookup.
-        NodeCollection allParagraphs = doc.GetChildNodes(NodeType.Paragraph, true);
-
         // Generate report of revisions.
-        int revIndex = 1;
+        Console.WriteLine("Revision Report:");
         foreach (Revision rev in doc.Revisions)
         {
-            // Determine the paragraph that contains the revision.
-            Paragraph para = rev.ParentNode as Paragraph ?? rev.ParentNode?.GetAncestor(NodeType.Paragraph) as Paragraph;
+            // Find the paragraph that contains the revision.
+            Node node = rev.ParentNode;
+            while (node != null && !(node is Paragraph))
+                node = node.ParentNode;
+
             int paragraphNumber = -1;
-            if (para != null)
-                paragraphNumber = allParagraphs.IndexOf(para) + 1; // 1‑based index
+            if (node != null)
+            {
+                NodeCollection allParagraphs = doc.GetChildNodes(NodeType.Paragraph, true);
+                paragraphNumber = allParagraphs.IndexOf(node) + 1; // 1‑based index
+            }
 
-            string paraInfo = paragraphNumber > 0 ? paragraphNumber.ToString() : "N/A";
-
-            Console.WriteLine($"Revision {revIndex}: Type={rev.RevisionType}, Author={rev.Author}, Paragraph={paraInfo}");
-            revIndex++;
+            Console.WriteLine($"Type: {rev.RevisionType}, Author: {rev.Author}, Paragraph: {paragraphNumber}");
         }
+
+        // Save the document to verify revisions visually.
+        doc.Save("TrackedDocument.docx");
     }
 }

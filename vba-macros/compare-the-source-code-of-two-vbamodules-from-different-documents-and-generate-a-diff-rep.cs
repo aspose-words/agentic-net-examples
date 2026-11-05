@@ -1,129 +1,85 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Vba;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Create first macro-enabled document with a VBA module.
-        Document doc1 = new Document();
-        doc1.VbaProject = new VbaProject();
-
-        VbaModule module1 = new VbaModule
+        // Create first macro‑enabled document with a VBA module
+        var doc1 = new Document();
+        if (doc1.VbaProject == null)
         {
-            Name = "SampleModule",
-            SourceCode = @"Sub Hello()
-    MsgBox ""Hello from Document 1""
-End Sub"
-        };
+            doc1.VbaProject = new VbaProject();
+        }
+
+        var module1 = new VbaModule();
+        module1.Name = "TestModule";
+        module1.SourceCode = @"Sub Test()
+    MsgBox ""Doc1 version""
+End Sub";
         doc1.VbaProject.Modules.Add(module1);
+        doc1.Save("doc1.docm", SaveFormat.Docm);
 
-        string file1 = "doc1.docm";
-        doc1.Save(file1, SaveFormat.Docm);
-
-        // Create second macro-enabled document with a slightly different VBA module.
-        Document doc2 = new Document();
-        doc2.VbaProject = new VbaProject();
-
-        VbaModule module2 = new VbaModule
+        // Create second macro‑enabled document with a slightly different VBA module
+        var doc2 = new Document();
+        if (doc2.VbaProject == null)
         {
-            Name = "SampleModule",
-            SourceCode = @"Sub Hello()
-    MsgBox ""Hello from Document 2""
+            doc2.VbaProject = new VbaProject();
+        }
+
+        var module2 = new VbaModule();
+        module2.Name = "TestModule";
+        module2.SourceCode = @"Sub Test()
+    MsgBox ""Doc2 version""
     Debug.Print ""Additional line""
-End Sub"
-        };
+End Sub";
         doc2.VbaProject.Modules.Add(module2);
+        doc2.Save("doc2.docm", SaveFormat.Docm);
 
-        string file2 = "doc2.docm";
-        doc2.Save(file2, SaveFormat.Docm);
+        // Retrieve the modules (by name) from each document
+        var retrievedModule1 = doc1.VbaProject.Modules["TestModule"];
+        var retrievedModule2 = doc2.VbaProject.Modules["TestModule"];
 
-        // Reload documents to ensure they are read from disk.
-        Document loadedDoc1 = new Document(file1);
-        Document loadedDoc2 = new Document(file2);
+        // Guard against null source code
+        string source1 = retrievedModule1?.SourceCode ?? string.Empty;
+        string source2 = retrievedModule2?.SourceCode ?? string.Empty;
 
-        // Retrieve the VBA modules (guard against missing modules).
-        string source1 = string.Empty;
-        string source2 = string.Empty;
-
-        if (loadedDoc1.VbaProject?.Modules?["SampleModule"] != null)
-        {
-            source1 = loadedDoc1.VbaProject.Modules["SampleModule"].SourceCode ?? string.Empty;
-        }
-
-        if (loadedDoc2.VbaProject?.Modules?["SampleModule"] != null)
-        {
-            source2 = loadedDoc2.VbaProject.Modules["SampleModule"].SourceCode ?? string.Empty;
-        }
-
-        // Split source code into lines for comparison.
-        string[] lines1 = source1.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
-        string[] lines2 = source2.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
-
-        // Build simple diff report.
-        var onlyInFirst = new List<string>();
-        var onlyInSecond = new List<string>();
-        var set1 = new HashSet<string>(lines1);
-        var set2 = new HashSet<string>(lines2);
-
-        foreach (string line in lines2)
-        {
-            if (!set1.Contains(line))
-                onlyInSecond.Add(line);
-        }
-
-        foreach (string line in lines1)
-        {
-            if (!set2.Contains(line))
-                onlyInFirst.Add(line);
-        }
-
-        // Output diff report.
-        Console.WriteLine("=== Diff Report for VBA Module 'SampleModule' ===");
-        Console.WriteLine();
-
-        Console.WriteLine($"Lines only in first document ({file1}):");
-        if (onlyInFirst.Count == 0)
-        {
-            Console.WriteLine("  (none)");
-        }
-        else
-        {
-            foreach (var line in onlyInFirst)
-                Console.WriteLine("- " + line);
-        }
-
-        Console.WriteLine();
-
-        Console.WriteLine($"Lines only in second document ({file2}):");
-        if (onlyInSecond.Count == 0)
-        {
-            Console.WriteLine("  (none)");
-        }
-        else
-        {
-            foreach (var line in onlyInSecond)
-                Console.WriteLine("+ " + line);
-        }
-
-        // Clean up temporary files.
-        TryDelete(file1);
-        TryDelete(file2);
+        // Generate and output the diff report
+        string diffReport = GenerateDiffReport(source1, source2);
+        Console.WriteLine(diffReport);
     }
 
-    private static void TryDelete(string path)
+    private static string GenerateDiffReport(string text1, string text2)
     {
-        try
+        var lines1 = text1.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+        var lines2 = text2.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+        int maxLines = Math.Max(lines1.Length, lines2.Length);
+        var sb = new StringBuilder();
+        sb.AppendLine("Diff Report:");
+        bool anyDifference = false;
+
+        for (int i = 0; i < maxLines; i++)
         {
-            if (File.Exists(path))
-                File.Delete(path);
+            string line1 = i < lines1.Length ? lines1[i] : string.Empty;
+            string line2 = i < lines2.Length ? lines2[i] : string.Empty;
+
+            if (!string.Equals(line1, line2, StringComparison.Ordinal))
+            {
+                anyDifference = true;
+                sb.AppendLine($"Line {i + 1}:");
+                sb.AppendLine($"  Doc1: {line1}");
+                sb.AppendLine($"  Doc2: {line2}");
+            }
         }
-        catch
+
+        if (!anyDifference)
         {
-            // Ignored – cleanup failure should not affect program outcome.
+            sb.AppendLine("  No differences found.");
         }
+
+        return sb.ToString();
     }
 }

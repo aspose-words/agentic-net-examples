@@ -2,81 +2,97 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
+using System.Text;
 
-public class Person
+namespace LinqReportingReflectionOptimization
 {
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public int Age { get; set; }
-}
-
-public class DataModel
-{
-    public List<Person> Persons { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main()
+    public class Item
     {
-        // Register code page provider (required for Aspose.Words).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public double Value { get; set; }
+    }
 
-        // Create a large JSON array.
-        const int itemCount = 20000;
-        var model = new DataModel();
-        for (int i = 1; i <= itemCount; i++)
+    public class Root
+    {
+        public List<Item> Items { get; set; } = new();
+    }
+
+    public class Program
+    {
+        private const string TemplateFileName = "template.docx";
+        private const string JsonFileName = "data.json";
+        private const string OutputNonOptimized = "output_nonoptimized.docx";
+        private const string OutputOptimized = "output_optimized.docx";
+
+        public static void Main()
         {
-            model.Persons.Add(new Person
-            {
-                Id = i,
-                Name = $"Person {i}",
-                Age = 20 + (i % 30)
-            });
+            // Register code page provider for Aspose.Words.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Prepare large JSON data.
+            Root data = GenerateSampleData(10000);
+            string json = JsonConvert.SerializeObject(data);
+            File.WriteAllText(JsonFileName, json);
+
+            // Load data back from JSON.
+            Root root = JsonConvert.DeserializeObject<Root>(File.ReadAllText(JsonFileName))!;
+
+            // Create and save the template document.
+            CreateTemplate();
+
+            // Benchmark without reflection optimization.
+            TimeSpan nonOptimizedTime = RunReport(root, false, OutputNonOptimized);
+            Console.WriteLine($"Report without reflection optimization: {nonOptimizedTime.TotalMilliseconds} ms");
+
+            // Benchmark with reflection optimization.
+            TimeSpan optimizedTime = RunReport(root, true, OutputOptimized);
+            Console.WriteLine($"Report with reflection optimization: {optimizedTime.TotalMilliseconds} ms");
         }
 
-        // Serialize to JSON file.
-        const string jsonPath = "data.json";
-        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(model));
+        private static Root GenerateSampleData(int count)
+        {
+            var root = new Root();
+            for (int i = 1; i <= count; i++)
+            {
+                root.Items.Add(new Item
+                {
+                    Id = i,
+                    Name = $"Item {i}",
+                    Value = i * 0.1
+                });
+            }
+            return root;
+        }
 
-        // Create LINQ Reporting template.
-        const string templatePath = "template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Persons Report");
-        builder.Writeln("<<foreach [person in Persons]>>");
-        builder.Writeln("Id: <<[person.Id]>>, Name: <<[person.Name]>>, Age: <<[person.Age]>>");
-        builder.Writeln("<</foreach>>");
-        templateDoc.Save(templatePath);
+        private static void CreateTemplate()
+        {
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Load data from JSON.
-        var json = File.ReadAllText(jsonPath);
-        var data = JsonConvert.DeserializeObject<DataModel>(json)!;
+            builder.Writeln("<<foreach [item in Items]>>");
+            builder.Writeln("Id: <<[item.Id]>>, Name: <<[item.Name]>>, Value: <<[item.Value]>>");
+            builder.Writeln("<</foreach>>");
 
-        // Benchmark without reflection optimization.
-        ReportingEngine.UseReflectionOptimization = false;
-        var docWithoutOpt = new Document(templatePath);
-        var engineWithoutOpt = new ReportingEngine();
-        var swWithout = Stopwatch.StartNew();
-        bool successWithout = engineWithoutOpt.BuildReport(docWithoutOpt, data, "data");
-        swWithout.Stop();
-        const string outputWithout = "report_without_opt.docx";
-        docWithoutOpt.Save(outputWithout);
-        Console.WriteLine($"Without optimization: {swWithout.ElapsedMilliseconds} ms, success = {successWithout}");
+            doc.Save(TemplateFileName);
+        }
 
-        // Benchmark with reflection optimization.
-        ReportingEngine.UseReflectionOptimization = true;
-        var docWithOpt = new Document(templatePath);
-        var engineWithOpt = new ReportingEngine();
-        var swWith = Stopwatch.StartNew();
-        bool successWith = engineWithOpt.BuildReport(docWithOpt, data, "data");
-        swWith.Stop();
-        const string outputWith = "report_with_opt.docx";
-        docWithOpt.Save(outputWith);
-        Console.WriteLine($"With optimization: {swWith.ElapsedMilliseconds} ms, success = {successWith}");
+        private static TimeSpan RunReport(Root data, bool useOptimization, string outputPath)
+        {
+            ReportingEngine.UseReflectionOptimization = useOptimization;
+
+            Document template = new Document(TemplateFileName);
+            ReportingEngine engine = new ReportingEngine();
+
+            Stopwatch sw = Stopwatch.StartNew();
+            engine.BuildReport(template, data, "root");
+            sw.Stop();
+
+            template.Save(outputPath);
+            return sw.Elapsed;
+        }
     }
 }

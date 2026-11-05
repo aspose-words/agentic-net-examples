@@ -4,41 +4,37 @@
     "slug": "split-document",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Use simple documented Aspose.Words splitting workflows. Create local sample source documents when needed, use Document, Section, Node, page extraction APIs, or import/clone workflows only when directly required by the task, and keep validation narrow and task-specific.",
+    "preferred_workflow": "Create a deterministic source document locally, select a supported split strategy (section, heading, page, or custom range), use Document, Section, NodeImporter, or Document.ExtractPages to produce separate Document objects, and save each part with explicit file-system checks. Keep validation focused on the existence and basic integrity of the generated files.",
     "required_packages": [
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.9.0"
+      "Aspose.Words": "26.10.0"
     },
     "required_namespaces": [
       "System",
       "System.IO",
       "Aspose.Words",
       "Aspose.Words.Saving",
-      "System.Linq",
+      "Aspose.Words.BuildingBlocks",
       "System.Collections.Generic",
-      "Aspose.Words.Loading",
-      "Aspose.Words.Tables"
+      "Aspose.Words.Tables",
+      "System.Linq"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
-      "Directory",
+      "File",
       "Path",
       "Paragraph",
-      "HtmlSaveOptions",
-      "SaveFormat",
-      "StyleIdentifier",
-      "File",
       "NodeType",
+      "SaveFormat",
+      "Directory",
+      "StyleIdentifier",
+      "HtmlSaveOptions",
       "Node",
-      "MemoryStream",
-      "LoadOptions",
-      "Range",
       "Table",
-      "Row",
-      "Cell"
+      "Row"
     ]
   },
   "stats": {
@@ -49,40 +45,55 @@
     }
   },
   "rules_summary": {
-    "core_rules": [
-      "Use native Aspose.Words APIs directly.",
-      "Create local sample source documents when a task refers to an existing file, folder, stream, or template.",
-      "Do not assume external files or folders already exist.",
-      "Always save the requested split output documents, files, or reports.",
-      "Keep validation narrow and task-specific."
+    "strict_api_bans": [
+      "Never reference Aspose.Words members that are absent from version 26.10.0.",
+      "Do not import or use namespaces that are not part of the official package."
     ],
-    "split_rules": [
-      "Use section, node, bookmark, heading, or page extraction workflows only when relevant to the task.",
-      "For page-based splitting, use documented page extraction APIs only.",
-      "Use import, clone, or NodeImporter workflows when moving content between documents.",
-      "Preserve the intended content scope only."
+    "canonical_patterns": [
+      "Use Document, Section, NodeImporter, and HtmlSaveOptions for all splitting scenarios.",
+      "When splitting by pages, call Document.ExtractPages with zero-based start index and validated page count.",
+      "For heading-based splitting, iterate over Paragraph nodes and import the desired range into a new Document."
     ],
-    "api_safety_rules": [
-      "Do not invent unsupported Aspose.Words splitting APIs.",
-      "Do not use fake namespaces.",
-      "Do not append cross-document nodes without importing or cloning them correctly."
+    "nullable_warning_prevention": [
+      "Create all source files, folders, and streams before they are accessed.",
+      "Validate that output directories exist and are writable prior to saving split parts."
     ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "Unsupported API invention",
-      "symptom": "Generated code references members that do not exist in the selected package version.",
-      "fix": "Replace invented members with documented Aspose.Words APIs already proven in this category."
+      "pattern": "Unsupported API usage",
+      "symptom": "Code references members such as DocumentSplitCriteria.SplitMode, DocumentSplitMode, or Aspose.Words.Import that do not exist in the installed library.",
+      "cause": "The example invents APIs that were never released in Aspose.Words 26.10.0.",
+      "fix": "Replace invented members with documented alternatives, for example HtmlSaveOptions.DocumentSplitCriteria and HtmlSaveOptions.DocumentSplitHeadingLevel for heading-based splitting.",
+      "prevention": "Consult the official Aspose.Words API reference for the exact class and member names before writing code."
     },
     {
-      "pattern": "Missing local bootstrap inputs",
-      "symptom": "The example assumes source files, folders, images, or data already exist.",
-      "fix": "Create deterministic local inputs before loading, processing, or validating them."
+      "pattern": "Invalid page range arguments",
+      "symptom": "ExtractPages throws ArgumentOutOfRangeException because the start or end page index exceeds the document's page count.",
+      "cause": "Page numbers are calculated incorrectly or zero-based indices are mixed with one-based values.",
+      "fix": "Call Document.UpdatePageLayout() first, verify that 1 ≤ startPage ≤ endPage ≤ doc.PageCount, then invoke ExtractPages(startPage-1, pageCount).",
+      "prevention": "Always validate page numbers against the actual PageCount and use consistent zero-based indexing."
     },
     {
-      "pattern": "Over-broad validation",
-      "symptom": "The example fails at runtime while checking unrelated document internals.",
-      "fix": "Validate only the requested behavior and the existence of expected outputs."
+      "pattern": "Cross-document node import errors",
+      "symptom": "Runtime exception reports that a new child node was created from a different document than the target.",
+      "cause": "Nodes are appended directly without using NodeImporter or cloning, violating Aspose.Words ownership rules.",
+      "fix": "Import nodes with NodeImporter (ImportFormatMode.KeepSourceFormatting) or clone them before insertion.",
+      "prevention": "Never mix nodes from different Document instances without proper import or cloning."
+    },
+    {
+      "pattern": "Missing required namespaces or types",
+      "symptom": "CS0234 errors indicate that namespaces such as Aspose.Words.Import, Aspose.Words.Building, or Aspose.Words.Splitting cannot be found.",
+      "cause": "The code assumes the existence of non-existent sub-namespaces.",
+      "fix": "Remove invalid using directives and reference only the namespaces listed in the package documentation (e.g., Aspose.Words, Aspose.Words.Saving).",
+      "prevention": "Rely on IDE intellisense or the official documentation to determine available namespaces."
+    },
+    {
+      "pattern": "Incorrect DocumentPartSavingCallback usage",
+      "symptom": "CS1061 errors show that SaveOptions does not contain a DocumentPartSavingCallback property in the current version.",
+      "cause": "The example attempts to assign a callback to a property that was removed or never existed.",
+      "fix": "Omit the callback or implement IDocumentPartSavingCallback only where the property is supported, using the correct SaveOptions subclass.",
+      "prevention": "Verify the presence of callback properties in the specific Aspose.Words version before using them."
     }
   ],
   "examples": [
@@ -95,8 +106,8 @@
         "docx",
         "doc"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 2,
@@ -106,8 +117,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 3,
@@ -128,8 +139,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 5,
@@ -139,8 +150,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 6,
@@ -150,8 +161,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 7,
@@ -183,8 +194,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 10,
@@ -194,8 +205,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 11,
@@ -207,8 +218,8 @@
         "doc",
         "pdf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 12,
@@ -254,8 +265,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 16,
@@ -321,7 +332,7 @@
     {
       "id": 21,
       "file_name": "split-a-large-word-file-into-50-page-chunks-and-save-each-chunk-as-pdf.cs",
-      "task": "Split a large Word file into 50‑page chunks and save each chunk as PDF.",
+      "task": "Split a large Word file into 50-page chunks and save each chunk as PDF.",
       "workflow": "split-workflow",
       "outputs": [
         "pdf"
@@ -370,8 +381,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 26,
@@ -381,8 +392,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 27,
@@ -429,5 +440,15 @@
       "selected_engine": "mcp",
       "winner": "mcp"
     }
-  ]
+  ],
+  "narrative": {
+    "overview": "The Split Document category demonstrates how to divide Word, HTML, EPUB, and other supported formats into smaller parts using only the native Aspose.Words 26.10.0 APIs. Verified examples show section-based splitting, heading-based manual splitting, page extraction, custom page-range extraction, and conditional format selection.",
+    "purpose": "Provide an AI coding assistant with concise, version-accurate guidance for implementing reliable document-splitting workflows that rely on documented Aspose.Words classes, avoid invented APIs, and include deterministic input creation and output validation.",
+    "validation_priorities": [
+      "Confirm that each expected split file exists on disk after the operation."
+    ],
+    "maintenance_notes": [
+      "Review and update examples whenever a new Aspose.Words version adds or deprecates splitting-related members."
+    ]
+  }
 }

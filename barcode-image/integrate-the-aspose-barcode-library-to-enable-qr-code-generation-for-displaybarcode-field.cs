@@ -2,54 +2,57 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
+using Aspose.Words.Replacing;
 using Aspose.BarCode.Generation;
 using Aspose.Drawing;
 
-public class Program
+public sealed class CustomBarcodeGenerator : IBarcodeGenerator
 {
-    // Custom barcode generator that uses Aspose.BarCode to create QR code images.
-    public class CustomBarcodeGenerator : IBarcodeGenerator
+    public Stream GetBarcodeImage(Aspose.Words.Fields.BarcodeParameters parameters)
     {
-        // Generates a barcode image based on the supplied Word barcode parameters.
-        public Stream GetBarcodeImage(Aspose.Words.Fields.BarcodeParameters parameters)
+        var stream = new MemoryStream();
+        // Use QR encoding type for the barcode.
+        using (var generator = new BarcodeGenerator(EncodeTypes.QR, parameters.BarcodeValue))
         {
-            // Create a BarcodeGenerator for QR codes.
-            var generator = new BarcodeGenerator(EncodeTypes.QR, parameters.BarcodeValue);
-
-            // Save the generated barcode to a memory stream in PNG format.
-            var stream = new MemoryStream();
+            // Set barcode colors if needed.
+            generator.Parameters.Barcode.BarColor = Color.Black;
+            generator.Parameters.BackColor = Color.White;
+            // Save as PNG to the memory stream.
             generator.Save(stream, BarCodeImageFormat.Png);
-            stream.Position = 0;
-            return stream;
         }
-
-        // For legacy BARCODE fields – delegate to the primary method.
-        public Stream GetOldBarcodeImage(Aspose.Words.Fields.BarcodeParameters parameters)
-        {
-            return GetBarcodeImage(parameters);
-        }
+        stream.Position = 0;
+        return stream;
     }
 
+    public Stream GetOldBarcodeImage(Aspose.Words.Fields.BarcodeParameters parameters)
+    {
+        // Delegate to the primary method.
+        return GetBarcodeImage(parameters);
+    }
+}
+
+public class Program
+{
     public static void Main()
     {
-        // Create a new empty Word document.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Register the custom barcode generator (required for rendered outputs such as PDF).
+        // Insert a DISPLAYBARCODE field of type QR.
+        FieldDisplayBarcode field = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
+        field.BarcodeType = "QR";
+        field.BarcodeValue = "https://example.com";
+        field.ForegroundColor = "0x000000";
+        field.BackgroundColor = "0xFFFFFF";
+
+        // Register the custom barcode generator for rendered output (PDF).
         doc.FieldOptions.BarcodeGenerator = new CustomBarcodeGenerator();
 
-        // Insert a DISPLAYBARCODE field using the typed API.
-        var field = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
-
-        // Configure the field to display a QR code.
-        field.BarcodeType = "QR";
-        field.BarcodeValue = "HelloWorld";
-
-        // Update fields so that the barcode image is generated.
+        // Update fields to generate the barcode image.
         doc.UpdateFields();
 
-        // Save the document as PDF (the custom generator ensures the QR code is rendered).
-        doc.Save("DisplayBarcodeQRCode.pdf");
+        // Save the document as PDF.
+        doc.Save("output.pdf");
     }
 }

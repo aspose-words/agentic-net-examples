@@ -3,46 +3,46 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingUnicodeExample
+public class Person
 {
-    // Data model with Unicode property names.
-    public class Model
-    {
-        public string Имя { get; set; } = "Иван Иванов";
-        public string Приветствие { get; set; } = "Привет, мир!";
-    }
+    public string Имя { get; set; } = "";
+    public int Возраст { get; set; }
+}
 
-    public class Program
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
+        // Prepare sample data with Unicode property names.
+        var person = new Person
         {
-            // Paths for template and output documents.
-            string templatePath = "Template.docx";
-            string outputPath = "Report.docx";
+            Имя = "Иван Иванов",
+            Возраст = 30
+        };
 
-            // Create the template document programmatically.
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Define file paths.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        string reportPath = Path.Combine(outputDir, "Report.docx");
 
-            // Write LINQ Reporting tags using literal Unicode identifiers.
-            builder.Writeln("<<[model.Приветствие]>>");
-            builder.Writeln("<<[model.Имя]>>");
+        // Create the template document programmatically.
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Имя клиента: <<[person.Имя]>>");
+        builder.Writeln("Возраст: <<[person.Возраст]>>");
+        templateDoc.Save(templatePath);
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
+        // Load the template for report generation.
+        var reportDoc = new Document(templatePath);
 
-            // Load the template for report generation.
-            Document doc = new Document(templatePath);
+        // Build the report using LINQ Reporting Engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, person, "person");
 
-            // Prepare the data model.
-            Model model = new Model();
+        // Save the generated report.
+        reportDoc.Save(reportPath);
 
-            // Build the report.
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
-
-            // Save the generated report.
-            doc.Save(outputPath);
-        }
+        Console.WriteLine($"Report generated at: {reportPath}");
     }
 }

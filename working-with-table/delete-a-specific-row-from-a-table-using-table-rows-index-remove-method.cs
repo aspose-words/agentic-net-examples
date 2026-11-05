@@ -7,51 +7,57 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder to construct content.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 3‑row, 2‑column table.
+        // Build a table with three rows and two columns.
         builder.StartTable();
 
-        // First row.
+        // Row 0
+        builder.InsertCell();
+        builder.Write("Row 0, Cell 0");
+        builder.InsertCell();
+        builder.Write("Row 0, Cell 1");
+        builder.EndRow();
+
+        // Row 1
+        builder.InsertCell();
+        builder.Write("Row 1, Cell 0");
         builder.InsertCell();
         builder.Write("Row 1, Cell 1");
-        builder.InsertCell();
-        builder.Write("Row 1, Cell 2");
         builder.EndRow();
 
-        // Second row.
+        // Row 2
+        builder.InsertCell();
+        builder.Write("Row 2, Cell 0");
         builder.InsertCell();
         builder.Write("Row 2, Cell 1");
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 2");
-        builder.EndRow();
-
-        // Third row.
-        builder.InsertCell();
-        builder.Write("Row 3, Cell 1");
-        builder.InsertCell();
-        builder.Write("Row 3, Cell 2");
         builder.EndRow();
 
         builder.EndTable();
 
         // Retrieve the first table in the document.
-        Table table = doc.GetChildNodes(NodeType.Table, true)[0] as Table;
-        if (table == null)
-            throw new InvalidOperationException("Table was not created.");
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
         // Delete the second row (index 1) using Table.Rows[index].Remove().
         if (table.Rows.Count > 1)
+        {
             table.Rows[1].Remove();
+        }
+        else
+        {
+            throw new InvalidOperationException("The table does not contain enough rows to delete the specified row.");
+        }
 
         // Save the modified document.
         string outputPath = "Output.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was saved.
+        // Verify that the file was saved successfully.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not created.", outputPath);
+        {
+            throw new IOException("The document was not saved correctly.");
+        }
     }
 }

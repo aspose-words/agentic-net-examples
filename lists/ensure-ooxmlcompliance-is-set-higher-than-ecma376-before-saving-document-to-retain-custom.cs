@@ -1,53 +1,54 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Lists;
-using Aspose.Words.Saving;
-using Aspose.Words.Settings;
+using Aspose.Words.Tables;
+using Aspose.Words.Saving; // Needed for OoxmlSaveOptions and OoxmlCompliance enum
 
 public class Program
 {
     public static void Main()
     {
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a numbered list to the document.
-        doc.Lists.Add(ListTemplate.NumberDefault);
-        List docList = doc.Lists[0];
-
-        // Enable restarting the list at each new section.
-        // This property only takes effect when the OOXML compliance level is higher than Ecma376.
-        docList.IsRestartAtEachSection = true;
+        // Create a list based on a built‑in template.
+        List list = doc.Lists.Add(ListTemplate.NumberDefault);
 
         // Apply the list to the builder.
-        builder.ListFormat.List = docList;
+        builder.ListFormat.List = list;
 
-        // Write some list items, then insert a section break and write more items.
-        builder.Writeln("Item 1");
-        builder.Writeln("Item 2");
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
-        builder.Writeln("Item 3");
-        builder.Writeln("Item 4");
+        // First top‑level item.
+        builder.ListFormat.ListLevelNumber = 0;
+        builder.Writeln("First item");
 
-        // Configure OOXML save options with a compliance level higher than Ecma376.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions();
-        saveOptions.Compliance = OoxmlCompliance.Iso29500_2008_Transitional;
+        // Nested second level item.
+        builder.ListFormat.ListLevelNumber = 1;
+        builder.Writeln("Nested item");
 
-        // Save the document using the specified save options.
-        string outPath = Path.Combine(outputDir, "CustomList.docx");
-        doc.Save(outPath, saveOptions);
+        // Return to top level for another item.
+        builder.ListFormat.ListLevelNumber = 0;
+        builder.Writeln("Second item");
 
-        // Load the saved document to verify that the list restart setting was retained.
-        Document loadedDoc = new Document(outPath);
-        bool isRestartEnabled = loadedDoc.Lists[0].IsRestartAtEachSection;
+        // End list formatting.
+        builder.ListFormat.RemoveNumbers();
 
-        // Output the verification result.
-        Console.WriteLine($"IsRestartAtEachSection retained after save: {isRestartEnabled}");
+        // Validation: count paragraphs that are part of the list.
+        int listParagraphCount = 0;
+        foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
+        {
+            if (para.ListFormat.IsListItem)
+                listParagraphCount++;
+        }
+
+        // Ensure OoxmlCompliance is set higher than Ecma376 to retain custom list settings.
+        // Use OoxmlSaveOptions to specify the compliance level.
+        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions
+        {
+            Compliance = OoxmlCompliance.Iso29500_2008_Transitional
+        };
+
+        // Save the document with the specified compliance level.
+        doc.Save("Output.docx", saveOptions);
     }
 }

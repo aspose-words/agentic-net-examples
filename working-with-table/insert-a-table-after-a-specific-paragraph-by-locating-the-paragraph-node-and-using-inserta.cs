@@ -12,16 +12,16 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Add some paragraphs to the document.
-        builder.Writeln("Paragraph 1");
-        builder.Writeln("Target Paragraph"); // This is the paragraph after which we will insert the table.
-        builder.Writeln("Paragraph 3");
+        builder.Writeln("First paragraph.");
+        builder.Writeln("Target paragraph."); // This is the paragraph after which we will insert the table.
+        builder.Writeln("Third paragraph.");
 
-        // Locate the paragraph node with the exact text "Target Paragraph".
+        // Locate the paragraph with the exact text "Target paragraph."
         Paragraph targetParagraph = null;
         NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
         foreach (Paragraph para in paragraphs)
         {
-            if (para.GetText().Trim() == "Target Paragraph")
+            if (para.GetText().Trim() == "Target paragraph.")
             {
                 targetParagraph = para;
                 break;
@@ -29,45 +29,31 @@ public class Program
         }
 
         if (targetParagraph == null)
-            throw new InvalidOperationException("Target paragraph not found.");
+            throw new Exception("Target paragraph not found.");
 
-        // Create a new table.
-        Table table = new Table(doc);
+        // Move the builder to the target paragraph.
+        builder.MoveTo(targetParagraph);
+        // Insert a new empty paragraph after the target paragraph – this will be the anchor for the table.
+        builder.InsertParagraph();
 
-        // First row.
-        Row row1 = new Row(doc);
-        table.AppendChild(row1);
+        // Build a simple 2x2 table using DocumentBuilder (preferred workflow).
+        builder.StartTable();
+        for (int rowIndex = 0; rowIndex < 2; rowIndex++)
+        {
+            for (int colIndex = 0; colIndex < 2; colIndex++)
+            {
+                builder.InsertCell();
+                builder.Write($"R{rowIndex + 1}C{colIndex + 1}");
+            }
+            builder.EndRow();
+        }
+        builder.EndTable();
 
-        // First cell of first row.
-        Cell cell11 = new Cell(doc);
-        cell11.AppendChild(new Paragraph(doc));
-        cell11.FirstParagraph.AppendChild(new Run(doc, "Cell 1"));
-        row1.AppendChild(cell11);
+        // Retrieve the table that was just created (it will be the last table in the document).
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true).Last();
 
-        // Second cell of first row.
-        Cell cell12 = new Cell(doc);
-        cell12.AppendChild(new Paragraph(doc));
-        cell12.FirstParagraph.AppendChild(new Run(doc, "Cell 2"));
-        row1.AppendChild(cell12);
-
-        // Second row.
-        Row row2 = new Row(doc);
-        table.AppendChild(row2);
-
-        // First cell of second row.
-        Cell cell21 = new Cell(doc);
-        cell21.AppendChild(new Paragraph(doc));
-        cell21.FirstParagraph.AppendChild(new Run(doc, "Cell 3"));
-        row2.AppendChild(cell21);
-
-        // Second cell of second row.
-        Cell cell22 = new Cell(doc);
-        cell22.AppendChild(new Paragraph(doc));
-        cell22.FirstParagraph.AppendChild(new Run(doc, "Cell 4"));
-        row2.AppendChild(cell22);
-
-        // Insert the table after the target paragraph.
-        targetParagraph.ParentNode.InsertAfter(table, targetParagraph);
+        // Apply a basic grid style now that the table has rows.
+        table.StyleIdentifier = StyleIdentifier.TableGrid;
 
         // Save the document.
         string outputPath = "Output.docx";
@@ -75,8 +61,6 @@ public class Program
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output file was not created.");
-
-        // Optionally, you could add further processing here.
+            throw new Exception("Failed to save the output document.");
     }
 }

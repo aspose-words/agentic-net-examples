@@ -1,53 +1,63 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
         // Prepare sample data.
-        ReportModel model = new()
+        var model = new ReportModel
         {
             Items = new List<Item>
             {
-                new() { Text = "First centered paragraph.", Alignment = "center" },
-                new() { Text = "Second right‑aligned paragraph.", Alignment = "right" },
-                new() { Text = "Third left‑aligned paragraph.", Alignment = "left" }
+                new Item { Name = "First Item" },
+                new Item { Name = "Second Item" },
+                new Item { Name = "Third Item" }
             }
         };
 
-        // Create the template document.
-        Document template = new();
-        DocumentBuilder builder = new(template);
+        // Create a template document programmatically.
+        var templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Write a foreach block that outputs each item with dynamic alignment using an HTML tag.
+        // Write a heading.
+        builder.Writeln("Dynamic Alignment Report");
+        builder.Writeln();
+
+        // Start a foreach loop over Items.
         builder.Writeln("<<foreach [item in Items]>>");
-        // The HTML expression builds a <p> element with the desired text‑align style.
-        builder.Writeln("<<html [\"<p style='text-align:\" + item.Alignment + \";'>\" + item.Text + \"</p>\"]>>");
+        // Each item will be placed in its own paragraph.
+        builder.Writeln("<<[item.Name]>>");
         builder.Writeln("<</foreach>>");
 
         // Save the template.
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-        template.Save(templatePath);
+        doc.Save(templatePath);
 
         // Load the template for reporting.
-        Document report = new(templatePath);
-        ReportingEngine engine = new()
-        {
-            Options = ReportBuildOptions.None
-        };
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
 
         // Build the report.
-        engine.BuildReport(report, model, "model");
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Save the final document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        report.Save(outputPath);
+        // After the report is built, set paragraph alignment dynamically.
+        // Here we center all paragraphs that contain item names.
+        foreach (Paragraph para in reportDoc.GetChildNodes(NodeType.Paragraph, true))
+        {
+            string text = para.GetText().Trim();
+            if (model.Items.Exists(i => i.Name == text))
+            {
+                para.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+            }
+        }
 
-        Console.WriteLine($"Report generated: {outputPath}");
+        // Save the final report.
+        var outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
 }
 
@@ -59,6 +69,5 @@ public class ReportModel
 
 public class Item
 {
-    public string Text { get; set; } = string.Empty;
-    public string Alignment { get; set; } = "left";
+    public string Name { get; set; } = string.Empty;
 }

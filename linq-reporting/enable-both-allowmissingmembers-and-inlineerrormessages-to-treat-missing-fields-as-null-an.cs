@@ -1,66 +1,71 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingExample
+public class Program
 {
-    // Simple data model with only the Name property.
-    public class Model
+    public static void Main()
     {
-        public string Name { get; set; } = string.Empty;
-        // Age is intentionally omitted to demonstrate AllowMissingMembers.
-    }
+        // Register code page provider (required for some encodings)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    public class Program
-    {
-        public static void Main()
+        // Paths for template and output
+        string templatePath = "template.docx";
+        string outputPath = "output.docx";
+
+        // Create template document with LINQ Reporting tags
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Write a heading
+        builder.Writeln("LINQ Reporting Example with AllowMissingMembers and InlineErrorMessages");
+        builder.Writeln();
+
+        // Correct tag
+        builder.Writeln("Name: <<[person.Name]>>");
+        builder.Writeln("Age: <<[person.Age]>>");
+
+        // Missing member tag (property does not exist in the model)
+        builder.Writeln("Missing field (should be treated as null): <<[person.MissingField]>>");
+
+        // Syntax error tag (invalid switch)
+        builder.Writeln("Syntax error example: <<[person.Name] -invalidSwitch>>");
+
+        // Save the template
+        templateDoc.Save(templatePath);
+
+        // Load the template for reporting
+        Document doc = new Document(templatePath);
+
+        // Prepare data model
+        Person person = new Person
         {
-            // File paths for the template and the generated report.
-            string templatePath = "Template.docx";
-            string outputPath = "Report.docx";
+            Name = "John Doe",
+            Age = 30
+        };
 
-            // -----------------------------------------------------------------
-            // Step 1: Create a Word template that contains LINQ Reporting tags.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Configure reporting engine with required options
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.AllowMissingMembers | ReportBuildOptions.InlineErrorMessages;
 
-            // Correct tag – will be replaced with the Name value.
-            builder.Writeln("Customer Name: <<[model.Name]>>");
+        // Build the report
+        bool success = engine.BuildReport(doc, person, "person");
 
-            // Missing member tag – Age does not exist in Model.
-            // With AllowMissingMembers this will be treated as null (empty output).
-            builder.Writeln("Customer Age: <<[model.Age]>>");
+        // Save the generated report
+        doc.Save(outputPath);
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // Step 2: Load the template for report generation.
-            // -----------------------------------------------------------------
-            Document reportDoc = new Document(templatePath);
-
-            // -----------------------------------------------------------------
-            // Step 3: Prepare the data source.
-            // -----------------------------------------------------------------
-            Model data = new Model { Name = "John Doe" };
-
-            // -----------------------------------------------------------------
-            // Step 4: Configure and run the ReportingEngine.
-            // -----------------------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.AllowMissingMembers | ReportBuildOptions.InlineErrorMessages;
-
-            // Build the report. The returned bool indicates success (true) or failure (false).
-            bool success = engine.BuildReport(reportDoc, data, "model");
-
-            // -----------------------------------------------------------------
-            // Step 5: Save the generated report.
-            // -----------------------------------------------------------------
-            reportDoc.Save(outputPath);
-
-            // Indicate the result (no interactive prompts).
-            Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to '{outputPath}'.");
-        }
+        // Output result status
+        Console.WriteLine($"Report generation success: {success}");
+        Console.WriteLine($"Output saved to: {Path.GetFullPath(outputPath)}");
     }
+}
+
+// Data model class
+public class Person
+{
+    public string Name { get; set; } = string.Empty;
+    public int Age { get; set; }
 }

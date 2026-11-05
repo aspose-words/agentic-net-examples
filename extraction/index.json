@@ -4,13 +4,14 @@
     "slug": "extraction",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Use native Aspose.Words APIs directly. Create realistic local sample DOC, DOCX, TXT, HTML, XML, image, or stream inputs inside the example whenever the task references an existing file, stream, folder, or batch of documents. Locate and extract content through actual document nodes, ranges, fields, shapes, comments, bookmarks, tables, sections, headers, footers, and metadata objects using documented Aspose.Words APIs only.",
+    "preferred_workflow": "Create a realistic sample document locally, locate the exact start and end nodes, import each node into a freshly constructed destination document via NodeImporter, and finally save the result while confirming the output file exists.",
     "required_packages": [
       "Aspose.Words",
       "Newtonsoft.Json"
     ],
     "package_versions": {
-      "Aspose.Words": "26.9.0"
+      "Aspose.Words": "26.10.0",
+      "Newtonsoft.Json": ""
     },
     "required_namespaces": [
       "System",
@@ -18,15 +19,14 @@
       "Aspose.Words",
       "Aspose.Words.Tables",
       "Aspose.Words.Fields",
-      "System.Collections.Generic",
-      "Aspose.Words.Drawing",
       "Aspose.Words.Saving",
       "System.Linq",
-      "System.IO.Compression",
+      "System.Collections.Generic",
+      "Aspose.Words.Drawing",
       "Newtonsoft.Json",
-      "System.Text",
+      "System.IO.Compression",
       "Aspose.Words.Notes",
-      "System.Collections.Concurrent",
+      "Aspose.Words.Fonts",
       "System.Threading.Tasks"
     ],
     "key_apis": [
@@ -35,22 +35,22 @@
       "Node",
       "File",
       "Paragraph",
+      "NodeType",
       "SaveFormat",
       "Range",
       "Field",
-      "NodeType",
+      "FieldType",
       "Run",
       "Table",
+      "StyleIdentifier",
       "Cell",
       "MemoryStream",
-      "Font",
-      "CompositeNode",
-      "StyleIdentifier",
-      "Path",
-      "FieldType",
-      "Directory",
       "Shape",
-      "ImageData"
+      "Path",
+      "CompositeNode",
+      "Directory",
+      "ImageData",
+      "Font"
     ]
   },
   "stats": {
@@ -66,48 +66,50 @@
   },
   "rules_summary": {
     "strict_api_bans": [
-      "Do not use System.Drawing in this category.",
-      "Do not assume source documents or assets already exist; bootstrap them locally when needed.",
-      "Do not invent helper APIs for extracting tables, images, comments, bookmarks, or metadata.",
-      "Do not skip writing the requested output artifact when the task expects one."
+      "Do not reference System.Drawing, assume no pre-existing files, and avoid inventing custom extraction helpers."
     ],
     "canonical_patterns": [
-      "Enumerate actual document nodes and validate node types before extracting content.",
-      "Create local sample DOC, DOCX, TXT, HTML, XML, image, stream, or folder inputs whenever the task implies an existing source.",
-      "Use Aspose.Words.Tables for Table, Row, and Cell types when structured extraction is needed.",
-      "Use Newtonsoft.Json for JSON serialization tasks and Aspose.Drawing instead of System.Drawing when drawing-related types are needed."
+      "Enumerate actual document nodes, validate their NodeType, and use Aspose.Words.Tables for table structures; serialize JSON with Newtonsoft.Json when required."
     ],
     "nullable_warning_prevention": [
-      "Initialize all non-nullable reference type properties to avoid CS8618 warnings.",
-      "Avoid CS8600, CS8602, and CS8604 by guarding maybe-null values before dereference or assignment.",
-      "Declare nullable locals when a value may legitimately be null and null-check before use."
+      "Initialize all non-nullable members, guard against null values before dereferencing, and declare locals as nullable when a null result is legitimate."
     ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "Invalid node insertion in destination document",
-      "symptom": "Runtime failures such as 'Cannot insert a node of this type at this location'.",
-      "fix": "Rebuild a valid destination document structure explicitly and insert cloned inline or block nodes only into supported parents."
+      "pattern": "Cross-document node insertion",
+      "symptom": "Runtime throws ArgumentException: \"The newChild was created from a different document than the one that created this node.\"",
+      "cause": "Nodes from the source Document are inserted directly into a destination Document without using NodeImporter, leaving them bound to the original document.",
+      "fix": "Create a NodeImporter (ImportFormatMode.KeepSourceFormatting) and import each node before appending or inserting it into the target document.",
+      "prevention": "Always import or clone nodes via NodeImporter whenever a node moves between documents."
     },
     {
-      "pattern": "Table namespace assumptions",
-      "symptom": "Compile errors because Table, Row, or Cell were used without Aspose.Words.Tables.",
-      "fix": "Import Aspose.Words.Tables or use fully qualified table node type names."
+      "pattern": "Missing API members",
+      "symptom": "Compile errors CS1061 or CS0234 indicating undefined members such as FieldStart.EndNode, Document.ExtractContent, or DocumentImporter.",
+      "cause": "Code references members that do not exist in the current Aspose.Words version or omits required namespaces.",
+      "fix": "Replace invalid members with the correct API (e.g., use Field.StartNode, Document.Range, and avoid non-existent extension methods) and add the proper using directives.",
+      "prevention": "Consult the official Aspose.Words documentation for the exact member names and required namespaces before coding."
     },
     {
-      "pattern": "Weak bookmark boundary logic",
-      "symptom": "Bookmark-bounded extraction or replacement fails because the wrong nodes are used or placeholder insertion is invalid.",
-      "fix": "Use real BookmarkStart and BookmarkEnd boundaries and insert a valid placeholder Paragraph into a supported block container."
+      "pattern": "Incorrect type casting",
+      "symptom": "Compiler reports CS0266: cannot implicitly convert type 'Node' to 'Paragraph'.",
+      "cause": "Assuming a generic Node is a Paragraph without checking its NodeType.",
+      "fix": "Verify node.NodeType == NodeType.Paragraph and cast explicitly (e.g., (Paragraph)node) or use pattern matching.",
+      "prevention": "Validate node types before casting and use explicit casts only after confirming the type."
     },
     {
-      "pattern": "Footnote-specific API issues",
-      "symptom": "Footnote export or enumeration fails because footnote APIs or namespaces are used incorrectly.",
-      "fix": "Use Aspose.Words.Notes.Footnote and Aspose.Words.Notes.FootnoteType explicitly and enumerate actual footnote nodes."
+      "pattern": "Table namespace omission",
+      "symptom": "Compile errors because Table, Row, or Cell types are not recognized.",
+      "cause": "Missing the Aspose.Words.Tables namespace in the source file.",
+      "fix": "Add `using Aspose.Words.Tables;` or fully qualify the types (e.g., Aspose.Words.Tables.Table).",
+      "prevention": "Include all required Aspose.Words sub-namespaces at the top of each file."
     },
     {
-      "pattern": "Font or drawing ambiguity",
-      "symptom": "Compile errors due to System.Drawing usage or ambiguous Font references.",
-      "fix": "Use Aspose.Drawing only and prefer explicit Aspose.Drawing type names when ambiguity is possible."
+      "pattern": "Bookmark boundary misuse",
+      "symptom": "InvalidOperationException when extracting between bookmarks or when inserting placeholder paragraphs.",
+      "cause": "Using incorrect start/end nodes (e.g., BookmarkStart vs. BookmarkEnd) or inserting a Paragraph into a non-block container.",
+      "fix": "Reference BookmarkStart and BookmarkEnd correctly and insert placeholder Paragraphs only into a Body or Section.",
+      "prevention": "Validate bookmark boundaries and ensure placeholder nodes are added to a block-level container."
     }
   ],
   "examples": [
@@ -119,8 +121,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 2,
@@ -131,8 +133,8 @@
         "docx",
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 3,
@@ -153,8 +155,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 5,
@@ -175,8 +177,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 7,
@@ -197,8 +199,8 @@
       "outputs": [
         "xps"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 9,
@@ -208,8 +210,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 10,
@@ -230,8 +232,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 12,
@@ -241,8 +243,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 13,
@@ -252,8 +254,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 14,
@@ -274,8 +276,8 @@
       "outputs": [
         "csv"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 16,
@@ -368,7 +370,7 @@
     {
       "id": 24,
       "file_name": "create-a-command-line-tool-that-accepts-start-and-end-node-ids-and-outputs-the-extracted-s.cs",
-      "task": "Create a command‑line tool that accepts start and end node IDs and outputs the extracted segment as PDF.",
+      "task": "Create a command-line tool that accepts start and end node IDs and outputs the extracted segment as PDF.",
       "workflow": "text-range-extraction",
       "outputs": [
         "pdf"
@@ -384,8 +386,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 26,
@@ -406,8 +408,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 28,
@@ -428,8 +430,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 30,
@@ -442,5 +444,15 @@
       "selected_engine": "mcp",
       "winner": "mcp"
     }
-  ]
+  ],
+  "narrative": {
+    "overview": "The Extraction category for Aspose.Words demonstrates how to isolate and copy specific node ranges-such as paragraphs, tables, runs, and bookmarks-into new documents. Verified examples show correct handling of source creation, node importing, and output validation for DOCX, DOCM, HTML, and XPS targets.",
+    "purpose": "Provide an AI coding assistant with a concise, end-to-end reference for building reliable extraction utilities that locate start and end markers, import nodes safely, and persist the result using only supported Aspose.Words APIs.",
+    "validation_priorities": [
+      "Ensure every extracted node is imported before insertion and that the saved file is present on disk."
+    ],
+    "maintenance_notes": [
+      "Update all sample snippets to use NodeImporter for every node transfer and verify that the Aspose.Words version (26.10.0) matches the API signatures used."
+    ]
+  }
 }

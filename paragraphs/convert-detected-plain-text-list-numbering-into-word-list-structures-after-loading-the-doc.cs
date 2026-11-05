@@ -2,65 +2,58 @@ using System;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Lists;
-using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document and add sample paragraphs with plain‑text numbering.
+        // Create a sample document containing plain‑text numbered items.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        builder.Writeln("1. First item of a list");
-        builder.Writeln("2. Second item of a list");
-        builder.Writeln("3. Third item of a list");
-        builder.Writeln("This is a normal paragraph without numbering.");
-        builder.Writeln("4. Fourth item after a normal paragraph");
-        builder.Writeln("5. Fifth item");
+        builder.Writeln("Introduction paragraph.");
+        builder.Writeln("1. First item");
+        builder.Writeln("2. Second item");
+        builder.Writeln("3. Third item");
+        builder.Writeln("Conclusion paragraph.");
 
-        // Create a list that will be used for the converted items.
-        List list = doc.Lists.Add(ListTemplate.NumberDefault);
+        // Save the sample document (input).
+        const string inputPath = "input.docx";
+        doc.Save(inputPath);
 
-        // Regular expression to detect plain‑text numbering at the start of a paragraph.
-        Regex numberingRegex = new Regex(@"^\d+\.\s", RegexOptions.Compiled);
+        // Load the document for processing.
+        Document loadedDoc = new Document(inputPath);
 
-        // Traverse all paragraphs in the document.
-        foreach (Paragraph paragraph in doc.GetChildNodes(NodeType.Paragraph, true))
+        // Create a list that will be applied to detected items.
+        List list = loadedDoc.Lists.Add(ListTemplate.NumberDefault);
+
+        // Regex to detect plain‑text numbering like "1. Item".
+        Regex plainNumberRegex = new Regex(@"^\s*\d+\.\s+(.*)", RegexOptions.Compiled);
+
+        // Traverse all paragraphs and convert matching ones to list items.
+        foreach (Paragraph para in loadedDoc.GetChildNodes(NodeType.Paragraph, true))
         {
-            // Get the paragraph text (includes the paragraph mark \r at the end).
-            string paragraphText = paragraph.GetText();
+            string paragraphText = para.GetText(); // Includes the paragraph break.
+            string trimmed = paragraphText.TrimEnd('\r', '\n');
 
-            // Trim leading whitespace for detection.
-            string trimmedStart = paragraphText.TrimStart();
-
-            // If the paragraph starts with a number followed by a dot and a space, convert it.
-            if (numberingRegex.IsMatch(trimmedStart))
+            Match match = plainNumberRegex.Match(trimmed);
+            if (match.Success)
             {
-                // Remove the plain‑text number prefix.
-                string cleanedText = numberingRegex.Replace(paragraphText, string.Empty);
+                // Extract the actual list item text without the plain number.
+                string itemText = match.Groups[1].Value;
 
-                // Update the paragraph's first run (or create one) with the cleaned text,
-                // ensuring the paragraph mark (\r) is not part of the run text.
-                string newRunText = cleanedText.TrimEnd('\r');
+                // Remove existing runs (the original text) and insert the clean text.
+                para.Runs.Clear();
+                para.Runs.Add(new Run(loadedDoc, itemText));
 
-                Run firstRun = paragraph.FirstChild as Run;
-                if (firstRun != null)
-                {
-                    firstRun.Text = newRunText;
-                }
-                else
-                {
-                    paragraph.AppendChild(new Run(doc, newRunText));
-                }
-
-                // Apply the list formatting to this paragraph.
-                paragraph.ListFormat.List = list;
-                paragraph.ListFormat.ListLevelNumber = 0;
+                // Apply list formatting.
+                para.ListFormat.List = list;
+                para.ListFormat.ListLevelNumber = 0;
             }
         }
 
-        // Save the resulting document.
-        doc.Save("ConvertedList.docx");
+        // Save the transformed document.
+        const string outputPath = "output.docx";
+        loadedDoc.Save(outputPath);
     }
 }

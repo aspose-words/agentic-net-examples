@@ -5,42 +5,42 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document (contains one default section).
+        // Create a new empty document (contains one empty section by default).
         Document doc = new Document();
 
-        // First (default) section already has a Body, add a paragraph to it.
-        Section firstSection = doc.FirstSection;
+        // First section (already exists) – add a paragraph with some text.
         Paragraph para1 = new Paragraph(doc);
         para1.AppendChild(new Run(doc, "This is the first section."));
-        firstSection.Body.AppendChild(para1);
+        doc.FirstSection.Body.AppendChild(para1);
 
-        // Create a second section.
+        // Add a second section with its own body.
         Section secondSection = new Section(doc);
-        // A Section must contain a Body node; add it explicitly.
-        Body secondBody = new Body(doc);
-        secondSection.AppendChild(secondBody);
-        // Add a paragraph to the second section's body.
+        Body body2 = new Body(doc);
+        secondSection.AppendChild(body2);
+        doc.AppendChild(secondSection);
+
         Paragraph para2 = new Paragraph(doc);
-        para2.AppendChild(new Run(doc, "This is the second section."));
-        secondBody.AppendChild(para2);
-        // Add the second section to the document.
-        doc.Sections.Add(secondSection);
+        para2.AppendChild(new Run(doc, "Content of the second section goes here."));
+        body2.AppendChild(para2);
 
-        // Save the document locally.
-        const string fileName = "Sample.docx";
-        doc.Save(fileName);
+        // Add a third section with its own body.
+        Section thirdSection = new Section(doc);
+        Body body3 = new Body(doc);
+        thirdSection.AppendChild(body3);
+        doc.AppendChild(thirdSection);
 
-        // Load the document back from the file.
-        Document loadedDoc = new Document(fileName);
+        Paragraph para3 = new Paragraph(doc);
+        para3.AppendChild(new Run(doc, "Third section text is this line."));
+        body3.AppendChild(para3);
 
-        // Iterate through each section and output its plain text.
-        int sectionIndex = 1;
-        foreach (Section section in loadedDoc.Sections)
+        // Extract and display plain text of each section using Section.Range.Text.
+        int index = 1;
+        foreach (Section section in doc.Sections)
         {
             string sectionText = section.Range.Text;
-            Console.WriteLine($"Section {sectionIndex} text:");
+            Console.WriteLine($"--- Section {index} ---");
             Console.WriteLine(sectionText);
-            sectionIndex++;
+            index++;
         }
     }
 }

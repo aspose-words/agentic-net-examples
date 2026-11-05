@@ -8,51 +8,60 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for CSV encoding support.
+        // Register code page provider for CSV reading.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare sample CSV data.
-        string csvPath = Path.Combine(Directory.GetCurrentDirectory(), "sample.csv");
-        File.WriteAllText(csvPath, "Name,Age\nAlice,30\nBob,25\nCharlie,35");
+        // Prepare output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
 
-        // Create a template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Create sample CSV file (includes an empty line that should be ignored).
+        string csvPath = Path.Combine(outputDir, "data.csv");
+        File.WriteAllText(csvPath, "Name,Age\r\nAlice,30\r\nBob,25\r\n\r\nCharlie,35\r\n");
 
-        // Begin foreach over CSV rows.
-        builder.Writeln("<<foreach [row in data]>>");
-        // Output each row in its own paragraph.
-        builder.Writeln("Name: <<[row.Name]>>, Age: <<[row.Age]>>");
+        // Build a template document with LINQ Reporting tags.
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Heading.
+        builder.Writeln("People Report");
+        builder.Writeln();
+
+        // Begin foreach over rows.
+        builder.Writeln("<<foreach [row in rows]>>");
+        // Write data fields.
+        builder.Writeln("Name: <<[row.Name]>>");
+        builder.Writeln("Age: <<[row.Age]>>");
+        // Blank line (may become an empty paragraph after processing).
+        builder.Writeln();
         // End foreach.
         builder.Writeln("<</foreach>>");
 
-        // Save the template (optional, for inspection).
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-        template.Save(templatePath);
+        // Save the template.
+        templateDoc.Save(templatePath);
 
         // Load the template for reporting.
-        Document reportDoc = new Document(templatePath);
+        Document doc = new Document(templatePath);
 
-        // Create CSV data source.
-        CsvDataSource csvData = new CsvDataSource(csvPath, new CsvDataLoadOptions
-        {
-            // Use first row as header.
-            HasHeaders = true
-            // Default separator is a comma, so no explicit Separator property is needed.
-        });
+        // Configure CSV data source (first row contains headers).
+        var csvOptions = new CsvDataLoadOptions { HasHeaders = true };
+        CsvDataSource csvData = new CsvDataSource(csvPath, csvOptions);
 
-        // Configure the reporting engine to remove empty paragraphs.
+        // Build the report.
         ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
+        bool success = engine.BuildReport(doc, csvData, "rows");
 
-        // Build the report using the CSV data source.
-        engine.BuildReport(reportDoc, csvData, "data");
+        // Remove any empty paragraphs that may have been generated.
+        for (int i = doc.GetChildNodes(NodeType.Paragraph, true).Count - 1; i >= 0; i--)
+        {
+            Paragraph para = (Paragraph)doc.GetChildNodes(NodeType.Paragraph, true)[i];
+            if (string.IsNullOrWhiteSpace(para.GetText()))
+                para.Remove();
+        }
 
-        // Save the generated report.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        reportDoc.Save(outputPath);
-
-        // Indicate completion (no interactive input).
-        Console.WriteLine($"Report generated: {outputPath}");
+        // Save the final document.
+        string outputPath = Path.Combine(outputDir, "PeopleReport.docx");
+        doc.Save(outputPath);
     }
 }

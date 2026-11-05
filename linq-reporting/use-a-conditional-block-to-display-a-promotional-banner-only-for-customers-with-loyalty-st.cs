@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -9,63 +8,69 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Paths for template and output.
-        string templatePath = "Template.docx";
-        string outputPath = "Report.docx";
-
-        // -------------------------------------------------
-        // Step 1: Create the LINQ Reporting template.
-        // -------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Write a greeting line.
-        builder.Writeln("Dear <<[customer.Name]>>,");
-        builder.Writeln();
-
-        // Conditional block: show promotional banner only for loyal customers.
-        builder.Writeln("<<if [customer.IsLoyal]>>");
-        builder.Writeln("<<[customer.PromoBanner]>>");
-        builder.Writeln("<</if>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -------------------------------------------------
-        // Step 2: Load the template back for report generation.
-        // -------------------------------------------------
-        Document doc = new Document(templatePath);
-
-        // -------------------------------------------------
-        // Step 3: Prepare sample data.
-        // -------------------------------------------------
-        Customer sampleCustomer = new Customer
+        // Prepare sample data.
+        var model = new ReportModel
         {
-            Name = "John Doe",
-            IsLoyal = true,
-            PromoBanner = "Exclusive Offer: 20% Discount on your next purchase!"
+            Customers = new List<Customer>
+            {
+                new Customer
+                {
+                    Name = "Alice Johnson",
+                    IsLoyal = true,
+                    PromoBanner = "Exclusive 20% Discount for Loyal Customers!"
+                },
+                new Customer
+                {
+                    Name = "Bob Smith",
+                    IsLoyal = false,
+                    PromoBanner = "Exclusive 20% Discount for Loyal Customers!"
+                }
+            }
         };
 
-        // -------------------------------------------------
-        // Step 4: Build the report.
-        // -------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, sampleCustomer, "customer");
+        // Create the LINQ Reporting template programmatically.
+        var templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // -------------------------------------------------
-        // Step 5: Save the generated report.
-        // -------------------------------------------------
-        doc.Save(outputPath);
+        builder.Writeln("Customer Report");
+        builder.Writeln("<<foreach [c in Customers]>>");
+        builder.Writeln("Name: <<[c.Name]>>");
+        // Conditional block: display promotional banner only for loyal customers.
+        builder.Writeln("<<if [c.IsLoyal]>>");
+        builder.Writeln("<<[c.PromoBanner]>>");
+        builder.Writeln("<</if>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        doc.Save(templatePath);
+
+        // Load the template for report generation.
+        var reportDoc = new Document(templatePath);
+
+        // Build the report using the LINQ Reporting engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
+
+        // Save the generated report.
+        var outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
+
+        // Optionally, indicate completion (no interactive input).
+        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
     }
 }
 
-// Public data model for the report.
+// Wrapper class for the root data source.
+public class ReportModel
+{
+    public List<Customer> Customers { get; set; } = new();
+}
+
+// Customer data model.
 public class Customer
 {
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; set; } = "";
     public bool IsLoyal { get; set; }
-    public string PromoBanner { get; set; } = string.Empty;
+    public string PromoBanner { get; set; } = "";
 }

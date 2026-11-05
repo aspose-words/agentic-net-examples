@@ -1,96 +1,63 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for template and output documents.
-        const string templatePath = "Template.docx";
-        const string outputPath = "Report.docx";
+        // Prepare working directories.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
 
-        // -------------------------------------------------------------
-        // 1. Create a template document using the default tag delimiters << >>
-        // -------------------------------------------------------------
+        // Create a template document using the default LINQ Reporting delimiters << >>.
+        string templatePath = Path.Combine(outputDir, "template.docx");
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("Person Report");
-        builder.Writeln(); // empty line
-
-        // Start foreach loop.
+        // Write a foreach block.
         builder.Writeln("<<foreach [p in Persons]>>");
-
-        // Table header.
-        Table table = builder.StartTable();
-        builder.InsertCell();
-        builder.Writeln("Name");
-        builder.InsertCell();
-        builder.Writeln("Age");
-        builder.EndRow();
-
-        // Table row with data placeholders.
-        builder.InsertCell();
-        builder.Writeln("<<[p.Name]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[p.Age]>>");
-        builder.EndRow();
-
-        builder.EndTable();
-
-        // End foreach loop.
+        builder.Writeln("Name: <<[p.Name]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
+        // Save the template.
         templateDoc.Save(templatePath);
 
-        // -------------------------------------------------------------
-        // 2. Load the template and prepare the reporting engine.
-        // -------------------------------------------------------------
-        Document doc = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.None
-        };
+        // Load the template for reporting.
+        Document reportDoc = new Document(templatePath);
 
-        // -------------------------------------------------------------
-        // 3. Prepare sample data model.
-        // -------------------------------------------------------------
+        // Prepare sample data.
         ReportModel model = new()
         {
             Persons = new List<Person>
             {
-                new Person { Name = "Alice", Age = 30 },
-                new Person { Name = "Bob", Age = 25 },
-                new Person { Name = "Charlie", Age = 35 }
+                new() { Name = "Alice" },
+                new() { Name = "Bob" },
+                new() { Name = "Charlie" }
             }
         };
 
-        // -------------------------------------------------------------
-        // 4. Build the report.
-        // -------------------------------------------------------------
-        bool success = engine.BuildReport(doc, model, "model");
+        // Configure the reporting engine (no custom delimiters needed).
+        ReportingEngine engine = new();
 
-        // -------------------------------------------------------------
-        // 5. Save the generated report.
-        // -------------------------------------------------------------
-        doc.Save(outputPath);
+        // Build the report.
+        engine.BuildReport(reportDoc, model, "model");
+
+        // Save the generated report.
+        string reportPath = Path.Combine(outputDir, "report.docx");
+        reportDoc.Save(reportPath);
     }
 }
 
-// ---------------------------------------------------------------------
-// Data model classes.
-// ---------------------------------------------------------------------
-public class Person
-{
-    public string Name { get; set; } = "";
-    public int Age { get; set; }
-}
-
+// Public data model classes.
 public class ReportModel
 {
     public List<Person> Persons { get; set; } = new();
+}
+
+public class Person
+{
+    public string Name { get; set; } = string.Empty;
 }

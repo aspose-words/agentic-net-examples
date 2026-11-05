@@ -1,6 +1,6 @@
 # Split Document Examples for Aspose.Words for .NET
 
-This folder contains the live, publish-ready C# examples for the Split Document category. Each file is a standalone console example selected from the verified 26.9.0 run.
+The Split Document category demonstrates how to divide Word, HTML, EPUB, and other supported formats into smaller parts using only the native Aspose.Words 26.10.0 APIs. Verified examples show section-based splitting, heading-based manual splitting, page extraction, custom page-range extraction, and conditional format selection.
 
 ## Snapshot
 
@@ -8,30 +8,33 @@ This folder contains the live, publish-ready C# examples for the Split Document 
 - Slug: split-document
 - Total examples: 30
 - Publish-ready successful examples: 30 / 30
-- Source run: 20260925_194858_2eeab9
+- Source run: 20261102_031946_08fb5b
 - Split Workflow examples: 30
 
 ## Category rules that shaped these examples
 
-- Use native Aspose.Words APIs directly.
-- Create local sample source documents when a task refers to an existing file, folder, stream, or template.
-- Do not assume external files or folders already exist.
-- Prefer documented section, node, heading, bookmark, and page extraction workflows only when relevant to the task.
-- Keep validation narrow and task-specific.
+- Never reference Aspose.Words members that are absent from version 26.10.0.
+- Do not import or use namespaces that are not part of the official package.
+- Use Document, Section, NodeImporter, and HtmlSaveOptions for all splitting scenarios.
+- When splitting by pages, call Document.ExtractPages with zero-based start index and validated page count.
+- For heading-based splitting, iterate over Paragraph nodes and import the desired range into a new Document.
+- Create all source files, folders, and streams before they are accessed.
+- Validate that output directories exist and are writable prior to saving split parts.
 
 ## Prerequisites
 
 - .NET SDK 8.0 or later
-- Aspose.Words 26.9.0
+- Aspose.Words for .NET `26.10.0`
 
 ## Running Examples
 
-Each file in this folder is a single, standalone `.cs` console example. To run one example:
+Each file in this folder is a **single, standalone `.cs` console example**. To run one example:
 
 ```bash
+# From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.9.0
+dotnet add package Aspose.Words --version 26.10.0
 
 # Copy one example from this folder into the project as Program.cs
 # PowerShell:
@@ -52,7 +55,7 @@ Example:
 # From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.9.0
+dotnet add package Aspose.Words --version 26.10.0
 
 # PowerShell example
 Copy-Item ..\split-document\load-a-docx-source-document-using-the-document-class-before-splitting.cs .\Program.cs
@@ -68,14 +71,14 @@ dotnet run --configuration Release --no-build
 | 1 | `load-a-docx-source-document-using-the-document-class-before-splitting.cs` | Load a DOCX source document using the Document class before splitting. | split-workflow | docx, doc | mcp |
 | 2 | `create-a-documentsplitcriteria-object-and-set-split-mode-to-headings.cs` | Create a DocumentSplitCriteria object and set split mode to headings. | split-workflow | doc | mcp |
 | 3 | `create-a-documentsplitcriteria-object-and-set-split-mode-to-sections.cs` | Create a DocumentSplitCriteria object and set split mode to sections. | split-workflow | doc | mcp |
-| 4 | `create-a-documentsplitcriteria-object-and-set-split-mode-to-individual-pages.cs` | Create a DocumentSplitCriteria object and set split mode to individual pages. | split-workflow | doc | mcp |
-| 5 | `create-a-documentsplitcriteria-object-and-set-split-mode-to-custom-page-ranges.cs` | Create a DocumentSplitCriteria object and set split mode to custom page ranges. | split-workflow | doc | mcp |
+| 4 | `create-a-documentsplitcriteria-object-and-set-split-mode-to-individual-pages.cs` | Create a DocumentSplitCriteria object and set split mode to individual pages. | split-workflow | doc | llm |
+| 5 | `create-a-documentsplitcriteria-object-and-set-split-mode-to-custom-page-ranges.cs` | Create a DocumentSplitCriteria object and set split mode to custom page ranges. | split-workflow | doc | llm |
 | 6 | `combine-heading-and-section-flags-in-documentsplitcriteria-to-split-by-both-structures.cs` | Combine heading and section flags in DocumentSplitCriteria to split by both structures. | split-workflow | doc | mcp |
 | 7 | `combine-page-and-heading-flags-in-documentsplitcriteria-to-start-each-part-on-a-new-page.cs` | Combine page and heading flags in DocumentSplitCriteria to start each part on a new page. | split-workflow | doc | mcp |
 | 8 | `call-document-split-criteria-to-obtain-a-collection-of-split-document-objects.cs` | Call Document.Split(criteria) to obtain a collection of split Document objects. | split-workflow | doc | mcp |
-| 9 | `iterate-over-the-split-document-collection-and-save-each-part-using-documentpartsavingcall.cs` | Iterate over the split Document collection and save each part using DocumentPartSavingCallback. | split-workflow | doc | mcp |
-| 10 | `implement-documentpartsavingcallback-to-assign-filenames-based-on-original-heading-text.cs` | Implement DocumentPartSavingCallback to assign filenames based on original heading text. | split-workflow | doc | mcp |
-| 11 | `implement-documentpartsavingcallback-to-select-docx-for-even-parts-and-pdf-for-odd-parts.cs` | Implement DocumentPartSavingCallback to select DOCX for even parts and PDF for odd parts. | split-workflow | docx, doc, pdf | mcp |
+| 9 | `iterate-over-the-split-document-collection-and-save-each-part-using-documentpartsavingcall.cs` | Iterate over the split Document collection and save each part using DocumentPartSavingCallback. | split-workflow | doc | llm |
+| 10 | `implement-documentpartsavingcallback-to-assign-filenames-based-on-original-heading-text.cs` | Implement DocumentPartSavingCallback to assign filenames based on original heading text. | split-workflow | doc | llm |
+| 11 | `implement-documentpartsavingcallback-to-select-docx-for-even-parts-and-pdf-for-odd-parts.cs` | Implement DocumentPartSavingCallback to select DOCX for even parts and PDF for odd parts. | split-workflow | docx, doc, pdf | llm |
 | 12 | `save-split-parts-as-pdf-files-while-preserving-original-document-styles-and-layout.cs` | Save split parts as PDF files while preserving original document styles and layout. | split-workflow | doc, pdf | mcp |
 | 13 | `save-split-parts-as-docx-files-preserving-original-formatting-and-page-orientation.cs` | Save split parts as DOCX files preserving original formatting and page orientation. | split-workflow | docx, doc | mcp |
 | 14 | `handle-exceptions-when-attempting-to-split-to-unsupported-mhtml-format.cs` | Handle exceptions when attempting to split to unsupported MHTML format. | split-workflow | html, mhtml | mcp |
@@ -89,8 +92,8 @@ dotnet run --configuration Release --no-build
 | 22 | `ensure-split-parts-retain-complete-table-rows-when-original-document-contains-spanning-tab.cs` | Ensure split parts retain complete table rows when original document contains spanning tables. | split-workflow | doc | mcp |
 | 23 | `retain-original-page-orientation-for-each-split-part-preserving-landscape-pages.cs` | Retain original page orientation for each split part, preserving landscape pages. | split-workflow | docx | mcp |
 | 24 | `load-a-source-document-define-split-criteria-and-execute-split-operation-in-a-single-workf.cs` | Load a source document, define split criteria, and execute split operation in a single workflow. | split-workflow | doc | mcp |
-| 25 | `use-documentsplitcriteria-enumeration-to-split-by-sections-and-then-merge-selected-parts.cs` | Use DocumentSplitCriteria enumeration to split by sections and then merge selected parts. | split-workflow | doc | mcp |
-| 26 | `apply-documentpartsavingcallback-to-customize-file-naming-convention-for-each-split-output.cs` | Apply DocumentPartSavingCallback to customize file naming convention for each split output. | split-workflow | doc | mcp |
+| 25 | `use-documentsplitcriteria-enumeration-to-split-by-sections-and-then-merge-selected-parts.cs` | Use DocumentSplitCriteria enumeration to split by sections and then merge selected parts. | split-workflow | doc | llm |
+| 26 | `apply-documentpartsavingcallback-to-customize-file-naming-convention-for-each-split-output.cs` | Apply DocumentPartSavingCallback to customize file naming convention for each split output. | split-workflow | doc | llm |
 | 27 | `validate-that-each-split-docx-file-maintains-original-header-and-footer-content-after-savi.cs` | Validate that each split DOCX file maintains original header and footer content after saving. | split-workflow | docx, doc | mcp |
 | 28 | `execute-split-operation-on-multiple-documents-sequentially-storing-results-in-designated-o.cs` | Execute split operation on multiple documents sequentially, storing results in designated output directories. | split-workflow | doc | mcp |
 | 29 | `combine-page-range-and-heading-criteria-to-produce-parts-that-start-at-each-heading-on-new.cs` | Combine page range and heading criteria to produce parts that start at each heading on new page. | split-workflow | docx | mcp |
@@ -98,20 +101,40 @@ dotnet run --configuration Release --no-build
 
 ## Common failure patterns seen during generation and how they were corrected
 
-### Unsupported API invention
+### Unsupported API usage
 
-- Symptom: Generated code references members that do not exist in the selected package version.
-- Fix: Replace invented members with documented Aspose.Words APIs already proven in this category.
+- Symptom: Code references members such as DocumentSplitCriteria.SplitMode, DocumentSplitMode, or Aspose.Words.Import that do not exist in the installed library.
+- Root cause: The example invents APIs that were never released in Aspose.Words 26.10.0.
+- Preferred fix: Replace invented members with documented alternatives, for example HtmlSaveOptions.DocumentSplitCriteria and HtmlSaveOptions.DocumentSplitHeadingLevel for heading-based splitting.
+- Prevention: Consult the official Aspose.Words API reference for the exact class and member names before writing code.
 
-### Missing local bootstrap inputs
+### Invalid page range arguments
 
-- Symptom: The example assumes source files, folders, images, or data already exist.
-- Fix: Create deterministic local inputs before loading, processing, or validating them.
+- Symptom: ExtractPages throws ArgumentOutOfRangeException because the start or end page index exceeds the document's page count.
+- Root cause: Page numbers are calculated incorrectly or zero-based indices are mixed with one-based values.
+- Preferred fix: Call Document.UpdatePageLayout() first, verify that 1 ≤ startPage ≤ endPage ≤ doc.PageCount, then invoke ExtractPages(startPage-1, pageCount).
+- Prevention: Always validate page numbers against the actual PageCount and use consistent zero-based indexing.
 
-### Over-broad validation
+### Cross-document node import errors
 
-- Symptom: The example fails at runtime while checking unrelated document internals.
-- Fix: Validate only the requested behavior and the existence of expected outputs.
+- Symptom: Runtime exception reports that a new child node was created from a different document than the target.
+- Root cause: Nodes are appended directly without using NodeImporter or cloning, violating Aspose.Words ownership rules.
+- Preferred fix: Import nodes with NodeImporter (ImportFormatMode.KeepSourceFormatting) or clone them before insertion.
+- Prevention: Never mix nodes from different Document instances without proper import or cloning.
+
+### Missing required namespaces or types
+
+- Symptom: CS0234 errors indicate that namespaces such as Aspose.Words.Import, Aspose.Words.Building, or Aspose.Words.Splitting cannot be found.
+- Root cause: The code assumes the existence of non-existent sub-namespaces.
+- Preferred fix: Remove invalid using directives and reference only the namespaces listed in the package documentation (e.g., Aspose.Words, Aspose.Words.Saving).
+- Prevention: Rely on IDE intellisense or the official documentation to determine available namespaces.
+
+### Incorrect DocumentPartSavingCallback usage
+
+- Symptom: CS1061 errors show that SaveOptions does not contain a DocumentPartSavingCallback property in the current version.
+- Root cause: The example attempts to assign a callback to a property that was removed or never existed.
+- Preferred fix: Omit the callback or implement IDocumentPartSavingCallback only where the property is supported, using the correct SaveOptions subclass.
+- Prevention: Verify the presence of callback properties in the specific Aspose.Words version before using them.
 
 ## See Also
 
@@ -124,6 +147,5 @@ dotnet run --configuration Release --no-build
 
 ## Notes for maintainers
 
-- This category is 100% publish-ready for the 26.9.0 run.
-- Preserve file-to-task traceability when updating this folder.
-- Keep examples standalone and bootstrap local inputs inside the example whenever external sources are mentioned.
+- This category is 100% publish-ready for the 26.10.0 run.
+- Review and update examples whenever a new Aspose.Words version adds or deprecates splitting-related members.

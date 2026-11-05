@@ -12,35 +12,31 @@ namespace RestartListNumberingExample
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // First heading.
+            // Insert first heading.
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
             builder.Writeln("Section 1");
 
-            // First numbered list.
-            // Use the default numbered list template.
+            // Create the first numbered list (will start at 1).
             List firstList = doc.Lists.Add(ListTemplate.NumberDefault);
             builder.ListFormat.List = firstList;
-            builder.ListFormat.ListLevelNumber = 0; // top level
             builder.Writeln("Item 1");
             builder.Writeln("Item 2");
-            builder.ListFormat.RemoveNumbers(); // End of the first list.
+            // End list formatting for the next paragraph.
+            builder.ListFormat.RemoveNumbers();
 
-            // Second heading.
+            // Insert second heading.
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
             builder.Writeln("Section 2");
 
-            // Restart numbering at 1 for the new list.
-            // Create a new list and set its start number to 1.
+            // Create a new numbered list – numbering restarts at 1.
             List secondList = doc.Lists.Add(ListTemplate.NumberDefault);
-            secondList.ListLevels[0].StartAt = 1; // restart numbering
             builder.ListFormat.List = secondList;
-            builder.ListFormat.ListLevelNumber = 0; // top level
             builder.Writeln("Item 1");
             builder.Writeln("Item 2");
-            builder.ListFormat.RemoveNumbers(); // End of the second list.
+            builder.ListFormat.RemoveNumbers();
 
             // Save the document.
-            const string outputPath = "Output.docx";
+            string outputPath = "Output.docx";
             doc.Save(outputPath);
         }
     }

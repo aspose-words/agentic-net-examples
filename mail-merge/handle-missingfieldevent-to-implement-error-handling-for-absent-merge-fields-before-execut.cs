@@ -1,66 +1,62 @@
 using System;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
-
-public class MailMergeEngine
-{
-    public delegate void MissingFieldEventHandler(string fieldName);
-    public event MissingFieldEventHandler MissingField;
-
-    public string Process(string template, Dictionary<string, string> data)
-    {
-        if (template == null) throw new ArgumentNullException(nameof(template));
-        if (data == null) throw new ArgumentNullException(nameof(data));
-
-        // Pattern matches {{FieldName}}
-        var pattern = new Regex(@"{{\s*(\w+)\s*}}", RegexOptions.Compiled);
-        var result = pattern.Replace(template, match =>
-        {
-            var fieldName = match.Groups[1].Value;
-            if (data.TryGetValue(fieldName, out var value))
-            {
-                return value;
-            }
-            else
-            {
-                // Raise event for missing field
-                MissingField?.Invoke(fieldName);
-                // After event, try again
-                if (data.TryGetValue(fieldName, out var newValue))
-                {
-                    return newValue;
-                }
-                // If still missing, keep placeholder unchanged
-                return match.Value;
-            }
-        });
-
-        return result;
-    }
-}
+using System.IO;
+using Aspose.Words;
+using Aspose.Words.MailMerging;
 
 public class Program
 {
+    // Callback to handle missing merge fields.
+    private class MissingFieldHandler : IFieldMergingCallback
+    {
+        public void FieldMerging(FieldMergingArgs args)
+        {
+            // If the data source does not contain a value for the field, treat it as missing.
+            if (args.FieldValue == null)
+            {
+                Console.WriteLine($"Missing field encountered: {args.FieldName}");
+                // Provide a default replacement text.
+                args.Text = "[Missing]";
+            }
+        }
+
+        // Required by the interface but not used for image fields.
+        public void ImageFieldMerging(ImageFieldMergingArgs args) { }
+    }
+
     public static void Main()
     {
-        var template = "Dear {{FirstName}} {{LastName}},\nYour order {{OrderId}} is shipped.";
-        var data = new Dictionary<string, string>
-        {
-            { "FirstName", "John" },
-            { "OrderId", "12345" }
-            // Note: LastName is intentionally missing
-        };
+        // Create a new document and build the template with merge fields.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.InsertField("MERGEFIELD Name", "«Name»");
+        builder.Writeln();
+        builder.InsertField("MERGEFIELD Age", "«Age»");
+        builder.Writeln();
 
-        var engine = new MailMergeEngine();
+        // Attach the missing‑field handler.
+        doc.MailMerge.FieldMergingCallback = new MissingFieldHandler();
 
-        // Subscribe to MissingField event to provide a default value
-        engine.MissingField += fieldName =>
-        {
-            // Provide a default placeholder for any missing field
-            data[fieldName] = "[Missing]";
-        };
+        // Prepare data source – Age field is intentionally omitted.
+        string[] fieldNames = { "Name" };
+        object[] fieldValues = { "John Doe" };
 
-        var result = engine.Process(template, data);
-        Console.WriteLine(result);
+        // Perform the mail merge.
+        doc.MailMerge.Execute(fieldNames, fieldValues);
+
+        // Save the merged document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedOutput.docx");
+        doc.Save(outputPath);
+
+        // Load the result to verify the merge.
+        Document resultDoc = new Document(outputPath);
+        string resultText = resultDoc.GetText();
+
+        if (!resultText.Contains("John Doe"))
+            throw new InvalidOperationException("The Name field was not merged correctly.");
+
+        if (!resultText.Contains("[Missing]"))
+            throw new InvalidOperationException("The missing Age field was not handled correctly.");
+
+        Console.WriteLine("Mail merge completed successfully. Output saved to: " + outputPath);
     }
 }

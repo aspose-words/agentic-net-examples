@@ -5,128 +5,116 @@ using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingBatch
+namespace BatchCsvLinqReporting
 {
-    // Simple data model representing a person.
-    public class Person
+    // Data model for a single CSV record.
+    public class Record
     {
         public int Id { get; set; } = 0;
-        public string Name { get; set; } = string.Empty;
+        public string Name { get; set; } = "";
+        public double Value { get; set; } = 0.0;
     }
 
-    // Wrapper model that will be passed as the root object to the reporting engine.
-    public class BatchReport
+    // Wrapper model passed to the reporting engine.
+    public class ReportModel
     {
-        public List<Person> Persons { get; set; } = new();
+        public List<Record> Records { get; set; } = new();
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Register code page provider for CSV encoding support.
+            // Register code page provider for CSV reading (required for some encodings).
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            // Prepare a temporary folder for sample CSV files.
-            string dataFolder = Path.Combine(Directory.GetCurrentDirectory(), "BatchData");
+            // Prepare folders.
+            string dataFolder = Path.Combine(Directory.GetCurrentDirectory(), "data");
+            string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "output");
             Directory.CreateDirectory(dataFolder);
+            Directory.CreateDirectory(outputFolder);
 
             // Create sample CSV files.
-            CreateSampleCsv(Path.Combine(dataFolder, "data1.csv"), new[]
-            {
-                new Person { Id = 1, Name = "Alice" },
-                new Person { Id = 2, Name = "Bob" }
-            });
+            CreateSampleCsv(Path.Combine(dataFolder, "file1.csv"));
+            CreateSampleCsv(Path.Combine(dataFolder, "file2.csv"));
 
-            CreateSampleCsv(Path.Combine(dataFolder, "data2.csv"), new[]
+            // Load and merge CSV data.
+            var allRecords = new List<Record>();
+            foreach (string csvPath in Directory.GetFiles(dataFolder, "*.csv"))
             {
-                new Person { Id = 3, Name = "Charlie" },
-                new Person { Id = 4, Name = "Diana" }
-            });
-
-            // Load all CSV files and merge their contents into a single list.
-            var reportModel = new BatchReport();
-
-            foreach (string csvFile in Directory.GetFiles(dataFolder, "*.csv"))
-            {
-                foreach (var person in LoadCsv(csvFile))
-                {
-                    reportModel.Persons.Add(person);
-                }
+                LoadCsvIntoList(csvPath, allRecords);
             }
 
-            // Create the LINQ Reporting template programmatically.
-            string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+            // Prepare the model.
+            var model = new ReportModel { Records = allRecords };
+
+            // Create the template document programmatically.
+            string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "template.docx");
             CreateTemplate(templatePath);
 
-            // Load the template document.
-            Document doc = new Document(templatePath);
+            // Load the template.
+            var doc = new Document(templatePath);
 
-            // Build the report using the merged data.
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(doc, reportModel, "model");
+            // Build the report.
+            var engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
 
-            // Save the generated report.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "BatchReportOutput.docx");
-            doc.Save(outputPath);
+            // Save the final report.
+            string reportPath = Path.Combine(outputFolder, "MergedReport.docx");
+            doc.Save(reportPath);
         }
 
-        // Writes a CSV file with a header and the supplied person records.
-        private static void CreateSampleCsv(string filePath, IEnumerable<Person> persons)
+        // Writes a simple CSV file with a header and three rows.
+        private static void CreateSampleCsv(string path)
         {
-            using var writer = new StreamWriter(filePath, false, Encoding.UTF8);
-            writer.WriteLine("Id,Name");
-            foreach (var p in persons)
+            var lines = new List<string>
             {
-                writer.WriteLine($"{p.Id},{p.Name}");
-            }
+                "Id,Name,Value",
+                "1,Alpha,10.5",
+                "2,Beta,20.75",
+                "3,Gamma,30.0"
+            };
+            File.WriteAllLines(path, lines, Encoding.UTF8);
         }
 
-        // Reads a CSV file and returns a list of Person objects.
-        private static List<Person> LoadCsv(string filePath)
+        // Parses a CSV file and adds its records to the provided list.
+        private static void LoadCsvIntoList(string csvPath, List<Record> target)
         {
-            var persons = new List<Person>();
-            using var reader = new StreamReader(filePath, Encoding.UTF8);
-            bool isFirstLine = true;
-            while (!reader.EndOfStream)
+            var lines = File.ReadAllLines(csvPath, Encoding.UTF8);
+            if (lines.Length < 2) return; // No data.
+
+            // Assume first line is header.
+            for (int i = 1; i < lines.Length; i++)
             {
-                string line = reader.ReadLine();
-                if (isFirstLine)
-                {
-                    // Skip header.
-                    isFirstLine = false;
-                    continue;
-                }
+                var parts = lines[i].Split(',');
+                if (parts.Length != 3) continue;
 
-                if (string.IsNullOrWhiteSpace(line))
-                    continue;
-
-                string[] parts = line.Split(',');
-                if (parts.Length >= 2 &&
-                    int.TryParse(parts[0], out int id))
+                if (int.TryParse(parts[0], out int id) &&
+                    double.TryParse(parts[2], out double value))
                 {
-                    persons.Add(new Person
+                    var record = new Record
                     {
                         Id = id,
-                        Name = parts[1]
-                    });
+                        Name = parts[1],
+                        Value = value
+                    };
+                    target.Add(record);
                 }
             }
-            return persons;
         }
 
-        // Generates a simple Word template containing a foreach loop over the Persons collection.
-        private static void CreateTemplate(string templatePath)
+        // Generates a Word template containing a foreach loop over Records.
+        private static void CreateTemplate(string path)
         {
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
 
-            builder.Writeln("Batch Report");
-            builder.Writeln("<<foreach [p in Persons]>>");
-            builder.Writeln("Id: <<[p.Id]>>, Name: <<[p.Name]>>");
+            builder.Writeln("Merged CSV Report");
+            builder.Writeln("<<foreach [rec in Records]>>");
+            builder.Writeln("Id: <<[rec.Id]>>, Name: <<[rec.Name]>>, Value: <<[rec.Value]>>");
             builder.Writeln("<</foreach>>");
 
-            templateDoc.Save(templatePath);
+            doc.Save(path);
         }
     }
 }

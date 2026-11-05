@@ -2,41 +2,63 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
-public class Program
+namespace ListRestartExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new empty document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Create two sections, each with its own numbered list that restarts from 1.
-        for (int sectionIndex = 1; sectionIndex <= 2; sectionIndex++)
+        public static void Main()
         {
-            // Add a heading for the section.
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-            builder.Writeln($"Section {sectionIndex}");
-            builder.ParagraphFormat.ClearFormatting();
+            // Create a new document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Create a new numbered list and set its starting number to 1.
-            List list = doc.Lists.Add(ListTemplate.NumberDefault);
-            list.ListLevels[0].StartAt = 1;   // Reset numbering for this list.
+            // ---------- First section ----------
+            // Create a new list for the first section.
+            List firstList = doc.Lists.Add(ListTemplate.NumberDefault);
 
-            // Add three items to the list.
-            for (int itemIndex = 1; itemIndex <= 3; itemIndex++)
-            {
-                builder.ListFormat.List = list;
-                builder.Writeln($"Item {itemIndex} in Section {sectionIndex}");
-            }
+            // Apply the list to the builder.
+            builder.ListFormat.List = firstList;
+            builder.ListFormat.ListLevelNumber = 1;
 
-            // End the list formatting.
+            // Write list items.
+            builder.Writeln("First section - Item 1");
+            builder.Writeln("First section - Item 2");
+
+            // End the first list.
             builder.ListFormat.RemoveNumbers();
 
-            // Insert a blank line between sections.
+            // Add a blank paragraph between sections.
             builder.Writeln();
-        }
 
-        // Save the document to disk.
-        doc.Save("Output.docx");
+            // ---------- Second section ----------
+            // Create a new list for the second section (new instance restarts numbering).
+            List secondList = doc.Lists.Add(ListTemplate.NumberDefault);
+
+            // Apply the second list.
+            builder.ListFormat.List = secondList;
+            builder.ListFormat.ListLevelNumber = 1;
+
+            // Write list items.
+            builder.Writeln("Second section - Item 1");
+            builder.Writeln("Second section - Item 2");
+            builder.Writeln("Second section - Item 3");
+
+            // End the second list.
+            builder.ListFormat.RemoveNumbers();
+
+            // Save the document.
+            doc.Save("ListRestartExample.docx");
+
+            // Validation: count paragraphs that are part of a list.
+            int listParagraphCount = 0;
+            NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
+            foreach (Paragraph para in paragraphs)
+            {
+                if (para.ListFormat.IsListItem)
+                    listParagraphCount++;
+            }
+
+            Console.WriteLine($"Document contains {listParagraphCount} list paragraphs.");
+        }
     }
 }

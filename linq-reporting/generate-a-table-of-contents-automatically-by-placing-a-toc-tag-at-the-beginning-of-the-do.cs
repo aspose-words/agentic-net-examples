@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
@@ -7,68 +8,86 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare working directories.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        // Prepare output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
-        // Paths for template and final report.
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        string reportPath = Path.Combine(outputDir, "Report.docx");
-
         // -----------------------------------------------------------------
-        // 1. Create the document template programmatically.
+        // 1. Create the template document with LINQ Reporting tags.
         // -----------------------------------------------------------------
-        Document templateDoc = new();
-        DocumentBuilder builder = new(templateDoc);
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Add some headings that will appear in the TOC.
+        // NOTE: The LINQ Reporting engine does not have a dedicated <<toc>> tag.
+        // We will insert the Table of Contents after the report is built.
+
+        // Begin foreach block for sections.
+        builder.Writeln("<<foreach [sec in Sections]>>");
+
+        // Section title – Heading 1 style.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 1: Introduction");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("This is the introduction content.");
+        builder.Writeln("<<[sec.Title]>>");
 
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 2: Details");
+        // Section content – normal style.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Detailed information goes here.");
+        builder.Writeln("<<[sec.Content]>>");
 
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Section 2.1: Subsection");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Subsection content.");
+        // End foreach block.
+        builder.Writeln("<</foreach>>");
 
         // Save the template to disk.
-        templateDoc.Save(templatePath);
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        template.Save(templatePath);
 
         // -----------------------------------------------------------------
-        // 2. Load the template and build the report using LINQ Reporting.
+        // 2. Prepare sample data.
         // -----------------------------------------------------------------
-        Document reportDoc = new(templatePath);
+        ReportModel model = new()
+        {
+            Sections = new()
+            {
+                new Section { Title = "Introduction", Content = "This is the introduction section." },
+                new Section { Title = "Chapter 1", Content = "Details of chapter one go here." },
+                new Section { Title = "Conclusion", Content = "Final thoughts are presented in this section." }
+            }
+        };
 
-        // The model is empty because the template does not reference any data.
-        var model = new ReportModel();
+        // -----------------------------------------------------------------
+        // 3. Load the template and build the report.
+        // -----------------------------------------------------------------
+        Document reportDoc = new Document(templatePath);
 
-        // Optional: enable reflection optimization for better performance.
-        ReportingEngine.UseReflectionOptimization = true;
-
-        ReportingEngine engine = new();
+        ReportingEngine engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.None
+        };
         engine.BuildReport(reportDoc, model, "model");
 
-        // Insert a Table of Contents at the beginning of the document.
-        DocumentBuilder tocBuilder = new(reportDoc);
+        // -----------------------------------------------------------------
+        // 4. Insert a Table of Contents at the beginning of the generated document.
+        // -----------------------------------------------------------------
+        DocumentBuilder tocBuilder = new DocumentBuilder(reportDoc);
         tocBuilder.MoveToDocumentStart();
         tocBuilder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
+        reportDoc.UpdateFields(); // Populate the TOC entries.
 
-        // Update fields so the TOC is generated.
-        reportDoc.UpdateFields();
-
-        // Save the final report.
+        // -----------------------------------------------------------------
+        // 5. Save the final report.
+        // -----------------------------------------------------------------
+        string reportPath = Path.Combine(outputDir, "Report.docx");
         reportDoc.Save(reportPath);
     }
+}
 
-    // Empty wrapper class required by the ReportingEngine.
-    public class ReportModel
-    {
-        // No properties needed for this example.
-    }
+// Root data model.
+public class ReportModel
+{
+    public List<Section> Sections { get; set; } = new();
+}
+
+// Section model.
+public class Section
+{
+    public string Title { get; set; } = string.Empty;
+    public string Content { get; set; } = string.Empty;
 }

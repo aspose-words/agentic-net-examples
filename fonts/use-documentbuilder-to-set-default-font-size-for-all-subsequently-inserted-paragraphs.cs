@@ -1,6 +1,8 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Drawing; // Required package, not used directly
+using Newtonsoft.Json; // Required package, not used directly
 
 public class Program
 {
@@ -8,30 +10,31 @@ public class Program
     {
         // Create a new empty document.
         Document doc = new Document();
+
+        // Initialize DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set the default font size for all subsequently inserted text.
-        double defaultFontSize = 16.0;
-        builder.Font.Size = defaultFontSize;
+        // Set the default font size for all subsequently inserted paragraphs.
+        builder.Font.Size = 14; // 14 points
 
         // Validate that the font size was set correctly.
-        if (builder.Font.Size != defaultFontSize)
+        if (builder.Font.Size != 14)
         {
             throw new InvalidOperationException("Failed to set the default font size.");
         }
 
         // Insert paragraphs that will use the default font size.
-        builder.Writeln("This paragraph uses the default font size.");
-        builder.Writeln("This is another paragraph with the same default font size.");
+        builder.Writeln("First paragraph using the default font size.");
+        builder.Writeln("Second paragraph using the default font size.");
 
         // Save the document to disk.
         string outputPath = "DefaultFontSize.docx";
-        doc.Save(outputPath);
+        doc.Save(outputPath, SaveFormat.Docx);
 
-        // Ensure the output file was created successfully.
+        // Verify that the output file was created successfully.
         if (!File.Exists(outputPath))
         {
-            throw new FileNotFoundException("The output document was not created.", outputPath);
+            throw new FileNotFoundException("The document was not saved correctly.", outputPath);
         }
     }
 }

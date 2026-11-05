@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Threading;
 using Aspose.Words;
 using Aspose.Words.Fields;
@@ -8,63 +7,40 @@ public class Program
 {
     public static void Main()
     {
-        // Create a document with many PAGE fields to simulate a long‑running update.
+        // Create a document with many fields to make the update operation lengthy.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         for (int i = 0; i < 5000; i++)
         {
-            builder.Writeln($"Field {i + 1}: ");
-            builder.InsertField("PAGE", null);
+            builder.Writeln($"Field {i}: ");
+            builder.InsertField(FieldType.FieldPage, true);
+            builder.Writeln();
         }
 
-        // Save the document to a temporary .docx file (extension required for format detection).
-        string tempPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".docx");
-        try
+        // Set up a cancellation token that will be triggered shortly.
+        using (CancellationTokenSource cts = new CancellationTokenSource())
         {
-            doc.Save(tempPath);
+            cts.CancelAfter(10); // Cancel after 10 milliseconds.
 
-            // Reload the document from the saved file.
-            Document loadedDoc = new Document(tempPath);
-
-            // Prepare a cancellation token that will be cancelled shortly after the update starts.
-            using (CancellationTokenSource cts = new CancellationTokenSource())
+            try
             {
-                // Cancel after a brief delay (e.g., 10 ms).
-                cts.CancelAfter(10);
-
-                bool wasCancelled = false;
-                try
+                // Manually update fields while checking the cancellation token periodically.
+                foreach (Field field in doc.Range.Fields)
                 {
-                    // Manually update each field, checking the cancellation token periodically.
-                    foreach (Field field in loadedDoc.Range.Fields)
-                    {
-                        // Throw if cancellation has been requested.
-                        cts.Token.ThrowIfCancellationRequested();
+                    if (cts.Token.IsCancellationRequested)
+                        throw new OperationCanceledException(cts.Token);
 
-                        // Update the current field.
-                        field.Update();
-
-                        // Optional small delay to make cancellation more likely during the loop.
-                        Thread.Sleep(1);
-                    }
-                }
-                catch (OperationCanceledException)
-                {
-                    wasCancelled = true;
+                    field.Update();
                 }
 
-                // Validate that the operation respected the cancellation token.
-                if (!wasCancelled)
-                {
-                    throw new Exception("Field update did not respect the cancellation token.");
-                }
+                // If we reach this point, the operation ignored the cancellation token.
+                throw new Exception("Field update completed without respecting the cancellation token.");
             }
-        }
-        finally
-        {
-            // Clean up the temporary file.
-            if (File.Exists(tempPath))
-                File.Delete(tempPath);
+            catch (OperationCanceledException)
+            {
+                // Expected outcome: the update was cancelled.
+                Console.WriteLine("Field update was cancelled as expected.");
+            }
         }
     }
 }

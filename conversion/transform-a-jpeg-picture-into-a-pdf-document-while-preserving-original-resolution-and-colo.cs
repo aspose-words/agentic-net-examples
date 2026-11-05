@@ -9,47 +9,57 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a sample JPEG image using Aspose.Drawing.
-        const string jpegPath = "sample.jpg";
-        const int imageWidth = 800;
-        const int imageHeight = 600;
+        // Define file paths.
+        string jpegPath = "sample.jpg";
+        string pdfPath = "output.pdf";
 
-        using (Bitmap bitmap = new Bitmap(imageWidth, imageHeight, PixelFormat.Format24bppRgb))
+        // Create a sample JPEG image using Aspose.Drawing.
+        // The image is 800x600 pixels, 24‑bit color depth.
+        Bitmap bitmap = new Bitmap(800, 600, PixelFormat.Format24bppRgb);
+        try
         {
-            using (Graphics graphics = Graphics.FromImage(bitmap))
+            Graphics graphics = Graphics.FromImage(bitmap);
+            try
             {
                 // Fill background with a solid color.
-                graphics.Clear(Color.LightBlue);
+                graphics.Clear(Color.CornflowerBlue);
 
-                // Draw a simple ellipse.
-                using (Pen pen = new Pen(Color.DarkBlue, 5))
+                // Draw a simple rectangle.
+                using (Pen pen = new Pen(Color.Yellow, 5))
                 {
-                    graphics.DrawEllipse(pen, 100, 100, 600, 400);
+                    graphics.DrawRectangle(pen, 100, 100, 600, 400);
                 }
+            }
+            finally
+            {
+                graphics.Dispose();
             }
 
             // Save the bitmap as a JPEG file.
             bitmap.Save(jpegPath, ImageFormat.Jpeg);
+        }
+        finally
+        {
+            bitmap.Dispose();
         }
 
         // Verify that the JPEG file was created.
         if (!File.Exists(jpegPath))
             throw new InvalidOperationException("The JPEG image was not created.");
 
-        // Step 2: Create a new Word document and insert the JPEG image.
+        // Create a new Word document and insert the JPEG image.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(jpegPath);
 
-        // Step 3: Save the document as a PDF, preserving the original image resolution and color depth.
-        const string pdfPath = "output.pdf";
+        // Save the document as a PDF, preserving the original image resolution and color depth.
         doc.Save(pdfPath, SaveFormat.Pdf);
 
         // Validate that the PDF file was created.
         if (!File.Exists(pdfPath))
             throw new InvalidOperationException("The PDF document was not created.");
 
-        // Cleanup: optionally delete the temporary JPEG file.
+        // Optional: Clean up the temporary JPEG file.
         // File.Delete(jpegPath);
     }
 }

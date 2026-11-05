@@ -1,62 +1,60 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class Model
+{
+    // Sample properties used in the template
+    public string Name { get; set; } = "John Doe";
+    public int Age { get; set; } = 30;
+    // This property does NOT exist in the template on purpose to trigger an error
+    // (No need to define it; the missing reference will cause the inline error.)
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare working directories.
-        string workDir = Directory.GetCurrentDirectory();
-        string templatePath = Path.Combine(workDir, "template.docx");
-        string resultPath = Path.Combine(workDir, "result.docx");
+        // File names for the temporary template and the generated report
+        const string templatePath = "template.docx";
+        const string outputPath = "output.docx";
 
-        // -----------------------------------------------------------------
-        // 1. Create a template document with a valid tag and an invalid tag.
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
+        // 1. Create a template document with a deliberate reference error
+        // -------------------------------------------------
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Valid expression.
+        // Correct tag – will be processed normally
         builder.Writeln("Hello <<[model.Name]>>!");
 
-        // Invalid expression – property 'Missing' does not exist in the model.
-        builder.Writeln("This will cause an error: <<[model.Missing]>>");
+        // Intentional error: reference a non‑existent property
+        builder.Writeln("This line has an error: <<[model.NonExistentProperty]>>");
 
-        // Save the template to disk.
+        // Save the template to disk
         templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the template for reporting.
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
+        // 2. Load the template document for reporting
+        // -------------------------------------------------
         Document doc = new Document(templatePath);
 
-        // -----------------------------------------------------------------
-        // 3. Prepare the data model.
-        // -----------------------------------------------------------------
-        Model model = new Model { Name = "World" };
+        // Sample data model
+        Model model = new Model();
 
-        // -----------------------------------------------------------------
-        // 4. Configure ReportingEngine with InlineErrorMessages.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.InlineErrorMessages;
+        // Configure the reporting engine to embed inline error messages
+        ReportingEngine engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.InlineErrorMessages
+        };
 
-        // Build the report and capture the success flag.
+        // Build the report and capture the success flag
         bool success = engine.BuildReport(doc, model, "model");
 
-        // Save the generated report.
-        doc.Save(resultPath);
-
-        // Output the success flag.
+        // Output the success flag – expected to be false because of the error above
         Console.WriteLine($"Report build success: {success}");
-    }
-}
 
-// Data model used by the template.
-public class Model
-{
-    public string Name { get; set; } = "";
-    // Note: No 'Missing' property – this will trigger an inline error.
+        // Save the generated report (contains the inline error message)
+        doc.Save(outputPath);
+    }
 }

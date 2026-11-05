@@ -4,43 +4,49 @@ using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace LinqReportingExample
 {
-    public static void Main()
+    public class Program
     {
-        // Register code page provider for Aspose.Words.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Define file paths.
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-
-        // Create a simple DOCX template with a LINQ Reporting tag.
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-        templateDoc.Save(templatePath);
-
-        // Load the template from disk.
-        Document doc = new Document(templatePath);
-
-        // Prepare sample data.
-        Order order = new Order
+        public static void Main()
         {
-            CustomerName = "John Doe"
-        };
+            // Register code page provider required by Aspose.Words.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Build the report.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, order, "order");
+            // Paths for the template and the generated report.
+            string templatePath = "Template.docx";
+            string outputPath = "Report.docx";
 
-        // Save the generated report.
-        doc.Save(outputPath);
+            // Create a DOCX template with LINQ Reporting tags.
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            builder.Writeln("Customer Report");
+            builder.Writeln("Name: <<[model.Name]>>");
+            builder.Writeln("Age: <<[model.Age]>>");
+            templateDoc.Save(templatePath);
+
+            // Load the template.
+            Document doc = new Document(templatePath);
+
+            // Sample data model.
+            var model = new Customer
+            {
+                Name = "John Doe",
+                Age = 30
+            };
+
+            // Build the report using the ReportingEngine.
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
+
+            // Save the generated report.
+            doc.Save(outputPath);
+        }
     }
-}
 
-// Public data model class.
-public class Order
-{
-    public string CustomerName { get; set; } = string.Empty;
+    public class Customer
+    {
+        public string Name { get; set; } = "";
+        public int Age { get; set; }
+    }
 }

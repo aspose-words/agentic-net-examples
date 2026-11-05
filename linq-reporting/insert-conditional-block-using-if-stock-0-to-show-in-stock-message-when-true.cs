@@ -4,45 +4,45 @@ using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Product
-{
-    public int Stock { get; set; }
-}
-
 public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create the template document programmatically.
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Prepare paths.
+        string templatePath = "template.docx";
+        string outputPath = "output.docx";
 
-        builder.Writeln("Product stock status:");
-        // Conditional block: show "In stock" only when Stock > 0.
-        builder.Writeln("<<if [model.Stock > 0]>>In stock<</if>>");
-
-        // Save the template.
-        string templatePath = Path.Combine(outputDir, "Template.docx");
+        // Create the template document with a conditional block.
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Product Stock Status:");
+        builder.Writeln("<<if [product.Stock > 0]>>In stock<</if>>");
+        builder.Writeln("<<if [product.Stock <= 0]>>Out of stock<</if>>");
         templateDoc.Save(templatePath);
 
-        // Load the template for report generation.
-        var reportDoc = new Document(templatePath);
+        // Load the template for reporting.
+        Document doc = new Document(templatePath);
 
-        // Sample data.
-        var model = new Product { Stock = 5 };
+        // Prepare the data model.
+        Product product = new Product { Stock = 5 };
 
-        // Build the report using LINQ Reporting Engine.
-        var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+        // Build the report.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, product, "product");
 
         // Save the generated report.
-        string reportPath = Path.Combine(outputDir, "Report.docx");
-        reportDoc.Save(reportPath);
+        doc.Save(outputPath);
 
-        Console.WriteLine($"Report generated at: {reportPath}");
+        // Indicate completion.
+        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
     }
+}
+
+// Public data model class.
+public class Product
+{
+    public int Stock { get; set; } = 0;
 }

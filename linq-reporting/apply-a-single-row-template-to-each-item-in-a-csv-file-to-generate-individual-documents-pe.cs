@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Text;
 using Aspose.Words;
@@ -9,76 +10,86 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare working directories.
-        string workDir = Directory.GetCurrentDirectory();
-        string dataDir = Path.Combine(workDir, "data");
-        string outputDir = Path.Combine(workDir, "output");
-        Directory.CreateDirectory(dataDir);
-        Directory.CreateDirectory(outputDir);
+        // Register code page provider for CSV handling.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create a sample CSV file.
-        string csvPath = Path.Combine(dataDir, "people.csv");
-        File.WriteAllText(csvPath,
-            "FirstName,LastName,Email\nJohn,Doe,john.doe@example.com\nJane,Smith,jane.smith@example.com",
-            Encoding.UTF8);
+        // Prepare sample CSV data.
+        string csvPath = "data.csv";
+        File.WriteAllText(csvPath, "Name,Age,Email\r\nAlice,30,alice@example.com\r\nBob,25,bob@example.com\r\nCharlie,35,charlie@example.com");
 
         // Create a simple template document with LINQ Reporting tags.
-        string templatePath = Path.Combine(dataDir, "template.docx");
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("<<[record.FirstName]>> <<[record.LastName]>>");
-        builder.Writeln("Email: <<[record.Email]>>");
-        templateDoc.Save(templatePath);
+        string templatePath = "template.docx";
+        CreateTemplate(templatePath);
 
-        // Load CSV data into a list of strongly‑typed records.
-        var records = new List<Record>();
-        using (var reader = new StreamReader(csvPath, Encoding.UTF8))
+        // Load the template once.
+        Document templateDoc = new Document(templatePath);
+        ReportingEngine engine = new ReportingEngine();
+
+        // Parse CSV into a list of Person objects.
+        List<Person> persons = LoadCsv(csvPath);
+
+        // Ensure output directory exists.
+        string outputDir = "output";
+        Directory.CreateDirectory(outputDir);
+
+        // Generate an individual document for each person.
+        for (int i = 0; i < persons.Count; i++)
         {
-            // Read header.
-            string? headerLine = reader.ReadLine();
-            if (headerLine == null) return;
+            Person person = persons[i];
+            Document doc = (Document)templateDoc.Clone();
 
-            // Read each data line.
-            while (!reader.EndOfStream)
+            // Build the report using the person object as the root.
+            engine.BuildReport(doc, person, "person");
+
+            string outputPath = Path.Combine(outputDir, $"Person_{i + 1}.docx");
+            doc.Save(outputPath);
+        }
+    }
+
+    // Creates a Word template containing tags that reference the Person model.
+    private static void CreateTemplate(string path)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        builder.Writeln("Report for <<[person.Name]>>");
+        builder.Writeln("Age: <<[person.Age]>>");
+        builder.Writeln("Email: <<[person.Email]>>");
+
+        doc.Save(path);
+    }
+
+    // Reads the CSV file and returns a list of Person objects.
+    private static List<Person> LoadCsv(string path)
+    {
+        var persons = new List<Person>();
+        using var reader = new StreamReader(path);
+        string? headerLine = reader.ReadLine(); // Skip header.
+        while (!reader.EndOfStream)
+        {
+            string? line = reader.ReadLine();
+            if (string.IsNullOrWhiteSpace(line))
+                continue;
+
+            string[] parts = line.Split(',');
+            if (parts.Length < 3)
+                continue;
+
+            persons.Add(new Person
             {
-                string? line = reader.ReadLine();
-                if (string.IsNullOrWhiteSpace(line)) continue;
-
-                string[] parts = line.Split(',');
-                if (parts.Length < 3) continue;
-
-                records.Add(new Record
-                {
-                    FirstName = parts[0],
-                    LastName = parts[1],
-                    Email = parts[2]
-                });
-            }
+                Name = parts[0].Trim(),
+                Age = int.Parse(parts[1].Trim(), CultureInfo.InvariantCulture),
+                Email = parts[2].Trim()
+            });
         }
-
-        // Generate an individual document for each record.
-        int index = 1;
-        foreach (var record in records)
-        {
-            // Load the template.
-            var doc = new Document(templatePath);
-
-            // Build the report using the current record as the root object.
-            var engine = new ReportingEngine();
-            engine.BuildReport(doc, record, "record");
-
-            // Save the generated document.
-            string outPath = Path.Combine(outputDir, $"Person_{index}.docx");
-            doc.Save(outPath);
-            index++;
-        }
+        return persons;
     }
 }
 
-// Public data model matching the CSV columns.
-public class Record
+// Public data model matching the template tags.
+public class Person
 {
-    public string FirstName { get; set; } = string.Empty;
-    public string LastName { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public int Age { get; set; }
     public string Email { get; set; } = string.Empty;
 }

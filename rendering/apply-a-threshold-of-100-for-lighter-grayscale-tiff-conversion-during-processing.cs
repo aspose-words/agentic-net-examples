@@ -10,25 +10,23 @@ public class Program
         // Create a simple document with some text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document for TIFF rendering with a threshold of 100.");
-        builder.Writeln("The quick brown fox jumps over the lazy dog.");
+        builder.Writeln("This is a sample document for TIFF conversion with a threshold.");
 
-        // Define output TIFF path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.tiff");
+        // Define the output TIFF file path.
+        string outputPath = "output.tiff";
 
         // Configure image save options for grayscale TIFF.
-        // The threshold of 100 is conceptually applied by using a grayscale mode;
-        // Aspose.Words does not expose a direct TiffThreshold property in this version,
-        // so we rely on the grayscale conversion which lightens the image.
-        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
+        // The current Aspose.Words version does not expose a direct threshold property,
+        // so we use the closest available settings: Grayscale color mode and CCITT4 compression,
+        // which produces a black‑white image suitable for lighter grayscale rendering.
+        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
             ImageColorMode = ImageColorMode.Grayscale,
-            // Use CCITT Group 4 compression for monochrome TIFFs.
             TiffCompression = TiffCompression.Ccitt4
         };
 
         // Save the document as a TIFF image.
-        doc.Save(outputPath, options);
+        doc.Save(outputPath, saveOptions);
 
         // Verify that the TIFF file was created.
         if (!File.Exists(outputPath))
@@ -36,9 +34,8 @@ public class Program
             throw new FileNotFoundException("The TIFF file was not created.", outputPath);
         }
 
-        // Output the result path and file size for confirmation.
-        FileInfo info = new FileInfo(outputPath);
-        Console.WriteLine($"TIFF file created at: {outputPath}");
-        Console.WriteLine($"File size: {info.Length} bytes");
+        // Output the file size to confirm creation.
+        long fileSize = new FileInfo(outputPath).Length;
+        Console.WriteLine($"TIFF file created successfully. Size: {fileSize} bytes.");
     }
 }

@@ -11,35 +11,23 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a 2x3 table with a formula field that sums the numbers above.
+        // Build a table with two numeric cells and a formula field that sums the numbers above.
         builder.StartTable();
 
-        // Header row.
+        // First row, first cell: numeric value 5
         builder.InsertCell();
-        builder.Write("Item");
-        builder.InsertCell();
-        builder.Write("Quantity");
+        builder.Write("5");
         builder.EndRow();
 
-        // First data row.
+        // Second row, first cell: numeric value 15
         builder.InsertCell();
-        builder.Write("Apples");
-        builder.InsertCell();
-        builder.Write("10");
+        builder.Write("15");
         builder.EndRow();
 
-        // Second data row.
+        // Third row, first cell: formula field =SUM(ABOVE)
         builder.InsertCell();
-        builder.Write("Oranges");
-        builder.InsertCell();
-        builder.Write("20");
-        builder.EndRow();
-
-        // Sum row with a formula field =SUM(ABOVE) in the second column.
-        builder.InsertCell();
-        builder.Write("Total");
-        builder.InsertCell();
-        builder.InsertField("=SUM(ABOVE)", null);
+        // Insert a formula field that sums the numbers in the column above.
+        builder.InsertField("=SUM(ABOVE)", "?");
         builder.EndRow();
 
         builder.EndTable();
@@ -48,26 +36,25 @@ public class Program
         string initialPath = "TableWithFormula.docx";
         doc.Save(initialPath);
 
-        // Modify a cell value (change quantity of Apples from 10 to 15).
-        NodeCollection tables = doc.GetChildNodes(NodeType.Table, true);
-        Table table = (Table)tables[0];
-        Row firstDataRow = table.Rows[1]; // Row after header.
-        Cell quantityCell = firstDataRow.Cells[1];
-        // Clear existing runs and insert new text.
-        quantityCell.FirstParagraph.Runs.Clear();
-        quantityCell.FirstParagraph.AppendChild(new Run(doc, "15"));
+        // Modify the first numeric cell (change 5 to 20).
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        Cell firstCell = table.Rows[0].Cells[0];
+        // Clear existing content and write new value.
+        firstCell.RemoveAllChildren();
+        firstCell.AppendChild(new Paragraph(doc));
+        firstCell.FirstParagraph.AppendChild(new Run(doc, "20"));
 
-        // Recalculate all fields in the document.
+        // Recalculate fields after the modification.
         doc.UpdateFields();
 
         // Save the updated document.
-        string updatedPath = "UpdatedTableFields.docx";
+        string updatedPath = "TableWithFormulaUpdated.docx";
         doc.Save(updatedPath);
 
-        // Verify that the updated file was saved.
-        if (!File.Exists(updatedPath))
+        // Verify that the output files were created.
+        if (!File.Exists(initialPath) || !File.Exists(updatedPath))
         {
-            throw new Exception("The updated document was not saved correctly.");
+            throw new InvalidOperationException("One or more output files were not created successfully.");
         }
     }
 }

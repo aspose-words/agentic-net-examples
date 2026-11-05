@@ -9,11 +9,14 @@ public class Program
         // Create a sample DOCX document.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Sample DOCX content.");
-        sourceDoc.Save("input.docx", SaveFormat.Docx);
+        builder.Writeln("This is a sample DOCX document created for conversion.");
+
+        // Save the document as DOCX to a local file.
+        const string inputPath = "input.docx";
+        sourceDoc.Save(inputPath, SaveFormat.Docx);
 
         // Load the DOCX document from the file.
-        Document doc = new Document("input.docx");
+        Document doc = new Document(inputPath);
 
         // Simulate an HTTP response stream using MemoryStream.
         using MemoryStream responseStream = new MemoryStream();
@@ -21,18 +24,25 @@ public class Program
         // Save the document as PDF directly into the response stream.
         doc.Save(responseStream, SaveFormat.Pdf);
 
-        // Verify that PDF data was written to the stream.
+        // Validate that PDF data was written to the stream.
         if (responseStream.Length == 0)
         {
             throw new InvalidOperationException("No PDF data was written to the simulated response stream.");
         }
 
-        // (Optional) Reset position if further processing is needed.
-        responseStream.Position = 0;
+        // (Optional) Write the PDF to a file for verification.
+        const string outputPath = "output.pdf";
+        File.WriteAllBytes(outputPath, responseStream.ToArray());
 
-        // Example: write the PDF to a file to confirm the conversion succeeded.
-        // This step is not required for the streaming scenario but demonstrates the output.
-        using FileStream file = new FileStream("output.pdf", FileMode.Create, FileAccess.Write);
-        responseStream.CopyTo(file);
+        if (!File.Exists(outputPath))
+        {
+            throw new InvalidOperationException("Expected output PDF file was not created.");
+        }
+
+        // Clean up the temporary input file.
+        if (File.Exists(inputPath))
+        {
+            File.Delete(inputPath);
+        }
     }
 }

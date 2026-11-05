@@ -4,30 +4,33 @@
     "slug": "working-with-table",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Use simple documented table workflows. Prefer DocumentBuilder.StartTable and related builder methods for creation tasks, and use Table, Row, Cell, and CellFormat APIs directly for modification or inspection tasks. Keep validation narrow and task-specific.",
+    "preferred_workflow": "Use DocumentBuilder.StartTable, InsertCell, EndRow, and EndTable for any table creation, then manipulate Table, Row, and Cell objects directly for edits such as adding rows, setting styles, or adjusting widths. When moving a table between documents, clone the node, import it with NodeImporter, and insert it via the parent node's InsertAfter method. Validate only the requested behavior and the existence of the output file.",
     "required_packages": [
       "Aspose.Words",
       "Newtonsoft.Json"
     ],
     "package_versions": {
-      "Aspose.Words": "26.9.0"
+      "Aspose.Words": "26.10.0",
+      "Newtonsoft.Json": ""
     },
     "required_namespaces": [
       "System",
       "System.IO",
       "Aspose.Words",
       "Aspose.Words.Tables",
-      "System.Linq",
+      "System.Collections.Generic",
       "Aspose.Words.Replacing",
       "System.Drawing",
+      "System.Linq",
       "Aspose.Words.Drawing",
-      "Aspose.Words.Saving",
-      "System.Collections.Generic",
       "System.Data",
-      "Aspose.Words.Notes",
-      "Newtonsoft.Json",
-      "System.Xml.Linq",
       "Aspose.Words.Fields",
+      "Aspose.Words.Notes",
+      "Aspose.Words.Saving",
+      "Newtonsoft.Json",
+      "System.Xml",
+      "System.Xml.Linq",
+      "System.Reflection",
       "System.Text",
       "System.Net"
     ],
@@ -35,30 +38,29 @@
       "Document",
       "DocumentBuilder",
       "File",
-      "Table",
       "Row",
-      "Cell",
-      "Directory",
-      "Path",
       "Paragraph",
       "Run",
+      "Table",
+      "Cell",
       "NodeType",
       "StyleIdentifier",
+      "CompositeNode",
+      "Path",
+      "Node",
       "Range",
       "FindReplaceOptions",
-      "SaveFormat",
-      "Font",
       "CellFormat",
       "Style",
+      "Font",
+      "Directory",
       "Shape",
+      "MemoryStream",
+      "SaveFormat",
       "LoadOptions",
-      "HtmlSaveOptions",
+      "Field",
       "ProtectionType",
-      "ImageSaveOptions",
-      "FieldType",
-      "Watermark",
-      "TextWatermarkOptions",
-      "Node"
+      "ImageSaveOptions"
     ]
   },
   "stats": {
@@ -70,40 +72,48 @@
     }
   },
   "rules_summary": {
-    "core_rules": [
-      "Use native Aspose.Words APIs directly.",
-      "Create local sample documents when a task refers to an existing file, stream, template, or input asset.",
-      "Do not assume external files or folders already exist.",
-      "Always save the requested output document, report, or exported file.",
-      "Keep validation narrow and task-specific."
+    "strict_api_bans": [
+      "Never reference members that are not present in Aspose.Words 26.10.0, such as Table.AutoFit as a property, Table.Borders, Table.VerticalAlignment, Table.Columns, Cell.PreferredWidth, TableStyleOptions members, BorderCollection.Clear, TextureIndex.None, LoadOptions, or VerticalAlignment enum.",
+      "Do not use DocumentBuilder.InsertTable; prefer the explicit StartTable workflow."
     ],
-    "table_rules": [
-      "Use DocumentBuilder.StartTable, InsertCell, EndRow, and EndTable for builder-based creation.",
-      "Use Table, Row, Cell, and collection APIs for modification workflows.",
-      "Use import or clone workflows when moving table content across documents.",
-      "Use paragraph formatting inside cells for horizontal text alignment when required."
+    "canonical_patterns": [
+      "Create a table with DocumentBuilder, then retrieve the Table node via doc.GetChild(NodeType.Table, index, true) for further DOM manipulation.",
+      "Add rows by constructing a new Row(doc) and calling table.Rows.Add(row); add cells with new Row.Cells.Add(new Cell(doc)).",
+      "Clone a table with originalTable.Clone(true), import it using NodeImporter, and insert it with referenceParagraph.ParentNode.InsertAfter(clonedTable, referenceParagraph)."
     ],
-    "api_safety_rules": [
-      "Do not use DocumentBuilder.InsertTable.",
-      "Do not invent unsupported table, row, or cell APIs.",
-      "Do not assume unsupported TableStyleOptions or cell-format members exist in the current package version."
+    "nullable_warning_prevention": [
+      "Always append a Paragraph to a newly created Cell before adding Run objects to avoid NullReferenceException.",
+      "Check that target nodes (paragraphs, tables) are not null before moving the builder or performing InsertAfter."
     ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "Unsupported API invention",
-      "symptom": "Generated code references members that do not exist in the selected package version.",
-      "fix": "Replace invented members with documented Aspose.Words APIs already proven in this category."
+      "pattern": "Missing Node argument in collection Add",
+      "symptom": "CS7036 errors indicating that NodeCollection.Add was called without a Node parameter.",
+      "cause": "The code attempted to add rows or cells using Rows.Add() or Cells.Add() without supplying a new Row or Cell instance.",
+      "fix": "Instantiate the required node (e.g., new Row(doc) or new Cell(doc)) and pass it to the Add method.",
+      "prevention": "Always create the node first and supply it as the argument to Rows.Add and Cells.Add."
     },
     {
-      "pattern": "Missing local bootstrap inputs",
-      "symptom": "The example assumes source files, folders, images, or data already exist.",
-      "fix": "Create deterministic local inputs before loading, processing, or validating them."
+      "pattern": "Incorrect InsertAfter usage",
+      "symptom": "CS1061 or CS7036 errors stating that InsertAfter is missing or that the refChild argument is absent.",
+      "cause": "The code called InsertAfter on the target node itself or omitted the reference child parameter.",
+      "fix": "Call InsertAfter on the parent CompositeNode: parentNode.InsertAfter(newNode, referenceNode).",
+      "prevention": "Locate the parent of the reference paragraph and use its InsertAfter method with both arguments."
     },
     {
-      "pattern": "Over-broad validation",
-      "symptom": "The example fails at runtime while checking unrelated document internals.",
-      "fix": "Validate only the requested behavior and the existence of expected outputs."
+      "pattern": "Invented or outdated API members",
+      "symptom": "Multiple CS0117, CS1061, CS0234, CS1656, CS1729, and CS0200 errors for members such as Table.AutoFit property, Table.Borders, Table.VerticalAlignment, Table.Columns, Cell.PreferredWidth, TableStyleOptions flags, BorderCollection.Clear, TextureIndex.None, LoadOptions, and PreferredWidth constructors.",
+      "cause": "The generated code referenced members that do not exist in Aspose.Words 26.10.0 or were mis-typed.",
+      "fix": "Use the documented APIs: call table.AutoFit(AutoFitBehavior...), set table.PreferredWidth via PreferredWidth.FromPoints or FromPercent, apply styles with table.StyleIdentifier, and configure borders through table.SetBorder(BorderType, LineStyle, width, color, true).",
+      "prevention": "Consult the official Aspose.Words 26.10.0 API reference and avoid guessing member names; rely on the key APIs list provided."
+    },
+    {
+      "pattern": "Missing paragraph in a new cell",
+      "symptom": "Runtime NullReferenceException when attempting to append a Run to a cell that has no Paragraph.",
+      "cause": "The code created a Cell but did not add a Paragraph before inserting text.",
+      "fix": "After creating a Cell, call cell.AppendChild(new Paragraph(doc)) and then add Run objects to cell.FirstParagraph.",
+      "prevention": "Always ensure each new Cell contains at least one Paragraph before writing content."
     }
   ],
   "examples": [
@@ -137,8 +147,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 4,
@@ -258,8 +268,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 15,
@@ -357,8 +367,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 24,
@@ -379,8 +389,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 26,
@@ -396,7 +406,7 @@
     {
       "id": 27,
       "file_name": "apply-the-built-in-grid-table-5-dark-style-to-a-table-after-inserting-its-rows.cs",
-      "task": "Apply the built‑in \"Grid Table 5 Dark\" style to a table after inserting its rows.",
+      "task": "Apply the built-in \"Grid Table 5 Dark\" style to a table after inserting its rows.",
       "workflow": "table-workflow",
       "outputs": [
         "docx"
@@ -434,8 +444,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 31,
@@ -456,8 +466,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 33,
@@ -478,8 +488,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 35,
@@ -544,8 +554,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 41,
@@ -566,8 +576,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 43,
@@ -588,13 +598,13 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 45,
       "file_name": "set-cell-text-direction-to-right-to-left-for-arabic-content-by-configuring-cellformat-text.cs",
-      "task": "Set cell text direction to right‑to‑left for Arabic content by configuring CellFormat.TextDirection property.",
+      "task": "Set cell text direction to right-to-left for Arabic content by configuring CellFormat.TextDirection property.",
       "workflow": "table-workflow",
       "outputs": [
         "docx"
@@ -605,7 +615,7 @@
     {
       "id": 46,
       "file_name": "set-the-table-s-text-direction-to-right-to-left-for-languages-requiring-bidirectional-layo.cs",
-      "task": "Set the table's text direction to right‑to‑left for languages requiring bidirectional layout.",
+      "task": "Set the table's text direction to right-to-left for languages requiring bidirectional layout.",
       "workflow": "table-workflow",
       "outputs": [
         "docx"
@@ -616,13 +626,13 @@
     {
       "id": 47,
       "file_name": "set-the-table-s-text-direction-to-top-to-bottom-for-vertical-asian-scripts-by-configuring.cs",
-      "task": "Set the table's text direction to top‑to‑bottom for vertical Asian scripts by configuring Table.TextDirection property.",
+      "task": "Set the table's text direction to top-to-bottom for vertical Asian scripts by configuring Table.TextDirection property.",
       "workflow": "table-workflow",
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 48,
@@ -770,13 +780,13 @@
     {
       "id": 61,
       "file_name": "prevent-a-table-from-being-split-across-columns-in-a-multi-column-layout-by-setting-allowb.cs",
-      "task": "Prevent a table from being split across columns in a multi‑column layout by setting AllowBreakAcrossColumns to false.",
+      "task": "Prevent a table from being split across columns in a multi-column layout by setting AllowBreakAcrossColumns to false.",
       "workflow": "table-workflow",
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 62,
@@ -836,7 +846,7 @@
     {
       "id": 67,
       "file_name": "create-a-table-with-one-cell-spanning-full-width-by-merging-all-first-row-cells-horizontal.cs",
-      "task": "Create a table with one cell spanning full width by merging all first‑row cells horizontally.",
+      "task": "Create a table with one cell spanning full width by merging all first-row cells horizontally.",
       "workflow": "table-workflow",
       "outputs": [
         "docx"
@@ -847,7 +857,7 @@
     {
       "id": 68,
       "file_name": "create-a-table-with-a-merged-cell-spanning-the-entire-first-row-by-merging-all-first-row-c.cs",
-      "task": "Create a table with a merged cell spanning the entire first row by merging all first‑row cells horizontally.",
+      "task": "Create a table with a merged cell spanning the entire first row by merging all first-row cells horizontally.",
       "workflow": "table-workflow",
       "outputs": [
         "docx"
@@ -885,8 +895,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 72,
@@ -896,8 +906,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 73,
@@ -1028,8 +1038,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 85,
@@ -1094,8 +1104,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 91,
@@ -1111,7 +1121,7 @@
     {
       "id": 92,
       "file_name": "set-table-preferredwidth-to-half-page-and-enable-auto-fit-to-adjust-columns-dynamically.cs",
-      "task": "Set table PreferredWidth to half page and enable auto‑fit to adjust columns dynamically.",
+      "task": "Set table PreferredWidth to half page and enable auto-fit to adjust columns dynamically.",
       "workflow": "table-workflow",
       "outputs": [
         "docx"
@@ -1122,7 +1132,7 @@
     {
       "id": 93,
       "file_name": "disable-table-auto-fit-by-setting-allowautofit-property-to-false-keeping-column-widths-fix.cs",
-      "task": "Disable table auto‑fit by setting AllowAutoFit property to false, keeping column widths fixed.",
+      "task": "Disable table auto-fit by setting AllowAutoFit property to false, keeping column widths fixed.",
       "workflow": "table-workflow",
       "outputs": [
         "docx"
@@ -1270,8 +1280,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 107,
@@ -1320,7 +1330,7 @@
     {
       "id": 111,
       "file_name": "set-table-direction-to-right-to-left-for-arabic-text-by-enabling-table-righttoleft-propert.cs",
-      "task": "Set table direction to right‑to‑left for Arabic text by enabling Table.RightToLeft property.",
+      "task": "Set table direction to right-to-left for Arabic text by enabling Table.RightToLeft property.",
       "workflow": "table-workflow",
       "outputs": [
         "docx"
@@ -1371,8 +1381,8 @@
         "docx",
         "html"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 116,
@@ -1437,8 +1447,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 122,
@@ -1454,7 +1464,7 @@
     {
       "id": 123,
       "file_name": "protect-a-table-from-editing-by-applying-a-read-only-restriction-using-document-protect-wi.cs",
-      "task": "Protect a table from editing by applying a read‑only restriction using Document.Protect with editing type.",
+      "task": "Protect a table from editing by applying a read-only restriction using Document.Protect with editing type.",
       "workflow": "table-workflow",
       "outputs": [
         "docx"
@@ -1547,8 +1557,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 132,
@@ -1657,8 +1667,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 142,
@@ -1668,8 +1678,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 143,
@@ -1690,8 +1700,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 145,
@@ -1701,8 +1711,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 146,
@@ -1723,8 +1733,8 @@
       "outputs": [
         "html"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 148,
@@ -1800,8 +1810,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 155,
@@ -1866,8 +1876,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 161,
@@ -1877,8 +1887,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 162,
@@ -1916,7 +1926,7 @@
     {
       "id": 165,
       "file_name": "set-table-text-direction-to-right-to-left-for-the-entire-table-by-enabling-table-righttole.cs",
-      "task": "Set table text direction to right‑to‑left for the entire table by enabling Table.RightToLeft property.",
+      "task": "Set table text direction to right-to-left for the entire table by enabling Table.RightToLeft property.",
       "workflow": "table-workflow",
       "outputs": [
         "docx"
@@ -2064,8 +2074,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 179,
@@ -2086,8 +2096,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 181,
@@ -2108,8 +2118,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 183,
@@ -2136,13 +2146,13 @@
     {
       "id": 185,
       "file_name": "apply-a-predefined-built-in-tablestyle-by-setting-table-style-to-tablegrid.cs",
-      "task": "Apply a predefined built‑in TableStyle by setting Table.Style to \"TableGrid\".",
+      "task": "Apply a predefined built-in TableStyle by setting Table.Style to \"TableGrid\".",
       "workflow": "table-workflow",
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 186,
@@ -2229,8 +2239,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 194,
@@ -2262,8 +2272,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 197,
@@ -2287,5 +2297,15 @@
       "selected_engine": "mcp",
       "winner": "mcp"
     }
-  ]
+  ],
+  "narrative": {
+    "overview": "The Working With Table category demonstrates how to create, modify, clone, and style tables using Aspose.Words 26.10.0. Verified examples cover builder-based creation, DOM manipulation, insertion after specific nodes, cloning with import, and HTML-to-Word conversion while preserving merges.",
+    "purpose": "Provide an AI coding assistant with clear, version-compatible patterns for all common table operations in Aspose.Words, ensuring generated code compiles, runs, and produces the expected document output without relying on unavailable APIs or external assets.",
+    "validation_priorities": [
+      "Confirm that the output document file exists and that the table contains the expected number of rows and cells."
+    ],
+    "maintenance_notes": [
+      "Periodically verify the Aspose.Words version used in the environment; update the rule set if new members are added or existing ones are deprecated."
+    ]
+  }
 }

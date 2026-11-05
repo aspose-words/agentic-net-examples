@@ -9,62 +9,59 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words.
+        // Register code page provider (required for Aspose.Words)
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare output folder.
+        // Prepare working directories
         string workDir = Directory.GetCurrentDirectory();
-        string outputDir = Path.Combine(workDir, "output");
-        Directory.CreateDirectory(outputDir);
+        string templatePath = Path.Combine(workDir, "template.docx");
+        string reportPath = Path.Combine(workDir, "report.docx");
+        string imagePath = Path.Combine(workDir, "sample.png");
 
-        // Create a sample PNG image (1x1 pixel) from a Base64 string.
-        string imagePath = Path.Combine(outputDir, "sample.png");
-        byte[] pngBytes = Convert.FromBase64String(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XG6cAAAAASUVORK5CYII=");
+        // Create a simple PNG image file (1x1 red pixel) without using System.Drawing
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+hHgAFgwJ/lKXK5wAAAABJRU5ErkJggg==";
+        byte[] pngBytes = Convert.FromBase64String(base64Png);
         File.WriteAllBytes(imagePath, pngBytes);
 
-        // Build the data model and load the image bytes.
-        ReportModel model = new ReportModel
-        {
-            ImageUri = imagePath,
-            ImageData = pngBytes
-        };
+        // Build the template document programmatically
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Create the template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        builder.Writeln("Image Report");
+        builder.Writeln();
 
-        // Insert a textbox that will hold the image tag.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 250, 250);
+        // Insert a textbox that will hold the image tag
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 250, 150);
         builder.MoveTo(textBox.FirstParagraph);
         builder.Write("<<image [model.ImageData] -fitSize>>");
 
-        // Save the template.
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        template.Save(templatePath);
+        // Save the template
+        templateDoc.Save(templatePath);
 
-        // Load the template for reporting.
-        Document reportDoc = new Document(templatePath);
+        // Load the template (optional, can use the same instance)
+        Document doc = new Document(templatePath);
 
-        // Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine
+        // Prepare the data model
+        ReportModel model = new ReportModel
         {
-            Options = ReportBuildOptions.None
+            Title = "Sample Image",
+            ImageUri = imagePath,
+            ImageData = File.ReadAllBytes(imagePath)
         };
-        engine.BuildReport(reportDoc, model, "model");
 
-        // Save the final report.
-        string reportPath = Path.Combine(outputDir, "Report.docx");
-        reportDoc.Save(reportPath);
+        // Build the report
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
+
+        // Save the generated report
+        doc.Save(reportPath);
     }
 }
 
-// Public data model class.
+// Data model used by the LINQ reporting engine
 public class ReportModel
 {
-    // Original image URI (kept for reference).
+    public string Title { get; set; } = string.Empty;
     public string ImageUri { get; set; } = string.Empty;
-
-    // Image data as a byte array that will be inserted into the report.
     public byte[] ImageData { get; set; } = Array.Empty<byte>();
 }

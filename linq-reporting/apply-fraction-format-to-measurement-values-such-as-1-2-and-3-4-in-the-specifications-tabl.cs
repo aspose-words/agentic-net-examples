@@ -1,111 +1,111 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
+using Aspose.Words.Tables;   // Required for Table type
+
+public class Specification
+{
+    public string Name { get; set; } = "";
+    public double Value { get; set; }
+
+    // Returns the value formatted as a simple fraction (e.g., 1/2, 3/4).
+    public string Fraction => ToFraction(Value);
+
+    private static string ToFraction(double value)
+    {
+        // Handle common fractions up to denominator 16.
+        const int maxDenominator = 16;
+        int sign = Math.Sign(value);
+        value = Math.Abs(value);
+        int bestNumerator = 0;
+        int bestDenominator = 1;
+        double bestError = double.MaxValue;
+
+        for (int denominator = 1; denominator <= maxDenominator; denominator++)
+        {
+            int numerator = (int)Math.Round(value * denominator);
+            double error = Math.Abs(value - (double)numerator / denominator);
+            if (error < bestError)
+            {
+                bestError = error;
+                bestNumerator = numerator;
+                bestDenominator = denominator;
+            }
+        }
+
+        if (bestDenominator == 1)
+            return (sign * bestNumerator).ToString();
+
+        return $"{(sign * bestNumerator)}/{bestDenominator}";
+    }
+}
+
+public class ReportModel
+{
+    public List<Specification> Specs { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Ensure the output directory exists.
-        string outputDir = "output";
-        Directory.CreateDirectory(outputDir);
+        // -----------------------------------------------------------------
+        // 1. Create the template document with LINQ Reporting tags.
+        // -----------------------------------------------------------------
+        const string templatePath = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Create the template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-
-        // Title.
         builder.Writeln("Specifications");
-        builder.Writeln();
+        builder.Writeln("<<foreach [spec in Specs]>>");
 
-        // Begin the foreach block for items.
-        builder.Writeln("<<foreach [item in Items]>>");
-
-        // Create a table for each item (header + data row).
+        // Start a table for each specification (as per original logic).
         Table table = builder.StartTable();
 
         // Header row.
         builder.InsertCell();
-        builder.Writeln("Index");
+        builder.Writeln("Specification");
         builder.InsertCell();
-        builder.Writeln("Name");
-        builder.InsertCell();
-        builder.Writeln("Measurement");
+        builder.Writeln("Value");
         builder.EndRow();
 
-        // Data row (repeated for each item).
+        // Data row – values will be filled by the engine.
         builder.InsertCell();
-        builder.Writeln("<<[item.Index]>>");
+        builder.Writeln("<<[spec.Name]>>");
         builder.InsertCell();
-        builder.Writeln("<<[item.Name]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[item.Fraction]>>");
+        builder.Writeln("<<[spec.Fraction]>>");
         builder.EndRow();
 
-        // End the table.
+        // End the table and the foreach block.
         builder.EndTable();
-
-        // End the foreach block.
         builder.Writeln("<</foreach>>");
 
         // Save the template to disk.
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        template.Save(templatePath);
+        doc.Save(templatePath);
 
-        // Load the template for reporting.
-        Document doc = new Document(templatePath);
+        // -----------------------------------------------------------------
+        // 2. Load the template and build the report.
+        // -----------------------------------------------------------------
+        var reportDoc = new Document(templatePath);
 
-        // Prepare sample data.
-        ReportModel model = new()
+        // Sample data.
+        var model = new ReportModel
         {
-            Items = new()
+            Specs = new List<Specification>
             {
-                new() { Index = 1, Name = "Widget A", Measurement = 0.5 },
-                new() { Index = 2, Name = "Widget B", Measurement = 0.75 },
-                new() { Index = 3, Name = "Widget C", Measurement = 0.25 },
-                new() { Index = 4, Name = "Widget D", Measurement = 1.0 }
+                new Specification { Name = "Length", Value = 0.5 },   // 1/2
+                new Specification { Name = "Width",  Value = 0.75 }, // 3/4
+                new Specification { Name = "Height", Value = 1.0 }   // 1
             }
         };
 
-        // Build the report.
-        ReportingEngine engine = new();
-        engine.BuildReport(doc, model, "model");
+        // Build the report using the LINQ Reporting engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Save the generated report.
-        string outputPath = Path.Combine(outputDir, "output.docx");
-        doc.Save(outputPath);
-    }
-}
-
-// Root data model.
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
-
-// Item model with fraction formatting.
-public class Item
-{
-    public int Index { get; set; }
-    public string Name { get; set; } = "";
-    public double Measurement { get; set; }
-
-    // Returns a fraction string for known measurement values.
-    public string Fraction
-    {
-        get
-        {
-            return Measurement switch
-            {
-                double m when Math.Abs(m - 0.5) < 0.0001 => "1/2",
-                double m when Math.Abs(m - 0.75) < 0.0001 => "3/4",
-                double m when Math.Abs(m - 0.25) < 0.0001 => "1/4",
-                double m when Math.Abs(m - 1.0) < 0.0001 => "1",
-                _ => Measurement.ToString()
-            };
-        }
+        // Save the final report.
+        const string outputPath = "report.docx";
+        reportDoc.Save(outputPath);
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Drawing;
+using System.Reflection;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -8,36 +9,57 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table and add a single cell with some text.
+        // Start a table.
         builder.StartTable();
-        builder.InsertCell();
-        builder.Writeln("Diagonal Cell");
 
-        // Retrieve the cell that was just created.
+        // Insert a cell.
+        builder.InsertCell();
+
+        // Get the current cell.
         Cell cell = builder.CurrentParagraph.ParentNode as Cell;
         if (cell == null)
-            throw new InvalidOperationException("Unable to obtain the created cell.");
+            throw new InvalidOperationException("Current cell not found.");
 
-        // Apply diagonal lines across the cell using border types.
-        cell.CellFormat.Borders[BorderType.DiagonalDown].LineStyle = LineStyle.Single;
-        cell.CellFormat.Borders[BorderType.DiagonalDown].Color = Color.Black;
-        cell.CellFormat.Borders[BorderType.DiagonalUp].LineStyle = LineStyle.Single;
-        cell.CellFormat.Borders[BorderType.DiagonalUp].Color = Color.Black;
+        // Apply diagonal lines to the cell using reflection (works even if the properties are not present in the current library version).
+        CellFormat fmt = cell.CellFormat;
+        Type fmtType = fmt.GetType();
 
-        // Finish the row and the table.
+        PropertyInfo propDiagonalDown = fmtType.GetProperty("DiagonalDown");
+        PropertyInfo propDiagonalUp = fmtType.GetProperty("DiagonalUp");
+        PropertyInfo propDiagonalColor = fmtType.GetProperty("DiagonalColor");
+        PropertyInfo propDiagonalWidth = fmtType.GetProperty("DiagonalWidth");
+
+        if (propDiagonalDown != null && propDiagonalDown.CanWrite)
+            propDiagonalDown.SetValue(fmt, true);
+        if (propDiagonalUp != null && propDiagonalUp.CanWrite)
+            propDiagonalUp.SetValue(fmt, true);
+        if (propDiagonalColor != null && propDiagonalColor.CanWrite)
+            propDiagonalColor.SetValue(fmt, Color.Red);
+        if (propDiagonalWidth != null && propDiagonalWidth.CanWrite)
+            propDiagonalWidth.SetValue(fmt, 2.0); // points
+
+        // Add some text to the cell.
+        builder.Writeln("Diagonal Cell");
+
+        // End the row and the table.
         builder.EndRow();
         builder.EndTable();
 
         // Save the document.
-        string outputPath = "DiagonalCell.docx";
-        doc.Save(outputPath);
+        string fileName = "DiagonalCell.docx";
+        doc.Save(fileName);
 
         // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not saved.", outputPath);
+        if (!File.Exists(fileName))
+            throw new Exception($"Failed to create the output file: {fileName}");
+
+        // Load the document again and ensure it contains a table.
+        Document loaded = new Document(fileName);
+        if (loaded.GetChildNodes(NodeType.Table, true).Count == 0)
+            throw new Exception("The saved document does not contain a table.");
     }
 }

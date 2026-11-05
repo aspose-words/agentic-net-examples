@@ -6,17 +6,14 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("This is a sample PDF document for image conversion.");
-
-        // Save the document as PDF.
-        string pdfPath = "sample.pdf";
-        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
+        // Create a sample PDF document.
+        Document source = new Document();
+        DocumentBuilder builder = new DocumentBuilder(source);
+        builder.Writeln("Sample PDF content generated for conversion.");
+        source.Save("input.pdf", SaveFormat.Pdf);
 
         // Load the PDF document.
-        Document pdfDoc = new Document(pdfPath);
+        Document pdfDoc = new Document("input.pdf");
 
         // Convert PDF to JPEG.
         string jpegPath = "output.jpg";
@@ -26,13 +23,12 @@ public class Program
         string pngPath = "output.png";
         pdfDoc.Save(pngPath, SaveFormat.Png);
 
-        // Validate that the image files were created.
+        // Validate that the JPEG file was created.
         if (!File.Exists(jpegPath))
             throw new InvalidOperationException("Expected JPEG output was not created.");
 
+        // Validate that the PNG file was created.
         if (!File.Exists(pngPath))
             throw new InvalidOperationException("Expected PNG output was not created.");
-
-        Console.WriteLine("PDF successfully converted to JPEG and PNG.");
     }
 }

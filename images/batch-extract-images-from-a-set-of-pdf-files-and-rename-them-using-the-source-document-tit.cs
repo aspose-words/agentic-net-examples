@@ -2,102 +2,88 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 using Aspose.Drawing;
 
-public class Program
+public class BatchPdfImageExtractor
 {
     public static void Main()
     {
-        // Prepare folders
-        string baseDir = Directory.GetCurrentDirectory();
+        // Base working directory.
+        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "BatchImages");
         string inputFolder = Path.Combine(baseDir, "InputPdfs");
         string outputFolder = Path.Combine(baseDir, "ExtractedImages");
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Create deterministic sample images
-        string[] sampleImagePaths = CreateSampleImages(baseDir);
+        // Create sample images that will be inserted into the PDFs.
+        string sampleImage1 = Path.Combine(baseDir, "sample1.png");
+        string sampleImage2 = Path.Combine(baseDir, "sample2.png");
+        CreateSampleImage(sampleImage1, 200, 100, Aspose.Drawing.Color.LightBlue, "Img1");
+        CreateSampleImage(sampleImage2, 150, 150, Aspose.Drawing.Color.LightGreen, "Img2");
 
-        // Create sample PDF documents that contain the images and have titles
-        CreateSamplePdfDocuments(inputFolder, sampleImagePaths);
-
-        // Batch process PDFs: extract images and rename them using the document title
-        int totalExtracted = 0;
-        foreach (string pdfPath in Directory.GetFiles(inputFolder, "*.pdf"))
-        {
-            // Load PDF as Aspose.Words Document
-            Document doc = new Document(pdfPath);
-
-            // Determine source document title (fallback to file name without extension)
-            string title = doc.BuiltInDocumentProperties.Title;
-            if (string.IsNullOrWhiteSpace(title))
-                title = Path.GetFileNameWithoutExtension(pdfPath);
-
-            // Extract images from the document
-            NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
-            int imageIndex = 1;
-            foreach (Shape shape in shapes)
-            {
-                if (shape.HasImage)
-                {
-                    string imageFileName = $"{title}_Image{imageIndex}.png";
-                    string imagePath = Path.Combine(outputFolder, imageFileName);
-                    shape.ImageData.Save(imagePath);
-                    if (!File.Exists(imagePath))
-                        throw new Exception($"Failed to save extracted image: {imagePath}");
-                    imageIndex++;
-                    totalExtracted++;
-                }
-            }
-
-            if (imageIndex == 1) // No images found in this document
-                throw new Exception($"No images were extracted from PDF: {pdfPath}");
-        }
-
-        // Validate that at least one image was extracted overall
-        if (totalExtracted == 0)
-            throw new Exception("No images were extracted from any PDF files.");
-
-        Console.WriteLine($"Extraction complete. Total images extracted: {totalExtracted}");
-    }
-
-    // Creates deterministic sample PNG images and returns their file paths
-    private static string[] CreateSampleImages(string baseDir)
-    {
-        string[] paths = new string[2];
-        for (int i = 0; i < 2; i++)
-        {
-            string filePath = Path.Combine(baseDir, $"sample{i + 1}.png");
-            Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(200, 200);
-            Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap);
-            g.Clear(Aspose.Drawing.Color.White);
-            // Draw a simple rectangle with a distinct color
-            using (var pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.FromArgb(255, 0, 0, (i + 1) * 100), 5))
-            {
-                g.DrawRectangle(pen, 20, 20, 160, 160);
-            }
-            bitmap.Save(filePath);
-            g.Dispose();
-            bitmap.Dispose();
-            paths[i] = filePath;
-        }
-        return paths;
-    }
-
-    // Generates sample PDF files containing the provided images and sets document titles
-    private static void CreateSamplePdfDocuments(string inputFolder, string[] imagePaths)
-    {
-        for (int i = 0; i < imagePaths.Length; i++)
+        // Create sample PDF files with images and a title property.
+        for (int i = 1; i <= 2; i++)
         {
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln($"This is sample document {i + 1}");
-            builder.InsertImage(imagePaths[i]);
-            // Set the built‑in title property
-            doc.BuiltInDocumentProperties.Title = $"SampleDoc{i + 1}";
-            string pdfPath = Path.Combine(inputFolder, $"SampleDoc{i + 1}.pdf");
+            // Insert first image.
+            builder.InsertImage(sampleImage1);
+            builder.Writeln(); // Add a line break.
+            // Insert second image.
+            builder.InsertImage(sampleImage2);
+            // Set the document title.
+            doc.BuiltInDocumentProperties.Title = $"SampleDoc{i}";
+            string pdfPath = Path.Combine(inputFolder, $"SampleDoc{i}.pdf");
             doc.Save(pdfPath, SaveFormat.Pdf);
+        }
+
+        // Process each PDF: extract images and rename them using the document title.
+        foreach (string pdfPath in Directory.GetFiles(inputFolder, "*.pdf"))
+        {
+            Document pdfDoc = new Document(pdfPath);
+            string title = pdfDoc.BuiltInDocumentProperties.Title;
+            if (string.IsNullOrEmpty(title))
+                title = Path.GetFileNameWithoutExtension(pdfPath);
+
+            NodeCollection shapeNodes = pdfDoc.GetChildNodes(NodeType.Shape, true);
+            int imageIndex = 1;
+            foreach (Shape shape in shapeNodes)
+            {
+                if (shape.HasImage)
+                {
+                    string outImagePath = Path.Combine(outputFolder, $"{title}_Image{imageIndex}.png");
+                    shape.ImageData.Save(outImagePath);
+                    imageIndex++;
+                }
+            }
+
+            if (imageIndex == 1) // No images were saved.
+                throw new InvalidOperationException($"No images were extracted from '{pdfPath}'.");
+        }
+
+        // Validation: ensure at least one image file exists in the output folder.
+        if (Directory.GetFiles(outputFolder, "*.png").Length == 0)
+            throw new InvalidOperationException("Image extraction completed but no output images were found.");
+
+        // Example completed.
+    }
+
+    // Helper method to create a deterministic sample PNG image.
+    private static void CreateSampleImage(string filePath, int width, int height, Aspose.Drawing.Color backColor, string text)
+    {
+        using (Bitmap bitmap = new Bitmap(width, height))
+        {
+            using (Graphics graphics = Graphics.FromImage(bitmap))
+            {
+                graphics.Clear(backColor);
+                // Simple drawing: fill a rectangle.
+                using (var brush = new SolidBrush(Aspose.Drawing.Color.DarkBlue))
+                {
+                    graphics.FillRectangle(brush, 10, 10, width - 20, height - 20);
+                }
+                // Optionally, draw text if needed (omitted to avoid font ambiguity).
+            }
+            bitmap.Save(filePath);
         }
     }
 }

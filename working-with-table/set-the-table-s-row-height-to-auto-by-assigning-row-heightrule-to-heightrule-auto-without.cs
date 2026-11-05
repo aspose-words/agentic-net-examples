@@ -11,31 +11,39 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple table with one row and one cell.
+        // Build a simple 2x2 table.
         builder.StartTable();
+
+        // First row, first cell.
         builder.InsertCell();
-        builder.Writeln("Sample cell");
+        builder.Writeln("R1C1");
+        // End first row.
         builder.EndRow();
+
+        // Second row, first cell.
+        builder.InsertCell();
+        builder.Writeln("R2C1");
+        // End second row.
+        builder.EndRow();
+
+        // Finish the table.
         builder.EndTable();
 
-        // Retrieve the first table and its first row.
-        Table table = doc.FirstSection.Body.Tables[0];
-        Row row = table.Rows[0];
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
 
-        // Set the row height rule to Auto (do not specify an explicit height).
-        row.RowFormat.HeightRule = HeightRule.Auto;
+        // Set the height rule of the first row to Auto (no explicit height).
+        Row firstRow = table.Rows[0];
+        firstRow.RowFormat.HeightRule = HeightRule.Auto;
 
-        // Save the document to a file.
-        string outputPath = "TableRowHeightAuto.docx";
+        // Save the document to disk.
+        string outputPath = "RowHeightAuto.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify that the file was saved.
         if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
-        }
-
-        // Optionally, inform that the process completed successfully.
-        Console.WriteLine($"Document saved successfully to '{outputPath}'.");
+            throw new FileNotFoundException("The output document was not created.", outputPath);
     }
 }

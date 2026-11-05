@@ -5,62 +5,64 @@ using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Drawing;
 
+public class ReportItem
+{
+    public string Title { get; set; } = string.Empty;
+    public string ImagePath { get; set; } = string.Empty;
+}
+
 public class Program
 {
     public static void Main()
     {
-        // Prepare directories
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        // Prepare directories.
+        string imagesDir = "images";
+        string outputDir = "output";
+        Directory.CreateDirectory(imagesDir);
         Directory.CreateDirectory(outputDir);
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "template.docx");
 
-        // Create sample images
-        string imagePath1 = Path.Combine(Directory.GetCurrentDirectory(), "image1.png");
-        string imagePath2 = Path.Combine(Directory.GetCurrentDirectory(), "image2.png");
-        WritePngFromBase64(imagePath1, "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BFwAE/wJ/6ZkZAAAAAElFTkSuQmCC"); // red
-        WritePngFromBase64(imagePath2, "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8DAAQAD/6X+6wAAAABJRU5ErkJggg=="); // green
+        // Create sample PNG images from Base64 strings.
+        var redPngBase64 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAAFklEQVR42mNk+M9Qz0AEYBxVSFIAABcAAf+XKc8AAAAASUVORK5CYII="; // 16x16 red square
+        var bluePngBase64 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAAFklEQVR42mNkYGBg+M+ABYwMDAwAAJcAAf+K6V8AAAAASUVORK5CYII="; // 16x16 blue square
 
-        // Build template document with an image placeholder inside a textbox
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Report Title: <<[Item.Title]>>");
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
-        builder.MoveTo(textBox.FirstParagraph);
-        builder.Write("<<image [Item.ImagePath] -fitSize>>");
-        templateDoc.Save(templatePath);
+        string redImagePath = Path.Combine(imagesDir, "red.png");
+        string blueImagePath = Path.Combine(imagesDir, "blue.png");
+        File.WriteAllBytes(redImagePath, Convert.FromBase64String(redPngBase64));
+        File.WriteAllBytes(blueImagePath, Convert.FromBase64String(bluePngBase64));
 
-        // Sample data for batch reports
-        var items = new List<ReportItem>
+        // Sample data for batch reports.
+        var reports = new List<ReportItem>
         {
-            new ReportItem { Title = "FirstReport", ImagePath = imagePath1 },
-            new ReportItem { Title = "SecondReport", ImagePath = imagePath2 }
+            new() { Title = "Red Image Report", ImagePath = redImagePath },
+            new() { Title = "Blue Image Report", ImagePath = blueImagePath }
         };
 
-        // Optional: enable reflection optimization
-        ReportingEngine.UseReflectionOptimization = true;
+        // Create a reusable template document.
+        string templatePath = "template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // Generate each report
-        foreach (var item in items)
+        // Title placeholder.
+        builder.Writeln("Report for: <<[item.Title]>>");
+
+        // Insert a textbox that will hold the image.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 200);
+        builder.MoveTo(textBox.FirstParagraph);
+        builder.Write("<<image [item.ImagePath] -fitSize>>");
+
+        // Save the template.
+        templateDoc.Save(templatePath);
+
+        // Build each report using the template.
+        var engine = new ReportingEngine();
+
+        foreach (var report in reports)
         {
             var doc = new Document(templatePath);
-            var engine = new ReportingEngine();
-            engine.BuildReport(doc, item, "Item");
-            string outPath = Path.Combine(outputDir, $"{item.Title}.docx");
-            doc.Save(outPath);
+            engine.BuildReport(doc, report, "item");
+
+            string outputPath = Path.Combine(outputDir, $"{report.Title.Replace(' ', '_')}.docx");
+            doc.Save(outputPath);
         }
     }
-
-    // Helper to write a PNG file from a Base64 string
-    private static void WritePngFromBase64(string filePath, string base64)
-    {
-        byte[] bytes = Convert.FromBase64String(base64);
-        File.WriteAllBytes(filePath, bytes);
-    }
-}
-
-// Public data model for a single report
-public class ReportItem
-{
-    public string Title { get; set; } = "";
-    public string ImagePath { get; set; } = "";
 }

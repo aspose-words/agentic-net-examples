@@ -1,60 +1,63 @@
 using System;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert a paragraph.
-        builder.Writeln("This is a sample paragraph added to the document.");
-
-        // Insert a bulleted list.
-        builder.ListFormat.ApplyBulletDefault();
-        builder.Writeln("First list item");
-        builder.Writeln("Second list item");
-        builder.Writeln("Third list item");
-        builder.ListFormat.RemoveNumbers();
-
-        // Insert a table with 3 rows and 3 columns.
-        Table table = builder.StartTable();
-
-        // First row (header)
-        for (int i = 0; i < 3; i++)
+        public static void Main()
         {
-            builder.InsertCell();
-            builder.Writeln($"Header {i + 1}");
-        }
-        builder.EndRow();
+            // Create a new document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Data rows
-        for (int row = 0; row < 2; row++)
-        {
-            for (int col = 0; col < 3; col++)
+            // Add a paragraph.
+            builder.Writeln("This is a sample paragraph.");
+
+            // Add a bulleted list.
+            builder.ListFormat.ApplyBulletDefault();
+            builder.Writeln("First bullet item");
+            builder.Writeln("Second bullet item");
+            builder.Writeln("Third bullet item");
+            builder.ListFormat.RemoveNumbers();
+
+            // Add a table with 3 columns and 3 rows.
+            Table table = builder.StartTable();
+
+            // Header row.
+            for (int i = 0; i < 3; i++)
             {
                 builder.InsertCell();
-                builder.Writeln($"Row {row + 1}, Col {col + 1}");
+                builder.Writeln($"Header {i + 1}");
+                builder.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
             }
             builder.EndRow();
-        }
 
-        builder.EndTable();
+            // Data rows.
+            for (int row = 0; row < 2; row++)
+            {
+                for (int col = 0; col < 3; col++)
+                {
+                    builder.InsertCell();
+                    builder.Writeln($"Row {row + 1}, Cell {col + 1}");
+                }
+                builder.EndRow();
+            }
 
-        // Define output file path.
-        string outputPath = "output.odt";
+            builder.EndTable();
 
-        // Save the document in ODT format.
-        doc.Save(outputPath, SaveFormat.Odt);
+            // Save the document as ODT.
+            string outputPath = "output.odt";
+            doc.Save(outputPath, SaveFormat.Odt);
 
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException("Failed to create the ODT file.");
+            // Confirm the file was saved.
+            if (File.Exists(outputPath))
+            {
+                Console.WriteLine($"Document saved successfully to {Path.GetFullPath(outputPath)}");
+            }
         }
     }
 }

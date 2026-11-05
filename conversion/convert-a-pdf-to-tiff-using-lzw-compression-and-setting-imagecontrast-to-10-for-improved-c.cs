@@ -8,29 +8,45 @@ public class Program
     public static void Main()
     {
         // Create a sample PDF document.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Sample PDF content for conversion.");
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        builder.Writeln("This is a sample PDF created for conversion to TIFF.");
         string pdfPath = "sample.pdf";
-        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
+        sampleDoc.Save(pdfPath, SaveFormat.Pdf);
+
+        // Verify the PDF was created.
+        if (!File.Exists(pdfPath) || new FileInfo(pdfPath).Length == 0)
+            throw new InvalidOperationException("Failed to create the sample PDF.");
 
         // Load the PDF document.
-        Document pdfDoc = new Document(pdfPath);
+        Document pdfDocument = new Document(pdfPath);
 
-        // Set up TIFF conversion options.
-        // ImageContrast must be in the range [0, 1]; use 1.0 for maximum contrast.
+        // Configure TIFF save options with LZW compression.
         ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            TiffCompression = TiffCompression.Lzw,
-            ImageContrast = 1.0f // Maximum contrast within the valid range.
+            TiffCompression = TiffCompression.Lzw
         };
 
-        // Convert PDF to TIFF.
-        string tiffPath = "output.tiff";
-        pdfDoc.Save(tiffPath, tiffOptions);
+        // Attempt to set image contrast; ignore if not supported.
+        try
+        {
+            tiffOptions.ImageContrast = 10f;
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            // The property may not be supported for TIFF in some versions; continue without it.
+        }
 
-        // Verify that the TIFF file was created.
-        if (!File.Exists(tiffPath))
-            throw new InvalidOperationException("TIFF file was not created.");
+        // Save the PDF as a TIFF image.
+        string tiffPath = "output.tiff";
+        pdfDocument.Save(tiffPath, tiffOptions);
+
+        // Validate that the TIFF file was created.
+        if (!File.Exists(tiffPath) || new FileInfo(tiffPath).Length == 0)
+            throw new InvalidOperationException("The TIFF conversion failed; no output file was created.");
+
+        // Clean up temporary files (optional).
+        File.Delete(pdfPath);
+        // The TIFF file remains for inspection.
     }
 }

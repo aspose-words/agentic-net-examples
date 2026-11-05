@@ -6,29 +6,29 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
+
+        // Use DocumentBuilder to add a paragraph with sample text.
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a sample paragraph with double line spacing.");
 
-        // Add a paragraph with default line spacing.
-        builder.Writeln("This paragraph uses the default line spacing.");
+        // Retrieve the first paragraph in the document.
+        Paragraph paragraph = (Paragraph)doc.GetChild(NodeType.Paragraph, 0, true);
 
-        // Set line spacing to double for subsequent paragraphs.
-        builder.ParagraphFormat.LineSpacingRule = LineSpacingRule.Multiple;
-        builder.ParagraphFormat.LineSpacing = 2.0;
-
-        // Add a paragraph that will inherit the double line spacing.
-        builder.Writeln("This paragraph has double line spacing.");
+        // Set line spacing to double (2.0) using ParagraphFormat.
+        paragraph.ParagraphFormat.LineSpacingRule = LineSpacingRule.Multiple;
+        paragraph.ParagraphFormat.LineSpacing = 2.0;
 
         // Validate that the line spacing was set correctly.
-        if (builder.ParagraphFormat.LineSpacingRule != LineSpacingRule.Multiple ||
-            Math.Abs(builder.ParagraphFormat.LineSpacing - 2.0) > 0.0001)
+        if (paragraph.ParagraphFormat.LineSpacingRule != LineSpacingRule.Multiple ||
+            Math.Abs(paragraph.ParagraphFormat.LineSpacing - 2.0) > 0.0001)
         {
-            throw new InvalidOperationException("Line spacing was not set to double.");
+            throw new InvalidOperationException("Line spacing was not set to the expected value.");
         }
 
         // Save the document to disk.
-        string outputPath = "Output.docx";
+        string outputPath = "OutputDoubleLineSpacing.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.

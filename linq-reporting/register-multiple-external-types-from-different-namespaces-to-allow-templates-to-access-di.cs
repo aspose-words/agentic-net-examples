@@ -1,96 +1,88 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+namespace ExternalTypesDemo
 {
-    // External namespace A
-    namespace ExternalModels
+    // Namespace A
+    namespace NamespaceA
     {
         public class Person
         {
-            public string FirstName { get; set; } = "";
-            public string LastName { get; set; } = "";
-
-            // Computed full name used directly in the template.
-            public string FullName => $"{FirstName} {LastName}";
+            public string Name { get; set; } = "";
+            public int Age { get; set; }
         }
     }
 
-    // External namespace B
-    namespace ExternalData
+    // Namespace B
+    namespace NamespaceB
     {
         public class Company
         {
             public string Name { get; set; } = "";
-
-            // Upper‑cased name used directly in the template.
-            public string UpperName => Name.ToUpperInvariant();
+            public string Location { get; set; } = "";
         }
     }
 
-    // Root model used for the report
-    public class ReportModel
+    // Wrapper root object
+    public class ReportData
     {
-        public List<ExternalModels.Person> Persons { get; set; } = new();
-        public ExternalData.Company Company { get; set; } = new();
+        public List<NamespaceA.Person> Persons { get; set; } = new();
+        public List<NamespaceB.Company> Companies { get; set; } = new();
     }
 
     public class Program
     {
         public static void Main()
         {
-            // -----------------------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -----------------------------------------------------------------
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
-
-            // Insert a tag that uses the computed UpperName property.
-            builder.Writeln("Company: <<[Company.UpperName]>>");
-
-            // Begin a foreach loop over the Persons collection.
-            builder.Writeln("<<foreach [p in Persons]>>");
-            builder.Writeln("- <<[p.FullName]>>");
-            builder.Writeln("<</foreach>>");
-
-            // Save the template to disk.
-            const string templatePath = "template.docx";
-            template.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template back (simulating a separate load step).
-            // -----------------------------------------------------------------
-            Document doc = new Document(templatePath);
-
-            // -----------------------------------------------------------------
-            // 3. Prepare sample data.
-            // -----------------------------------------------------------------
-            ReportModel model = new()
+            // Prepare sample data
+            var data = new ReportData
             {
-                Company = new ExternalData.Company { Name = "Acme Corp" },
-                Persons = new()
+                Persons =
                 {
-                    new ExternalModels.Person { FirstName = "John", LastName = "Doe" },
-                    new ExternalModels.Person { FirstName = "Jane", LastName = "Smith" }
+                    new NamespaceA.Person { Name = "Alice", Age = 30 },
+                    new NamespaceA.Person { Name = "Bob", Age = 45 }
+                },
+                Companies =
+                {
+                    new NamespaceB.Company { Name = "Acme Corp", Location = "New York" },
+                    new NamespaceB.Company { Name = "Globex Inc", Location = "London" }
                 }
             };
 
-            // -----------------------------------------------------------------
-            // 4. Build the report.
-            // -----------------------------------------------------------------
+            // Create template document
+            string templatePath = "Template.docx";
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            builder.Writeln("=== Persons ===");
+            builder.Writeln("<<foreach [p in Persons]>>");
+            builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
+            builder.Writeln("<</foreach>>");
+
+            builder.Writeln();
+            builder.Writeln("=== Companies ===");
+            builder.Writeln("<<foreach [c in Companies]>>");
+            builder.Writeln("Company: <<[c.Name]>>, Location: <<[c.Location]>>");
+            builder.Writeln("<</foreach>>");
+
+            templateDoc.Save(templatePath);
+
+            // Load template for reporting
+            Document doc = new Document(templatePath);
             ReportingEngine engine = new ReportingEngine();
 
-            // No external type registration is required because the template
-            // accesses instance properties (FullName, UpperName) directly.
-            engine.BuildReport(doc, model, "model");
+            // Build the report
+            engine.BuildReport(doc, data, "data");
 
-            // -----------------------------------------------------------------
-            // 5. Save the generated report.
-            // -----------------------------------------------------------------
-            const string outputPath = "output.docx";
+            // Save the generated report
+            string outputPath = "Report.docx";
             doc.Save(outputPath);
+
+            // Indicate completion (no interactive input)
+            Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
         }
     }
 }

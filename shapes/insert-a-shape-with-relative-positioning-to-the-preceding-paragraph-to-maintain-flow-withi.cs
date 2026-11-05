@@ -12,18 +12,26 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert the preceding paragraph.
+        // Insert a paragraph with some text.
         builder.Writeln("This is the first paragraph. The shape will be positioned relative to this paragraph.");
 
-        // Insert a floating rectangle shape anchored to the preceding paragraph.
-        Shape shape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
+        // Create a floating rectangle shape.
+        Shape shape = new Shape(doc, ShapeType.Rectangle);
+        shape.Width = 100;   // Width in points.
+        shape.Height = 50;   // Height in points.
+        shape.StrokeColor = Color.Blue;
+        shape.FillColor = Color.LightBlue;
+
+        // Position the shape relative to the preceding paragraph.
         shape.WrapType = WrapType.Square;
         shape.RelativeHorizontalPosition = RelativeHorizontalPosition.Margin;
         shape.RelativeVerticalPosition = RelativeVerticalPosition.Paragraph;
-        shape.Left = 0; // Position relative to the left margin of the paragraph.
-        shape.Top = 0;  // Position at the top of the paragraph.
-        shape.StrokeColor = Color.Blue;
-        shape.FillColor = Color.LightBlue;
+        shape.Left = 0;   // 0 points from the left margin.
+        shape.Top = 0;    // 0 points from the top of the preceding paragraph.
+
+        // Append the shape to the current paragraph (the one we just wrote).
+        Paragraph currentParagraph = builder.CurrentParagraph;
+        currentParagraph.AppendChild(shape);
 
         // Save the document.
         string outputPath = "Output.docx";
@@ -32,5 +40,8 @@ public class Program
         // Validate that the file was created.
         if (!File.Exists(outputPath))
             throw new Exception("The output document was not created.");
+
+        // Optionally, inform that the process completed.
+        Console.WriteLine("Document created successfully: " + Path.GetFullPath(outputPath));
     }
 }

@@ -9,20 +9,18 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Add some sample content.
+        // Add sample content to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("This is a sample document.");
 
-        // Apply a text watermark to the entire document.
+        // Apply a text watermark to the document.
         doc.Watermark.SetText("CONFIDENTIAL");
 
-        // Define the output file path.
+        // Save the document as a DOCX file.
         string outputPath = "WatermarkedDocument.docx";
-
-        // Save the document as DOCX.
         doc.Save(outputPath);
 
-        // Validate that the file was created.
+        // Verify that the file was saved.
         if (File.Exists(outputPath))
         {
             Console.WriteLine($"Document saved successfully: {outputPath}");

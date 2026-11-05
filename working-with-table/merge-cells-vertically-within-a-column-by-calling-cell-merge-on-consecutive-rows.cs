@@ -3,66 +3,63 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace TableMergeExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Build a simple 3x2 table.
-        builder.StartTable();
-
-        // Row 1
-        builder.InsertCell();
-        builder.Writeln("A1");
-        builder.InsertCell();
-        builder.Writeln("B1");
-        builder.EndRow();
-
-        // Row 2
-        builder.InsertCell();
-        builder.Writeln("A2");
-        builder.InsertCell();
-        builder.Writeln("B2");
-        builder.EndRow();
-
-        // Row 3
-        builder.InsertCell();
-        builder.Writeln("A3");
-        builder.InsertCell();
-        builder.Writeln("B3");
-        builder.EndRow();
-
-        builder.EndTable();
-
-        // Retrieve the created table.
-        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
-
-        // Merge the first two cells in the first column vertically.
-        Cell firstCell = table.Rows[0].Cells[0];
-        Cell secondCell = table.Rows[1].Cells[0];
-
-        // Set vertical merge flags.
-        firstCell.CellFormat.VerticalMerge = CellMerge.First;
-        secondCell.CellFormat.VerticalMerge = CellMerge.Previous;
-
-        // Update the text of the merged cell.
-        firstCell.RemoveAllChildren();
-        Paragraph para = new Paragraph(doc);
-        Run run = new Run(doc, "Merged A1-A2");
-        para.AppendChild(run);
-        firstCell.AppendChild(para);
-
-        // Save the document.
-        string outputPath = "MergedTable.docx";
-        doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
+        public static void Main()
         {
-            throw new Exception("The output file was not created.");
+            // Create a new document and a builder.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Build a 3x2 table.
+            builder.StartTable();
+
+            // Row 1
+            builder.InsertCell();
+            builder.Write("Row 1, Col 1");
+            builder.InsertCell();
+            builder.Write("Row 1, Col 2");
+            builder.EndRow();
+
+            // Row 2
+            builder.InsertCell();
+            builder.Write("Row 2, Col 1");
+            builder.InsertCell();
+            builder.Write("Row 2, Col 2");
+            builder.EndRow();
+
+            // Row 3
+            builder.InsertCell();
+            builder.Write("Row 3, Col 1");
+            builder.InsertCell();
+            builder.Write("Row 3, Col 2");
+            builder.EndRow();
+
+            // End the table.
+            builder.EndTable();
+
+            // Retrieve the created table.
+            Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+
+            // Merge cells vertically in the first column (index 0) across the three rows.
+            Cell firstCell = table.Rows[0].Cells[0];
+            Cell secondCell = table.Rows[1].Cells[0];
+            Cell thirdCell = table.Rows[2].Cells[0];
+
+            // Set vertical merge flags.
+            firstCell.CellFormat.VerticalMerge = CellMerge.First;      // Start of merged region
+            secondCell.CellFormat.VerticalMerge = CellMerge.Previous; // Continuation
+            thirdCell.CellFormat.VerticalMerge = CellMerge.Previous;  // Continuation
+
+            // Save the document.
+            string outputPath = "MergedTable.docx";
+            doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new Exception("The output file was not created.");
         }
     }
 }

@@ -6,39 +6,34 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
-
-        // Get a DocumentBuilder to insert content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a new list based on the default numbered template.
+        // Create a numbered list using a built‑in template.
         List list = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // Access the first level of the list (level 0).
+        // Configure the first level of the list.
         ListLevel level = list.ListLevels[0];
-
-        // Position the number at the left margin.
-        level.NumberPosition = 0;
-
-        // Set a custom tab stop after the number to align the text.
-        // Here we set it to 72 points (1 inch) from the left margin.
+        // Set a custom tab stop (1 inch = 72 points) to align text after the number.
         level.TabPosition = 72;
+        // Optional adjustments for better appearance.
+        level.NumberPosition = 36;
+        level.Alignment = ListLevelAlignment.Right;
 
-        // Apply the list to several paragraphs.
-        for (int i = 1; i <= 5; i++)
-        {
-            // Start a new list item.
-            builder.ListFormat.List = list;
-            builder.Writeln($"Item {i} with custom tab stop");
-            // End the list formatting for the next paragraph.
-            builder.ListFormat.RemoveNumbers();
-        }
+        // Apply the list to the builder.
+        builder.ListFormat.List = list;
+        builder.ListFormat.ListLevelNumber = 0; // First level.
 
-        // Save the document to disk.
-        doc.Save("ListTabStop.docx");
+        // Write list items.
+        builder.Writeln("First item with custom tab stop.");
+        builder.Writeln("Second item with custom tab stop.");
+        builder.Writeln("Third item with custom tab stop.");
 
-        // Indicate completion.
-        Console.WriteLine("Document created: ListTabStop.docx");
+        // End the list.
+        builder.ListFormat.RemoveNumbers();
+
+        // Save the document.
+        doc.Save("ListWithCustomTab.docx");
     }
 }

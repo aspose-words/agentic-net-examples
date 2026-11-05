@@ -4,12 +4,12 @@
     "slug": "programming-with-documents",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Use simple documented document-level Aspose.Words workflows. Keep validation narrow and task-specific. Prefer Document and DocumentBuilder APIs and create all input assets locally.",
+    "preferred_workflow": "Create a Document, configure Section.PageSetup flags, use DocumentBuilder to move to the appropriate HeaderFooter, insert content such as images or fields, adjust shape positioning with WrapType and relative positions, and finally save the document to a local path while confirming successful reload.",
     "required_packages": [
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.9.0"
+      "Aspose.Words": "26.10.0"
     },
     "required_namespaces": [
       "System",
@@ -18,42 +18,41 @@
       "Aspose.Words.Drawing",
       "Aspose.Words.Tables",
       "Aspose.Words.BuildingBlocks",
-      "Aspose.Words.Saving",
-      "Aspose.Words.Notes",
-      "System.Drawing",
-      "Aspose.Words.Fields",
+      "System.Collections.Generic",
       "System.Linq",
+      "Aspose.Words.Notes",
+      "Aspose.Words.Fields",
+      "System.Drawing",
       "System.Data",
+      "Aspose.Words.Saving",
       "System.Globalization",
       "Aspose.Words.Lists",
-      "System.Collections.Generic",
-      "Aspose.Words.Properties",
-      "Aspose.Words.Settings",
-      "Aspose.Words.Loading",
-      "Aspose.Words.Drawing.Charts"
+      "Aspose.Words.Settings"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
-      "Directory",
+      "MemoryStream",
       "Path",
-      "Shape",
       "Font",
+      "Paragraph",
+      "Shape",
+      "File",
+      "NodeType",
+      "Run",
       "StyleIdentifier",
       "Table",
-      "Paragraph",
       "Style",
       "Range",
       "Field",
       "FieldType",
-      "NodeType",
-      "Cell",
+      "Directory",
       "Node",
       "Row",
+      "Cell",
       "CellFormat",
-      "Run",
+      "HtmlSaveOptions",
       "SaveFormat",
-      "File",
       "PdfSaveOptions"
     ]
   },
@@ -65,46 +64,48 @@
     }
   },
   "rules_summary": {
-    "core_rules": [
-      "Use native Aspose.Words APIs directly.",
-      "Always create local sample source documents if a task refers to an existing file, folder, stream, or template.",
-      "Do not assume external files or folders already exist.",
-      "Always save the requested output document or report when the task expects one.",
-      "Keep validation narrow and task-specific."
+    "strict_api_bans": [
+      "Do not reference types that are not part of the Aspose.Words package version.",
+      "Do not import System.Drawing classes for image handling."
     ],
-    "minimal_workflow_rules": [
-      "Prefer simple documented Document and DocumentBuilder workflows.",
-      "Do not add broad document-count or structure assertions unless the task explicitly requires them.",
-      "For file or conversion tasks, verify the requested output file exists and can be reopened when appropriate."
+    "canonical_patterns": [
+      "Load images from a MemoryStream created from a Base64 string.",
+      "Use HeaderFooterType enum values HeaderFirst, HeaderPrimary, and HeaderEven for header configuration.",
+      "Access footnote options through Document.FootnoteOptions and use FootnoteType from Aspose.Words.Notes."
     ],
-    "api_safety_rules": [
-      "Do not invent unsupported Aspose.Words APIs.",
-      "Do not use fake namespaces.",
-      "Use documented save, load, protection, property, and conversion APIs only."
+    "nullable_warning_prevention": [
+      "Check for the existence of a property via reflection before setting it when the library version may not expose it.",
+      "Validate that collections such as HeadersFooters contain the expected items before removal."
     ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "Unsupported API invention",
-      "symptom": "Generated code references members that do not exist in the selected package version.",
-      "fix": "Replace invented members with documented Aspose.Words APIs already proven in this category."
+      "pattern": "Missing System.Drawing dependency",
+      "symptom": "The compiler reports that Bitmap or Graphics types cannot be found in the System.Drawing namespace.",
+      "cause": "The code attempts to create images using System.Drawing classes, which are not referenced in the project and are unnecessary for Aspose.Words image insertion.",
+      "fix": "Replace System.Drawing usage with a Base64-encoded image stream and call DocumentBuilder.InsertImage using the stream.",
+      "prevention": "Always load images from a MemoryStream or file path and avoid any System.Drawing types in examples."
     },
     {
-      "pattern": "Missing local bootstrap inputs",
-      "symptom": "The example assumes source files, folders, images, or data already exist.",
-      "fix": "Create deterministic local inputs before loading, processing, or validating them."
+      "pattern": "Incorrect or outdated Aspose.Words API usage",
+      "symptom": "Compilation fails because enums, properties, or methods such as HeaderFooter.Type, DifferentOddAndEvenPages, FootnoteType, or Document.Footnotes are not defined.",
+      "cause": "The snippet references API members that were renamed, moved, or removed in version 26.10.0.",
+      "fix": "Use the current enum names HeaderFooterType.HeaderFirst, HeaderFooterType.HeaderPrimary, HeaderFooterType.HeaderEven, and include Aspose.Words.Notes for FootnoteType and NumberStyle. Set odd/even header flags via Section.PageSetup.OddAndEvenPagesHeaderFooter or reflectively set DifferentOddAndEvenPages when unavailable.",
+      "prevention": "Consult the official Aspose.Words 26.10.0 documentation for the exact member names before coding."
     },
     {
-      "pattern": "Over-broad validation",
-      "symptom": "The example fails at runtime while checking unrelated document internals.",
-      "fix": "Validate only the requested behavior and the existence of expected outputs."
+      "pattern": "Invalid method signatures or collection handling",
+      "symptom": "The compiler reports that methods like HeaderFooterCollection.Add overloads or Shape.Position do not exist, and that collections such as Section.Footers are missing.",
+      "cause": "The code calls non-existent overloads or accesses properties that were never part of the API.",
+      "fix": "Clone a HeaderFooter node and add it with HeadersFooters.Add, set shape positioning using WrapType, RelativeHorizontalPosition, and RelativeVerticalPosition, and remove footers by enumerating HeadersFooters and deleting items that match footer types.",
+      "prevention": "Use only the overloads and properties listed in the Aspose.Words API reference and manipulate collections through supported LINQ queries."
     }
   ],
   "examples": [
     {
       "id": 1,
       "file_name": "create-a-first-page-header-with-a-centered-logo-image-using-documentbuilder.cs",
-      "task": "Create a first‑page header with a centered logo image using DocumentBuilder.",
+      "task": "Create a first-page header with a centered logo image using DocumentBuilder.",
       "workflow": "document-workflow",
       "outputs": [
         "doc"
@@ -115,7 +116,7 @@
     {
       "id": 2,
       "file_name": "add-an-odd-page-header-containing-a-right-aligned-chapter-title-in-a-custom-font.cs",
-      "task": "Add an odd‑page header containing a right‑aligned chapter title in a custom font.",
+      "task": "Add an odd-page header containing a right-aligned chapter title in a custom font.",
       "workflow": "document-workflow",
       "outputs": [
         "docx"
@@ -126,7 +127,7 @@
     {
       "id": 3,
       "file_name": "insert-an-even-page-footer-that-shows-page-numbers-in-roman-numerals-via-insertfield.cs",
-      "task": "Insert an even‑page footer that shows page numbers in Roman numerals via InsertField.",
+      "task": "Insert an even-page footer that shows page numbers in Roman numerals via InsertField.",
       "workflow": "document-workflow",
       "outputs": [
         "rtf"
@@ -153,13 +154,13 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 6,
       "file_name": "enable-unique-first-page-header-content-by-setting-differentfirstpageheaderfooter-to-true.cs",
-      "task": "Enable unique first‑page header content by setting DifferentFirstPageHeaderFooter to true.",
+      "task": "Enable unique first-page header content by setting DifferentFirstPageHeaderFooter to true.",
       "workflow": "document-workflow",
       "outputs": [
         "docx"
@@ -208,8 +209,8 @@
       "outputs": [
         "rtf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 11,
@@ -225,7 +226,7 @@
     {
       "id": 12,
       "file_name": "change-footnote-numbering-style-to-lower-case-roman-numerals-by-setting-document-footnoteo.cs",
-      "task": "Change footnote numbering style to lower‑case Roman numerals by setting Document.FootnoteOptions.NumberStyle.",
+      "task": "Change footnote numbering style to lower-case Roman numerals by setting Document.FootnoteOptions.NumberStyle.",
       "workflow": "document-workflow",
       "outputs": [
         "doc"
@@ -241,8 +242,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 14,
@@ -252,8 +253,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 15,
@@ -263,8 +264,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 16,
@@ -280,7 +281,7 @@
     {
       "id": 17,
       "file_name": "customize-toc-entry-levels-to-include-headings-1-3-by-specifying-the-o-1-3-switch.cs",
-      "task": "Customize TOC entry levels to include headings 1‑3 by specifying the \\o \"1-3\" switch.",
+      "task": "Customize TOC entry levels to include headings 1-3 by specifying the \\o \"1-3\" switch.",
       "workflow": "document-workflow",
       "outputs": [
         "docx"
@@ -291,7 +292,7 @@
     {
       "id": 18,
       "file_name": "include-only-specific-styles-in-the-toc-by-using-the-t-switch-with-a-comma-separated-list.cs",
-      "task": "Include only specific styles in the TOC by using the \\t switch with a comma‑separated list.",
+      "task": "Include only specific styles in the TOC by using the \\t switch with a comma-separated list.",
       "workflow": "document-workflow",
       "outputs": [
         "docx"
@@ -346,7 +347,7 @@
     {
       "id": 23,
       "file_name": "apply-a-custom-paragraph-style-to-toc-entries-by-modifying-the-toc-field-s-style-property.cs",
-      "task": "Apply a custom paragraph style to TOC entries by modifying the TOC field’s style property.",
+      "task": "Apply a custom paragraph style to TOC entries by modifying the TOC field's style property.",
       "workflow": "document-workflow",
       "outputs": [
         "docx"
@@ -401,7 +402,7 @@
     {
       "id": 28,
       "file_name": "create-a-multi-section-document-where-each-section-has-distinct-header-and-footer-configur.cs",
-      "task": "Create a multi‑section document where each section has distinct header and footer configurations.",
+      "task": "Create a multi-section document where each section has distinct header and footer configurations.",
       "workflow": "document-workflow",
       "outputs": [
         "doc"
@@ -423,7 +424,7 @@
     {
       "id": 30,
       "file_name": "adjust-the-left-margin-of-the-first-page-header-to-align-with-the-main-text-margin.cs",
-      "task": "Adjust the left margin of the first‑page header to align with the main text margin.",
+      "task": "Adjust the left margin of the first-page header to align with the main text margin.",
       "workflow": "document-workflow",
       "outputs": [
         "docx"
@@ -456,7 +457,7 @@
     {
       "id": 33,
       "file_name": "create-an-even-page-footer-that-displays-the-document-title-aligned-left-using-documentbui.cs",
-      "task": "Create an even‑page footer that displays the document title aligned left using DocumentBuilder.InsertField.",
+      "task": "Create an even-page footer that displays the document title aligned left using DocumentBuilder.InsertField.",
       "workflow": "document-workflow",
       "outputs": [
         "doc",
@@ -517,13 +518,13 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 39,
       "file_name": "apply-the-built-in-grid-table-5-dark-style-to-the-entire-table-for-consistent-formatting.cs",
-      "task": "Apply the built‑in 'Grid Table 5 Dark' style to the entire table for consistent formatting.",
+      "task": "Apply the built-in 'Grid Table 5 Dark' style to the entire table for consistent formatting.",
       "workflow": "document-workflow",
       "outputs": [
         "docx"
@@ -650,8 +651,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 51,
@@ -672,13 +673,13 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 53,
       "file_name": "define-a-second-list-level-with-alphabetic-lower-case-numbering-and-increased-indentation.cs",
-      "task": "Define a second list level with alphabetic lower‑case numbering and increased indentation.",
+      "task": "Define a second list level with alphabetic lower-case numbering and increased indentation.",
       "workflow": "document-workflow",
       "outputs": [
         "docx"
@@ -722,13 +723,13 @@
     {
       "id": 57,
       "file_name": "insert-a-multi-level-list-where-each-level-uses-a-different-list-style-defined-in-the-docu.cs",
-      "task": "Insert a multi‑level list where each level uses a different list style defined in the document.",
+      "task": "Insert a multi-level list where each level uses a different list style defined in the document.",
       "workflow": "document-workflow",
       "outputs": [
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 58,
@@ -739,8 +740,8 @@
         "doc",
         "xml"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 59,
@@ -756,7 +757,7 @@
     {
       "id": 60,
       "file_name": "apply-the-built-in-heading-2-style-to-a-paragraph-and-adjust-its-spacing-before-and-after.cs",
-      "task": "Apply the built‑in 'Heading 2' style to a paragraph and adjust its spacing before and after.",
+      "task": "Apply the built-in 'Heading 2' style to a paragraph and adjust its spacing before and after.",
       "workflow": "document-workflow",
       "outputs": [
         "docx"
@@ -877,7 +878,7 @@
     {
       "id": 71,
       "file_name": "apply-a-built-in-quote-style-to-a-paragraph-and-increase-its-left-indent-for-emphasis.cs",
-      "task": "Apply a built‑in 'Quote' style to a paragraph and increase its left indent for emphasis.",
+      "task": "Apply a built-in 'Quote' style to a paragraph and increase its left indent for emphasis.",
       "workflow": "document-workflow",
       "outputs": [
         "docx"
@@ -904,8 +905,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 74,
@@ -926,8 +927,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 76,
@@ -937,8 +938,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 77,
@@ -948,8 +949,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 78,
@@ -981,8 +982,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 81,
@@ -1003,8 +1004,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 83,
@@ -1043,13 +1044,13 @@
     {
       "id": 86,
       "file_name": "create-a-text-box-set-its-text-direction-to-right-to-left-and-insert-arabic-characters.cs",
-      "task": "Create a text box, set its text direction to right‑to‑left, and insert Arabic characters.",
+      "task": "Create a text box, set its text direction to right-to-left, and insert Arabic characters.",
       "workflow": "document-workflow",
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 87,
@@ -1098,13 +1099,13 @@
     {
       "id": 91,
       "file_name": "create-a-macro-like-routine-that-inserts-a-table-a-paragraph-and-a-linked-text-box-in-one.cs",
-      "task": "Create a macro‑like routine that inserts a table, a paragraph, and a linked text box in one operation.",
+      "task": "Create a macro-like routine that inserts a table, a paragraph, and a linked text box in one operation.",
       "workflow": "document-workflow",
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 92,
@@ -1159,8 +1160,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 97,
@@ -1187,18 +1188,18 @@
     {
       "id": 99,
       "file_name": "set-the-document-s-language-property-to-french-and-adjust-paragraph-direction-for-right-to.cs",
-      "task": "Set the document's language property to French and adjust paragraph direction for right‑to‑left scripts.",
+      "task": "Set the document's language property to French and adjust paragraph direction for right-to-left scripts.",
       "workflow": "document-workflow",
       "outputs": [
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 100,
       "file_name": "apply-a-built-in-title-style-to-the-first-paragraph-and-ensure-it-appears-in-the-document.cs",
-      "task": "Apply a built‑in 'Title' style to the first paragraph and ensure it appears in the document outline.",
+      "task": "Apply a built-in 'Title' style to the first paragraph and ensure it appears in the document outline.",
       "workflow": "document-workflow",
       "outputs": [
         "doc"
@@ -1214,8 +1215,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 102,
@@ -1247,8 +1248,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 105,
@@ -1280,8 +1281,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 108,
@@ -1291,8 +1292,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 109,
@@ -1308,13 +1309,23 @@
     {
       "id": 110,
       "file_name": "create-a-numbered-list-where-each-level-uses-a-different-numbering-scheme-such-as-decimal.cs",
-      "task": "Create a numbered list where each level uses a different numbering scheme, such as decimal and lower‑roman.",
+      "task": "Create a numbered list where each level uses a different numbering scheme, such as decimal and lower-roman.",
       "workflow": "document-workflow",
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     }
-  ]
+  ],
+  "narrative": {
+    "overview": "The Programming With Documents category demonstrates how to manipulate Word files using Aspose.Words 26.10.0. Verified examples show header/footer configuration, image insertion, footnote handling, and table of contents management without external dependencies.",
+    "purpose": "An AI coding agent should generate concise, self-contained C# snippets that create or modify Word documents using only the documented Aspose.Words APIs, instantiate any required input assets locally, and verify that the expected output file can be opened.",
+    "validation_priorities": [
+      "Verify that the output file exists on disk and can be reopened without errors."
+    ],
+    "maintenance_notes": [
+      "Update examples promptly when a new Aspose.Words version changes enum names or adds new properties."
+    ]
+  }
 }

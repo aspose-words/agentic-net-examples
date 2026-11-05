@@ -12,27 +12,32 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a rectangle shape (inline) with specific size.
-        Shape shape = builder.InsertShape(ShapeType.Rectangle, 150, 80);
+        // Insert a rectangle shape (100 points wide, 50 points high).
+        Shape shape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
         shape.StrokeColor = Color.Blue;
         shape.FillColor = Color.LightGray;
 
-        // Retrieve the actual bounds of the shape using the Bounds property.
+        // Force layout so that actual bounds can be calculated.
+        doc.UpdatePageLayout();
+
+        // Retrieve the actual bounds of the shape.
         RectangleF bounds = shape.Bounds;
 
         // Log the coordinate points.
         Console.WriteLine("Shape Actual Bounds:");
-        Console.WriteLine($"X (Left)   : {bounds.X}");
-        Console.WriteLine($"Y (Top)    : {bounds.Y}");
-        Console.WriteLine($"Width      : {bounds.Width}");
-        Console.WriteLine($"Height     : {bounds.Height}");
+        Console.WriteLine($"X: {bounds.X}");
+        Console.WriteLine($"Y: {bounds.Y}");
+        Console.WriteLine($"Width: {bounds.Width}");
+        Console.WriteLine($"Height: {bounds.Height}");
 
-        // Save the document to verify the shape is present.
+        // Save the document.
         string outputPath = "ShapeBounds.docx";
         doc.Save(outputPath);
 
-        // Validate that the file was created.
+        // Verify that the file was saved.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"Failed to create output file: {outputPath}");
+            throw new Exception($"Failed to save the document to '{outputPath}'.");
+
+        Console.WriteLine($"Document saved to '{outputPath}'.");
     }
 }

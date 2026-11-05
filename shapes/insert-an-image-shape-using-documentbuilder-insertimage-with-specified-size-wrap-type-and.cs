@@ -7,50 +7,56 @@ public class Program
 {
     public static void Main()
     {
-        // Create a temporary image file (a tiny PNG).
-        string imagePath = Path.Combine(Path.GetTempPath(), "sample_image.png");
+        // Create a temporary image file (a simple 1x1 PNG).
+        string imagePath = "sample.png";
         CreateSampleImage(imagePath);
 
         // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert the image with explicit size (in points).
-        // 1 point = 1/72 inch. Convert pixels to points assuming 96 DPI.
-        double widthInPoints = 200 * 72.0 / 96.0;
-        double heightInPoints = 100 * 72.0 / 96.0;
-        Shape imageShape = builder.InsertImage(imagePath, widthInPoints, heightInPoints);
+        // Insert the image with explicit size (points).
+        double width = 150;   // points
+        double height = 150;  // points
+        Shape imageShape = builder.InsertImage(imagePath, width, height);
 
-        // Configure wrapping, positioning and relative references.
+        // Set wrapping behavior.
         imageShape.WrapType = WrapType.Square;
+
+        // Position the shape relative to the page.
         imageShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
         imageShape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-        imageShape.Left = ConvertUtil.MillimeterToPoint(20);   // 20 mm from the left of the page
-        imageShape.Top = ConvertUtil.MillimeterToPoint(30);    // 30 mm from the top of the page
+        imageShape.Left = 100; // points from the left edge
+        imageShape.Top = 100;  // points from the top edge
 
         // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ImageShapeExample.docx");
-        doc.Save(outputPath);
+        string docPath = "ImageShape.docx";
+        doc.Save(docPath);
 
         // Validate that the document was saved.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not created.");
+        if (!File.Exists(docPath))
+            throw new Exception("The output document was not created.");
 
-        // Validate that the inserted shape has the expected wrap type.
-        if (imageShape.WrapType != WrapType.Square)
-            throw new InvalidOperationException("Wrap type was not set correctly.");
-
-        // Clean up temporary image file.
-        if (File.Exists(imagePath))
-            File.Delete(imagePath);
+        // Optional cleanup of the temporary image.
+        // File.Delete(imagePath);
     }
 
-    // Writes a minimal PNG image (1x1 pixel) to the specified path.
+    // Creates a minimal PNG file without using System.Drawing.
     private static void CreateSampleImage(string path)
     {
-        // Base64-encoded PNG (transparent 1x1 pixel).
-        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
-        byte[] pngBytes = Convert.FromBase64String(base64Png);
-        File.WriteAllBytes(path, pngBytes);
+        // PNG data for a 1x1 pixel light blue image.
+        byte[] pngData = new byte[]
+        {
+            0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,
+            0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52,
+            0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,
+            0x08,0x02,0x00,0x00,0x00,0x90,0x77,0x53,
+            0xDE,0x00,0x00,0x00,0x0A,0x49,0x44,0x41,
+            0x54,0x08,0xD7,0x63,0xF8,0xCF,0xC0,0x00,
+            0x00,0x04,0x00,0x01,0xE2,0x26,0x05,0x9B,
+            0x00,0x00,0x00,0x00,0x49,0x45,0x4E,0x44,
+            0xAE,0x42,0x60,0x82
+        };
+        File.WriteAllBytes(path, pngData);
     }
 }

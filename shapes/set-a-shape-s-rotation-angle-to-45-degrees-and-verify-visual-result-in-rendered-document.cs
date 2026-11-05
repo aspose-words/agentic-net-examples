@@ -3,7 +3,7 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class Program
+public class RotatedShapeExample
 {
     public static void Main()
     {
@@ -11,28 +11,27 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a rectangle shape (inline by default) with specific size.
-        Shape shape = builder.InsertShape(ShapeType.Rectangle, 150, 100);
-
+        // Insert a rectangle shape.
+        Shape shape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
         // Set the rotation angle to 45 degrees.
-        shape.Rotation = 45;
+        shape.Rotation = 45f;
 
-        // Validate that the rotation was applied.
-        if (Math.Abs(shape.Rotation - 45) > 0.001)
+        // Verify that the rotation property was set correctly.
+        if (Math.Abs(shape.Rotation - 45f) > 0.001f)
             throw new Exception("Shape rotation was not set to 45 degrees.");
 
-        // Save the document to a .docx file.
-        string docPath = "RotatedShape.docx";
-        doc.Save(docPath);
+        // Save the document to DOCX.
+        string docxPath = "RotatedShape.docx";
+        doc.Save(docxPath);
 
-        // Render the first page of the document to a PNG image to visually verify the rotation.
-        string imagePath = "RotatedShape.png";
-        doc.Save(imagePath, SaveFormat.Png);
+        // Save the document to PDF for visual verification.
+        string pdfPath = "RotatedShape.pdf";
+        doc.Save(pdfPath);
 
-        // Verify that both output files exist.
-        if (!File.Exists(docPath))
-            throw new FileNotFoundException("The output DOCX file was not created.", docPath);
-        if (!File.Exists(imagePath))
-            throw new FileNotFoundException("The output PNG file was not created.", imagePath);
+        // Validate that the output files exist.
+        if (!File.Exists(docxPath))
+            throw new FileNotFoundException("DOCX file was not created.", docxPath);
+        if (!File.Exists(pdfPath))
+            throw new FileNotFoundException("PDF file was not created.", pdfPath);
     }
 }

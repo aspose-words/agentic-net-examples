@@ -1,6 +1,5 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Tables;
 
 public class Program
 {
@@ -10,25 +9,35 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a Table of Contents field. It will include headings with outline levels 1‑3.
-        builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
-        builder.Writeln(); // Add a blank line after TOC.
+        // Insert a title.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Title;
+        builder.Writeln("Document Title");
 
-        // Insert a main heading (outline level 1).
+        // Insert a level‑1 heading.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Writeln("Chapter 1");
 
-        // Insert a subheading and explicitly set its outline level to 2.
+        // Insert a level‑2 subheading and explicitly set its outline level to 2.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
         builder.ParagraphFormat.OutlineLevel = OutlineLevel.Level2;
         builder.Writeln("Section 1.1");
 
-        // Add some body text.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("This is some sample content under the subheading.");
+        // Another level‑2 subheading.
+        builder.Writeln("Section 1.2");
 
-        // Update fields so the TOC reflects the headings.
-        doc.UpdateFields();
+        // Insert another level‑1 heading.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.ParagraphFormat.OutlineLevel = OutlineLevel.Level1; // reset to default for heading 1
+        builder.Writeln("Chapter 2");
+
+        // Level‑2 subheading under Chapter 2.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+        builder.ParagraphFormat.OutlineLevel = OutlineLevel.Level2;
+        builder.Writeln("Section 2.1");
+
+        // Insert a Table of Contents at the beginning of the document.
+        builder.MoveToDocumentStart();
+        builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
 
         // Save the document.
         doc.Save("Output.docx");

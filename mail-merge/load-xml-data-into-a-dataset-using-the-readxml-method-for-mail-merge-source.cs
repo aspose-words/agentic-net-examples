@@ -1,53 +1,75 @@
 using System;
 using System.Data;
 using System.IO;
+using System.Text;
 using Aspose.Words;
-using Aspose.Words.Drawing;
+using Aspose.Words.MailMerging;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a simple template document with merge fields.
+        // Create a template document with merge fields and a region for repeating data.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Dear <<FirstName>> <<LastName>>,");
-        builder.Writeln("Your order <<OrderID>> is confirmed.");
-        builder.Writeln("Thank you for shopping with us.");
 
-        // XML data to be used as the mail merge source.
+        // Insert a table region named "Person".
+        builder.InsertField("MERGEFIELD TableStart:Person", null);
+        builder.Writeln(); // New line after the start field.
+
+        // Insert merge fields that correspond to XML element names.
+        builder.InsertField("MERGEFIELD FirstName", null);
+        builder.Write(" ");
+        builder.InsertField("MERGEFIELD LastName", null);
+        builder.Writeln(); // New line for each record.
+
+        // End of the region.
+        builder.InsertField("MERGEFIELD TableEnd:Person", null);
+        builder.Writeln();
+
+        // Prepare XML data.
         string xmlData = @"
-<Customers>
-    <Customer>
-        <FirstName>John</FirstName>
-        <LastName>Doe</LastName>
-        <OrderID>12345</OrderID>
-    </Customer>
-    <Customer>
-        <FirstName>Jane</FirstName>
-        <LastName>Smith</LastName>
-        <OrderID>67890</OrderID>
-    </Customer>
-</Customers>";
+<People>
+  <Person>
+    <FirstName>John</FirstName>
+    <LastName>Doe</LastName>
+  </Person>
+  <Person>
+    <FirstName>Jane</FirstName>
+    <LastName>Smith</LastName>
+  </Person>
+</People>";
 
-        // Load XML into a DataSet using ReadXml.
+        // Load XML into a DataSet.
         DataSet dataSet = new DataSet();
-        using (StringReader sr = new StringReader(xmlData))
+        using (MemoryStream stream = new MemoryStream(Encoding.UTF8.GetBytes(xmlData)))
         {
-            dataSet.ReadXml(sr);
+            dataSet.ReadXml(stream);
         }
 
-        // Perform mail merge using the first table in the DataSet.
-        if (dataSet.Tables.Count > 0)
-        {
-            doc.MailMerge.Execute(dataSet.Tables[0]);
-        }
+        // Retrieve the DataTable that matches the region name.
+        DataTable personTable = dataSet.Tables["Person"];
+        if (personTable == null)
+            throw new InvalidOperationException("The required DataTable 'Person' was not found in the XML data.");
+
+        // Ensure the table has rows.
+        if (personTable.Rows.Count == 0)
+            throw new InvalidOperationException("The DataTable 'Person' contains no rows to merge.");
+
+        // Perform region-based mail merge.
+        doc.MailMerge.CleanupOptions = MailMergeCleanupOptions.RemoveUnusedFields;
+        doc.MailMerge.ExecuteWithRegions(personTable);
 
         // Save the merged document.
-        string outputPath = "MergedOutput.docx";
+        const string outputPath = "MergedOutput.docx";
         doc.Save(outputPath);
 
-        // Indicate completion.
-        Console.WriteLine($"Mail merge completed. Document saved to '{Path.GetFullPath(outputPath)}'.");
+        // Validate that the merged output contains expected values.
+        string mergedText = doc.GetText();
+        if (!mergedText.Contains("John") || !mergedText.Contains("Jane"))
+            throw new Exception("Mail merge failed: expected values were not found in the output.");
+
+        // Optionally, indicate success (no interactive output required).
+        // The program ends here.
     }
 }

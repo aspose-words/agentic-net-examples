@@ -5,69 +5,85 @@ using System.Linq;
 using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using System.Text;
 
-public class Item
+namespace LinqReportingCaseInsensitiveFilter
 {
-    public string Name { get; set; } = string.Empty;
-    public string Category { get; set; } = string.Empty;
-}
-
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main()
+    // Model representing a single item.
+    public class Item
     {
-        // Sample XML data with a Category attribute.
-        string xmlContent = @"
-<Products>
-    <Product Name='Laptop' Category='Electronics' />
-    <Product Name='Desk' Category='Furniture' />
-    <Product Name='Smartphone' Category='electronics' />
-    <Product Name='Chair' Category='Furniture' />
-    <Product Name='Headphones' Category='ELECTRONICS' />
-</Products>";
+        public string Name { get; set; } = "";
+        public string Category { get; set; } = "";
+    }
 
-        // Load XML and filter items where Category equals "electronics" (case‑insensitive).
-        XDocument xDoc = XDocument.Parse(xmlContent);
-        List<Item> filteredItems = xDoc.Root!
-            .Elements("Product")
-            .Where(e => string.Equals((string?)e.Attribute("Category"), "electronics", StringComparison.OrdinalIgnoreCase))
-            .Select(e => new Item
+    // Root model passed to the reporting engine.
+    public class ReportModel
+    {
+        public List<Item> Items { get; set; } = new();
+    }
+
+    public class Program
+    {
+        public static void Main()
+        {
+            // Register code page provider (required by Aspose.Words for some encodings).
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // 1. Create sample XML data.
+            string xmlContent = @"
+                <Items>
+                    <Item Name='Apple' Category='Fruit' />
+                    <Item Name='Carrot' Category='Vegetable' />
+                    <Item Name='Banana' Category='fruit' />
+                    <Item Name='Broccoli' Category='Vegetable' />
+                    <Item Name='Strawberry' Category='FRUIT' />
+                </Items>";
+            string xmlPath = Path.Combine(Directory.GetCurrentDirectory(), "Data.xml");
+            File.WriteAllText(xmlPath, xmlContent);
+
+            // 2. Load XML and filter nodes with case‑insensitive comparison on the 'Category' attribute.
+            XDocument xDoc = XDocument.Load(xmlPath);
+            List<Item> filteredItems = xDoc.Root!
+                .Elements("Item")
+                .Where(e => string.Equals(
+                    (string?)e.Attribute("Category"),
+                    "fruit",
+                    StringComparison.OrdinalIgnoreCase))
+                .Select(e => new Item
+                {
+                    Name = (string?)e.Attribute("Name") ?? "",
+                    Category = (string?)e.Attribute("Category") ?? ""
+                })
+                .ToList();
+
+            // 3. Prepare the report model.
+            ReportModel model = new()
             {
-                Name = (string?)e.Attribute("Name") ?? string.Empty,
-                Category = (string?)e.Attribute("Category") ?? string.Empty
-            })
-            .ToList();
+                Items = filteredItems
+            };
 
-        // Prepare the LINQ Reporting template.
-        string templatePath = "Template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            // 4. Create a Word template with LINQ Reporting tags.
+            string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+            Document templateDoc = new();
+            DocumentBuilder builder = new(templateDoc);
 
-        builder.Writeln("Filtered Products (Category = Electronics):");
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln(" - <<[item.Name]>> (<<[item.Category]>>)");
-        builder.Writeln("<</foreach>>");
+            builder.Writeln("Filtered Items (Category = 'Fruit'):");
+            builder.Writeln("<<foreach [item in Items]>>");
+            builder.Writeln(" - <<[item.Name]>> (<<[item.Category]>>)");
+            builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
+            templateDoc.Save(templatePath);
 
-        // Load the template for report generation.
-        Document reportDoc = new Document(templatePath);
+            // 5. Load the template for report generation.
+            Document reportDoc = new(templatePath);
 
-        // Create the root data model.
-        ReportModel model = new ReportModel { Items = filteredItems };
+            // 6. Build the report.
+            ReportingEngine engine = new();
+            engine.BuildReport(reportDoc, model, "model");
 
-        // Build the report using Aspose.Words LINQ Reporting Engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
-
-        // Save the generated report.
-        string outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+            // 7. Save the generated report.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+            reportDoc.Save(outputPath);
+        }
     }
 }

@@ -1,61 +1,61 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class Person
+{
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
+}
+
+public class ReportModel
+{
+    public List<Person> Persons { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Create a simple data model.
-        ReportModel model = new()
+        // Prepare sample data.
+        var model = new ReportModel
         {
-            Items = new()
+            Persons = new List<Person>
             {
-                new Item { Name = "Apple" },
-                new Item { Name = "Banana" },
-                new Item { Name = "Cherry" }
+                new Person { Name = "Alice", Age = 28 },
+                new Person { Name = "Bob", Age = 35 },
+                new Person { Name = "Charlie", Age = 22 }
             }
         };
 
-        // Build the template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Create template document.
+        var templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        builder.Writeln("Items List:");
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("<<[item.Name]>>");
+        builder.Writeln("People Report");
+        builder.Writeln("<<foreach [p in Persons]>>");
+        builder.Writeln("Name: <<[p.Name]>>");
+        // This paragraph may become empty if condition is false.
+        builder.Writeln("<<if [p.Age > 30]>>Senior<</if>>");
         builder.Writeln("<</foreach>>");
-        // An empty paragraph that would normally remain after the foreach.
-        builder.Writeln("");
 
-        // Save the template to disk.
-        const string templatePath = "template.docx";
-        template.Save(templatePath);
+        doc.Save(templatePath);
 
-        // Load the template for reporting.
-        Document doc = new Document(templatePath);
+        // Load template for reporting.
+        var template = new Document(templatePath);
 
-        // Configure the reporting engine to remove empty paragraphs.
-        ReportingEngine engine = new ReportingEngine();
+        // Configure reporting engine to remove empty paragraphs.
+        var engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
 
         // Build the report.
-        engine.BuildReport(doc, model, "model");
+        engine.BuildReport(template, model, "model");
 
         // Save the final document.
-        const string outputPath = "report.docx";
-        doc.Save(outputPath);
+        var outputPath = "Result.docx";
+        template.Save(outputPath);
     }
-}
-
-// Data model classes.
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
-
-public class Item
-{
-    public string Name { get; set; } = "";
 }

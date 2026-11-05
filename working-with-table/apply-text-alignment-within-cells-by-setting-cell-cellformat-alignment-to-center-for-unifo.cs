@@ -7,33 +7,37 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
+        // Build a simple 2x3 table.
         builder.StartTable();
 
-        // Add 3 rows and 3 columns with sample text.
-        for (int row = 0; row < 3; row++)
+        // First row.
+        for (int i = 0; i < 3; i++)
         {
-            for (int col = 0; col < 3; col++)
-            {
-                builder.InsertCell();
-                builder.Writeln($"R{row + 1}C{col + 1}");
-            }
-            builder.EndRow();
+            builder.InsertCell();
+            builder.Writeln($"Cell {i + 1}");
         }
+        builder.EndRow();
 
-        // End the table.
+        // Second row.
+        for (int i = 0; i < 3; i++)
+        {
+            builder.InsertCell();
+            builder.Writeln($"Cell {i + 4}");
+        }
+        builder.EndRow();
+
         builder.EndTable();
 
-        // Center-align the text inside each cell.
+        // Center-align the paragraphs inside each cell.
         foreach (Table table in doc.GetChildNodes(NodeType.Table, true))
         {
-            foreach (Row r in table.Rows)
+            foreach (Row row in table.Rows)
             {
-                foreach (Cell cell in r.Cells)
+                foreach (Cell cell in row.Cells)
                 {
                     foreach (Paragraph para in cell.Paragraphs)
                     {
@@ -44,11 +48,11 @@ public class Program
         }
 
         // Save the document.
-        string fileName = "AlignedTable.docx";
-        doc.Save(fileName);
+        string outputPath = "AlignedTable.docx";
+        doc.Save(outputPath);
 
         // Verify that the file was created.
-        if (!File.Exists(fileName))
-            throw new Exception("The output document was not created.");
+        if (!File.Exists(outputPath))
+            throw new Exception("The output file was not created.");
     }
 }

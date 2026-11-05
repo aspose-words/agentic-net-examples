@@ -9,59 +9,81 @@ public class Program
 {
     public static void Main()
     {
-        // Create a deterministic sample thumbnail image.
-        const string sampleImagePath = "thumb.png";
+        // -----------------------------------------------------------------
+        // 1. Create a deterministic thumbnail image (sample input for the doc)
+        // -----------------------------------------------------------------
+        const string thumbnailPath = "thumb.png";
         using (Bitmap bitmap = new Bitmap(200, 200))
         {
             using (Graphics g = Graphics.FromImage(bitmap))
             {
-                g.Clear(Aspose.Drawing.Color.LightBlue);
-                // Draw a simple rectangle.
-                g.DrawRectangle(new Pen(Aspose.Drawing.Color.DarkBlue, 5), 20, 20, 160, 160);
-            }
-            bitmap.Save(sampleImagePath);
-        }
-
-        // Create a DOCX document and insert the sample image (simulating a video thumbnail).
-        const string docPath = "sample.docx";
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(sampleImagePath);
-        doc.Save(docPath);
-
-        // Load the document for extraction.
-        Document loadedDoc = new Document(docPath);
-
-        // Iterate through all Shape nodes and extract images.
-        NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int extractedCount = 0;
-
-        foreach (Shape shape in shapes)
-        {
-            if (!shape.HasImage)
-                continue;
-
-            // Obtain the raw image bytes.
-            byte[] imageBytes = shape.ImageData.ImageBytes;
-
-            using (MemoryStream ms = new MemoryStream(imageBytes))
-            {
-                ms.Position = 0; // Ensure the stream is at the beginning.
-                using (Aspose.Drawing.Image img = Aspose.Drawing.Image.FromStream(ms))
+                g.Clear(Color.LightBlue);
+                using (Pen pen = new Pen(Color.DarkBlue, 5))
                 {
-                    string outputPath = $"extracted-{extractedCount + 1}.png";
-                    img.Save(outputPath, ImageFormat.Png);
-                    extractedCount++;
+                    g.DrawEllipse(pen, 20, 20, 160, 160);
                 }
             }
+            bitmap.Save(thumbnailPath, ImageFormat.Png);
         }
 
-        // Validate that at least one image was extracted.
-        if (extractedCount == 0)
-            throw new InvalidOperationException("No images were extracted from the document.");
+        if (!File.Exists(thumbnailPath))
+            throw new InvalidOperationException($"Failed to create thumbnail image at {thumbnailPath}.");
 
-        // Cleanup sample files (optional).
-        // File.Delete(sampleImagePath);
+        // -----------------------------------------------------------------
+        // 2. Create a new document and insert the thumbnail as an image shape.
+        //    (In Aspose.Words there is no dedicated video shape, so we use an
+        //     image shape to simulate a video thumbnail.)
+        // -----------------------------------------------------------------
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        Shape imageShape = new Shape(doc, ShapeType.Image);
+        imageShape.ImageData.SetImage(thumbnailPath);
+        // Optional: give the shape a name that hints it is a video thumbnail.
+        imageShape.Name = "VideoThumbnail";
+
+        // Append the shape to the current paragraph.
+        builder.CurrentParagraph.AppendChild(imageShape);
+
+        // Save the sample document.
+        const string docPath = "sample.docx";
+        doc.Save(docPath);
+
+        if (!File.Exists(docPath))
+            throw new InvalidOperationException($"Failed to save document at {docPath}.");
+
+        // -----------------------------------------------------------------
+        // 3. Load the document and extract all image shapes (simulated video thumbnails).
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(docPath);
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+
+        int extractedCount = 0;
+        int index = 1;
+
+        foreach (Shape shape in shapeNodes)
+        {
+            // We look for image shapes that have an image attached.
+            if (shape.HasImage)
+            {
+                string outPath = $"video-thumb-{index}.png";
+                shape.ImageData.Save(outPath);
+                if (!File.Exists(outPath))
+                    throw new InvalidOperationException($"Failed to save extracted image to {outPath}.");
+
+                extractedCount++;
+                index++;
+            }
+        }
+
+        // Validate that at least one thumbnail was extracted.
+        if (extractedCount == 0)
+            throw new InvalidOperationException("No video thumbnail images were extracted from the document.");
+
+        // -----------------------------------------------------------------
+        // 4. (Optional) Clean up temporary files.
+        // -----------------------------------------------------------------
+        // File.Delete(thumbnailPath);
         // File.Delete(docPath);
     }
 }

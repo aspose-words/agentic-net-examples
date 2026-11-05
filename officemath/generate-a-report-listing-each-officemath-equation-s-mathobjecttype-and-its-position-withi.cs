@@ -1,105 +1,91 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Fields;
-using Aspose.Words.Math;   // Needed for OfficeMath
+using Aspose.Words.Math;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document and builder.
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a title paragraph.
-        builder.Writeln("Sample document with OfficeMath equations:");
-        builder.Writeln();
+        // Local helper that inserts an equation using the deterministic EQ-field bootstrap workflow.
+        void InsertEquation(string eqSwitch)
+        {
+            // Insert an empty Equation field.
+            Field field = builder.InsertField(FieldType.FieldEquation, true);
 
-        // Insert three simple equations using the deterministic EQ-field bootstrap workflow.
-        InsertEquation(builder, @"\f(1,2)"); // fraction
-        builder.Writeln(); // separate paragraphs
-        InsertEquation(builder, @"\r(3,x)"); // root
-        builder.Writeln();
-        InsertEquation(builder, @"\s(5)"); // sigma
+            // Move the builder to the field separator where the EQ argument should be written.
+            builder.MoveTo(field.Separator);
+            builder.Write(eqSwitch);
 
-        // Save the sample document.
-        string docPath = "SampleWithEquations.docx";
-        doc.Save(docPath);
+            // Convert the field to a real OfficeMath node.
+            FieldEQ fieldEq = field as FieldEQ;
+            OfficeMath officeMath = fieldEq?.AsOfficeMath();
 
-        // Reload the document to ensure a clean state.
+            if (officeMath != null)
+            {
+                // Insert the OfficeMath node before the field start.
+                Node fieldStart = field.Start;
+                fieldStart.ParentNode.InsertBefore(officeMath, fieldStart);
+
+                // Remove the original field so only the OfficeMath remains.
+                field.Remove();
+            }
+        }
+
+        // Add some paragraphs and equations.
+        builder.Writeln("Paragraph before equations.");
+        InsertEquation(@"\f(1,2)"); // Simple fraction.
+        builder.Writeln(); // New line after the equation.
+        InsertEquation(@"\r(3,x)"); // Simple root.
+        builder.Writeln(); // New line after the equation.
+        InsertEquation(@"\s(5)"); // Simple sum.
+        builder.Writeln("Paragraph after equations.");
+
+        // Save the document.
+        string docPath = "Sample.docx";
+        doc.Save(docPath, SaveFormat.Docx);
+
+        // Reload the document to ensure proper loading.
         Document loadedDoc = new Document(docPath);
 
-        // Prepare the report.
-        StringBuilder reportBuilder = new StringBuilder();
-        reportBuilder.AppendLine("OfficeMath Equation Report");
-        reportBuilder.AppendLine("---------------------------");
-
-        // Get all OfficeMath nodes.
+        // Retrieve all OfficeMath nodes.
         NodeCollection officeMathNodes = loadedDoc.GetChildNodes(NodeType.OfficeMath, true);
-        int equationIndex = 0;
 
-        // Get all paragraphs once for position calculations.
-        NodeCollection allParagraphs = loadedDoc.GetChildNodes(NodeType.Paragraph, true);
+        // Prepare report lines.
+        List<string> reportLines = new List<string>();
+        reportLines.Add("Index,MathObjectType,ParagraphIndex");
 
-        foreach (OfficeMath om in officeMathNodes)
+        // Retrieve all paragraphs for index calculation.
+        NodeCollection paragraphs = loadedDoc.GetChildNodes(NodeType.Paragraph, true);
+
+        for (int i = 0; i < officeMathNodes.Count; i++)
         {
-            equationIndex++;
+            OfficeMath om = (OfficeMath)officeMathNodes[i];
+            Paragraph para = om.ParentNode as Paragraph;
+            int paraIndex = -1;
+            if (para != null)
+            {
+                paraIndex = paragraphs.IndexOf(para);
+            }
 
-            // MathObjectType of the equation.
-            var mathObjectType = om.MathObjectType;
-
-            // Parent paragraph.
-            Paragraph parentParagraph = om.ParentParagraph;
-
-            // Paragraph index (1‑based).
-            int paragraphIndex = allParagraphs.IndexOf(parentParagraph) + 1;
-
-            // Section index (1‑based).
-            Section parentSection = parentParagraph?.ParentSection;
-            int sectionIndex = loadedDoc.Sections.IndexOf(parentSection) + 1;
-
-            reportBuilder.AppendLine(
-                $"Equation {equationIndex}: MathObjectType={mathObjectType}, Section={sectionIndex}, Paragraph={paragraphIndex}");
+            string line = $"{i + 1},{om.MathObjectType},{paraIndex}";
+            reportLines.Add(line);
         }
 
         // Write the report to a text file.
         string reportPath = "OfficeMathReport.txt";
-        File.WriteAllText(reportPath, reportBuilder.ToString());
+        File.WriteAllLines(reportPath, reportLines);
 
         // Validate that the report file was created.
         if (!File.Exists(reportPath))
-            throw new InvalidOperationException("Report file was not created.");
-
-        // Optionally, write a brief console message (no user interaction required).
-        Console.WriteLine($"Report generated: {Path.GetFullPath(reportPath)}");
-    }
-
-    // Helper method to insert an equation using the EQ-field bootstrap workflow.
-    private static void InsertEquation(DocumentBuilder builder, string eqSwitch)
-    {
-        // Insert an EQ field.
-        Field field = builder.InsertField(FieldType.FieldEquation, true);
-        if (field is not FieldEQ fieldEq)
-            return; // Safety check.
-
-        // Move to the field separator and write the EQ argument.
-        builder.MoveTo(fieldEq.Separator);
-        builder.Write(eqSwitch);
-
-        // Convert the field to an OfficeMath node.
-        OfficeMath officeMath = fieldEq.AsOfficeMath();
-
-        // If conversion succeeded, replace the field with the real OfficeMath node.
-        if (officeMath != null)
         {
-            // Insert the OfficeMath node before the field start.
-            Node fieldStart = field.Start;
-            fieldStart.ParentNode.InsertBefore(officeMath, fieldStart);
-
-            // Remove the original field from the document.
-            field.Remove();
+            throw new Exception("Report file was not created.");
         }
     }
 }

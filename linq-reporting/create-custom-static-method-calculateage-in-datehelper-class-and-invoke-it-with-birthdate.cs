@@ -1,16 +1,15 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public static class DateHelper
 {
+    // Calculates age in years based on the provided birth date.
     public static int CalculateAge(DateTime birthDate)
     {
-        DateTime today = DateTime.Today;
+        var today = DateTime.Today;
         int age = today.Year - birthDate.Year;
-        if (birthDate.Date > today.AddYears(-age))
+        if (birthDate > today.AddYears(-age))
             age--;
         return age;
     }
@@ -18,51 +17,43 @@ public static class DateHelper
 
 public class Person
 {
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; set; } = "";
     public DateTime BirthDate { get; set; }
 
+    // Exposes the calculated age using the static helper method.
     public int Age => DateHelper.CalculateAge(BirthDate);
-}
-
-public class ReportModel
-{
-    public List<Person> Persons { get; set; } = new();
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare template
-        string templatePath = "template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("<<foreach [p in Persons]>>");
-        builder.Writeln("Name: <<[p.Name]>>");
-        builder.Writeln("Age: <<[p.Age]>>");
-        builder.Writeln("<</foreach>>");
-
-        templateDoc.Save(templatePath);
-
-        // Prepare data
-        ReportModel model = new ReportModel
+        // Sample data model.
+        var person = new Person
         {
-            Persons = new List<Person>
-            {
-                new Person { Name = "Alice", BirthDate = new DateTime(1990, 5, 12) },
-                new Person { Name = "Bob", BirthDate = new DateTime(1985, 11, 23) },
-                new Person { Name = "Charlie", BirthDate = new DateTime(2000, 2, 3) }
-            }
+            Name = "John Doe",
+            BirthDate = new DateTime(1990, 5, 15)
         };
 
-        // Build report
-        Document reportDoc = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+        // Create the LINQ Reporting template programmatically.
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Name: <<[model.Name]>>");
+        builder.Writeln("Age: <<[model.Age]>>");
 
-        // Save output
-        string outputPath = "report.docx";
-        reportDoc.Save(outputPath);
+        // Save the template to disk.
+        const string templatePath = "template.docx";
+        templateDoc.Save(templatePath);
+
+        // Load the template for report generation.
+        var doc = new Document(templatePath);
+
+        // Build the report using the data model.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, person, "model");
+
+        // Save the generated report.
+        const string outputPath = "output.docx";
+        doc.Save(outputPath);
     }
 }

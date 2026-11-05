@@ -1,102 +1,102 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Tables;
+
+public class OrderItem
+{
+    public string Description { get; set; } = "";
+    public int Quantity { get; set; }
+    public decimal UnitPrice { get; set; }
+}
+
+public class OrderReport
+{
+    public List<OrderItem> Items { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Ensure the output directory exists.
+        string outputDir = "Output";
+        Directory.CreateDirectory(outputDir);
 
-        // Paths for the template and the generated report.
-        const string templatePath = "Template.docx";
-        const string outputPath = "Report.docx";
-
-        // -----------------------------------------------------------------
         // Create the template document programmatically.
-        // -----------------------------------------------------------------
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        CreateTemplate(templatePath);
 
-        builder.Writeln("Order Report");
+        // Load the template.
+        Document doc = new(templatePath);
+
+        // Prepare sample data.
+        OrderReport model = new()
+        {
+            Items = new()
+            {
+                new OrderItem { Description = "Widget A", Quantity = 3, UnitPrice = 9.99m },
+                new OrderItem { Description = "Widget B", Quantity = 5, UnitPrice = 14.50m },
+                new OrderItem { Description = "Widget C", Quantity = 2, UnitPrice = 7.25m }
+            }
+        };
+
+        // Build the report using LINQ Reporting Engine.
+        ReportingEngine engine = new();
+        engine.BuildReport(doc, model, "model");
+
+        // Save the generated report.
+        string reportPath = Path.Combine(outputDir, "Report.docx");
+        doc.Save(reportPath);
+    }
+
+    private static void CreateTemplate(string path)
+    {
+        Document doc = new();
+        DocumentBuilder builder = new(doc);
+
+        // Title
+        builder.Writeln("Order Items Report");
         builder.Writeln();
 
-        // Begin foreach band that will repeat the table rows.
+        // Begin foreach band.
         builder.Writeln("<<foreach [item in Items]>>");
 
-        // Create the table inside the foreach band.
+        // Start table inside foreach.
         Table table = builder.StartTable();
 
-        // Header row.
+        // Header row (only once, before data rows).
         builder.InsertCell();
-        builder.Writeln("Product");
+        builder.Writeln("Description");
         builder.InsertCell();
-        builder.Writeln("Qty");
+        builder.Writeln("Quantity");
         builder.InsertCell();
         builder.Writeln("Unit Price");
         builder.InsertCell();
         builder.Writeln("Line Total");
         builder.EndRow();
 
-        // Data row – will be repeated for each item.
+        // Data row inside foreach.
         builder.InsertCell();
-        builder.Writeln("<<[item.ProductName]>>");
+        builder.Writeln("<<[item.Description]>>");
         builder.InsertCell();
         builder.Writeln("<<[item.Quantity]>>");
         builder.InsertCell();
         builder.Writeln("<<[item.UnitPrice]>>");
         builder.InsertCell();
-        // Calculate line total using an expression tag.
+        // Calculate line total using expression tag.
         builder.Writeln("<<[item.Quantity * item.UnitPrice]>>");
         builder.EndRow();
 
-        // End the table and the foreach band.
+        // End table.
         builder.EndTable();
+
+        // End foreach band.
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
-        doc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // Load the template and build the report.
-        // -----------------------------------------------------------------
-        var reportDoc = new Document(templatePath);
-
-        // Sample data.
-        var order = new Order
-        {
-            Items = new List<LineItem>
-            {
-                new LineItem { ProductName = "Apple",  Quantity = 3, UnitPrice = 0.5m },
-                new LineItem { ProductName = "Banana", Quantity = 5, UnitPrice = 0.3m },
-                new LineItem { ProductName = "Cherry", Quantity = 2, UnitPrice = 1.2m }
-            }
-        };
-
-        // Build the report.
-        var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, order, "order");
-
-        // Save the generated report.
-        reportDoc.Save(outputPath);
+        // Save the template.
+        doc.Save(path);
     }
-}
-
-// ---------------------------------------------------------------------
-// Data model classes.
-// ---------------------------------------------------------------------
-public class Order
-{
-    public List<LineItem> Items { get; set; } = new();
-}
-
-public class LineItem
-{
-    public string ProductName { get; set; } = "";
-    public int Quantity { get; set; }
-    public decimal UnitPrice { get; set; }
 }

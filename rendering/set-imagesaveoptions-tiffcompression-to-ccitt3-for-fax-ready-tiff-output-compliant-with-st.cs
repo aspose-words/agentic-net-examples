@@ -7,27 +7,26 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple document with some text.
+        // Create a simple document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample text for TIFF rendering.");
+        builder.Writeln("This is a sample document for fax‑ready TIFF output.");
 
-        // Set up TIFF save options to use CCITT3 compression (fax‑ready).
+        // Configure TIFF save options with CCITT3 compression.
         ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff);
         tiffOptions.TiffCompression = TiffCompression.Ccitt3;
 
-        string outputFile = "fax_ready_output.tiff";
+        // Define output file path.
+        string outputPath = "fax_ready_output.tiff";
 
-        // Render the document to a TIFF file using the specified options.
-        doc.Save(outputFile, tiffOptions);
+        // Save the document as a TIFF image using the specified options.
+        doc.Save(outputPath, tiffOptions);
 
-        // Verify that the TIFF file was created.
-        if (!File.Exists(outputFile))
-        {
-            throw new InvalidOperationException("Failed to create the TIFF file.");
-        }
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException($"Failed to create TIFF file at '{outputPath}'.");
 
-        // Optionally, report the file size.
-        Console.WriteLine($"TIFF file saved: {outputFile} ({new FileInfo(outputFile).Length} bytes)");
+        // Optionally, report success (no interactive prompts required).
+        Console.WriteLine($"TIFF file saved successfully to '{Path.GetFullPath(outputPath)}'.");
     }
 }

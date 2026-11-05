@@ -4,73 +4,74 @@
     "slug": "linq-reporting",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Create the template document programmatically inside the example unless an external template file is explicitly bootstrapped by the example. Create realistic local sample data and local sample assets before calling ReportingEngine.BuildReport. Keep root object, root name, public model classes, and template references fully aligned.",
+    "preferred_workflow": "Programmatically create a DOCX template, insert exact <<...>> tags, prepare realistic sample data, load the template, invoke ReportingEngine.BuildReport with a matching root object name, and finally save the generated document.",
     "required_packages": [
       "Aspose.Words",
       "Newtonsoft.Json",
       "System.Text.Encoding.CodePages"
     ],
     "package_versions": {
-      "Aspose.Words": "26.9.0",
+      "Aspose.Words": "26.10.0",
+      "Newtonsoft.Json": "",
       "System.Text.Encoding.CodePages": "9.0.2"
     },
     "required_namespaces": [
       "System",
       "System.Collections.Generic",
       "System.IO",
+      "System.Text",
       "Aspose.Words",
       "Aspose.Words.Reporting",
-      "System.Text",
       "Aspose.Words.Tables",
       "Aspose.Words.Drawing",
-      "System.Linq",
       "System.Globalization",
+      "System.Linq",
       "System.Text.RegularExpressions",
+      "Newtonsoft.Json",
+      "System.Threading",
       "System.Threading.Tasks",
       "System.Collections",
-      "Newtonsoft.Json",
-      "Aspose.Words.Lists",
       "System.Data",
-      "Aspose.Words.Saving",
-      "Aspose.Words.Drawing.Charts",
+      "System.Text.Encodings.Web",
       "System.Net.Http",
+      "Aspose.Words.Drawing.Charts",
       "Aspose.Words.Fields",
+      "Aspose.Words.Saving",
       "System.Xml.Linq",
-      "System.Text.Json",
-      "System.Threading",
+      "System.Xml",
+      "System.Reflection",
+      "System.Xml.Serialization",
       "System.Diagnostics",
-      "Aspose.Words.Replacing",
-      "System.Reflection"
+      "Aspose.Words.Loading",
+      "Newtonsoft.Json.Linq"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
+      "Path",
       "ReportingEngine",
       "Table",
       "Directory",
       "File",
-      "Path",
       "Shape",
-      "Cell",
-      "NodeType",
-      "Paragraph",
       "Run",
-      "JsonDataSource",
-      "Range",
       "SaveFormat",
       "StyleIdentifier",
-      "Row",
+      "Font",
       "MemoryStream",
       "ImageData",
-      "ChartType",
+      "Paragraph",
+      "Range",
+      "NodeType",
       "Chart",
+      "ChartType",
       "Field",
       "FieldType",
+      "Cell",
       "XmlDataSource",
-      "Font",
-      "HtmlSaveOptions",
-      "PdfSaveOptions",
-      "FindReplaceOptions"
+      "Row",
+      "JsonDataSource",
+      "PdfSaveOptions"
     ]
   },
   "stats": {
@@ -81,86 +82,79 @@
     }
   },
   "rules_summary": {
-    "primary_core_rules": [
-      "Use Aspose.Words.Reporting.ReportingEngine for all LINQ Reporting examples.",
-      "Always insert real LINQ Reporting tags into the document template before calling BuildReport.",
-      "Use only valid Aspose.Words LINQ Reporting syntax with <<...>> tags.",
-      "Close foreach blocks using <</foreach>> exactly; do not use </foreach> or any HTML/XML-style closing syntax.",
-      "Do not use mustache syntax like {{...}} for LINQ Reporting templates.",
-      "Do not call BuildReport until the template content has been fully created and saved or loaded."
+    "strict_api_bans": [
+      "Do not use any API outside the Aspose.Words.Reporting namespace for LINQ Reporting tag processing."
     ],
-    "primary_template_rules": [
-      "If a template file is required by the scenario, create it programmatically inside the example first, then save it locally, then load it again for report generation if needed.",
-      "Do not assume any template file already exists on disk.",
-      "When the task mentions DOCX templates, create a valid DOCX template in the example using Document and DocumentBuilder.",
-      "When creating tags with DocumentBuilder.Writeln or Write, use the exact <<...>> syntax required by the LINQ Reporting Engine.",
-      "Do not introduce malformed tags, mismatched opening/closing tags, or invalid in-tag expressions."
+    "canonical_patterns": [
+      "Always keep foreach, if, var, and other tags within a single story or table without crossing boundaries."
     ],
-    "primary_alignment_rules": [
-      "Keep the BuildReport root object, root name, and template references fully aligned.",
-      "If the template uses <<[order.CustomerName]>>, call BuildReport(doc, order, \"order\").",
-      "If the template uses <<[model.CustomerName]>>, call BuildReport(doc, model, \"model\").",
-      "If a wrapper object is passed, template expressions must reference that wrapper explicitly instead of assuming the wrapped object is the root.",
-      "Avoid anonymous root data sources; use a public wrapper class when needed."
-    ],
-    "primary_tag_rules": [
-      "Use valid tags such as <<foreach [p in persons]>>, <<if [condition]>>, <<var [x = expr]>>, <<[expr]>>, and matching closing tags like <</foreach>> and <</if>> when supported by the engine.",
-      "Do not place pseudo-C# code outside valid tag syntax and expect the engine to interpret it.",
-      "Do not write malformed tag examples such as {{foreach p in Model}}...{{end}}.",
-      "When nesting loops or conditions, ensure closing tags are properly balanced.",
-      "Use only valid in-tag expressions that the LINQ Reporting Engine can evaluate.",
-      "Do not use pseudo-format suffixes like <<[value]:date>> or <<[value]:currency>>.",
-      "Do not use composite format placeholders like <<[value]:{0:C}>> or <<[dateValue]:{0:yyyy-MM-dd}>>.",
-      "For formatted output, use expression-based formatting such as <<[value.ToString(\"C\")]>> or <<[dateValue.ToString(\"yyyy-MM-dd\")]>>.",
-      "For sorting, filtering, projection, grouping, and aggregate scenarios, keep expressions simple and valid for the actual model shape."
-    ],
-    "primary_runtime_prevention": [
-      "Do not assume templates already exist; generate them.",
-      "Do not leave model properties inaccessible to the reporting engine.",
-      "Do not mismatch BuildReport root name and template references.",
-      "Do not create malformed LINQ Reporting tags.",
-      "Do not forget to create sample input files referenced by insert, image, JSON, XML, or CSV scenarios."
-    ],
-    "secondary_delta_focus": [
-      "Secondary activation rules",
-      "Foreach story and table-boundary rules",
-      "XML hierarchy and namespace rules",
-      "Nested XML repeating-section rules",
-      "Merge and grouped-table rules",
-      "Reflection optimization and XML-array rules",
-      "Hard bans for recurring wrong XML and data-shape mistakes"
+    "nullable_warning_prevention": [
+      "Initialize all non-nullable properties and guard against possible null values before they are accessed in expressions."
     ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "Malformed or invented tag syntax",
-      "symptom": "Parser errors caused by malformed tags, mismatched closing tags, extra colons/commas, invented switches, or pseudo-tag variants.",
-      "fix": "Use only exact LINQ Reporting tag syntax and valid in-tag expressions. Keep opening and closing tags matched and avoid invented switches."
+      "pattern": "Incorrect LINQ Reporting tag syntax",
+      "symptom": "Parser errors or runtime exceptions indicating malformed tags or unexpected tokens.",
+      "cause": "Tags do not follow the exact <<...>> syntax, have mismatched opening/closing tags, or contain invented switches such as colons or format suffixes.",
+      "fix": "Use only supported tags (foreach, if, var, expression, etc.) with exact syntax and balanced closing tags.",
+      "prevention": "Validate template tags against the official documentation before building the report."
     },
     {
-      "pattern": "Unsafe table and foreach structure",
-      "symptom": "Errors such as EndTable while not building a table, or foreach crossing table/story boundaries.",
-      "fix": "Use the safest repeated-table structure: start foreach first, start the table after foreach starts, end the table just before foreach ends, then close foreach. Keep each opening and closing tag within the same valid table/story structure."
+      "pattern": "Table/foreach boundary violation",
+      "symptom": "Runtime InvalidOperationException stating that a table cannot be ended while not building a table.",
+      "cause": "A foreach block crosses a table boundary or the table is started or ended outside the foreach scope.",
+      "fix": "Start the foreach block first, then start the table, end the table, and finally close the foreach block.",
+      "prevention": "Keep table start/end calls entirely within the same foreach block and avoid nesting tables across loops."
     },
     {
-      "pattern": "Image tag placement errors",
-      "symptom": "Image tag not well formed, image-container errors, or malformed image-in-table structure.",
-      "fix": "Place image tags only inside a textbox prepared as the image container. For image-in-table tasks, create the table safely and place the textbox inside the required cell."
+      "pattern": "Improper image tag usage",
+      "symptom": "InvalidOperationException indicating that the image cannot be loaded from the provided string value.",
+      "cause": "The image tag is placed outside a textbox container or the path expression does not resolve to a valid file, URI, or Base64 string.",
+      "fix": "Insert a textbox shape, move the builder cursor into the textbox, and write the <<image [path]>> tag with a correct path or Base64 data.",
+      "prevention": "Always wrap image tags in a textbox and verify that the image source is accessible at runtime."
     },
     {
-      "pattern": "Root object or data-shape mismatch",
-      "symptom": "Template paths do not match the actual root object, root name, or source shape, especially for XML, DataTable, DataView, or DataRow sources.",
-      "fix": "Keep the BuildReport root object, root name, and template expressions fully aligned. Use public model types and match template paths to the real source hierarchy."
+      "pattern": "Root object name mismatch",
+      "symptom": "Engine cannot resolve expressions, reporting token errors such as unexpected identifiers.",
+      "cause": "The root object name supplied to BuildReport does not match the name used in template tags, or the data shape differs from the template expectations.",
+      "fix": "Pass the root object and its name to BuildReport so that template expressions reference the same identifier, and use a public wrapper class when needed.",
+      "prevention": "Keep the root object, root name, and template tag references fully aligned."
     },
     {
-      "pattern": "Unsupported XML namespace handling",
-      "symptom": "Compile or runtime failures caused by unsupported XML namespace APIs or incorrect XmlDataSource constructor usage.",
-      "fix": "Use supported XmlDataSource constructors together with XmlDataLoadOptions when needed. Do not pass XmlNamespaceManager to XmlDataSource constructors and do not call unavailable namespace helper APIs."
+      "pattern": "Missing Aspose.Words.Tables reference",
+      "symptom": "Compile-time CS0246 error: type or namespace name 'Table' could not be found.",
+      "cause": "The source file lacks a using directive for Aspose.Words.Tables or the assembly reference is omitted.",
+      "fix": "Add `using Aspose.Words.Tables;` and ensure the Aspose.Words assembly is referenced.",
+      "prevention": "Include all required namespaces listed in the category definition before compiling."
     },
     {
-      "pattern": "Nullable and style warnings",
-      "symptom": "Warnings such as CS8618, CS8600, CS8602, CS8604, or IDE0090.",
-      "fix": "Initialize non-nullable properties, guard maybe-null values before dereference, use nullable locals when appropriate, and prefer target-typed new where the simplified form is obvious."
+      "pattern": "Invalid Encoding.CodePages reference",
+      "symptom": "Compile-time CS0426/CS0117 errors about 'Encoding.CodePages' not existing.",
+      "cause": "Code attempts to access a non-existent member on System.Text.Encoding instead of registering the code-page provider.",
+      "fix": "Call `Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);` and remove any `Encoding.CodePages` references.",
+      "prevention": "Use the correct provider registration pattern for code-page support in .NET Core."
+    },
+    {
+      "pattern": "Unsupported include tag",
+      "symptom": "InvalidOperationException reporting an unexpected token 'include' or malformed 'doc' tag.",
+      "cause": "The include tag is not part of the supported LINQ Reporting syntax or is malformed.",
+      "fix": "Do not use the include tag; embed reusable content by programmatically inserting it into the template.",
+      "prevention": "Restrict templates to the officially supported tag set."
+    },
+    {
+      "pattern": "Malformed var tag",
+      "symptom": "Engine reports unexpected token or missing assignment operator in a var tag.",
+      "cause": "The var tag does not follow the `<<var [name = expression]>>` format.",
+      "fix": "Write the var tag as `<<var [total = item.Quantity * item.UnitPrice]>>` and reference `<<[total]>>` later.",
+      "prevention": "Validate var tag syntax against the documented pattern before running the report."
+    },
+    {
+      "pattern": "Static member access in expressions",
+      "symptom": "InvalidOperationException stating that the engine cannot get the value of a static type such as 'Math' or custom static class.",
+      "cause": "Expressions attempt to call static members directly, which the LINQ Reporting engine does not resolve.",
+      "fix": "Expose required static functionality through an instance helper class and pass it as an additional data source.",
+      "prevention": "Wrap static calls in a helper object and reference the helper in template expressions."
     }
   ],
   "examples": [
@@ -227,8 +221,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 7,
@@ -260,7 +254,7 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
+      "selected_engine": "llm_secondary",
       "winner": "llm"
     },
     {
@@ -282,8 +276,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp_secondary",
+      "winner": "mcp"
     },
     {
       "id": 12,
@@ -425,8 +419,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 25,
@@ -453,18 +447,18 @@
     {
       "id": 27,
       "file_name": "create-nested-data-band-tags-to-represent-master-detail-relationships-between-orders-and-t.cs",
-      "task": "Create nested data band tags to represent master‑detail relationships between orders and their line items.",
+      "task": "Create nested data band tags to represent master-detail relationships between orders and their line items.",
       "workflow": "linq-reporting-workflow",
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 28,
       "file_name": "implement-a-custom-extension-method-that-converts-enum-values-to-user-friendly-strings-for.cs",
-      "task": "Implement a custom extension method that converts enum values to user‑friendly strings for template display.",
+      "task": "Implement a custom extension method that converts enum values to user-friendly strings for template display.",
       "workflow": "linq-reporting-workflow",
       "outputs": [
         "docx"
@@ -491,8 +485,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 31,
@@ -502,8 +496,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 32,
@@ -524,8 +518,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 34,
@@ -557,7 +551,7 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
+      "selected_engine": "mcp_secondary",
       "winner": "mcp"
     },
     {
@@ -590,8 +584,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 40,
@@ -645,8 +639,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 45,
@@ -656,8 +650,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 46,
@@ -733,8 +727,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 53,
@@ -777,8 +771,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 57,
@@ -854,8 +848,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 64,
@@ -898,7 +892,7 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm_secondary",
+      "selected_engine": "llm",
       "winner": "llm"
     },
     {
@@ -920,8 +914,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 70,
@@ -942,7 +936,7 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp_secondary",
+      "selected_engine": "mcp",
       "winner": "mcp"
     },
     {
@@ -975,8 +969,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp_secondary",
+      "winner": "mcp"
     },
     {
       "id": 75,
@@ -1019,8 +1013,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 79,
@@ -1052,8 +1046,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 82,
@@ -1096,8 +1090,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 86,
@@ -1118,8 +1112,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 88,
@@ -1129,8 +1123,8 @@
       "outputs": [
         "json"
       ],
-      "selected_engine": "llm_secondary",
-      "winner": "llm"
+      "selected_engine": "mcp_secondary",
+      "winner": "mcp"
     },
     {
       "id": 89,
@@ -1184,8 +1178,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm_secondary",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 94,
@@ -1201,7 +1195,7 @@
     {
       "id": 95,
       "file_name": "nest-a-foreach-band-for-invoices-inside-a-customer-band-to-generate-a-hierarchical-master.cs",
-      "task": "Nest a foreach band for invoices inside a customer band to generate a hierarchical master‑detail report.",
+      "task": "Nest a foreach band for invoices inside a customer band to generate a hierarchical master-detail report.",
       "workflow": "linq-reporting-workflow",
       "outputs": [
         "docx"
@@ -1234,7 +1228,7 @@
     {
       "id": 98,
       "file_name": "insert-an-external-word-document-dynamically-into-a-placeholder-using-the-inserting-docume.cs",
-      "task": "Insert an external Word document dynamically into a placeholder using the inserting‑documents‑dynamically workflow.",
+      "task": "Insert an external Word document dynamically into a placeholder using the inserting-documents-dynamically workflow.",
       "workflow": "linq-reporting-workflow",
       "outputs": [
         "docx"
@@ -1289,24 +1283,24 @@
     {
       "id": 103,
       "file_name": "apply-lower-case-roman-numeral-format-to-chapter-numbers-using-the-chapternumber-roman-exp.cs",
-      "task": "Apply lower‑case Roman numeral format to chapter numbers using the {=ChapterNumber:roman} expression.",
+      "task": "Apply lower-case Roman numeral format to chapter numbers using the {=ChapterNumber:roman} expression.",
       "workflow": "linq-reporting-workflow",
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 104,
       "file_name": "convert-integer-values-to-upper-case-alphabetic-letters-for-section-headings-with-the-sect.cs",
-      "task": "Convert integer values to upper‑case alphabetic letters for section headings with the {=Section:letter} tag.",
+      "task": "Convert integer values to upper-case alphabetic letters for section headings with the {=Section:letter} tag.",
       "workflow": "linq-reporting-workflow",
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 105,
@@ -1316,8 +1310,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 106,
@@ -1338,8 +1332,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 108,
@@ -1421,7 +1415,7 @@
     {
       "id": 115,
       "file_name": "apply-custom-font-styling-to-expression-results-by-omitting-the-html-switch-and-using-firs.cs",
-      "task": "Apply custom font styling to expression results by omitting the html switch and using first‑character formatting.",
+      "task": "Apply custom font styling to expression results by omitting the html switch and using first-character formatting.",
       "workflow": "linq-reporting-workflow",
       "outputs": [
         "html"
@@ -1537,8 +1531,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 126,
@@ -1614,8 +1608,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp_secondary",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 133,
@@ -1631,7 +1625,7 @@
     {
       "id": 134,
       "file_name": "insert-bookmark-expression-tags-where-bookmark-names-are-derived-from-non-empty-string-exp.cs",
-      "task": "Insert <<bookmark [Expression]>> tags where bookmark names are derived from non‑empty string expressions.",
+      "task": "Insert <<bookmark [Expression]>> tags where bookmark names are derived from non-empty string expressions.",
       "workflow": "linq-reporting-workflow",
       "outputs": [
         "docx"
@@ -1746,7 +1740,7 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
+      "selected_engine": "mcp_secondary",
       "winner": "mcp"
     },
     {
@@ -1768,8 +1762,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 147,
@@ -1889,7 +1883,7 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp_secondary",
+      "selected_engine": "mcp",
       "winner": "mcp"
     },
     {
@@ -1900,8 +1894,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp_secondary",
+      "winner": "mcp"
     },
     {
       "id": 159,
@@ -1911,7 +1905,7 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
+      "selected_engine": "mcp_secondary",
       "winner": "mcp"
     },
     {
@@ -1922,8 +1916,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp_secondary",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 161,
@@ -1955,8 +1949,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 164,
@@ -2010,8 +2004,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp_secondary",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 169,
@@ -2054,8 +2048,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 173,
@@ -2065,8 +2059,8 @@
       "outputs": [
         "json"
       ],
-      "selected_engine": "llm_secondary",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 174,
@@ -2076,8 +2070,8 @@
       "outputs": [
         "xml"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 175,
@@ -2087,8 +2081,8 @@
       "outputs": [
         "csv"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 176,
@@ -2164,8 +2158,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 183,
@@ -2241,7 +2235,7 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm_secondary",
+      "selected_engine": "llm",
       "winner": "llm"
     },
     {
@@ -2252,8 +2246,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 191,
@@ -2263,8 +2257,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp_secondary",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 192,
@@ -2274,8 +2268,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 193,
@@ -2319,8 +2313,8 @@
         "docx",
         "pdf"
       ],
-      "selected_engine": "mcp_secondary",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 197,
@@ -2336,7 +2330,7 @@
     {
       "id": 198,
       "file_name": "build-multi-section-report-using-separate-data-sources-for-header-body-and-footer-via-api.cs",
-      "task": "Build multi‑section report using separate data sources for header, body, and footer via API.",
+      "task": "Build multi-section report using separate data sources for header, body, and footer via API.",
       "workflow": "linq-reporting-workflow",
       "outputs": [
         "docx"
@@ -2352,8 +2346,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 200,
@@ -2397,8 +2391,8 @@
       "outputs": [
         "rtf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 204,
@@ -2409,8 +2403,8 @@
         "docx",
         "xml"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 205,
@@ -2431,8 +2425,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp_secondary",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 207,
@@ -2464,7 +2458,7 @@
       "outputs": [
         "csv"
       ],
-      "selected_engine": "llm",
+      "selected_engine": "llm_secondary",
       "winner": "llm"
     },
     {
@@ -2508,8 +2502,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp_secondary",
+      "winner": "mcp"
     },
     {
       "id": 214,
@@ -2519,8 +2513,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 215,
@@ -2563,7 +2557,7 @@
       "outputs": [
         "csv"
       ],
-      "selected_engine": "llm_secondary",
+      "selected_engine": "llm",
       "winner": "llm"
     },
     {
@@ -2574,8 +2568,8 @@
       "outputs": [
         "csv"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm_secondary",
+      "winner": "llm"
     },
     {
       "id": 220,
@@ -2585,8 +2579,8 @@
       "outputs": [
         "xml"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp_secondary",
+      "winner": "mcp"
     },
     {
       "id": 221,
@@ -2596,7 +2590,7 @@
       "outputs": [
         "xml"
       ],
-      "selected_engine": "llm_secondary",
+      "selected_engine": "llm",
       "winner": "llm"
     },
     {
@@ -2607,8 +2601,8 @@
       "outputs": [
         "xml"
       ],
-      "selected_engine": "mcp_secondary",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 223,
@@ -2618,8 +2612,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 224,
@@ -2629,8 +2623,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp_secondary",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 225,
@@ -2640,7 +2634,7 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp_secondary",
+      "selected_engine": "mcp",
       "winner": "mcp"
     },
     {
@@ -2674,8 +2668,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 229,
@@ -2685,8 +2679,8 @@
       "outputs": [
         "xml"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 230,
@@ -2707,8 +2701,8 @@
       "outputs": [
         "xml"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 232,
@@ -2718,8 +2712,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 233,
@@ -2740,7 +2734,7 @@
       "outputs": [
         "csv"
       ],
-      "selected_engine": "mcp",
+      "selected_engine": "mcp_secondary",
       "winner": "mcp"
     },
     {
@@ -2751,8 +2745,8 @@
       "outputs": [
         "json"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 236,
@@ -2775,8 +2769,8 @@
         "pdf",
         "xml"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 238,
@@ -2787,8 +2781,8 @@
         "pdf",
         "csv"
       ],
-      "selected_engine": "mcp_secondary",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 239,
@@ -2799,8 +2793,8 @@
         "docx",
         "csv"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 240,
@@ -2834,8 +2828,8 @@
       "outputs": [
         "json"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm_secondary",
+      "winner": "llm"
     },
     {
       "id": 243,
@@ -2845,8 +2839,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 244,
@@ -2955,8 +2949,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 254,
@@ -2988,7 +2982,7 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp_secondary",
+      "selected_engine": "mcp",
       "winner": "mcp"
     },
     {
@@ -3021,8 +3015,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 260,
@@ -3032,8 +3026,8 @@
       "outputs": [
         "xml"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm_secondary",
+      "winner": "llm"
     },
     {
       "id": 261,
@@ -3065,8 +3059,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 264,
@@ -3076,8 +3070,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 265,
@@ -3131,8 +3125,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 270,
@@ -3186,8 +3180,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp_secondary",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 275,
@@ -3252,7 +3246,7 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
+      "selected_engine": "mcp_secondary",
       "winner": "mcp"
     },
     {
@@ -3318,8 +3312,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 287,
@@ -3357,7 +3351,7 @@
     {
       "id": 290,
       "file_name": "apply-a-single-row-list-template-to-generate-a-simple-report-from-a-collection-of-objects.cs",
-      "task": "Apply a single‑row list template to generate a simple report from a collection of objects.",
+      "task": "Apply a single-row list template to generate a simple report from a collection of objects.",
       "workflow": "linq-reporting-workflow",
       "outputs": [
         "docx"
@@ -3368,12 +3362,12 @@
     {
       "id": 291,
       "file_name": "use-an-in-table-list-template-to-render-tabular-data-within-a-document-generated-from-json.cs",
-      "task": "Use an in‑table list template to render tabular data within a document generated from JSON source.",
+      "task": "Use an in-table list template to render tabular data within a document generated from JSON source.",
       "workflow": "linq-reporting-workflow",
       "outputs": [
         "json"
       ],
-      "selected_engine": "llm",
+      "selected_engine": "llm_secondary",
       "winner": "llm"
     },
     {
@@ -3395,8 +3389,8 @@
       "outputs": [
         "json"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 294,
@@ -3406,8 +3400,8 @@
       "outputs": [
         "csv"
       ],
-      "selected_engine": "llm_secondary",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 295,
@@ -3439,7 +3433,7 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
+      "selected_engine": "mcp_secondary",
       "winner": "mcp"
     },
     {
@@ -3461,8 +3455,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm_secondary",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 300,
@@ -3483,13 +3477,13 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm_secondary",
+      "selected_engine": "llm",
       "winner": "llm"
     },
     {
       "id": 302,
       "file_name": "use-built-in-enumeration-extension-methods-in-templates-to-perform-inline-sorting-before-r.cs",
-      "task": "Use built‑in enumeration extension methods in templates to perform inline sorting before rendering.",
+      "task": "Use built-in enumeration extension methods in templates to perform inline sorting before rendering.",
       "workflow": "linq-reporting-workflow",
       "outputs": [
         "docx"
@@ -3500,13 +3494,13 @@
     {
       "id": 303,
       "file_name": "apply-a-bulleted-list-template-to-generate-a-bullet-point-summary-from-a-filtered-json-arr.cs",
-      "task": "Apply a bulleted list template to generate a bullet‑point summary from a filtered JSON array.",
+      "task": "Apply a bulleted list template to generate a bullet-point summary from a filtered JSON array.",
       "workflow": "linq-reporting-workflow",
       "outputs": [
         "json"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 304,
@@ -3516,13 +3510,13 @@
       "outputs": [
         "xml"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 305,
       "file_name": "create-a-multi-section-document-by-nesting-foreach-loops-over-xml-and-json-data-sources-wi.cs",
-      "task": "Create a multi‑section document by nesting foreach loops over XML and JSON data sources within the same template.",
+      "task": "Create a multi-section document by nesting foreach loops over XML and JSON data sources within the same template.",
       "workflow": "linq-reporting-workflow",
       "outputs": [
         "xml",
@@ -3611,13 +3605,13 @@
     {
       "id": 313,
       "file_name": "apply-a-list-in-table-template-to-render-csv-data-as-rows-within-a-pre-formatted-word-tabl.cs",
-      "task": "Apply a list‑in‑table template to render CSV data as rows within a pre‑formatted Word table.",
+      "task": "Apply a list-in-table template to render CSV data as rows within a pre-formatted Word table.",
       "workflow": "linq-reporting-workflow",
       "outputs": [
         "csv"
       ],
-      "selected_engine": "mcp_secondary",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 314,
@@ -3628,8 +3622,8 @@
         "xml",
         "csv"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 315,
@@ -3650,8 +3644,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 317,
@@ -3661,7 +3655,7 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
+      "selected_engine": "llm_secondary",
       "winner": "llm"
     },
     {
@@ -3683,8 +3677,8 @@
       "outputs": [
         "xml"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 320,
@@ -3795,8 +3789,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm_secondary",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 330,
@@ -3812,7 +3806,7 @@
     {
       "id": 331,
       "file_name": "apply-a-single-row-template-to-each-item-in-a-csv-file-to-generate-individual-documents-pe.cs",
-      "task": "Apply a single‑row template to each item in a CSV file to generate individual documents per record.",
+      "task": "Apply a single-row template to each item in a CSV file to generate individual documents per record.",
       "workflow": "linq-reporting-workflow",
       "outputs": [
         "csv"
@@ -3828,7 +3822,7 @@
       "outputs": [
         "json"
       ],
-      "selected_engine": "mcp",
+      "selected_engine": "mcp_secondary",
       "winner": "mcp"
     },
     {
@@ -3839,8 +3833,8 @@
       "outputs": [
         "xml"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 334,
@@ -3867,7 +3861,7 @@
     {
       "id": 336,
       "file_name": "apply-an-in-table-list-template-to-json-data-to-produce-a-formatted-table-with-dynamic-row.cs",
-      "task": "Apply an in‑table list template to JSON data to produce a formatted table with dynamic rows.",
+      "task": "Apply an in-table list template to JSON data to produce a formatted table with dynamic rows.",
       "workflow": "linq-reporting-workflow",
       "outputs": [
         "json"
@@ -3916,8 +3910,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 341,
@@ -3933,13 +3927,13 @@
     {
       "id": 342,
       "file_name": "apply-a-bulleted-list-template-to-xml-nodes-representing-tasks-to-generate-a-bullet-point.cs",
-      "task": "Apply a bulleted list template to XML nodes representing tasks to generate a bullet‑point task list.",
+      "task": "Apply a bulleted list template to XML nodes representing tasks to generate a bullet-point task list.",
       "workflow": "linq-reporting-workflow",
       "outputs": [
         "xml"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 343,
@@ -3971,8 +3965,8 @@
       "outputs": [
         "csv"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 346,
@@ -3982,8 +3976,8 @@
       "outputs": [
         "json"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 347,
@@ -3993,19 +3987,19 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 348,
       "file_name": "apply-a-single-row-template-repeatedly-using-a-foreach-loop-over-csv-records-to-produce-ba.cs",
-      "task": "Apply a single‑row template repeatedly using a foreach loop over CSV records to produce batch documents.",
+      "task": "Apply a single-row template repeatedly using a foreach loop over CSV records to produce batch documents.",
       "workflow": "linq-reporting-workflow",
       "outputs": [
         "csv"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 349,
@@ -4043,7 +4037,7 @@
     {
       "id": 352,
       "file_name": "apply-an-in-table-list-template-to-xml-data-to-create-a-table-with-header-rows-from-elemen.cs",
-      "task": "Apply an in‑table list template to XML data to create a table with header rows from element names.",
+      "task": "Apply an in-table list template to XML data to create a table with header rows from element names.",
       "workflow": "linq-reporting-workflow",
       "outputs": [
         "xml"
@@ -4081,8 +4075,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 356,
@@ -4125,8 +4119,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm_secondary",
-      "winner": "llm"
+      "selected_engine": "mcp_secondary",
+      "winner": "mcp"
     },
     {
       "id": 360,
@@ -4158,7 +4152,7 @@
       "outputs": [
         "csv"
       ],
-      "selected_engine": "llm_secondary",
+      "selected_engine": "llm",
       "winner": "llm"
     },
     {
@@ -4186,7 +4180,7 @@
     {
       "id": 365,
       "file_name": "apply-a-single-row-template-to-each-element-of-an-xml-node-list-to-generate-separate-secti.cs",
-      "task": "Apply a single‑row template to each element of an XML node list to generate separate sections per item.",
+      "task": "Apply a single-row template to each element of an XML node list to generate separate sections per item.",
       "workflow": "linq-reporting-workflow",
       "outputs": [
         "xml"
@@ -4202,8 +4196,8 @@
       "outputs": [
         "json"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 367,
@@ -4213,8 +4207,8 @@
       "outputs": [
         "csv"
       ],
-      "selected_engine": "llm_secondary",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 368,
@@ -4224,7 +4218,7 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp_secondary",
+      "selected_engine": "mcp",
       "winner": "mcp"
     },
     {
@@ -4246,8 +4240,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 371,
@@ -4285,7 +4279,7 @@
     {
       "id": 374,
       "file_name": "apply-a-single-row-template-to-each-json-object-to-generate-individual-sections-with-detai.cs",
-      "task": "Apply a single‑row template to each JSON object to generate individual sections with detailed information.",
+      "task": "Apply a single-row template to each JSON object to generate individual sections with detailed information.",
       "workflow": "linq-reporting-workflow",
       "outputs": [
         "json"
@@ -4301,8 +4295,8 @@
       "outputs": [
         "csv"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 376,
@@ -4329,18 +4323,18 @@
     {
       "id": 378,
       "file_name": "apply-an-in-table-list-template-to-grouped-xml-nodes-mapping-each-group-to-a-separate-tabl.cs",
-      "task": "Apply an in‑table list template to grouped XML nodes, mapping each group to a separate table section.",
+      "task": "Apply an in-table list template to grouped XML nodes, mapping each group to a separate table section.",
       "workflow": "linq-reporting-workflow",
       "outputs": [
         "xml"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 379,
       "file_name": "use-the-where-method-with-a-case-insensitive-comparison-to-filter-json-entries-based-on-a.cs",
-      "task": "Use the Where method with a case‑insensitive comparison to filter JSON entries based on a string field.",
+      "task": "Use the Where method with a case-insensitive comparison to filter JSON entries based on a string field.",
       "workflow": "linq-reporting-workflow",
       "outputs": [
         "json"
@@ -4373,7 +4367,7 @@
     {
       "id": 382,
       "file_name": "register-external-types-from-both-core-and-third-party-assemblies-to-enable-comprehensive.cs",
-      "task": "Register external types from both core and third‑party assemblies to enable comprehensive data access in templates.",
+      "task": "Register external types from both core and third-party assemblies to enable comprehensive data access in templates.",
       "workflow": "linq-reporting-workflow",
       "outputs": [
         "docx"
@@ -4411,8 +4405,8 @@
       "outputs": [
         "xml"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 386,
@@ -4444,8 +4438,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 389,
@@ -4455,8 +4449,8 @@
       "outputs": [
         "xml"
       ],
-      "selected_engine": "llm_secondary",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 390,
@@ -4466,8 +4460,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 391,
@@ -4477,8 +4471,8 @@
       "outputs": [
         "xml"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 392,
@@ -4499,19 +4493,19 @@
       "outputs": [
         "csv"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 394,
       "file_name": "apply-an-in-table-list-template-to-json-data-to-create-a-table-with-column-headers-derived.cs",
-      "task": "Apply an in‑table list template to JSON data to create a table with column headers derived from keys.",
+      "task": "Apply an in-table list template to JSON data to create a table with column headers derived from keys.",
       "workflow": "linq-reporting-workflow",
       "outputs": [
         "json"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 395,
@@ -4549,7 +4543,7 @@
     {
       "id": 398,
       "file_name": "apply-a-single-row-template-to-each-element-of-a-json-array-to-generate-individual-detaile.cs",
-      "task": "Apply a single‑row template to each element of a JSON array to generate individual detailed sections.",
+      "task": "Apply a single-row template to each element of a JSON array to generate individual detailed sections.",
       "workflow": "linq-reporting-workflow",
       "outputs": [
         "json"
@@ -4582,7 +4576,7 @@
     {
       "id": 401,
       "file_name": "use-the-where-method-with-case-insensitive-comparison-to-filter-xml-nodes-based-on-attribu.cs",
-      "task": "Use the Where method with case‑insensitive comparison to filter XML nodes based on attribute values.",
+      "task": "Use the Where method with case-insensitive comparison to filter XML nodes based on attribute values.",
       "workflow": "linq-reporting-workflow",
       "outputs": [
         "xml"
@@ -4612,5 +4606,15 @@
       "selected_engine": "mcp",
       "winner": "mcp"
     }
-  ]
+  ],
+  "narrative": {
+    "overview": "LINQ Reporting for Aspose.Words enables the generation of Word documents by binding .NET data models to template tags. The verified examples illustrate template creation, data binding, table iteration, image insertion, variable usage, custom extensions, culture configuration, and robust error handling.",
+    "purpose": "Assist developers in constructing correct Aspose.Words LINQ Reporting pipelines, from programmatic template generation to safe tag usage and reliable report building.",
+    "validation_priorities": [
+      "Ensure every opening tag has a matching closing tag and that table start/end calls are nested inside the same foreach block."
+    ],
+    "maintenance_notes": [
+      "When upgrading Aspose.Words, review template tags for any deprecations and update them to the latest supported syntax."
+    ]
+  }
 }

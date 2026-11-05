@@ -4,12 +4,12 @@
     "slug": "charts",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Use native Aspose.Words chart APIs directly. Create or load local sample DOCX inputs inside the example whenever the task references an existing file, stream, folder, table, or multi-document batch. Insert or locate a real chart shape, then modify Chart, ChartSeries, ChartDataLabel, ChartAxis, ChartLegend, and related objects through documented APIs only.",
+    "preferred_workflow": "Always call DocumentBuilder.InsertChart with a valid ChartType, verify shape.HasChart before accessing the Chart property, clear any default series, then populate data using Chart.Series.Add overloads that accept category labels and value arrays; when placing a chart inside a table, balance the table constructs (StartTable, InsertCell, EndRow, EndTable) before saving; bootstrap any required DOCX, folder, or stream inputs locally at the start of the example.",
     "required_packages": [
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.9.0"
+      "Aspose.Words": "26.10.0"
     },
     "required_namespaces": [
       "System",
@@ -18,26 +18,28 @@
       "Aspose.Words",
       "Aspose.Words.Drawing",
       "Aspose.Words.Drawing.Charts",
+      "Aspose.Words.Tables",
       "System.Drawing",
+      "System.Reflection",
       "Aspose.Words.Saving"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
       "NodeType",
+      "File",
       "Shape",
       "Chart",
       "ChartType",
       "Paragraph",
       "Directory",
       "Path",
+      "Cell",
       "CellFormat",
-      "Node",
-      "Font",
       "ChartSeries",
+      "Font",
       "SaveFormat",
-      "MemoryStream",
-      "File"
+      "MemoryStream"
     ]
   },
   "stats": {
@@ -52,47 +54,57 @@
   },
   "rules_summary": {
     "strict_api_bans": [
-      "Do not modify a shape as if it were a chart unless shape.HasChart is true.",
-      "Do not invent chart APIs, enums, or formatting members that are not part of Aspose.Words.",
-      "Do not remove or add series without validating current series availability and compatible data structure."
+      "Do not treat a generic Shape as a chart unless shape.HasChart is true.",
+      "Do not reference members that are not part of Aspose.Words.Chart, such as CategoryAxis, ChartLegend.IsVisible, or Trendline APIs.",
+      "Do not add or remove series without first clearing or validating the existing series collection."
     ],
     "canonical_patterns": [
-      "Insert charts with DocumentBuilder.InsertChart using the required ChartType.",
-      "Bootstrap local DOCX inputs when a task mentions an existing file, paragraph, chart, stream, or folder.",
-      "Validate series and point counts explicitly for verification scenarios.",
-      "Balance table insertion state before inserting a chart into a cell."
+      "Insert charts with DocumentBuilder.InsertChart using the required ChartType enumeration.",
+      "When a task mentions an existing file, paragraph, chart, stream, or folder, create a local sample DOCX or directory at the beginning of the example.",
+      "Validate that each series has a matching number of category labels and values before saving.",
+      "Balance table state (StartTable, InsertCell, EndRow, EndTable) before document save."
     ],
     "nullable_warning_prevention": [
-      "Initialize all non-nullable reference type properties to avoid CS8618 warnings.",
-      "Avoid CS8600, CS8602, and CS8604 by guarding maybe-null values before dereference or assignment.",
-      "Declare nullable locals when a value may legitimately be null, then null-check before use."
+      "Initialize all non-nullable reference-type fields or use the null-forgiving operator to satisfy the compiler.",
+      "Guard any potentially null nodes (e.g., builder.CurrentParagraph?.ParentNode) with explicit null checks before dereferencing.",
+      "Declare locals as nullable when a value may be absent and perform a null-check prior to use."
     ]
   },
   "common_failure_patterns": [
     {
       "pattern": "Invalid chart shape assumption",
-      "symptom": "Code treats a generic Shape as a chart without checking HasChart.",
-      "fix": "Validate shape.HasChart before accessing the Chart property."
+      "symptom": "Code accesses Shape.Chart without confirming shape.HasChart, leading to CS1061 errors.",
+      "cause": "The example treats any Shape as a chart regardless of its actual content.",
+      "fix": "Add a shape.HasChart check and throw a clear exception if the shape does not contain a chart.",
+      "prevention": "Always guard chart access with if (shape.HasChart) { ... } else { throw new InvalidOperationException(...); }."
     },
     {
-      "pattern": "Series/data misalignment",
-      "symptom": "Category count and series values do not match expected chart structure.",
-      "fix": "Clear default data if needed and add aligned categories and series values deterministically."
+      "pattern": "Use of non-existent chart members",
+      "symptom": "Compilation fails with CS1061 or CS0246 for members such as CategoryAxis, ChartLegend.IsVisible, Trendline, or DataLabel properties that do not exist in Aspose.Words.",
+      "cause": "The code references API members that are part of other libraries (e.g., Aspose.Slides) or older versions of Aspose.Words.",
+      "fix": "Replace the invalid members with the supported Aspose.Words equivalents, or omit the unsupported functionality.",
+      "prevention": "Consult the Aspose.Words 26.10.0 documentation for the exact Chart API surface before writing code."
     },
     {
-      "pattern": "Invalid table insertion state",
-      "symptom": "Chart insertion in a table cell fails because the builder is left in an unbalanced table state.",
-      "fix": "Balance StartTable, InsertCell, EndRow, and EndTable before saving."
+      "pattern": "Table insertion state imbalance",
+      "symptom": "Saving the document throws runtime errors because the table construction (StartTable/InsertCell/EndRow/EndTable) is not balanced.",
+      "cause": "The example leaves an open table row or cell when inserting a chart.",
+      "fix": "Ensure that every StartTable is paired with EndTable and that each InsertCell is followed by EndRow before saving.",
+      "prevention": "Wrap chart insertion inside a clearly delimited table block and call builder.EndRow() and builder.EndTable() after the chart is placed."
     },
     {
       "pattern": "Missing local bootstrap inputs",
-      "symptom": "Existing DOCX, folder, or stream scenarios assume inputs already exist.",
-      "fix": "Create local sample input documents or folders inside the example first."
+      "symptom": "Examples that reference external DOCX files, folders, or streams fail at runtime because the inputs do not exist.",
+      "cause": "The code assumes pre-existing files or directories without creating them in the sample.",
+      "fix": "Create a minimal DOCX, directory, or memory stream at the start of the example and use it for subsequent operations.",
+      "prevention": "Always include a self-contained bootstrap section that generates any required input artifacts."
     },
     {
-      "pattern": "Nullable warnings",
-      "symptom": "CS8600, CS8602, or CS8604 around maybe-null chart shapes or located nodes.",
-      "fix": "Use nullable locals and guard maybe-null values before dereference."
+      "pattern": "Incorrect overload usage for builder navigation",
+      "symptom": "CS7036 errors occur when calling DocumentBuilder.MoveToParagraph without providing the required characterIndex argument.",
+      "cause": "The example uses an overload that no longer exists or omits required parameters.",
+      "fix": "Use the overload MoveToParagraph(paragraphIndex, characterIndex) with both arguments, or move the builder by referencing the target Paragraph node directly.",
+      "prevention": "Refer to the current Aspose.Words API for the correct overload signatures before invoking navigation methods."
     }
   ],
   "examples": [
@@ -132,13 +144,13 @@
     {
       "id": 4,
       "file_name": "insert-a-chart-using-a-two-dimensional-array-as-a-custom-data-source-mapping-series-and-ca.cs",
-      "task": "Insert a chart using a two‑dimensional array as a custom data source, mapping series and categories.",
+      "task": "Insert a chart using a two-dimensional array as a custom data source, mapping series and categories.",
       "workflow": "native-chart-api",
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 5,
@@ -148,8 +160,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 6,
@@ -203,8 +215,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 11,
@@ -242,7 +254,7 @@
     {
       "id": 14,
       "file_name": "align-multi-line-chart-data-labels-to-the-center-and-enable-text-wrapping-for-better-reada.cs",
-      "task": "Align multi‑line chart data labels to the center and enable text wrapping for better readability.",
+      "task": "Align multi-line chart data labels to the center and enable text wrapping for better readability.",
       "workflow": "native-chart-api",
       "outputs": [
         "docx"
@@ -297,18 +309,18 @@
     {
       "id": 19,
       "file_name": "set-major-gridlines-visibility-on-the-primary-x-axis-and-customize-their-line-color-and-th.cs",
-      "task": "Set major gridlines visibility on the primary X‑axis and customize their line color and thickness.",
+      "task": "Set major gridlines visibility on the primary X-axis and customize their line color and thickness.",
       "workflow": "native-chart-api",
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 20,
       "file_name": "adjust-the-primary-y-axis-scaling-to-fixed-minimum-and-maximum-values-and-set-major-unit-i.cs",
-      "task": "Adjust the primary Y‑axis scaling to fixed minimum and maximum values and set major unit intervals.",
+      "task": "Adjust the primary Y-axis scaling to fixed minimum and maximum values and set major unit intervals.",
       "workflow": "native-chart-api",
       "outputs": [
         "docx"
@@ -319,7 +331,7 @@
     {
       "id": 21,
       "file_name": "set-display-units-for-the-secondary-x-axis-to-thousands-and-format-axis-labels-with-a-cust.cs",
-      "task": "Set display units for the secondary X‑axis to thousands and format axis labels with a custom number format.",
+      "task": "Set display units for the secondary X-axis to thousands and format axis labels with a custom number format.",
       "workflow": "native-chart-api",
       "outputs": [
         "docx"
@@ -330,7 +342,7 @@
     {
       "id": 22,
       "file_name": "set-the-secondary-y-axis-number-format-to-currency-with-two-decimal-places-for-financial-c.cs",
-      "task": "Set the secondary Y‑axis number format to currency with two decimal places for financial charts.",
+      "task": "Set the secondary Y-axis number format to currency with two decimal places for financial charts.",
       "workflow": "native-chart-api",
       "outputs": [
         "docx"
@@ -352,7 +364,7 @@
     {
       "id": 24,
       "file_name": "programmatically-set-the-chart-s-background-fill-to-a-semi-transparent-color-to-create-a-w.cs",
-      "task": "Programmatically set the chart's background fill to a semi‑transparent color to create a watermark effect.",
+      "task": "Programmatically set the chart's background fill to a semi-transparent color to create a watermark effect.",
       "workflow": "native-chart-api",
       "outputs": [
         "docx"
@@ -368,8 +380,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 26,
@@ -390,8 +402,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 28,
@@ -407,7 +419,7 @@
     {
       "id": 29,
       "file_name": "apply-a-three-dimensional-rotation-effect-to-a-column-chart-to-enhance-visual-perspective.cs",
-      "task": "Apply a three‑dimensional rotation effect to a column chart to enhance visual perspective.",
+      "task": "Apply a three-dimensional rotation effect to a column chart to enhance visual perspective.",
       "workflow": "native-chart-api",
       "outputs": [
         "docx"
@@ -434,8 +446,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 32,
@@ -456,8 +468,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 34,
@@ -478,8 +490,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 36,
@@ -489,8 +501,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 37,
@@ -501,19 +513,19 @@
         "pdf",
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 38,
       "file_name": "implement-error-handling-to-catch-exceptions-when-inserting-a-chart-into-a-read-only-docum.cs",
-      "task": "Implement error handling to catch exceptions when inserting a chart into a read‑only document stream.",
+      "task": "Implement error handling to catch exceptions when inserting a chart into a read-only document stream.",
       "workflow": "existing-docx-and-export",
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 39,
@@ -526,5 +538,15 @@
       "selected_engine": "mcp",
       "winner": "mcp"
     }
-  ]
+  ],
+  "narrative": {
+    "overview": "The Charts category of Aspose.Words supplies native APIs for creating, customizing, and exporting chart objects inside Word documents. The verified examples illustrate inserting various chart types, populating data from arrays, cloning chart shapes, embedding charts in table cells, and dynamically swapping chart types while respecting the library's supported API surface.",
+    "purpose": "Guide the AI coding agent to produce correct, compile-time-safe Aspose.Words chart code by enforcing the native chart workflow, applying documented API contracts, and avoiding the common misuse patterns that cause compilation failures.",
+    "validation_priorities": [
+      "Prioritize compile-time validation of API members and nullability before runtime execution."
+    ],
+    "maintenance_notes": [
+      "Periodically review Aspose.Words release notes to update the list of supported chart members and adjust the strict API bans accordingly."
+    ]
+  }
 }

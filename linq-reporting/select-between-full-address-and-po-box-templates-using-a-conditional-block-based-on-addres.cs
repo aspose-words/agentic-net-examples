@@ -7,77 +7,80 @@ public class Program
 {
     public static void Main()
     {
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Register code page provider (required for some encodings)
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        // Paths for the template and the generated report.
-        string templatePath = Path.Combine(outputDir, "AddressTemplate.docx");
-        string reportPath = Path.Combine(outputDir, "AddressReport.docx");
+        // Create the LINQ Reporting template
+        const string templatePath = "AddressTemplate.docx";
+        CreateTemplate(templatePath);
 
-        // -----------------------------------------------------------------
-        // 1. Create the LINQ Reporting template programmatically.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("Address Information:");
-        builder.Writeln();
-
-        // Conditional block for PO Box address.
-        builder.Writeln("<<if [model.Address.IsPoBox]>>");
-        builder.Writeln("PO Box: <<[model.Address.PoBoxNumber]>>");
-        builder.Writeln("<</if>>");
-
-        // Conditional block for full street address.
-        builder.Writeln("<<if [!model.Address.IsPoBox]>>");
-        builder.Writeln("Street: <<[model.Address.Street]>>");
-        builder.Writeln("City: <<[model.Address.City]>>");
-        builder.Writeln("State: <<[model.Address.State]>>");
-        builder.Writeln("ZIP: <<[model.Address.Zip]>>");
-        builder.Writeln("<</if>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Prepare sample data.
-        // -----------------------------------------------------------------
-        var model = new ReportModel
+        // Sample data: PO Box address
+        var poBoxAddress = new Address
         {
-            Address = new AddressInfo
-            {
-                // Change IsPoBox to true to test the PO Box branch.
-                IsPoBox = false,
-                PoBoxNumber = "PO Box 789",
-                Street = "123 Main St",
-                City = "Anytown",
-                State = "NY",
-                Zip = "12345"
-            }
+            IsPoBox = true,
+            PoBoxNumber = "PO Box 123",
+            Street = "",
+            City = "Springfield",
+            State = "IL",
+            Zip = "62704"
         };
 
-        // -----------------------------------------------------------------
-        // 3. Load the template and build the report.
-        // -----------------------------------------------------------------
-        Document doc = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        // Sample data: Full street address
+        var fullAddress = new Address
+        {
+            IsPoBox = false,
+            PoBoxNumber = "",
+            Street = "742 Evergreen Terrace",
+            City = "Springfield",
+            State = "IL",
+            Zip = "62704"
+        };
 
-        // Save the generated report.
-        doc.Save(reportPath);
+        // Generate reports for both samples
+        GenerateReport(templatePath, poBoxAddress, "Report_POBox.docx");
+        GenerateReport(templatePath, fullAddress, "Report_FullAddress.docx");
+    }
+
+    private static void CreateTemplate(string path)
+    {
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        builder.Writeln("Address Report");
+        builder.Writeln();
+
+        // Conditional block for PO Box address
+        builder.Writeln("<<if [address.IsPoBox]>>");
+        builder.Writeln("PO Box: <<[address.PoBoxNumber]>>");
+        builder.Writeln("<</if>>");
+
+        // Conditional block for full street address (when not a PO Box)
+        builder.Writeln("<<if [!address.IsPoBox]>>");
+        builder.Writeln("Street: <<[address.Street]>>");
+        builder.Writeln("City: <<[address.City]>>");
+        builder.Writeln("State: <<[address.State]>>");
+        builder.Writeln("ZIP: <<[address.Zip]>>");
+        builder.Writeln("<</if>>");
+
+        doc.Save(path);
+    }
+
+    private static void GenerateReport(string templatePath, Address data, string outputPath)
+    {
+        // Load the template document
+        var doc = new Document(templatePath);
+
+        // Build the report using the address object as the root named "address"
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, data, "address");
+
+        // Save the generated report
+        doc.Save(outputPath);
     }
 }
 
-// ---------------------------------------------------------------------
-// Data model definitions.
-// ---------------------------------------------------------------------
-public class ReportModel
-{
-    public AddressInfo Address { get; set; } = new();
-}
-
-public class AddressInfo
+// Data model representing an address
+public class Address
 {
     public bool IsPoBox { get; set; }
     public string PoBoxNumber { get; set; } = "";

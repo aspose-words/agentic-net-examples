@@ -1,82 +1,102 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingKnownTypesDemo
+namespace AsposeWordsLinqReportingExample
 {
-    // Sample external type 1
-    public class Person
+    // External types that will be registered with the ReportingEngine.
+    namespace ExternalTypes
     {
-        public string Name { get; set; } = "John Doe";
-        public int Age { get; set; } = 30;
+        public class PersonInfo
+        {
+            public string FirstName { get; set; } = "";
+            public string LastName { get; set; } = "";
+            public int Age { get; set; }
+        }
+
+        public class CompanyInfo
+        {
+            public string Name { get; set; } = "";
+            public string Location { get; set; } = "";
+        }
     }
 
-    // Sample external type 2
-    public class Product
-    {
-        public string Title { get; set; } = "Sample Product";
-        public decimal Price { get; set; } = 99.99m;
-    }
-
-    // Root model that holds the external objects
+    // Root data model for the report.
     public class ReportModel
     {
-        public Person Person { get; set; } = new();
-        public Product Product { get; set; } = new();
+        public List<ExternalTypes.PersonInfo> Persons { get; set; } = new();
+        public ExternalTypes.CompanyInfo Company { get; set; } = new();
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Ensure the output directory exists
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            // Ensure the output directory exists.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
             Directory.CreateDirectory(outputDir);
 
-            // -----------------------------------------------------------------
-            // 1. Create the template document with LINQ Reporting tags
-            // -----------------------------------------------------------------
-            string templatePath = Path.Combine(outputDir, "Template.docx");
-            Document templateDoc = new();
-            DocumentBuilder builder = new(templateDoc);
+            // 1. Create the template document programmatically.
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
 
-            builder.Writeln("Person Name: <<[model.Person.Name]>>");
-            builder.Writeln("Person Age: <<[model.Person.Age]>>");
-            builder.Writeln("Product Title: <<[model.Product.Title]>>");
-            builder.Writeln("Product Price: <<[model.Product.Price]>>");
+            // Write static text and LINQ Reporting tags.
+            builder.Writeln("Company: <<[model.Company.Name]>> located at <<[model.Company.Location]>>");
+            builder.Writeln("Employees:");
+            builder.Writeln("<<foreach [p in model.Persons]>>");
+            builder.Writeln("- <<[p.FirstName]>> <<[p.LastName]>>, Age: <<[p.Age]>>");
+            builder.Writeln("<</foreach>>");
 
-            templateDoc.Save(templatePath);
+            // Save the template to disk.
+            string templatePath = Path.Combine(outputDir, "template.docx");
+            template.Save(templatePath);
 
-            // -----------------------------------------------------------------
-            // 2. Enable reflection optimization (allows known types without reflection)
-            // -----------------------------------------------------------------
+            // 2. Prepare the reporting engine and register external types.
+            ReportingEngine engine = new ReportingEngine();
+            engine.KnownTypes.Add(typeof(ExternalTypes.PersonInfo));
+            engine.KnownTypes.Add(typeof(ExternalTypes.CompanyInfo));
+
+            // Optional: enable reflection optimization (does not affect known type registration).
             ReportingEngine.UseReflectionOptimization = true;
 
-            // -----------------------------------------------------------------
-            // 3. Load the template and build the report
-            // -----------------------------------------------------------------
-            Document reportDoc = new(templatePath);
+            // 3. Prepare sample data.
             ReportModel model = new()
             {
-                Person = new Person { Name = "Alice Smith", Age = 28 },
-                Product = new Product { Title = "Aspose.Words Book", Price = 49.95m }
+                Company = new ExternalTypes.CompanyInfo
+                {
+                    Name = "Acme Corp",
+                    Location = "New York"
+                },
+                Persons = new List<ExternalTypes.PersonInfo>
+                {
+                    new ExternalTypes.PersonInfo { FirstName = "John", LastName = "Doe", Age = 30 },
+                    new ExternalTypes.PersonInfo { FirstName = "Jane", LastName = "Smith", Age = 28 }
+                }
             };
 
-            ReportingEngine engine = new();
-            engine.BuildReport(reportDoc, model, "model");
+            // 4. Load the template (demonstrating load before building).
+            Document doc = new Document(templatePath);
 
-            // -----------------------------------------------------------------
-            // 4. Save the generated report
-            // -----------------------------------------------------------------
-            string reportPath = Path.Combine(outputDir, "Report.docx");
-            reportDoc.Save(reportPath);
+            // 5. Build the report.
+            engine.BuildReport(doc, model, "model");
 
-            // -----------------------------------------------------------------
-            // 5. Verify the output by printing the document text to console
-            // -----------------------------------------------------------------
-            Console.WriteLine("=== Generated Report Text ===");
-            Console.WriteLine(reportDoc.GetText());
+            // 6. Save the generated report.
+            string outputPath = Path.Combine(outputDir, "output.docx");
+            doc.Save(outputPath);
+
+            // 7. Verify that the generated document contains expected values.
+            string extractedText = doc.GetText();
+            bool verificationPassed =
+                extractedText.Contains("Acme Corp") &&
+                extractedText.Contains("New York") &&
+                extractedText.Contains("John Doe") &&
+                extractedText.Contains("Jane Smith");
+
+            Console.WriteLine(verificationPassed
+                ? "Report generated successfully and verified."
+                : "Verification failed: expected content not found.");
         }
     }
 }

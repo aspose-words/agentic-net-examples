@@ -1,54 +1,50 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using System.Text;
 
-namespace LinqReportingReflectionOptimization
+public class Program
 {
-    // Simple data model used by the template.
-    public class Model
+    public static void Main()
     {
-        public string Name { get; set; } = "World";
+        // Register code page provider required by Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Create a template document containing a LINQ Reporting tag.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+        builder.Writeln("Customer: <<[model.Name]>>");
+
+        // Save and reload the template to ensure it is fully created before building the report.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
+        Document doc = new Document(templatePath);
+
+        // Prepare the data model.
+        ReportModel model = new ReportModel { Name = "John Doe" };
+
+        // Disable reflection optimization for this scoped operation.
+        bool previousSetting = ReportingEngine.UseReflectionOptimization;
+        ReportingEngine.UseReflectionOptimization = false;
+        try
+        {
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
+        }
+        finally
+        {
+            // Restore the original setting.
+            ReportingEngine.UseReflectionOptimization = previousSetting;
+        }
+
+        // Save the generated report.
+        const string outputPath = "Report.docx";
+        doc.Save(outputPath);
     }
 
-    public class Program
+    // Public data model class.
+    public class ReportModel
     {
-        public static void Main()
-        {
-            // Prepare folders.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-            Directory.CreateDirectory(outputDir);
-
-            // Create a template document with a LINQ Reporting tag.
-            string templatePath = Path.Combine(outputDir, "template.docx");
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-            builder.Writeln("Hello <<[model.Name]>>!");
-            templateDoc.Save(templatePath);
-
-            // Load the template for report generation.
-            Document loadedTemplate = new Document(templatePath);
-
-            // Prepare the data source.
-            Model model = new Model();
-
-            // Disable reflection optimization only for this report generation.
-            bool previousOptimizationSetting = ReportingEngine.UseReflectionOptimization;
-            ReportingEngine.UseReflectionOptimization = false;
-            try
-            {
-                ReportingEngine engine = new ReportingEngine();
-                engine.BuildReport(loadedTemplate, model, "model");
-            }
-            finally
-            {
-                // Restore the original setting.
-                ReportingEngine.UseReflectionOptimization = previousOptimizationSetting;
-            }
-
-            // Save the generated report.
-            string resultPath = Path.Combine(outputDir, "result.docx");
-            loadedTemplate.Save(resultPath);
-        }
+        public string Name { get; set; } = "";
     }
 }

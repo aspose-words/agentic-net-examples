@@ -10,7 +10,7 @@ public class Program
         // Create a sample DOCX document.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("This is a sample document to be converted to XLSX.");
+        builder.Writeln("Sample content for XLSX conversion.");
         string inputPath = "input.docx";
         sourceDoc.Save(inputPath, SaveFormat.Docx);
 
@@ -30,11 +30,7 @@ public class Program
         // Validate that the XLSX file was created.
         if (!File.Exists(outputPath))
         {
-            throw new InvalidOperationException("The XLSX file was not created as expected.");
+            throw new InvalidOperationException("Expected output XLSX was not created.");
         }
-
-        // Optional cleanup (comment out if you want to inspect the files).
-        // File.Delete(inputPath);
-        // File.Delete(outputPath);
     }
 }

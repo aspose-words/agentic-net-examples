@@ -1,59 +1,60 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class ReportModel
-{
-    // Role of the current user.
-    public string Role { get; set; } = string.Empty;
-    // Additional content (not used in this example but shown for completeness).
-    public string Content { get; set; } = string.Empty;
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the template and the generated report.
-        string templatePath = "Template.docx";
-        string outputPath = "Report_Output.docx";
+        // Register code page provider required by Aspose.Words.
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        // -----------------------------------------------------------------
-        // Step 1: Create the template document with conditional tags.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Create a new document and a builder to insert LINQ Reporting tags.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        builder.Writeln("=== Report Header ===");
-        // Conditional section: visible only when Role == "Admin".
+        // Header.
+        builder.Writeln("User Report");
+        builder.Writeln();
+
+        // Show the role from the model.
+        builder.Writeln("Role: <<[model.Role]>>");
+        builder.Writeln();
+
+        // Conditional section visible only for Admin role.
         builder.Writeln("<<if [model.Role == \"Admin\"]>>");
-        builder.Writeln("Admin-only section: Confidential information displayed here.");
+        builder.Writeln("=== Admin Section ===");
+        builder.Writeln("Confidential admin data goes here.");
         builder.Writeln("<</if>>");
-        builder.Writeln("=== Report Footer ===");
 
-        // Save the template to disk before building the report.
-        templateDoc.Save(templatePath);
+        // Section visible to all users.
+        builder.Writeln("General information visible to all users.");
 
-        // -----------------------------------------------------------------
-        // Step 2: Prepare the data model.
-        // -----------------------------------------------------------------
+        // Save the template (optional step to demonstrate saving/loading).
+        const string templatePath = "UserReportTemplate.docx";
+        doc.Save(templatePath);
+
+        // Load the template for report generation.
+        Document templateDoc = new Document(templatePath);
+
+        // Prepare the data model.
         ReportModel model = new ReportModel
         {
-            Role = "Admin", // Change to other values (e.g., "User") to hide the section.
-            Content = "Sample content"
+            Role = "Admin" // Change to "User" to hide the admin section.
         };
 
-        // -----------------------------------------------------------------
-        // Step 3: Load the template and generate the report.
-        // -----------------------------------------------------------------
-        Document docToReport = new Document(templatePath);
+        // Build the report using the LINQ Reporting engine.
         ReportingEngine engine = new ReportingEngine();
-
-        // Build the report using the model as the root object named "model".
-        engine.BuildReport(docToReport, model, "model");
+        engine.BuildReport(templateDoc, model, "model");
 
         // Save the generated report.
-        docToReport.Save(outputPath);
+        const string outputPath = "UserReportOutput.docx";
+        templateDoc.Save(outputPath);
     }
+}
+
+// Data model used by the template.
+public class ReportModel
+{
+    public string Role { get; set; } = string.Empty;
 }

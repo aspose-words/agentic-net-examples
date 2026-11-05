@@ -7,19 +7,19 @@ using Aspose.Words.Reporting;
 
 public class Item
 {
-    public string Category { get; set; } = "";
     public string Name { get; set; } = "";
+    public string Category { get; set; } = "";
 }
 
-public class Group
+public class GroupModel
 {
-    public string Category { get; set; } = "";
+    public string Key { get; set; } = "";
     public List<Item> Items { get; set; } = new();
 }
 
 public class ReportModel
 {
-    public List<Group> Groups { get; set; } = new();
+    public List<GroupModel> Groups { get; set; } = new();
 }
 
 public class Program
@@ -27,68 +27,60 @@ public class Program
     public static void Main()
     {
         // Prepare sample data.
-        List<Item> items = new()
+        var items = new List<Item>
         {
-            new Item { Category = "Fruits", Name = "Apple" },
-            new Item { Category = "Fruits", Name = "Banana" },
-            new Item { Category = "Fruits", Name = "Orange" },
-            new Item { Category = "Vegetables", Name = "Carrot" },
-            new Item { Category = "Vegetables", Name = "Broccoli" },
-            new Item { Category = "Grains", Name = "Rice" }
+            new() { Name = "Apple", Category = "Fruits" },
+            new() { Name = "Banana", Category = "Fruits" },
+            new() { Name = "Carrot", Category = "Vegetables" },
+            new() { Name = "Broccoli", Category = "Vegetables" },
+            new() { Name = "Chicken", Category = "Meat" }
         };
 
         // Group items by Category.
-        ReportModel model = new()
-        {
-            Groups = items
-                .GroupBy(i => i.Category)
-                .Select(g => new Group
-                {
-                    Category = g.Key,
-                    Items = g.ToList()
-                })
-                .ToList()
-        };
+        var groups = items
+            .GroupBy(i => i.Category)
+            .Select(g => new GroupModel { Key = g.Key, Items = g.ToList() })
+            .ToList();
+
+        var model = new ReportModel { Groups = groups };
 
         // Create the LINQ Reporting template.
         string templatePath = "Template.docx";
-        Document templateDoc = new();
-        DocumentBuilder builder = new(templateDoc);
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Begin outer foreach over groups.
-        builder.Writeln("<<foreach [g in model.Groups]>>");
+        builder.Writeln("Report:");
+        builder.Writeln();
 
-        // Group bullet (level 1).
-        builder.CurrentParagraph.ListFormat.ApplyBulletDefault();
-        builder.CurrentParagraph.ListFormat.ListLevelNumber = 1;
-        builder.Writeln("<<[g.Category]>>");
+        // Begin group foreach.
+        builder.Writeln("<<foreach [group in Groups]>>");
 
-        // Begin inner foreach over items.
-        builder.Writeln("<<foreach [i in g.Items]>>");
+        // Group bullet.
+        builder.ListFormat.ApplyBulletDefault();
+        builder.Writeln("<<[group.Key]>>");
 
-        // Item bullet (level 2).
-        builder.CurrentParagraph.ListFormat.ApplyBulletDefault();
-        builder.CurrentParagraph.ListFormat.ListLevelNumber = 2;
-        builder.Writeln("<<[i.Name]>>");
-
-        // End inner foreach.
+        // Nested items bullet.
+        builder.ListFormat.ListIndent();
+        builder.Writeln("<<foreach [item in group.Items]>>");
+        builder.Writeln("<<[item.Name]>>");
         builder.Writeln("<</foreach>>");
+        builder.ListFormat.ListOutdent();
 
-        // End outer foreach.
+        // End group foreach.
         builder.Writeln("<</foreach>>");
 
         // Save the template.
-        templateDoc.Save(templatePath);
+        doc.Save(templatePath);
 
-        // Load the template for report generation.
-        Document reportDoc = new(templatePath);
+        // Load the template for reporting.
+        var templateDoc = new Document(templatePath);
 
         // Build the report.
-        ReportingEngine engine = new();
-        engine.BuildReport(reportDoc, model, "model");
+        var engine = new ReportingEngine();
+        engine.BuildReport(templateDoc, model, "model");
 
-        // Save the final report.
-        string outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+        // Save the generated report.
+        string outputPath = "ReportOutput.docx";
+        templateDoc.Save(outputPath);
     }
 }

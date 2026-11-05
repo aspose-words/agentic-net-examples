@@ -6,33 +6,37 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample DOCX file locally.
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
-        builder.Writeln("Sample DOCX content from cloud storage.");
-        source.Save("input.docx", SaveFormat.Docx);
-
-        // Simulate loading the DOCX from a cloud storage stream.
-        using (FileStream fileStream = new FileStream("input.docx", FileMode.Open, FileAccess.Read))
+        // Create a sample DOCX document and store it in a memory stream
         using (MemoryStream cloudStream = new MemoryStream())
         {
-            fileStream.CopyTo(cloudStream);
-            cloudStream.Position = 0;
+            Document sourceDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+            builder.Writeln("Hello from cloud storage DOCX.");
 
-            Document doc = new Document(cloudStream);
+            // Save the document as DOCX into the simulated cloud stream
+            sourceDoc.Save(cloudStream, SaveFormat.Docx);
+            cloudStream.Position = 0; // Reset for reading
 
-            // Convert the document to PDF and write to a simulated client response stream.
+            // Load the DOCX from the simulated cloud storage stream
+            Document loadedDoc = new Document(cloudStream);
+
+            // Convert the loaded document to PDF and write to a simulated client response stream
             using (MemoryStream responseStream = new MemoryStream())
             {
-                doc.Save(responseStream, SaveFormat.Pdf);
+                loadedDoc.Save(responseStream, SaveFormat.Pdf);
 
+                // Validate that PDF data was written
                 if (responseStream.Length == 0)
                 {
                     throw new InvalidOperationException("No PDF data was written to the simulated response stream.");
                 }
 
-                // Optionally save the PDF to a file to verify the conversion.
-                File.WriteAllBytes("output.pdf", responseStream.ToArray());
+                // Optionally, save the PDF to a file for verification
+                responseStream.Position = 0;
+                using (FileStream file = new FileStream("output.pdf", FileMode.Create, FileAccess.Write))
+                {
+                    responseStream.CopyTo(file);
+                }
 
                 if (!File.Exists("output.pdf"))
                 {

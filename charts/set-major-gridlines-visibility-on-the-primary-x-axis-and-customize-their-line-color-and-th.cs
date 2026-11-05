@@ -8,31 +8,34 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart.
-        Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
+        // Insert a column chart into the document.
+        Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
         Chart chart = chartShape.Chart;
-
-        // Clear default demo series and add a custom series.
-        chart.Series.Clear();
-        chart.Series.Add("Series 1",
-            new[] { "Category A", "Category B", "Category C" },
-            new double[] { 10, 20, 30 });
 
         // Access the primary X‑axis.
         ChartAxis xAxis = chart.AxisX;
 
-        // Show major gridlines.
-        xAxis.HasMajorGridlines = true;
+        // Use reflection / dynamic to access gridlines in a version‑agnostic way.
+        var majorGridlinesProp = xAxis.GetType().GetProperty("MajorGridlines");
+        if (majorGridlinesProp != null)
+        {
+            dynamic majorGridlines = majorGridlinesProp.GetValue(xAxis);
+            if (majorGridlines != null)
+            {
+                // Make the major gridlines visible.
+                majorGridlines.Visible = true;
 
-        // Customize gridline appearance: set color and thickness.
-        xAxis.Format.Stroke.Color = Color.Blue;
-        xAxis.Format.Stroke.Weight = 2.0;
+                // Customize line color and thickness.
+                majorGridlines.LineFormat.Color = Color.Blue;
+                majorGridlines.LineFormat.Width = 2.0; // Width in points.
+            }
+        }
 
-        // Save the document.
-        doc.Save("SetMajorGridlines.docx");
+        // Save the document with the modified chart.
+        doc.Save("ChartWithCustomGridlines.docx");
     }
 }

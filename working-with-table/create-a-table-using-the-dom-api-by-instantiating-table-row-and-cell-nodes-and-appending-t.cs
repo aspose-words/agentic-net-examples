@@ -13,53 +13,47 @@ public class Program
         // Create a new table node.
         Table table = new Table(doc);
 
-        // ----- First row -----
-        Row row1 = new Row(doc);
+        // Build a 2x3 table (2 rows, 3 columns).
+        for (int rowIndex = 0; rowIndex < 2; rowIndex++)
+        {
+            // Create a new row.
+            Row row = new Row(doc);
 
-        // First cell of first row.
-        Cell cell11 = new Cell(doc);
-        cell11.AppendChild(new Paragraph(doc));
-        cell11.FirstParagraph.AppendChild(new Run(doc, "R1C1"));
-        row1.AppendChild(cell11);
+            for (int colIndex = 0; colIndex < 3; colIndex++)
+            {
+                // Create a new cell.
+                Cell cell = new Cell(doc);
 
-        // Second cell of first row.
-        Cell cell12 = new Cell(doc);
-        cell12.AppendChild(new Paragraph(doc));
-        cell12.FirstParagraph.AppendChild(new Run(doc, "R1C2"));
-        row1.AppendChild(cell12);
+                // Add a paragraph with some text to the cell.
+                Paragraph para = new Paragraph(doc);
+                Run run = new Run(doc, $"Row {rowIndex + 1}, Cell {colIndex + 1}");
+                para.AppendChild(run);
+                cell.AppendChild(para);
 
-        // Add the first row to the table.
-        table.AppendChild(row1);
+                // Append the cell to the row.
+                row.AppendChild(cell);
+            }
 
-        // ----- Second row -----
-        Row row2 = new Row(doc);
+            // Append the row to the table.
+            table.AppendChild(row);
+        }
 
-        // First cell of second row.
-        Cell cell21 = new Cell(doc);
-        cell21.AppendChild(new Paragraph(doc));
-        cell21.FirstParagraph.AppendChild(new Run(doc, "R2C1"));
-        row2.AppendChild(cell21);
-
-        // Second cell of second row.
-        Cell cell22 = new Cell(doc);
-        cell22.AppendChild(new Paragraph(doc));
-        cell22.FirstParagraph.AppendChild(new Run(doc, "R2C2"));
-        row2.AppendChild(cell22);
-
-        // Add the second row to the table.
-        table.AppendChild(row2);
-
-        // Append the table to the document body.
+        // Append the table to the document's first section body.
         doc.FirstSection.Body.AppendChild(table);
 
+        // Define output file path.
+        string outputPath = "TableCreated.docx";
+
         // Save the document.
-        string outputPath = "CreatedTable.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
         {
-            throw new Exception("Failed to create the output document.");
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
         }
+
+        // Optionally, inform that the process completed.
+        Console.WriteLine($"Document saved successfully to '{outputPath}'.");
     }
 }

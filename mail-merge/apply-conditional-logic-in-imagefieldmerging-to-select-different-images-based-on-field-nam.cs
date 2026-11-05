@@ -2,72 +2,80 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.MailMerging;
+using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new document and builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add explanatory text and two image merge fields.
-        builder.Writeln("Below are images inserted via mail merge:");
-        builder.InsertField("MERGEFIELD Image1 \\* MERGEFORMAT", null);
-        builder.Writeln();
-        builder.InsertField("MERGEFIELD Image2 \\* MERGEFORMAT", null);
-        builder.Writeln();
+        // Insert some text.
+        builder.Writeln("Mail merge with conditional image selection:");
 
-        // Assign the custom image field merging callback.
+        // Insert image merge fields.
+        builder.InsertField("MERGEFIELD Logo");
+        builder.Writeln();
+        builder.InsertField("MERGEFIELD Signature");
+
+        // Set up the image field merging callback.
         doc.MailMerge.FieldMergingCallback = new ImageFieldMergingHandler();
 
-        // Execute mail merge. The actual values are not used; the callback supplies the images.
-        doc.MailMerge.Execute(
-            new[] { "Image1", "Image2" },
-            new object[] { null, null });
+        // Execute mail merge with placeholder values (null) for the image fields.
+        string[] fieldNames = { "Logo", "Signature" };
+        object[] fieldValues = { null, null };
+        doc.MailMerge.Execute(fieldNames, fieldValues);
 
-        // Save the resulting document.
-        doc.Save("Result.docx");
-    }
-}
+        // Save the merged document.
+        string outputPath = "Merged.docx";
+        doc.Save(outputPath);
 
-// Callback that supplies different images based on the merge field name.
-public class ImageFieldMergingHandler : IFieldMergingCallback
-{
-    // Not used for text fields, but must be implemented.
-    public void FieldMerging(FieldMergingArgs args)
-    {
-        // No action needed for text fields in this example.
+        // Validate that images were inserted.
+        int imageCount = doc.GetChildNodes(NodeType.Shape, true).Count;
+        if (imageCount == 0)
+            throw new Exception("No images were merged into the document.");
+
+        Console.WriteLine($"Document '{outputPath}' created with {imageCount} images.");
     }
 
-    // Called for each image merge field.
-    public void ImageFieldMerging(ImageFieldMergingArgs args)
+    // Callback class to provide images based on field name.
+    private class ImageFieldMergingHandler : IFieldMergingCallback
     {
-        // Choose an image based on the field name and provide it via a stream.
-        if (args.FieldName == "Image1")
+        public void FieldMerging(FieldMergingArgs args)
         {
-            args.ImageStream = new MemoryStream(GetRedPixelPng());
-        }
-        else if (args.FieldName == "Image2")
-        {
-            args.ImageStream = new MemoryStream(GetGreenPixelPng());
+            // No text field handling required for this example.
         }
 
-        // Optional: set a file name for the image.
-        args.ImageFileName = "image.png";
-    }
+        public void ImageFieldMerging(ImageFieldMergingArgs args)
+        {
+            // Choose image bytes based on the field name.
+            byte[] imageBytes = GetImageBytes(args.FieldName);
+            if (imageBytes == null || imageBytes.Length == 0)
+                throw new Exception($"No image data defined for field '{args.FieldName}'.");
 
-    // Returns a 1x1 red PNG image as a byte array.
-    private static byte[] GetRedPixelPng()
-    {
-        const string base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+hHgAFgwJ/lcKZVwAAAABJRU5ErkJggg==";
-        return Convert.FromBase64String(base64);
-    }
+            // Provide the image stream to the merge engine.
+            MemoryStream imageStream = new MemoryStream(imageBytes);
+            args.ImageStream = imageStream;
+            args.ImageFileName = $"{args.FieldName}.png";
+        }
 
-    // Returns a 1x1 green PNG image as a byte array.
-    private static byte[] GetGreenPixelPng()
-    {
-        const string base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8AAAgEB/6V6WQAAAABJRU5ErkJggg==";
-        return Convert.FromBase64String(base64);
+        private static byte[] GetImageBytes(string fieldName)
+        {
+            // Simple 1x1 PNG images encoded in base64.
+            // Red pixel for "Logo", green pixel for "Signature", default to blue.
+            const string redBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+hHgAFgwJ/lKXcAAAAAElFTkSuQmCC";
+            const string greenBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8DAAQAB/6F9WQAAAABJRU5ErkJggg==";
+            const string blueBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8DAAQAB/6F9WQAAAABJRU5ErkJggg==";
+
+            string base64 = fieldName.Equals("Logo", StringComparison.OrdinalIgnoreCase)
+                ? redBase64
+                : fieldName.Equals("Signature", StringComparison.OrdinalIgnoreCase)
+                    ? greenBase64
+                    : blueBase64;
+
+            return Convert.FromBase64String(base64);
+        }
     }
 }

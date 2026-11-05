@@ -5,74 +5,65 @@ using Aspose.Words;
 using Aspose.Words.Loading;
 using Aspose.Words.Saving;
 
-namespace AsposeWordsSecurityExample
+public class Program
 {
-    public class Program
+    // Reusable helper that processes a document safely with cancellation support.
+    public static void ProcessDocument(string inputPath, string outputPath, string password, CancellationToken token)
     {
-        // Reusable helper that safely processes a document with cancellation support.
-        // It loads a password‑protected document, removes protection, and saves the result.
-        public static void ProcessDocument(string inputPath, string outputPath, string password, CancellationToken cancellationToken)
+        // Check for cancellation before starting.
+        token.ThrowIfCancellationRequested();
+
+        // Load the document with the provided password (if any).
+        var loadOptions = new LoadOptions
         {
-            // Throw if cancellation was requested before starting.
-            cancellationToken.ThrowIfCancellationRequested();
+            Password = password
+        };
+        var doc = new Document(inputPath, loadOptions);
 
-            // Load the protected document using the supplied password.
-            var loadOptions = new LoadOptions
-            {
-                Password = password
-            };
-            Document doc = new Document(inputPath, loadOptions);
+        token.ThrowIfCancellationRequested();
 
-            // Check for cancellation again after loading.
-            cancellationToken.ThrowIfCancellationRequested();
+        // Apply read‑only protection using the same password.
+        doc.Protect(ProtectionType.ReadOnly, password);
 
-            // Remove protection if present.
-            if (doc.ProtectionType != ProtectionType.NoProtection)
-            {
-                doc.Unprotect(password);
-            }
+        token.ThrowIfCancellationRequested();
 
-            // Save the unprotected document.
-            doc.Save(outputPath);
-
-            // Verify that the output file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException($"Failed to create output file: {outputPath}");
-        }
-
-        public static void Main()
+        // Save the protected document with encryption.
+        var saveOptions = new OoxmlSaveOptions
         {
-            // Create a simple source document.
-            string sourcePath = "source.docx";
-            Document sourceDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-            builder.Writeln("This is a sample document for security demonstration.");
-            sourceDoc.Save(sourcePath);
+            Password = password
+        };
+        doc.Save(outputPath, saveOptions);
 
-            // Apply read‑only protection with a password.
-            string protectedPath = "protected.docx";
-            string password = "Secret123";
-            Document protectedDoc = new Document(sourcePath);
-            protectedDoc.Protect(ProtectionType.ReadOnly, password);
-            protectedDoc.Save(protectedPath);
+        token.ThrowIfCancellationRequested();
 
-            // Prepare cancellation token (not cancelled in this example).
-            using var cts = new CancellationTokenSource();
-            CancellationToken token = cts.Token;
+        // Validate that the output file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException($"Failed to create the protected document at '{outputPath}'.");
+    }
 
-            // Process the protected document: remove protection and save unprotected copy.
-            string unprotectedPath = "unprotected.docx";
-            ProcessDocument(protectedPath, unprotectedPath, password, token);
+    public static void Main()
+    {
+        // Prepare a temporary folder for the demo files.
+        string demoFolder = Path.Combine(Path.GetTempPath(), "AsposeDemo");
+        Directory.CreateDirectory(demoFolder);
 
-            // Simple verification that the unprotected document is indeed not protected.
-            Document resultDoc = new Document(unprotectedPath);
-            if (resultDoc.ProtectionType != ProtectionType.NoProtection)
-                throw new InvalidOperationException("The document is still protected after processing.");
+        // Create a simple source document.
+        string sourcePath = Path.Combine(demoFolder, "source.docx");
+        var sourceDoc = new Document();
+        var paragraph = new Paragraph(sourceDoc);
+        paragraph.AppendChild(new Run(sourceDoc, "Hello, Aspose.Words!"));
+        sourceDoc.FirstSection.Body.AppendChild(paragraph);
+        sourceDoc.Save(sourcePath);
 
-            // Clean up temporary files (optional).
-            File.Delete(sourcePath);
-            File.Delete(protectedPath);
-            File.Delete(unprotectedPath);
-        }
+        // Define the output path and password.
+        string protectedPath = Path.Combine(demoFolder, "protected.docx");
+        string password = "Secret123";
+
+        // Process the document with a non‑canceled token.
+        var cancellationToken = CancellationToken.None;
+        ProcessDocument(sourcePath, protectedPath, password, cancellationToken);
+
+        // Indicate success.
+        Console.WriteLine("Document processed and protected successfully.");
     }
 }

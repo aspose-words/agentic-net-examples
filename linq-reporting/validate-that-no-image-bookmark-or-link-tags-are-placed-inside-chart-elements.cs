@@ -1,78 +1,92 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
-using Aspose.Words.Reporting;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code pages (required for some encodings)
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Register code page provider for Aspose.Words if needed.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare a sample image file
-        string imagePath = Path.Combine(Directory.GetCurrentDirectory(), "sample.png");
-        if (!File.Exists(imagePath))
+        // Prepare a temporary folder for the example files.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
+
+        // Create a Word document template with a chart.
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        CreateTemplateWithChart(templatePath);
+
+        // Validate the template: ensure no image, bookmark, or link tags are inside chart elements.
+        bool isValid = ValidateChartTags(templatePath, out List<string> foundTags);
+
+        // Output the validation result.
+        if (isValid)
         {
-            // 1x1 transparent PNG
-            byte[] pngBytes = Convert.FromBase64String(
-                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=");
-            File.WriteAllBytes(imagePath, pngBytes);
+            Console.WriteLine("Validation passed: No prohibited tags inside chart elements.");
         }
+        else
+        {
+            Console.WriteLine("Validation failed: Prohibited tags found inside chart elements:");
+            foreach (string tag in foundTags)
+            {
+                Console.WriteLine($"- {tag}");
+            }
+        }
+    }
 
-        // Create the template document
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+    private static void CreateTemplateWithChart(string filePath)
+    {
+        // Create a new empty document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a chart (valid placement)
+        // Insert a chart shape.
         Shape chartShape = builder.InsertChart(ChartType.Column, 400, 300);
 
-        // Move to the end of the document (outside the chart) and insert valid LINQ Reporting tags
-        builder.MoveToDocumentEnd();
-        builder.Writeln("<<image [model.ImagePath]>>");
-        builder.Writeln("<<bookmark [model.BookmarkName]>>Bookmarked Content<</bookmark>>");
-        builder.Writeln("<<link [model.Url] [model.LinkText]>>");
+        // The chart shape does not contain paragraphs, so we cannot move the builder inside it.
+        // Instead, we add a regular paragraph after the chart that (incorrectly) contains prohibited tags.
+        // This demonstrates that the validation logic only inspects the text inside chart shapes.
+        builder.Writeln();
+        builder.Write("Quarterly Sales <<image [model.ImagePath]>>");
+        builder.Writeln();
+        builder.Write("Details <<bookmark [model.BookmarkName]>>");
+        builder.Writeln();
+        builder.Write("More info <<link [model.Url] [model.LinkText]>>");
 
-        // Save the template (optional, demonstrates persistence)
-        string templatePath = "template.docx";
-        template.Save(templatePath);
-
-        // Load the template for reporting
-        Document doc = new Document(templatePath);
-
-        // Prepare model data
-        ReportModel model = new()
-        {
-            ImagePath = imagePath,
-            BookmarkName = "SampleBookmark",
-            Url = "https://example.com",
-            LinkText = "Example Site"
-        };
-
-        // Build the report with inline error messages to capture validation errors
-        ReportingEngine engine = new();
-        engine.Options = ReportBuildOptions.InlineErrorMessages;
-        bool success = engine.BuildReport(doc, model, "model");
-
-        // Save the resulting document
-        string outputDir = "output";
-        Directory.CreateDirectory(outputDir);
-        string resultPath = Path.Combine(outputDir, "result.docx");
-        doc.Save(resultPath);
-
-        // Output validation result
-        Console.WriteLine($"Report build success: {success}");
-        Console.WriteLine($"Result saved to: {resultPath}");
+        // Save the template.
+        doc.Save(filePath);
     }
-}
 
-// Data model used by the LINQ Reporting engine
-public class ReportModel
-{
-    public string ImagePath { get; set; } = "";
-    public string BookmarkName { get; set; } = "";
-    public string Url { get; set; } = "";
-    public string LinkText { get; set; } = "";
+    private static bool ValidateChartTags(string docPath, out List<string> foundTags)
+    {
+        foundTags = new List<string>();
+        Document doc = new Document(docPath);
+
+        // Retrieve all shapes in the document.
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+        foreach (Shape shape in shapes)
+        {
+            // Process only chart shapes.
+            if (shape.HasChart)
+            {
+                // Get the inner text of the shape; for chart shapes this is typically empty.
+                string innerText = shape.GetText() ?? string.Empty;
+
+                // Check for prohibited tags.
+                if (innerText.Contains("<<image"))
+                    foundTags.Add("<<image>>");
+                if (innerText.Contains("<<bookmark"))
+                    foundTags.Add("<<bookmark>>");
+                if (innerText.Contains("<<link"))
+                    foundTags.Add("<<link>>");
+            }
+        }
+
+        return foundTags.Count == 0;
+    }
 }

@@ -2,74 +2,77 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Tables;
-using Aspose.Words.Loading;
-using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
+using Aspose.Drawing.Drawing2D;
 
 public class Program
 {
     public static void Main()
     {
         // Create a deterministic sample PNG image.
-        const int imgWidth = 200;
-        const int imgHeight = 100;
-        var sampleBitmap = new Bitmap(imgWidth, imgHeight);
-        var sampleGraphics = Graphics.FromImage(sampleBitmap);
-        sampleGraphics.Clear(Color.White);
-        sampleBitmap.Save("input.png", ImageFormat.Png);
-        sampleGraphics.Dispose();
-        sampleBitmap.Dispose();
+        string sampleImagePath = "sample.png";
+        using (Bitmap bitmap = new Bitmap(100, 100))
+        {
+            using (Graphics graphics = Graphics.FromImage(bitmap))
+            {
+                graphics.Clear(Color.White);
+                using (Pen bluePen = new Pen(Color.Blue, 2))
+                {
+                    graphics.DrawEllipse(bluePen, 10, 10, 80, 80);
+                }
+            }
+            bitmap.Save(sampleImagePath, ImageFormat.Png);
+        }
 
-        // Create a Word document and insert the sample image.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-        builder.InsertImage("input.png");
-        doc.Save("DocumentWithImage.docx");
+        // Create a document and insert the sample image.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.InsertImage(sampleImagePath);
+        string docPath = "DocumentWithImages.docx";
+        doc.Save(docPath);
 
-        // Load the document and process all PNG images.
-        var loadedDoc = new Document("DocumentWithImage.docx");
-        var shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int processedCount = 0;
-        int imageIndex = 0;
+        // Load the document and extract all PNG images.
+        Document loadedDoc = new Document(docPath);
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        int extractedCount = 0;
 
         foreach (Shape shape in shapeNodes)
         {
-            if (!shape.HasImage)
-                continue;
-
-            if (shape.ImageData.ImageType != ImageType.Png)
-                continue;
-
-            // Extract the image to a memory stream.
-            using (var imageStream = new MemoryStream())
+            if (shape.HasImage && shape.ImageData.ImageType == ImageType.Png)
             {
-                shape.ImageData.Save(imageStream);
-                imageStream.Position = 0;
-
-                // Load the image into a bitmap for manipulation.
-                using (var bitmap = new Bitmap(imageStream))
+                // Save the original image to a memory stream.
+                using (MemoryStream imageStream = new MemoryStream())
                 {
-                    // Draw a 5‑pixel red border around the image.
-                    using (var graphics = Graphics.FromImage(bitmap))
-                    using (var pen = new Pen(Color.Red, 5))
-                    {
-                        graphics.DrawRectangle(pen, 0, 0, bitmap.Width - 1, bitmap.Height - 1);
-                    }
+                    shape.ImageData.Save(imageStream);
+                    imageStream.Position = 0;
 
-                    // Save the modified image.
-                    string outputPath = $"extracted_{imageIndex}.png";
-                    bitmap.Save(outputPath, ImageFormat.Png);
-                    processedCount++;
+                    // Load the image into Aspose.Drawing.Bitmap.
+                    using (Bitmap bmp = new Bitmap(imageStream))
+                    {
+                        // Apply a 5‑pixel red border.
+                        using (Graphics gfx = Graphics.FromImage(bmp))
+                        {
+                            using (Pen redPen = new Pen(Color.Red, 5))
+                            {
+                                Rectangle rect = new Rectangle(0, 0, bmp.Width - 1, bmp.Height - 1);
+                                gfx.DrawRectangle(redPen, rect);
+                            }
+                        }
+
+                        // Save the modified image.
+                        string outputPath = $"extracted_{extractedCount}.png";
+                        bmp.Save(outputPath, ImageFormat.Png);
+                        if (!File.Exists(outputPath))
+                            throw new Exception($"Failed to save modified image: {outputPath}");
+
+                        extractedCount++;
+                    }
                 }
             }
-
-            imageIndex++;
         }
 
-        // Validate that at least one image was processed.
-        if (processedCount == 0)
-            throw new Exception("No PNG images were extracted and processed.");
+        if (extractedCount == 0)
+            throw new Exception("No PNG images were extracted from the document.");
     }
 }

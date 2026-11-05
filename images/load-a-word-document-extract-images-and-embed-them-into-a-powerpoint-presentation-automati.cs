@@ -1,6 +1,6 @@
 using System;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
@@ -9,106 +9,83 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a deterministic sample image file.
-        const string sampleImagePath = "sample1.png";
-        CreateSampleImage(sampleImagePath, 200, 200);
+        // Create a deterministic sample image.
+        string imagePath = "input.png";
+        CreateSampleImage(imagePath);
 
-        // Step 2: Create a Word document and insert the sample image.
-        const string wordFilePath = "sample.docx";
-        CreateWordDocumentWithImage(wordFilePath, sampleImagePath);
+        // Create a Word document that contains the sample image.
+        string wordPath = "sample.docx";
+        CreateWordDocumentWithImage(wordPath, imagePath);
 
-        // Step 3: Load the Word document and extract all embedded images.
-        string[] extractedImages = ExtractImagesFromWord(wordFilePath);
+        // Extract all images from the Word document.
+        List<string> extractedImages = ExtractImagesFromWord(wordPath);
 
-        // Validate that at least one image was extracted.
-        if (extractedImages.Length == 0)
-            throw new InvalidOperationException("No images were extracted from the Word document.");
+        // NOTE: PowerPoint creation is omitted because Aspose.Slides is not available
+        // in the required package set. The extracted images are saved to disk and can
+        // be used in a presentation by external tools.
 
-        // Step 4: Create a placeholder PowerPoint file and list the extracted images.
-        const string pptxPath = "output.pptx";
-        CreatePlaceholderPowerPoint(pptxPath, extractedImages);
-
-        // Validate that the placeholder presentation file was created.
-        if (!File.Exists(pptxPath))
-            throw new InvalidOperationException("Failed to create the PowerPoint placeholder file.");
-
-        Console.WriteLine("Process completed successfully.");
+        // Validate that all expected files were created.
+        ValidateFileExists(imagePath);
+        ValidateFileExists(wordPath);
+        foreach (string img in extractedImages)
+        {
+            ValidateFileExists(img);
+        }
     }
 
-    // Creates a deterministic PNG image using Aspose.Drawing.
-    private static void CreateSampleImage(string path, int width, int height)
+    // Creates a simple 200x200 PNG image with a blue rectangle.
+    private static void CreateSampleImage(string path)
     {
-        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height);
-        Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap);
-        graphics.Clear(Aspose.Drawing.Color.White);
-        using (Aspose.Drawing.SolidBrush brush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Blue))
-        {
-            graphics.FillRectangle(brush, 20, 20, width - 40, height - 40);
-        }
+        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(200, 200);
+        Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap);
+        g.Clear(Aspose.Drawing.Color.White);
+        Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Blue, 5);
+        g.DrawRectangle(pen, 20, 20, 160, 160);
+        pen.Dispose();
+        g.Dispose();
         bitmap.Save(path);
-        graphics.Dispose();
         bitmap.Dispose();
-
-        if (!File.Exists(path))
-            throw new InvalidOperationException($"Failed to create sample image at '{path}'.");
     }
 
     // Creates a Word document and inserts the previously created image.
-    private static void CreateWordDocumentWithImage(string docPath, string imagePath)
+    private static void CreateWordDocumentWithImage(string docPath, string imgPath)
     {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(imagePath);
+        builder.InsertImage(imgPath);
         doc.Save(docPath);
-
-        if (!File.Exists(docPath))
-            throw new InvalidOperationException($"Failed to save Word document at '{docPath}'.");
     }
 
     // Extracts all images from the Word document and saves them as separate files.
-    private static string[] ExtractImagesFromWord(string docPath)
+    private static List<string> ExtractImagesFromWord(string docPath)
     {
+        List<string> extracted = new List<string>();
         Document doc = new Document(docPath);
         NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
-        List<string> extractedPaths = new List<string>();
         int index = 0;
-
         foreach (Shape shape in shapes)
         {
             if (shape.HasImage)
             {
-                string imageFileName = $"extracted_{index}.png";
-                shape.ImageData.Save(imageFileName);
-                if (!File.Exists(imageFileName))
-                    throw new InvalidOperationException($"Failed to save extracted image '{imageFileName}'.");
-                extractedPaths.Add(imageFileName);
+                string outPath = $"extracted-{index}.png";
+                shape.ImageData.Save(outPath);
+                extracted.Add(outPath);
                 index++;
             }
         }
-
-        return extractedPaths.ToArray();
+        if (extracted.Count == 0)
+        {
+            throw new Exception("No images were extracted from the Word document.");
+        }
+        return extracted;
     }
 
-    // Creates a placeholder PowerPoint file (empty .pptx) and writes a simple manifest of images.
-    private static void CreatePlaceholderPowerPoint(string pptxPath, string[] imagePaths)
+    // Validates that a file exists at the given path.
+    private static void ValidateFileExists(string path)
     {
-        // Create an empty file with .pptx extension.
-        using (FileStream fs = new FileStream(pptxPath, FileMode.Create, FileAccess.Write))
+        if (!File.Exists(path))
         {
-            // Write a minimal placeholder content.
-            using (StreamWriter writer = new StreamWriter(fs))
-            {
-                writer.WriteLine("Placeholder PowerPoint file.");
-                writer.WriteLine("The following images were extracted from the Word document:");
-                foreach (string img in imagePaths)
-                {
-                    writer.WriteLine("- " + img);
-                }
-            }
+            throw new Exception($"Expected file not found: {path}");
         }
-
-        // Validate that the placeholder file exists.
-        if (!File.Exists(pptxPath))
-            throw new InvalidOperationException($"Failed to create placeholder PowerPoint at '{pptxPath}'.");
     }
 }

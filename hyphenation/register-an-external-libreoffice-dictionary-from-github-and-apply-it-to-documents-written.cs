@@ -2,53 +2,52 @@ using System;
 using System.Globalization;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the dictionary file and the output PDF.
+        // Create a minimal LibreOffice‑style Spanish hyphenation dictionary.
         const string dictionaryPath = "hyph_es_ES.dic";
-        const string outputPdfPath = "HyphenatedSpanish.pdf";
-
-        // Create a minimal Spanish hyphenation dictionary in OpenOffice format.
-        // First line must specify the encoding, followed by word=hyphenation patterns.
-        string dictionaryContent =
+        File.WriteAllText(dictionaryPath,
             "UTF-8\n" +
             "extraordinariamente=ex-tra-or-di-nar-ia-men-te\n" +
-            "hipopotomonstrosesquipedaliofobia=hi-po-po-to-mo-ns-tro-se-squi-pe-da-li-o-fo-bia\n" +
-            "desafortunadamente=de-sa-for-tu-na-da-men-te\n";
+            "inconstitucionalmente=in-cons-ti-tu-cio-nal-men-te\n" +
+            "electroencefalografista=elec-tro-en-ce-fa-lo-gra-fis-ta\n");
 
-        File.WriteAllText(dictionaryPath, dictionaryContent);
+        // Register the dictionary for the Spanish locale (es-ES).
+        Aspose.Words.Hyphenation.RegisterDictionary("es-ES", dictionaryPath);
 
-        // Register the dictionary for the Spanish (Spain) locale.
-        Hyphenation.RegisterDictionary("es-ES", dictionaryPath);
-
-        // Create a new blank document.
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Configure page layout to force line wrapping.
-        doc.FirstSection.PageSetup.PageWidth = 300; // points (~4.2 inches)
-        doc.FirstSection.PageSetup.LeftMargin = 20;
-        doc.FirstSection.PageSetup.RightMargin = 20;
+        // Set the paragraph (font) locale to Spanish so hyphenation uses the registered dictionary.
+        builder.Font.LocaleId = new CultureInfo("es-ES").LCID;
+
+        // Write a line of Spanish words that are long enough to require hyphenation.
+        builder.Writeln("extraordinariamente inconstitucionalmente electroencefalografista");
+
+        // Narrow the page width to force line wrapping and make hyphenation visible.
+        Section section = doc.FirstSection;
+        section.PageSetup.PageWidth = 200; // points
+        section.PageSetup.LeftMargin = 20;
+        section.PageSetup.RightMargin = 20;
+        section.PageSetup.TopMargin = 20;
+        section.PageSetup.BottomMargin = 20;
 
         // Enable automatic hyphenation.
         doc.HyphenationOptions.AutoHyphenation = true;
+        doc.HyphenationOptions.HyphenationZone = 5;
 
-        // Write Spanish text containing long words that can be hyphenated.
-        builder.Font.Size = 24;
-        builder.Font.LocaleId = new CultureInfo("es-ES").LCID;
-        builder.Writeln(
-            "Esta es una demostración de hyphenation automática con palabras como extraordinariamente, " +
-            "hipopotomonstrosesquipedaliofobia y desafortunadamente para observar cómo se insertan guiones.");
-
-        // Save the document as PDF.
-        doc.Save(outputPdfPath, SaveFormat.Pdf);
+        // Save the document as PDF to demonstrate hyphenation.
+        const string outputPath = "HyphenatedSpanish.pdf";
+        doc.Save(outputPath);
 
         // Verify that the PDF was created.
-        if (!File.Exists(outputPdfPath))
-            throw new InvalidOperationException("The expected PDF file was not created.");
+        if (!File.Exists(outputPath))
+        {
+            throw new InvalidOperationException("Expected PDF output was not created.");
+        }
     }
 }

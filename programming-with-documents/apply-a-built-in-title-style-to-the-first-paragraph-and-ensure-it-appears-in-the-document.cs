@@ -5,18 +5,21 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Apply the built‑in 'Title' style to the first paragraph and ensure it appears in the outline.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Title;
-        builder.ParagraphFormat.OutlineLevel = OutlineLevel.Level1;
-        builder.Writeln("Document Title");
+        // Insert the first paragraph (the title).
+        builder.Writeln("My Document Title");
 
-        // Reset style to normal for subsequent paragraphs.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.ParagraphFormat.OutlineLevel = OutlineLevel.BodyText;
+        // Apply the built‑in Title style to the first paragraph.
+        Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
+        firstParagraph.ParagraphFormat.StyleIdentifier = StyleIdentifier.Title;
+
+        // The Title style automatically maps to the outline level for titles,
+        // so an explicit OutlineLevel assignment is not required.
+
+        // Add a normal paragraph.
         builder.Writeln("This is the body of the document.");
 
         // Save the document.

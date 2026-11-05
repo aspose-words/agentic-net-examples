@@ -15,28 +15,32 @@ public class Program
         // Start a table.
         builder.StartTable();
 
-        // First row, first cell.
+        // First cell with gradient shading.
         builder.InsertCell();
+        builder.CellFormat.Shading.Texture = TextureIndex.TextureDiagonalCross;
+        builder.CellFormat.Shading.BackgroundPatternColor = Color.LightBlue;
         builder.Writeln("Cell 1");
-        ApplyGradientShading(builder, TextureIndex.TextureDiagonalDown, Color.LightBlue);
 
-        // First row, second cell.
+        // Second cell with a different gradient shading.
         builder.InsertCell();
+        builder.CellFormat.Shading.Texture = TextureIndex.TextureHorizontal;
+        builder.CellFormat.Shading.BackgroundPatternColor = Color.LightGreen;
         builder.Writeln("Cell 2");
-        ApplyGradientShading(builder, TextureIndex.TextureDiagonalUp, Color.LightCoral);
 
         // End the first row.
         builder.EndRow();
 
-        // Second row, first cell.
+        // Third cell with gradient shading.
         builder.InsertCell();
+        builder.CellFormat.Shading.Texture = TextureIndex.TextureVertical;
+        builder.CellFormat.Shading.BackgroundPatternColor = Color.LightCoral;
         builder.Writeln("Cell 3");
-        ApplyGradientShading(builder, TextureIndex.TextureHorizontal, Color.LightGreen);
 
-        // Second row, second cell.
+        // Fourth cell with gradient shading.
         builder.InsertCell();
+        builder.CellFormat.Shading.Texture = TextureIndex.TextureDiagonalCross;
+        builder.CellFormat.Shading.BackgroundPatternColor = Color.LightGoldenrodYellow;
         builder.Writeln("Cell 4");
-        ApplyGradientShading(builder, TextureIndex.TextureVertical, Color.LightGoldenrodYellow);
 
         // End the second row and the table.
         builder.EndRow();
@@ -48,21 +52,8 @@ public class Program
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
-    }
-
-    // Helper method to apply gradient shading to the current cell.
-    private static void ApplyGradientShading(DocumentBuilder builder, TextureIndex texture, Color backgroundColor)
-    {
-        // The builder is positioned inside the cell after InsertCell().
-        Cell cell = builder.CurrentParagraph.ParentNode as Cell;
-        if (cell == null)
-            throw new InvalidOperationException("Current node is not a cell.");
-
-        // Set the shading texture and background pattern color.
-        cell.CellFormat.Shading.Texture = texture;
-        cell.CellFormat.Shading.BackgroundPatternColor = backgroundColor;
-        // Optionally set a foreground color for the texture.
-        cell.CellFormat.Shading.ForegroundPatternColor = Color.White;
+        {
+            throw new Exception($"Failed to create the output file: {outputPath}");
+        }
     }
 }

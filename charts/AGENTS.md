@@ -10,32 +10,28 @@ product: Aspose.Words
 
 ## Purpose
 
-This folder is a live, curated example set for Charts scenarios. Treat every `.cs` file as a standalone console application. The goal is correct, warning-free examples that use documented Aspose APIs and match the original task intent.
+Guide the AI coding agent to produce correct, compile-time-safe Aspose.Words chart code by enforcing the native chart workflow, applying documented API contracts, and avoiding the common misuse patterns that cause compilation failures.
 
 ## Non-negotiable conventions
 
-- Use `Shape` + `Chart` APIs directly and validate `shape.HasChart` before modification.
-- Insert charts with `DocumentBuilder.InsertChart` using the required `ChartType`.
-- Bootstrap local sample DOCX inputs for existing-file, folder, and stream workflows.
-- Prefer simple, verifiable chart workflows over speculative formatting shortcuts.
-- Guard maybe-null values to avoid nullable-reference warnings such as `CS8600`, `CS8602`, and `CS8604`.
+- Do not treat a generic Shape as a chart unless shape.HasChart is true.
+- Do not reference members that are not part of Aspose.Words.Chart, such as CategoryAxis, ChartLegend.IsVisible, or Trendline APIs.
+- Do not add or remove series without first clearing or validating the existing series collection.
+- Bootstrap local sample inputs for existing-file, folder, stream, image, and data workflows.
+- Prefer simple, verifiable workflows over speculative formatting shortcuts.
 
 ## Recommended workflow selection
 
-- Existing DOCX And Export workflow: 5 examples
-- Native Chart Api workflow: 28 examples
-- Validation workflow: 3 examples
-- Stream Batch IO workflow: 3 examples
+- **Existing DOCX and export workflow**: 5 examples
+- **Native chart API workflow**: 28 examples
+- **Validation workflow**: 3 examples
+- **Stream and batch I/O workflow**: 3 examples
 
 Use the simplest workflow that satisfies the task.
 
 ## Validation priorities
 
-1. The code must compile and run without manual input.
-2. API usage must be supported by the configured package versions.
-3. Exported outputs must actually be written by the example.
-4. Validation scenarios must inspect only the behavior requested by the task.
-5. Examples that depend on files, folders, streams, images, or data should bootstrap those inputs locally during the example run.
+1. Prioritize compile-time validation of API members and nullability before runtime execution.
 
 ## File-to-task reference
 
@@ -58,7 +54,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Insert a chart using a two-dimensional array as a custom data source, mapping series and categories.
   - Workflow: native-chart-api
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `insert-a-chart-into-a-table-cell-and-ensure-it-scales-proportionally-with-the-cell-dimensi.cs`
   - Task: Insert a chart into a table cell and ensure it scales proportionally with the cell dimensions.
   - Workflow: validation
@@ -78,7 +74,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Create a new chart series, set its values via the series.Values property, and assign custom category labels.
   - Workflow: native-chart-api
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `use-chartseriescollection-add-overload-accepting-a-name-and-values-to-create-a-labeled-ser.cs`
   - Task: Use ChartSeriesCollection.Add overload accepting a name and values to create a labeled series in one step.
   - Workflow: native-chart-api
@@ -93,7 +89,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Change the chart type from column to line after populating data to demonstrate dynamic transformation.
   - Workflow: native-chart-api
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `add-a-trendline-to-a-scatter-chart-series-and-configure-its-type-color-and-display-equatio.cs`
   - Task: Add a trendline to a scatter chart series and configure its type, color, and display equation.
   - Workflow: native-chart-api
@@ -103,72 +99,72 @@ Use the simplest workflow that satisfies the task.
   - Task: Configure ChartDataLabel number format to display percentages with one decimal place for all series data points.
   - Workflow: native-chart-api
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `align-multi-line-chart-data-labels-to-the-center-and-enable-text-wrapping-for-better-reada.cs`
   - Task: Align multi-line chart data labels to the center and enable text wrapping for better readability.
   - Workflow: native-chart-api
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `define-default-chartdatalabel-options-to-apply-consistent-font-size-and-color-across-all-c.cs`
   - Task: Define default ChartDataLabel options to apply consistent font size and color across all chart series.
   - Workflow: native-chart-api
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `customize-the-chart-s-data-label-font-to-use-a-specific-typeface-size-and-bold-styling-for.cs`
   - Task: Customize the chart's data label font to use a specific typeface, size, and bold styling for emphasis.
   - Workflow: native-chart-api
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `enable-data-label-leader-lines-for-a-pie-chart-and-customize-their-length-for-better-place.cs`
   - Task: Enable data label leader lines for a pie chart and customize their length for better placement.
   - Workflow: native-chart-api
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `configure-the-chart-to-display-data-labels-only-for-points-exceeding-a-specified-threshold.cs`
   - Task: Configure the chart to display data labels only for points exceeding a specified threshold value.
   - Workflow: native-chart-api
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `set-major-gridlines-visibility-on-the-primary-x-axis-and-customize-their-line-color-and-th.cs`
   - Task: Set major gridlines visibility on the primary X-axis and customize their line color and thickness.
   - Workflow: native-chart-api
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `adjust-the-primary-y-axis-scaling-to-fixed-minimum-and-maximum-values-and-set-major-unit-i.cs`
   - Task: Adjust the primary Y-axis scaling to fixed minimum and maximum values and set major unit intervals.
   - Workflow: native-chart-api
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `set-display-units-for-the-secondary-x-axis-to-thousands-and-format-axis-labels-with-a-cust.cs`
   - Task: Set display units for the secondary X-axis to thousands and format axis labels with a custom number format.
   - Workflow: native-chart-api
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `set-the-secondary-y-axis-number-format-to-currency-with-two-decimal-places-for-financial-c.cs`
   - Task: Set the secondary Y-axis number format to currency with two decimal places for financial charts.
   - Workflow: native-chart-api
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `apply-a-solid-fill-color-to-the-chart-plot-area-and-add-a-gradient-overlay-for-visual-dept.cs`
   - Task: Apply a solid fill color to the chart plot area and add a gradient overlay for visual depth.
   - Workflow: native-chart-api
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `programmatically-set-the-chart-s-background-fill-to-a-semi-transparent-color-to-create-a-w.cs`
   - Task: Programmatically set the chart's background fill to a semi-transparent color to create a watermark effect.
   - Workflow: native-chart-api
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `add-a-border-stroke-to-the-chart-legend-with-specified-thickness-and-dash-style-for-emphas.cs`
   - Task: Add a border stroke to the chart legend with specified thickness and dash style for emphasis.
   - Workflow: native-chart-api
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `adjust-the-chart-legend-position-to-the-top-right-corner-and-set-its-background-fill-to-li.cs`
   - Task: Adjust the chart legend position to the top right corner and set its background fill to light gray.
   - Workflow: native-chart-api
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `update-the-chart-title-text-and-toggle-legend-visibility-based-on-user-preferences.cs`
   - Task: Update the chart title text and toggle legend visibility based on user preferences.
   - Workflow: native-chart-api
@@ -178,22 +174,22 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply a predefined chart style template to a newly inserted chart to ensure consistent visual branding.
   - Workflow: validation
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `apply-a-three-dimensional-rotation-effect-to-a-column-chart-to-enhance-visual-perspective.cs`
   - Task: Apply a three-dimensional rotation effect to a column chart to enhance visual perspective.
   - Workflow: native-chart-api
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `programmatically-change-the-chart-s-plot-area-border-to-a-dashed-line-with-specific-color.cs`
   - Task: Programmatically change the chart's plot area border to a dashed line with specific color and width.
   - Workflow: native-chart-api
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `programmatically-hide-the-chart-s-plot-area-border-while-keeping-axis-lines-visible-for-a.cs`
   - Task: Programmatically hide the chart's plot area border while keeping axis lines visible for a clean appearance.
   - Workflow: native-chart-api
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `enable-automatic-resizing-of-chart-elements-when-the-document-page-size-changes-to-maintai.cs`
   - Task: Enable automatic resizing of chart elements when the document page size changes to maintain layout integrity.
   - Workflow: native-chart-api
@@ -213,17 +209,17 @@ Use the simplest workflow that satisfies the task.
   - Task: Validate that a chart contains the expected number of series and data points before saving.
   - Workflow: validation
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `validate-that-all-chart-series-have-matching-category-counts-to-prevent-data-misalignment.cs`
   - Task: Validate that all chart series have matching category counts to prevent data misalignment errors during rendering.
   - Workflow: existing-docx-and-export
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `export-a-word-document-containing-multiple-charts-to-pdf-while-preserving-chart-formatting.cs`
   - Task: Export a Word document containing multiple charts to PDF while preserving chart formatting and data labels.
   - Workflow: stream-batch-io
   - Outputs: pdf, docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `implement-error-handling-to-catch-exceptions-when-inserting-a-chart-into-a-read-only-docum.cs`
   - Task: Implement error handling to catch exceptions when inserting a chart into a read-only document stream.
   - Workflow: existing-docx-and-export
@@ -238,52 +234,51 @@ Use the simplest workflow that satisfies the task.
 ## Common failure patterns and preferred agent fixes
 
 - **Invalid chart shape assumption**
-  - Symptom: Code treats a generic Shape as a chart without checking HasChart.
-  - Preferred fix: Validate shape.HasChart before accessing the Chart property.
+  - Symptom: Code accesses Shape.Chart without confirming shape.HasChart, leading to CS1061 errors.
+  - Root cause: The example treats any Shape as a chart regardless of its actual content.
+  - Preferred fix: Add a shape.HasChart check and throw a clear exception if the shape does not contain a chart.
+  - Prevention: Always guard chart access with if (shape.HasChart) { ... } else { throw new InvalidOperationException(...); }.
 
-- **Series/data misalignment**
-  - Symptom: Category count and series values do not match expected chart structure.
-  - Preferred fix: Clear default data if needed and add aligned categories and series values deterministically.
+- **Use of non-existent chart members**
+  - Symptom: Compilation fails with CS1061 or CS0246 for members such as CategoryAxis, ChartLegend.IsVisible, Trendline, or DataLabel properties that do not exist in Aspose.Words.
+  - Root cause: The code references API members that are part of other libraries (e.g., Aspose.Slides) or older versions of Aspose.Words.
+  - Preferred fix: Replace the invalid members with the supported Aspose.Words equivalents, or omit the unsupported functionality.
+  - Prevention: Consult the Aspose.Words 26.10.0 documentation for the exact Chart API surface before writing code.
 
-- **Invalid table insertion state**
-  - Symptom: Chart insertion in a table cell fails because the builder is left in an unbalanced table state.
-  - Preferred fix: Balance StartTable, InsertCell, EndRow, and EndTable before saving.
+- **Table insertion state imbalance**
+  - Symptom: Saving the document throws runtime errors because the table construction (StartTable/InsertCell/EndRow/EndTable) is not balanced.
+  - Root cause: The example leaves an open table row or cell when inserting a chart.
+  - Preferred fix: Ensure that every StartTable is paired with EndTable and that each InsertCell is followed by EndRow before saving.
+  - Prevention: Wrap chart insertion inside a clearly delimited table block and call builder.EndRow() and builder.EndTable() after the chart is placed.
 
 - **Missing local bootstrap inputs**
-  - Symptom: Existing DOCX, folder, or stream scenarios assume inputs already exist.
-  - Preferred fix: Create local sample input documents or folders inside the example first.
+  - Symptom: Examples that reference external DOCX files, folders, or streams fail at runtime because the inputs do not exist.
+  - Root cause: The code assumes pre-existing files or directories without creating them in the sample.
+  - Preferred fix: Create a minimal DOCX, directory, or memory stream at the start of the example and use it for subsequent operations.
+  - Prevention: Always include a self-contained bootstrap section that generates any required input artifacts.
 
-- **Nullable warnings**
-  - Symptom: CS8600, CS8602, or CS8604 around maybe-null chart shapes or located nodes.
-  - Preferred fix: Use nullable locals and guard maybe-null values before dereference.
+- **Incorrect overload usage for builder navigation**
+  - Symptom: CS7036 errors occur when calling DocumentBuilder.MoveToParagraph without providing the required characterIndex argument.
+  - Root cause: The example uses an overload that no longer exists or omits required parameters.
+  - Preferred fix: Use the overload MoveToParagraph(paragraphIndex, characterIndex) with both arguments, or move the builder by referencing the target Paragraph node directly.
+  - Prevention: Refer to the current Aspose.Words API for the correct overload signatures before invoking navigation methods.
 
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.9.0`
+- Primary package: `Aspose.Words` `26.10.0`
 
 ## Command reference
-
-### Create a temporary console project
 
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
+dotnet add package Aspose.Words --version 26.10.0
 ```
-
-### Add required packages
-
-```bash
-dotnet add package Aspose.Words --version 26.9.0
-```
-
-### Copy a category example into the temp project
 
 ```powershell
 Copy-Item ..\charts\<example-file>.cs .\Program.cs
 ```
-
-### Build and run
 
 ```bash
 dotnet build --configuration Release --verbosity minimal
@@ -292,6 +287,4 @@ dotnet run --configuration Release --no-build
 
 ## Category update guidance
 
-- Preserve file-to-task traceability. Any future update should keep the original task text associated with the file in metadata.
-- When replacing a file, prefer the latest verified publish-ready version rather than a merely compiling draft.
-- Keep examples standalone, bootstrap missing inputs locally, and prefer documented Aspose APIs over speculative shortcuts.
+- Periodically review Aspose.Words release notes to update the list of supported chart members and adjust the strict API bans accordingly.

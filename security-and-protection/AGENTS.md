@@ -10,29 +10,23 @@ product: Aspose.Words
 
 ## Purpose
 
-This folder is a live, curated example set for security-and-protection scenarios. Treat every `.cs` file as a standalone console application. The goal is correct, warning-free examples that use documented Aspose APIs and match the original task intent.
+Provide concise, task-focused code snippets that enable developers to protect, unprotect, and safely load or save Word documents while handling cancellation without relying on undocumented or unavailable APIs.
 
 ## Non-negotiable conventions
 
-- Always use documented Aspose.Words APIs directly.
-- Always create local sample source documents when a task refers to an existing file, folder, stream, template, or input asset.
-- Prefer `Document.Protect`, `Document.Unprotect`, `LoadOptions`, and documented format-specific save options.
-- Keep validation narrow and task-specific.
-- Do not invent encryption, permission, or protection helper APIs.
+- Do not reference Aspose.Words members that are not present in version 26.10.0.
+- Bootstrap local sample inputs for existing-file, folder, stream, image, and data workflows.
+- Prefer simple, verifiable workflows over speculative formatting shortcuts.
 
 ## Recommended workflow selection
 
-- Security Workflow workflow: 30 examples
+- **Security Workflow workflow**: 30 examples
 
 Use the simplest workflow that satisfies the task.
 
 ## Validation priorities
 
-1. The code must compile and run without manual input.
-2. API usage must be supported by the configured package versions.
-3. Exported outputs must actually be written by the example.
-4. Validation scenarios must inspect only the behavior requested by the task.
-5. Examples that depend on files, folders, streams, images, or data should bootstrap those inputs locally during the example run.
+1. Confirm that the output file is created and that its protection status matches the requested ProtectionType.
 
 ## File-to-task reference
 
@@ -45,7 +39,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Attach a callback to DocumentLoadingArgs.ThrowIfCancellationRequested during loading to ensure proper response.
   - Workflow: security-workflow
   - Outputs: doc
-  - Selected engine: mcp
+  - Selected engine: llm
 - `use-token-throwifcancellationrequested-inside-a-field-update-loop-to-abort-long-running-op.cs`
   - Task: Use token.ThrowIfCancellationRequested inside a field update loop to abort long-running operations efficiently.
   - Workflow: security-workflow
@@ -80,12 +74,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Pass the same CancellationToken to both loading and saving methods for consistent interruption control.
   - Workflow: security-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `use-token-iscancellationrequested-in-a-custom-linq-reporting-engine-query-to-abort-large-r.cs`
   - Task: Use token.IsCancellationRequested in a custom LINQ Reporting Engine query to abort large reports.
   - Workflow: security-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `wrap-a-batch-of-document-load-calls-in-a-foreach-loop-that-checks-token-cancellation-befor.cs`
   - Task: Wrap a batch of Document.Load calls in a foreach loop that checks token cancellation before each load.
   - Workflow: security-workflow
@@ -95,7 +89,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Configure DocumentLoadingArgs to invoke a user-defined method when cancellation is requested during loading.
   - Workflow: security-workflow
   - Outputs: doc
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `integrate-cancellationtoken-into-a-background-worker-that-processes-documents-without-bloc.cs`
   - Task: Integrate CancellationToken into a background worker that processes documents without blocking the UI.
   - Workflow: security-workflow
@@ -190,44 +184,39 @@ Use the simplest workflow that satisfies the task.
 ## Common failure patterns and preferred agent fixes
 
 - **Unsupported API invention**
-  - Symptom: Generated code references members that do not exist in the selected package version.
-  - Preferred fix: Replace invented members with documented Aspose.Words APIs already proven in this category.
+  - Symptom: Compilation fails because members such as LoadOptions.LoadingCallback, Document.LoadAsync, or Document.Dispose are not defined.
+  - Root cause: The code references APIs that do not exist in the shipped Aspose.Words package.
+  - Preferred fix: Replace invented members with the documented Document constructor, LoadOptions, and explicit token-aware wrappers using Task.Run.
+  - Prevention: Consult the official Aspose.Words 26.10.0 reference and limit code to APIs listed in the key_apis set.
+
+- **Missing CancellationToken support**
+  - Symptom: Build errors occur when passing a CancellationToken directly to Document.Load or Document.Save, and runtime checks cannot locate cancellation callbacks.
+  - Root cause: Aspose.Words does not expose overloads that accept a CancellationToken in this version.
+  - Preferred fix: Wrap the load or save call inside Task.Run and invoke token.ThrowIfCancellationRequested before and after the operation.
+  - Prevention: Design cancellation logic around token checks surrounding synchronous Aspose.Words calls rather than expecting built-in overloads.
 
 - **Missing local bootstrap inputs**
-  - Symptom: The example assumes source files, folders, images, or data already exist.
-  - Preferred fix: Create deterministic local inputs before loading, processing, or validating them.
-
-- **Over-broad validation**
-  - Symptom: The example fails at runtime while checking unrelated document internals.
-  - Preferred fix: Validate only the requested behavior and the existence of expected outputs.
+  - Symptom: Code assumes that source documents, templates, or image files already exist, leading to FileNotFound exceptions or invalid test results.
+  - Root cause: Samples do not create the required files before processing.
+  - Preferred fix: Generate deterministic sample documents, templates, or images at the start of each example and clean them up afterward.
+  - Prevention: Always include a self-contained setup block that creates any files the task needs.
 
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.9.0`
+- Primary package: `Aspose.Words` `26.10.0`
 
 ## Command reference
-
-### Create a temporary console project
 
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
+dotnet add package Aspose.Words --version 26.10.0
 ```
-
-### Add required packages
-
-```bash
-dotnet add package Aspose.Words --version 26.9.0
-```
-
-### Copy a category example into the temp project
 
 ```powershell
 Copy-Item ..\security-and-protection\<example-file>.cs .\Program.cs
 ```
-
-### Build and run
 
 ```bash
 dotnet build --configuration Release --verbosity minimal
@@ -236,6 +225,4 @@ dotnet run --configuration Release --no-build
 
 ## Category update guidance
 
-- Preserve file-to-task traceability. Any future update should keep the original task text associated with the file in metadata.
-- When replacing a file, prefer the latest verified publish-ready version rather than a merely compiling draft.
-- Keep examples standalone, bootstrap missing inputs locally, and prefer documented Aspose APIs over speculative shortcuts.
+- Update the examples whenever a new Aspose.Words version adds native CancellationToken overloads to simplify the wrappers.

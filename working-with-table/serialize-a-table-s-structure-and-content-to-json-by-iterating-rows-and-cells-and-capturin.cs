@@ -8,10 +8,13 @@ using Newtonsoft.Json;
 
 public class Program
 {
-    // DTOs for JSON serialization
-    public class TableInfo
+    // Simple DTOs for JSON serialization
+    public class CellInfo
     {
-        public List<RowInfo> Rows { get; set; } = new List<RowInfo>();
+        public string Text { get; set; }
+        public double Width { get; set; }
+        public string ShadingColor { get; set; }
+        public string ParagraphAlignment { get; set; }
     }
 
     public class RowInfo
@@ -19,109 +22,94 @@ public class Program
         public List<CellInfo> Cells { get; set; } = new List<CellInfo>();
     }
 
-    public class CellInfo
+    public class TableInfo
     {
-        public string Text { get; set; }
-        public string ShadingColor { get; set; } // Hex string, null if no shading
+        public List<RowInfo> Rows { get; set; } = new List<RowInfo>();
     }
 
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and builder
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple table with formatting.
+        // Build a sample table with formatting
         builder.StartTable();
 
-        // First row, first cell with shading.
+        // First row, first cell
         builder.InsertCell();
         builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        builder.CellFormat.Shading.BackgroundPatternColor = Color.LightBlue;
+        builder.CellFormat.Width = 100;
         builder.Write("Header 1");
-        builder.CurrentParagraph.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        // Apply shading to the current cell.
-        Cell currentCell = builder.CurrentParagraph.ParentNode as Cell;
-        if (currentCell != null)
-            currentCell.CellFormat.Shading.BackgroundPatternColor = Color.LightBlue;
 
-        // First row, second cell without shading.
+        // First row, second cell
         builder.InsertCell();
+        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        builder.CellFormat.Shading.BackgroundPatternColor = Color.LightGreen;
+        builder.CellFormat.Width = 150;
         builder.Write("Header 2");
-        // Ensure no shading.
-        currentCell = builder.CurrentParagraph.ParentNode as Cell;
-        if (currentCell != null)
-            currentCell.CellFormat.Shading.BackgroundPatternColor = Color.Empty;
-
         builder.EndRow();
 
-        // Second row, first cell.
+        // Second row, first cell
         builder.InsertCell();
+        builder.ParagraphFormat.Alignment = ParagraphAlignment.Left;
+        builder.CellFormat.Shading.BackgroundPatternColor = Color.White;
+        builder.CellFormat.Width = 100;
         builder.Write("Row 1, Cell 1");
-        currentCell = builder.CurrentParagraph.ParentNode as Cell;
-        if (currentCell != null)
-            currentCell.CellFormat.Shading.BackgroundPatternColor = Color.LightGreen;
 
-        // Second row, second cell.
+        // Second row, second cell
         builder.InsertCell();
+        builder.ParagraphFormat.Alignment = ParagraphAlignment.Right;
+        builder.CellFormat.Shading.BackgroundPatternColor = Color.White;
+        builder.CellFormat.Width = 150;
         builder.Write("Row 1, Cell 2");
-        // No shading for this cell (default).
-
         builder.EndRow();
 
-        // End the table.
         builder.EndTable();
 
-        // Save the document to verify creation.
+        // Save the document
         string docPath = "TableDoc.docx";
         doc.Save(docPath);
+        if (!File.Exists(docPath))
+            throw new Exception("Document was not saved.");
 
-        // Retrieve the first table in the document.
-        Table table = doc.GetChildNodes(NodeType.Table, true)[0] as Table;
-        if (table == null)
-            throw new InvalidOperationException("No table found in the document.");
-
-        // Serialize table structure and content to JSON.
-        TableInfo tableInfo = new TableInfo();
-
-        foreach (Row row in table.Rows)
+        // Traverse tables and collect information
+        List<TableInfo> tablesInfo = new List<TableInfo>();
+        NodeCollection tables = doc.GetChildNodes(NodeType.Table, true);
+        foreach (Table table in tables)
         {
-            RowInfo rowInfo = new RowInfo();
-
-            foreach (Cell cell in row.Cells)
+            TableInfo tInfo = new TableInfo();
+            foreach (Row row in table.Rows)
             {
-                CellInfo cellInfo = new CellInfo
+                RowInfo rInfo = new RowInfo();
+                foreach (Cell cell in row.Cells)
                 {
-                    Text = cell.GetText().TrimEnd('\a')
-                };
-
-                Color shading = cell.CellFormat.Shading.BackgroundPatternColor;
-                if (shading != Color.Empty && shading.A != 0)
-                {
-                    cellInfo.ShadingColor = ColorTranslator.ToHtml(shading);
+                    CellInfo cInfo = new CellInfo
+                    {
+                        Text = cell.GetText().TrimEnd('\a'), // Remove cell marker
+                        Width = cell.CellFormat.Width,
+                        ShadingColor = cell.CellFormat.Shading.BackgroundPatternColor.IsEmpty
+                            ? "None"
+                            : ColorTranslator.ToHtml(cell.CellFormat.Shading.BackgroundPatternColor),
+                        ParagraphAlignment = cell.FirstParagraph?.ParagraphFormat?.Alignment.ToString() ?? "Unknown"
+                    };
+                    rInfo.Cells.Add(cInfo);
                 }
-                else
-                {
-                    cellInfo.ShadingColor = null;
-                }
-
-                rowInfo.Cells.Add(cellInfo);
+                tInfo.Rows.Add(rInfo);
             }
-
-            tableInfo.Rows.Add(rowInfo);
+            tablesInfo.Add(tInfo);
         }
 
-        string json = JsonConvert.SerializeObject(tableInfo, Formatting.Indented);
-        string jsonPath = "table.json";
+        // Serialize to JSON
+        string json = JsonConvert.SerializeObject(tablesInfo, Formatting.Indented);
+        string jsonPath = "TableStructure.json";
         File.WriteAllText(jsonPath, json);
-
-        // Validate that output files were created.
-        if (!File.Exists(docPath))
-            throw new FileNotFoundException($"Document file not found: {docPath}");
         if (!File.Exists(jsonPath))
-            throw new FileNotFoundException($"JSON file not found: {jsonPath}");
+            throw new Exception("JSON report was not created.");
 
-        // Output paths (no interactive prompts).
+        // Optionally, output paths (no interactive wait)
         Console.WriteLine($"Document saved to: {Path.GetFullPath(docPath)}");
-        Console.WriteLine($"Table JSON saved to: {Path.GetFullPath(jsonPath)}");
+        Console.WriteLine($"JSON report saved to: {Path.GetFullPath(jsonPath)}");
     }
 }

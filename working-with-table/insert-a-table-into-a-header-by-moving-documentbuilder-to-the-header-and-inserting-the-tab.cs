@@ -9,33 +9,38 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Add a primary header to the first section.
+        Section section = doc.FirstSection;
+        HeaderFooter header = new HeaderFooter(doc, HeaderFooterType.HeaderPrimary);
+        section.HeadersFooters.Add(header);
+
+        // Create a DocumentBuilder and move it to the header.
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Ensure that the primary header exists.
-        // If it does not, create and add it to the first section.
-        HeaderFooter primaryHeader = doc.FirstSection.HeadersFooters[HeaderFooterType.HeaderPrimary];
-        if (primaryHeader == null)
-        {
-            primaryHeader = new HeaderFooter(doc, HeaderFooterType.HeaderPrimary);
-            doc.FirstSection.HeadersFooters.Add(primaryHeader);
-        }
-
-        // Move the builder's cursor into the primary header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
 
-        // Build a simple 1‑row, 2‑cell table inside the header.
+        // Build a simple 2x2 table inside the header.
         builder.StartTable();
 
-        // First cell.
+        // First row, first cell.
         builder.InsertCell();
         builder.Write("Header Cell 1");
 
-        // Second cell.
+        // First row, second cell.
         builder.InsertCell();
         builder.Write("Header Cell 2");
-
-        // End the row and the table.
         builder.EndRow();
+
+        // Second row, first cell.
+        builder.InsertCell();
+        builder.Write("Header Cell 3");
+
+        // Second row, second cell.
+        builder.InsertCell();
+        builder.Write("Header Cell 4");
+        builder.EndRow();
+
+        // End the table.
         builder.EndTable();
 
         // Save the document.
@@ -44,9 +49,8 @@ public class Program
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The document was not saved correctly.");
-
-        // Indicate successful completion.
-        Console.WriteLine("Document saved to " + Path.GetFullPath(outputPath));
+        {
+            throw new Exception($"Failed to create the output file: {outputPath}");
+        }
     }
 }

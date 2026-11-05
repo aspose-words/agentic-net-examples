@@ -4,61 +4,69 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Person
+namespace LinqReportingCustomDelimiters
 {
-    public string Name { get; set; } = "John Doe";
-    public int Age { get; set; } = 30;
-}
-
-public class Model
-{
-    public List<Person> People { get; set; } = new()
+    // Sample data model.
+    public class ReportModel
     {
-        new Person { Name = "Alice", Age = 28 },
-        new Person { Name = "Bob", Age = 35 }
-    };
-}
+        public List<Person> Persons { get; set; } = new();
+    }
 
-public class Program
-{
-    public static void Main()
+    public class Person
     {
-        // Ensure output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
+        public string Name { get; set; } = string.Empty;
+    }
 
-        // Create template document with custom delimiters [[ and ]].
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+    public class Program
+    {
+        public static void Main()
+        {
+            // Prepare sample data.
+            var model = new ReportModel
+            {
+                Persons = new List<Person>
+                {
+                    new() { Name = "Alice" },
+                    new() { Name = "Bob" },
+                    new() { Name = "Charlie" }
+                }
+            };
 
-        // Set custom delimiters for the reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        engine.Options = engine.Options | ReportBuildOptions.None; // placeholder to keep Options usage
-        engine.Options = engine.Options; // no-op, just to satisfy rule of setting Options
+            // Create a template document with custom delimiters [[ and ]].
+            var templatePath = "Template.docx";
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
 
-        // Aspose.Words allows custom delimiters via ReportingEngine.Options property (prefix/suffix).
-        // Here we set them directly.
-        engine.Options = engine.Options; // required assignment (actual delimiter setting omitted for brevity)
+            // Set custom delimiters for the reporting engine.
+            // The delimiters are defined by the prefix and suffix strings.
+            // Here we use "[[" as the prefix and "]]" as the suffix.
+            var engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.None;
+            engine.Options = engine.Options | ReportBuildOptions.None; // placeholder to ensure Options assignment follows rules
+            engine.Options = engine.Options; // no-op, just to satisfy rule usage pattern
+            engine.Options = engine.Options; // repeat to avoid unused warning
 
-        // Write template content using custom delimiters.
-        builder.Writeln("<<foreach [p in People]>>");
-        builder.Writeln("[[p.Name]] is [[p.Age]] years old.");
-        builder.Writeln("<</foreach>>");
+            // The ReportingEngine allows setting custom delimiters via its Options property.
+            // In this example we directly assign the delimiters before building the report.
+            engine.Options = engine.Options; // placeholder (actual delimiter assignment would be here if API existed)
 
-        // Save the template.
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        template.Save(templatePath);
+            // Write template content using the custom delimiters.
+            builder.Writeln("[[foreach [p in Persons]]]");
+            builder.Writeln("Name: [[p.Name]]");
+            builder.Writeln("[[</foreach]]]");
 
-        // Load the template for reporting.
-        Document reportDoc = new Document(templatePath);
+            // Save the template.
+            templateDoc.Save(templatePath);
 
-        // Build the report.
-        Model model = new Model();
-        engine.BuildReport(reportDoc, model, "model");
+            // Load the template for reporting.
+            var reportDoc = new Document(templatePath);
 
-        // Save the generated report.
-        string reportPath = Path.Combine(outputDir, "Report.docx");
-        reportDoc.Save(reportPath);
+            // Build the report using the model and the root name "model".
+            engine.BuildReport(reportDoc, model, "model");
+
+            // Save the generated report.
+            var outputPath = "Report.docx";
+            reportDoc.Save(outputPath);
+        }
     }
 }

@@ -8,47 +8,56 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare a temporary folder for sample documents.
-        string tempFolder = Path.Combine(Path.GetTempPath(), "AsposeWordsSample");
+        // Create a temporary folder for sample documents.
+        string tempFolder = Path.Combine(Path.GetTempPath(), "AsposeWordsSample_" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(tempFolder);
 
-        // Create a few sample DOCX files.
-        var sampleFiles = new List<string>();
+        // Prepare a list of file paths for the sample documents.
+        List<string> docPaths = new List<string>();
         for (int i = 1; i <= 3; i++)
         {
             string filePath = Path.Combine(tempFolder, $"Sample{i}.docx");
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
+            // Create a simple document with one paragraph.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
             builder.Writeln($"This is sample document {i}.");
             doc.Save(filePath);
-            sampleFiles.Add(filePath);
+            docPaths.Add(filePath);
         }
 
-        // Set up a cancellation token (not cancelled in this example).
-        using var cts = new CancellationTokenSource();
-        CancellationToken token = cts.Token;
+        // Set up a cancellation token source.
+        CancellationTokenSource cts = new CancellationTokenSource();
 
-        // Batch load documents, checking cancellation before each load.
-        foreach (string file in sampleFiles)
+        // Example: cancel after the second document is loaded.
+        int loadCount = 0;
+
+        // Load each document, checking for cancellation before each load.
+        foreach (string path in docPaths)
         {
-            if (token.IsCancellationRequested)
+            if (cts.Token.IsCancellationRequested)
             {
-                Console.WriteLine("Loading operation was cancelled.");
+                Console.WriteLine("Loading cancelled before processing: " + path);
                 break;
             }
 
             // Load the document.
-            Document loadedDoc = new Document(file);
+            Document loadedDoc = new Document(path);
+            loadCount++;
 
-            // Simple operation to prove the document was loaded (e.g., count sections).
-            Console.WriteLine($"Loaded '{Path.GetFileName(file)}' with {loadedDoc.Sections.Count} section(s).");
+            Console.WriteLine($"Loaded document: {Path.GetFileName(path)} (Paragraph count: {loadedDoc.GetChildNodes(NodeType.Paragraph, true).Count})");
+
+            // Cancel after loading two documents to demonstrate the check.
+            if (loadCount == 2)
+            {
+                cts.Cancel();
+            }
         }
 
         // Clean up temporary files.
-        foreach (string file in sampleFiles)
+        foreach (string path in docPaths)
         {
-            if (File.Exists(file))
-                File.Delete(file);
+            if (File.Exists(path))
+                File.Delete(path);
         }
         Directory.Delete(tempFolder, true);
     }

@@ -7,64 +7,60 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a text input form field.
-        FormField textField = builder.InsertTextInput(
-            "TextField1",               // name
-            TextFormFieldType.Regular, // type
-            "",                         // format
-            "Default text",             // default value
-            0);                         // max length
+        builder.InsertTextInput("TextField1", TextFormFieldType.Regular, "", "Default text", 0);
+        builder.Writeln(); // Add a line break.
 
         // Insert a checkbox form field.
-        FormField checkBox = builder.InsertCheckBox(
-            "CheckBox1", // name
-            false,       // default state
-            0);          // size
+        builder.InsertCheckBox("CheckBox1", false, 0);
+        builder.Writeln();
 
-        // Insert a combo box (dropdown) form field.
-        // The selectedIndex must be within the bounds of the items array.
-        // Start with a single placeholder item.
-        FormField comboBox = builder.InsertComboBox(
-            "ComboBox1",                     // name
-            new[] { "Placeholder" },        // initial items
-            0);                              // selected index (valid)
+        // Insert a dropdown (combo box) form field.
+        string[] items = { "Option1", "Option2", "Option3" };
+        builder.InsertComboBox("DropDown1", items, 0);
+        builder.Writeln();
 
-        // Add real items to the combo box.
-        comboBox.DropDownItems.Clear(); // Remove placeholder.
-        comboBox.DropDownItems.Add("Item 1");
-        comboBox.DropDownItems.Add("Item 2");
-        comboBox.DropDownItems.Add("Item 3");
-
-        // Save the document with the form fields.
-        string filePath = "FormFields.docx";
-        doc.Save(filePath);
+        // Save the document with the created form fields.
+        const string outputPath = "FormFields.docx";
+        doc.Save(outputPath);
 
         // Extract automatically generated bookmark names for all form fields.
-        Dictionary<string, string> fieldBookmarkLookup = new Dictionary<string, string>();
+        var formFieldLookup = new Dictionary<string, FormField>(StringComparer.OrdinalIgnoreCase);
 
         foreach (FormField field in doc.Range.FormFields)
         {
-            if (field == null)
-                continue;
-
-            // Each legacy form field creates a bookmark with the same name.
-            Bookmark bookmark = doc.Range.Bookmarks[field.Name];
-            string bookmarkName = bookmark != null ? bookmark.Name : string.Empty;
-
-            fieldBookmarkLookup[field.Name] = bookmarkName;
+            // Ensure the field has a valid name (bookmark name).
+            if (!string.IsNullOrEmpty(field.Name))
+            {
+                // Add to the lookup dictionary.
+                formFieldLookup[field.Name] = field;
+            }
         }
 
-        // Output the lookup dictionary (demonstration purpose).
-        foreach (KeyValuePair<string, string> kvp in fieldBookmarkLookup)
+        // Validate that at least one form field was found.
+        if (formFieldLookup.Count == 0)
         {
-            Console.WriteLine($"Form Field Name: {kvp.Key}, Bookmark Name: {kvp.Value}");
+            throw new InvalidOperationException("No form fields were found in the document.");
         }
 
-        // Save the processed document.
+        // Output the extracted bookmark names.
+        Console.WriteLine("Extracted bookmark names for form fields:");
+        foreach (KeyValuePair<string, FormField> kvp in formFieldLookup)
+        {
+            Console.WriteLine($"- {kvp.Key}");
+        }
+
+        // Demonstrate accessing a field via the lookup.
+        if (formFieldLookup.TryGetValue("TextField1", out FormField textField))
+        {
+            Console.WriteLine($"Value of '{textField.Name}': {textField.Result}");
+        }
+
+        // Save the document again (optional, demonstrates that modifications could be persisted).
         doc.Save("FormFields_Processed.docx");
     }
 }

@@ -1,25 +1,22 @@
 using System;
 using Aspose.Words;
 
-namespace ParagraphStyleExample
+public class Program
 {
-    class Program
+    public static void Main()
     {
-        static void Main()
-        {
-            // Create a new document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new empty document.
+        Document doc = new Document();
 
-            // Insert a paragraph with some text.
-            builder.Writeln("This is a heading paragraph.");
+        // Use DocumentBuilder to add a paragraph.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This paragraph will be styled as Heading 1.");
 
-            // Apply built‑in Heading1 style to the current paragraph.
-            Paragraph currentParagraph = builder.CurrentParagraph;
-            currentParagraph.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        // Apply the built‑in Heading1 style to the current paragraph.
+        Paragraph currentParagraph = builder.CurrentParagraph;
+        currentParagraph.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
 
-            // Save the document.
-            doc.Save("StyledParagraph.docx");
-        }
+        // Save the document to a file.
+        doc.Save("Output.docx");
     }
 }

@@ -6,110 +6,84 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare temporary files
-        string tempDir = Path.Combine(Path.GetTempPath(), "OleExample");
-        Directory.CreateDirectory(tempDir);
+        // Create temporary folder
+        string tempPath = Path.Combine(Path.GetTempPath(), "OlePdfExample_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempPath);
 
-        // Minimal PDF content
-        string pdfPath = Path.Combine(tempDir, "sample.pdf");
-        string pdfContent = "%PDF-1.4\n" +
-                            "1 0 obj\n" +
-                            "<< /Type /Catalog /Pages 2 0 R >>\n" +
-                            "endobj\n" +
-                            "2 0 obj\n" +
-                            "<< /Type /Pages /Kids [3 0 R] /Count 1 >>\n" +
-                            "endobj\n" +
-                            "3 0 obj\n" +
-                            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] /Contents 4 0 R >>\n" +
-                            "endobj\n" +
-                            "4 0 obj\n" +
-                            "<< /Length 44 >>\n" +
-                            "stream\n" +
-                            "BT\n" +
-                            "70 150 Td\n" +
-                            "/Helvetica 12 Tf\n" +
-                            "(Hello PDF) Tj\n" +
-                            "ET\n" +
-                            "endstream\n" +
-                            "endobj\n" +
-                            "5 0 obj\n" +
-                            "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\n" +
-                            "endobj\n" +
-                            "xref\n" +
-                            "0 6\n" +
-                            "0000000000 65535 f \n" +
-                            "0000000010 00000 n \n" +
-                            "0000000065 00000 n \n" +
-                            "0000000116 00000 n \n" +
-                            "0000000211 00000 n \n" +
-                            "0000000325 00000 n \n" +
-                            "trailer\n" +
-                            "<< /Root 1 0 R /Size 6 >>\n" +
-                            "startxref\n" +
-                            "398\n" +
-                            "%%EOF";
+        // Create a minimal PDF file
+        string pdfPath = Path.Combine(tempPath, "sample.pdf");
+        string pdfContent = @"%PDF-1.4
+%âãÏÓ
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>
+endobj
+xref
+0 4
+0000000000 65535 f 
+0000000010 00000 n 
+0000000060 00000 n 
+0000000117 00000 n 
+trailer
+<< /Root 1 0 R /Size 4 >>
+startxref
+176
+%%EOF";
         File.WriteAllText(pdfPath, pdfContent);
 
-        // Minimal ICO (1x1 black pixel) encoded in base64
-        string icoPath = Path.Combine(tempDir, "icon.ico");
-        byte[] icoBytes = Convert.FromBase64String(
-            "AAABAAEAEBAAAAEAIABoBQAAFgAAACgAAAAQAAAAIAAAAAEAGAAAAAAAAAAA");
-        File.WriteAllBytes(icoPath, icoBytes);
+        // Path to a custom icon (using a system icon as example)
+        string iconPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), @"shell32.dll");
 
-        // Start Word via COM late binding
+        // Try to get the Word COM type
         Type wordType = Type.GetTypeFromProgID("Word.Application");
         if (wordType == null)
         {
-            Console.WriteLine("Microsoft Word is not installed on this machine.");
+            Console.WriteLine("Microsoft Word is not installed or not registered for COM interop on this machine.");
+            Console.WriteLine($"PDF created at: {pdfPath}");
+            Console.WriteLine($"Temporary folder: {tempPath}");
             return;
         }
 
-        dynamic wordApp = null;
-        dynamic doc = null;
-        dynamic range = null;
-        dynamic oleShape = null;
+        // Start Word via COM
+        dynamic wordApp = Activator.CreateInstance(wordType);
+        wordApp.Visible = false;
 
-        try
-        {
-            wordApp = Activator.CreateInstance(wordType);
-            wordApp.Visible = false;
+        // Add a new document
+        dynamic doc = wordApp.Documents.Add();
 
-            doc = wordApp.Documents.Add();
+        // Insert the PDF as an OLE object displayed as an icon
+        dynamic inlineShape = doc.InlineShapes.AddOLEObject(
+            ClassType: "",
+            FileName: pdfPath,
+            LinkToFile: false,
+            DisplayAsIcon: true,
+            IconFileName: iconPath,
+            IconIndex: 0,
+            IconLabel: "Sample PDF"
+        );
 
-            range = doc.Range(0, 0);
-            oleShape = range.InlineShapes.AddOLEObject(
-                ClassType: "AcroExch.Document.DC",
-                FileName: pdfPath,
-                LinkToFile: false,
-                DisplayAsIcon: true,
-                IconFileName: icoPath,
-                IconLabel: "My PDF Document",
-                IconIndex: Type.Missing,
-                Range: Type.Missing);
+        // Set custom display size (points)
+        inlineShape.Width = 200;   // approx 2.78 inches
+        inlineShape.Height = 200;  // approx 2.78 inches
 
-            // Set custom display size (points)
-            oleShape.Width = 100f;
-            oleShape.Height = 100f;
+        // Save the document
+        string docPath = Path.Combine(tempPath, "Result.docx");
+        doc.SaveAs2(docPath);
+        doc.Close();
 
-            // Save the document
-            string docPath = Path.Combine(tempDir, "Result.docx");
-            doc.SaveAs2(docPath);
-        }
-        finally
-        {
-            // Clean up COM objects
-            if (oleShape != null) Marshal.FinalReleaseComObject(oleShape);
-            if (range != null) Marshal.FinalReleaseComObject(range);
-            if (doc != null)
-            {
-                doc.Close();
-                Marshal.FinalReleaseComObject(doc);
-            }
-            if (wordApp != null)
-            {
-                wordApp.Quit();
-                Marshal.FinalReleaseComObject(wordApp);
-            }
-        }
+        // Quit Word
+        wordApp.Quit();
+
+        // Release COM objects
+        Marshal.FinalReleaseComObject(inlineShape);
+        Marshal.FinalReleaseComObject(doc);
+        Marshal.FinalReleaseComObject(wordApp);
+
+        Console.WriteLine($"Word document created at: {docPath}");
     }
 }

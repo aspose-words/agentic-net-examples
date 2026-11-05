@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
+using Aspose.Words.MailMerging;
 
 public class Program
 {
@@ -8,28 +11,59 @@ public class Program
         // Create a template document in memory.
         Document template = new Document();
         DocumentBuilder builder = new DocumentBuilder(template);
-        builder.Writeln("Dear <<Name>>,");
-        builder.Writeln("Your order <<OrderNumber>> has been shipped.");
-        builder.Writeln("Thank you for shopping with us.");
 
-        // Data for mail merge.
-        string[] names = { "John Doe", "Jane Smith", "Bob Johnson" };
-        int[] orderNumbers = { 1001, 1002, 1003 };
+        // Build simple content with merge fields.
+        builder.Writeln("Hello ");
+        builder.InsertField("MERGEFIELD FirstName");
+        builder.Write(" ");
+        builder.InsertField("MERGEFIELD LastName");
+        builder.Writeln();
+        builder.Writeln("Address: ");
+        builder.InsertField("MERGEFIELD Address");
+        builder.Writeln();
 
-        // Perform mail merge for each record, cloning the template each time.
-        for (int i = 0; i < names.Length; i++)
+        // Define merge field names (must match the fields inserted above).
+        string[] fieldNames = new[] { "FirstName", "LastName", "Address" };
+
+        // Prepare multiple data records.
+        List<object[]> records = new List<object[]>
         {
-            // Clone the template to get an independent document.
-            Document output = (Document)template.Clone(true);
+            new object[] { "John", "Doe", "123 Main St" },
+            new object[] { "Jane", "Smith", "456 Oak Ave" },
+            new object[] { "Bob", "Johnson", "789 Pine Rd" }
+        };
 
-            // Execute mail merge with a single record.
-            output.MailMerge.Execute(
-                new string[] { "Name", "OrderNumber" },
-                new object[] { names[i], orderNumbers[i] });
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "MergedOutputs");
+        Directory.CreateDirectory(outputDir);
 
-            // Save the result to a separate file.
-            string fileName = $"Output_{i + 1}.docx";
-            output.Save(fileName);
+        // Process each record: clone the template, perform mail merge, and save.
+        for (int i = 0; i < records.Count; i++)
+        {
+            // Clone the template to obtain an independent document for this record.
+            Document outputDoc = (Document)template.Clone(true);
+
+            // Execute the mail merge with the current record's values.
+            outputDoc.MailMerge.Execute(fieldNames, records[i]);
+
+            // Clean up any unused merge fields.
+            outputDoc.MailMerge.CleanupOptions = MailMergeCleanupOptions.RemoveUnusedFields;
+
+            // Validate that all merge fields were replaced.
+            string mergedText = outputDoc.GetText();
+            foreach (object value in records[i])
+            {
+                if (value == null) continue;
+                string valStr = value.ToString();
+                if (!mergedText.Contains(valStr))
+                {
+                    throw new InvalidOperationException($"Merged value '{valStr}' was not found in the document.");
+                }
+            }
+
+            // Save the merged document to a distinct file.
+            string outputPath = Path.Combine(outputDir, $"MergedDocument_{i + 1}.docx");
+            outputDoc.Save(outputPath);
         }
     }
 }

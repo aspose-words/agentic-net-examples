@@ -1,49 +1,70 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class ReportModel
-{
-    public string Name { get; set; } = "";
-    public int Age { get; set; }
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // -----------------------------------------------------------------
+        // 1. Create the template document programmatically.
+        // -----------------------------------------------------------------
+        const string templatePath = "template.docx";
+        var builder = new DocumentBuilder();
 
-        // Build the template with LINQ Reporting tags.
-        builder.Writeln("Report with Inline Error Messages");
-        builder.Writeln("Name: <<[model.Name]>>");
-        builder.Writeln("Age: <<[model.Age]>>");
-        // This tag references a non‑existent property and will trigger an inline error.
-        builder.Writeln("Invalid field: <<[model.Missing]>>");
+        builder.Writeln("Order Report");
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
 
-        // Prepare sample data.
-        ReportModel model = new ReportModel
+        // The -format switch forces a conversion; the value returned below cannot be formatted as a number,
+        // so the ReportingEngine will insert an <<error>> tag when InlineErrorMessages is enabled.
+        builder.Writeln("Faulty Value: <<[order.FaultyValue] -format \"N2\">>");
+
+        builder.Document.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template for reporting.
+        // -----------------------------------------------------------------
+        var doc = new Document(templatePath);
+
+        // -----------------------------------------------------------------
+        // 3. Prepare the data model.
+        // -----------------------------------------------------------------
+        var order = new Order
         {
-            Name = "John Doe",
-            Age = 30
+            CustomerName = "John Doe"
+            // FaultyValue is intentionally invalid for numeric formatting.
         };
 
-        // Configure the reporting engine to insert inline error messages.
-        ReportingEngine engine = new ReportingEngine();
+        // -----------------------------------------------------------------
+        // 4. Build the report with inline error messages.
+        // -----------------------------------------------------------------
+        var engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-        // Build the report.
-        bool success = engine.BuildReport(doc, model, "model");
+        bool success = engine.BuildReport(doc, order, "order");
 
-        // Save the generated document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
+        // -----------------------------------------------------------------
+        // 5. Save the generated report.
+        // -----------------------------------------------------------------
+        const string outputPath = "report.docx";
         doc.Save(outputPath);
 
-        // Output the result status.
+        // -----------------------------------------------------------------
+        // 6. Output the result status.
+        // -----------------------------------------------------------------
         Console.WriteLine($"Report generation success: {success}");
-        Console.WriteLine($"Document saved to: {outputPath}");
     }
+}
+
+// ---------------------------------------------------------------------
+// Data model.
+// ---------------------------------------------------------------------
+public class Order
+{
+    // Non‑nullable property initialized to avoid warnings.
+    public string CustomerName { get; set; } = string.Empty;
+
+    // This property returns a value that cannot be formatted as a number,
+    // causing a conversion error that will be shown inline as <<error>>.
+    public string FaultyValue => "NotANumber";
 }

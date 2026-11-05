@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,64 +8,81 @@ public class Program
 {
     public static void Main()
     {
-        // Create sample XML data source file.
-        const string xmlFileName = "Orders.xml";
-        File.WriteAllText(xmlFileName,
-@"<Orders>
-    <Order>
-        <OrderId>1001</OrderId>
-        <CustomerName>John Doe</CustomerName>
-        <Items>
-            <Item>
-                <ProductName>Widget A</ProductName>
-                <Quantity>3</Quantity>
-            </Item>
-            <Item>
-                <ProductName>Gadget B</ProductName>
-                <Quantity>1</Quantity>
-            </Item>
-        </Items>
-    </Order>
-    <Order>
-        <OrderId>1002</OrderId>
-        <CustomerName>Jane Smith</CustomerName>
-        <Items>
-            <Item>
-                <ProductName>Widget C</ProductName>
-                <Quantity>2</Quantity>
-            </Item>
-        </Items>
-    </Order>
+        // Register code page provider (required for some encodings).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Prepare directories.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
+
+        // Create sample XML data source.
+        string xmlPath = Path.Combine(outputDir, "orders.xml");
+        File.WriteAllText(xmlPath, @"<?xml version=""1.0"" encoding=""UTF-8""?>
+<Orders>
+  <Order>
+    <OrderId>1001</OrderId>
+    <CustomerName>John Doe</CustomerName>
+    <LineItems>
+      <LineItem>
+        <ProductName>Widget A</ProductName>
+        <Quantity>2</Quantity>
+        <Price>9.99</Price>
+      </LineItem>
+      <LineItem>
+        <ProductName>Widget B</ProductName>
+        <Quantity>1</Quantity>
+        <Price>19.99</Price>
+      </LineItem>
+    </LineItems>
+  </Order>
+  <Order>
+    <OrderId>1002</OrderId>
+    <CustomerName>Jane Smith</CustomerName>
+    <LineItems>
+      <LineItem>
+        <ProductName>Gadget X</ProductName>
+        <Quantity>5</Quantity>
+        <Price>4.99</Price>
+      </LineItem>
+    </LineItems>
+  </Order>
 </Orders>");
 
-        // Build the template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Create the template document programmatically.
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
 
         builder.Writeln("Orders Report");
-        builder.Writeln();
-
-        // Outer foreach – iterate over orders.
-        builder.Writeln("<<foreach [order in orders]>>");
+        builder.Writeln("------------------------------");
+        builder.Writeln("<<foreach [order in Orders]>>");
         builder.Writeln("Order ID: <<[order.OrderId]>>");
         builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("Items:");
-        // Inner foreach – iterate over line items of the current order.
-        // For XML data source the collection of items is accessed via order.Items.Item
-        builder.Writeln("<<foreach [item in order.Items.Item]>>");
-        builder.Writeln("- <<[item.ProductName]>> x <<[item.Quantity]>>");
+        builder.Writeln("Line Items:");
+        builder.Writeln("<<foreach [item in order.LineItems.LineItem]>>");
+        builder.Writeln("  - Product: <<[item.ProductName]>>");
+        builder.Writeln("    Quantity: <<[item.Quantity]>>");
+        builder.Writeln("    Price: $<<[item.Price]>>");
         builder.Writeln("<</foreach>>");
         builder.Writeln("<</foreach>>");
+        builder.Writeln("------------------------------");
 
-        // Load the XML data source.
-        XmlDataSource dataSource = new XmlDataSource(xmlFileName);
+        templateDoc.Save(templatePath);
+
+        // Load the template.
+        Document reportDoc = new(templatePath);
+
+        // Load XML data source.
+        XmlDataSource xmlData = new(xmlPath);
 
         // Build the report.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(template, dataSource, "orders");
+        ReportingEngine engine = new();
+        engine.BuildReport(reportDoc, xmlData, "Orders");
 
         // Save the generated report.
-        const string outputFileName = "OrdersReport.docx";
-        template.Save(outputFileName);
+        string reportPath = Path.Combine(outputDir, "Report.docx");
+        reportDoc.Save(reportPath);
+
+        Console.WriteLine($"Report generated: {reportPath}");
     }
 }

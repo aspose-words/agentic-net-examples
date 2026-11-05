@@ -1,38 +1,25 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
 
-        // Modify the Normal style (applied to new paragraphs) to set the default font name and size.
+        // Set the default font name and size by modifying the Normal style.
         Style normalStyle = doc.Styles[StyleIdentifier.Normal];
         normalStyle.Font.Name = "Calibri";
         normalStyle.Font.Size = 11;
 
-        // Use DocumentBuilder to add paragraphs that will inherit the Normal style.
+        // Add some paragraphs; they will inherit the Normal style settings.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is the first paragraph using Calibri, size 11.");
-        builder.Writeln("This is the second paragraph also using Calibri, size 11.");
+        builder.Writeln("First paragraph using default Calibri 11.");
+        builder.Writeln("Second paragraph also uses default Calibri 11.");
 
-        // Define output path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
-
-        // Save the document.
+        // Save the document to a file.
+        string outputPath = "DefaultFontExample.docx";
         doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (File.Exists(outputPath))
-        {
-            Console.WriteLine("Document saved successfully to: " + outputPath);
-        }
-        else
-        {
-            Console.WriteLine("Failed to save the document.");
-        }
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -7,50 +8,64 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample source document containing three sections.
-        Document sourceDoc = new Document();
-        for (int i = 1; i <= 3; i++)
+        // Create a sample document with two heading sections.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        builder.Writeln("Sample Document");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Chapter 1");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("This is the content of chapter 1.");
+
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Chapter 2");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("This is the content of chapter 2.");
+
+        // Prepare output folder.
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputFolder);
+
+        // Configure HtmlSaveOptions to split by heading.
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions
         {
-            // Build a simple section with one paragraph.
-            Section section = new Section(sourceDoc);
-            Body body = new Body(sourceDoc);
-            Paragraph para = new Paragraph(sourceDoc);
-            Run run = new Run(sourceDoc, $"This is content of Section {i}.");
-            para.AppendChild(run);
-            body.AppendChild(para);
-            section.AppendChild(body);
-            sourceDoc.AppendChild(section);
+            DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph,
+            DocumentSplitHeadingLevel = 1,
+            DocumentPartSavingCallback = new CustomPartSavingCallback()
+        };
+
+        // Save the document; it will be split into separate HTML files.
+        string mainFilePath = Path.Combine(outputFolder, "MainDocument.html");
+        doc.Save(mainFilePath, saveOptions);
+
+        // After saving, rename the generated split files to the desired convention.
+        // Aspose.Words creates files named "MainDocument.html", "MainDocument_1.html", etc.
+        var generatedFiles = Directory.GetFiles(outputFolder, "MainDocument*.html")
+                                      .Where(f => !f.Equals(mainFilePath, StringComparison.OrdinalIgnoreCase))
+                                      .OrderBy(f => f)
+                                      .ToList();
+
+        if (generatedFiles.Count == 0)
+            throw new InvalidOperationException("No split HTML files were generated.");
+
+        int chapterIndex = 1;
+        foreach (string filePath in generatedFiles)
+        {
+            string newFileName = $"Chapter_{chapterIndex}.html";
+            string newPath = Path.Combine(outputFolder, newFileName);
+            File.Move(filePath, newPath);
+            Console.WriteLine($"Generated: {newFileName}");
+            chapterIndex++;
         }
+    }
 
-        // Optional: save the source document for manual inspection.
-        sourceDoc.Save("Source.docx");
-
-        // Split the document by its sections.
-        for (int index = 0; index < sourceDoc.Sections.Count; index++)
+    // Empty callback – required by the API but does not modify naming directly.
+    private class CustomPartSavingCallback : IDocumentPartSavingCallback
+    {
+        public void DocumentPartSaving(DocumentPartSavingArgs args)
         {
-            Section sourceSection = sourceDoc.Sections[index];
-
-            // Create a new empty document that will hold the single section.
-            Document splitDoc = new Document();
-            splitDoc.RemoveAllChildren(); // Remove the default empty section.
-
-            // Import the section from the source document into the new document.
-            NodeImporter importer = new NodeImporter(sourceDoc, splitDoc, ImportFormatMode.KeepSourceFormatting);
-            Section importedSection = (Section)importer.ImportNode(sourceSection, true);
-            splitDoc.AppendChild(importedSection);
-
-            // Configure save options. In newer Aspose.Words versions a DocumentPartSavingCallback
-            // can be assigned here to customize internal part names, but the property is not
-            // available in all versions, so we omit it to keep the code compile‑time safe.
-            OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx);
-
-            // Save each split document with a distinct file name.
-            string outputFileName = $"Section_{index + 1}.docx";
-            splitDoc.Save(outputFileName, saveOptions);
-
-            // Verify that the file was created.
-            if (!File.Exists(outputFileName))
-                throw new InvalidOperationException($"Failed to create split file: {outputFileName}");
+            // No custom handling needed; naming will be adjusted after the save operation.
         }
     }
 }

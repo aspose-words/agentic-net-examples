@@ -1,5 +1,5 @@
 using System;
-using System.Data;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -11,41 +11,48 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a static Table of Contents at the beginning of the document.
-        // The TOC will include headings of levels 1 to 3.
+        // Insert a static Table of Contents field at the beginning of the document.
+        // The TOC will be updated after the mail merge execution.
         builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
+        builder.Writeln(); // Add a line break after the TOC.
 
-        // Add a page break after the TOC so the main content starts on a new page.
-        builder.InsertBreak(BreakType.PageBreak);
-
-        // Add headings that will be captured by the TOC.
+        // Insert a heading that will contain a merge field.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Report Title");
-
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Section 1");
-
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Section 2");
-
-        // Insert a merge field that will be populated by mail merge.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Write("Report for ");
         builder.InsertField("MERGEFIELD CustomerName \\* MERGEFORMAT");
         builder.Writeln();
 
-        // Prepare mail merge data.
-        DataTable data = new DataTable("Customers");
-        data.Columns.Add("CustomerName");
-        data.Rows.Add("John Doe");
-        data.Rows.Add("Jane Smith");
+        // Insert a normal paragraph with another merge field.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Write("Date: ");
+        builder.InsertField("MERGEFIELD ReportDate \\* MERGEFORMAT");
+        builder.Writeln();
 
-        // Execute mail merge.
-        doc.MailMerge.Execute(data);
+        // Prepare simple mail merge data.
+        string[] fieldNames = new string[] { "CustomerName", "ReportDate" };
+        object[] fieldValues = new object[] { "Acme Corp", DateTime.Now.ToString("yyyy-MM-dd") };
 
-        // Update all fields (including the TOC) after mail merge.
+        // Execute the mail merge.
+        doc.MailMerge.Execute(fieldNames, fieldValues);
+
+        // Validate that merge fields were replaced.
+        string mergedText = doc.GetText();
+        if (!mergedText.Contains("Acme Corp"))
+        {
+            throw new InvalidOperationException("Mail merge failed: CustomerName not replaced.");
+        }
+
+        // Update all fields (including the TOC) to reflect the merged content.
         doc.UpdateFields();
 
-        // Save the resulting document.
-        doc.Save("Output.docx");
+        // Save the merged document.
+        string outputPath = "Output.docx";
+        doc.Save(outputPath);
+
+        // Verify that the output file was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new FileNotFoundException("The output file was not created.", outputPath);
+        }
     }
 }

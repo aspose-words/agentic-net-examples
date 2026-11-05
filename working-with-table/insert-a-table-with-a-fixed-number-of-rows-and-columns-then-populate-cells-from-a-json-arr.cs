@@ -2,52 +2,76 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Tables;
 using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // JSON representing a 2‑dimensional array (rows and columns).
+        // JSON array representing rows and columns of the table.
         string json = @"[
-            [""Header1"", ""Header2"", ""Header3""],
-            [""Row1Col1"", ""Row1Col2"", ""Row1Col3""],
-            [""Row2Col1"", ""Row2Col2"", ""Row2Col3""]
+            [""R1C1"", ""R1C2"", ""R1C3""],
+            [""R2C1"", ""R2C2"", ""R2C3""],
+            [""R3C1"", ""R3C2"", ""R3C3""]
         ]";
 
-        // Deserialize the JSON into a list of rows, each row being a list of cell strings.
+        // Deserialize JSON into a list of rows, each row is a list of cell strings.
         List<List<string>> tableData = JsonConvert.DeserializeObject<List<List<string>>>(json);
+
         if (tableData == null || tableData.Count == 0)
-            throw new Exception("The JSON does not contain any table data.");
+            throw new InvalidOperationException("JSON does not contain any table data.");
+
+        // Determine the number of rows and columns.
+        int rowCount = tableData.Count;
+        int columnCount = tableData[0].Count;
 
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Begin building the table.
+        // Build the table.
         builder.StartTable();
 
-        // Populate the table cells from the deserialized JSON data.
-        foreach (List<string> row in tableData)
+        for (int i = 0; i < rowCount; i++)
         {
-            foreach (string cellText in row)
+            // Ensure each row has the expected number of columns.
+            if (tableData[i].Count != columnCount)
+                throw new InvalidOperationException($"Row {i} does not have the expected number of columns.");
+
+            for (int j = 0; j < columnCount; j++)
             {
+                // Insert a new cell and write the corresponding text (no line break).
                 builder.InsertCell();
-                builder.Writeln(cellText);
+                builder.Write(tableData[i][j]);
             }
+
             // End the current row.
             builder.EndRow();
         }
 
-        // Finish the table.
+        // End the table construction.
         builder.EndTable();
 
-        // Save the document to disk.
+        // Define output file path.
         string outputPath = "OutputTable.docx";
+
+        // Save the document.
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception($"Failed to create the output file: {outputPath}");
+            throw new FileNotFoundException("The output document was not created.", outputPath);
+
+        // Reopen the document and verify the first cell's text.
+        Document loadedDoc = new Document(outputPath);
+        Table loadedTable = loadedDoc.GetChildNodes(NodeType.Table, true)[0] as Table;
+        Cell firstCell = loadedTable.Rows[0].Cells[0];
+        string firstCellText = firstCell.GetText().TrimEnd('\a', '\r', '\n');
+
+        if (firstCellText != tableData[0][0])
+            throw new InvalidOperationException("Verification failed: first cell content does not match expected value.");
+
+        // Execution completed successfully.
     }
 }

@@ -4,12 +4,11 @@ using Aspose.Words;
 using Aspose.Words.Reporting;
 using System.Text;
 
-namespace AsposeWordsLinqReportingHtmlExample
+namespace LinqReportingHtmlExample
 {
-    // Data model with an HTML snippet property.
+    // Simple data model with an HTML snippet.
     public class ReportModel
     {
-        // Initialize with sample HTML content.
         public string HtmlSnippet { get; set; } = "<b>Bold Text</b> and <i>Italic Text</i>";
     }
 
@@ -17,7 +16,7 @@ namespace AsposeWordsLinqReportingHtmlExample
     {
         public static void Main()
         {
-            // Register code page provider for possible encoding needs.
+            // Register code page provider for Aspose.Words if needed.
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
             // Define file paths.
@@ -25,42 +24,31 @@ namespace AsposeWordsLinqReportingHtmlExample
             string outputPath = "output.docx";
 
             // -------------------------------------------------
-            // Step 1: Create the template document programmatically.
+            // Create the template document with a LINQ Reporting tag.
             // -------------------------------------------------
             Document templateDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            // Write a paragraph that will contain the dynamic HTML.
-            builder.Writeln("Report:");
-            // Insert the LINQ Reporting HTML tag bound to the model's HtmlSnippet property.
+            // Insert a paragraph that will render the HTML snippet.
             builder.Writeln("<<html [model.HtmlSnippet]>>");
 
             // Save the template to disk.
             templateDoc.Save(templatePath);
 
             // -------------------------------------------------
-            // Step 2: Load the template for report generation.
+            // Load the template and build the report.
             // -------------------------------------------------
-            Document doc = new Document(templatePath);
-
-            // -------------------------------------------------
-            // Step 3: Prepare the data model.
-            // -------------------------------------------------
+            Document reportDoc = new Document(templatePath);
             ReportModel model = new ReportModel();
 
-            // -------------------------------------------------
-            // Step 4: Build the report using the LINQ Reporting engine.
-            // -------------------------------------------------
             ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
+            engine.BuildReport(reportDoc, model, "model");
 
-            // -------------------------------------------------
-            // Step 5: Save the generated report.
-            // -------------------------------------------------
-            doc.Save(outputPath);
+            // Save the generated report.
+            reportDoc.Save(outputPath);
 
-            // Optional: indicate completion.
-            Console.WriteLine($"Report generated and saved to '{outputPath}'.");
+            // Indicate completion.
+            Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
         }
     }
 }

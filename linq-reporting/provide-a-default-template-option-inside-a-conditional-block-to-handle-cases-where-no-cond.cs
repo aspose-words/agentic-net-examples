@@ -1,50 +1,76 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Newtonsoft.Json;
 
-public class ReportModel
+namespace LinqReportingConditionalDefault
 {
-    // Initialize to avoid nullable warnings.
-    public string Status { get; set; } = string.Empty;
-}
-
-public class Program
-{
-    public static void Main()
+    // Data model classes
+    public class ReportModel
     {
-        // Ensure output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        public List<Item> Items { get; set; } = new();
+    }
 
-        // Create a template document with conditional tags.
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+    public class Item
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+    }
 
-        // Conditional blocks using double‑quoted string literals (required by LINQ Reporting syntax).
-        builder.Writeln("<<if [model.Status == \"Approved\"]>>Approved<</if>>");
-        builder.Writeln("<<if [model.Status == \"Pending\"]>>Pending<</if>>");
-        // Default block when none of the above conditions are true.
-        builder.Writeln("<<if [model.Status != \"Approved\" && model.Status != \"Pending\"]>>Unknown<</if>>");
+    public class Program
+    {
+        public static void Main()
+        {
+            // Register code page provider (required for some encodings)
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Save the template.
-        templateDoc.Save(templatePath);
+            // Prepare sample data
+            var model = new ReportModel
+            {
+                Items = new List<Item>
+                {
+                    new Item { Name = "Item 1", Status = "Active" },
+                    new Item { Name = "Item 2", Status = "Pending" },
+                    new Item { Name = "Item 3", Status = "Other" }
+                }
+            };
 
-        // Load the template for reporting.
-        Document doc = new Document(templatePath);
+            // Create template document programmatically
+            var templatePath = "Template.docx";
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
 
-        // Sample data where no condition matches to trigger the default block.
-        ReportModel model = new ReportModel { Status = "Other" };
+            builder.Writeln("LINQ Reporting - Conditional Default Example");
+            builder.Writeln();
 
-        // Build the report.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+            // Begin foreach loop over Items
+            builder.Writeln("<<foreach [item in Items]>>");
+            builder.Writeln("Name: <<[item.Name]>> - Status: ");
 
-        // Save the generated report.
-        string resultPath = Path.Combine(outputDir, "result.docx");
-        doc.Save(resultPath);
+            // Conditional blocks for known statuses
+            builder.Writeln("<<if [item.Status == \"Active\"]>>Active<</if>>");
+            builder.Writeln("<<if [item.Status == \"Pending\"]>>Pending<</if>>");
 
-        Console.WriteLine($"Report generated: {resultPath}");
+            // Default block when no previous condition matches
+            builder.Writeln("<<if [item.Status != \"Active\" && item.Status != \"Pending\"]>>Unknown<</if>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk
+            doc.Save(templatePath);
+
+            // Load the template for report generation
+            var templateDoc = new Document(templatePath);
+
+            // Build the report using the LINQ Reporting engine
+            var engine = new ReportingEngine();
+            engine.BuildReport(templateDoc, model, "model");
+
+            // Save the generated report
+            var reportPath = "Report.docx";
+            templateDoc.Save(reportPath);
+        }
     }
 }

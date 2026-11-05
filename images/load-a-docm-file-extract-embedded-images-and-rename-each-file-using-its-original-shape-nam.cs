@@ -1,79 +1,127 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
+using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare deterministic file names
-        const string sampleImagePath = "input.png";
-        const string docmPath = "sample.docm";
+        // Prepare directories
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
+        Directory.CreateDirectory(workDir);
+        string outputDir = Path.Combine(workDir, "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // -------------------------------------------------
-        // Create a sample image using Aspose.Drawing
-        // -------------------------------------------------
-        const int imgWidth = 200;
-        const int imgHeight = 200;
-        Bitmap bitmap = new Bitmap(imgWidth, imgHeight);
-        Graphics graphics = Graphics.FromImage(bitmap);
-        graphics.Clear(Color.White);
-        // (Optional) draw something deterministic
-        graphics.Dispose();
-        bitmap.Save(sampleImagePath);
-        bitmap.Dispose();
+        // Create sample images
+        string imgPath1 = Path.Combine(workDir, "sample1.png");
+        string imgPath2 = Path.Combine(workDir, "sample2.png");
+        CreateSampleImage(imgPath1, 200, 100, Aspose.Drawing.Color.LightBlue, "Img1");
+        CreateSampleImage(imgPath2, 150, 150, Aspose.Drawing.Color.LightGreen, "Img2");
 
-        // -------------------------------------------------
-        // Create a DOCM document and insert the image as a shape
-        // -------------------------------------------------
+        // Create a DOCM document with the images
+        string docPath = Path.Combine(workDir, "sample.docm");
+        CreateDocumentWithImages(docPath, new[] { imgPath1, imgPath2 });
+
+        // Load the DOCM and extract images, renaming them using the shape name
+        ExtractImagesUsingShapeNames(docPath, outputDir);
+    }
+
+    private static void CreateSampleImage(string filePath, int width, int height, Aspose.Drawing.Color backColor, string text)
+    {
+        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
+        {
+            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
+            {
+                g.Clear(backColor);
+
+                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Black, 2))
+                {
+                    g.DrawRectangle(pen, 10, 10, width - 20, height - 20);
+                }
+
+                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 12))
+                using (Aspose.Drawing.SolidBrush brush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Black))
+                {
+                    g.DrawString(text, font, brush, new Aspose.Drawing.PointF(15, height / 2 - 10));
+                }
+            }
+
+            bitmap.Save(filePath, Aspose.Drawing.Imaging.ImageFormat.Png);
+        }
+    }
+
+    private static void CreateDocumentWithImages(string docPath, string[] imagePaths)
+    {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        Shape imageShape = builder.InsertImage(sampleImagePath);
-        // Assign a deterministic shape name
-        imageShape.Name = "SampleImageShape";
-        // Save the document as DOCM
-        doc.Save(docmPath, SaveFormat.Docm);
 
-        // -------------------------------------------------
-        // Load the DOCM document and extract embedded images
-        // -------------------------------------------------
-        Document loadedDoc = new Document(docmPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int extractedCount = 0;
-
-        foreach (Shape shape in shapeNodes)
+        for (int i = 0; i < imagePaths.Length; i++)
         {
-            if (!shape.HasImage)
-                continue;
-
-            // Determine a safe file name based on the shape's name
-            string baseName = string.IsNullOrWhiteSpace(shape.Name)
-                ? $"image_{extractedCount}"
-                : shape.Name;
-
-            // Remove invalid file name characters
-            foreach (char c in Path.GetInvalidFileNameChars())
-                baseName = baseName.Replace(c, '_');
-
-            // Determine file extension from image type
-            string extension = shape.ImageData.ImageType.ToString().ToLowerInvariant();
-            string outputFileName = $"{baseName}.{extension}";
-
-            // Save the image to disk
-            shape.ImageData.Save(outputFileName);
-            extractedCount++;
+            // Insert image and obtain the shape
+            Shape shape = builder.InsertImage(imagePaths[i]);
+            shape.Name = $"ImageShape{i + 1}";
+            // Add a paragraph break after each image
+            builder.Writeln();
         }
 
-        // Validate that at least one image was extracted
-        if (extractedCount == 0)
-            throw new Exception("No images were extracted from the document.");
+        doc.Save(docPath, SaveFormat.Docm);
+    }
 
-        // Optional: indicate success
-        Console.WriteLine($"Extracted {extractedCount} image(s) from '{docmPath}'.");
+    private static void ExtractImagesUsingShapeNames(string docPath, string outputDir)
+    {
+        Document doc = new Document(docPath);
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+        List<string> savedFiles = new List<string>();
+
+        foreach (Shape shape in shapes)
+        {
+            if (shape.HasImage)
+            {
+                string shapeName = string.IsNullOrEmpty(shape.Name)
+                    ? $"UnnamedShape_{Guid.NewGuid()}"
+                    : shape.Name;
+
+                string extension = ImageTypeToExtension(shape.ImageData.ImageType);
+                string outPath = Path.Combine(outputDir, $"{shapeName}{extension}");
+                shape.ImageData.Save(outPath);
+                savedFiles.Add(outPath);
+            }
+        }
+
+        if (savedFiles.Count == 0)
+        {
+            throw new InvalidOperationException("No images were extracted from the document.");
+        }
+
+        // Optional: write a simple JSON manifest of extracted files
+        string manifestPath = Path.Combine(outputDir, "manifest.json");
+        File.WriteAllText(manifestPath, JsonConvert.SerializeObject(savedFiles, Formatting.Indented));
+    }
+
+    private static string ImageTypeToExtension(ImageType imageType)
+    {
+        switch (imageType)
+        {
+            case ImageType.Jpeg:
+                return ".jpg";
+            case ImageType.Png:
+                return ".png";
+            case ImageType.Gif:
+                return ".gif";
+            case ImageType.Bmp:
+                return ".bmp";
+            case ImageType.Emf:
+                return ".emf";
+            case ImageType.Wmf:
+                return ".wmf";
+            default:
+                return ".img";
+        }
     }
 }

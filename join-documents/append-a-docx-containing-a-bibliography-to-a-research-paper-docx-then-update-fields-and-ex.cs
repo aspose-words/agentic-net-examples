@@ -7,55 +7,67 @@ public class Program
 {
     public static void Main()
     {
-        // Define file paths for the sample documents and the final PDF.
-        string researchPath = "ResearchPaper.docx";
-        string bibliographyPath = "Bibliography.docx";
-        string outputPdfPath = "MergedDocument.pdf";
+        // Paths for the sample documents and the final PDF.
+        const string researchPath = "ResearchPaper.docx";
+        const string bibliographyPath = "Bibliography.docx";
+        const string outputPdfPath = "Combined.pdf";
 
         // -----------------------------------------------------------------
         // Create a sample research paper DOCX.
         // -----------------------------------------------------------------
-        Document researchDoc = new Document();
-        DocumentBuilder researchBuilder = new DocumentBuilder(researchDoc);
+        var researchDoc = new Document();
+        var researchBuilder = new DocumentBuilder(researchDoc);
         researchBuilder.Writeln("Research Paper Title");
-        researchBuilder.Writeln("This is the introduction of the research paper.");
-        // Insert a simple PAGE field to demonstrate field updating later.
-        researchBuilder.InsertField("PAGE", "1");
+        researchBuilder.Writeln("This is the main content of the research paper.");
+        researchBuilder.Writeln("It may contain multiple paragraphs, tables, images, etc.");
         researchDoc.Save(researchPath, SaveFormat.Docx);
 
         // -----------------------------------------------------------------
         // Create a sample bibliography DOCX.
         // -----------------------------------------------------------------
-        Document bibliographyDoc = new Document();
-        DocumentBuilder bibBuilder = new DocumentBuilder(bibliographyDoc);
+        var bibliographyDoc = new Document();
+        var bibBuilder = new DocumentBuilder(bibliographyDoc);
         bibBuilder.Writeln("Bibliography");
-        bibBuilder.Writeln("1. Author A. Title A.");
-        bibBuilder.Writeln("2. Author B. Title B.");
+        bibBuilder.Writeln("1. Author A. Title A. Publisher A, 2020.");
+        bibBuilder.Writeln("2. Author B. Title B. Publisher B, 2021.");
         bibliographyDoc.Save(bibliographyPath, SaveFormat.Docx);
 
         // -----------------------------------------------------------------
-        // Load the research paper and append the bibliography.
+        // Load the documents for joining.
         // -----------------------------------------------------------------
-        Document mainDoc = new Document(researchPath);
-        Document bibToAppend = new Document(bibliographyPath);
-        mainDoc.AppendDocument(bibToAppend, ImportFormatMode.KeepSourceFormatting);
+        var combinedDoc = new Document(researchPath);
+        var bibToAppend = new Document(bibliographyPath);
 
-        // Update all fields (e.g., PAGE fields) after the merge.
-        mainDoc.UpdateFields();
+        // Append the bibliography to the research paper.
+        combinedDoc.AppendDocument(bibToAppend, ImportFormatMode.KeepSourceFormatting);
 
-        // Save the merged document as PDF.
-        mainDoc.Save(outputPdfPath, SaveFormat.Pdf);
+        // Update all fields (e.g., TOC, page numbers) in the combined document.
+        combinedDoc.UpdateFields();
+
+        // Save the combined document as PDF.
+        combinedDoc.Save(outputPdfPath, SaveFormat.Pdf);
 
         // -----------------------------------------------------------------
-        // Validation: ensure the PDF was created successfully.
+        // Validation: ensure the PDF was created and contains content from both sources.
         // -----------------------------------------------------------------
-        if (!File.Exists(outputPdfPath) || new FileInfo(outputPdfPath).Length == 0)
+        if (!File.Exists(outputPdfPath))
         {
-            throw new InvalidOperationException("The merged PDF was not created correctly.");
+            throw new InvalidOperationException($"Failed to create the output PDF at '{outputPdfPath}'.");
         }
 
-        // Optional: clean up sample DOCX files (comment out if inspection is needed).
-        // File.Delete(researchPath);
-        // File.Delete(bibliographyPath);
+        // Simple validation: the combined document should have at least two sections
+        // (one for each original document) unless they were merged into a single section.
+        if (combinedDoc.Sections.Count < 2)
+        {
+            // If sections were merged, we can still check for presence of bibliography text.
+            string pdfText = File.ReadAllText(outputPdfPath);
+            if (!pdfText.Contains("Bibliography") || !pdfText.Contains("Research Paper Title"))
+            {
+                throw new InvalidOperationException("The combined document does not contain expected content from both source files.");
+            }
+        }
+
+        // Indicate successful completion (optional, not required for non-interactive run).
+        Console.WriteLine("Documents merged and PDF created successfully.");
     }
 }

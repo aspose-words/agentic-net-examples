@@ -10,86 +10,76 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some encodings).
+        // Register code page provider for Aspose.Words (required on .NET Core/5+)
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // ---------- Create sample JSON data ----------
-        string json = @"
-[
-  {
-    ""Name"": ""Fruits"",
-    ""Items"": [
-      { ""Name"": ""Apple"" },
-      { ""Name"": ""Banana"" },
-      { ""Name"": ""Orange"" }
-    ]
-  },
-  {
-    ""Name"": ""Vegetables"",
-    ""Items"": [
-      { ""Name"": ""Carrot"" },
-      { ""Name"": ""Broccoli"" },
-      { ""Name"": ""Spinach"" }
-    ]
-  }
-]";
+        // Prepare sample JSON data
+        var model = new ReportModel
+        {
+            Categories = new List<Category>
+            {
+                new Category
+                {
+                    Name = "Fruits",
+                    Items = new List<string> { "Apple", "Banana", "Cherry" }
+                },
+                new Category
+                {
+                    Name = "Vegetables",
+                    Items = new List<string> { "Carrot", "Lettuce", "Tomato" }
+                }
+            }
+        };
+
+        // Serialize to a local JSON file (optional, demonstrates JSON source)
         const string jsonPath = "data.json";
-        File.WriteAllText(jsonPath, json);
+        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(model, Formatting.Indented));
 
-        // Deserialize JSON into model objects.
-        List<Category> categories = JsonConvert.DeserializeObject<List<Category>>(File.ReadAllText(jsonPath)) ?? new();
-        var reportData = new ReportData { Categories = categories };
-
-        // ---------- Create the LINQ Reporting template ----------
+        // Create the LINQ Reporting template programmatically
         const string templatePath = "template.docx";
         var templateDoc = new Document();
         var builder = new DocumentBuilder(templateDoc);
 
-        // Outer foreach: categories.
+        // Title
+        builder.Writeln("Category Report");
+        builder.Writeln();
+
+        // Outer foreach for categories
         builder.Writeln("<<foreach [cat in Categories]>>");
-        // Category name as a heading (bold).
-        builder.Font.Bold = true;
-        builder.Writeln("<<[cat.Name]>>");
-        builder.Font.Bold = false;
+        // Category name as a bullet (using a dash)
+        builder.Writeln("- <<[cat.Name]>>");
+        // Inner foreach for items within a category
+        builder.Writeln("<<foreach [itm in cat.Items]>>");
+        // Item bullet, indented with a tab for visual nesting
+        builder.Writeln("\t- <<[itm]>>");
+        builder.Writeln("<</foreach>>");
+        builder.Writeln("<</foreach>>");
 
-        // Inner foreach: items within a category.
-        builder.Writeln("<<foreach [item in cat.Items]>>");
-        // Apply bullet list formatting for each item.
-        builder.ListFormat.ApplyBulletDefault();
-        builder.Writeln("<<[item.Name]>>");
-        // Reset list formatting after the line.
-        builder.ListFormat.RemoveNumbers();
-        builder.Writeln("<</foreach>>"); // End inner foreach.
-
-        builder.Writeln("<</foreach>>"); // End outer foreach.
-
-        // Save the template.
+        // Save the template
         templateDoc.Save(templatePath);
 
-        // ---------- Load the template and build the report ----------
+        // Load the template for report generation
         var doc = new Document(templatePath);
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, reportData, "data");
 
-        // Save the generated report.
+        // Build the report using the model as the root object named "model"
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
+
+        // Save the final document
         const string outputPath = "output.docx";
         doc.Save(outputPath);
     }
 }
 
-// ---------- Data model ----------
-public class ReportData
+// Root model class
+public class ReportModel
 {
     public List<Category> Categories { get; set; } = new();
 }
 
+// Category class with a collection of items
 public class Category
 {
     public string Name { get; set; } = "";
-    public List<Item> Items { get; set; } = new();
-}
-
-public class Item
-{
-    public string Name { get; set; } = "";
+    public List<string> Items { get; set; } = new();
 }

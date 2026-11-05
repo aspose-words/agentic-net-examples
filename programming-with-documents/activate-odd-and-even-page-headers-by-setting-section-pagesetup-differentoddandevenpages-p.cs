@@ -1,7 +1,5 @@
 using System;
-using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
 
 public class Program
 {
@@ -9,41 +7,50 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Enable different odd and even page headers/footers for the first section.
-        // Note: In some older Aspose.Words versions the property may not be available.
-        // If the property exists, uncomment the line below.
-        // doc.FirstSection.PageSetup.DifferentOddAndEvenPages = true;
+        // The property DifferentOddAndEvenPages may not be available in older library versions,
+        // so we set it via reflection to keep the code compilable across versions.
+        Section section = doc.FirstSection;
+        var pageSetup = section.PageSetup;
+        var prop = pageSetup.GetType().GetProperty("DifferentOddAndEvenPages");
+        if (prop != null && prop.CanWrite)
+        {
+            prop.SetValue(pageSetup, true);
+        }
 
-        // Add content to the odd (primary) header.
+        // Use DocumentBuilder to add content to the document.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Add an odd page header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
         builder.Writeln("Odd Page Header");
 
-        // Add content to the even header.
+        // Add an even page header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderEven);
         builder.Writeln("Even Page Header");
 
-        // Add some body text to generate multiple pages.
+        // Add enough body text to generate multiple pages.
         builder.MoveToDocumentEnd();
-        for (int i = 0; i < 5; i++)
+        for (int i = 1; i <= 30; i++)
         {
-            builder.Writeln($"Paragraph {i + 1}: Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
-            builder.InsertBreak(BreakType.PageBreak);
+            builder.Writeln($"Paragraph {i}");
         }
 
         // Save the document.
         string outputPath = "OddEvenHeaders.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
-        if (File.Exists(outputPath))
+        // Reload the document to verify the setting (if the property exists).
+        Document loadedDoc = new Document(outputPath);
+        bool different = false;
+        var loadedProp = loadedDoc.FirstSection.PageSetup.GetType()
+            .GetProperty("DifferentOddAndEvenPages");
+        if (loadedProp != null && loadedProp.CanRead)
         {
-            Console.WriteLine($"Document saved successfully to '{outputPath}'.");
+            different = (bool)loadedProp.GetValue(loadedDoc.FirstSection.PageSetup);
         }
-        else
-        {
-            Console.WriteLine("Failed to save the document.");
-        }
+
+        Console.WriteLine($"DifferentOddAndEvenPages set: {different}");
     }
 }

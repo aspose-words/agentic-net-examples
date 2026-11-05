@@ -15,69 +15,62 @@ public class Program
         HeaderFooter header = new HeaderFooter(doc, HeaderFooterType.HeaderPrimary);
         doc.FirstSection.HeadersFooters.Add(header);
 
-        // Add a primary footer to the first section.
-        HeaderFooter footer = new HeaderFooter(doc, HeaderFooterType.FooterPrimary);
-        doc.FirstSection.HeadersFooters.Add(footer);
-
-        // ----- Insert a table into the header -----
-        // Move the builder's cursor to the header.
+        // Move the builder to the header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
 
-        // Build a simple 2x2 table in the header.
+        // Build a 2x2 table in the header.
         builder.StartTable();
 
-        // First row, first cell.
+        // First row.
         builder.InsertCell();
         builder.Write("Header Cell 1");
-
-        // First row, second cell.
         builder.InsertCell();
         builder.Write("Header Cell 2");
         builder.EndRow();
 
-        // Second row, first cell.
+        // Second row.
         builder.InsertCell();
         builder.Write("Header Cell 3");
-
-        // Second row, second cell.
         builder.InsertCell();
         builder.Write("Header Cell 4");
         builder.EndRow();
 
-        // End the table.
         builder.EndTable();
 
-        // ----- Insert a table into the footer -----
-        // Move the builder's cursor to the footer.
+        // Add a primary footer to the first section.
+        HeaderFooter footer = new HeaderFooter(doc, HeaderFooterType.FooterPrimary);
+        doc.FirstSection.HeadersFooters.Add(footer);
+
+        // Move the builder to the footer.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
 
-        // Build a simple 1x3 table in the footer.
+        // Build a 2x2 table in the footer.
         builder.StartTable();
 
-        // First cell.
+        // First row.
         builder.InsertCell();
-        builder.Write("Footer Cell A");
-
-        // Second cell.
+        builder.Write("Footer Cell 1");
         builder.InsertCell();
-        builder.Write("Footer Cell B");
-
-        // Third cell.
-        builder.InsertCell();
-        builder.Write("Footer Cell C");
+        builder.Write("Footer Cell 2");
         builder.EndRow();
 
-        // End the table.
+        // Second row.
+        builder.InsertCell();
+        builder.Write("Footer Cell 3");
+        builder.InsertCell();
+        builder.Write("Footer Cell 4");
+        builder.EndRow();
+
         builder.EndTable();
 
-        // Save the document to disk.
+        // Save the document.
         string outputPath = "HeaderFooterTable.docx";
         doc.Save(outputPath);
 
-        // Validate that the file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
         {
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+            throw new Exception($"Failed to create the output file: {outputPath}");
         }
     }
 }

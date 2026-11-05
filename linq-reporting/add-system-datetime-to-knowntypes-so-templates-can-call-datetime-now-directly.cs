@@ -6,32 +6,36 @@ public class Program
 {
     public static void Main()
     {
-        // Create a template document that contains a static DateTime call.
-        const string templatePath = "Template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        // Correct tag syntax for static member access uses a dot.
-        builder.Writeln("Current date and time: <<[DateTime.Now]>>");
+        // Paths for the template and the generated report.
+        string templatePath = "Template.docx";
+        string reportPath = "Report.docx";
+
+        // Create a Word document that will serve as the LINQ Reporting template.
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Insert a tag that calls the static DateTime.Now property.
+        builder.Writeln("Current time: <<[DateTime.Now]>>");
+
+        // Save the template to disk.
         templateDoc.Save(templatePath);
 
-        // Load the template for reporting.
-        var reportDoc = new Document(templatePath);
+        // Load the template for report generation.
+        Document reportDoc = new Document(templatePath);
 
-        // Configure the reporting engine and add System.DateTime to known types.
-        var engine = new ReportingEngine();
+        // Configure the ReportingEngine.
+        ReportingEngine engine = new ReportingEngine();
+
+        // Add System.DateTime to the list of known types so the template can use it.
         engine.KnownTypes.Add(typeof(DateTime));
 
-        // Build the report using an empty model.
-        var model = new Model();
-        engine.BuildReport(reportDoc, model, "model");
+        // Build the report. No root data object is needed for this example.
+        engine.BuildReport(reportDoc, new object(), "model");
 
         // Save the generated report.
-        const string outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
-    }
+        reportDoc.Save(reportPath);
 
-    // Empty model class required by BuildReport.
-    public class Model
-    {
+        // Indicate completion.
+        Console.WriteLine("Report generated successfully.");
     }
 }

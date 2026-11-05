@@ -10,36 +10,28 @@ product: Aspose.Words
 
 ## Purpose
 
-This folder is a live, curated example set for Paragraphs scenarios. Treat every `.cs` file as a standalone console application. The goal is correct, warning-free examples that use documented Aspose APIs and match the original task intent.
+Provide concise, reliable guidance for an AI coding assistant to generate correct C# snippets that manipulate paragraphs with Aspose.Words, ensuring only documented APIs are used and document integrity is preserved.
 
 ## Non-negotiable conventions
 
-- Always use real `Paragraph` nodes and `ParagraphFormat` APIs for paragraph-level work.
-- Prefer `DocumentBuilder` for simple paragraph insertion and direct DOM traversal for reporting, filtering, and structural edits.
-- Bootstrap all required input assets locally for DOCX, DOC, or TXT workflows.
-- Keep validation narrow and task-specific. Validate the exact paragraph change or output required by the task.
-- For built-in paragraph styles, prefer `ParagraphFormat.StyleIdentifier`.
-- For custom paragraph styles, prefer `ParagraphFormat.StyleName`.
-- Do not use fake namespaces such as `Aspose.Words.Paragraphs`.
-- Do not use unsupported APIs such as `Paragraph.GetLinesCount()` or `Run.Replace()`.
+- Never reference namespaces or members that are not part of the official Aspose.Words API.
+- Do not call Run.Replace; modify Run.Text directly to preserve formatting.
+- Bootstrap local sample inputs for existing-file, folder, stream, image, and data workflows.
+- Prefer simple, verifiable workflows over speculative formatting shortcuts.
 
 ## Recommended workflow selection
 
-- Insertion workflow: 6 examples
-- Paragraph Formatting workflow: 16 examples
-- Traversal Reporting workflow: 6 examples
-- Text Export workflow: 4 examples
-- Editing workflow: 3 examples
+- **Insertion workflow**: 6 examples
+- **Paragraph Formatting workflow**: 16 examples
+- **Traversal Reporting workflow**: 6 examples
+- **Text Export workflow**: 4 examples
+- **Editing workflow**: 3 examples
 
 Use the simplest workflow that satisfies the task.
 
 ## Validation priorities
 
-1. The code must compile and run without manual input.
-2. API usage must be supported by the configured package versions.
-3. Exported outputs must actually be written by the example.
-4. Validation scenarios must inspect only the behavior requested by the task.
-5. Examples that depend on files, folders, streams, images, or data should bootstrap those inputs locally during the example run.
+1. Check that every referenced type, property, and method exists in Aspose.Words 26.10.0 before compilation.
 
 ## File-to-task reference
 
@@ -217,53 +209,56 @@ Use the simplest workflow that satisfies the task.
   - Task: Load a TXT file with list detection disabled and compare the resulting document's list formatting to enabled mode.
   - Workflow: text-export
   - Outputs: txt, docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 
 ## Common failure patterns and preferred agent fixes
 
-- **Fake Paragraph namespace**
-  - Symptom: Compiler error that Aspose.Words.Paragraphs does not exist.
-  - Preferred fix: Use only documented Aspose.Words namespaces.
+- **Use of non-existent API members**
+  - Symptom: Compiler reports missing definitions for properties such as Document.AddBidiMarks, TxtSaveOptions.ExportHeadersFooters, or StyleIdentifier.StyleSeparator.
+  - Root cause: The code references members that were never implemented in the Aspose.Words library.
+  - Preferred fix: Replace the call with the supported alternative (e.g., configure TxtSaveOptions.AddBidiMarks, use the Unicode unit separator character for style separators, or omit unsupported options).
+  - Prevention: Consult the official Aspose.Words API reference for the exact version before using a property or method.
 
-- **Unsupported paragraph line-count API**
-  - Symptom: Compiler errors around Paragraph.GetLinesCount and invented layout helpers.
-  - Preferred fix: Use a compile-safe approximation for line-count tasks rather than unsupported APIs.
+- **Incorrect overload usage**
+  - Symptom: Build fails because DocumentBuilder.MoveTo or MoveToParagraph is called with an invalid number of arguments.
+  - Root cause: The code supplies parameters that do not match any overload defined in the library.
+  - Preferred fix: Use the overload signatures documented for the current version, providing both paragraph index and character index for MoveToParagraph, or call MoveTo with a Node argument.
+  - Prevention: Review method signatures in the API docs and pass the required arguments exactly as specified.
 
-- **Invalid run replacement API**
-  - Symptom: Compiler error that Run does not expose Replace.
-  - Preferred fix: Edit Run.Text while preserving run formatting.
+- **Applying paragraph style to a run**
+  - Symptom: Runtime throws ArgumentException stating that the style is not a character style when assigning a StyleIdentifier to Font.StyleIdentifier.
+  - Root cause: A paragraph-level style (e.g., Heading1) is being applied to a Run, which only accepts character styles.
+  - Preferred fix: Assign a character style such as StyleIdentifier.DefaultParagraphFont to the run, or leave the run with the document's default character formatting.
+  - Prevention: Distinguish between paragraph and character styles; use Font.StyleIdentifier only for character styles.
+
+- **Assuming unsupported layout helpers**
+  - Symptom: Compiler errors appear for calls to Paragraph.GetLinesCount or other invented layout APIs.
+  - Root cause: The code attempts to use methods that are not part of the Aspose.Words API for line-count or layout information.
+  - Preferred fix: Remove the unsupported call and, if line count is needed, approximate it by measuring the rendered height or by using a custom layout engine outside Aspose.Words.
+  - Prevention: Limit paragraph-related logic to properties and methods documented in the API reference.
 
 - **Over-broad paragraph count validation**
-  - Symptom: Runtime failures caused by asserting total paragraph counts for tasks that only required a targeted insertion or formatting change.
-  - Preferred fix: Validate the exact target paragraph or target scope only.
+  - Symptom: Runtime failures occur when the test asserts the total number of paragraphs instead of the targeted subset.
+  - Root cause: The validation logic checks the entire document rather than the specific paragraph(s) affected by the operation.
+  - Preferred fix: Validate only the paragraph(s) that the task modifies or queries, using precise node references.
+  - Prevention: Scope assertions to the exact nodes involved in the operation.
 
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.9.0`
+- Primary package: `Aspose.Words` `26.10.0`
 
 ## Command reference
-
-### Create a temporary console project
 
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
+dotnet add package Aspose.Words --version 26.10.0
 ```
-
-### Add required packages
-
-```bash
-dotnet add package Aspose.Words --version 26.9.0
-```
-
-### Copy a category example into the temp project
 
 ```powershell
 Copy-Item ..\paragraphs\<example-file>.cs .\Program.cs
 ```
-
-### Build and run
 
 ```bash
 dotnet build --configuration Release --verbosity minimal
@@ -272,6 +267,4 @@ dotnet run --configuration Release --no-build
 
 ## Category update guidance
 
-- Preserve file-to-task traceability. Any future update should keep the original task text associated with the file in metadata.
-- When replacing a file, prefer the latest verified publish-ready version rather than a merely compiling draft.
-- Keep examples standalone, bootstrap missing inputs locally, and prefer documented Aspose APIs over speculative shortcuts.
+- Update the examples whenever a new Aspose.Words version introduces or deprecates API members, and verify all referenced members against the official documentation.

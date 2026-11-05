@@ -1,75 +1,64 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 using Aspose.Words.Tables;
+using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a floating image with square text wrapping.
-        // The image file is created on the fly for demonstration purposes.
-        string imagePath = "sample.png";
-        CreateSampleImage(imagePath);
-        Shape image = builder.InsertImage(imagePath);
-        image.WrapType = WrapType.Square;
-        image.RelativeHorizontalPosition = RelativeHorizontalPosition.Margin;
-        image.RelativeVerticalPosition = RelativeVerticalPosition.Line;
-        image.Left = 50;   // Position from the left margin.
-        image.Top = 50;    // Position from the top of the line.
-        image.AllowOverlap = true;
+        // A 1x1 red PNG image encoded in base64.
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR42mP8z8BQDwAF/AL+XcK6AAAAAElFTkSuQmCC";
+        byte[] pngBytes = Convert.FromBase64String(base64Png);
 
-        // Move to a new paragraph after the image.
+        // Insert the image as a floating shape.
+        using (MemoryStream imgStream = new MemoryStream(pngBytes))
+        {
+            Shape imageShape = builder.InsertImage(imgStream);
+            imageShape.WrapType = WrapType.Square;
+            imageShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Margin;
+            imageShape.RelativeVerticalPosition = RelativeVerticalPosition.Margin;
+            imageShape.Left = 0;
+            imageShape.Top = 0;
+            imageShape.AllowOverlap = true;
+        }
+
+        // Move the builder to a new paragraph after the image.
         builder.Writeln();
 
-        // Build a simple 2x2 table.
+        // Start a table that will overlap the image.
         builder.StartTable();
+
+        // Insert some cells.
         builder.InsertCell();
         builder.Writeln("Cell 1");
+        builder.EndRow();
+
         builder.InsertCell();
         builder.Writeln("Cell 2");
         builder.EndRow();
-        builder.InsertCell();
-        builder.Writeln("Cell 3");
-        builder.InsertCell();
-        builder.Writeln("Cell 4");
-        builder.EndRow();
+
+        // End the table.
         builder.EndTable();
 
         // Retrieve the created table.
-        Table table = doc.GetChildNodes(NodeType.Table, true).Cast<Table>().Last();
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
-        // In some versions of Aspose.Words the Table.AllowOverlap and TextWrappingStyle
-        // properties are read‑only or not available. Therefore we rely on the default
-        // behavior of the floating image (square wrap) which already allows the table
-        // content to flow around the image.
+        // Adjust layout: make the table narrower and position it over the image.
+        table.PreferredWidth = PreferredWidth.FromPercent(50);
+        table.LeftIndent = -20; // Move left to overlap the image.
 
         // Save the document.
-        string outputPath = "TableWrapAroundImage.docx";
+        string outputPath = "TableWrap.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
             throw new Exception("The output document was not created.");
-
-        // Clean up the temporary image file.
-        if (File.Exists(imagePath))
-            File.Delete(imagePath);
-    }
-
-    // Helper method to create a simple placeholder PNG image without using System.Drawing.
-    private static void CreateSampleImage(string path)
-    {
-        // This is a minimal 1x1 pixel PNG (transparent).
-        byte[] pngBytes = Convert.FromBase64String(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X" +
-            "K6cAAAAASUVORK5CYII=");
-        File.WriteAllBytes(path, pngBytes);
     }
 }

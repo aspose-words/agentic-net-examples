@@ -3,74 +3,57 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class BatchDocxToTiff
+public class Program
 {
     public static void Main()
     {
-        // Define temporary base folder and subfolders for source DOCX files and output TIFF files.
-        string baseFolder = Path.Combine(Path.GetTempPath(), "AsposeBatchConvert");
-        string sourceFolder = Path.Combine(baseFolder, "Source");
-        string outputFolder = Path.Combine(baseFolder, "Output");
-
-        // Ensure a clean environment.
-        if (Directory.Exists(baseFolder))
-            Directory.Delete(baseFolder, true);
+        // Create a folder for sample DOCX files.
+        string sourceFolder = Path.Combine(Directory.GetCurrentDirectory(), "SampleDocs");
         Directory.CreateDirectory(sourceFolder);
+
+        // Generate a few sample DOCX documents.
+        for (int i = 1; i <= 2; i++)
+        {
+            Document doc = new Document();
+            Paragraph para = new Paragraph(doc);
+            Run run = new Run(doc, $"This is sample document {i}.");
+            para.AppendChild(run);
+            doc.FirstSection.Body.AppendChild(para);
+
+            string docPath = Path.Combine(sourceFolder, $"Doc{i}.docx");
+            doc.Save(docPath);
+        }
+
+        // Create a folder for the TIFF output.
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "TiffOutput");
         Directory.CreateDirectory(outputFolder);
 
-        // Create sample DOCX files with multiple pages.
-        CreateSampleDocx(Path.Combine(sourceFolder, "Sample1.docx"), "First document", 3);
-        CreateSampleDocx(Path.Combine(sourceFolder, "Sample2.docx"), "Second document", 5);
+        // Define custom DPI for the TIFF images.
+        const float customDpi = 300f;
 
-        // Desired DPI for the TIFF images.
-        const int dpi = 300;
-
-        // Process each DOCX file in the source folder.
+        // Batch convert each DOCX file to a multipage TIFF.
         foreach (string docxPath in Directory.GetFiles(sourceFolder, "*.docx"))
         {
-            // Load the DOCX document.
-            Document doc = new Document(docxPath);
+            Document document = new Document(docxPath);
 
-            // Configure TIFF save options.
             ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
             {
-                // Set both horizontal and vertical resolution.
-                Resolution = dpi
-                // By default all pages are rendered; no need to set PageSet.
+                // Render all pages (default behavior) into a single multipage TIFF.
+                // No need to set PageSet explicitly.
+                Resolution = customDpi
             };
 
-            // Build the output TIFF file path.
-            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(docxPath);
-            string tiffPath = Path.Combine(outputFolder, fileNameWithoutExt + ".tiff");
+            string tiffPath = Path.Combine(outputFolder,
+                Path.GetFileNameWithoutExtension(docxPath) + ".tiff");
 
-            // Save the document as a multipage TIFF.
-            doc.Save(tiffPath, saveOptions);
+            document.Save(tiffPath, saveOptions);
 
             // Verify that the TIFF file was created.
             if (!File.Exists(tiffPath))
                 throw new InvalidOperationException($"Failed to create TIFF file: {tiffPath}");
         }
 
-        // Indicate successful batch conversion.
+        // Indicate successful completion.
         Console.WriteLine("Batch conversion completed successfully.");
-    }
-
-    // Helper method that creates a DOCX file containing the specified number of pages.
-    private static void CreateSampleDocx(string filePath, string title, int pageCount)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        builder.Writeln(title);
-        builder.Writeln($"This document contains {pageCount} pages.");
-
-        // Insert page breaks to generate additional pages.
-        for (int i = 1; i < pageCount; i++)
-        {
-            builder.InsertBreak(BreakType.PageBreak);
-            builder.Writeln($"Page {i + 1}");
-        }
-
-        doc.Save(filePath);
     }
 }

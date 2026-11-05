@@ -10,42 +10,43 @@ public class Program
         // Create a sample document with three pages.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        for (int i = 1; i <= 3; i++)
-        {
-            builder.Writeln($"This is page {i}");
-            if (i < 3)
-                builder.InsertBreak(BreakType.PageBreak);
-        }
+        builder.Writeln("Page 1 content.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("Page 2 content.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("Page 3 content.");
 
-        // Prepare an output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Ensure the layout is up‑to‑date so PageCount is accurate.
+        doc.UpdatePageLayout();
 
-        // Render the whole document to a multipage TIFF.
-        string multiTiffPath = Path.Combine(outputDir, "multipage.tiff");
+        // Render the whole document to a multipage TIFF file.
+        string multiPageTiffPath = "multipage.tiff";
         ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff);
-        // No PageSet assigned means all pages will be rendered.
-        doc.Save(multiTiffPath, tiffOptions);
+        // Save all pages.
+        tiffOptions.PageSet = PageSet.All;
+        doc.Save(multiPageTiffPath, tiffOptions);
 
-        // Ensure the multipage TIFF was created.
-        if (!File.Exists(multiTiffPath))
-            throw new InvalidOperationException("Multipage TIFF was not created.");
+        // Verify the multipage TIFF was created.
+        if (!File.Exists(multiPageTiffPath))
+            throw new FileNotFoundException("Failed to create the multipage TIFF.", multiPageTiffPath);
 
         // Split the multipage TIFF into individual page TIFF files.
-        int pageCount = doc.PageCount;
+        int pageCount = doc.PageCount; // Zero‑based count after layout update.
         for (int pageIndex = 0; pageIndex < pageCount; pageIndex++)
         {
-            string pageTiffPath = Path.Combine(outputDir, $"page_{pageIndex + 1}.tiff");
-            ImageSaveOptions pageOptions = new ImageSaveOptions(SaveFormat.Tiff)
-            {
-                // Render only the current page.
-                PageSet = new PageSet(pageIndex)
-            };
-            doc.Save(pageTiffPath, pageOptions);
+            // Output file name uses 1‑based page numbers for readability.
+            string singlePagePath = $"page_{pageIndex + 1}.tiff";
 
-            // Verify each page image exists.
-            if (!File.Exists(pageTiffPath))
-                throw new InvalidOperationException($"TIFF for page {pageIndex + 1} was not created.");
+            ImageSaveOptions singlePageOptions = new ImageSaveOptions(SaveFormat.Tiff);
+            // Render only the current page (zero‑based index).
+            singlePageOptions.PageSet = new PageSet(pageIndex);
+            doc.Save(singlePagePath, singlePageOptions);
+
+            // Verify each single‑page TIFF was created.
+            if (!File.Exists(singlePagePath))
+                throw new FileNotFoundException($"Failed to create TIFF for page {pageIndex + 1}.", singlePagePath);
         }
+
+        Console.WriteLine("Multipage TIFF and individual page TIFFs have been created.");
     }
 }

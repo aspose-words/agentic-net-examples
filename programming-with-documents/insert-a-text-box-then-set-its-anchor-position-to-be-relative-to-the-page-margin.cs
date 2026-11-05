@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -11,39 +10,27 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a text box shape.
-        Shape textBox = new Shape(doc, ShapeType.TextBox);
-        textBox.Width = 200;   // Width in points.
-        textBox.Height = 100;  // Height in points.
+        // Insert a text box shape with a specific size.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 100);
 
-        // Set the anchor position to be relative to the page margin.
+        // Add some sample text inside the text box.
+        // The TextBoxContentBuilder property is not available in this version,
+        // so we add a paragraph and a run directly to the shape's text box.
+        Paragraph paragraph = new Paragraph(doc);
+        Run run = new Run(doc, "Hello, Aspose.Words!");
+        paragraph.AppendChild(run);
+        textBox.AppendChild(paragraph);
+
+        // Set the anchor position of the text box relative to the page margin.
         textBox.RelativeHorizontalPosition = RelativeHorizontalPosition.Margin;
         textBox.RelativeVerticalPosition = RelativeVerticalPosition.Margin;
-        textBox.Left = 0;   // Distance from the left margin.
-        textBox.Top = 0;    // Distance from the top margin.
 
-        // Add a paragraph with some text inside the text box.
-        Paragraph para = new Paragraph(doc);
-        Run run = new Run(doc, "Hello from the text box!");
-        para.AppendChild(run);
-        // For a TextBox shape, content is added directly to the shape's child nodes.
-        textBox.AppendChild(para);
+        // Position the text box 50 points from the left and top margins.
+        textBox.Left = 50;
+        textBox.Top = 50;
 
-        // Insert the text box into the document.
-        builder.InsertNode(textBox);
-
-        // Save the document.
-        string outputPath = "Output.docx";
+        // Save the document to a file.
+        const string outputPath = "Output.docx";
         doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (File.Exists(outputPath))
-        {
-            Console.WriteLine($"Document saved successfully to '{outputPath}'.");
-        }
-        else
-        {
-            Console.WriteLine("Failed to save the document.");
-        }
     }
 }

@@ -9,87 +9,96 @@ public class Program
 {
     public static void Main()
     {
-        // Folder for temporary files
-        string workFolder = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        Directory.CreateDirectory(workFolder);
+        // Prepare deterministic folders
+        const string inputFolder = "InputImages";
+        const string outputFolder = "ExtractedTiles";
+        Directory.CreateDirectory(inputFolder);
+        Directory.CreateDirectory(outputFolder);
 
-        // Create sample tile images (2x2 grid)
-        int tileCountX = 2;
-        int tileCountY = 2;
-        int tileSize = 100; // pixels
-
-        for (int x = 0; x < tileCountX; x++)
+        // Step 1: Create sample tile images (2x2 grid)
+        for (int x = 0; x < 2; x++)
         {
-            for (int y = 0; y < tileCountY; y++)
+            for (int y = 0; y < 2; y++)
             {
-                string tilePath = Path.Combine(workFolder, $"tile_{x}_{y}.png");
-                using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(tileSize, tileSize))
+                string fileName = $"tile_{x}_{y}.png";
+                string filePath = Path.Combine(inputFolder, fileName);
+
+                // Create a simple bitmap
+                using (Bitmap bitmap = new Bitmap(100, 100))
                 {
-                    using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
+                    using (Graphics g = Graphics.FromImage(bitmap))
                     {
-                        g.Clear(Aspose.Drawing.Color.White);
-                        // Draw a simple rectangle with the coordinates
-                        g.DrawRectangle(Aspose.Drawing.Pens.Black, 10, 10, tileSize - 20, tileSize - 20);
-                        g.DrawString($"({x},{y})",
-                            new Aspose.Drawing.Font("Arial", 12),
-                            Aspose.Drawing.Brushes.Black,
-                            new Aspose.Drawing.PointF(20, 40));
+                        // Fill background with a distinct color per tile
+                        Color bgColor = (x + y) % 2 == 0 ? Color.LightBlue : Color.LightGreen;
+                        g.Clear(bgColor);
                     }
-                    bitmap.Save(tilePath, Aspose.Drawing.Imaging.ImageFormat.Png);
+
+                    // Save the bitmap to a deterministic file
+                    bitmap.Save(filePath, ImageFormat.Png);
                 }
             }
         }
 
-        // Create a DOCX and insert the tiles, storing coordinates in AlternativeText
-        string docPath = Path.Combine(workFolder, "MapTiles.docx");
+        // Step 2: Build a DOCX that contains the tile images
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        for (int x = 0; x < tileCountX; x++)
+        for (int x = 0; x < 2; x++)
         {
-            for (int y = 0; y < tileCountY; y++)
+            for (int y = 0; y < 2; y++)
             {
-                string tilePath = Path.Combine(workFolder, $"tile_{x}_{y}.png");
-                Shape shape = builder.InsertImage(tilePath);
-                shape.AlternativeText = $"tile_{x}_{y}";
-                // Add a line break after each image for readability
+                string imagePath = Path.Combine(inputFolder, $"tile_{x}_{y}.png");
+
+                // Insert the image and obtain the created Shape
+                Shape shape = builder.InsertImage(imagePath);
+                // Store tile coordinates in AlternativeText for later extraction
+                shape.AlternativeText = $"{x}_{y}";
+
+                // Add a line break between images for readability
                 builder.Writeln();
             }
         }
 
+        // Save the sample document
+        const string docPath = "MapTiles.docx";
         doc.Save(docPath);
 
-        // Load the document and extract images using tile coordinates from AlternativeText
+        // Step 3: Load the document and extract images using tile coordinates
         Document loadedDoc = new Document(docPath);
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+
         int extractedCount = 0;
+        int genericIndex = 0;
 
         foreach (Shape shape in shapeNodes)
         {
             if (!shape.HasImage)
                 continue;
 
-            string altText = shape.AlternativeText ?? string.Empty;
-            if (!altText.StartsWith("tile_"))
-                continue;
+            // Determine output file name based on stored coordinates
+            string altText = shape.AlternativeText;
+            string outputFileName;
 
-            string[] parts = altText.Split('_');
-            if (parts.Length != 3)
-                continue;
+            if (!string.IsNullOrWhiteSpace(altText))
+            {
+                // Expected format: "x_y"
+                outputFileName = $"tile_{altText}.png";
+            }
+            else
+            {
+                // Fallback name if no coordinates are stored
+                outputFileName = $"extracted_{genericIndex++}.png";
+            }
 
-            string xPart = parts[1];
-            string yPart = parts[2];
-
-            string outputFileName = Path.Combine(workFolder, $"extracted_tile_{xPart}_{yPart}.png");
-            shape.ImageData.Save(outputFileName);
+            string outputPath = Path.Combine(outputFolder, outputFileName);
+            shape.ImageData.Save(outputPath);
             extractedCount++;
         }
 
+        // Validation: ensure at least one image was extracted
         if (extractedCount == 0)
-            throw new InvalidOperationException("No tile images were extracted from the document.");
+            throw new InvalidOperationException("No images were extracted from the document.");
 
-        // Optional: clean up sample tile images (comment out if you want to keep them)
-        //foreach (var file in Directory.GetFiles(workFolder, "tile_*.png"))
-        //    File.Delete(file);
+        Console.WriteLine($"Extraction complete. {extractedCount} image(s) saved to '{outputFolder}'.");
     }
 }

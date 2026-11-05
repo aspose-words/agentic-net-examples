@@ -7,58 +7,91 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample DOCX document with a styled table.
+        // Paths for the intermediate DOCX and the final PDF.
+        const string docxPath = "SampleTable.docx";
+        const string pdfPath = "SampleTable.pdf";
+
+        // -------------------------------------------------
+        // Step 1: Create a DOCX document that contains a formatted table.
+        // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table.
+        // Title paragraph.
+        builder.Writeln("Document with a Sample Table");
+        builder.Writeln();
+
+        // Begin the table.
         builder.StartTable();
 
-        // First row - header cells.
+        // ----- Header row -----
         builder.InsertCell();
         builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-        builder.Font.Bold = true;
-        builder.Write("Header 1");
+        builder.Writeln("Header 1");
 
         builder.InsertCell();
         builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-        builder.Font.Bold = true;
-        builder.Write("Header 2");
-
-        builder.EndRow();
-
-        // Second row - data cells.
-        builder.InsertCell();
-        builder.ParagraphFormat.Alignment = ParagraphAlignment.Left;
-        builder.Font.Bold = false;
-        builder.Write("Cell 1");
+        builder.Writeln("Header 2");
 
         builder.InsertCell();
-        builder.ParagraphFormat.Alignment = ParagraphAlignment.Left;
-        builder.Write("Cell 2");
-
+        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        builder.Writeln("Header 3");
         builder.EndRow();
 
+        // ----- First data row -----
+        builder.InsertCell();
+        builder.ParagraphFormat.Alignment = ParagraphAlignment.Left;
+        builder.Writeln("Row 1, Cell 1");
+
+        builder.InsertCell();
+        builder.Writeln("Row 1, Cell 2");
+
+        builder.InsertCell();
+        builder.Writeln("Row 1, Cell 3");
+        builder.EndRow();
+
+        // ----- Second data row -----
+        builder.InsertCell();
+        builder.Writeln("Row 2, Cell 1");
+
+        builder.InsertCell();
+        builder.Writeln("Row 2, Cell 2");
+
+        builder.InsertCell();
+        builder.Writeln("Row 2, Cell 3");
+        builder.EndRow();
+
+        // End the table.
         builder.EndTable();
 
-        // Apply a built‑in table style to preserve formatting.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        table.StyleIdentifier = StyleIdentifier.LightListAccent1;
+        // Retrieve the created table and apply formatting.
+        Table table = doc.GetChild(NodeType.Table, 0, true) as Table;
+        if (table == null)
+            throw new InvalidOperationException("Failed to locate the created table.");
+
+        table.StyleIdentifier = StyleIdentifier.TableGrid;
         table.AllowAutoFit = true;
 
-        // Save the sample DOCX locally.
-        string docxPath = Path.Combine(Directory.GetCurrentDirectory(), "SampleTable.docx");
-        doc.Save(docxPath, SaveFormat.Docx);
+        // Save the DOCX to disk.
+        doc.Save(docxPath);
 
-        // Load the DOCX and convert it to PDF, preserving table styles.
+        // -------------------------------------------------
+        // Step 2: Load the DOCX containing the table.
+        // -------------------------------------------------
         Document loadedDoc = new Document(docxPath);
-        string pdfPath = Path.Combine(Directory.GetCurrentDirectory(), "SampleTable.pdf");
+
+        // -------------------------------------------------
+        // Step 3: Export the loaded document to PDF while preserving table styles.
+        // -------------------------------------------------
         loadedDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Verify that the PDF was created.
+        // -------------------------------------------------
+        // Validation: Ensure the PDF file was created successfully.
+        // -------------------------------------------------
         if (!File.Exists(pdfPath))
-        {
-            throw new Exception("PDF conversion failed: output file not found.");
-        }
+            throw new InvalidOperationException($"Failed to create PDF file at '{pdfPath}'.");
+
+        // Optional cleanup of the intermediate DOCX.
+        // File.Delete(docxPath);
     }
 }

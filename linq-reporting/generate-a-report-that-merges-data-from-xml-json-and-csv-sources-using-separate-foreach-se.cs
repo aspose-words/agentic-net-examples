@@ -6,10 +6,128 @@ using System.Text;
 using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
 using Newtonsoft.Json;
 
-#nullable enable
+public class Program
+{
+    public static void Main()
+    {
+        // Ensure code page support for potential CSV encodings.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Create sample data files.
+        string jsonPath = "data.json";
+        string xmlPath = "data.xml";
+        string csvPath = "data.csv";
+
+        File.WriteAllText(jsonPath, @"[
+  { ""Name"": ""Alice"", ""Age"": 30 },
+  { ""Name"": ""Bob"",   ""Age"": 25 }
+]");
+
+        File.WriteAllText(xmlPath, @"<Products>
+  <Product><Name>Widget</Name><Price>19.99</Price></Product>
+  <Product><Name>Gadget</Name><Price>29.99</Price></Product>
+</Products>");
+
+        File.WriteAllText(csvPath, @"Item,Quantity
+Pen,10
+Notebook,5
+");
+
+        // Load JSON data.
+        var jsonCustomers = JsonConvert.DeserializeObject<List<Customer>>(File.ReadAllText(jsonPath)) ?? new();
+
+        // Load XML data.
+        var xmlDoc = XDocument.Load(xmlPath);
+        var xmlProducts = xmlDoc.Root?
+            .Elements("Product")
+            .Select(p => new Product
+            {
+                Name = (string?)p.Element("Name") ?? "",
+                Price = decimal.TryParse((string?)p.Element("Price"), out var v) ? v : 0m
+            })
+            .ToList() ?? new();
+
+        // Load CSV data.
+        var csvLines = File.ReadAllLines(csvPath);
+        var csvSales = new List<Sale>();
+        foreach (var line in csvLines.Skip(1)) // Skip header
+        {
+            var parts = line.Split(',');
+            if (parts.Length >= 2)
+            {
+                csvSales.Add(new Sale
+                {
+                    Item = parts[0],
+                    Quantity = int.TryParse(parts[1], out var q) ? q : 0
+                });
+            }
+        }
+
+        // Assemble the root model.
+        var model = new ReportModel
+        {
+            JsonCustomers = jsonCustomers,
+            XmlProducts = xmlProducts,
+            CsvSales = csvSales
+        };
+
+        // Build the LINQ Reporting template.
+        var templatePath = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        builder.Writeln("=== JSON Customers ===");
+        builder.Writeln("<<foreach [c in JsonCustomers]>>");
+        builder.Writeln("Name: <<[c.Name]>>   Age: <<[c.Age]>>");
+        builder.Writeln("<</foreach>>");
+        builder.Writeln();
+
+        builder.Writeln("=== XML Products ===");
+        builder.Writeln("<<foreach [p in XmlProducts]>>");
+        var table = builder.StartTable();
+        builder.InsertCell();
+        builder.Writeln("Product");
+        builder.InsertCell();
+        builder.Writeln("Price");
+        builder.EndRow();
+
+        builder.InsertCell();
+        builder.Writeln("<<[p.Name]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[p.Price]>>");
+        builder.EndRow();
+        builder.EndTable();
+        builder.Writeln("<</foreach>>");
+        builder.Writeln();
+
+        builder.Writeln("=== CSV Sales ===");
+        builder.Writeln("<<foreach [s in CsvSales]>>");
+        builder.Writeln("Item: <<[s.Item]>>   Quantity: <<[s.Quantity]>>");
+        builder.Writeln("<</foreach>>");
+
+        doc.Save(templatePath);
+
+        // Load the template for reporting.
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None;
+        engine.BuildReport(reportDoc, model, "model");
+
+        // Save the final report.
+        string outputPath = "report.docx";
+        reportDoc.Save(outputPath);
+    }
+}
+
+// Data model classes.
+public class ReportModel
+{
+    public List<Customer> JsonCustomers { get; set; } = new();
+    public List<Product> XmlProducts { get; set; } = new();
+    public List<Sale> CsvSales { get; set; } = new();
+}
 
 public class Customer
 {
@@ -20,157 +138,11 @@ public class Customer
 public class Product
 {
     public string Name { get; set; } = "";
-    public double Price { get; set; }
+    public decimal Price { get; set; }
 }
 
-public class Order
+public class Sale
 {
-    public int OrderId { get; set; }
-    public string Product { get; set; } = "";
+    public string Item { get; set; } = "";
     public int Quantity { get; set; }
-}
-
-public class ReportModel
-{
-    public List<Customer> Customers { get; set; } = new();
-    public List<Product> Products { get; set; } = new();
-    public List<Order> Orders { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main()
-    {
-        // Register code page provider for any encoding needs.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Create a folder for sample data.
-        string dataFolder = Path.Combine(Directory.GetCurrentDirectory(), "Data");
-        Directory.CreateDirectory(dataFolder);
-
-        // ---------- Create sample XML ----------
-        string xmlPath = Path.Combine(dataFolder, "customers.xml");
-        string xmlContent = @"<Customers>
-  <Customer>
-    <Name>John Doe</Name>
-    <Age>30</Age>
-  </Customer>
-  <Customer>
-    <Name>Jane Smith</Name>
-    <Age>25</Age>
-  </Customer>
-</Customers>";
-        File.WriteAllText(xmlPath, xmlContent, Encoding.UTF8);
-
-        // ---------- Create sample JSON ----------
-        string jsonPath = Path.Combine(dataFolder, "products.json");
-        string jsonContent = @"[
-  { ""Name"": ""Laptop"", ""Price"": 1200.50 },
-  { ""Name"": ""Mouse"", ""Price"": 25.99 }
-]";
-        File.WriteAllText(jsonPath, jsonContent, Encoding.UTF8);
-
-        // ---------- Create sample CSV ----------
-        string csvPath = Path.Combine(dataFolder, "orders.csv");
-        string csvContent = @"OrderId,Product,Quantity
-1,Laptop,2
-2,Mouse,5";
-        File.WriteAllText(csvPath, csvContent, Encoding.UTF8);
-
-        // ---------- Load data into model ----------
-        ReportModel model = new ReportModel();
-
-        // Load XML
-        XDocument xDoc = XDocument.Load(xmlPath);
-        model.Customers = xDoc.Root!
-            .Elements("Customer")
-            .Select(x => new Customer
-            {
-                Name = (string?)x.Element("Name") ?? "",
-                Age = (int?)x.Element("Age") ?? 0
-            })
-            .ToList();
-
-        // Load JSON
-        string jsonString = File.ReadAllText(jsonPath, Encoding.UTF8);
-        model.Products = JsonConvert.DeserializeObject<List<Product>>(jsonString) ?? new List<Product>();
-
-        // Load CSV
-        string[] csvLines = File.ReadAllLines(csvPath, Encoding.UTF8);
-        if (csvLines.Length > 1)
-        {
-            model.Orders = csvLines
-                .Skip(1) // skip header
-                .Select(line => line.Split(','))
-                .Where(parts => parts.Length == 3)
-                .Select(parts => new Order
-                {
-                    OrderId = int.TryParse(parts[0], out int id) ? id : 0,
-                    Product = parts[1],
-                    Quantity = int.TryParse(parts[2], out int qty) ? qty : 0
-                })
-                .ToList();
-        }
-
-        // ---------- Create template document ----------
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-
-        // Customers section
-        builder.Writeln("Customers:");
-        builder.Writeln("<<foreach [c in Customers]>>");
-        Table custTable = builder.StartTable();
-        builder.InsertCell(); builder.Writeln("Name");
-        builder.InsertCell(); builder.Writeln("Age");
-        builder.EndRow();
-
-        builder.InsertCell(); builder.Writeln("<<[c.Name]>>");
-        builder.InsertCell(); builder.Writeln("<<[c.Age]>>");
-        builder.EndRow();
-        builder.EndTable();
-        builder.Writeln("<</foreach>>");
-
-        // Products section
-        builder.Writeln("\nProducts:");
-        builder.Writeln("<<foreach [p in Products]>>");
-        Table prodTable = builder.StartTable();
-        builder.InsertCell(); builder.Writeln("Name");
-        builder.InsertCell(); builder.Writeln("Price");
-        builder.EndRow();
-
-        builder.InsertCell(); builder.Writeln("<<[p.Name]>>");
-        builder.InsertCell(); builder.Writeln("<<[p.Price]>>");
-        builder.EndRow();
-        builder.EndTable();
-        builder.Writeln("<</foreach>>");
-
-        // Orders section
-        builder.Writeln("\nOrders:");
-        builder.Writeln("<<foreach [o in Orders]>>");
-        Table orderTable = builder.StartTable();
-        builder.InsertCell(); builder.Writeln("Order ID");
-        builder.InsertCell(); builder.Writeln("Product");
-        builder.InsertCell(); builder.Writeln("Quantity");
-        builder.EndRow();
-
-        builder.InsertCell(); builder.Writeln("<<[o.OrderId]>>");
-        builder.InsertCell(); builder.Writeln("<<[o.Product]>>");
-        builder.InsertCell(); builder.Writeln("<<[o.Quantity]>>");
-        builder.EndRow();
-        builder.EndTable();
-        builder.Writeln("<</foreach>>");
-
-        // Save the template (optional, for inspection)
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "report_template.docx");
-        template.Save(templatePath);
-
-        // ---------- Build the report ----------
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        engine.BuildReport(template, model, "model");
-
-        // Save the final report
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "report_output.docx");
-        template.Save(outputPath);
-    }
 }

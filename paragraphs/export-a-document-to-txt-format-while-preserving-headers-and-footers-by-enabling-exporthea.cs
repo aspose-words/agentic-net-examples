@@ -8,30 +8,30 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Use DocumentBuilder to add content to header, body, and footer.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add content to the primary header.
+        // Add a header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Writeln("Header: Document Title");
+        builder.Writeln("Header Text");
 
-        // Return to the main body and add some paragraphs.
+        // Add a body paragraph.
         builder.MoveToDocumentEnd();
-        builder.Writeln("This is the first paragraph of the document body.");
-        builder.Writeln("This is the second paragraph of the document body.");
+        builder.Writeln("This is a body paragraph.");
 
-        // Add content to the primary footer.
+        // Add a footer.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.Writeln("Footer: Confidential");
+        builder.Writeln("Footer Text");
 
         // Configure TXT save options.
+        // Note: In some older versions of Aspose.Words the ExportHeadersFooters property
+        // may not be available. If it exists, you can enable it as shown below.
         TxtSaveOptions saveOptions = new TxtSaveOptions();
-
-        // In newer versions of Aspose.Words the ExportHeadersFooters property can be set to true:
+        // Uncomment the following line if the property is supported in your version:
         // saveOptions.ExportHeadersFooters = true;
-        // If the property is not available in the referenced version, headers and footers are
-        // included by default when saving to TXT.
 
         // Save the document as a TXT file.
-        doc.Save("ExportedDocument.txt", saveOptions);
+        doc.Save("output.txt", saveOptions);
     }
 }

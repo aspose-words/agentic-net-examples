@@ -1,6 +1,6 @@
 # Working With Table Examples for Aspose.Words for .NET
 
-This folder contains the live, publish-ready C# examples for the Working With Table category. Each file is a standalone console example selected from the verified 26.9.0 run.
+The Working With Table category demonstrates how to create, modify, clone, and style tables using Aspose.Words 26.10.0. Verified examples cover builder-based creation, DOM manipulation, insertion after specific nodes, cloning with import, and HTML-to-Word conversion while preserving merges.
 
 ## Snapshot
 
@@ -8,32 +8,34 @@ This folder contains the live, publish-ready C# examples for the Working With Ta
 - Slug: working-with-table
 - Total examples: 198
 - Publish-ready successful examples: 198 / 198
-- Source run: 20260925_194858_2eeab9
+- Source run: 20261102_031946_08fb5b
 - Table Workflow examples: 197
-- Table Dom Api examples: 1
+- Table DOM API examples: 1
 
 ## Category rules that shaped these examples
 
-- Use native Aspose.Words APIs directly.
-- Create local sample documents when a task refers to an existing file, stream, template, or input asset.
-- Do not assume external files or folders already exist.
-- Prefer `DocumentBuilder.StartTable`, `InsertCell`, `EndRow`, and `EndTable` for builder-based creation.
-- Keep validation narrow and task-specific.
+- Never reference members that are not present in Aspose.Words 26.10.0, such as Table.AutoFit as a property, Table.Borders, Table.VerticalAlignment, Table.Columns, Cell.PreferredWidth, TableStyleOptions members, BorderCollection.Clear, TextureIndex.None, LoadOptions, or VerticalAlignment enum.
+- Do not use DocumentBuilder.InsertTable; prefer the explicit StartTable workflow.
+- Create a table with DocumentBuilder, then retrieve the Table node via doc.GetChild(NodeType.Table, index, true) for further DOM manipulation.
+- Add rows by constructing a new Row(doc) and calling table.Rows.Add(row); add cells with new Row.Cells.Add(new Cell(doc)).
+- Clone a table with originalTable.Clone(true), import it using NodeImporter, and insert it with referenceParagraph.ParentNode.InsertAfter(clonedTable, referenceParagraph).
+- Always append a Paragraph to a newly created Cell before adding Run objects to avoid NullReferenceException.
+- Check that target nodes (paragraphs, tables) are not null before moving the builder or performing InsertAfter.
 
 ## Prerequisites
 
 - .NET SDK 8.0 or later
-- Aspose.Words 26.9.0
-- Newtonsoft.Json
+- Aspose.Words for .NET `26.10.0`
 
 ## Running Examples
 
-Each file in this folder is a single, standalone `.cs` console example. To run one example:
+Each file in this folder is a **single, standalone `.cs` console example**. To run one example:
 
 ```bash
+# From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.9.0
+dotnet add package Aspose.Words --version 26.10.0
 dotnet add package Newtonsoft.Json
 
 # Copy one example from this folder into the project as Program.cs
@@ -55,8 +57,7 @@ Example:
 # From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.9.0
-dotnet add package Newtonsoft.Json
+dotnet add package Aspose.Words --version 26.10.0
 
 # PowerShell example
 Copy-Item ..\working-with-table\create-a-table-with-three-rows-and-four-columns-using-documentbuilder-in-a-new-document.cs .\Program.cs
@@ -71,7 +72,7 @@ dotnet run --configuration Release --no-build
 |---|---|---|---|---|---|
 | 1 | `create-a-table-with-three-rows-and-four-columns-using-documentbuilder-in-a-new-document.cs` | Create a table with three rows and four columns using DocumentBuilder in a new document. | table-workflow | docx | mcp |
 | 2 | `create-a-table-using-the-dom-api-by-instantiating-table-row-and-cell-nodes-and-appending-t.cs` | Create a table using the DOM API by instantiating Table, Row, and Cell nodes and appending them. | table-workflow | docx | mcp |
-| 3 | `add-a-new-row-to-an-existing-table-by-calling-table-rows-add-and-then-inserting-cells-with.cs` | Add a new row to an existing table by calling Table.Rows.Add and then inserting cells with Row.Cells.Add. | table-workflow | docx | mcp |
+| 3 | `add-a-new-row-to-an-existing-table-by-calling-table-rows-add-and-then-inserting-cells-with.cs` | Add a new row to an existing table by calling Table.Rows.Add and then inserting cells with Row.Cells.Add. | table-workflow | docx | llm |
 | 4 | `insert-a-table-at-a-bookmark-location-by-moving-the-documentbuilder-cursor-to-the-bookmark.cs` | Insert a table at a bookmark location by moving the DocumentBuilder cursor to the bookmark and calling InsertTable. | table-workflow | docx | mcp |
 | 5 | `insert-a-table-into-a-header-by-moving-documentbuilder-to-the-header-and-inserting-the-tab.cs` | Insert a table into a header by moving DocumentBuilder to the header and inserting the table. | table-workflow | docx | mcp |
 | 6 | `insert-a-table-into-a-header-footer-by-moving-documentbuilder-to-the-respective-section-an.cs` | Insert a table into a header/footer by moving DocumentBuilder to the respective section and calling InsertTable. | table-workflow | docx | mcp |
@@ -82,9 +83,9 @@ dotnet run --configuration Release --no-build
 | 11 | `insert-a-table-after-a-paragraph-containing-a-specific-keyword-by-searching-nodes-and-usin.cs` | Insert a table after a paragraph containing a specific keyword by searching nodes and using InsertAfter. | table-workflow | docx | mcp |
 | 12 | `insert-an-empty-paragraph-after-a-table-to-prevent-automatic-merging-with-the-following-ta.cs` | Insert an empty paragraph after a table to prevent automatic merging with the following table. | table-workflow | docx | mcp |
 | 13 | `clone-an-existing-table-node-and-insert-the-copy-after-a-specific-paragraph-using-node-ins.cs` | Clone an existing Table node and insert the copy after a specific paragraph using Node.InsertAfter. | table-workflow | docx | mcp |
-| 14 | `clone-a-table-from-a-template-document-and-replace-placeholder-text-in-each-cell-using-fin.cs` | Clone a table from a template document and replace placeholder text in each cell using FindReplaceOptions. | table-workflow | docx | mcp |
-| 15 | `load-an-html-file-with-a-complex-table-and-convert-it-to-a-word-document-preserving-merged.cs` | Load an HTML file with a complex table and convert it to a Word document preserving merged cells. | table-workflow | html | mcp |
-| 16 | `insert-a-table-from-an-html-string-using-documentbuilder-inserthtml-while-preserving-cell.cs` | Insert a table from an HTML string using DocumentBuilder.InsertHtml while preserving cell formatting. | table-workflow | html | llm |
+| 14 | `clone-a-table-from-a-template-document-and-replace-placeholder-text-in-each-cell-using-fin.cs` | Clone a table from a template document and replace placeholder text in each cell using FindReplaceOptions. | table-workflow | docx | existing_repo |
+| 15 | `load-an-html-file-with-a-complex-table-and-convert-it-to-a-word-document-preserving-merged.cs` | Load an HTML file with a complex table and convert it to a Word document preserving merged cells. | table-workflow | html | llm |
+| 16 | `insert-a-table-from-an-html-string-using-documentbuilder-inserthtml-while-preserving-cell.cs` | Insert a table from an HTML string using DocumentBuilder.InsertHtml while preserving cell formatting. | table-workflow | html | mcp |
 | 17 | `set-table-autofit-to-autofitbehavior-autofittowindow-to-automatically-adjust-column-widths.cs` | Set Table.AutoFit to AutoFitBehavior.AutoFitToWindow to automatically adjust column widths to page margins. | table-workflow | docx | mcp |
 | 18 | `enable-automatic-resizing-of-table-columns-to-fit-content-by-setting-table-autofit-to-auto.cs` | Enable automatic resizing of table columns to fit content by setting Table.AutoFit to AutoFitBehavior.AutoFitToContents. | table-workflow | docx | mcp |
 | 19 | `prevent-automatic-resizing-of-a-table-after-content-changes-by-disabling-table-autofit-and.cs` | Prevent automatic resizing of a table after content changes by disabling Table.AutoFit and fixing column widths. | table-workflow | docx | mcp |
@@ -93,31 +94,31 @@ dotnet run --configuration Release --no-build
 | 22 | `define-a-table-s-preferred-width-as-100-percent-of-the-page-width-by-assigning-preferredwi.cs` | Define a table's preferred width as 100 percent of the page width by assigning PreferredWidth type and value. | table-workflow | docx | mcp |
 | 23 | `create-a-table-with-a-fixed-width-of-fifteen-centimeters-by-setting-preferredwidth-type-an.cs` | Create a table with a fixed width of fifteen centimeters by setting PreferredWidth type and value accordingly. | table-workflow | docx | mcp |
 | 24 | `create-a-table-with-a-fixed-width-and-centered-alignment-by-setting-preferredwidth-and-tab.cs` | Create a table with a fixed width and centered alignment by setting PreferredWidth and Table.Alignment properties. | table-workflow | docx | mcp |
-| 25 | `set-the-table-s-vertical-alignment-within-the-page-by-adjusting-table-verticalalignment-pr.cs` | Set the table's vertical alignment within the page by adjusting Table.VerticalAlignment property to Middle. | table-workflow | docx | mcp |
+| 25 | `set-the-table-s-vertical-alignment-within-the-page-by-adjusting-table-verticalalignment-pr.cs` | Set the table's vertical alignment within the page by adjusting Table.VerticalAlignment property to Middle. | table-workflow | docx | llm |
 | 26 | `align-a-table-to-the-center-of-the-page-by-setting-table-alignment-to-tablealignment-cente.cs` | Align a table to the center of the page by setting Table.Alignment to TableAlignment.Center. | table-workflow | docx | mcp |
 | 27 | `apply-the-built-in-grid-table-5-dark-style-to-a-table-after-inserting-its-rows.cs` | Apply the built-in "Grid Table 5 Dark" style to a table after inserting its rows. | table-workflow | docx | mcp |
 | 28 | `iterate-all-tables-in-a-document-and-set-each-style-to-table-grid-using-a-foreach-loop.cs` | Iterate all tables in a document and set each style to "Table Grid" using a foreach loop. | table-workflow | docx | mcp |
 | 29 | `apply-a-table-style-that-includes-header-row-formatting-by-enabling-table-styleoptions-fir.cs` | Apply a table style that includes header row formatting by enabling Table.StyleOptions.FirstRow. | table-workflow | docx | mcp |
-| 30 | `apply-a-table-style-that-includes-bold-text-for-the-first-row-by-enabling-table-styleoptio.cs` | Apply a table style that includes bold text for the first row by enabling Table.StyleOptions.FirstRowBold. | table-workflow | docx | mcp |
+| 30 | `apply-a-table-style-that-includes-bold-text-for-the-first-row-by-enabling-table-styleoptio.cs` | Apply a table style that includes bold text for the first row by enabling Table.StyleOptions.FirstRowBold. | table-workflow | docx | llm |
 | 31 | `apply-a-table-style-that-includes-bold-formatting-for-the-first-column-by-enabling-table-s.cs` | Apply a table style that includes bold formatting for the first column by enabling Table.StyleOptions.FirstColumnBold. | table-workflow | docx | mcp |
-| 32 | `apply-a-table-style-that-includes-alternating-row-shading-by-enabling-table-styleoptions-r.cs` | Apply a table style that includes alternating row shading by enabling Table.StyleOptions.RowBanding. | table-workflow | docx | mcp |
+| 32 | `apply-a-table-style-that-includes-alternating-row-shading-by-enabling-table-styleoptions-r.cs` | Apply a table style that includes alternating row shading by enabling Table.StyleOptions.RowBanding. | table-workflow | docx | llm |
 | 33 | `apply-a-table-style-that-adds-a-thick-top-border-and-thin-bottom-border-by-configuring-tab.cs` | Apply a table style that adds a thick top border and thin bottom border by configuring Table.Borders. | table-workflow | docx | mcp |
-| 34 | `apply-a-table-style-that-hides-borders-by-setting-table-styleoptions-to-tablestyleoptions.cs` | Apply a table style that hides borders by setting Table.StyleOptions to TableStyleOptions.NoBorders. | table-workflow | docx | mcp |
-| 35 | `apply-a-table-style-that-disables-all-cell-shading-by-setting-table-styleoptions-to-tables.cs` | Apply a table style that disables all cell shading by setting Table.StyleOptions to TableStyleOptions.NoShading. | table-workflow | docx | mcp |
+| 34 | `apply-a-table-style-that-hides-borders-by-setting-table-styleoptions-to-tablestyleoptions.cs` | Apply a table style that hides borders by setting Table.StyleOptions to TableStyleOptions.NoBorders. | table-workflow | docx | llm |
+| 35 | `apply-a-table-style-that-disables-all-cell-shading-by-setting-table-styleoptions-to-tables.cs` | Apply a table style that disables all cell shading by setting Table.StyleOptions to TableStyleOptions.NoShading. | table-workflow | docx | llm |
 | 36 | `apply-a-table-style-that-disables-row-banding-by-setting-table-styleoptions-to-tablestyleo.cs` | Apply a table style that disables row banding by setting Table.StyleOptions to TableStyleOptions.NoRowBanding. | table-workflow | docx | mcp |
-| 37 | `apply-a-table-style-that-enforces-fixed-column-widths-by-disabling-autofit-and-defining-pr.cs` | Apply a table style that enforces fixed column widths by disabling AutoFit and defining PreferredWidth for each column. | table-workflow | docx | mcp |
+| 37 | `apply-a-table-style-that-enforces-fixed-column-widths-by-disabling-autofit-and-defining-pr.cs` | Apply a table style that enforces fixed column widths by disabling AutoFit and defining PreferredWidth for each column. | table-workflow | docx | llm |
 | 38 | `apply-a-custom-border-thickness-of-two-points-to-all-sides-of-a-table-by-setting-table-bor.cs` | Apply a custom border thickness of two points to all sides of a table by setting Table.Borders.LineWidth. | table-workflow | docx | mcp |
 | 39 | `apply-a-custom-border-color-to-the-top-edge-of-a-table-by-setting-table-borders-top-color.cs` | Apply a custom border color to the top edge of a table by setting Table.Borders.Top.Color property. | table-workflow | docx | mcp |
 | 40 | `remove-all-borders-from-a-table-by-setting-each-table-borders-linestyle-to-linestyle-none.cs` | Remove all borders from a table by setting each Table.Borders.LineStyle to LineStyle.None. | table-workflow | docx | mcp |
 | 41 | `set-cell-background-shading-to-light-gray-by-assigning-a-shading-pattern-and-color-to-cell.cs` | Set cell background shading to light gray by assigning a shading pattern and color to CellFormat.Shading. | table-workflow | docx | mcp |
-| 42 | `set-the-table-s-background-color-to-light-blue-by-assigning-a-shading-pattern-and-color-to.cs` | Set the table's background color to light blue by assigning a shading pattern and color to Table.Shading. | table-workflow | docx | mcp |
+| 42 | `set-the-table-s-background-color-to-light-blue-by-assigning-a-shading-pattern-and-color-to.cs` | Set the table's background color to light blue by assigning a shading pattern and color to Table.Shading. | table-workflow | docx | llm |
 | 43 | `set-cell-text-alignment-to-center-horizontally-and-vertically-by-configuring-cellformat-ho.cs` | Set cell text alignment to center horizontally and vertically by configuring CellFormat.HorizontalAlignment and VerticalAlignment. | table-workflow | docx | mcp |
-| 44 | `set-cell-vertical-alignment-to-bottom-by-configuring-cellformat-verticalalignment-property.cs` | Set cell vertical alignment to bottom by configuring CellFormat.VerticalAlignment property for each cell. | table-workflow | docx | mcp |
+| 44 | `set-cell-vertical-alignment-to-bottom-by-configuring-cellformat-verticalalignment-property.cs` | Set cell vertical alignment to bottom by configuring CellFormat.VerticalAlignment property for each cell. | table-workflow | docx | llm |
 | 45 | `set-cell-text-direction-to-right-to-left-for-arabic-content-by-configuring-cellformat-text.cs` | Set cell text direction to right-to-left for Arabic content by configuring CellFormat.TextDirection property. | table-workflow | docx | mcp |
 | 46 | `set-the-table-s-text-direction-to-right-to-left-for-languages-requiring-bidirectional-layo.cs` | Set the table's text direction to right-to-left for languages requiring bidirectional layout. | table-workflow | docx | mcp |
-| 47 | `set-the-table-s-text-direction-to-top-to-bottom-for-vertical-asian-scripts-by-configuring.cs` | Set the table's text direction to top-to-bottom for vertical Asian scripts by configuring Table.TextDirection property. | table-workflow | docx | mcp |
-| 48 | `set-individual-cell-margins-to-five-points-on-all-sides-by-adjusting-cellformat-margintop.cs` | Set individual cell margins to five points on all sides by adjusting CellFormat.MarginTop, Bottom, Left, and Right. | table-workflow | docx | mcp |
-| 49 | `adjust-cell-padding-to-three-points-on-all-sides-by-setting-cellformat-paddingtop-bottom-l.cs` | Adjust cell padding to three points on all sides by setting CellFormat.PaddingTop, Bottom, Left, and Right. | table-workflow | docx | mcp |
+| 47 | `set-the-table-s-text-direction-to-top-to-bottom-for-vertical-asian-scripts-by-configuring.cs` | Set the table's text direction to top-to-bottom for vertical Asian scripts by configuring Table.TextDirection property. | table-workflow | docx | existing_repo |
+| 48 | `set-individual-cell-margins-to-five-points-on-all-sides-by-adjusting-cellformat-margintop.cs` | Set individual cell margins to five points on all sides by adjusting CellFormat.MarginTop, Bottom, Left, and Right. | table-workflow | docx | existing_repo |
+| 49 | `adjust-cell-padding-to-three-points-on-all-sides-by-setting-cellformat-paddingtop-bottom-l.cs` | Adjust cell padding to three points on all sides by setting CellFormat.PaddingTop, Bottom, Left, and Right. | table-workflow | docx | existing_repo |
 | 50 | `set-the-table-s-default-cell-margins-to-two-points-by-configuring-table-defaultcellmargin.cs` | Set the table's default cell margins to two points by configuring Table.DefaultCellMargin globally. | table-workflow | docx | mcp |
 | 51 | `set-row-height-to-exactly-twenty-points-by-assigning-row-height-and-row-heightrule-propert.cs` | Set row height to exactly twenty points by assigning Row.Height and Row.HeightRule properties appropriately. | table-workflow | docx | mcp |
 | 52 | `set-the-table-s-row-height-to-auto-by-assigning-row-heightrule-to-heightrule-auto-without.cs` | Set the table's row height to auto by assigning Row.HeightRule to HeightRule.Auto without specifying Height. | table-workflow | docx | mcp |
@@ -129,18 +130,18 @@ dotnet run --configuration Release --no-build
 | 58 | `disable-row-breaking-across-pages-by-setting-row-allowbreakacrosspages-to-false-for-each-r.cs` | Disable row breaking across pages by setting Row.AllowBreakAcrossPages to false for each row. | table-workflow | docx | mcp |
 | 59 | `configure-a-table-to-avoid-breaking-across-pages-by-setting-table-allowbreakacrosspages-to.cs` | Configure a table to avoid breaking across pages by setting Table.AllowBreakAcrossPages to false. | table-workflow | docx | mcp |
 | 60 | `prevent-a-table-from-being-split-across-pages-by-setting-the-first-row-s-allowbreakacrossp.cs` | Prevent a table from being split across pages by setting the first row's AllowBreakAcrossPages to false. | table-workflow | docx | mcp |
-| 61 | `prevent-a-table-from-being-split-across-columns-in-a-multi-column-layout-by-setting-allowb.cs` | Prevent a table from being split across columns in a multi-column layout by setting AllowBreakAcrossColumns to false. | table-workflow | docx | mcp |
+| 61 | `prevent-a-table-from-being-split-across-columns-in-a-multi-column-layout-by-setting-allowb.cs` | Prevent a table from being split across columns in a multi-column layout by setting AllowBreakAcrossColumns to false. | table-workflow | docx | existing_repo |
 | 62 | `merge-two-adjacent-cells-horizontally-by-setting-the-first-cell-s-mergehorizontal-property.cs` | Merge two adjacent cells horizontally by setting the first cell's MergeHorizontal property to true. | table-workflow | docx | mcp |
 | 63 | `merge-a-group-of-cells-vertically-by-setting-the-top-cell-s-mergevertical-property-to-true.cs` | Merge a group of cells vertically by setting the top cell's MergeVertical property to true. | table-workflow | docx | mcp |
 | 64 | `merge-cells-vertically-across-three-rows-by-setting-the-top-cell-s-mergevertical-property.cs` | Merge cells vertically across three rows by setting the top cell's MergeVertical property to true. | table-workflow | docx | mcp |
 | 65 | `add-a-row-of-cells-with-varying-column-spans-by-merging-cells-horizontally-across-multiple.cs` | Add a row of cells with varying column spans by merging cells horizontally across multiple columns. | table-workflow | docx | mcp |
 | 66 | `insert-a-table-with-merged-header-cells-spanning-three-columns-by-setting-mergehorizontal.cs` | Insert a table with merged header cells spanning three columns by setting MergeHorizontal on the first row's cells. | table-workflow | docx | mcp |
 | 67 | `create-a-table-with-one-cell-spanning-full-width-by-merging-all-first-row-cells-horizontal.cs` | Create a table with one cell spanning full width by merging all first-row cells horizontally. | table-workflow | docx | mcp |
-| 68 | `create-a-table-with-a-merged-cell-spanning-the-entire-first-row-by-merging-all-first-row-c.cs` | Create a table with a merged cell spanning the entire first row by merging all first-row cells horizontally. | table-workflow | docx | llm |
+| 68 | `create-a-table-with-a-merged-cell-spanning-the-entire-first-row-by-merging-all-first-row-c.cs` | Create a table with a merged cell spanning the entire first row by merging all first-row cells horizontally. | table-workflow | docx | mcp |
 | 69 | `insert-a-table-with-a-cell-spanning-two-rows-and-three-columns-by-setting-mergehorizontal.cs` | Insert a table with a cell spanning two rows and three columns by setting MergeHorizontal and MergeVertical. | table-workflow | docx | mcp |
 | 70 | `split-a-merged-cell-back-into-individual-cells-by-resetting-its-mergehorizontal-and-mergev.cs` | Split a merged cell back into individual cells by resetting its MergeHorizontal and MergeVertical properties to false. | table-workflow | docx | mcp |
-| 71 | `split-a-table-into-two-separate-tables-at-the-third-row-using-the-table-split-method.cs` | Split a table into two separate tables at the third row using the Table.Split method. | table-workflow | docx | mcp |
-| 72 | `split-a-table-into-three-parts-by-calling-table-split-twice-at-specified-row-indices-for-c.cs` | Split a table into three parts by calling Table.Split twice at specified row indices for custom pagination. | table-workflow | docx | llm |
+| 71 | `split-a-table-into-two-separate-tables-at-the-third-row-using-the-table-split-method.cs` | Split a table into two separate tables at the third row using the Table.Split method. | table-workflow | docx | llm |
+| 72 | `split-a-table-into-three-parts-by-calling-table-split-twice-at-specified-row-indices-for-c.cs` | Split a table into three parts by calling Table.Split twice at specified row indices for custom pagination. | table-workflow | docx | existing_repo |
 | 73 | `join-adjacent-tables-by-inserting-an-empty-paragraph-between-them.cs` | Join adjacent tables by inserting an empty paragraph between them. | table-workflow | docx | mcp |
 | 74 | `set-the-table-s-text-wrapping-mode-to-around-surrounding-text-by-configuring-table-wraparo.cs` | Set the table's text wrapping mode to around surrounding text by configuring Table.WrapAround property. | table-workflow | docx | mcp |
 | 75 | `add-a-row-with-cells-containing-rich-text-formatting-by-inserting-formatted-runs-into-each.cs` | Add a row with cells containing rich text formatting by inserting formatted runs into each cell's paragraphs. | table-workflow | docx | mcp |
@@ -152,7 +153,7 @@ dotnet run --configuration Release --no-build
 | 81 | `create-a-table-with-a-fixed-number-of-columns-and-dynamically-add-rows-from-a-data-source.cs` | Create a table with a fixed number of columns and dynamically add rows from a data source collection. | table-workflow | docx | mcp |
 | 82 | `insert-a-table-using-documentbuilder-specify-column-count-and-define-initial-rows.cs` | Insert a table using DocumentBuilder, specify column count, and define initial rows. | table-workflow | docx | mcp |
 | 83 | `build-a-table-from-a-datatable-by-iterating-rows-and-inserting-cells-with-documentbuilder.cs` | Build a table from a DataTable by iterating rows and inserting cells with DocumentBuilder. | table-workflow | docx | mcp |
-| 84 | `insert-a-table-with-a-caption-that-automatically-updates-numbering-when-new-tables-are-add.cs` | Insert a table with a caption that automatically updates numbering when new tables are added. | table-workflow | docx | mcp |
+| 84 | `insert-a-table-with-a-caption-that-automatically-updates-numbering-when-new-tables-are-add.cs` | Insert a table with a caption that automatically updates numbering when new tables are added. | table-workflow | docx | existing_repo |
 | 85 | `insert-a-table-at-a-specific-bookmark-location-by-moving-documentbuilder-to-the-bookmark-b.cs` | Insert a table at a specific bookmark location by moving DocumentBuilder to the bookmark before building. | table-workflow | docx | mcp |
 | 86 | `insert-a-table-into-the-header-section-by-moving-documentbuilder-to-the-header-and-buildin.cs` | Insert a table into the header section by moving DocumentBuilder to the header and building the table. | table-workflow | docx | mcp |
 | 87 | `insert-a-nested-table-inside-a-cell-by-creating-a-table-and-adding-it-to-the-parent-cell.cs` | Insert a nested table inside a cell by creating a Table and adding it to the parent cell. | table-workflow | docx | mcp |
@@ -169,12 +170,12 @@ dotnet run --configuration Release --no-build
 | 98 | `create-a-custom-tablestyle-named-customstyle-define-shading-and-borders-and-add-to-documen.cs` | Create a custom TableStyle named CustomStyle, define shading and borders, and add to document styles. | table-workflow | docx | mcp |
 | 99 | `copy-an-existing-tablestyle-from-a-source-document-using-document-styles-addcopy-method.cs` | Copy an existing TableStyle from a source document using document.Styles.AddCopy method. | table-workflow | docx | mcp |
 | 100 | `apply-a-tablestyle-to-a-table-by-setting-the-table-style-property-to-the-style-name.cs` | Apply a TableStyle to a table by setting the Table.Style property to the style name. | table-workflow | docx | mcp |
-| 101 | `translate-a-tablestyle-into-direct-formatting-by-reading-its-properties-and-applying-them.cs` | Translate a TableStyle into direct formatting by reading its properties and applying them to Table, Row, and Cell. | table-workflow | docx | mcp |
-| 102 | `join-two-adjacent-tables-into-a-single-continuous-table-using-the-table-join-method.cs` | Join two adjacent tables into a single continuous table using the Table.Join method. | table-workflow | docx | mcp |
+| 101 | `translate-a-tablestyle-into-direct-formatting-by-reading-its-properties-and-applying-them.cs` | Translate a TableStyle into direct formatting by reading its properties and applying them to Table, Row, and Cell. | table-workflow | docx | existing_repo |
+| 102 | `join-two-adjacent-tables-into-a-single-continuous-table-using-the-table-join-method.cs` | Join two adjacent tables into a single continuous table using the Table.Join method. | table-workflow | docx | existing_repo |
 | 103 | `split-a-large-table-at-a-specific-row-index-into-smaller-tables-using-table-split.cs` | Split a large table at a specific row index into smaller tables using Table.Split. | table-workflow | docx | mcp |
 | 104 | `apply-distinct-border-styles-to-first-row-last-row-and-inner-cells-via-rowformat-and-cellf.cs` | Apply distinct border styles to first row, last row, and inner cells via RowFormat and CellFormat. | table-workflow | docx | mcp |
 | 105 | `center-the-table-on-the-page-by-setting-table-alignment-property-to-center.cs` | Center the table on the page by setting Table.Alignment property to Center. | table-workflow | docx | mcp |
-| 106 | `enable-table-text-wrapping-around-images-by-setting-table-allowoverlap-to-true-and-adjusti.cs` | Enable table text wrapping around images by setting Table.AllowOverlap to true and adjusting layout. | table-workflow | docx | mcp |
+| 106 | `enable-table-text-wrapping-around-images-by-setting-table-allowoverlap-to-true-and-adjusti.cs` | Enable table text wrapping around images by setting Table.AllowOverlap to true and adjusting layout. | table-workflow | docx | llm |
 | 107 | `prevent-row-deletion-by-setting-row-rowformat-allowbreakacrosspages-to-false-in-the-docume.cs` | Prevent row deletion by setting Row.RowFormat.AllowBreakAcrossPages to false in the document. | table-workflow | docx | mcp |
 | 108 | `apply-conditional-cell-shading-based-on-numeric-values-by-iterating-cells-and-setting-cell.cs` | Apply conditional cell shading based on numeric values by iterating cells and setting CellFormat.Shading. | table-workflow | docx | mcp |
 | 109 | `merge-cells-horizontally-across-multiple-columns-using-cell-merge-on-adjacent-cells.cs` | Merge cells horizontally across multiple columns using Cell.Merge on adjacent cells. | table-workflow | docx | mcp |
@@ -183,19 +184,19 @@ dotnet run --configuration Release --no-build
 | 112 | `preserve-original-table-formatting-when-loading-a-document-by-disabling-loadoptions-preser.cs` | Preserve original table formatting when loading a document by disabling LoadOptions.PreserveFormatting. | table-workflow | docx | mcp |
 | 113 | `optimize-table-rendering-performance-for-large-documents-by-turning-off-layout-updates-dur.cs` | Optimize table rendering performance for large documents by turning off layout updates during batch modifications. | table-workflow | docx | mcp |
 | 114 | `generate-a-pdf-from-a-docx-containing-tables-while-maintaining-all-table-styles-and-format.cs` | Generate a PDF from a DOCX containing tables while maintaining all table styles and formatting. | table-workflow | docx, pdf | mcp |
-| 115 | `convert-a-docx-with-complex-tables-to-html-ensuring-borders-and-cell-padding-are-retained.cs` | Convert a DOCX with complex tables to HTML, ensuring borders and cell padding are retained. | table-workflow | docx, html | mcp |
+| 115 | `convert-a-docx-with-complex-tables-to-html-ensuring-borders-and-cell-padding-are-retained.cs` | Convert a DOCX with complex tables to HTML, ensuring borders and cell padding are retained. | table-workflow | docx, html | llm |
 | 116 | `serialize-a-table-s-structure-and-content-to-json-by-iterating-rows-and-cells-and-capturin.cs` | Serialize a table's structure and content to JSON by iterating rows and cells and capturing formatting. | table-workflow | json | mcp |
 | 117 | `deserialize-json-table-data-back-into-a-word-document-by-creating-a-table-and-applying-sto.cs` | Deserialize JSON table data back into a Word document by creating a table and applying stored formatting. | table-workflow | json | mcp |
 | 118 | `apply-gradient-shading-to-cells-by-setting-cellformat-shading-texture-and-backgroundpatter.cs` | Apply gradient shading to cells by setting CellFormat.Shading.Texture and BackgroundPatternColor properties. | table-workflow | docx | mcp |
 | 119 | `set-uniform-column-widths-for-all-cells-by-iterating-columns-and-assigning-cellformat-widt.cs` | Set uniform column widths for all cells by iterating columns and assigning CellFormat.Width values. | table-workflow | docx | mcp |
 | 120 | `adjust-row-spacing-by-configuring-row-rowformat-spaceafter-and-spacebefore-properties-for.cs` | Adjust row spacing by configuring Row.RowFormat.SpaceAfter and SpaceBefore properties for each row. | table-workflow | docx | mcp |
-| 121 | `insert-a-caption-above-a-table-using-documentbuilder-insertcaption-with-appropriate-label.cs` | Insert a caption above a table using DocumentBuilder.InsertCaption with appropriate label and numbering. | table-workflow | docx | existing_repo |
+| 121 | `insert-a-caption-above-a-table-using-documentbuilder-insertcaption-with-appropriate-label.cs` | Insert a caption above a table using DocumentBuilder.InsertCaption with appropriate label and numbering. | table-workflow | docx | llm |
 | 122 | `update-all-table-captions-after-adding-new-tables-by-iterating-tables-and-refreshing-capti.cs` | Update all table captions after adding new tables by iterating tables and refreshing caption numbers. | table-workflow | docx | mcp |
 | 123 | `protect-a-table-from-editing-by-applying-a-read-only-restriction-using-document-protect-wi.cs` | Protect a table from editing by applying a read-only restriction using Document.Protect with editing type. | table-workflow | docx | mcp |
 | 124 | `export-a-table-as-an-image-by-rendering-the-table-node-to-a-bitmap-and-saving-as-png.cs` | Export a table as an image by rendering the table node to a bitmap and saving as PNG. | table-workflow | png | mcp |
 | 125 | `replace-an-existing-table-with-a-template-by-locating-the-original-table-node-and-insertin.cs` | Replace an existing table with a template by locating the original Table node and inserting the new one. | table-workflow | docx | mcp |
 | 126 | `apply-different-cell-background-colors-based-on-column-index-by-iterating-cells-and-settin.cs` | Apply different cell background colors based on column index by iterating cells and setting CellFormat.Shading. | table-workflow | docx | mcp |
-| 127 | `set-table-to-repeat-header-row-on-each-page-by-enabling-row-isheader-property-for-the-firs.cs` | Set table to repeat header row on each page by enabling Row.IsHeader property for the first row. | table-workflow | docx | mcp |
+| 127 | `set-table-to-repeat-header-row-on-each-page-by-enabling-row-isheader-property-for-the-firs.cs` | Set table to repeat header row on each page by enabling Row.IsHeader property for the first row. | table-workflow | docx | existing_repo |
 | 128 | `remove-all-empty-rows-from-a-table-by-checking-row-rowformat-height-and-deleting-rows-with.cs` | Remove all empty rows from a table by checking Row.RowFormat.Height and deleting rows with zero height. | table-workflow | docx | mcp |
 | 129 | `convert-a-table-with-merged-cells-into-a-flat-structure-by-unmerging-cells-and-redistribut.cs` | Convert a table with merged cells into a flat structure by unmerging cells and redistributing content appropriately. | table-workflow | docx | mcp |
 | 130 | `add-a-footer-row-with-totals-by-calculating-column-sums-and-inserting-a-new-formatted-row.cs` | Add a footer row with totals by calculating column sums and inserting a new formatted row. | table-workflow | docx | mcp |
@@ -209,21 +210,21 @@ dotnet run --configuration Release --no-build
 | 138 | `add-a-toc-entry-for-a-table-by-inserting-a-bookmark-and-referencing-it-in-the-toc-field.cs` | Add a TOC entry for a table by inserting a bookmark and referencing it in the TOC field. | table-workflow | docx | mcp |
 | 139 | `update-table-style-definitions-programmatically-by-iterating-document-styles-and-modifying.cs` | Update table style definitions programmatically by iterating document.Styles and modifying TableStyle properties. | table-workflow | docx | mcp |
 | 140 | `clone-an-existing-table-modify-its-content-and-insert-it-at-a-different-location-in-the-sa.cs` | Clone an existing table, modify its content, and insert it at a different location in the same document. | table-workflow | docx | mcp |
-| 141 | `apply-a-diagonal-line-across-a-cell-by-setting-cellformat-diagonaldown-and-diagonalup-prop.cs` | Apply a diagonal line across a cell by setting CellFormat.DiagonalDown and DiagonalUp properties. | table-workflow | docx | mcp |
-| 142 | `set-cell-text-direction-to-vertical-for-east-asian-languages-by-configuring-cellformat-tex.cs` | Set cell text direction to vertical for East Asian languages by configuring CellFormat.TextDirection property. | table-workflow | docx | mcp |
+| 141 | `apply-a-diagonal-line-across-a-cell-by-setting-cellformat-diagonaldown-and-diagonalup-prop.cs` | Apply a diagonal line across a cell by setting CellFormat.DiagonalDown and DiagonalUp properties. | table-workflow | docx | llm |
+| 142 | `set-cell-text-direction-to-vertical-for-east-asian-languages-by-configuring-cellformat-tex.cs` | Set cell text direction to vertical for East Asian languages by configuring CellFormat.TextDirection property. | table-workflow | docx | llm |
 | 143 | `apply-a-custom-margin-around-the-entire-table-by-setting-table-leftindent-and-table-righti.cs` | Apply a custom margin around the entire table by setting Table.LeftIndent and Table.RightIndent properties. | table-workflow | docx | mcp |
 | 144 | `set-table-vertical-alignment-within-the-page-by-adjusting-table-verticalalignment-property.cs` | Set table vertical alignment within the page by adjusting Table.VerticalAlignment property to Center. | table-workflow | docx | mcp |
-| 145 | `apply-a-table-style-that-includes-banded-rows-and-columns-by-configuring-tablestyle-banded.cs` | Apply a table style that includes banded rows and columns by configuring TableStyle.BandedRows and BandedColumns. | table-workflow | docx | mcp |
+| 145 | `apply-a-table-style-that-includes-banded-rows-and-columns-by-configuring-tablestyle-banded.cs` | Apply a table style that includes banded rows and columns by configuring TableStyle.BandedRows and BandedColumns. | table-workflow | docx | llm |
 | 146 | `generate-a-report-with-multiple-tables-each-using-a-distinct-tablestyle-and-ensure-consist.cs` | Generate a report with multiple tables, each using a distinct TableStyle, and ensure consistent spacing between them. | table-workflow | docx | mcp |
 | 147 | `convert-a-table-with-complex-merged-cells-to-plain-html-by-calculating-appropriate-colspan.cs` | Convert a table with complex merged cells to plain HTML by calculating appropriate colspan and rowspan attributes. | table-workflow | html | mcp |
 | 148 | `apply-a-watermark-behind-a-table-by-inserting-a-shape-with-text-and-positioning-it-behind.cs` | Apply a watermark behind a table by inserting a Shape with text and positioning it behind table nodes. | table-workflow | docx | mcp |
 | 149 | `set-table-text-wrapping-style-to-square-by-configuring-table-textwrapping-property-accordi.cs` | Set table text wrapping style to square by configuring Table.TextWrapping property accordingly. | table-workflow | docx | mcp |
-| 150 | `enable-table-overlapping-with-other-floating-objects-by-setting-table-allowoverlap-to-true.cs` | Enable table overlapping with other floating objects by setting Table.AllowOverlap to true. | table-workflow | docx | existing_repo |
-| 151 | `add-a-comment-to-a-specific-table-cell-by-locating-the-cell-and-using-documentbuilder-inse.cs` | Add a comment to a specific table cell by locating the cell and using DocumentBuilder.InsertComment. | table-workflow | docx | mcp |
+| 150 | `enable-table-overlapping-with-other-floating-objects-by-setting-table-allowoverlap-to-true.cs` | Enable table overlapping with other floating objects by setting Table.AllowOverlap to true. | table-workflow | docx | mcp |
+| 151 | `add-a-comment-to-a-specific-table-cell-by-locating-the-cell-and-using-documentbuilder-inse.cs` | Add a comment to a specific table cell by locating the cell and using DocumentBuilder.InsertComment. | table-workflow | docx | existing_repo |
 | 152 | `retrieve-the-list-of-all-tables-in-a-document-by-iterating-nodes-of-type-nodetype-table.cs` | Retrieve the list of all tables in a document by iterating nodes of type NodeType.Table. | table-workflow | docx | mcp |
 | 153 | `delete-a-table-that-contains-a-specific-keyword-by-searching-its-range-text-and-removing-t.cs` | Delete a table that contains a specific keyword by searching its Range.Text and removing the node. | table-workflow | docx | mcp |
-| 154 | `apply-custom-cell-margins-by-setting-cell-cellformat-margintop-marginbottom-marginleft-and.cs` | Apply custom cell margins by setting Cell.CellFormat.MarginTop, MarginBottom, MarginLeft, and MarginRight properties. | table-workflow | docx | mcp |
-| 155 | `set-table-background-shading-to-light-blue-by-configuring-table-shading-backgroundpatternc.cs` | Set table background shading to light blue by configuring Table.Shading.BackgroundPatternColor property. | table-workflow | docx | mcp |
+| 154 | `apply-custom-cell-margins-by-setting-cell-cellformat-margintop-marginbottom-marginleft-and.cs` | Apply custom cell margins by setting Cell.CellFormat.MarginTop, MarginBottom, MarginLeft, and MarginRight properties. | table-workflow | docx | existing_repo |
+| 155 | `set-table-background-shading-to-light-blue-by-configuring-table-shading-backgroundpatternc.cs` | Set table background shading to light blue by configuring Table.Shading.BackgroundPatternColor property. | table-workflow | docx | llm |
 | 156 | `export-each-table-in-a-document-to-separate-docx-files-while-preserving-their-individual-s.cs` | Export each table in a document to separate DOCX files while preserving their individual styles. | table-workflow | docx | mcp |
 | 157 | `import-multiple-tables-from-separate-docx-files-and-merge-them-into-a-single-document-main.cs` | Import multiple tables from separate DOCX files and merge them into a single document maintaining original formatting. | table-workflow | docx | mcp |
 | 158 | `apply-a-table-style-with-a-bold-header-row-and-italic-footer-row-by-customizing-style-prop.cs` | Apply a table style with a bold header row and italic footer row by customizing style properties. | table-workflow | docx | mcp |
@@ -248,9 +249,9 @@ dotnet run --configuration Release --no-build
 | 177 | `apply-a-table-style-with-bold-header-row-and-italic-footer-row-by-customizing-style-proper.cs` | Apply a table style with bold header row and italic footer row by customizing style properties. | table-workflow | docx | mcp |
 | 178 | `set-cell-vertical-alignment-to-middle-using-cell-cellformat-verticalalignment-property-for.cs` | Set cell vertical alignment to middle using Cell.CellFormat.VerticalAlignment property for better presentation. | table-workflow | docx | mcp |
 | 179 | `apply-text-alignment-within-cells-by-setting-cell-cellformat-alignment-to-center-for-unifo.cs` | Apply text alignment within cells by setting Cell.CellFormat.Alignment to Center for uniform appearance. | table-workflow | docx | mcp |
-| 180 | `define-cell-margins-by-configuring-cell-cellformat-margintop-marginbottom-marginleft-and-m.cs` | Define cell margins by configuring Cell.CellFormat.MarginTop, MarginBottom, MarginLeft, and MarginRight. | table-workflow | docx | mcp |
+| 180 | `define-cell-margins-by-configuring-cell-cellformat-margintop-marginbottom-marginleft-and-m.cs` | Define cell margins by configuring Cell.CellFormat.MarginTop, MarginBottom, MarginLeft, and MarginRight. | table-workflow | docx | existing_repo |
 | 181 | `set-table-top-and-bottom-spacing-using-table-spacebefore-and-table-spaceafter-properties.cs` | Set table top and bottom spacing using Table.SpaceBefore and Table.SpaceAfter properties. | table-workflow | docx | mcp |
-| 182 | `apply-table-background-shading-to-the-entire-table-by-setting-table-shading-backgroundpatt.cs` | Apply table background shading to the entire table by setting Table.Shading.BackgroundPatternColor. | table-workflow | docx | mcp |
+| 182 | `apply-table-background-shading-to-the-entire-table-by-setting-table-shading-backgroundpatt.cs` | Apply table background shading to the entire table by setting Table.Shading.BackgroundPatternColor. | table-workflow | docx | existing_repo |
 | 183 | `prevent-rows-from-breaking-across-pages-by-setting-row-rowformat-keeptogether-to-true.cs` | Prevent rows from breaking across pages by setting Row.RowFormat.KeepTogether to true. | table-workflow | docx | mcp |
 | 184 | `set-table-to-use-fixed-layout-by-disabling-table-autofit-and-specifying-explicit-column-wi.cs` | Set table to use fixed layout by disabling Table.AutoFit and specifying explicit column widths. | table-workflow | docx | mcp |
 | 185 | `apply-a-predefined-built-in-tablestyle-by-setting-table-style-to-tablegrid.cs` | Apply a predefined built-in TableStyle by setting Table.Style to "TableGrid". | table-workflow | docx | mcp |
@@ -264,26 +265,39 @@ dotnet run --configuration Release --no-build
 | 193 | `apply-a-table-style-that-includes-a-header-row-with-a-different-background-color-by-settin.cs` | Apply a table style that includes a header row with a different background color by setting TableStyle.HeaderRow properties. | table-workflow | docx | mcp |
 | 194 | `set-table-left-and-right-indents-to-align-with-paragraph-indentation-using-table-leftinden.cs` | Set table left and right indents to align with paragraph indentation using Table.LeftIndent and Table.RightIndent. | table-workflow | docx | mcp |
 | 195 | `keep-the-entire-table-on-a-single-page-by-setting-row-rowformat-keeptogether-to-true-for-a.cs` | Keep the entire table on a single page by setting Row.RowFormat.KeepTogether to true for all rows. | table-workflow | docx | mcp |
-| 196 | `apply-a-custom-table-style-that-includes-alternating-row-shading-by-setting-tablestyle-ban.cs` | Apply a custom table style that includes alternating row shading by setting TableStyle.BandedRows to true. | table-workflow | docx | mcp |
+| 196 | `apply-a-custom-table-style-that-includes-alternating-row-shading-by-setting-tablestyle-ban.cs` | Apply a custom table style that includes alternating row shading by setting TableStyle.BandedRows to true. | table-workflow | docx | existing_repo |
 | 197 | `enable-table-to-allow-overlapping-with-other-floating-objects-by-setting-table-allowoverla.cs` | Enable table to allow overlapping with other floating objects by setting Table.AllowOverlap to true. | table-workflow | docx | mcp |
 | 198 | `update-table-fields-after-modifying-content-by-calling-document-updatefields-to-recalculat.cs` | Update table fields after modifying content by calling Document.UpdateFields to recalculate any embedded calculations. | table-workflow | docx | mcp |
 
 ## Common failure patterns seen during generation and how they were corrected
 
-### Unsupported API invention
+### Missing Node argument in collection Add
 
-- Symptom: Generated code references members that do not exist in the selected package version.
-- Fix: Replace invented members with documented Aspose.Words APIs already proven in this category.
+- Symptom: CS7036 errors indicating that NodeCollection.Add was called without a Node parameter.
+- Root cause: The code attempted to add rows or cells using Rows.Add() or Cells.Add() without supplying a new Row or Cell instance.
+- Preferred fix: Instantiate the required node (e.g., new Row(doc) or new Cell(doc)) and pass it to the Add method.
+- Prevention: Always create the node first and supply it as the argument to Rows.Add and Cells.Add.
 
-### Missing local bootstrap inputs
+### Incorrect InsertAfter usage
 
-- Symptom: The example assumes source files, folders, images, or data already exist.
-- Fix: Create deterministic local inputs before loading, processing, or validating them.
+- Symptom: CS1061 or CS7036 errors stating that InsertAfter is missing or that the refChild argument is absent.
+- Root cause: The code called InsertAfter on the target node itself or omitted the reference child parameter.
+- Preferred fix: Call InsertAfter on the parent CompositeNode: parentNode.InsertAfter(newNode, referenceNode).
+- Prevention: Locate the parent of the reference paragraph and use its InsertAfter method with both arguments.
 
-### Over-broad validation
+### Invented or outdated API members
 
-- Symptom: The example fails at runtime while checking unrelated document internals.
-- Fix: Validate only the requested behavior and the existence of expected outputs.
+- Symptom: Multiple CS0117, CS1061, CS0234, CS1656, CS1729, and CS0200 errors for members such as Table.AutoFit property, Table.Borders, Table.VerticalAlignment, Table.Columns, Cell.PreferredWidth, TableStyleOptions flags, BorderCollection.Clear, TextureIndex.None, LoadOptions, and PreferredWidth constructors.
+- Root cause: The generated code referenced members that do not exist in Aspose.Words 26.10.0 or were mis-typed.
+- Preferred fix: Use the documented APIs: call table.AutoFit(AutoFitBehavior...), set table.PreferredWidth via PreferredWidth.FromPoints or FromPercent, apply styles with table.StyleIdentifier, and configure borders through table.SetBorder(BorderType, LineStyle, width, color, true).
+- Prevention: Consult the official Aspose.Words 26.10.0 API reference and avoid guessing member names; rely on the key APIs list provided.
+
+### Missing paragraph in a new cell
+
+- Symptom: Runtime NullReferenceException when attempting to append a Run to a cell that has no Paragraph.
+- Root cause: The code created a Cell but did not add a Paragraph before inserting text.
+- Preferred fix: After creating a Cell, call cell.AppendChild(new Paragraph(doc)) and then add Run objects to cell.FirstParagraph.
+- Prevention: Always ensure each new Cell contains at least one Paragraph before writing content.
 
 ## See Also
 
@@ -296,6 +310,5 @@ dotnet run --configuration Release --no-build
 
 ## Notes for maintainers
 
-- This category is 100% publish-ready for the 26.9.0 run.
-- Preserve file-to-task traceability when updating this folder.
-- Keep examples standalone and bootstrap local inputs inside the example whenever external sources are mentioned.
+- This category is 100% publish-ready for the 26.10.0 run.
+- Periodically verify the Aspose.Words version used in the environment; update the rule set if new members are added or existing ones are deprecated.

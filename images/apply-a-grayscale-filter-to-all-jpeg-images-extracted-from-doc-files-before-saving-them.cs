@@ -9,76 +9,89 @@ public class Program
 {
     public static void Main()
     {
-        // Create a deterministic sample JPEG image.
-        const string sampleImagePath = "sample.jpg";
-        using (Bitmap bitmap = new Bitmap(100, 100))
+        // Create a sample JPEG image.
+        string sampleImagePath = "sample.jpg";
+        CreateSampleJpeg(sampleImagePath);
+
+        // Create a DOCX file that contains the JPEG image.
+        string docPath = "input.docx";
+        CreateDocumentWithImages(docPath, sampleImagePath);
+
+        // Extract JPEG images, apply grayscale filter, and save them.
+        ExtractAndGrayscaleImages(docPath);
+    }
+
+    private static void CreateSampleJpeg(string path)
+    {
+        int width = 200;
+        int height = 100;
+        using (Bitmap bitmap = new Bitmap(width, height))
         {
             using (Graphics g = Graphics.FromImage(bitmap))
             {
                 g.Clear(Color.White);
-                using (SolidBrush brush = new SolidBrush(Color.Red))
+                using (SolidBrush brush = new SolidBrush(Color.Blue))
                 {
-                    g.FillRectangle(brush, 10, 10, 80, 80);
+                    g.FillRectangle(brush, 10, 10, width - 20, height - 20);
                 }
             }
-            bitmap.Save(sampleImagePath, ImageFormat.Jpeg);
+            bitmap.Save(path, ImageFormat.Jpeg);
         }
+    }
 
-        // Create a Word document and insert the JPEG image.
-        const string inputDocPath = "input.docx";
+    private static void CreateDocumentWithImages(string docPath, string imagePath)
+    {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(sampleImagePath);
-        doc.Save(inputDocPath);
+        builder.InsertImage(imagePath);
+        builder.Writeln();
+        builder.InsertImage(imagePath);
+        doc.Save(docPath);
+    }
 
-        // Load the document and process JPEG images.
-        Document loadedDoc = new Document(inputDocPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int imageIndex = 0;
+    private static void ExtractAndGrayscaleImages(string docPath)
+    {
+        Document doc = new Document(docPath);
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+        int savedCount = 0;
 
         foreach (Shape shape in shapeNodes)
         {
             if (!shape.HasImage)
                 continue;
 
-            ImageData imgData = shape.ImageData;
-            if (imgData.ImageType != ImageType.Jpeg)
+            if (shape.ImageData.ImageType != ImageType.Jpeg)
                 continue;
 
-            // Extract image to a memory stream.
-            using (MemoryStream ms = new MemoryStream())
+            byte[] imageBytes = shape.ImageData.ImageBytes;
+            using (MemoryStream ms = new MemoryStream(imageBytes))
             {
-                imgData.Save(ms);
-                ms.Position = 0; // Reset position before reading.
-
-                // Load bitmap from stream.
-                using (Bitmap bmp = new Bitmap(ms))
+                ms.Position = 0;
+                using (Bitmap bitmap = new Bitmap(ms))
                 {
-                    // Apply grayscale filter.
-                    for (int y = 0; y < bmp.Height; y++)
-                    {
-                        for (int x = 0; x < bmp.Width; x++)
-                        {
-                            Color pixel = bmp.GetPixel(x, y);
-                            int gray = (int)(pixel.R * 0.3 + pixel.G * 0.59 + pixel.B * 0.11);
-                            Color grayColor = Color.FromArgb(gray, gray, gray);
-                            bmp.SetPixel(x, y, grayColor);
-                        }
-                    }
-
-                    // Save the processed image.
-                    string outputImagePath = $"extracted-{imageIndex}.jpg";
-                    bmp.Save(outputImagePath, ImageFormat.Jpeg);
-                    imageIndex++;
+                    ApplyGrayscale(bitmap);
+                    string outputPath = $"extracted-{savedCount}.jpg";
+                    bitmap.Save(outputPath, ImageFormat.Jpeg);
+                    savedCount++;
                 }
             }
         }
 
-        // Validate that at least one grayscale image was saved.
-        string[] outputFiles = Directory.GetFiles(Directory.GetCurrentDirectory(), "extracted-*.jpg");
-        if (outputFiles.Length == 0)
-            throw new InvalidOperationException("No JPEG images were extracted and processed.");
+        if (savedCount == 0)
+            throw new InvalidOperationException("No JPEG images were extracted and saved.");
+    }
 
-        // Cleanup: optional removal of intermediate files can be added here.
+    private static void ApplyGrayscale(Bitmap bitmap)
+    {
+        for (int y = 0; y < bitmap.Height; y++)
+        {
+            for (int x = 0; x < bitmap.Width; x++)
+            {
+                Color original = bitmap.GetPixel(x, y);
+                int gray = (int)(original.R * 0.3 + original.G * 0.59 + original.B * 0.11);
+                Color grayColor = Color.FromArgb(original.A, gray, gray, gray);
+                bitmap.SetPixel(x, y, grayColor);
+            }
+        }
     }
 }

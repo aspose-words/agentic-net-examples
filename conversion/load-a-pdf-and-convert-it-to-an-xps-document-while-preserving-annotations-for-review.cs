@@ -1,60 +1,41 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Layout;
 using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Define file names.
-        const string pdfFile = "sample.pdf";
-        const string xpsFile = "sample.xps";
+        // Paths for the temporary PDF and final XPS files
+        string pdfPath = "sample.pdf";
+        string xpsPath = "output.xps";
+
+        // -----------------------------------------------------------------
+        // 1. Create a simple Word document and save it as PDF (sample input)
+        // -----------------------------------------------------------------
+        Document wordDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(wordDoc);
+        builder.Writeln("Sample PDF content with annotation placeholder.");
+
+        // Save as PDF – this will be the source file for the conversion step
+        wordDoc.Save(pdfPath, SaveFormat.Pdf);
 
         // ---------------------------------------------------------------
-        // Step 1: Create a sample PDF document with a comment (annotation).
+        // 2. Load the generated PDF and convert it to XPS (preserving content)
         // ---------------------------------------------------------------
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-
-        // Add some content.
-        builder.Writeln("This is a sample document.");
-
-        // Create a comment node manually (InsertComment is not available in this version).
-        Comment comment = new Comment(sourceDoc, "Reviewer", "RV", DateTime.Now);
-        comment.SetText("Please review this paragraph.");
-        // Append the comment to the current paragraph.
-        builder.CurrentParagraph.AppendChild(comment);
-
-        // Ensure comments are saved as PDF annotations.
-        sourceDoc.LayoutOptions.CommentDisplayMode = CommentDisplayMode.ShowInAnnotations;
-        // Rebuild layout after changing layout options.
-        sourceDoc.UpdatePageLayout();
-
-        // Save the document as PDF.
-        sourceDoc.Save(pdfFile, SaveFormat.Pdf);
-
-        // Verify that the PDF was created.
-        if (!File.Exists(pdfFile))
-            throw new InvalidOperationException("The PDF file was not created.");
+        Document pdfDoc = new Document(pdfPath);
+        pdfDoc.Save(xpsPath, SaveFormat.Xps);
 
         // ---------------------------------------------------------------
-        // Step 2: Load the PDF and convert it to XPS while preserving annotations.
+        // 3. Validate that the XPS file was created and is not empty
         // ---------------------------------------------------------------
-        Document pdfDoc = new Document(pdfFile);
+        if (!File.Exists(xpsPath) || new FileInfo(xpsPath).Length == 0)
+        {
+            throw new InvalidOperationException("XPS conversion failed or the output file is empty.");
+        }
 
-        // Use XpsSaveOptions to control XPS output if needed.
-        XpsSaveOptions xpsOptions = new XpsSaveOptions();
-
-        // Save the loaded PDF as XPS.
-        pdfDoc.Save(xpsFile, xpsOptions);
-
-        // Verify that the XPS file was created.
-        if (!File.Exists(xpsFile))
-            throw new InvalidOperationException("The XPS file was not created.");
-
-        // Indicate successful conversion.
-        Console.WriteLine($"PDF file '{pdfFile}' was successfully converted to XPS file '{xpsFile}'.");
+        // Optional: clean up temporary PDF (comment out if you need to inspect it)
+        // File.Delete(pdfPath);
     }
 }

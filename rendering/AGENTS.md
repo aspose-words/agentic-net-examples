@@ -10,30 +10,25 @@ product: Aspose.Words
 
 ## Purpose
 
-This folder is a live, curated example set for Rendering scenarios. Treat every `.cs` file as a standalone console application. The goal is correct, warning-free examples that use documented Aspose APIs and match the original task intent.
+Guide an AI coding assistant to generate reliable Aspose.Words rendering snippets that load documents, configure image save options, manage custom fonts, and save the result, ensuring the code compiles against version 26.10.0 and runs without unnecessary side effects.
 
 ## Non-negotiable conventions
 
-- Always use documented Aspose.Words APIs directly.
-- Always create local sample source documents when a task refers to an existing file, folder, stream, template, or input asset.
-- Prefer `Document.Save` with the appropriate save options for full-document rendering tasks.
-- Prefer `Aspose.Drawing` over `System.Drawing` unless a documented API explicitly requires `System.Drawing`.
-- Keep validation narrow and task-specific.
-- Do not invent rendering, OpenType, text shaping, or layout helper APIs.
+- Do not reference members that are absent from the Aspose.Words 26.10.0 API surface.
+- Avoid using System.Drawing types unless a specific Aspose API requires them.
+- Bootstrap local sample inputs for existing-file, folder, stream, image, and data workflows.
+- Prefer simple, verifiable workflows over speculative formatting shortcuts.
 
 ## Recommended workflow selection
 
-- Rendering Workflow workflow: 70 examples
+- **Rendering Workflow workflow**: 70 examples
 
 Use the simplest workflow that satisfies the task.
 
 ## Validation priorities
 
-1. The code must compile and run without manual input.
-2. API usage must be supported by the configured package versions.
-3. Exported outputs must actually be written by the example.
-4. Validation scenarios must inspect only the behavior requested by the task.
-5. Examples that depend on files, folders, streams, images, or data should bootstrap those inputs locally during the example run.
+1. Confirm that the output file exists after Document.Save.
+2. If the task specifies page limits, verify that the generated TIFF contains the expected number of pages.
 
 ## File-to-task reference
 
@@ -76,12 +71,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Disable automatic font substitution by setting SubstitutionSettings.Enabled to false during rendering.
   - Workflow: rendering-workflow
   - Outputs: pdf
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `define-a-fallback-list-using-fontfallbacksettings-predefinedsettings-for-missing-glyphs-du.cs`
   - Task: Define a fallback list using FontFallbackSettings.PredefinedSettings for missing glyphs during rendering.
   - Workflow: rendering-workflow
   - Outputs: pdf
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `set-imagesaveoptions-pagecount-to-limit-tiff-output-to-the-first-five-pages-only.cs`
   - Task: Set ImageSaveOptions.PageCount to limit TIFF output to the first five pages only.
   - Workflow: rendering-workflow
@@ -131,12 +126,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Subset embedded TrueType fonts during rendering to reduce the resulting TIFF file size significantly.
   - Workflow: rendering-workflow
   - Outputs: tiff
-  - Selected engine: mcp
+  - Selected engine: llm
 - `apply-format24bpprgb-pixel-format-for-color-tiff-output-from-docx-documents-accurately.cs`
   - Task: Apply Format24bppRgb pixel format for color TIFF output from DOCX documents accurately.
   - Workflow: rendering-workflow
   - Outputs: docx, doc, tiff
-  - Selected engine: mcp
+  - Selected engine: llm
 - `generate-a-single-page-tiff-from-the-first-page-of-a-multipage-docx-using-imagesaveoptions.cs`
   - Task: Generate a single-page TIFF from the first page of a multipage DOCX using ImageSaveOptions.
   - Workflow: rendering-workflow
@@ -161,12 +156,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Configure FontSettings.SubstitutionSettings.FontFallbackSettings with a custom XML hierarchy for fallback fonts definition.
   - Workflow: rendering-workflow
   - Outputs: xml
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `enable-font-substitution-fallback-to-arial-unicode-ms-for-characters-missing-in-primary-fo.cs`
   - Task: Enable font substitution fallback to Arial Unicode MS for characters missing in primary fonts.
   - Workflow: rendering-workflow
   - Outputs: pdf
-  - Selected engine: mcp
+  - Selected engine: llm
 - `create-a-powershell-script-that-iterates-over-doc-files-sets-dpi-to-250-and-saves-tiffs.cs`
   - Task: Create a PowerShell script that iterates over DOC files, sets DPI to 250, and saves TIFFs.
   - Workflow: rendering-workflow
@@ -231,12 +226,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Specify a default fallback font name for missing TrueType fonts when saving as PDF.
   - Workflow: rendering-workflow
   - Outputs: pdf
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `load-font-substitution-rules-from-an-xml-file-and-apply-them-to-the-document.cs`
   - Task: Load font substitution rules from an XML file and apply them to the document.
   - Workflow: rendering-workflow
   - Outputs: doc, xml
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `enable-opentype-typographic-features-to-preserve-ligatures-and-contextual-forms-during-pdf.cs`
   - Task: Enable OpenType typographic features to preserve ligatures and contextual forms during PDF rendering.
   - Workflow: rendering-workflow
@@ -266,7 +261,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply a binarization threshold of 150 for darker grayscale TIFF rendering.
   - Workflow: rendering-workflow
   - Outputs: tiff
-  - Selected engine: mcp
+  - Selected engine: llm
 - `apply-a-threshold-of-100-for-lighter-grayscale-tiff-conversion-during-processing.cs`
   - Task: Apply a threshold of 100 for lighter grayscale TIFF conversion during processing.
   - Workflow: rendering-workflow
@@ -281,7 +276,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Configure ImageSaveOptions.PixelFormat to Format8bppIndexed and use LZW compression for color TIFF.
   - Workflow: rendering-workflow
   - Outputs: tiff
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `set-imagesaveoptions-tiffcompression-to-ccitt4-for-optimal-black-white-tiff-size-reduction.cs`
   - Task: Set ImageSaveOptions.TiffCompression to CCITT4 for optimal black-white TIFF size reduction.
   - Workflow: rendering-workflow
@@ -301,7 +296,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Generate a multipage TIFF from a DOCX file using parallel batch processing.
   - Workflow: rendering-workflow
   - Outputs: docx, doc, tiff
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `convert-a-batch-of-doc-files-to-tiff-using-1-bit-pixel-format-and-ccitt4-compression.cs`
   - Task: Convert a batch of DOC files to TIFF using 1-bit pixel format and CCITT4 compression.
   - Workflow: rendering-workflow
@@ -351,7 +346,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Set ImageSaveOptions.DpiX to 72 and DpiY to 300 for asymmetric resolution TIFF.
   - Workflow: rendering-workflow
   - Outputs: tiff
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `split-a-generated-multipage-tiff-into-individual-page-images-programmatically-after-conver.cs`
   - Task: Split a generated multipage TIFF into individual page images programmatically after conversion.
   - Workflow: rendering-workflow
@@ -366,12 +361,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Create a unit test that ensures 1-bit TIFF files contain exactly two colors.
   - Workflow: rendering-workflow
   - Outputs: tiff
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `extract-embedded-truetype-fonts-from-a-pdf-to-verify-correct-subsetting-after-rendering.cs`
   - Task: Extract embedded TrueType fonts from a PDF to verify correct subsetting after rendering.
   - Workflow: rendering-workflow
   - Outputs: pdf
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `render-a-docx-to-pdf-with-full-font-embedding-and-then-extract-fonts-to-confirm-subsetting.cs`
   - Task: Render a DOCX to PDF with full font embedding and then extract fonts to confirm subsetting disabled.
   - Workflow: rendering-workflow
@@ -381,7 +376,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Configure FontSettings.SubstitutionSettings to map missing Arial to Liberation Sans on Linux platforms.
   - Workflow: rendering-workflow
   - Outputs: pdf
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `configure-fontsettings-to-prioritize-fonts-from-a-user-specified-directory-over-system-fon.cs`
   - Task: Configure FontSettings to prioritize fonts from a user-specified directory over system fonts during rendering.
   - Workflow: rendering-workflow
@@ -390,47 +385,47 @@ Use the simplest workflow that satisfies the task.
 
 ## Common failure patterns and preferred agent fixes
 
-- **Unsupported API invention**
-  - Symptom: Generated code references members that do not exist in the selected package version.
-  - Preferred fix: Replace invented members with documented Aspose.Words APIs already proven in this category.
+- **Missing API member**
+  - Symptom: The compiler reports CS0117 or CS1061 because a property such as DesiredDpi, Compression, or FontFallbackSettings does not exist on the target type.
+  - Root cause: The code uses property names from older or undocumented versions of Aspose.Words.
+  - Preferred fix: Replace the nonexistent member with the correct documented property (e.g., use ImageSaveOptions.Resolution instead of DesiredDpi, use ImageSaveOptions.TiffCompression instead of Compression, and access FontSettings.FallbackSettings for fallback configuration).
+  - Prevention: Consult the official Aspose.Words 26.10.0 API reference before referencing a member and rely on IntelliSense to surface available members.
 
-- **Missing local bootstrap inputs**
-  - Symptom: The example assumes source files, folders, images, or data already exist.
-  - Preferred fix: Create deterministic local inputs before loading, processing, or validating them.
+- **Incorrect namespace or type**
+  - Symptom: CS0246 or CS0234 errors appear because types like LoadOptions, Break, or FontSettings are not found in the imported namespaces.
+  - Root cause: The code omits required using directives or references types that belong to different Aspose namespaces.
+  - Preferred fix: Add the appropriate using statements (e.g., Aspose.Words.Loading for LoadOptions, Aspose.Words for Break) and reference the correct type names.
+  - Prevention: Review the required_namespaces list for the category and include them at the top of every snippet.
 
-- **Over-broad validation**
-  - Symptom: The example fails at runtime while checking unrelated document internals.
-  - Preferred fix: Validate only the requested behavior and the existence of expected outputs.
+- **Invalid callback implementation**
+  - Symptom: CS1660 occurs when assigning a lambda to ImageSaveOptions.PageSavingCallback because the property expects an IPageSavingCallback implementation.
+  - Root cause: The code treats the callback interface as a delegate rather than implementing the IPageSavingCallback contract.
+  - Preferred fix: Create a class that implements IPageSavingCallback.PageSaving and assign an instance of that class to PageSavingCallback.
+  - Prevention: Always implement the required interface explicitly; never use a lambda unless the API defines a delegate type.
+
+- **Runtime argument or file errors**
+  - Symptom: The program throws ArgumentException or FileNotFoundException when required command-line arguments are missing or when expected files are not created.
+  - Root cause: The example assumes external files or arguments exist without providing fallbacks.
+  - Preferred fix: Generate deterministic sample inputs when they are absent and validate argument count before parsing.
+  - Prevention: Never rely on pre-existing files; always create minimal test assets in the code path.
 
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.9.0`
-- Package: `Aspose.Drawing.Common` `26.8.0`
+- Primary package: `Aspose.Words` `26.10.0`
 
 ## Command reference
-
-### Create a temporary console project
 
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
+dotnet add package Aspose.Words --version 26.10.0
+dotnet add package Aspose.Drawing.Common --version 26.10.0
 ```
-
-### Add required packages
-
-```bash
-dotnet add package Aspose.Words --version 26.9.0
-dotnet add package Aspose.Drawing.Common --version 26.8.0
-```
-
-### Copy a category example into the temp project
 
 ```powershell
 Copy-Item ..\rendering\<example-file>.cs .\Program.cs
 ```
-
-### Build and run
 
 ```bash
 dotnet build --configuration Release --verbosity minimal
@@ -439,6 +434,4 @@ dotnet run --configuration Release --no-build
 
 ## Category update guidance
 
-- Preserve file-to-task traceability. Any future update should keep the original task text associated with the file in metadata.
-- When replacing a file, prefer the latest verified publish-ready version rather than a merely compiling draft.
-- Keep examples standalone, bootstrap missing inputs locally, and prefer documented Aspose APIs over speculative shortcuts.
+- Periodically verify that all property names used in examples match the current Aspose.Words 26.10.0 documentation to prevent regression after library updates.

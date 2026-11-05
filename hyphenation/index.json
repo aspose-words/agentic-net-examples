@@ -4,23 +4,25 @@
     "slug": "hyphenation",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Use native Aspose.Words hyphenation APIs directly with local deterministic sample inputs and local dictionary files where needed.",
+    "preferred_workflow": "Create a local sample document, write a minimal Hunspell dictionary file, register the dictionary with Hyphenation.RegisterDictionary, enable doc.HyphenationOptions.AutoHyphenation, adjust page setup to force line breaks, and save the result while asserting that the output file exists.",
     "required_packages": [
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.9.0"
+      "Aspose.Words": "26.10.0"
     },
     "required_namespaces": [
       "System",
-      "System.Globalization",
       "System.IO",
       "Aspose.Words",
-      "Aspose.Words.Settings",
+      "System.Globalization",
       "Aspose.Words.Saving",
+      "Aspose.Words.Settings",
       "Aspose.Words.Tables",
       "System.Collections.Generic",
+      "System.Linq",
       "System.Diagnostics",
+      "Aspose.Words.Loading",
       "Aspose.Words.Notes"
     ],
     "key_apis": [
@@ -29,14 +31,15 @@
       "File",
       "Font",
       "SaveFormat",
-      "Path",
       "Directory",
-      "StyleIdentifier",
+      "Path",
       "Paragraph",
+      "Table",
+      "Cell",
+      "StyleIdentifier",
       "ImageSaveOptions",
       "NodeType",
-      "Run",
-      "Style"
+      "Run"
     ]
   },
   "stats": {
@@ -50,43 +53,29 @@
   },
   "rules_summary": {
     "strict_api_bans": [
-      "Do not assume source documents, folders, or hyphenation dictionary files already exist.",
-      "Do not invent unsupported hyphenation APIs or callback hooks.",
-      "Do not depend on external dictionary downloads for live examples.",
-      "Do not skip writing the requested output artifact when the task expects one."
+      "Do not reference non-existent Aspose.Words types or invent hyphenation properties that are not part of the public API."
     ],
     "canonical_patterns": [
-      "Use documented Aspose.Words hyphenation APIs directly.",
-      "Create local sample documents and local deterministic dictionary files whenever a task implies an existing source or dictionary.",
-      "Use narrow layout or other deterministic formatting only when the task requires visible hyphenation behavior.",
-      "Validate that the configured result, report, or rendered output actually exists."
+      "Use the Hyphenation class for dictionary registration and the HyphenationOptions property on Document to control automatic hyphenation."
     ],
     "nullable_warning_prevention": [
-      "Initialize all non-nullable reference type properties to avoid CS8618 warnings.",
-      "Avoid CS8600, CS8602, and CS8604 by guarding maybe-null values before dereference or assignment.",
-      "Declare nullable locals when a value may legitimately be null and null-check before use."
+      "Initialize all file paths and objects before use and guard any potentially null values with explicit checks."
     ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "Remote dictionary dependency",
-      "symptom": "Example depends on a GitHub or other external URL for a hyphenation dictionary file.",
-      "fix": "Create a deterministic local dictionary file inside the example and register that local file instead."
+      "pattern": "Incorrect API usage",
+      "symptom": "Compilation fails because properties such as HyphenationLanguage, LanguageId, or static using directives are referenced on non-existent types.",
+      "cause": "The code attempts to use legacy or undocumented members that were removed or never existed in Aspose.Words 26.10.0.",
+      "fix": "Replace the invalid members with the current Hyphenation.RegisterDictionary method and the Document.HyphenationOptions.AutoHyphenation flag.",
+      "prevention": "Consult the official Aspose.Words API reference and limit code to members that appear in IntelliSense for the target version."
     },
     {
-      "pattern": "Wrong or invented hyphenation API usage",
-      "symptom": "Compile failures or ineffective behavior because unsupported hyphenation helpers or callback hooks are used.",
-      "fix": "Use only documented Aspose.Words hyphenation registration and callback APIs."
-    },
-    {
-      "pattern": "Visible hyphenation not triggered",
-      "symptom": "Example configures hyphenation but the layout never becomes narrow enough for hyphenation to matter.",
-      "fix": "Use deterministic page or layout settings and sufficiently long sample text so hyphenation can realistically occur."
-    },
-    {
-      "pattern": "Missing local bootstrap input",
-      "symptom": "Example assumes an existing document, stream, folder, or dictionary already exists.",
-      "fix": "Create local sample documents, source files, folders, and dictionary files inside the example."
+      "pattern": "Missing local resources",
+      "symptom": "Runtime throws InvalidOperationException because a hyphenation dictionary file cannot be found or registered.",
+      "cause": "The example assumes external dictionary files or source documents exist without creating them locally.",
+      "fix": "Generate deterministic dictionary files and sample documents within the example before registration and processing.",
+      "prevention": "Always create required files in the code base and verify their existence with File.Exists checks before use."
     }
   ],
   "examples": [
@@ -98,8 +87,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 2,
@@ -109,8 +98,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 3,
@@ -131,13 +120,13 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 5,
       "file_name": "set-the-hyphenation-language-to-en-us-and-verify-word-breaking-matches-microsoft-word-beha.cs",
-      "task": "Set the hyphenation language to en‑US and verify word breaking matches Microsoft Word behavior.",
+      "task": "Set the hyphenation language to en-US and verify word breaking matches Microsoft Word behavior.",
       "workflow": "dictionary-registration",
       "outputs": [
         "docx"
@@ -159,7 +148,7 @@
     {
       "id": 7,
       "file_name": "set-hyphenation-to-respect-word-boundaries-in-arabic-script-by-loading-appropriate-right-t.cs",
-      "task": "Set hyphenation to respect word boundaries in Arabic script by loading appropriate right‑to‑left dictionary.",
+      "task": "Set hyphenation to respect word boundaries in Arabic script by loading appropriate right-to-left dictionary.",
       "workflow": "dictionary-registration",
       "outputs": [
         "docx"
@@ -170,7 +159,7 @@
     {
       "id": 8,
       "file_name": "configure-hyphenation-to-respect-compound-word-rules-of-microsoft-word-for-german-language.cs",
-      "task": "Configure hyphenation to respect compound‑word rules of Microsoft Word for German language documents.",
+      "task": "Configure hyphenation to respect compound-word rules of Microsoft Word for German language documents.",
       "workflow": "dictionary-registration",
       "outputs": [
         "docx"
@@ -219,8 +208,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 13,
@@ -241,8 +230,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 15,
@@ -252,8 +241,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 16,
@@ -296,8 +285,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 20,
@@ -318,8 +307,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 22,
@@ -335,7 +324,7 @@
     {
       "id": 23,
       "file_name": "measure-pagination-differences-after-enabling-hyphenation-on-a-multi-section-report-docume.cs",
-      "task": "Measure pagination differences after enabling hyphenation on a multi‑section report document for analysis.",
+      "task": "Measure pagination differences after enabling hyphenation on a multi-section report document for analysis.",
       "workflow": "document-setup-and-validation",
       "outputs": [
         "docx"
@@ -368,14 +357,14 @@
     {
       "id": 26,
       "file_name": "batch-process-a-collection-of-docx-files-applying-language-specific-hyphenation-and-export.cs",
-      "task": "Batch process a collection of DOCX files, applying language‑specific hyphenation and exporting each to PDF.",
+      "task": "Batch process a collection of DOCX files, applying language-specific hyphenation and exporting each to PDF.",
       "workflow": "dictionary-registration",
       "outputs": [
         "docx",
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 27,
@@ -386,8 +375,8 @@
         "docx",
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 28,
@@ -397,8 +386,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 29,
@@ -421,13 +410,13 @@
         "docx",
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 31,
       "file_name": "export-a-hyphenated-document-to-pdf-and-compare-file-size-with-a-non-hyphenated-version.cs",
-      "task": "Export a hyphenated document to PDF and compare file size with a non‑hyphenated version.",
+      "task": "Export a hyphenated document to PDF and compare file size with a non-hyphenated version.",
       "workflow": "rendering-and-export",
       "outputs": [
         "pdf"
@@ -443,13 +432,13 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 33,
       "file_name": "load-a-docx-set-hyphenation-language-to-ru-ru-and-save-the-result-as-pdf.cs",
-      "task": "Load a DOCX, set hyphenation language to ru‑RU, and save the result as PDF.",
+      "task": "Load a DOCX, set hyphenation language to ru-RU, and save the result as PDF.",
       "workflow": "dictionary-registration",
       "outputs": [
         "docx",
@@ -466,8 +455,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 35,
@@ -510,8 +499,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 39,
@@ -535,5 +524,15 @@
       "selected_engine": "existing_repo",
       "winner": "existing_repo"
     }
-  ]
+  ],
+  "narrative": {
+    "overview": "The Hyphenation category demonstrates how to enable and control automatic hyphenation in Aspose.Words using the documented Hyphenation API. Verified examples show document creation, custom Hunspell dictionary registration, language-specific configuration, and PDF export without external dependencies.",
+    "purpose": "Provide an AI coding agent with a clear, reproducible pattern for implementing hyphenation in Aspose.Words projects, including dictionary registration, locale selection, layout preparation, and output verification.",
+    "validation_priorities": [
+      "Verify that the hyphenation dictionary is registered, the document is saved, and the expected output file exists on disk."
+    ],
+    "maintenance_notes": [
+      "Update dictionary file contents and registration calls when newer Aspose.Words versions introduce changes to the Hyphenation API."
+    ]
+  }
 }

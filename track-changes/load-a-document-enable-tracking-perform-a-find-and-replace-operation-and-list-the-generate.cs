@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -6,39 +7,48 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with some text.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document. Hello World!");
+        // Create a sample document in memory.
+        var builder = new DocumentBuilder();
+        builder.Writeln("Hello World! This is a sample document for track changes demonstration.");
 
-        // Save the sample document locally.
-        string samplePath = "Sample.docx";
-        doc.Save(samplePath);
+        // Save the sample document to a temporary file.
+        string originalPath = "Original.docx";
+        builder.Document.Save(originalPath);
 
         // Load the document from the file.
-        Document loadedDoc = new Document(samplePath);
+        Document doc = new Document(originalPath);
 
-        // Enable track changes with an author name and current date.
-        loadedDoc.StartTrackRevisions("John Doe", DateTime.Now);
+        // Enable track changes with a specific author and current date.
+        doc.StartTrackRevisions("DemoAuthor", DateTime.Now);
 
         // Perform a find-and-replace operation while tracking is enabled.
-        loadedDoc.Range.Replace("World", "Aspose", new FindReplaceOptions());
+        // This will generate revisions for the replaced text.
+        FindReplaceOptions options = new FindReplaceOptions();
+        doc.Range.Replace("Hello", "Hi", options);
 
-        // Stop tracking changes.
-        loadedDoc.StopTrackRevisions();
-
-        // Save the modified document.
-        string modifiedPath = "Modified.docx";
-        loadedDoc.Save(modifiedPath);
+        // Stop tracking revisions.
+        doc.StopTrackRevisions();
 
         // List all generated revisions.
-        foreach (Revision rev in loadedDoc.Revisions)
+        var revisions = doc.Revisions;
+        if (revisions.Count == 0)
         {
-            Console.WriteLine($"Revision Type: {rev.RevisionType}");
-            Console.WriteLine($"Author: {rev.Author}");
-            Console.WriteLine($"Date: {rev.DateTime}");
-            Console.WriteLine($"Text: {rev.ParentNode?.GetText().Trim()}");
-            Console.WriteLine("---");
+            throw new InvalidOperationException("No revisions were generated.");
         }
+
+        Console.WriteLine($"Total revisions: {revisions.Count}");
+        foreach (var rev in revisions)
+        {
+            string revType = rev.RevisionType.ToString();
+            string author = rev.Author;
+            DateTime date = rev.DateTime;
+            string text = rev.ParentNode?.GetText()?.Trim() ?? string.Empty;
+
+            Console.WriteLine($"Type: {revType}, Author: {author}, Date: {date}, Text: \"{text}\"");
+        }
+
+        // Save the revised document.
+        string revisedPath = "Revised.docx";
+        doc.Save(revisedPath);
     }
 }

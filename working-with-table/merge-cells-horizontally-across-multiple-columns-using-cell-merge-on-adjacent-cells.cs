@@ -11,43 +11,38 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2‑row, 3‑column table.
+        // Build a simple 3‑column table with two rows.
         builder.StartTable();
 
-        // First row.
+        // First row – cells that will be merged.
         builder.InsertCell();
-        builder.Writeln("A1");
+        builder.Writeln("Merged Cell Part 1");
         builder.InsertCell();
-        builder.Writeln("B1");
+        builder.Writeln("Merged Cell Part 2");
         builder.InsertCell();
-        builder.Writeln("C1");
+        builder.Writeln("Merged Cell Part 3");
         builder.EndRow();
 
-        // Second row.
+        // Second row – regular cells.
         builder.InsertCell();
-        builder.Writeln("A2");
+        builder.Writeln("Row2 Col1");
         builder.InsertCell();
-        builder.Writeln("B2");
+        builder.Writeln("Row2 Col2");
         builder.InsertCell();
-        builder.Writeln("C2");
+        builder.Writeln("Row2 Col3");
         builder.EndRow();
 
         builder.EndTable();
 
         // Retrieve the created table.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        Table table = doc.FirstSection.Body.Tables[0];
+        Row firstRow = table.Rows[0];
 
-        // Merge the first two cells of the first row horizontally.
-        Cell firstCell = table.Rows[0].Cells[0];
-        Cell secondCell = table.Rows[0].Cells[1];
-        firstCell.CellFormat.HorizontalMerge = CellMerge.First;
-        secondCell.CellFormat.HorizontalMerge = CellMerge.Previous;
-
-        // Merge the last two cells of the second row horizontally.
-        Cell thirdCell = table.Rows[1].Cells[1];
-        Cell fourthCell = table.Rows[1].Cells[2];
-        thirdCell.CellFormat.HorizontalMerge = CellMerge.First;
-        fourthCell.CellFormat.HorizontalMerge = CellMerge.Previous;
+        // Merge the first three cells horizontally using CellFormat.HorizontalMerge.
+        // The first cell starts the merge, the following cells continue it.
+        firstRow.Cells[0].CellFormat.HorizontalMerge = CellMerge.First;
+        firstRow.Cells[1].CellFormat.HorizontalMerge = CellMerge.Previous;
+        firstRow.Cells[2].CellFormat.HorizontalMerge = CellMerge.Previous;
 
         // Save the document.
         string outputPath = "MergedCells.docx";
@@ -55,6 +50,9 @@ public class Program
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output file was not created.");
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+
+        // Inform that the process completed.
+        Console.WriteLine($"Document saved successfully to '{outputPath}'.");
     }
 }

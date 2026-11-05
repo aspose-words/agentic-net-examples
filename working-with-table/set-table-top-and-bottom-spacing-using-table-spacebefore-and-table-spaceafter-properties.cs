@@ -11,35 +11,47 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some text before the table.
-        builder.Writeln("Paragraph before the table.");
-
-        // Set spacing before and after the table (in points) via the paragraph format.
-        // The spacing is applied to the paragraph that will contain the table.
-        builder.ParagraphFormat.SpaceBefore = 12; // 12 points before the table.
-        builder.ParagraphFormat.SpaceAfter = 12;  // 12 points after the table.
-
-        // Build a simple 1x1 table.
+        // Build a simple 2x2 table.
         builder.StartTable();
+
         builder.InsertCell();
-        builder.Write("Cell 1");
+        builder.Writeln("Cell 1");
+
+        builder.InsertCell();
+        builder.Writeln("Cell 2");
+
+        builder.EndRow();
+
+        builder.InsertCell();
+        builder.Writeln("Cell 3");
+
+        builder.InsertCell();
+        builder.Writeln("Cell 4");
+
         builder.EndRow();
         builder.EndTable();
 
-        // Retrieve the created table (optional, shown for completeness).
-        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
+        // Retrieve the created table (the last table in the document).
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[doc.GetChildNodes(NodeType.Table, true).Count - 1];
 
-        // Save the document to a file.
+        // Set spacing before and after the table using the available padding properties.
+        // These properties control the space above and below the table.
+        table.TopPadding = 12f;    // Space before the table (12 points).
+        table.BottomPadding = 12f; // Space after the table (12 points).
+
+        // Define output file name.
         string outputPath = "TableSpacing.docx";
+
+        // Save the document.
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
         {
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+            throw new Exception($"Failed to create the output file: {outputPath}");
         }
 
-        // Inform that the process completed.
+        // Inform that the process completed successfully.
         Console.WriteLine($"Document saved successfully to '{outputPath}'.");
     }
 }

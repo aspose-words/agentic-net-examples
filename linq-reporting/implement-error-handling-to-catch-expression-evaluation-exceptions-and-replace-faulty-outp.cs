@@ -2,77 +2,62 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Replacing;
 
-public class Order
+public class ReportModel
 {
     public int Value { get; set; } = 10;
-    public int Divisor { get; set; } = 0; // Will cause divide‑by‑zero in the template
+    public int Divisor { get; set; } = 0; // Will cause divide by zero
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare working directory and file paths
-        string workDir = Directory.GetCurrentDirectory();
-        string templatePath = Path.Combine(workDir, "template.docx");
-        string outputPath = Path.Combine(workDir, "output.docx");
+        // Create output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create the template document with a faulty expression tag.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Result of division: <<[order.Value / order.Divisor]>>");
+        // 1. Create the LINQ Reporting template.
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
+
+        // Expression that will throw an exception (division by zero).
+        builder.Writeln("Result of division: <<[model.Value / model.Divisor]>>");
+
+        // Save the template.
         templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the template (simulating a separate load step).
-        // -----------------------------------------------------------------
-        Document doc = new Document(templatePath);
+        // 2. Load the template for report generation.
+        Document reportDoc = new(templatePath);
 
-        // -----------------------------------------------------------------
         // 3. Prepare the data model.
-        // -----------------------------------------------------------------
-        Order order = new Order();
+        ReportModel model = new();
 
-        // -----------------------------------------------------------------
-        // 4. Configure the reporting engine to embed inline error messages.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
+        // 4. Configure the reporting engine.
+        ReportingEngine engine = new();
+        // Enable inline error messages; the engine will replace faulty output with placeholder text.
         engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-        // -----------------------------------------------------------------
-        // 5. Build the report with error handling.
-        //    If an exception occurs, replace the faulty tag with a placeholder.
-        // -----------------------------------------------------------------
-        bool success = false;
+        // 5. Build the report. The method returns false if there were evaluation errors.
+        bool success;
         try
         {
-            success = engine.BuildReport(doc, order, "order");
+            success = engine.BuildReport(reportDoc, model, "model");
         }
         catch (Exception ex)
         {
-            // Replace the problematic expression with a placeholder text.
-            FindReplaceOptions replaceOptions = new FindReplaceOptions
-            {
-                MatchCase = false,
-                FindWholeWordsOnly = true
-            };
-            doc.Range.Replace("<<[order.Value / order.Divisor]>>", "N/A", replaceOptions);
-            Console.WriteLine($"Error during report generation: {ex.Message}");
+            // Unexpected exception handling – treat as failure.
+            Console.WriteLine($"Unexpected error: {ex.Message}");
+            success = false;
         }
 
-        // -----------------------------------------------------------------
         // 6. Save the generated report.
-        // -----------------------------------------------------------------
-        doc.Save(outputPath);
+        string reportPath = Path.Combine(outputDir, "Report.docx");
+        reportDoc.Save(reportPath);
 
-        // -----------------------------------------------------------------
-        // 7. Inform the user about the result.
-        // -----------------------------------------------------------------
-        Console.WriteLine($"Report build success: {success}");
-        Console.WriteLine($"Output saved to: {outputPath}");
+        // 7. Output the result status.
+        Console.WriteLine($"Report generation success: {success}");
+        Console.WriteLine($"Report saved to: {reportPath}");
     }
 }

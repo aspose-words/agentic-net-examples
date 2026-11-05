@@ -6,7 +6,7 @@ using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class CategoryCount
+public class CategoryGroup
 {
     public string Category { get; set; } = "";
     public int Count { get; set; }
@@ -14,58 +14,66 @@ public class CategoryCount
 
 public class ReportModel
 {
-    public List<CategoryCount> Groups { get; set; } = new();
+    public List<CategoryGroup> Groups { get; set; } = new();
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample XML data.
-        const string xmlFileName = "data.xml";
-        File.WriteAllText(xmlFileName,
+        // Ensure output directory exists.
+        string outputDir = "output";
+        Directory.CreateDirectory(outputDir);
+
+        // Create sample XML data file.
+        string xmlPath = Path.Combine(outputDir, "data.xml");
+        File.WriteAllText(xmlPath,
 @"<Items>
-    <Item><Category>Fruits</Category></Item>
-    <Item><Category>Vegetables</Category></Item>
-    <Item><Category>Fruits</Category></Item>
+    <Item><Category>Fruit</Category></Item>
+    <Item><Category>Vegetable</Category></Item>
+    <Item><Category>Fruit</Category></Item>
     <Item><Category>Dairy</Category></Item>
-    <Item><Category>Vegetables</Category></Item>
-    <Item><Category>Fruits</Category></Item>
+    <Item><Category>Vegetable</Category></Item>
+    <Item><Category>Fruit</Category></Item>
 </Items>");
 
-        // Load XML and aggregate by category using GroupBy.
-        XDocument xdoc = XDocument.Load(xmlFileName);
-        var groups = xdoc.Root!
+        // Load XML and aggregate by category using LINQ GroupBy.
+        XDocument xdoc = XDocument.Load(xmlPath);
+        List<CategoryGroup> groups = xdoc.Root?
             .Elements("Item")
-            .Select(item => (string?)item.Element("Category") ?? "")
-            .GroupBy(cat => cat)
-            .Select(g => new CategoryCount { Category = g.Key, Count = g.Count() })
-            .ToList();
+            .GroupBy(item => (string?)item.Element("Category") ?? "")
+            .Select(g => new CategoryGroup
+            {
+                Category = g.Key,
+                Count = g.Count()
+            })
+            .ToList() ?? new List<CategoryGroup>();
 
-        // Prepare the model for the report.
-        var model = new ReportModel { Groups = groups };
+        // Prepare the root model for the report.
+        ReportModel model = new() { Groups = groups };
 
-        // Create the template document programmatically.
-        const string templateFileName = "template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Create the LINQ Reporting template programmatically.
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
         builder.Writeln("Category Report");
         builder.Writeln("<<foreach [g in Groups]>>");
         builder.Writeln("Category: <<[g.Category]>>, Count: <<[g.Count]>>");
         builder.Writeln("<</foreach>>");
 
-        doc.Save(templateFileName);
+        // Save the template.
+        templateDoc.Save(templatePath);
 
-        // Load the template for reporting.
-        var template = new Document(templateFileName);
+        // Load the template for report generation.
+        Document reportDoc = new Document(templatePath);
 
-        // Build the report.
-        var engine = new ReportingEngine();
-        engine.BuildReport(template, model, "model");
+        // Build the report using Aspose.Words LINQ Reporting engine.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
 
         // Save the generated report.
-        const string outputFileName = "report.docx";
-        template.Save(outputFileName);
+        string reportPath = Path.Combine(outputDir, "report.docx");
+        reportDoc.Save(reportPath);
     }
 }

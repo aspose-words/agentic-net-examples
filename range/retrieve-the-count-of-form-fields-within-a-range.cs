@@ -1,36 +1,34 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.BuildingBlocks;
 using Aspose.Words.Fields;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert several legacy form fields.
+        // Insert a few form fields into the document.
         builder.InsertCheckBox("CheckBox1", false, 0);
         builder.Writeln();
-
-        // Insert a text input form field using the correct enum.
-        builder.InsertTextInput(
-            "TextInput1",
-            TextFormFieldType.Regular,
-            "",
-            "Default text",
-            0);
+        builder.InsertComboBox("ComboBox1", new string[] { "Option1", "Option2" }, 0);
+        builder.Writeln();
+        builder.InsertTextInput("TextInput1", TextFormFieldType.Regular, "", "Default text", 0);
         builder.Writeln();
 
-        builder.InsertComboBox("ComboBox1", new string[] { "OptionA", "OptionB", "OptionC" }, 0);
-        builder.Writeln();
+        // Save the document (optional, demonstrates lifecycle handling).
+        string filePath = "FormFieldsDocument.docx";
+        doc.Save(filePath);
 
-        // Retrieve the count of form fields within the document's range.
-        int formFieldCount = doc.Range.FormFields.Count;
+        // Retrieve the range of the whole document.
+        Aspose.Words.Range range = doc.Range;
 
-        // Output the result.
+        // Count the form fields within this range.
+        int formFieldCount = range.FormFields.Count;
+
+        // Output the count.
         Console.WriteLine($"Number of form fields in the document range: {formFieldCount}");
     }
 }

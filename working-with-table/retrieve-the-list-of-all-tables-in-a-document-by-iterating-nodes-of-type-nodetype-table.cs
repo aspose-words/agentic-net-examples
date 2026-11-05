@@ -3,89 +3,80 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableTraversal
+namespace WorkingWithTableExample
 {
     public class Program
     {
         public static void Main()
         {
-            // Create a new blank document.
+            // Create a new document.
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Build first sample table.
+            // Build the first table (2 rows x 2 columns).
             builder.StartTable();
             builder.InsertCell();
-            builder.Write("Table 1 - Cell 1");
+            builder.Writeln("Table1 Row1 Cell1");
             builder.InsertCell();
-            builder.Write("Table 1 - Cell 2");
+            builder.Writeln("Table1 Row1 Cell2");
+            builder.EndRow();
+
+            builder.InsertCell();
+            builder.Writeln("Table1 Row2 Cell1");
+            builder.InsertCell();
+            builder.Writeln("Table1 Row2 Cell2");
             builder.EndRow();
             builder.EndTable();
 
             // Add a paragraph between tables.
             builder.Writeln();
 
-            // Build second sample table.
+            // Build the second table (1 row x 3 columns).
             builder.StartTable();
             builder.InsertCell();
-            builder.Write("Table 2 - Cell 1");
+            builder.Writeln("Table2 Cell1");
             builder.InsertCell();
-            builder.Write("Table 2 - Cell 2");
+            builder.Writeln("Table2 Cell2");
             builder.InsertCell();
-            builder.Write("Table 2 - Cell 3");
+            builder.Writeln("Table2 Cell3");
             builder.EndRow();
             builder.EndTable();
 
             // Save the document to a local file.
-            string filePath = "Sample.docx";
-            doc.Save(filePath);
+            string outputPath = "SampleTables.docx";
+            doc.Save(outputPath);
 
-            // Load the document back (demonstrates load workflow).
-            Document loadedDoc = new Document(filePath);
+            // Verify that the file was saved.
+            if (!File.Exists(outputPath))
+                throw new Exception("Failed to save the document.");
 
-            // Retrieve all tables by iterating nodes of type NodeType.Table.
+            // Load the document (demonstrates loading workflow).
+            Document loadedDoc = new Document(outputPath);
+
+            // Retrieve all tables in the document.
             NodeCollection tableNodes = loadedDoc.GetChildNodes(NodeType.Table, true);
 
-            // Output information about each table.
             Console.WriteLine($"Total tables found: {tableNodes.Count}");
+
+            // Iterate through each table and output its details.
             for (int i = 0; i < tableNodes.Count; i++)
             {
                 Table table = (Table)tableNodes[i];
-                int rowCount = table.Rows.Count;
-                int cellCount = 0;
-                foreach (Row row in table.Rows)
-                {
-                    cellCount += row.Cells.Count;
-                }
-
-                Console.WriteLine($"Table {i + 1}: Rows = {rowCount}, Cells = {cellCount}");
+                Console.WriteLine($"Table {i + 1}: Rows = {table.Rows.Count}, Columns = {GetColumnCount(table)}");
             }
+        }
 
-            // Optionally write a simple report file.
-            string reportPath = "TablesReport.txt";
-            using (StreamWriter writer = new StreamWriter(reportPath))
+        // Helper method to determine the maximum column count in a table.
+        private static int GetColumnCount(Table table)
+        {
+            int max = 0;
+            foreach (Row row in table.Rows)
             {
-                writer.WriteLine($"Document: {Path.GetFullPath(filePath)}");
-                writer.WriteLine($"Total tables: {tableNodes.Count}");
-                for (int i = 0; i < tableNodes.Count; i++)
-                {
-                    Table table = (Table)tableNodes[i];
-                    writer.WriteLine($"Table {i + 1}: Rows = {table.Rows.Count}, Cells = {GetCellCount(table)}");
-                }
+                int cells = row.Cells.Count;
+                if (cells > max)
+                    max = cells;
             }
-
-            // Verify that the report file was created.
-            if (!File.Exists(reportPath))
-                throw new InvalidOperationException("Report file was not created.");
-
-            // Helper local function to count cells in a table.
-            int GetCellCount(Table tbl)
-            {
-                int count = 0;
-                foreach (Row r in tbl.Rows)
-                    count += r.Cells.Count;
-                return count;
-            }
+            return max;
         }
     }
 }

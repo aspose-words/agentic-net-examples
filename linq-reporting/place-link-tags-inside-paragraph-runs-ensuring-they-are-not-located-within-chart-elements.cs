@@ -1,63 +1,51 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Drawing.Charts;
-using System.Text;
+using Newtonsoft.Json;
 
-namespace LinkTagExample
+public class ReportModel
 {
-    // Data model for the report.
-    public class ReportModel
+    public string Url { get; set; } = "https://example.com";
+    public string LinkText { get; set; } = "Example Site";
+}
+
+public class Program
+{
+    public static void Main()
     {
-        public string Url { get; set; } = "";
-        public string LinkText { get; set; } = "";
-    }
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // Register code page provider for Aspose.Words.
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Prepare sample data.
+        ReportModel model = new();
 
-            // Paths for template and output documents.
-            string templatePath = "template.docx";
-            string outputPath = "output.docx";
+        // Create a template document programmatically.
+        string templatePath = "Template.docx";
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
 
-            // -----------------------------------------------------------------
-            // Create the template document programmatically.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Write a paragraph with a link tag inside a run.
+        builder.Writeln("Visit our website:");
+        builder.Write("<<link [model.Url] [model.LinkText]>>");
+        builder.Writeln(); // End the paragraph.
 
-            // Paragraph with a link tag (will be replaced by the engine).
-            builder.Writeln("Visit the site: <<link [model.Url] [model.LinkText]>>");
+        // Save the template.
+        templateDoc.Save(templatePath);
 
-            // Insert a chart after the paragraph (link tags must NOT be inside charts).
-            builder.InsertChart(ChartType.Column, 400, 300);
+        // Load the template for reporting.
+        Document reportDoc = new(templatePath);
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
+        // Build the report using LINQ Reporting Engine.
+        ReportingEngine engine = new();
+        bool success = engine.BuildReport(reportDoc, model, "model");
 
-            // -----------------------------------------------------------------
-            // Load the template for reporting.
-            // -----------------------------------------------------------------
-            Document doc = new Document(templatePath);
+        // Save the generated report.
+        string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
 
-            // Prepare the data model.
-            ReportModel model = new ReportModel
-            {
-                Url = "https://example.com",
-                LinkText = "Example Site"
-            };
-
-            // Build the report using LINQ Reporting Engine.
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
-
-            // Save the generated report.
-            doc.Save(outputPath);
-        }
+        // Optionally, indicate success (no interactive output required).
+        // The program ends here.
     }
 }

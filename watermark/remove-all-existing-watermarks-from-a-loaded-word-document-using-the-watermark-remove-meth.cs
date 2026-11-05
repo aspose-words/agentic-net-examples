@@ -11,31 +11,25 @@ public class Program
         string outputPath = "SampleWithoutWatermark.docx";
 
         // -----------------------------------------------------------------
-        // Step 1: Create a sample document and add a text watermark.
+        // Create a sample document and add a text watermark.
         // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document with a watermark.");
+        builder.Writeln("This is a sample document containing a watermark.");
 
-        // Add a text watermark using the Document.Watermark API.
-        doc.Watermark.SetText("CONFIDENTIAL");
+        // Apply a text watermark using the Document.Watermark API.
+        doc.Watermark.SetText("Sample Watermark");
 
         // Save the document that contains the watermark.
         doc.Save(inputPath);
 
         // -----------------------------------------------------------------
-        // Step 2: Load the document that contains the watermark.
+        // Load the document and remove all existing watermarks.
         // -----------------------------------------------------------------
         Document loadedDoc = new Document(inputPath);
-
-        // -----------------------------------------------------------------
-        // Step 3: Remove all existing watermarks.
-        // -----------------------------------------------------------------
         loadedDoc.Watermark.Remove();
 
-        // -----------------------------------------------------------------
-        // Step 4: Save the document after watermark removal.
-        // -----------------------------------------------------------------
+        // Save the document after watermark removal.
         loadedDoc.Save(outputPath);
 
         // Simple validation that the output file was created.

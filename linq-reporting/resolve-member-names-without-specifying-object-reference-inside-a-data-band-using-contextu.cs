@@ -3,79 +3,62 @@ using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using System.Text;
 
-namespace LinqReportingContextualAccess
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Prepare sample data.
+        var model = new ReportModel
         {
-            // Register code page provider for any encoding needs.
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            // Prepare folders.
-            string workDir = Directory.GetCurrentDirectory();
-            string templatePath = Path.Combine(workDir, "template.docx");
-            string outputPath = Path.Combine(workDir, "output.docx");
-
-            // -------------------------------------------------
-            // 1. Create the template document with LINQ tags.
-            // -------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-            builder.Writeln("Product List:");
-            // Data band: foreach over Products collection.
-            builder.Writeln("<<foreach [p in Products]>>");
-            // Use contextual member access (no 'p.' prefix).
-            builder.Writeln(" - <<[Name]>> : $<<[Price]>>");
-            builder.Writeln("<</foreach>>");
-
-            // Save the template.
-            templateDoc.Save(templatePath);
-
-            // -------------------------------------------------
-            // 2. Load the template for report generation.
-            // -------------------------------------------------
-            Document doc = new Document(templatePath);
-
-            // -------------------------------------------------
-            // 3. Prepare the data model.
-            // -------------------------------------------------
-            ReportModel model = new()
+            Persons = new List<Person>
             {
-                Products = new List<Product>
-                {
-                    new Product { Name = "Apple", Price = 0.99m },
-                    new Product { Name = "Banana", Price = 0.59m },
-                    new Product { Name = "Cherry", Price = 2.49m }
-                }
-            };
+                new Person { Name = "Alice Johnson", Age = 28 },
+                new Person { Name = "Bob Smith", Age = 35 },
+                new Person { Name = "Carol Davis", Age = 42 }
+            }
+        };
 
-            // -------------------------------------------------
-            // 4. Build the report.
-            // -------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
+        // Create a template document programmatically.
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
 
-            // -------------------------------------------------
-            // 5. Save the generated report.
-            // -------------------------------------------------
-            doc.Save(outputPath);
-        }
+        builder.Writeln("People Report");
+        builder.Writeln("==============");
+        builder.Writeln();
+        // Data band: foreach over Persons collection.
+        builder.Writeln("<<foreach [person in Persons]>>");
+        // Inside the band we refer to members without object reference.
+        builder.Writeln("Name: <<[Name]>>, Age: <<[Age]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to a file.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
+
+        // Load the template for report generation.
+        var doc = new Document(templatePath);
+
+        // Build the report using the LINQ Reporting engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
+
+        // Save the generated report.
+        Directory.CreateDirectory("Output");
+        const string outputPath = "Output/Report.docx";
+        doc.Save(outputPath);
     }
+}
 
-    // Root data model.
-    public class ReportModel
-    {
-        public List<Product> Products { get; set; } = new();
-    }
+// Root data model.
+public class ReportModel
+{
+    public List<Person> Persons { get; set; } = new();
+}
 
-    // Item class used inside the data band.
-    public class Product
-    {
-        public string Name { get; set; } = "";
-        public decimal Price { get; set; }
-    }
+// Item class used in the data band.
+public class Person
+{
+    public string Name { get; set; } = string.Empty;
+    public int Age { get; set; }
 }

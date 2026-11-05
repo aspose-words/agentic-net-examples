@@ -6,81 +6,81 @@ using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+public class Order
 {
-    public static void Main()
-    {
-        // Register code page provider (required for some Aspose.Words features).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Prepare sample data model.
-        ReportModel model = new()
-        {
-            Items = new()
-        };
-        for (int i = 1; i <= 1000; i++)
-        {
-            model.Items.Add(new Item
-            {
-                Index = i,
-                Name = $"Item #{i}"
-            });
-        }
-
-        // Create a template document programmatically.
-        string templatePath = "template.docx";
-        Document templateDoc = new();
-        DocumentBuilder builder = new(templateDoc);
-
-        builder.Writeln("=== Report Start ===");
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
-        builder.Writeln("<</foreach>>");
-        builder.Writeln("=== Report End ===");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // Load the template for report generation.
-        Document reportDoc = new(templatePath);
-
-        // Measure memory before report generation.
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
-        long memoryBefore = GC.GetTotalMemory(true);
-
-        // Configure and run the reporting engine with RemoveEmptyParagraphs enabled.
-        ReportingEngine engine = new();
-        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
-        bool success = engine.BuildReport(reportDoc, model, "model");
-
-        // Measure memory after report generation.
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
-        long memoryAfter = GC.GetTotalMemory(true);
-
-        // Output results.
-        Console.WriteLine($"Report generation success: {success}");
-        Console.WriteLine($"Memory before: {memoryBefore:N0} bytes");
-        Console.WriteLine($"Memory after : {memoryAfter:N0} bytes");
-        Console.WriteLine($"Memory delta : {memoryAfter - memoryBefore:N0} bytes");
-
-        // Save the generated report.
-        string outputPath = Path.Combine("output", "ReportWithRemoveEmptyParagraphs.docx");
-        Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
-        reportDoc.Save(outputPath);
-        Console.WriteLine($"Report saved to: {outputPath}");
-    }
-}
-
-// Data model classes.
-public class ReportModel
-{
+    public string CustomerName { get; set; } = "John Doe";
     public List<Item> Items { get; set; } = new();
 }
 
 public class Item
 {
     public int Index { get; set; }
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; set; } = "";
+}
+
+public class Program
+{
+    public static void Main()
+    {
+        // Register code page provider for any required encodings.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Prepare sample data.
+        var order = new Order
+        {
+            CustomerName = "Acme Corp",
+            Items = new List<Item>
+            {
+                new Item { Index = 1, Name = "Widget A" },
+                new Item { Index = 2, Name = "Widget B" },
+                new Item { Index = 3, Name = "Widget C" }
+            }
+        };
+
+        // Create a template document programmatically.
+        var templatePath = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("<<foreach [item in order.Items]>>");
+        builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
+        builder.Writeln("<</foreach>>");
+
+        doc.Save(templatePath);
+
+        // Load the template for report generation.
+        var templateDoc = new Document(templatePath);
+
+        // Configure the reporting engine with RemoveEmptyParagraphs option.
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
+
+        // Measure memory before report generation.
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+        long memoryBefore = GC.GetTotalMemory(true);
+        var process = Process.GetCurrentProcess();
+        long privateBefore = process.PrivateMemorySize64;
+
+        // Build the report.
+        engine.BuildReport(templateDoc, order, "order");
+
+        // Measure memory after report generation.
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+        long memoryAfter = GC.GetTotalMemory(true);
+        process.Refresh();
+        long privateAfter = process.PrivateMemorySize64;
+
+        // Save the generated report.
+        var outputPath = "output.docx";
+        templateDoc.Save(outputPath);
+
+        // Output memory consumption details.
+        Console.WriteLine($"GC Total Memory Increase: {memoryAfter - memoryBefore:N0} bytes");
+        Console.WriteLine($"Private Memory Increase: {privateAfter - privateBefore:N0} bytes");
+    }
 }

@@ -6,28 +6,29 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a textbox shape (width: 200 points, height: 100 points).
-        Shape textBoxShape = builder.InsertShape(ShapeType.TextBox, 200, 100);
+        // Insert a text box shape.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 100);
 
-        // Set internal margins of the textbox (in points).
-        TextBox textBox = textBoxShape.TextBox;
-        textBox.InternalMarginTop = 10;
-        textBox.InternalMarginBottom = 10;
-        textBox.InternalMarginLeft = 10;
-        textBox.InternalMarginRight = 10;
+        // Set internal margins (in points).
+        textBox.TextBox.InternalMarginTop = 10;
+        textBox.TextBox.InternalMarginBottom = 10;
+        textBox.TextBox.InternalMarginLeft = 10;
+        textBox.TextBox.InternalMarginRight = 10;
 
-        // Move the builder cursor inside the textbox.
-        builder.MoveTo(textBoxShape.LastParagraph);
-
-        // Insert a paragraph with bold text.
+        // Move the builder inside the text box and add a bold paragraph.
+        builder.MoveTo(textBox.FirstParagraph);
         builder.Font.Bold = true;
-        builder.Writeln("Bold text inside the textbox.");
+        builder.Writeln("Bold text inside the text box.");
 
         // Save the document.
-        doc.Save("TextBoxMargins.docx");
+        string outputPath = "Output.docx";
+        doc.Save(outputPath);
+
+        // Indicate completion.
+        Console.WriteLine($"Document saved to {outputPath}");
     }
 }

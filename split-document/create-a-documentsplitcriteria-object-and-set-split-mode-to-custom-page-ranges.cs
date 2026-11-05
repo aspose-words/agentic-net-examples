@@ -7,62 +7,72 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with enough content to span multiple pages.
+        // Create a sample document with enough content to span several pages.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.Size = 12;
 
-        // Insert many lines; Aspose.Words will paginate automatically.
-        for (int i = 0; i < 200; i++)
+        for (int i = 1; i <= 5; i++)
         {
-            builder.Writeln($"Line {i + 1}");
+            builder.Writeln($"This is page {i}.");
+            // Add enough text to force a new page.
+            builder.Writeln(new string('x', 2000));
+            if (i < 5)
+                builder.InsertBreak(BreakType.PageBreak);
         }
 
-        // Ensure layout information is up‑to‑date before extracting pages.
+        // Ensure layout is calculated so PageCount is accurate.
         doc.UpdatePageLayout();
 
-        // Define the custom page ranges we want to split: 1‑2 and 3‑4.
-        int[][] pageRanges = new int[][]
-        {
-            new int[] { 1, 2 },
-            new int[] { 3, 4 }
-        };
+        // Define custom page ranges for splitting: pages 1‑2 and 4‑5.
+        string[] customRanges = { "1-2", "4-5" };
 
-        // Prepare the output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Prepare output folder.
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "SplitOutput");
+        Directory.CreateDirectory(outputFolder);
 
-        // Save each page range as a separate HTML file.
-        for (int i = 0; i < pageRanges.Length; i++)
+        // Save each custom range as a separate HTML file.
+        int rangeIndex = 1;
+        foreach (string range in customRanges)
         {
-            int startPage = pageRanges[i][0];
-            int endPage = pageRanges[i][1];
+            // Parse the range (e.g., "1-2").
+            string[] parts = range.Split('-');
+            if (parts.Length != 2 ||
+                !int.TryParse(parts[0], out int startPage) ||
+                !int.TryParse(parts[1], out int endPage) ||
+                startPage < 1 ||
+                endPage < startPage)
+            {
+                throw new InvalidOperationException($"Invalid page range: '{range}'.");
+            }
+
+            // Ensure the requested pages exist in the source document.
+            if (endPage > doc.PageCount)
+                throw new InvalidOperationException($"Requested page {endPage} exceeds document page count ({doc.PageCount}).");
+
             int pageCount = endPage - startPage + 1;
 
-            // Extract the required pages into a new document.
-            Document splitDoc = doc.ExtractPages(startPage, pageCount);
+            // Extract the required pages (zero‑based start index).
+            Document extracted = doc.ExtractPages(startPage - 1, pageCount);
 
-            // Configure HTML save options (default options are sufficient here).
-            HtmlSaveOptions saveOptions = new HtmlSaveOptions();
-
-            // Build the output file name.
-            string fileName = i == 0 ? "SplitDocument.html" : $"SplitDocument_{i}.html";
-            string outputPath = Path.Combine(outputDir, fileName);
-
-            // Save the split document.
-            splitDoc.Save(outputPath, saveOptions);
+            // Save the extracted pages as HTML.
+            string fileName = Path.Combine(outputFolder, $"output_range{rangeIndex}.html");
+            HtmlSaveOptions saveOptions = new HtmlSaveOptions
+            {
+                ExportHeadersFootersMode = ExportHeadersFootersMode.PerSection
+            };
+            extracted.Save(fileName, saveOptions);
+            rangeIndex++;
         }
 
-        // Validate that the primary output file was created.
-        string primaryFile = Path.Combine(outputDir, "SplitDocument.html");
-        if (!File.Exists(primaryFile))
-            throw new Exception("The primary split HTML file was not created.");
+        // Validate that the expected split files were created.
+        string[] generatedFiles = Directory.GetFiles(outputFolder, "output_range*.html");
+        if (generatedFiles.Length != customRanges.Length)
+            throw new InvalidOperationException($"Expected {customRanges.Length} HTML files, but found {generatedFiles.Length}.");
 
-        // Validate that at least one additional split file exists.
-        string additionalFile = Path.Combine(outputDir, "SplitDocument_1.html");
-        if (!File.Exists(additionalFile))
-            throw new Exception("Expected additional split HTML file was not created.");
-
-        Console.WriteLine("Document split completed successfully.");
+        Console.WriteLine("Split operation completed successfully. Generated files:");
+        foreach (string file in generatedFiles)
+        {
+            Console.WriteLine(Path.GetFileName(file));
+        }
     }
 }

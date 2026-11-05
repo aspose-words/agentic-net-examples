@@ -10,35 +10,29 @@ product: Aspose.Words
 
 ## Purpose
 
-This folder is a live, curated example set for Images scenarios. Treat every `.cs` file as a standalone console application. The goal is correct, warning-free examples that use documented Aspose APIs and match the original task intent.
+Provide an AI coding agent with clear guidance to generate robust, self-contained .NET snippets that handle image operations in Aspose.Words without external dependencies, while adhering to best-practice patterns for resource management and API usage.
 
 ## Non-negotiable conventions
 
-- Use Aspose.Words Shape and ImageData APIs for image operations.
-- Create local deterministic image inputs whenever the task implies an existing image, file, stream, folder, or batch source.
-- Use DocumentBuilder.InsertImage for standard insertion tasks and Shape.ImageData for shape-based scenarios.
-- Always check shape.HasImage before accessing ImageData.
-- Do not use System.Drawing.
-- Reset MemoryStream.Position before reuse.
-- Validate that expected output files are actually written.
+- Do not reference System.Drawing; use only Aspose.Drawing for all image creation and manipulation.
+- Do not download images from external sources; generate all sample images locally.
+- Do not assume pre-existing files or folders; always create required directories and sample assets at runtime.
+- Bootstrap local sample inputs for existing-file, folder, stream, image, and data workflows.
+- Prefer simple, verifiable workflows over speculative formatting shortcuts.
 
 ## Recommended workflow selection
 
-- Image Extraction workflow: 109 examples
-- Image Insertion And Shape workflow: 4 examples
-- Image Conversion And Manipulation workflow: 2 examples
-- Input Bootstrap workflow: 1 examples
-- General Image Workflow workflow: 4 examples
+- **Image Extraction workflow**: 109 examples
+- **Image Insertion And Shape workflow**: 4 examples
+- **Image Conversion And Manipulation workflow**: 2 examples
+- **Input Bootstrap workflow**: 1 examples
+- **General Image Workflow workflow**: 4 examples
 
 Use the simplest workflow that satisfies the task.
 
 ## Validation priorities
 
-1. The code must compile and run without manual input.
-2. API usage must be supported by the configured package versions.
-3. Exported outputs must actually be written by the example.
-4. Validation scenarios must inspect only the behavior requested by the task.
-5. Examples that depend on files, folders, streams, images, or data should bootstrap those inputs locally during the example run.
+1. After each image save operation, verify that the target file exists and throw an informative exception if it does not.
 
 ## File-to-task reference
 
@@ -86,7 +80,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Load a PDF file, extract embedded images, and convert them to JPEG with 85% quality.
   - Workflow: image-extraction
   - Outputs: pdf, jpeg
-  - Selected engine: mcp
+  - Selected engine: llm
 - `create-a-memory-stream-containing-a-bmp-image-extracted-from-a-docx-and-pass-it-to-the-api.cs`
   - Task: Create a memory stream containing a BMP image extracted from a DOCX and pass it to the API.
   - Workflow: image-extraction
@@ -101,7 +95,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Batch convert all extracted images from a collection of Word files to WebP format for web use.
   - Workflow: image-extraction
   - Outputs: webp
-  - Selected engine: mcp
+  - Selected engine: llm
 - `apply-a-grayscale-filter-to-all-jpeg-images-extracted-from-doc-files-before-saving-them.cs`
   - Task: Apply a grayscale filter to all JPEG images extracted from DOC files before saving them.
   - Workflow: image-extraction
@@ -116,7 +110,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Load a DOCM file, extract embedded images, and rename each file using its original shape name.
   - Workflow: image-extraction
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `convert-extracted-bmp-images-to-png-format-while-reducing-color-depth-to-256-colors.cs`
   - Task: Convert extracted BMP images to PNG format while reducing color depth to 256 colors.
   - Workflow: image-extraction
@@ -126,7 +120,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Extract images from footnotes in a Word document and save them as separate JPEG files.
   - Workflow: image-extraction
   - Outputs: docx, jpeg
-  - Selected engine: mcp
+  - Selected engine: llm
 - `batch-process-multiple-docx-files-extracting-images-and-generating-a-csv-report-of-image-m.cs`
   - Task: Batch process multiple DOCX files, extracting images and generating a CSV report of image metadata.
   - Workflow: image-extraction
@@ -171,12 +165,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Convert extracted GIF animations to individual PNG frames and store them in sequentially numbered files.
   - Workflow: image-extraction
   - Outputs: png, gif
-  - Selected engine: mcp
+  - Selected engine: llm
 - `apply-a-watermark-text-overlay-to-all-png-images-extracted-from-a-collection-of-word-docum.cs`
   - Task: Apply a watermark text overlay to all PNG images extracted from a collection of Word documents.
   - Workflow: image-extraction
   - Outputs: docx, png
-  - Selected engine: llm
+  - Selected engine: mcp
 - `extract-images-from-comments-in-a-docx-file-and-save-them-using-the-comment-identifier-as.cs`
   - Task: Extract images from comments in a DOCX file and save them using the comment identifier as filename.
   - Workflow: image-extraction
@@ -186,12 +180,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Batch convert extracted TIFF images to JPEG with 90% quality and store them in the output directory.
   - Workflow: image-extraction
   - Outputs: jpeg, tiff
-  - Selected engine: mcp
+  - Selected engine: llm
 - `load-a-doc-file-extract-all-embedded-vector-images-and-convert-them-to-emf-format.cs`
   - Task: Load a DOC file, extract all embedded vector images, and convert them to EMF format.
   - Workflow: image-extraction
   - Outputs: doc, emf
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `resize-extracted-bmp-images-to-a-maximum-file-size-of-200-kilobytes-using-quality-scaling.cs`
   - Task: Resize extracted BMP images to a maximum file size of 200 kilobytes using quality scaling.
   - Workflow: image-extraction
@@ -236,7 +230,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Extract images from a DOCX file's chart objects and convert them to high-resolution PNG.
   - Workflow: image-extraction
   - Outputs: docx, png
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `resize-extracted-images-to-square-dimensions-of-500-by-500-pixels-adding-padding-where-nec.cs`
   - Task: Resize extracted images to square dimensions of 500 by 500 pixels, adding padding where necessary.
   - Workflow: image-extraction
@@ -251,12 +245,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Load a DOCX file, extract images, and generate an Excel spreadsheet listing image metadata.
   - Workflow: image-extraction
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `extract-images-from-a-word-document-s-equation-objects-and-save-them-as-png-for-external-u.cs`
   - Task: Extract images from a Word document's equation objects and save them as PNG for external use.
   - Workflow: image-extraction
   - Outputs: docx, png
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `apply-lossless-png-compression-to-all-extracted-images-and-compare-file-size-reduction-sta.cs`
   - Task: Apply lossless PNG compression to all extracted images and compare file size reduction statistics.
   - Workflow: image-extraction
@@ -281,7 +275,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Extract images from a Word document's embedded OLE objects and save them using the OLE identifier.
   - Workflow: image-extraction
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `batch-process-a-collection-of-docx-files-extracting-images-and-creating-a-summary-pdf-cata.cs`
   - Task: Batch process a collection of DOCX files, extracting images and creating a summary PDF catalog.
   - Workflow: image-extraction
@@ -291,7 +285,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Resize extracted JPEG images to 1024x768 resolution while maintaining original aspect ratio.
   - Workflow: image-extraction
   - Outputs: jpeg
-  - Selected engine: mcp
+  - Selected engine: llm
 - `apply-a-sepia-tone-effect-to-all-png-images-extracted-from-a-set-of-word-documents.cs`
   - Task: Apply a sepia tone effect to all PNG images extracted from a set of Word documents.
   - Workflow: image-extraction
@@ -301,17 +295,17 @@ Use the simplest workflow that satisfies the task.
   - Task: Extract images from a DOCX file's custom document properties and store them with property names.
   - Workflow: image-extraction
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `batch-convert-extracted-bmp-images-to-jpeg-with-80-quality-and-log-conversion-results.cs`
   - Task: Batch convert extracted BMP images to JPEG with 80% quality and log conversion results.
   - Workflow: image-extraction
   - Outputs: jpeg, bmp
-  - Selected engine: mcp
+  - Selected engine: llm
 - `load-a-word-document-extract-images-and-embed-them-into-a-powerpoint-presentation-automati.cs`
   - Task: Load a Word document, extract images, and embed them into a PowerPoint presentation automatically.
   - Workflow: image-extraction
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `extract-images-from-a-docx-file-s-content-controls-and-rename-files-using-control-identifi.cs`
   - Task: Extract images from a DOCX file's content controls and rename files using control identifiers.
   - Workflow: image-extraction
@@ -321,7 +315,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Resize extracted GIF images to a maximum width of 300 pixels while preserving animation frames.
   - Workflow: image-extraction
   - Outputs: gif
-  - Selected engine: mcp
+  - Selected engine: llm
 - `apply-a-contrast-enhancement-filter-to-all-extracted-png-images-before-saving-them-to-disk.cs`
   - Task: Apply a contrast enhancement filter to all extracted PNG images before saving them to disk.
   - Workflow: image-extraction
@@ -346,7 +340,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Extract images from a Word document's footnote references and name files using footnote numbers.
   - Workflow: image-extraction
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `batch-process-doc-files-extracting-images-and-creating-a-zip-archive-containing-all-extrac.cs`
   - Task: Batch process DOC files, extracting images and creating a zip archive containing all extracted files.
   - Workflow: image-extraction
@@ -366,7 +360,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Extract images from a DOCX file's embedded video thumbnails and save them as PNG files.
   - Workflow: image-extraction
   - Outputs: docx, png
-  - Selected engine: mcp
+  - Selected engine: llm
 - `batch-convert-extracted-tiff-images-to-lossless-png-while-preserving-metadata-such-as-dpi.cs`
   - Task: Batch convert extracted TIFF images to lossless PNG while preserving metadata such as DPI.
   - Workflow: image-extraction
@@ -386,7 +380,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Resize extracted BMP images to a fixed 1024 pixel width, adjusting height proportionally.
   - Workflow: image-extraction
   - Outputs: bmp
-  - Selected engine: llm
+  - Selected engine: mcp
 - `apply-a-sharpening-filter-to-all-png-images-extracted-from-word-documents-before-re-saving.cs`
   - Task: Apply a sharpening filter to all PNG images extracted from Word documents before re-saving them.
   - Workflow: image-extraction
@@ -431,12 +425,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Extract images from a DOCX file's embedded audio cover art and store them as JPEG files.
   - Workflow: image-extraction
   - Outputs: docx, jpeg
-  - Selected engine: mcp
+  - Selected engine: llm
 - `batch-convert-extracted-bmp-images-to-webp-with-lossless-compression-and-log-conversion-de.cs`
   - Task: Batch convert extracted BMP images to WebP with lossless compression and log conversion details.
   - Workflow: image-extraction
   - Outputs: bmp, webp
-  - Selected engine: mcp
+  - Selected engine: llm
 - `load-a-word-document-extract-images-and-create-a-powershell-script-to-re-embed-them-later.cs`
   - Task: Load a Word document, extract images, and create a PowerShell script to re-embed them later.
   - Workflow: image-extraction
@@ -456,7 +450,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply a border of 5 pixels in red color to all extracted PNG images before saving.
   - Workflow: image-extraction
   - Outputs: png
-  - Selected engine: llm
+  - Selected engine: mcp
 - `batch-extract-images-from-a-collection-of-doc-files-and-generate-an-excel-index-with-file.cs`
   - Task: Batch extract images from a collection of DOC files and generate an Excel index with file paths.
   - Workflow: image-extraction
@@ -476,7 +470,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Extract images from a Word document's embedded chart data and export them as SVG files.
   - Workflow: image-extraction
   - Outputs: docx, svg
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `batch-process-docx-files-extracting-images-and-creating-a-summary-csv-containing-image-siz.cs`
   - Task: Batch process DOCX files, extracting images and creating a summary CSV containing image sizes.
   - Workflow: image-extraction
@@ -511,12 +505,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Extract images from a DOCX file's custom XML data and map them to database records.
   - Workflow: image-extraction
   - Outputs: docx, xml
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `resize-extracted-bmp-images-to-640x480-resolution-for-use-in-legacy-applications.cs`
   - Task: Resize extracted BMP images to 640x480 resolution for use in legacy applications.
   - Workflow: image-extraction
   - Outputs: bmp
-  - Selected engine: llm
+  - Selected engine: mcp
 - `apply-a-hue-rotation-of-180-degrees-to-all-extracted-png-images-for-color-testing.cs`
   - Task: Apply a hue rotation of 180 degrees to all extracted PNG images for color testing.
   - Workflow: image-extraction
@@ -531,7 +525,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Convert extracted JPEG images to high-quality WebP for optimized web delivery.
   - Workflow: image-extraction
   - Outputs: jpeg, webp
-  - Selected engine: mcp
+  - Selected engine: llm
 - `load-a-docx-file-replace-all-images-with-placeholders-and-export-to-html-preserving-layout.cs`
   - Task: Load a DOCX file, replace all images with placeholders, and export to HTML preserving layout.
   - Workflow: general-image-workflow
@@ -561,7 +555,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Extract images from a DOCX file's embedded spreadsheet charts and save them as PNG files.
   - Workflow: image-extraction
   - Outputs: docx, png
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `batch-convert-extracted-bmp-images-to-lossless-png-and-generate-a-checksum-file-for-verifi.cs`
   - Task: Batch convert extracted BMP images to lossless PNG and generate a checksum file for verification.
   - Workflow: image-extraction
@@ -621,7 +615,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply a saturation increase of 20% to all extracted JPEG images before re-saving them.
   - Workflow: image-extraction
   - Outputs: jpeg
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `extract-images-from-a-docx-file-s-embedded-audio-waveform-visualizations-and-save-as-png.cs`
   - Task: Extract images from a DOCX file's embedded audio waveform visualizations and save as PNG.
   - Workflow: image-extraction
@@ -636,7 +630,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Load a Word document, extract images, and generate a JSON file containing base64 encoded data.
   - Workflow: image-extraction
   - Outputs: docx, json
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `extract-images-from-a-docx-file-s-embedded-map-tiles-and-store-them-using-tile-coordinates.cs`
   - Task: Extract images from a DOCX file's embedded map tiles and store them using tile coordinates.
   - Workflow: image-extraction
@@ -646,56 +640,53 @@ Use the simplest workflow that satisfies the task.
 ## Common failure patterns and preferred agent fixes
 
 - **Missing local image bootstrap**
-  - Symptom: Examples assume an existing image file or source document already exists.
-  - Preferred fix: Create deterministic local sample images and source documents before insertion, extraction, or conversion.
+  - Symptom: The code fails at runtime because the expected sample image or source document file is not present on disk.
+  - Root cause: The example assumes that an image file or Word document already exists, violating the rule against external dependencies.
+  - Preferred fix: Create the required image files programmatically with Aspose.Drawing before any insertion or extraction step.
+  - Prevention: Always include deterministic image-creation logic at the start of the snippet and ensure the output folder is created.
 
 - **Shape insertion at invalid location**
-  - Symptom: Runtime failures such as invalid insertion location or self-append mistakes.
-  - Preferred fix: Append image shapes only once and only into valid containers such as Paragraph.
+  - Symptom: DocumentBuilder throws an exception when attempting to insert a shape into a node that cannot contain child nodes.
+  - Root cause: The code inserts an image shape directly into a container such as a Table cell without first moving the builder to a valid Paragraph node.
+  - Preferred fix: Move the DocumentBuilder to a Paragraph (or other valid container) before calling InsertImage or creating a Shape.
+  - Prevention: Validate the target node type with NodeType checks and use DocumentBuilder.MoveTo before any insertion.
 
 - **Unsafe image extraction**
-  - Symptom: Code accesses ImageData on nodes that are not image-bearing shapes.
-  - Preferred fix: Enumerate Shape nodes and require shape.HasImage before accessing or saving ImageData.
+  - Symptom: Accessing ImageData on a non-image Shape results in a NullReferenceException or CS1061 compile error.
+  - Root cause: The snippet iterates over all Shape nodes without confirming that the shape actually contains an image.
+  - Preferred fix: Filter shapes with shape.HasImage before accessing shape.ImageData or calling Save.
+  - Prevention: Encapsulate the extraction loop with an if (shape.HasImage) guard and log skipped shapes for transparency.
 
 - **Stream reuse bugs**
-  - Symptom: Image or document stream operations fail because MemoryStream.Position was not reset.
-  - Preferred fix: Always reset stream.Position = 0 before reuse.
+  - Symptom: Saving an image to a MemoryStream and then reusing the same stream fails because the stream position is at the end.
+  - Root cause: The code does not reset MemoryStream.Position to zero before reading or passing the stream to another API.
+  - Preferred fix: Set stream.Position = 0 immediately after each write operation and before any subsequent read.
+  - Prevention: Wrap stream handling in a using block and always reset the position after saving.
 
 - **Context-specific image container mistakes**
-  - Symptom: Comment, content-control, footnote, or property-based image tasks fail due to wrong document structure assumptions.
-  - Preferred fix: Traverse the actual container nodes first, then shapes inside them, and insert shapes only through valid child containers.
+  - Symptom: Image extraction from headers, footers, footnotes, or SmartArt fails because the code traverses the wrong node hierarchy.
+  - Root cause: The snippet assumes that images are direct children of the Document node rather than being nested inside HeaderFooter, Footnote, or SmartArt containers.
+  - Preferred fix: First locate the appropriate container (e.g., HeaderFooter, Footnote) and then enumerate its child Shape nodes.
+  - Prevention: Structure the traversal logic to reflect the actual document model hierarchy and use explicit container type checks.
 
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.9.0`
-- Package: `Aspose.Drawing.Common` `26.8.0`
-- Package: `Newtonsoft.Json`
+- Primary package: `Aspose.Words` `26.10.0`
 
 ## Command reference
-
-### Create a temporary console project
 
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-```
-
-### Add required packages
-
-```bash
-dotnet add package Aspose.Words --version 26.9.0
-dotnet add package Aspose.Drawing.Common --version 26.8.0
+dotnet add package Aspose.Words --version 26.10.0
+dotnet add package Aspose.Drawing.Common --version 26.10.0
 dotnet add package Newtonsoft.Json
 ```
-
-### Copy a category example into the temp project
 
 ```powershell
 Copy-Item ..\images\<example-file>.cs .\Program.cs
 ```
-
-### Build and run
 
 ```bash
 dotnet build --configuration Release --verbosity minimal
@@ -704,6 +695,5 @@ dotnet run --configuration Release --no-build
 
 ## Category update guidance
 
-- Preserve file-to-task traceability. Any future update should keep the original task text associated with the file in metadata.
-- When replacing a file, prefer the latest verified publish-ready version rather than a merely compiling draft.
-- Keep examples standalone, bootstrap missing inputs locally, and prefer documented Aspose APIs over speculative shortcuts.
+- Update the sample image dimensions and colors when new Aspose.Drawing features are released to keep examples relevant.
+- Periodically verify that ImageType, ImageFormat, and Save overload signatures have not changed in newer Aspose.Words versions.

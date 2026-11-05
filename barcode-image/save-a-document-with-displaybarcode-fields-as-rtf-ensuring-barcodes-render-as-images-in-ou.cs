@@ -2,49 +2,45 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
-using Aspose.Words.Saving;
 using Aspose.BarCode.Generation;
+using Aspose.Drawing;
 
-public class CustomBarcodeGenerator : IBarcodeGenerator
+public sealed class CustomBarcodeGenerator : IBarcodeGenerator
 {
-    // Generates a barcode image based on the supplied parameters.
+    // Generates a barcode image based on the parameters from the DISPLAYBARCODE field.
     public Stream GetBarcodeImage(Aspose.Words.Fields.BarcodeParameters parameters)
     {
-        // Convert the barcode type string to the corresponding SymbologyEncodeType enum value.
-        SymbologyEncodeType encodeType = (SymbologyEncodeType)Enum.Parse(
-            typeof(SymbologyEncodeType), parameters.BarcodeType, true);
+        // Map the string barcode type to a SymbologyEncodeType using EncodeTypes static values.
+        SymbologyEncodeType encodeType = EncodeTypes.Code128; // default
 
-        // Create the barcode generator.
-        var generator = new BarcodeGenerator(encodeType, parameters.BarcodeValue);
-
-        // Optional: apply background color if provided.
-        if (!string.IsNullOrEmpty(parameters.BackgroundColor))
+        if (!string.IsNullOrEmpty(parameters.BarcodeType))
         {
-            // Expected format: "0xRRGGBB"
-            int argb = int.Parse(parameters.BackgroundColor.Substring(2),
-                System.Globalization.NumberStyles.HexNumber);
-            generator.Parameters.BackColor = Aspose.Drawing.Color.FromArgb(argb);
+            string type = parameters.BarcodeType.ToUpperInvariant();
+            if (type == "QR")
+                encodeType = EncodeTypes.QR;
+            else if (type == "EAN13")
+                encodeType = EncodeTypes.EAN13;
+            else if (type == "CODE128")
+                encodeType = EncodeTypes.Code128;
+            // Additional types can be added here as needed.
         }
 
-        // Optional: apply foreground color if provided.
-        if (!string.IsNullOrEmpty(parameters.ForegroundColor))
+        MemoryStream stream = new MemoryStream();
+        using (BarcodeGenerator generator = new BarcodeGenerator(encodeType, parameters.BarcodeValue))
         {
-            int argb = int.Parse(parameters.ForegroundColor.Substring(2),
-                System.Globalization.NumberStyles.HexNumber);
-            // The property name may be ForeColor in newer versions; use reflection for compatibility.
-            var foreColorProp = generator.Parameters.GetType().GetProperty("ForeColor");
-            if (foreColorProp != null)
-                foreColorProp.SetValue(generator.Parameters, Aspose.Drawing.Color.FromArgb(argb));
+            // Set barcode and background colors.
+            generator.Parameters.Barcode.BarColor = Color.Black;
+            generator.Parameters.BackColor = Color.White;
+
+            // Save as PNG to the stream.
+            generator.Save(stream, BarCodeImageFormat.Png);
         }
 
-        // Generate the image into a memory stream.
-        var ms = new MemoryStream();
-        generator.Save(ms, BarCodeImageFormat.Png);
-        ms.Position = 0;
-        return ms;
+        stream.Position = 0;
+        return stream;
     }
 
-    // Legacy method simply forwards to the primary implementation.
+    // Legacy method delegates to the primary implementation.
     public Stream GetOldBarcodeImage(Aspose.Words.Fields.BarcodeParameters parameters)
     {
         return GetBarcodeImage(parameters);
@@ -56,27 +52,23 @@ public class Program
     public static void Main()
     {
         // Create a new empty document.
-        var doc = new Document();
-
-        // Register the custom barcode generator so that DISPLAYBARCODE fields are rendered as images.
-        doc.FieldOptions.BarcodeGenerator = new CustomBarcodeGenerator();
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a DISPLAYBARCODE field using the typed API.
-        var builder = new DocumentBuilder(doc);
-        var field = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
+        FieldDisplayBarcode field = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
+        field.BarcodeType = "CODE128";
+        field.BarcodeValue = "1234567890";
+        field.ForegroundColor = "0x000000"; // Black
+        field.BackgroundColor = "0xFFFFFF"; // White
 
-        // Set barcode properties.
-        field.BarcodeType = "QR";
-        field.BarcodeValue = "ABC123";
-        field.BackgroundColor = "0xF8BD69";
-        field.ForegroundColor = "0xB5413B";
-        field.ScalingFactor = "250";
+        // Register the custom barcode generator so that barcodes are rendered as images.
+        doc.FieldOptions.BarcodeGenerator = new CustomBarcodeGenerator();
 
         // Update fields to generate the barcode image.
         doc.UpdateFields();
 
-        // Save the document as RTF; the barcode will be stored as an image.
-        var rtfOptions = new RtfSaveOptions();
-        doc.Save("Barcodes.rtf", rtfOptions);
+        // Save the document as RTF; barcodes will appear as images.
+        doc.Save("output.rtf");
     }
 }

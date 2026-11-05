@@ -11,30 +11,28 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a text input form field with a name and a default value.
-        // Parameters: name, type, format, default text, max length (0 = unlimited).
-        builder.InsertTextInput("MyTextField", TextFormFieldType.Regular, "", "Default Text", 0);
+        string fieldName = "MyTextField";
+        builder.InsertTextInput(fieldName, TextFormFieldType.Regular, "", "Default", 0);
 
-        // Save the initial document (optional, demonstrates creation step).
-        doc.Save("FormFieldExample.docx");
+        // Save the document that contains the form field.
+        string initialPath = "FormFieldDemo.docx";
+        doc.Save(initialPath);
 
-        // Access the form field through the document's FormFields collection.
-        FormField? formField = doc.Range.FormFields["MyTextField"];
+        // Retrieve the form field from the document.
+        FormField? formField = doc.Range.FormFields[fieldName];
         if (formField == null)
-        {
-            throw new InvalidOperationException("The expected form field 'MyTextField' was not found.");
-        }
+            throw new InvalidOperationException($"Form field '{fieldName}' was not found.");
 
-        // Set the Result property to a predefined string value.
-        const string predefinedValue = "Predefined string value";
+        // Set the Result property to a predefined string.
+        string predefinedValue = "Predefined string value";
         formField.Result = predefinedValue;
 
         // Validate that the value was set correctly.
         if (formField.Result != predefinedValue)
-        {
-            throw new InvalidOperationException("Failed to set the form field result to the predefined value.");
-        }
+            throw new InvalidOperationException("Failed to set the form field result.");
 
-        // Save the modified document.
-        doc.Save("FormFieldResult.docx");
+        // Save the updated document.
+        string outputPath = "FormFieldResult.docx";
+        doc.Save(outputPath);
     }
 }

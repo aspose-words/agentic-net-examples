@@ -3,26 +3,25 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-public class FirstOccurrencePerSectionCallback : IReplacingCallback
+public class FirstOccurrencePerSectionReplacer : IReplacingCallback
 {
     private readonly HashSet<Section> _replacedSections = new HashSet<Section>();
 
     public ReplaceAction Replacing(ReplacingArgs args)
     {
-        // Find the section that contains the current match.
-        var matchNode = args.MatchNode;
-        if (matchNode == null)
+        // Ensure the match node is not null.
+        if (args.MatchNode == null)
             return ReplaceAction.Skip;
 
-        var section = matchNode.GetAncestor(NodeType.Section) as Section;
+        // Find the section that contains the current match.
+        Section? section = args.MatchNode.GetAncestor(NodeType.Section) as Section;
         if (section == null)
             return ReplaceAction.Skip;
 
-        // If we have already replaced a match in this section, skip further matches.
+        // Replace only the first occurrence in each section.
         if (_replacedSections.Contains(section))
             return ReplaceAction.Skip;
 
-        // First match in this section – perform the replacement.
         _replacedSections.Add(section);
         return ReplaceAction.Replace;
     }
@@ -32,32 +31,32 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with several sections, each containing the word "pattern" multiple times.
+        // Create a new document with two sections, each containing multiple occurrences of the pattern.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        builder.Writeln("Section 1: pattern pattern pattern");
+        // Section 1
+        builder.Writeln("Section 1 start. PLACEHOLDER appears here. Some more text. PLACEHOLDER again.");
+        // Insert a section break.
         builder.InsertBreak(BreakType.SectionBreakNewPage);
-        builder.Writeln("Section 2: pattern pattern");
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
-        builder.Writeln("Section 3: no matching word here");
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
-        builder.Writeln("Section 4: pattern");
+        // Section 2
+        builder.Writeln("Section 2 start. PLACEHOLDER appears here too. Another PLACEHOLDER here.");
 
-        // Set up find-and-replace options with a custom callback that replaces only the first occurrence per section.
+        // Set up the replace callback to replace only the first occurrence per section.
         FindReplaceOptions options = new FindReplaceOptions
         {
-            ReplacingCallback = new FirstOccurrencePerSectionCallback()
+            ReplacingCallback = new FirstOccurrencePerSectionReplacer()
         };
 
         // Perform the replacement.
-        int replacedCount = doc.Range.Replace("pattern", "replaced", options);
+        int replacedCount = doc.Range.Replace("PLACEHOLDER", "REPLACED", options);
 
         // Validate that at least one replacement occurred.
         if (replacedCount == 0)
             throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
         // Save the modified document.
-        doc.Save("output.docx");
+        const string outputPath = "output.docx";
+        doc.Save(outputPath);
     }
 }

@@ -1,41 +1,36 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+
+// Alias to avoid conflict with System.Range
+using AsposeRange = Aspose.Words.Range;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a sample document with some text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello world! This is a sample document.");
 
-        // Add sample paragraphs.
-        builder.Writeln("This is a sample document.");
-        builder.Writeln("ReplaceMe"); // Text that will be replaced.
+        // Save the source document locally.
+        const string sourcePath = "Source.docx";
+        doc.Save(sourcePath);
 
-        // Validate that the document's range contains no form fields.
-        if (doc.Range.FormFields.Count == 0)
+        // Load the document to work with its range.
+        Document loadedDoc = new Document(sourcePath);
+        AsposeRange range = loadedDoc.Range;
+
+        // Validate that the range contains no form fields.
+        if (range.FormFields.Count == 0)
         {
-            // Perform the text replacement because no form fields are present.
-            FindReplaceOptions options = new FindReplaceOptions();
-            doc.Range.Replace("ReplaceMe", "ReplacedText", options);
-        }
-        else
-        {
-            // If form fields exist, skip replacement (could log or handle as needed).
-            Console.WriteLine("Document contains form fields; replacement aborted.");
+            // Since there are no form fields, perform a text replacement.
+            range.Replace("Hello", "Hi", new FindReplaceOptions(FindReplaceDirection.Forward));
         }
 
         // Save the resulting document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
-        doc.Save(outputPath);
-
-        // Optional verification: ensure the replacement occurred.
-        bool replacementSucceeded = doc.Range.Text.Contains("ReplacedText");
-        Console.WriteLine(replacementSucceeded
-            ? "Replacement completed successfully."
-            : "Replacement was not performed.");
+        const string outputPath = "Result.docx";
+        loadedDoc.Save(outputPath);
     }
 }

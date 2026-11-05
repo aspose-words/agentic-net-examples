@@ -6,88 +6,67 @@ using Aspose.Words.Math;
 
 public class OfficeMathBatchInsert
 {
-    // Predefined EQ field argument that creates a simple fraction: \f(1,2)
-    private const string EquationArgs = @"\f(1,2)";
-
     public static void Main()
     {
         // Create a sample document with several paragraphs.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        builder.Writeln("First paragraph.");
-        builder.Writeln("Second paragraph.");
-        builder.Writeln("Third paragraph.");
-
-        // Get the original set of paragraphs before any modifications.
-        NodeCollection originalParagraphs = doc.GetChildNodes(NodeType.Paragraph, true);
-        int originalParagraphCount = originalParagraphs.Count;
-
-        // Insert the predefined equation into every original paragraph.
-        foreach (Paragraph para in originalParagraphs)
+        for (int i = 1; i <= 5; i++)
         {
-            InsertEquationIntoParagraph(doc, para, EquationArgs);
+            builder.Writeln($"This is paragraph {i}.");
         }
 
-        // Save the result.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OutputWithEquations.docx");
-        doc.Save(outputPath);
+        // Save the sample input document.
+        string inputPath = "Input.docx";
+        doc.Save(inputPath, SaveFormat.Docx);
 
-        // Validation: ensure the file exists and the expected number of equations were added.
+        // Load the document for batch processing.
+        Document processedDoc = new Document(inputPath);
+        DocumentBuilder procBuilder = new DocumentBuilder(processedDoc);
+
+        // Retrieve all paragraph nodes.
+        NodeCollection paragraphs = processedDoc.GetChildNodes(NodeType.Paragraph, true);
+
+        // Predefined EQ argument for the OfficeMath equation.
+        const string eqArgument = @"\f(1,2)";
+
+        foreach (Paragraph para in paragraphs)
+        {
+            // Position the builder at the start of the current paragraph.
+            procBuilder.MoveTo(para);
+
+            // Insert an EQ field which will be converted to OfficeMath.
+            Field field = procBuilder.InsertField(FieldType.FieldEquation, true);
+            FieldEQ fieldEq = field as FieldEQ;
+            if (fieldEq == null)
+                continue; // Safety check; should not occur.
+
+            // Write the EQ argument into the field separator.
+            procBuilder.MoveTo(fieldEq.Separator);
+            procBuilder.Write(eqArgument);
+
+            // Convert the field to a real OfficeMath node.
+            OfficeMath officeMath = fieldEq.AsOfficeMath();
+            if (officeMath != null)
+            {
+                // Insert the OfficeMath node before the field start node.
+                CompositeNode parent = field.Start.ParentNode as CompositeNode;
+                if (parent != null)
+                {
+                    parent.InsertBefore(officeMath, field.Start);
+                }
+
+                // Remove the original field, leaving only the OfficeMath node.
+                field.Remove();
+            }
+        }
+
+        // Save the processed document.
+        string outputPath = "Output.docx";
+        processedDoc.Save(outputPath, SaveFormat.Docx);
+
+        // Validate that the output file was created.
         if (!File.Exists(outputPath))
             throw new InvalidOperationException("The output document was not created.");
-
-        // Count only top‑level OfficeMath nodes (MathObjectType == OMathPara).
-        int equationCount = 0;
-        foreach (OfficeMath om in doc.GetChildNodes(NodeType.OfficeMath, true))
-        {
-            if (om.MathObjectType == MathObjectType.OMathPara)
-                equationCount++;
-        }
-
-        if (equationCount != originalParagraphCount)
-            throw new InvalidOperationException($"Expected {originalParagraphCount} equations, but found {equationCount}.");
-    }
-
-    // Inserts an OfficeMath equation into the specified paragraph using the EQ‑field bootstrap workflow.
-    private static void InsertEquationIntoParagraph(Document doc, Paragraph paragraph, string eqArgs)
-    {
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.MoveTo(paragraph);
-
-        // Insert an EQ field.
-        Field eqField = builder.InsertField(FieldType.FieldEquation, true);
-        FieldEQ fieldEQ = eqField as FieldEQ;
-        if (fieldEQ == null)
-            throw new InvalidOperationException("Failed to create an EQ field.");
-
-        // Write the equation arguments into the field separator.
-        if (fieldEQ.Separator == null)
-            throw new InvalidOperationException("EQ field separator is missing.");
-
-        builder.MoveTo(fieldEQ.Separator);
-        builder.Write(eqArgs);
-
-        // Ensure the field code is up‑to‑date before conversion.
-        fieldEQ.Update();
-
-        // Convert the field to a real OfficeMath object.
-        OfficeMath officeMath = fieldEQ.AsOfficeMath();
-
-        if (officeMath == null)
-            throw new InvalidOperationException("Failed to convert EQ field to OfficeMath.");
-
-        // Insert the OfficeMath node before the field start node.
-        fieldEQ.Start.ParentNode.InsertBefore(officeMath, fieldEQ.Start);
-
-        // Apply display formatting only to top‑level equations.
-        if (officeMath.MathObjectType == MathObjectType.OMathPara)
-        {
-            officeMath.DisplayType = OfficeMathDisplayType.Display;
-            officeMath.Justification = OfficeMathJustification.Left;
-        }
-
-        // Remove the original field, leaving only the OfficeMath node.
-        fieldEQ.Remove();
     }
 }

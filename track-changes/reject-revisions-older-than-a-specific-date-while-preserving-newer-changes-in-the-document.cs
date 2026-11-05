@@ -1,46 +1,44 @@
 using System;
-using System.Collections.Generic;
 using Aspose.Words;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static void Main()
     {
-        // Create a new document and add initial content.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Add initial content (no revision).
         builder.Writeln("Original paragraph.");
 
         // First set of revisions (older date).
-        DateTime oldRevisionDate = new DateTime(2020, 1, 1);
-        doc.StartTrackRevisions("OldAuthor", oldRevisionDate);
-        builder.Writeln("Old revision paragraph.");
+        DateTime oldRevisionDate = new DateTime(2023, 1, 1);
+        doc.StartTrackRevisions("Author1", oldRevisionDate);
+        builder.Writeln("Inserted paragraph from older revision.");
         doc.StopTrackRevisions();
 
         // Second set of revisions (newer date).
-        DateTime newRevisionDate = new DateTime(2022, 1, 1);
-        doc.StartTrackRevisions("NewAuthor", newRevisionDate);
-        builder.Writeln("New revision paragraph.");
+        DateTime newRevisionDate = new DateTime(2023, 6, 1);
+        doc.StartTrackRevisions("Author2", newRevisionDate);
+        builder.Writeln("Inserted paragraph from newer revision.");
         doc.StopTrackRevisions();
 
-        // Define the cutoff date: revisions older than this will be rejected.
-        DateTime cutoffDate = new DateTime(2021, 1, 1);
+        // Define cutoff date: revisions older than this will be rejected.
+        DateTime cutoffDate = new DateTime(2023, 3, 1);
 
-        // Collect revisions to reject (those older than the cutoff date).
-        List<Revision> revisionsToReject = new List<Revision>();
-        foreach (Revision rev in doc.Revisions)
+        // Process revisions: reject those older than cutoff, accept newer ones.
+        // Iterate backwards because Accept/Reject modifies the collection.
+        for (int i = doc.Revisions.Count - 1; i >= 0; i--)
         {
+            Revision rev = doc.Revisions[i];
             if (rev.DateTime < cutoffDate)
-                revisionsToReject.Add(rev);
-        }
-
-        // Reject the collected revisions.
-        foreach (Revision rev in revisionsToReject)
-        {
-            rev.Reject();
+                rev.Reject();
+            else
+                rev.Accept();
         }
 
         // Save the resulting document.
-        doc.Save("Output.docx");
+        doc.Save("Result.docx");
     }
 }

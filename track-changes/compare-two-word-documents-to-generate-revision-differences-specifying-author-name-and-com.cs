@@ -5,33 +5,34 @@ public class Program
 {
     public static void Main()
     {
-        // Create the original document.
-        Document originalDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(originalDoc);
-        builder.Writeln("Hello world!");
-        builder.Writeln("This is the original document.");
-        originalDoc.Save("Original.docx");
+        // Create the first sample document.
+        Document doc1 = new Document();
+        DocumentBuilder builder1 = new DocumentBuilder(doc1);
+        builder1.Writeln("Hello world!");
+        builder1.Writeln("This is the first document.");
+        doc1.Save("doc1.docx");
 
-        // Create the modified document.
-        Document modifiedDoc = new Document();
-        DocumentBuilder builder2 = new DocumentBuilder(modifiedDoc);
+        // Create the second sample document with a modification.
+        Document doc2 = new Document();
+        DocumentBuilder builder2 = new DocumentBuilder(doc2);
         builder2.Writeln("Hello world!");
-        builder2.Writeln("This is the modified document with extra line.");
-        builder2.Writeln("Additional paragraph added.");
-        modifiedDoc.Save("Modified.docx");
+        builder2.Writeln("This is the second document with changes.");
+        doc2.Save("doc2.docx");
 
-        // Compare the documents to generate revisions, specifying author and date.
-        string authorName = "ComparisonAuthor";
-        DateTime comparisonDate = new DateTime(2023, 1, 1, 12, 0, 0);
-        originalDoc.Compare(modifiedDoc, authorName, comparisonDate);
+        // Compare the two documents.
+        // The comparison will generate revisions in doc1.
+        string authorName = "John Doe";
+        DateTime comparisonDate = new DateTime(2023, 1, 1);
+        doc1.Compare(doc2, authorName, comparisonDate);
 
         // Save the document that now contains revision differences.
-        originalDoc.Save("ComparedWithRevisions.docx");
+        doc1.Save("Compared.docx");
 
-        // Output revision details.
-        foreach (Revision rev in originalDoc.Revisions)
+        // Output revision details to the console.
+        foreach (Revision rev in doc1.Revisions)
         {
-            Console.WriteLine($"Revision Type: {rev.RevisionType}, Author: {rev.Author}, Date: {rev.DateTime}");
+            string revisionText = rev.ParentNode?.GetText()?.Trim() ?? string.Empty;
+            Console.WriteLine($"Type: {rev.RevisionType}, Author: {rev.Author}, Date: {rev.DateTime}, Text: \"{revisionText}\"");
         }
     }
 }

@@ -1,49 +1,38 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert first paragraph with a bookmark.
-        builder.StartBookmark("bm1");
-        builder.Writeln("First paragraph.");
-        builder.EndBookmark("bm1");
+        // Insert first bookmark.
+        builder.StartBookmark("Bookmark1");
+        builder.Writeln("First bookmarked paragraph.");
+        builder.EndBookmark("Bookmark1");
 
-        // Insert second paragraph with a bookmark.
-        builder.StartBookmark("bm2");
-        builder.Writeln("Second paragraph.");
-        builder.EndBookmark("bm2");
+        // Insert second bookmark.
+        builder.StartBookmark("Bookmark2");
+        builder.Writeln("Second bookmarked paragraph.");
+        builder.EndBookmark("Bookmark2");
 
-        // Insert third paragraph with a bookmark.
-        builder.StartBookmark("bm3");
-        builder.Writeln("Third paragraph.");
-        builder.EndBookmark("bm3");
+        // Insert a paragraph without a bookmark.
+        builder.Writeln("Regular paragraph.");
 
-        // Save the document (optional, demonstrates lifecycle handling).
-        doc.Save("BookmarksDemo.docx");
+        // Save the document.
+        string filePath = "BookmarksDemo.docx";
+        doc.Save(filePath);
 
-        // Get the second paragraph.
-        Paragraph secondParagraph = doc.FirstSection.Body.Paragraphs[1];
+        // Load the document.
+        Document loadedDoc = new Document(filePath);
 
-        // Count bookmarks that are fully contained within the second paragraph.
-        int bookmarkCount = 0;
-        foreach (Bookmark bookmark in doc.Range.Bookmarks)
-        {
-            // Determine the paragraph that contains the bookmark start.
-            Paragraph bookmarkParagraph = bookmark.BookmarkStart.GetAncestor(NodeType.Paragraph) as Paragraph;
+        // Retrieve the count of bookmarks within the document's range.
+        int bookmarkCount = loadedDoc.Range.Bookmarks.Count;
 
-            // If the bookmark start resides in the second paragraph, count it.
-            if (bookmarkParagraph == secondParagraph)
-                bookmarkCount++;
-        }
-
-        // Output the result.
-        Console.WriteLine($"Number of bookmarks within the selected range: {bookmarkCount}");
+        // Output the count.
+        Console.WriteLine($"Number of bookmarks in the document range: {bookmarkCount}");
     }
 }

@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -7,48 +6,47 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder for constructing content.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a sample table with 2 rows and 3 columns.
-        Table table = builder.StartTable();
-        for (int col = 0; col < 3; col++)
-        {
-            builder.InsertCell();
-            builder.Writeln($"Header {col + 1}");
-        }
+        // Build a sample table (2 rows x 2 columns) to demonstrate padding changes.
+        builder.StartTable();
+
+        builder.InsertCell();
+        builder.Write("Cell 1");
+        builder.InsertCell();
+        builder.Write("Cell 2");
         builder.EndRow();
 
-        for (int row = 0; row < 2; row++)
-        {
-            for (int col = 0; col < 3; col++)
-            {
-                builder.InsertCell();
-                builder.Writeln($"R{row + 1}C{col + 1}");
-            }
-            builder.EndRow();
-        }
+        builder.InsertCell();
+        builder.Write("Cell 3");
+        builder.InsertCell();
+        builder.Write("Cell 4");
+        builder.EndRow();
+
         builder.EndTable();
 
-        // Iterate through all tables and set uniform cell padding of five points.
-        foreach (Table tbl in doc.GetChildNodes(NodeType.Table, true).OfType<Table>())
+        // Iterate through all tables in the document.
+        foreach (Table tbl in doc.GetChildNodes(NodeType.Table, true))
         {
-            foreach (Row r in tbl.Rows)
+            // Iterate through each row in the current table.
+            foreach (Row row in tbl.Rows)
             {
-                foreach (Cell c in r.Cells)
+                // Iterate through each cell in the current row.
+                foreach (Cell cell in row.Cells)
                 {
-                    // Set uniform padding (points) for the cell.
-                    c.CellFormat.LeftPadding = 5;
-                    c.CellFormat.RightPadding = 5;
-                    c.CellFormat.TopPadding = 5;
-                    c.CellFormat.BottomPadding = 5;
+                    // Apply a uniform padding of five points to all sides of the cell.
+                    cell.CellFormat.TopPadding = 5;
+                    cell.CellFormat.BottomPadding = 5;
+                    cell.CellFormat.LeftPadding = 5;
+                    cell.CellFormat.RightPadding = 5;
                 }
             }
         }
 
-        // Save the document.
-        const string outputPath = "Output.docx";
+        // Save the modified document to disk.
+        string outputPath = "Output.docx";
         doc.Save(outputPath);
     }
 }

@@ -1,5 +1,5 @@
 using System;
-using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -11,36 +11,24 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x1 table.
+        // Build a simple 1x1 table.
         builder.StartTable();
         builder.InsertCell();
-        builder.Writeln("Cell 1");
-        builder.InsertCell();
-        builder.Writeln("Cell 2");
+        builder.Writeln("Sample cell");
         builder.EndRow();
         builder.EndTable();
 
         // Retrieve the created table.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (table == null)
-            throw new InvalidOperationException("Table was not created.");
 
-        // Apply a thick top border to the first row.
-        Row firstRow = table.FirstRow;
-        firstRow.RowFormat.Borders.Top.LineWidth = 2.0;    // Thick border (points)
-        firstRow.RowFormat.Borders.Top.LineStyle = LineStyle.Single;
+        // Apply a thick top border.
+        table.SetBorder(BorderType.Top, LineStyle.Single, 2.0, Color.Black, true);
 
-        // Apply a thin bottom border to the last row.
-        Row lastRow = table.LastRow;
-        lastRow.RowFormat.Borders.Bottom.LineWidth = 0.5; // Thin border (points)
-        lastRow.RowFormat.Borders.Bottom.LineStyle = LineStyle.Single;
+        // Apply a thin bottom border.
+        table.SetBorder(BorderType.Bottom, LineStyle.Single, 0.5, Color.Black, true);
 
-        // Save the document.
-        string outputPath = "TableBorders.docx";
+        // Save the document to disk.
+        const string outputPath = "TableBorderExample.docx";
         doc.Save(outputPath);
-
-        // Verify that the file was saved.
-        if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not created.", outputPath);
     }
 }

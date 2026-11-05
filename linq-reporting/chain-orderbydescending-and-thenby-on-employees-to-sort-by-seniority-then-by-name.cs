@@ -4,61 +4,65 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using System.Text;
 
-public class Employee
+namespace LinqReportingExample
 {
-    public string Name { get; set; } = "";
-    public int Seniority { get; set; }
-}
-
-public class ReportModel
-{
-    public List<Employee> Employees { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main()
+    // Employee data model
+    public class Employee
     {
-        // Sample employee data.
-        List<Employee> employees = new()
+        public int Seniority { get; set; }
+        public string Name { get; set; } = string.Empty;
+    }
+
+    // Root model containing the collection of employees
+    public class ReportModel
+    {
+        public List<Employee> Employees { get; set; } = new();
+    }
+
+    public class Program
+    {
+        public static void Main()
         {
-            new Employee { Name = "Alice", Seniority = 5 },
-            new Employee { Name = "Bob", Seniority = 3 },
-            new Employee { Name = "Charlie", Seniority = 5 },
-            new Employee { Name = "David", Seniority = 2 }
-        };
+            // Register code page provider (required for Aspose.Words)
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Chain OrderByDescending and ThenBy to sort by seniority descending, then by name ascending.
-        List<Employee> sortedEmployees = employees
-            .OrderByDescending(e => e.Seniority)
-            .ThenBy(e => e.Name)
-            .ToList();
+            // Prepare sample data
+            var model = new ReportModel
+            {
+                Employees = new List<Employee>
+                {
+                    new Employee { Seniority = 5, Name = "Alice" },
+                    new Employee { Seniority = 3, Name = "Bob" },
+                    new Employee { Seniority = 5, Name = "Charlie" },
+                    new Employee { Seniority = 2, Name = "Diana" }
+                }
+            };
 
-        // Prepare the model for the report.
-        ReportModel model = new()
-        {
-            Employees = sortedEmployees
-        };
+            // Create a template document programmatically
+            var templatePath = "Template.docx";
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
 
-        // Create the LINQ Reporting template programmatically.
-        string templatePath = "Template.docx";
-        DocumentBuilder builder = new();
-        builder.Writeln("Employee Report");
-        builder.Writeln("<<foreach [e in Employees]>>");
-        builder.Writeln("Name: <<[e.Name]>>, Seniority: <<[e.Seniority]>>");
-        builder.Writeln("<</foreach>>");
-        builder.Document.Save(templatePath);
+            // Insert LINQ Reporting tags with sorting: OrderByDescending then ThenBy
+            builder.Writeln("<<foreach [e in Employees.OrderByDescending(e => e.Seniority).ThenBy(e => e.Name)]>>");
+            builder.Writeln("Name: <<[e.Name]>>, Seniority: <<[e.Seniority]>>");
+            builder.Writeln("<</foreach>>");
 
-        // Load the template document.
-        Document doc = new(templatePath);
+            // Save the template
+            doc.Save(templatePath);
 
-        // Build the report using Aspose.Words ReportingEngine.
-        ReportingEngine engine = new();
-        engine.BuildReport(doc, model, "model");
+            // Load the template for report generation
+            var reportDoc = new Document(templatePath);
 
-        // Save the generated report.
-        string reportPath = "Report.docx";
-        doc.Save(reportPath);
+            // Build the report
+            var engine = new ReportingEngine();
+            engine.BuildReport(reportDoc, model, "model");
+
+            // Save the generated report
+            var outputPath = "Report.docx";
+            reportDoc.Save(outputPath);
+        }
     }
 }

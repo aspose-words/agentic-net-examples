@@ -9,43 +9,40 @@ public class Program
 {
     public static void Main()
     {
-        // Define paths
-        string baseDir = Directory.GetCurrentDirectory();
-        string sampleImagePath = Path.Combine(baseDir, "sample.png");
-        string docPath = Path.Combine(baseDir, "sample.docx");
-        string outputFolder = Path.Combine(baseDir, "ExtractedImages");
+        // Paths
+        string inputDocPath = "sample.docx";
+        string sampleImagePath = "sample.png";
+        string outputFolder = "ExtractedImages";
 
         // Ensure output folder exists
         Directory.CreateDirectory(outputFolder);
 
         // -------------------------------------------------
-        // Create a deterministic sample image (sample.png)
+        // Create a deterministic sample image (100x100 white)
         // -------------------------------------------------
-        int imgWidth = 200;
-        int imgHeight = 100;
-        using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
+        int width = 100;
+        int height = 100;
+        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
         {
-            using (Graphics g = Graphics.FromImage(bitmap))
+            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
             {
-                g.Clear(Color.White);
-                // Draw a simple rectangle
-                g.DrawRectangle(Pens.Black, 10, 10, imgWidth - 20, imgHeight - 20);
+                g.Clear(Aspose.Drawing.Color.White);
             }
-            bitmap.Save(sampleImagePath, ImageFormat.Png);
+            bitmap.Save(sampleImagePath);
         }
 
         // -------------------------------------------------
-        // Create a DOCX document and insert the sample image
+        // Create a sample DOCX containing the image
         // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(sampleImagePath);
-        doc.Save(docPath);
+        doc.Save(inputDocPath);
 
         // -------------------------------------------------
-        // Load the DOCX document and extract all embedded images
+        // Load the DOCX and extract all embedded images
         // -------------------------------------------------
-        Document loadedDoc = new Document(docPath);
+        Document loadedDoc = new Document(inputDocPath);
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
 
         int imageIndex = 0;
@@ -53,23 +50,39 @@ public class Program
         {
             if (shape.HasImage)
             {
-                // Determine file extension based on image type
-                string extension = "." + shape.ImageData.ImageType.ToString().ToLowerInvariant();
+                string extension = GetExtension(shape.ImageData.ImageType);
                 string outputPath = Path.Combine(outputFolder, $"image-{imageIndex}{extension}");
-
-                // Save the image to the output folder
                 shape.ImageData.Save(outputPath);
+                if (!File.Exists(outputPath))
+                    throw new InvalidOperationException($"Failed to save extracted image to '{outputPath}'.");
                 imageIndex++;
             }
         }
 
-        // Validate that at least one image was extracted
+        // Validation: ensure at least one image was extracted
         if (imageIndex == 0)
-        {
             throw new InvalidOperationException("No images were extracted from the document.");
-        }
+    }
 
-        // Optional: indicate completion (no interactive prompts)
-        Console.WriteLine($"Extracted {imageIndex} image(s) to \"{outputFolder}\".");
+    // Helper to map ImageType to file extension
+    private static string GetExtension(ImageType imageType)
+    {
+        switch (imageType)
+        {
+            case ImageType.Jpeg:
+                return ".jpeg";
+            case ImageType.Png:
+                return ".png";
+            case ImageType.Gif:
+                return ".gif";
+            case ImageType.Bmp:
+                return ".bmp";
+            case ImageType.Emf:
+                return ".emf";
+            case ImageType.Wmf:
+                return ".wmf";
+            default:
+                return ".img";
+        }
     }
 }

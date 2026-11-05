@@ -5,19 +5,24 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and add some sample text.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello World!");
-        builder.Writeln("This is a second paragraph.");
+        // Create a sample document with some text.
+        Document originalDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(originalDoc);
+        builder.Writeln("Hello, Aspose.Words!");
+        builder.Writeln("This is a sample document.");
 
-        // Save the original document (optional, just for reference).
-        doc.Save("original.docx");
+        // Save the original document locally.
+        const string originalPath = "Original.docx";
+        originalDoc.Save(originalPath);
 
-        // Delete all characters in the document's body by deleting the whole document range.
+        // Load the document from the saved file.
+        Document doc = new Document(originalPath);
+
+        // Delete all characters in the document's body using the Range API.
         doc.Range.Delete();
 
-        // Save the resulting document after deletion.
-        doc.Save("deleted.docx");
+        // Save the modified document.
+        const string outputPath = "DeletedContent.docx";
+        doc.Save(outputPath);
     }
 }

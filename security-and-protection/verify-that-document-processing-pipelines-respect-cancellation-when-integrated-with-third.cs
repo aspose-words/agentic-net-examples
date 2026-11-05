@@ -1,78 +1,90 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Aspose.Words;
-using Aspose.Words.Tables; // For NodeType enum
 
 public class Program
 {
-    // Entry point of the console application.
-    public static async Task Main(string[] args)
+    // Simulates a third‑party reporting tool that processes each page of a document.
+    private static async Task ProcessDocumentAsync(Document doc, CancellationToken token)
     {
-        // Paths for temporary source and output documents.
-        string sourcePath = Path.Combine(Path.GetTempPath(), "sample.docx");
-        string outputPath = Path.Combine(Path.GetTempPath(), "processed.pdf");
+        // Ensure layout is up to date so PageCount is accurate.
+        doc.UpdatePageLayout();
+        int pageCount = doc.PageCount;
 
-        // Ensure any previous files are removed.
-        if (File.Exists(sourcePath)) File.Delete(sourcePath);
-        if (File.Exists(outputPath)) File.Delete(outputPath);
-
-        // 1. Create a sample document with many paragraphs to simulate a long‑running operation.
-        Document sourceDoc = new Document();
-        for (int i = 0; i < 500; i++)
+        for (int i = 0; i < pageCount; i++)
         {
-            sourceDoc.FirstSection.Body.AppendChild(new Paragraph(sourceDoc));
-            sourceDoc.FirstSection.Body.LastParagraph.AppendChild(new Run(sourceDoc, $"Paragraph {i + 1}"));
+            // Respect cancellation request.
+            token.ThrowIfCancellationRequested();
+
+            // Simulate time‑consuming work for each page.
+            await Task.Delay(50, token);
         }
-        sourceDoc.Save(sourcePath); // Save the source document.
-
-        // 2. Load the document (bootstrap step as required by the rules).
-        Document doc = new Document(sourcePath);
-
-        // 3. Set up cancellation.
-        using CancellationTokenSource cts = new CancellationTokenSource();
-
-        // Start the processing pipeline.
-        Task processingTask = ProcessDocumentAsync(doc, outputPath, cts.Token);
-
-        // Cancel after a short delay to simulate user‑initiated cancellation.
-        _ = Task.Delay(100).ContinueWith(_ => cts.Cancel());
-
-        try
-        {
-            await processingTask;
-            // If we reach here, processing completed without cancellation – this is unexpected for the test.
-            throw new Exception("Processing completed despite cancellation request.");
-        }
-        catch (OperationCanceledException)
-        {
-            // Expected path: processing was cancelled.
-        }
-
-        // 4. Verify that the output file was not created due to cancellation.
-        if (File.Exists(outputPath))
-        {
-            throw new Exception("Output file was created even though processing was cancelled.");
-        }
-
-        // Clean up source file.
-        if (File.Exists(sourcePath)) File.Delete(sourcePath);
     }
 
-    // Simulated document processing pipeline that respects cancellation.
-    private static async Task ProcessDocumentAsync(Document doc, string outputPath, CancellationToken token)
+    public static void Main()
     {
-        // Simulate work per paragraph; check cancellation token regularly.
-        foreach (Paragraph paragraph in doc.GetChildNodes(NodeType.Paragraph, true))
+        // Prepare a sample document with many pages.
+        string sourcePath = "source.docx";
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+
+        // Insert enough paragraphs to generate multiple pages.
+        for (int i = 0; i < 200; i++)
         {
-            // Simulate a small amount of work.
-            await Task.Delay(5, token);
-            // Throw if cancellation was requested.
-            token.ThrowIfCancellationRequested();
+            builder.Writeln($"Paragraph {i + 1}");
+            // Insert a page break every 5 paragraphs to increase page count.
+            if ((i + 1) % 5 == 0)
+                builder.InsertBreak(BreakType.PageBreak);
         }
 
-        // If not cancelled, save the document to PDF.
-        doc.Save(outputPath);
+        // Save the source document locally.
+        sourceDoc.Save(sourcePath);
+
+        // Validate that the source file was created.
+        if (!File.Exists(sourcePath))
+            throw new Exception($"Failed to create source document at '{sourcePath}'.");
+
+        // Load the document for processing.
+        Document docToProcess = new Document(sourcePath);
+
+        // Set up cancellation: cancel after a short delay.
+        using (CancellationTokenSource cts = new CancellationTokenSource())
+        {
+            // Start the processing task.
+            Task processingTask = ProcessDocumentAsync(docToProcess, cts.Token);
+
+            // Cancel after 200 milliseconds.
+            Task.Delay(200).ContinueWith(_ => cts.Cancel());
+
+            try
+            {
+                // Wait for the processing to finish (or be cancelled).
+                processingTask.Wait();
+
+                // If we reach here, processing completed without cancellation, which is unexpected.
+                throw new Exception("Processing completed without respecting cancellation.");
+            }
+            catch (AggregateException ae)
+            {
+                // Expect an OperationCanceledException.
+                if (!ae.InnerExceptions.Any(e => e is OperationCanceledException))
+                    throw; // Re‑throw unexpected exceptions.
+                // Cancellation was respected – continue.
+            }
+        }
+
+        // Optionally, save the (partially) processed document to demonstrate normal workflow.
+        string outputPath = "processed.docx";
+        docToProcess.Save(outputPath);
+
+        // Validate that the output file exists.
+        if (!File.Exists(outputPath))
+            throw new Exception($"Failed to save processed document at '{outputPath}'.");
+
+        // Indicate successful completion.
+        Console.WriteLine("Cancellation was respected and output document saved.");
     }
 }

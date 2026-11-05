@@ -2,52 +2,59 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Markup;
+using Aspose.Words.Drawing;
 using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
+using Aspose.Drawing.Drawing2D;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Create a sample PNG image using Aspose.Drawing.
-        string imagePath = Path.Combine(outputDir, "sample.png");
-        using (Bitmap bitmap = new Bitmap(100, 100))
+        // Create a simple PNG image using Aspose.Drawing.
+        const string imageFileName = "sample.png";
+        using (Bitmap bitmap = new Bitmap(200, 100))
         {
-            using (Graphics g = Graphics.FromImage(bitmap))
+            // Obtain a Graphics object for the bitmap.
+            using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                g.Clear(Color.LightBlue);
-                g.DrawEllipse(new Pen(Color.DarkBlue, 3), 10, 10, 80, 80);
+                graphics.Clear(Color.LightBlue);
+                // Use Aspose.Drawing.Font to avoid ambiguity with Aspose.Words.Font.
+                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 20, FontStyle.Bold))
+                {
+                    graphics.DrawString("Aspose", font, Brushes.DarkBlue, new PointF(10, 30));
+                }
             }
-            bitmap.Save(imagePath);
+
+            bitmap.Save(imageFileName, ImageFormat.Png);
         }
 
-        // Create a new blank document.
+        // Create a new Word document.
         Document doc = new Document();
 
-        // Create a paragraph that will host the picture content control.
-        Paragraph hostParagraph = new Paragraph(doc);
-        doc.FirstSection.Body.AppendChild(hostParagraph);
+        // Create a paragraph to hold the content control.
+        Paragraph paragraph = new Paragraph(doc);
+        doc.FirstSection.Body.AppendChild(paragraph);
 
-        // Create an inline picture content control.
+        // Create a picture content control (inline).
         StructuredDocumentTag pictureSdt = new StructuredDocumentTag(doc, SdtType.Picture, MarkupLevel.Inline)
         {
             Title = "SampleImage",
             Tag = "sample-image"
         };
 
-        // Insert the picture content control into the paragraph.
-        hostParagraph.AppendChild(pictureSdt);
+        // Create a shape (image) and load the external image file.
+        Shape pictureShape = new Shape(doc, ShapeType.Image);
+        pictureShape.ImageData.SetImage(imageFileName); // Embeds the image data.
 
-        // Insert the external image into the picture content control.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.MoveTo(pictureSdt);
-        builder.InsertImage(imagePath);
+        // Add the picture shape to the content control.
+        pictureSdt.AppendChild(pictureShape);
 
-        // Save the document; the image will be embedded inside the content control.
-        string outputPath = Path.Combine(outputDir, "picture-content-control.docx");
-        doc.Save(outputPath);
+        // Add the content control to the paragraph.
+        paragraph.AppendChild(pictureSdt);
+
+        // Save the document; the image will be embedded.
+        const string outputFileName = "PictureContentControl.docx";
+        doc.Save(outputFileName);
     }
 }

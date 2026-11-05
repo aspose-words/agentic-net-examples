@@ -3,41 +3,41 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
+public class ReportModel
+{
+    // Heading HTML with dynamic font size of 14 points.
+    public string Title { get; set; } = "<span style=\"font-size:14pt;\">Dynamic Report Title</span>";
+}
+
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample data model
-        ReportModel model = new()
-        {
-            HeadingHtml = "<h1 style='font-size:14pt;'>Dynamic Heading</h1>"
-        };
-
-        // Create a template document programmatically
+        // Prepare paths.
         string templatePath = "template.docx";
-        Document templateDoc = new();
-        DocumentBuilder builder = new(templateDoc);
-        builder.Writeln("<<[model.HeadingHtml] -html>>");
+        string outputPath = "output.docx";
+
+        // Create the template document.
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Insert a heading placeholder that will render HTML.
+        builder.Writeln("<<[model.Title] -html>>");
+
+        // Save the template.
         templateDoc.Save(templatePath);
 
-        // Load the template (optional – we can reuse the same document)
-        Document doc = new(templatePath);
+        // Load the template for reporting.
+        Document doc = new Document(templatePath);
 
-        // Build the report
-        ReportingEngine engine = new();
+        // Prepare the data model.
+        ReportModel model = new ReportModel();
+
+        // Build the report.
+        ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
-        // Save the generated report
-        string outputPath = "output.docx";
+        // Save the generated report.
         doc.Save(outputPath);
-
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
     }
-}
-
-// Data model used by the LINQ Reporting engine
-public class ReportModel
-{
-    // HTML snippet that defines a heading with a dynamic font size of 14 points
-    public string HeadingHtml { get; set; } = "<h1 style='font-size:14pt;'>Default Heading</h1>";
 }

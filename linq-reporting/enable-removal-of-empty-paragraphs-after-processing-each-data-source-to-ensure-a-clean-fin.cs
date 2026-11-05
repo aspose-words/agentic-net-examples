@@ -1,84 +1,66 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingEmptyParagraphRemoval
+public class Program
 {
-    // Root data model for the report.
-    public class ReportModel
+    public static void Main()
     {
-        public List<Order> Orders { get; set; } = new();
-    }
+        // Ensure code page provider is registered (required for some data sources).
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-    public class Order
-    {
-        public string CustomerName { get; set; } = string.Empty;
-        public List<Service> Services { get; set; } = new();
-    }
-
-    public class Service
-    {
-        public string Name { get; set; } = string.Empty;
-    }
-
-    public class Program
-    {
-        public static void Main()
+        // Create sample data model.
+        var order = new Order
         {
-            // Register code page provider for any encoding needs.
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            // Prepare sample data.
-            var model = new ReportModel
+            CustomerName = "John Doe",
+            Items = new List<Item>
             {
-                Orders = new List<Order>
-                {
-                    new Order
-                    {
-                        CustomerName = "Alice",
-                        Services = new List<Service>
-                        {
-                            new Service { Name = "Consulting" },
-                            new Service { Name = "Support" }
-                        }
-                    },
-                    new Order
-                    {
-                        CustomerName = "Bob",
-                        Services = new List<Service>() // No services – will generate empty paragraphs.
-                    }
-                }
-            };
+                new Item { Name = "Apple", Quantity = 3 },
+                new Item { Name = "Banana", Quantity = 5 }
+            }
+        };
 
-            // Create a template document programmatically.
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
+        // Create a template document programmatically.
+        var templatePath = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-            // Begin outer foreach over Orders.
-            builder.Writeln("<<foreach [order in Orders]>>");
-            builder.Writeln("Customer: <<[order.CustomerName]>>");
-            // Intentionally add an empty paragraph that should be removed.
-            builder.Writeln("");
-            // Begin inner foreach over Services.
-            builder.Writeln("<<foreach [svc in order.Services]>>");
-            builder.Writeln("- Service: <<[svc.Name]>>");
-            builder.Writeln("<</foreach>>");
-            // End outer foreach.
-            builder.Writeln("<</foreach>>");
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("<<if [order.Items.Count == 0]>>No items available.<</if>>");
 
-            // Configure the reporting engine to remove empty paragraphs.
-            var engine = new ReportingEngine
-            {
-                Options = ReportBuildOptions.RemoveEmptyParagraphs
-            };
+        builder.Writeln("<<foreach [item in order.Items]>>");
+        builder.Writeln("Item: <<[item.Name]>>   Qty: <<[item.Quantity]>>");
+        builder.Writeln("<</foreach>>");
 
-            // Build the report.
-            bool success = engine.BuildReport(doc, model, "model");
+        doc.Save(templatePath);
 
-            // Save the resulting document.
-            doc.Save("Output.docx");
-        }
+        // Load the template for reporting.
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
+
+        // Enable removal of empty paragraphs after processing each data source.
+        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
+
+        // Build the report.
+        engine.BuildReport(reportDoc, order, "order");
+
+        // Save the final document.
+        var outputPath = "output.docx";
+        reportDoc.Save(outputPath);
     }
+}
+
+// Data model classes.
+public class Order
+{
+    public string CustomerName { get; set; } = "";
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    public string Name { get; set; } = "";
+    public int Quantity { get; set; }
 }

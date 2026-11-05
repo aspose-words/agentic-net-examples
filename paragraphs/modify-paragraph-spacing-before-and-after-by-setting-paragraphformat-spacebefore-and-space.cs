@@ -7,19 +7,19 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to insert a paragraph with some text.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This paragraph will have custom spacing before and after.");
 
-        // Retrieve the paragraph that was just added.
-        Paragraph paragraph = builder.CurrentParagraph;
+        // Insert a paragraph with sample text.
+        builder.Writeln("This is a sample paragraph.");
 
-        // Set spacing before and after (values are in points).
-        paragraph.ParagraphFormat.SpaceBefore = 12f; // 12 points before the paragraph
-        paragraph.ParagraphFormat.SpaceAfter = 6f;   // 6 points after the paragraph
+        // Retrieve the paragraph we just added.
+        Paragraph paragraph = doc.LastSection.Body.LastParagraph;
 
-        // Save the document to a file.
-        doc.Save("ParagraphSpacing.docx");
+        // Set spacing before and after (measured in points).
+        paragraph.ParagraphFormat.SpaceBefore = 12; // 12 points before the paragraph
+        paragraph.ParagraphFormat.SpaceAfter = 12;  // 12 points after the paragraph
+
+        // Save the modified document.
+        doc.Save("ModifiedParagraphSpacing.docx");
     }
 }

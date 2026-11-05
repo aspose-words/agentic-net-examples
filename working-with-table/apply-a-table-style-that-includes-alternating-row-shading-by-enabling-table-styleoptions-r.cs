@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -6,40 +7,48 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building a table.
-        Table table = builder.StartTable();
+        // Build a simple table with a header row and several data rows.
+        builder.StartTable();
 
-        // Header row – required before applying any style settings.
+        // Header row.
         builder.InsertCell();
-        builder.Write("Item");
+        builder.Writeln("Header 1");
         builder.InsertCell();
-        builder.Write("Quantity");
+        builder.Writeln("Header 2");
         builder.EndRow();
 
-        // Apply a built‑in style that supports row banding.
-        table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
-
-        // Enable only row banding (alternating row shading).
-        table.StyleOptions = TableStyleOptions.RowBands;
-
-        // Add a few data rows.
-        for (int i = 1; i <= 4; i++)
+        // Data rows.
+        for (int i = 1; i <= 5; i++)
         {
             builder.InsertCell();
-            builder.Writeln($"Item {i}");
+            builder.Writeln($"Row {i} Col 1");
             builder.InsertCell();
-            builder.Writeln($"{i * 10}");
+            builder.Writeln($"Row {i} Col 2");
             builder.EndRow();
         }
 
-        // Finish the table.
+        // End the table.
         builder.EndTable();
 
-        // Save the document to the current directory.
-        doc.Save("TableStyleRowBanding.docx");
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+
+        // Apply a built‑in style and enable alternating row shading.
+        table.StyleIdentifier = StyleIdentifier.TableGrid;
+        table.StyleOptions = TableStyleOptions.RowBands;
+
+        // Save the document.
+        string outputPath = "TableRowBanding.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new Exception("The output document was not created.");
+        }
     }
 }

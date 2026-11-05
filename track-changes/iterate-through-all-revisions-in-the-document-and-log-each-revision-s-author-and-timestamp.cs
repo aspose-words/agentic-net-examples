@@ -9,32 +9,33 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add initial content.
-        builder.Writeln("Original paragraph.");
+        // Add initial content (these will be the original paragraphs).
+        builder.Writeln("Original paragraph 1.");
+        builder.Writeln("Original paragraph 2.");
 
-        // Start tracking revisions with a specific author and timestamp.
-        string author = "John Doe";
-        DateTime revisionDate = DateTime.Now;
-        doc.StartTrackRevisions(author, revisionDate);
+        // Enable tracking of revisions.
+        doc.StartTrackRevisions("John Doe", DateTime.Now);
 
-        // Insert a new paragraph – this will be recorded as an insertion revision.
-        builder.Writeln("Inserted paragraph while tracking.");
+        // 1. Insert a new paragraph – this will create an insertion revision.
+        builder.Writeln("Inserted paragraph.");
 
-        // Delete the original paragraph – this will be recorded as a deletion revision.
-        Paragraph originalParagraph = doc.FirstSection.Body.Paragraphs[0];
-        originalParagraph.Remove();
+        // 2. Delete the first original paragraph – this will create a deletion revision.
+        Paragraph firstParagraph = (Paragraph)doc.GetChild(NodeType.Paragraph, 0, true);
+        firstParagraph?.Remove();
 
-        // Change formatting of the inserted paragraph – this will be recorded as a format change revision.
-        Paragraph insertedParagraph = doc.FirstSection.Body.Paragraphs[0];
-        if (insertedParagraph.Runs.Count > 0)
+        // 3. Change formatting of the remaining original paragraph – this will create a format change revision.
+        Paragraph remainingParagraph = (Paragraph)doc.GetChild(NodeType.Paragraph, 0, true);
+        if (remainingParagraph != null)
         {
-            insertedParagraph.Runs[0].Font.Size = 16;
+            Run run = (Run)remainingParagraph.GetChild(NodeType.Run, 0, true);
+            if (run != null)
+                run.Font.Bold = true;
         }
 
         // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Save the document (optional for this example).
+        // Save the document (required by the rules when output is expected).
         doc.Save("Revisions.docx");
 
         // Iterate through all revisions and log author and timestamp.

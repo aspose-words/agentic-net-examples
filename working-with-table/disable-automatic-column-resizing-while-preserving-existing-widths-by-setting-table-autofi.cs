@@ -3,43 +3,52 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace TableAutoFitExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table and set explicit column widths.
-        builder.StartTable();
+            // Build a simple 2‑column table.
+            builder.StartTable();
 
-        // First column width.
-        builder.CellFormat.Width = 100; // points
-        builder.InsertCell();
-        builder.Writeln("First column");
+            // First cell.
+            builder.InsertCell();
+            builder.Writeln("First column");
+            // Set the desired width for the first column.
+            Cell firstCell = (Cell)builder.CurrentParagraph.ParentNode;
+            firstCell.CellFormat.PreferredWidth = PreferredWidth.FromPoints(100);
 
-        // Second column width.
-        builder.CellFormat.Width = 150; // points
-        builder.InsertCell();
-        builder.Writeln("Second column");
+            // Second cell.
+            builder.InsertCell();
+            builder.Writeln("Second column");
+            // Set the desired width for the second column.
+            Cell secondCell = (Cell)builder.CurrentParagraph.ParentNode;
+            secondCell.CellFormat.PreferredWidth = PreferredWidth.FromPoints(150);
 
-        // End the row and the table.
-        builder.EndRow();
-        builder.EndTable();
+            // End the row and the table.
+            builder.EndRow();
+            builder.EndTable();
 
-        // Retrieve the created table.
-        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
+            // Retrieve the created table from the document.
+            Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+            if (table == null)
+                throw new InvalidOperationException("Table was not created.");
 
-        // Disable automatic column resizing while preserving the set widths.
-        table.AutoFit(AutoFitBehavior.FixedColumnWidths);
+            // Disable automatic column resizing while preserving the widths set above.
+            table.AutoFit(AutoFitBehavior.FixedColumnWidths);
 
-        // Save the document.
-        string outputPath = "TableAutoFit.docx";
-        doc.Save(outputPath);
+            // Save the document to disk.
+            string outputPath = "TableAutoFit.docx";
+            doc.Save(outputPath);
 
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("The output file was not created.");
+            // Verify that the file was saved.
+            if (!File.Exists(outputPath))
+                throw new FileNotFoundException("The output document was not created.", outputPath);
+        }
     }
 }

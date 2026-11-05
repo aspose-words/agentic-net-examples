@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -9,82 +8,83 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words if needed.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Paths for template and output documents.
-        string templatePath = "RankingTemplate.docx";
-        string outputPath = "RankingReport.docx";
-
-        // -------------------------------------------------
-        // Create the LINQ Reporting template programmatically.
-        // -------------------------------------------------
+        // Create the template document.
+        const string templatePath = "RankingTemplate.docx";
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Title.
-        builder.Writeln("Ranking Report");
-        builder.Writeln();
-
-        // Begin foreach loop over Items collection.
-        builder.Writeln("<<foreach [item in Items]>>");
-        // Paragraph showing ordinal rank and name.
-        builder.Writeln("<<[item.RankOrdinal]>>: <<[item.Name]>>");
-        // End foreach loop.
+        builder.Writeln("Ranking:");
+        builder.Writeln("<<foreach [player in Players]>>");
+        builder.Writeln("<<[player.Ordinal]>>. <<[player.Name]>> - <<[player.Score]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
         templateDoc.Save(templatePath);
 
-        // -------------------------------------------------
-        // Load the template for report generation.
-        // -------------------------------------------------
+        // Load the template for reporting.
         Document doc = new Document(templatePath);
 
         // Prepare sample data.
-        ReportModel model = new()
+        ReportModel model = new ReportModel
         {
-            Items = new()
-            {
-                new RankItem { Position = 1, Name = "Alice" },
-                new RankItem { Position = 2, Name = "Bob" },
-                new RankItem { Position = 3, Name = "Charlie" },
-                new RankItem { Position = 4, Name = "Diana" }
-            }
+            Players = GetSamplePlayers()
+                .OrderByDescending(p => p.Score)
+                .Select((p, index) =>
+                {
+                    p.Rank = index + 1;
+                    return p;
+                })
+                .ToList()
         };
 
-        // Build the report using LINQ Reporting engine.
-        ReportingEngine engine = new();
+        // Build the report.
+        ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
         // Save the generated report.
+        const string outputPath = "RankingReport.docx";
         doc.Save(outputPath);
+    }
+
+    private static List<Player> GetSamplePlayers()
+    {
+        return new()
+        {
+            new Player { Name = "Alice",   Score = 95 },
+            new Player { Name = "Bob",     Score = 87 },
+            new Player { Name = "Charlie", Score = 92 },
+            new Player { Name = "Diana",   Score = 78 }
+        };
     }
 }
 
 // Root data model.
 public class ReportModel
 {
-    public List<RankItem> Items { get; set; } = new();
+    public List<Player> Players { get; set; } = new();
 }
 
-// Individual ranking item.
-public class RankItem
+// Data item model.
+public class Player
 {
-    public int Position { get; set; }
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; set; } = "";
+    public int Score { get; set; }
+    public int Rank { get; set; }
 
-    // Returns ordinal word for the position (First, Second, Third, etc.).
-    public string RankOrdinal => GetOrdinalWord(Position);
+    // Returns ordinal word based on Rank (First, Second, Third, etc.).
+    public string Ordinal => GetOrdinalWord(Rank);
 
-    private static string GetOrdinalWord(int position)
+    private static string GetOrdinalWord(int rank) => rank switch
     {
-        return position switch
-        {
-            1 => "First",
-            2 => "Second",
-            3 => "Third",
-            _ => position + "th"
-        };
-    }
+        1 => "First",
+        2 => "Second",
+        3 => "Third",
+        4 => "Fourth",
+        5 => "Fifth",
+        6 => "Sixth",
+        7 => "Seventh",
+        8 => "Eighth",
+        9 => "Ninth",
+        10 => "Tenth",
+        _ => $"{rank}th"
+    };
 }

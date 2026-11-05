@@ -3,45 +3,46 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
+public class ReportModel
+{
+    // Sample property used in the template.
+    public string Name { get; set; } = "World";
+}
+
 public class Program
 {
     public static void Main()
     {
-        // Prepare folders
-        string outputDir = "Output";
+        // Prepare paths.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        string resultPath = Path.Combine(outputDir, "Result.docx");
 
-        // Create a template document with a LINQ Reporting tag.
-        string templatePath = Path.Combine(outputDir, "template.docx");
+        // Create a simple template with a LINQ Reporting tag.
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
         builder.Writeln("Hello <<[model.Name]>>!");
         templateDoc.Save(templatePath);
 
         // Load the template for reporting.
-        Document reportDoc = new Document(templatePath);
+        Document doc = new Document(templatePath);
 
-        // Sample data model.
-        Model model = new Model { Name = "World" };
+        // Prepare the data model.
+        ReportModel model = new ReportModel();
 
         // Configure the reporting engine with InlineErrorMessages option.
         ReportingEngine engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.InlineErrorMessages;
 
         // Build the report and capture the success flag.
-        bool success = engine.BuildReport(reportDoc, model, "model");
+        bool success = engine.BuildReport(doc, model, "model");
 
         // Save the generated report.
-        string resultPath = Path.Combine(outputDir, "result.docx");
-        reportDoc.Save(resultPath);
+        doc.Save(resultPath);
 
-        // Output the success flag.
+        // Output the result.
         Console.WriteLine($"Report build success: {success}");
+        Console.WriteLine($"Result saved to: {resultPath}");
     }
-}
-
-// Public data model class used by the template.
-public class Model
-{
-    public string Name { get; set; } = string.Empty;
 }

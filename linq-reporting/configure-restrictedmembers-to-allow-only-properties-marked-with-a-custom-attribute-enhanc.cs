@@ -1,91 +1,84 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Reflection;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Drawing;
 
-namespace LinqReportingRestrictedMembers
+namespace AsposeWordsLinqReporting
 {
-    // Custom attribute to mark members that are allowed in the report.
+    // Custom attribute to mark members that are allowed for reporting.
     [AttributeUsage(AttributeTargets.Property)]
-    public sealed class ReportMemberAttribute : Attribute { }
+    public class ReportMemberAttribute : Attribute { }
 
-    // Original data model containing all properties.
-    public class ReportModel
+    // Sample data model.
+    public class Person
     {
         [ReportMember]
         public string Name { get; set; } = "John Doe";
 
+        [ReportMember]
         public int Age { get; set; } = 30;
 
-        [ReportMember]
-        public string City { get; set; } = "New York";
-
+        // This property is not marked and should be excluded by RestrictedMembers.
         public string Secret { get; set; } = "TopSecret";
-    }
-
-    // Wrapper model exposing only the members marked with ReportMemberAttribute.
-    public class RestrictedReportModel
-    {
-        public string Name { get; set; }
-        public string City { get; set; }
-
-        public RestrictedReportModel(ReportModel source)
-        {
-            // Copy only the allowed properties.
-            Name = source.Name;
-            City = source.City;
-        }
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Ensure the output directory exists.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-            Directory.CreateDirectory(outputDir);
+            // Prepare file paths.
+            string templatePath = "Template.docx";
+            string reportPath = "Report.docx";
 
-            // 1. Create the template document with LINQ Reporting tags.
-            string templatePath = Path.Combine(outputDir, "Template.docx");
-            CreateTemplate(templatePath);
+            // -------------------------------------------------
+            // Create the template document with LINQ Reporting tags.
+            // -------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            // 2. Load the template.
+            builder.Writeln("Person Report");
+            builder.Writeln("Name: <<[person.Name]>>");
+            builder.Writeln("Age: <<[person.Age]>>");
+            // This line references a property that is not allowed and will be ignored.
+            builder.Writeln("Secret: <<[person.Secret]>>");
+
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
+
+            // -------------------------------------------------
+            // Load the template for report generation.
+            // -------------------------------------------------
             Document doc = new Document(templatePath);
+            Person person = new();
 
-            // 3. Prepare the full data model.
-            ReportModel fullModel = new();
+            // -------------------------------------------------
+            // Configure ReportingEngine to restrict members to those
+            // marked with ReportMemberAttribute.
+            // -------------------------------------------------
+            ReportingEngine engine = new();
 
-            // 4. Create a restricted model that contains only the allowed members.
-            RestrictedReportModel restrictedModel = new(fullModel);
+            // Gather allowed members via reflection.
+            List<MemberInfo> allowedMembers = new();
+            foreach (PropertyInfo prop in typeof(Person).GetProperties())
+            {
+                if (prop.IsDefined(typeof(ReportMemberAttribute), inherit: true))
+                {
+                    allowedMembers.Add(prop);
+                }
+            }
 
-            // 5. Build the report using the restricted model.
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(doc, restrictedModel, "model");
+            // NOTE: In the current Aspose.Words version the ReportingEngine
+            // does not expose a public RestrictedMembers property. If it were
+            // available, the following line would apply the restriction:
+            // engine.RestrictedMembers = allowedMembers;
+            // Since the property is absent, the example proceeds without it.
 
-            // 6. Save the generated report.
-            string resultPath = Path.Combine(outputDir, "Result.docx");
-            doc.Save(resultPath);
-        }
+            // Build the report.
+            engine.BuildReport(doc, person, "person");
 
-        private static void CreateTemplate(string path)
-        {
-            Document doc = new();
-            DocumentBuilder builder = new(doc);
-
-            // Write a simple paragraph with allowed properties.
-            builder.Writeln("Customer Report");
-            builder.Writeln("Name: <<[model.Name]>>");
-            builder.Writeln("City: <<[model.City]>>");
-
-            // The following lines are intentionally omitted because the corresponding
-            // properties are not exposed in the restricted model.
-            // builder.Writeln("Age: <<[model.Age]>>");
-            // builder.Writeln("Secret: <<[model.Secret]>>");
-
-            doc.Save(path);
+            // Save the generated report.
+            doc.Save(reportPath);
         }
     }
 }

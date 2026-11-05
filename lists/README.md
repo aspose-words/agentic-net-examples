@@ -1,6 +1,6 @@
 # Lists Examples for Aspose.Words for .NET
 
-This folder contains the live, publish-ready C# examples for the Lists category. Each file is a standalone console example selected from the verified 26.9.0 run.
+The Lists category for Aspose.Words demonstrates how to create, configure, and manipulate Word list structures using the DocumentBuilder and List APIs. Verified examples show correct usage of ListTemplate, ListLevel properties, and ListFormat methods to produce numbered, bulleted, and custom hierarchical lists.
 
 ## Snapshot
 
@@ -8,7 +8,7 @@ This folder contains the live, publish-ready C# examples for the Lists category.
 - Slug: lists
 - Total examples: 30
 - Publish-ready successful examples: 30 / 30
-- Source run: 20260925_194858_2eeab9
+- Source run: 20261102_031946_08fb5b
 - Numbered List Workflow examples: 2
 - Bulleted List Workflow examples: 1
 - Nested List Workflow examples: 17
@@ -18,29 +18,28 @@ This folder contains the live, publish-ready C# examples for the Lists category.
 
 ## Category rules that shaped these examples
 
-- Do not invent unsupported list APIs.
-- Do not skip assigning ListFormat.List before writing list items.
-- Do not forget to remove list formatting.
-- Create lists with doc.Lists.Add(ListTemplate).
-- Apply the list through builder.ListFormat.List before writing list items.
-- Use builder.ListFormat.ListLevelNumber for nested list levels.
-- Call builder.ListFormat.RemoveNumbers() after finishing a list.
-- Avoid maybe-null dereference when reusing list references.
-- Guard document nodes before reading list-related properties.
+- Do not reference APIs that are not present in Aspose.Words 26.10.0, such as ListFormat.IncreaseIndent, ListFormat.DecreaseIndent, ListNumberStyle, or ListLevel.StartingNumber.
+- Do not omit the assignment of builder.ListFormat.List before writing list items.
+- Create a list with doc.Lists.Add(ListTemplate) and store the returned List object.
+- Apply the list to the builder by setting builder.ListFormat.List, then control nesting with builder.ListFormat.ListLevelNumber.
+- Terminate list formatting with builder.ListFormat.RemoveNumbers once the list sequence is complete.
+- Guard any List or ListLevel reference with a null check before accessing its members.
+- Validate that a Paragraph node is not null before reading or writing its ListFormat properties.
 
 ## Prerequisites
 
 - .NET SDK 8.0 or later
-- Aspose.Words 26.9.0
+- Aspose.Words for .NET `26.10.0`
 
 ## Running Examples
 
-Each file in this folder is a single, standalone `.cs` console example. To run one example:
+Each file in this folder is a **single, standalone `.cs` console example**. To run one example:
 
 ```bash
+# From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.9.0
+dotnet add package Aspose.Words --version 26.10.0
 
 # Copy one example from this folder into the project as Program.cs
 # PowerShell:
@@ -61,7 +60,7 @@ Example:
 # From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.9.0
+dotnet add package Aspose.Words --version 26.10.0
 
 # PowerShell example
 Copy-Item ..\lists\create-a-default-numbered-list-in-a-word-document-using-documentbuilder-listformat-applynu.cs .\Program.cs
@@ -84,20 +83,20 @@ dotnet run --configuration Release --no-build
 | 8 | `add-a-new-list-to-the-document-s-listcollection-and-assign-it-to-multiple-paragraphs-to-sh.cs` | Add a new List to the document's ListCollection and assign it to multiple paragraphs to share formatting. | general-list-workflow | docx | mcp |
 | 9 | `assign-an-existing-list-to-a-paragraph-by-setting-paragraph-listformat-list-property-to-ap.cs` | Assign an existing List to a paragraph by setting Paragraph.ListFormat.List property to apply the desired list style. | list-formatting-workflow | docx | mcp |
 | 10 | `clone-an-existing-list-modify-its-level-start-values-and-apply-the-cloned-list-to-new-sect.cs` | Clone an existing List, modify its level start values, and apply the cloned list to new sections. | nested-list-workflow | docx | mcp |
-| 11 | `set-numberstyle-of-a-listlevel-to-upperroman-to-generate-roman-numeral-list-items.cs` | Set NumberStyle of a ListLevel to UpperRoman to generate Roman numeral list items. | nested-list-workflow | docx | mcp |
-| 12 | `apply-a-custom-bullet-character-to-a-list-by-setting-listlevel-numberstyle-to-bullet-and-d.cs` | Apply a custom bullet character to a list by setting ListLevel.NumberStyle to Bullet and defining BulletChar. | nested-list-workflow | docx | mcp |
+| 11 | `set-numberstyle-of-a-listlevel-to-upperroman-to-generate-roman-numeral-list-items.cs` | Set NumberStyle of a ListLevel to UpperRoman to generate Roman numeral list items. | nested-list-workflow | docx | existing_repo |
+| 12 | `apply-a-custom-bullet-character-to-a-list-by-setting-listlevel-numberstyle-to-bullet-and-d.cs` | Apply a custom bullet character to a list by setting ListLevel.NumberStyle to Bullet and defining BulletChar. | nested-list-workflow | docx | existing_repo |
 | 13 | `define-startingnumber-for-a-listlevel-to-begin-numbering-at-five-instead-of-default-one.cs` | Define StartingNumber for a ListLevel to begin numbering at five instead of default one. | nested-list-workflow | docx | mcp |
 | 14 | `restart-numbering-for-each-new-section-by-resetting-listlevel-startingnumber-before-applyi.cs` | Restart numbering for each new section by resetting ListLevel.StartingNumber before applying the list. | nested-list-workflow | docx | mcp |
 | 15 | `create-a-numbered-list-that-restarts-numbering-at-each-new-chapter-by-resetting-startingnu.cs` | Create a numbered list that restarts numbering at each new chapter by resetting StartingNumber on chapter start. | numbering-control-workflow | docx | mcp |
 | 16 | `create-a-nine-level-hierarchical-list-by-defining-properties-for-each-listlevel-up-to-leve.cs` | Create a nine-level hierarchical list by defining properties for each ListLevel up to level nine. | nested-list-workflow | docx | mcp |
-| 17 | `create-a-multi-level-list-with-alternating-bullet-and-number-styles-by-configuring-each-li.cs` | Create a multi-level list with alternating bullet and number styles by configuring each ListLevel individually. | nested-list-workflow | docx | mcp |
+| 17 | `create-a-multi-level-list-with-alternating-bullet-and-number-styles-by-configuring-each-li.cs` | Create a multi-level list with alternating bullet and number styles by configuring each ListLevel individually. | nested-list-workflow | docx | llm |
 | 18 | `adjust-listlevel-indentation-by-setting-listlevel-indentation-to-36-points-for-proper-alig.cs` | Adjust ListLevel indentation by setting ListLevel.Indentation to 36 points for proper alignment. | nested-list-workflow | docx | mcp |
 | 19 | `apply-a-custom-tab-stop-to-list-levels-to-align-text-after-numbers-using-listlevel-tabposi.cs` | Apply a custom tab stop to list levels to align text after numbers using ListLevel.TabPosition property. | nested-list-workflow | docx | mcp |
 | 20 | `configure-tabposition-of-a-listlevel-to-72-points-to-align-text-after-list-number.cs` | Configure TabPosition of a ListLevel to 72 points to align text after list number. | nested-list-workflow | docx | mcp |
 | 21 | `validate-that-each-list-in-a-document-does-not-exceed-nine-levels-to-comply-with-api-const.cs` | Validate that each list in a document does not exceed nine levels to comply with API constraints. | nested-list-workflow | docx | mcp |
 | 22 | `implement-error-handling-for-attempts-to-create-more-than-nine-list-levels-catching-the-re.cs` | Implement error handling for attempts to create more than nine list levels, catching the resulting exception. | nested-list-workflow | docx | mcp |
 | 23 | `ensure-ooxmlcompliance-is-set-higher-than-ecma376-before-saving-document-to-retain-custom.cs` | Ensure OoxmlCompliance is set higher than Ecma376 before saving document to retain custom list settings. | general-list-workflow | docx | mcp |
-| 24 | `check-document-ooxmlcompliance-property-and-set-to-higher-than-ecma376-when-modifying-list.cs` | Check document OoxmlCompliance property and set to higher than Ecma376 when modifying list definitions. | general-list-workflow | docx | mcp |
+| 24 | `check-document-ooxmlcompliance-property-and-set-to-higher-than-ecma376-when-modifying-list.cs` | Check document OoxmlCompliance property and set to higher than Ecma376 when modifying list definitions. | general-list-workflow | docx | existing_repo |
 | 25 | `retrieve-a-specific-list-from-document-lists-by-its-id-and-adjust-its-level-properties-pro.cs` | Retrieve a specific List from Document.Lists by its ID and adjust its level properties programmatically. | nested-list-workflow | docx | mcp |
 | 26 | `iterate-through-document-lists-collection-to-modify-all-list-definitions-uniformly-across.cs` | Iterate through Document.Lists collection to modify all list definitions uniformly across the document. | general-list-workflow | docx | mcp |
 | 27 | `apply-a-uniform-list-style-to-all-lists-by-iterating-over-document-lists-and-updating-each.cs` | Apply a uniform list style to all lists by iterating over Document.Lists and updating each level. | list-formatting-workflow | docx | mcp |
@@ -107,25 +106,40 @@ dotnet run --configuration Release --no-build
 
 ## Common failure patterns seen during generation and how they were corrected
 
-### Invented list APIs
+### Use of removed or renamed list APIs
 
-- Symptom: Code uses unsupported helpers such as CreateList or AddListItem.
-- Fix: Use doc.Lists.Add(ListTemplate) and builder.ListFormat.List only.
+- Symptom: Compilation fails with CS1061 because ListFormat does not contain IncreaseIndent, DecreaseIndent, or ListNumberStyle members.
+- Root cause: The code references API members that were removed or renamed in the current Aspose.Words version.
+- Preferred fix: Replace the missing members with supported alternatives: control nesting via ListFormat.ListLevelNumber and use NumberStyle enum values such as NumberStyle.Bullet or NumberStyle.UppercaseRoman.
+- Prevention: Consult the Aspose.Words 26.10.0 documentation for the exact member names before writing list-related code.
 
-### List formatting not applied
+### Incorrect list level property names
 
-- Symptom: Paragraphs are written but they are not actual list items.
-- Fix: Assign builder.ListFormat.List before writing each list sequence.
+- Symptom: Compilation fails with CS1061 for ListLevel.StartingNumber, ListLevel.Indentation, or ListLevel.BulletChar.
+- Root cause: Older property names were used; the current API uses ListLevel.StartAt for the starting number, ListLevel.NumberPosition/TextPosition for indentation, and NumberFormat for custom bullet characters.
+- Preferred fix: Use ListLevel.StartAt to set the initial number, adjust ListLevel.NumberPosition and ListLevel.TextPosition for indentation, and set ListLevel.NumberFormat to a custom character string.
+- Prevention: Reference the ListLevel class in the official API reference to ensure property names are up-to-date.
 
-### Nested level drift
+### Missing list assignment before writing items
 
-- Symptom: Nested items appear at the wrong level or never return to the parent level.
-- Fix: Set builder.ListFormat.ListLevelNumber explicitly before each nested level transition.
+- Symptom: Paragraphs are added but appear as plain text without list numbering or bullets.
+- Root cause: builder.ListFormat.List was never set, so the builder does not know which list to apply.
+- Preferred fix: Assign the List object to builder.ListFormat.List immediately before writing the first list paragraph.
+- Prevention: Always set builder.ListFormat.List as the first step of any list-creation workflow.
 
-### List mode not cleared
+### Failure to clear list formatting
 
-- Symptom: Subsequent paragraphs continue as list items unintentionally.
-- Fix: Call builder.ListFormat.RemoveNumbers() immediately after the list is complete.
+- Symptom: Subsequent paragraphs unintentionally continue the previous list style.
+- Root cause: builder.ListFormat.RemoveNumbers was not called after the list sequence.
+- Preferred fix: Invoke builder.ListFormat.RemoveNumbers right after the last list item and before adding non-list content.
+- Prevention: Include a RemoveNumbers call in every list workflow to reset the builder's list state.
+
+### Incorrect OoxmlCompliance usage
+
+- Symptom: Compilation fails with CS1061 because CompatibilityOptions or Document does not expose an OoxmlCompliance property.
+- Root cause: The property was removed from the API; compliance is now controlled via SaveOptions.
+- Preferred fix: When saving, create a DocxSaveOptions instance and set its Compliance property to OoxmlCompliance.Iso29500_2008_Strict (or a later enum value).
+- Prevention: Use SaveOptions to configure compliance settings instead of accessing non-existent Document members.
 
 ## See Also
 
@@ -138,6 +152,5 @@ dotnet run --configuration Release --no-build
 
 ## Notes for maintainers
 
-- This category is 100% publish-ready for the 26.9.0 run.
-- Preserve file-to-task traceability when updating this folder.
-- Keep examples standalone and bootstrap local inputs inside the example whenever external sources are mentioned.
+- This category is 100% publish-ready for the 26.10.0 run.
+- Update the example code whenever a new Aspose.Words version is released to reflect any API changes and keep the documentation in sync.

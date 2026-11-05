@@ -7,10 +7,9 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and add content that spans multiple pages.
+        // Create a sample document with multiple pages.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-
         for (int i = 1; i <= 3; i++)
         {
             builder.Writeln($"This is page {i}.");
@@ -18,28 +17,20 @@ public class Program
                 builder.InsertBreak(BreakType.PageBreak);
         }
 
-        // Ensure the document layout is up‑to‑date so that PageCount is accurate.
-        doc.UpdatePageLayout();
-
         // Configure TIFF save options for a multipage output.
-        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
-        {
-            // Use a PageSet that covers all pages of the document.
-            PageSet = new PageSet(0, doc.PageCount - 1),
+        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff);
+        tiffOptions.PageSet = PageSet.All; // Save all pages.
 
-            // Use LZW compression as a safe default.
-            TiffCompression = TiffCompression.Lzw
-        };
-
+        // Save the document as a multipage TIFF file.
         string outputPath = "output.tiff";
+        doc.Save(outputPath, tiffOptions);
 
-        // Save the document as a multipage TIFF.
-        doc.Save(outputPath, saveOptions);
-
-        // Verify that the file was created.
+        // Verify that the TIFF file was created and is not empty.
         if (!File.Exists(outputPath))
-            throw new Exception("TIFF file was not created.");
+            throw new Exception("The TIFF file was not created.");
 
-        Console.WriteLine($"Document saved as multipage TIFF to '{Path.GetFullPath(outputPath)}'.");
+        FileInfo fileInfo = new FileInfo(outputPath);
+        if (fileInfo.Length == 0)
+            throw new Exception("The TIFF file is empty.");
     }
 }

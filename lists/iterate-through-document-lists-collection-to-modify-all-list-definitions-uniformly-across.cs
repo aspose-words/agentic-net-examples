@@ -1,59 +1,48 @@
 using System;
-using System.Collections.Generic;
-
-public class ListDefinition
-{
-    public string Name { get; set; }
-    public int Level { get; set; }
-
-    public ListDefinition(string name, int level)
-    {
-        Name = name;
-        Level = level;
-    }
-
-    public override string ToString()
-    {
-        return $"{Name} (Level {Level})";
-    }
-}
-
-public class Document
-{
-    public List<ListDefinition> Lists { get; } = new List<ListDefinition>();
-
-    public Document()
-    {
-        // Sample list definitions
-        Lists.Add(new ListDefinition("BulletList", 1));
-        Lists.Add(new ListDefinition("NumberedList", 2));
-        Lists.Add(new ListDefinition("OutlineList", 3));
-    }
-}
+using Aspose.Words;
+using Aspose.Words.Lists;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a document with predefined lists
+        // Create a new empty document.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        Console.WriteLine("Before modification:");
-        foreach (var list in doc.Lists)
+        // Create a numbered list and add two items.
+        List numberedList = doc.Lists.Add(ListTemplate.NumberDefault);
+        builder.ListFormat.List = numberedList;
+        builder.Writeln("Numbered Item 1");
+        builder.Writeln("Numbered Item 2");
+        builder.ListFormat.RemoveNumbers();
+
+        // Create a bullet list and add two items.
+        List bulletList = doc.Lists.Add(ListTemplate.BulletDefault);
+        builder.ListFormat.List = bulletList;
+        builder.Writeln("Bullet Item 1");
+        builder.Writeln("Bullet Item 2");
+        builder.ListFormat.RemoveNumbers();
+
+        // Iterate through all list definitions in the document and modify them uniformly.
+        foreach (List list in doc.Lists)
         {
-            Console.WriteLine(list);
+            // Apply the same formatting to every level of each list.
+            foreach (ListLevel level in list.ListLevels)
+            {
+                // Change the numbering style to uppercase Roman numerals.
+                level.NumberStyle = NumberStyle.UppercaseRoman;
+
+                // Optionally, set a different font for the list numbers.
+                level.Font.Name = "Arial";
+                level.Font.Size = 10;
+            }
         }
 
-        // Uniformly modify all list definitions (e.g., set Level to 1)
-        foreach (var list in doc.Lists)
-        {
-            list.Level = 1;
-        }
+        // Save the modified document.
+        doc.Save("ModifiedLists.docx");
 
-        Console.WriteLine("\nAfter modification:");
-        foreach (var list in doc.Lists)
-        {
-            Console.WriteLine(list);
-        }
+        // Indicate completion.
+        Console.WriteLine("Document created and list definitions modified.");
     }
 }

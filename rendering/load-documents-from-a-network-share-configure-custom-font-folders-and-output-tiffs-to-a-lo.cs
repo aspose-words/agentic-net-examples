@@ -2,54 +2,52 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fonts;
+using Aspose.Words.Loading;
 using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Base directory for all example files.
-        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "ExampleData");
-        Directory.CreateDirectory(baseDir);
+        // Simulate a network share folder.
+        string networkShareFolder = Path.Combine(Directory.GetCurrentDirectory(), "NetworkShare");
+        Directory.CreateDirectory(networkShareFolder);
 
-        // Simulated network share folder.
-        string networkShareDir = Path.Combine(baseDir, "NetworkShare");
-        Directory.CreateDirectory(networkShareDir);
-
-        // Custom fonts folder.
-        string customFontDir = Path.Combine(baseDir, "CustomFonts");
-        Directory.CreateDirectory(customFontDir);
-
-        // Output folder for TIFF files.
-        string outputDir = Path.Combine(baseDir, "Output");
-        Directory.CreateDirectory(outputDir);
+        // Path for the source document on the simulated network share.
+        string sourceDocPath = Path.Combine(networkShareFolder, "Sample.docx");
 
         // Create a simple source document.
-        Document sampleDoc = new Document();
-        sampleDoc.FirstSection.Body.AppendParagraph("Hello from the network share!");
-        string sourcePath = Path.Combine(networkShareDir, "sample.docx");
-        sampleDoc.Save(sourcePath);
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("Hello from the simulated network share!");
+        sourceDoc.Save(sourceDocPath);
 
-        // Load the document from the simulated network share.
-        Document doc = new Document(sourcePath);
-
-        // Configure custom font settings.
+        // Configure a custom fonts folder (empty for this example).
+        string customFontsFolder = Path.Combine(Directory.GetCurrentDirectory(), "CustomFonts");
+        Directory.CreateDirectory(customFontsFolder);
         FontSettings fontSettings = new FontSettings();
-        fontSettings.SetFontsFolder(customFontDir, false);
-        doc.FontSettings = fontSettings;
+        fontSettings.SetFontsFolder(customFontsFolder, false);
+
+        // Load the document from the network share using the custom FontSettings.
+        LoadOptions loadOptions = new LoadOptions { FontSettings = fontSettings };
+        Document loadedDoc = new Document(sourceDocPath, loadOptions);
+
+        // Prepare the output directory for TIFF files.
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputTiff");
+        Directory.CreateDirectory(outputFolder);
+        string outputTiffPath = Path.Combine(outputFolder, "Sample.tiff");
 
         // Render the document to a multipage TIFF.
-        string tiffPath = Path.Combine(outputDir, "sample.tiff");
         ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff);
-        doc.Save(tiffPath, saveOptions);
+        loadedDoc.Save(outputTiffPath, saveOptions);
 
         // Verify that the TIFF file was created.
-        if (!File.Exists(tiffPath))
+        if (!File.Exists(outputTiffPath))
         {
-            throw new Exception("TIFF rendering failed: output file not found.");
+            throw new Exception("Failed to create the TIFF output file.");
         }
 
         // Indicate success.
-        Console.WriteLine("Document rendered to TIFF successfully: " + tiffPath);
+        Console.WriteLine("Document rendered to TIFF successfully: " + outputTiffPath);
     }
 }

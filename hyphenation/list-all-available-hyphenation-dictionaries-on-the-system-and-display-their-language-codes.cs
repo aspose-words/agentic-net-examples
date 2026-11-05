@@ -1,49 +1,57 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Linq;
+using Aspose.Words;
 
 public class Program
 {
     public static void Main()
     {
-        // Create sample hyphenation dictionaries locally.
-        var dictionaries = new[]
-        {
-            new
-            {
-                LanguageCode = "en-US",
-                FileName = "hyph_en_US.dic",
-                Content = "UTF-8\nextraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n"
-            },
-            new
-            {
-                LanguageCode = "de-DE",
-                FileName = "hyph_de_DE.dic",
-                Content = "UTF-8\nBeispiel=Bei-spiel\n"
-            }
-        };
+        // Create sample hyphenation dictionary files in the current directory.
+        const string enDictionaryPath = "hyph_en_US.dic";
+        const string frDictionaryPath = "hyph_fr_FR.dic";
 
-        foreach (var dict in dictionaries)
+        File.WriteAllText(enDictionaryPath,
+            "UTF-8\nextraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n");
+
+        File.WriteAllText(frDictionaryPath,
+            "UTF-8\nbonjour=bon-jour\n");
+
+        // Register the dictionaries with Aspose.Words.
+        Hyphenation.RegisterDictionary("en-US", enDictionaryPath);
+        Hyphenation.RegisterDictionary("fr-FR", frDictionaryPath);
+
+        // Retrieve and display all hyphenation dictionaries that exist in the current folder.
+        string[] dictionaryFiles = Directory.GetFiles(Directory.GetCurrentDirectory(), "hyph_*.dic");
+        var languageCodes = new List<string>();
+
+        foreach (string filePath in dictionaryFiles)
         {
-            // Ensure the dictionary file exists before registration.
-            File.WriteAllText(dict.FileName, dict.Content);
-            Aspose.Words.Hyphenation.RegisterDictionary(dict.LanguageCode, dict.FileName);
+            string fileName = Path.GetFileNameWithoutExtension(filePath); // e.g., hyph_en_US
+            string[] parts = fileName.Split('_', 2);
+            if (parts.Length == 2)
+            {
+                // Convert underscore separator to hyphen as used by Aspose.Words.
+                string code = parts[1].Replace('_', '-');
+                languageCodes.Add(code);
+            }
         }
 
-        // List all hyphenation dictionaries present in the current directory.
-        var dicFiles = Directory.GetFiles(Directory.GetCurrentDirectory(), "hyph_*.dic");
-
-        Console.WriteLine("Available hyphenation dictionaries (language codes):");
-        foreach (var filePath in dicFiles)
+        Console.WriteLine("Available hyphenation dictionaries:");
+        foreach (string code in languageCodes)
         {
-            var fileName = Path.GetFileNameWithoutExtension(filePath); // e.g., hyph_en_US
-            var parts = fileName.Split('_');
-            if (parts.Length >= 2)
-            {
-                // Combine remaining parts with hyphen to form language code (en-US, de-DE, etc.).
-                var languageCode = string.Join("-", parts.Skip(1));
-                Console.WriteLine(languageCode);
-            }
+            Console.WriteLine(code);
+        }
+
+        // Clean up the temporary dictionary files (optional).
+        try
+        {
+            File.Delete(enDictionaryPath);
+            File.Delete(frDictionaryPath);
+        }
+        catch
+        {
+            // Ignored – cleanup failure should not affect the example outcome.
         }
     }
 }

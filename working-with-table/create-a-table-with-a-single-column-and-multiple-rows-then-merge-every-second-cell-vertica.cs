@@ -7,47 +7,51 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        int rowCount = 6; // Total number of rows (must be even for pairing).
-
-        // Begin a table with a single column.
+        // Start a table with a single column.
         builder.StartTable();
 
-        for (int i = 0; i < rowCount; i++)
+        int totalRows = 8; // Number of rows in the table.
+
+        // Insert rows with a single cell each.
+        for (int i = 0; i < totalRows; i++)
         {
-            // Insert a cell for the current row.
             builder.InsertCell();
-
-            // Add some text to the cell.
             builder.Writeln($"Row {i + 1}");
-
-            // Retrieve the cell that was just created.
-            Cell cell = (Cell)builder.CurrentParagraph.ParentNode;
-
-            // Merge every second cell vertically:
-            // - First cell of each pair starts the merge.
-            // - Second cell of each pair continues the merge.
-            if (i % 2 == 0)
-                cell.CellFormat.VerticalMerge = CellMerge.First;
-            else
-                cell.CellFormat.VerticalMerge = CellMerge.Previous;
-
-            // End the current row.
             builder.EndRow();
         }
 
-        // Finish the table.
+        // End the table.
         builder.EndTable();
 
-        // Save the document to disk.
-        string fileName = "TableMerge.docx";
-        doc.Save(fileName);
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
+
+        // Merge every second cell vertically (rows 2&3, 4&5, etc.).
+        // Loop stops before the last row to avoid out‑of‑range access.
+        for (int rowIndex = 1; rowIndex < totalRows - 1; rowIndex += 2)
+        {
+            Cell firstCell = table.Rows[rowIndex].Cells[0];
+            Cell secondCell = table.Rows[rowIndex + 1].Cells[0];
+
+            // Mark the first cell as the start of a vertical merge.
+            firstCell.CellFormat.VerticalMerge = CellMerge.First;
+            // Mark the second cell to merge with the previous cell.
+            secondCell.CellFormat.VerticalMerge = CellMerge.Previous;
+        }
+
+        // Save the document.
+        string outputPath = "TableMerge.docx";
+        doc.Save(outputPath);
 
         // Verify that the file was created.
-        if (!File.Exists(fileName))
-            throw new Exception("Failed to create the output document.");
+        if (!File.Exists(outputPath))
+            throw new Exception("The output document was not created.");
+
+        // Indicate successful completion.
+        Console.WriteLine($"Document saved to {Path.GetFullPath(outputPath)}");
     }
 }

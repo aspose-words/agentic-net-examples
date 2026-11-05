@@ -8,91 +8,68 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a sample waveform image (PNG) locally.
-        const string waveformImagePath = "waveform.png";
-        CreateSampleWaveformImage(waveformImagePath);
+        // Paths for temporary files and output folder
+        string inputImagePath = "waveform.png";
+        string docPath = "sample.docx";
+        string outputDir = "ExtractedImages";
 
-        // Step 2: Create a DOCX document and insert the waveform image.
-        const string docPath = "sample.docx";
-        CreateDocumentWithImage(docPath, waveformImagePath);
+        // Ensure the output directory exists
+        Directory.CreateDirectory(outputDir);
 
-        // Step 3: Load the document and extract all embedded images, saving them as PNG files.
-        ExtractImagesFromDocument(docPath);
+        // Create a deterministic sample waveform image
+        CreateSampleWaveformImage(inputImagePath);
+
+        // Create a new document and insert the sample image (simulating an audio waveform visualization)
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.InsertImage(inputImagePath);
+        doc.Save(docPath);
+
+        // Load the document (simulating extraction from an existing file)
+        Document loadedDoc = new Document(docPath);
+
+        // Extract all images from shape nodes and save them as PNG files
+        int imageCount = 0;
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        foreach (Shape shape in shapeNodes)
+        {
+            if (shape.HasImage)
+            {
+                string outPath = Path.Combine(outputDir, $"extracted-{imageCount}.png");
+                shape.ImageData.Save(outPath);
+                imageCount++;
+            }
+        }
+
+        // Validate that at least one image was extracted
+        if (imageCount == 0)
+            throw new InvalidOperationException("No images were extracted from the document.");
     }
 
-    private static void CreateSampleWaveformImage(string path)
+    private static void CreateSampleWaveformImage(string filePath)
     {
-        const int width = 200;
-        const int height = 100;
+        int width = 200;
+        int height = 100;
 
-        // Create a bitmap and draw a simple placeholder for a waveform.
         using (Bitmap bitmap = new Bitmap(width, height))
         {
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
                 graphics.Clear(Color.White);
 
-                // Draw a simple rectangle to represent the waveform area.
+                // Draw a simple waveform using vertical lines
                 using (Pen pen = new Pen(Color.Black, 2))
                 {
-                    graphics.DrawRectangle(pen, 10, 10, width - 20, height - 20);
+                    for (int x = 0; x < width; x += 10)
+                    {
+                        double radians = (double)x / width * 2 * Math.PI;
+                        int y = (int)(height / 2 + (height / 4) * Math.Sin(radians));
+                        graphics.DrawLine(pen, x, height / 2, x, y);
+                    }
                 }
             }
 
-            // Save the bitmap as a PNG file.
-            bitmap.Save(path);
+            bitmap.Save(filePath);
         }
-
-        // Validate that the image file was created.
-        if (!File.Exists(path))
-            throw new Exception($"Failed to create sample image at '{path}'.");
-    }
-
-    private static void CreateDocumentWithImage(string docPath, string imagePath)
-    {
-        // Create a new empty document.
-        Document doc = new Document();
-
-        // Insert the image into the document.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(imagePath);
-
-        // Save the document.
-        doc.Save(docPath);
-
-        // Validate that the document file was created.
-        if (!File.Exists(docPath))
-            throw new Exception($"Failed to create document at '{docPath}'.");
-    }
-
-    private static void ExtractImagesFromDocument(string docPath)
-    {
-        // Load the document that contains the embedded images.
-        Document doc = new Document(docPath);
-
-        // Collect all Shape nodes (which may contain images).
-        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-
-        int extractedCount = 0;
-
-        foreach (Shape shape in shapeNodes)
-        {
-            if (shape.HasImage)
-            {
-                // Save each extracted image as a PNG file with a deterministic name.
-                string outputPath = $"extracted-{extractedCount}.png";
-                shape.ImageData.Save(outputPath);
-
-                // Validate that the image file was saved.
-                if (!File.Exists(outputPath))
-                    throw new Exception($"Failed to save extracted image to '{outputPath}'.");
-
-                extractedCount++;
-            }
-        }
-
-        // Ensure that at least one image was extracted.
-        if (extractedCount == 0)
-            throw new Exception("No images were extracted from the document.");
     }
 }

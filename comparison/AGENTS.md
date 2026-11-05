@@ -10,31 +10,27 @@ product: Aspose.Words
 
 ## Purpose
 
-This folder is a live, curated example set for Comparison scenarios. Treat every `.cs` file as a standalone console application. The goal is correct, warning-free examples that use documented Aspose APIs and match the original task intent.
+Provide concise, executable guidance for an AI coding assistant to generate reliable Aspose.Words comparison snippets that compile against version 26.10.0 and follow best-practice patterns.
 
 ## Non-negotiable conventions
 
-- Use `Document.Compare` and inspect actual `document.Revisions` items.
-- Create meaningful local source document differences before comparison.
-- Use supported `CompareOptions` members only when the task explicitly requires them.
-- Bootstrap local files, folders, and MemoryStream-backed documents whenever external-style inputs are needed.
-- Guard maybe-null values to avoid nullable-reference warnings such as `CS8600`, `CS8602`, and `CS8604`.
+- Do not reference members that are not present in Aspose.Words 26.10.0, such as CompareOptions.IgnoreWhitespaceChanges or Revision.GetText.
+- Do not fabricate revision-type constants that the library does not define.
+- Do not assume external files exist; generate sample inputs programmatically.
+- Bootstrap local sample inputs for existing-file, folder, stream, image, and data workflows.
+- Prefer simple, verifiable workflows over speculative formatting shortcuts.
 
 ## Recommended workflow selection
 
-- Revision Processing workflow: 19 examples
-- Stream Batch IO workflow: 2 examples
-- Native Comparison Api workflow: 9 examples
+- **Revision Processing workflow**: 19 examples
+- **Stream and batch I/O workflow**: 2 examples
+- **Native Comparison API workflow**: 9 examples
 
 Use the simplest workflow that satisfies the task.
 
 ## Validation priorities
 
-1. The code must compile and run without manual input.
-2. API usage must be supported by the configured package versions.
-3. Exported outputs must actually be written by the example.
-4. Validation scenarios must inspect only the behavior requested by the task.
-5. Examples that depend on files, folders, streams, images, or data should bootstrap those inputs locally during the example run.
+1. Verify that the compiled code accesses only members defined in the referenced Aspose.Words assembly and that Document.Revisions.Count reflects the expected changes.
 
 ## File-to-task reference
 
@@ -77,7 +73,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Configure ComparisonOptions to ignore whitespace changes when comparing source code documentation files.
   - Workflow: native-comparison-api
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `enable-detection-of-moved-paragraphs-by-setting-appropriate-flags-in-comparisonoptions-bef.cs`
   - Task: Enable detection of moved paragraphs by setting appropriate flags in ComparisonOptions before comparison.
   - Workflow: native-comparison-api
@@ -107,12 +103,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Compare documents with different page orientations and verify that orientation changes appear as revisions.
   - Workflow: revision-processing
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `compare-documents-containing-embedded-charts-and-ensure-that-chart-data-changes-are-captur.cs`
   - Task: Compare documents containing embedded charts and ensure that chart data changes are captured as revisions.
   - Workflow: revision-processing
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `compare-a-document-against-itself-to-confirm-that-no-revisions-are-generated.cs`
   - Task: Compare a document against itself to confirm that no revisions are generated.
   - Workflow: revision-processing
@@ -187,57 +183,62 @@ Use the simplest workflow that satisfies the task.
   - Task: Validate that the comparison output matches the online tool results by comparing revision counts and types.
   - Workflow: revision-processing
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 
 ## Common failure patterns and preferred agent fixes
 
-- **Identical document comparison**
-  - Symptom: Comparison yields no revisions when differences were expected.
-  - Preferred fix: Create deterministic local source documents with meaningful differences before calling Compare.
+- **Use of non-existent API members**
+  - Symptom: The compiler reports CS1061 or CS0117 because a property or flag such as CompareOptions.IgnoreWhitespaceChanges does not exist.
+  - Root cause: The example was written against a newer or different version of Aspose.Words where those members are defined.
+  - Preferred fix: Remove the unsupported member and rely on the available options, for example set CompareOptions.IgnoreFormatting to treat whitespace as formatting.
+  - Prevention: Consult the official API reference for version 26.10.0 before using any CompareOptions flags.
 
-- **Invented revision reporting**
-  - Symptom: Counts or revision metadata are reported without inspecting the real revisions collection.
-  - Preferred fix: Use document.Revisions directly and filter actual revision items.
+- **Assumed external documents**
+  - Symptom: Runtime code fails with FileNotFoundException or the comparison produces zero revisions because the input files were never created.
+  - Root cause: The sample assumes pre-existing DOCX/DOC files or folder structures.
+  - Preferred fix: Generate the required source documents in the example code using DocumentBuilder before invoking Compare.
+  - Prevention: Always bootstrap sample inputs locally; never rely on external files that are not part of the snippet.
 
-- **Missing local source documents**
-  - Symptom: Existing DOCX/DOC/folder/stream inputs are assumed to exist.
-  - Preferred fix: Bootstrap local versions, folders, or MemoryStream-backed documents in the example.
+- **Missing revision members**
+  - Symptom: Compilation errors such as CS1061 for Revision.GetText or Revision.Node appear.
+  - Root cause: The code accesses members that are not part of the Revision class in the target library.
+  - Preferred fix: Use Revision.ParentNode to obtain the affected node and call GetText on that node instead of on Revision.
+  - Prevention: Reference the Revision documentation and use only the properties and methods that exist.
 
-- **Incorrect post-processing assumption**
-  - Symptom: Accept/reject workflows do not verify the final revision state.
-  - Preferred fix: Check document.Revisions.Count after accepting or rejecting revisions.
+- **Incorrect collection manipulation**
+  - Symptom: CS1061 errors arise when calling Clear on RevisionCollection or CopyTo with an unsupported overload.
+  - Root cause: The example uses collection methods that the library does not implement.
+  - Preferred fix: Iterate over the collection and remove items individually if needed, or simply accept all revisions without clearing the collection.
+  - Prevention: Check the RevisionCollection API for supported operations before invoking them.
 
-- **Nullable warnings**
-  - Symptom: CS8600, CS8602, or CS8604 around maybe-null nodes or filtered results.
-  - Preferred fix: Use nullable locals and null-check before dereference or assignment.
+- **Nullable reference misuse**
+  - Symptom: Compiler warnings CS8600, CS8602, or CS8604 appear when a possibly null value is assigned or dereferenced.
+  - Root cause: The code does not guard against null results from properties such as Revision.ParentNode.
+  - Preferred fix: Introduce nullable locals and perform explicit null checks before accessing members.
+  - Prevention: Enable nullable reference analysis and follow the nullable_warning_prevention guidelines.
+
+- **Incorrect disposal pattern**
+  - Symptom: CS1674 indicates that Document does not implement IDisposable, yet it is used in a using statement.
+  - Root cause: The example assumes Document implements IDisposable, which it does not in this version.
+  - Preferred fix: Do not place Document in a using block; rely on the library's internal resource management.
+  - Prevention: Wrap only objects that implement IDisposable (e.g., MemoryStream) in using statements.
 
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.9.0`
+- Primary package: `Aspose.Words` `26.10.0`
 
 ## Command reference
-
-### Create a temporary console project
 
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
+dotnet add package Aspose.Words --version 26.10.0
 ```
-
-### Add required packages
-
-```bash
-dotnet add package Aspose.Words --version 26.9.0
-```
-
-### Copy a category example into the temp project
 
 ```powershell
 Copy-Item ..\comparison\<example-file>.cs .\Program.cs
 ```
-
-### Build and run
 
 ```bash
 dotnet build --configuration Release --verbosity minimal
@@ -246,6 +247,4 @@ dotnet run --configuration Release --no-build
 
 ## Category update guidance
 
-- Preserve file-to-task traceability. Any future update should keep the original task text associated with the file in metadata.
-- When replacing a file, prefer the latest verified publish-ready version rather than a merely compiling draft.
-- Keep examples standalone, bootstrap missing inputs locally, and prefer documented Aspose APIs over speculative shortcuts.
+- Update the rules summary whenever a new Aspose.Words version introduces additional CompareOptions flags or revision members.

@@ -4,50 +4,38 @@ using System.Threading.Tasks;
 
 public class Program
 {
-    // Simulated long‑running operation that respects a cancellation token.
-    private static async Task PerformWorkAsync(CancellationToken token)
+    // Simulates a long‑running operation that respects cancellation.
+    private static async Task LongRunningOperationAsync(CancellationToken token)
     {
-        Console.WriteLine("Work started.");
-        // Simulate work in 500 ms increments.
-        for (int i = 0; i < 20; i++)
+        for (int i = 1; i <= 10; i++)
         {
-            // Throw if cancellation was requested.
+            // Throw if cancellation has been requested.
             token.ThrowIfCancellationRequested();
 
-            await Task.Delay(500, token); // Respect the token during the delay.
-            Console.WriteLine($"Progress: {(i + 1) * 5}%");
+            // Simulate work.
+            await Task.Delay(1000, token);
+            Console.WriteLine($"Iteration {i}");
         }
-
-        Console.WriteLine("Work completed successfully.");
     }
 
-    public static async Task Main()
+    public static async Task Main(string[] args)
     {
-        // Define a timeout after which the operation should be cancelled.
+        // Define a timeout duration.
         TimeSpan timeout = TimeSpan.FromSeconds(3);
 
+        // Create a CancellationTokenSource that will cancel after the timeout.
         using var cts = new CancellationTokenSource();
-
-        // Automatically cancel after the specified timeout.
         cts.CancelAfter(timeout);
-        Console.WriteLine($"Cancellation will be triggered after {timeout.TotalSeconds} seconds.");
 
         try
         {
-            // Run the work task and await its completion.
-            await PerformWorkAsync(cts.Token);
+            // Run the operation with the cancellation token.
+            await LongRunningOperationAsync(cts.Token);
+            Console.WriteLine("Operation completed without cancellation.");
         }
         catch (OperationCanceledException)
         {
-            Console.WriteLine("Operation was cancelled due to timeout.");
+            Console.WriteLine("Operation cancelled due to timeout.");
         }
-        finally
-        {
-            // Ensure the token source is disposed.
-            cts.Dispose();
-        }
-
-        // Give a brief moment for console output to flush before exiting.
-        await Task.Delay(500);
     }
 }

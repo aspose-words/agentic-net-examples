@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -8,66 +8,73 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // Paths for the template and the final report.
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        string reportPath = Path.Combine(outputDir, "Report.docx");
+
+        // -----------------------------------------------------------------
+        // 1. Create the template document programmatically.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Insert a Table of Contents field at the beginning.
+        builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
+        builder.Writeln(); // Add a blank line after TOC.
+
+        // Begin a foreach block that will repeat for each section.
+        builder.Writeln("<<foreach [section in Model.Sections]>>");
+
+        // Insert a heading for the section title. Use Heading 1 style.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("<<[section.Title]>>");
+
+        // Insert the section content as normal paragraph text.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("<<[section.Content]>>");
+        builder.Writeln(); // Blank line between sections.
+
+        // End the foreach block.
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template and build the report using LINQ Reporting.
+        // -----------------------------------------------------------------
+        Document reportDoc = new Document(templatePath);
 
         // Sample data model.
-        var model = new ReportModel
+        ReportModel model = new()
         {
-            Sections = new List<Section>
+            Sections = new()
             {
                 new Section { Title = "Introduction", Content = "This is the introduction section." },
-                new Section { Title = "Chapter 1", Content = "Details of chapter 1 go here." },
+                new Section { Title = "Usage", Content = "Details on how to use the application." },
                 new Section { Title = "Conclusion", Content = "Final thoughts and summary." }
             }
         };
 
-        // Create template document.
-        const string templatePath = "Template.docx";
-        var builder = new DocumentBuilder();
+        // Build the report.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "Model");
 
-        // Insert Table of Contents field.
-        builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
-        builder.Writeln(); // Add a blank line after TOC.
-
-        // Begin foreach loop over sections.
-        builder.Writeln("<<foreach [sec in Sections]>>");
-
-        // Heading paragraph (Heading 1 style) for each section title.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("<<[sec.Title]>>");
-
-        // Reset style to Normal for content.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("<<[sec.Content]>>");
-
-        // End foreach loop.
-        builder.Writeln("<</foreach>>");
-
-        // Save the template.
-        builder.Document.Save(templatePath);
-
-        // Load the template and build the report.
-        var doc = new Document(templatePath);
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        bool success = engine.BuildReport(doc, model, "model");
-
-        // Update fields (e.g., TOC) after report generation.
-        if (success)
-        {
-            doc.UpdateFields();
-        }
+        // Update fields to generate the Table of Contents.
+        reportDoc.UpdateFields();
 
         // Save the final report.
-        const string outputPath = "Report.docx";
-        doc.Save(outputPath);
-
-        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to '{outputPath}'.");
+        reportDoc.Save(reportPath);
     }
 }
 
+// ---------------------------------------------------------------------
 // Data model classes.
+// ---------------------------------------------------------------------
 public class ReportModel
 {
     public List<Section> Sections { get; set; } = new();

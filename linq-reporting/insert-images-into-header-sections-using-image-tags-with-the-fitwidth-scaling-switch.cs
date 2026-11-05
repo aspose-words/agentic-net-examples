@@ -1,72 +1,66 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Reporting;
 using Aspose.Words.Drawing;
-using System.Text;
+using Aspose.Words.Reporting;
 
-namespace ImageInHeaderExample
+public class Program
 {
-    public class ReportModel
+    public static void Main()
     {
-        public string ImagePath { get; set; } = string.Empty;
-    }
+        // Ensure the output directory exists.
+        Directory.CreateDirectory("Output");
 
-    public class Program
-    {
-        public static void Main()
+        // Create a simple 1x1 PNG image and save it locally.
+        byte[] pngBytes = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK0cAAAAASUVORK5CYII=");
+        string imagePath = Path.Combine("Output", "sample.png");
+        File.WriteAllBytes(imagePath, pngBytes);
+
+        // Define the data model.
+        ReportModel model = new ReportModel
         {
-            // Register code page provider (required for some Aspose.Words features)
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            ImagePath = Path.GetFullPath(imagePath)
+        };
 
-            // Prepare working directories
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-            Directory.CreateDirectory(outputDir);
+        // Create the template document programmatically.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-            // Create a simple PNG image (1x1 pixel, red) and save it locally
-            string imageFile = Path.Combine(outputDir, "sample.png");
-            byte[] pngData = Convert.FromBase64String(
-                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK9cAAAAASUVORK5CYII=");
-            File.WriteAllBytes(imageFile, pngData);
+        // Insert a header.
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
 
-            // Create the template document with a header containing an image tag
-            string templateFile = Path.Combine(outputDir, "template.docx");
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Insert a textbox shape that will contain the image tag.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 50);
+        builder.MoveTo(textBox.FirstParagraph);
+        // Image tag with fitWidth scaling switch.
+        builder.Write("<<image [model.ImagePath] -fitWidth>>");
 
-            // Move to the primary header
-            builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        // Add some body content (optional).
+        builder.MoveToDocumentEnd();
+        builder.Writeln("Report generated with header image.");
 
-            // Insert a textbox shape to host the image tag
-            Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 50);
-            builder.MoveTo(textBox.FirstParagraph);
+        // Save the template to disk.
+        string templatePath = Path.Combine("Output", "Template.docx");
+        template.Save(templatePath);
 
-            // Write the LINQ Reporting image tag with -fitWidth switch
-            builder.Write("<<image [model.ImagePath] -fitWidth>>");
+        // Load the template for reporting.
+        Document report = new Document(templatePath);
 
-            // Return to the main body and add a placeholder paragraph
-            builder.MoveToDocumentEnd();
-            builder.Writeln("Report body content goes here.");
+        // Build the report using LINQ Reporting Engine.
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None;
+        bool success = engine.BuildReport(report, model, "model");
 
-            // Save the template
-            templateDoc.Save(templateFile);
-
-            // Load the template for report generation
-            Document reportDoc = new Document(templateFile);
-
-            // Prepare the data model
-            ReportModel model = new ReportModel
-            {
-                ImagePath = imageFile
-            };
-
-            // Build the report using LINQ Reporting Engine
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(reportDoc, model, "model");
-
-            // Save the final document
-            string outputFile = Path.Combine(outputDir, "output.docx");
-            reportDoc.Save(outputFile);
-        }
+        // Save the generated report.
+        string reportPath = Path.Combine("Output", "Report.docx");
+        report.Save(reportPath);
     }
+}
+
+// Data model used by the LINQ Reporting template.
+public class ReportModel
+{
+    // Path to the image file that will be inserted into the header.
+    public string ImagePath { get; set; } = string.Empty;
 }

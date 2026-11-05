@@ -4,95 +4,90 @@ using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Tables;
 
-namespace LinqReportingConditionalFormatting
+public class Item
 {
-    // Data model for a single row.
-    public class Item
-    {
-        public int Index { get; set; }
-        public string Name { get; set; } = "";
-    }
+    public int Index { get; set; }
+    public string Name { get; set; } = "";
+}
 
-    // Root model passed to the reporting engine.
-    public class ReportModel
-    {
-        public List<Item> Items { get; set; } = new();
-    }
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
 
-    public class Program
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
+        // ---------- Create the template document ----------
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+
+        // Title
+        builder.Writeln("Items Report");
+
+        // Begin the foreach loop that will repeat the table rows.
+        builder.Writeln("<<foreach [item in Items]>>");
+
+        // Create the table that will be repeated for each item.
+        Table table = builder.StartTable();
+
+        // Header row.
+        builder.InsertCell();
+        builder.Writeln("Index");
+        builder.InsertCell();
+        builder.Writeln("Name");
+        builder.EndRow();
+
+        // Data row with conditional background color for even rows.
+        builder.InsertCell();
+        builder.Writeln(
+            "<<if [item.Index % 2 == 0]>>" +
+            "<<backColor [\"LightGray\"]>><<[item.Index]>><</backColor>><</if>>" +
+            "<<if [item.Index % 2 != 0]>>" +
+            "<<[item.Index]>>" +
+            "<</if>>");
+
+        builder.InsertCell();
+        builder.Writeln(
+            "<<if [item.Index % 2 == 0]>>" +
+            "<<backColor [\"LightGray\"]>><<[item.Name]>><</backColor>><</if>>" +
+            "<<if [item.Index % 2 != 0]>>" +
+            "<<[item.Name]>>" +
+            "<</if>>");
+
+        // End the data row.
+        builder.EndRow();
+
+        // End the table.
+        builder.EndTable();
+
+        // End the foreach loop.
+        builder.Writeln("<</foreach>>");
+
+        // Save the template.
+        const string templatePath = "Template.docx";
+        templateDoc.Save(templatePath);
+
+        // ---------- Build the report ----------
+        var reportDoc = new Document(templatePath);
+
+        var model = new ReportModel
         {
-            // Prepare sample data.
-            var model = new ReportModel
+            Items = new()
             {
-                Items = new List<Item>
-                {
-                    new() { Index = 1, Name = "Alpha" },
-                    new() { Index = 2, Name = "Beta" },
-                    new() { Index = 3, Name = "Gamma" },
-                    new() { Index = 4, Name = "Delta" },
-                    new() { Index = 5, Name = "Epsilon" }
-                }
-            };
+                new Item { Index = 0, Name = "Alice" },
+                new Item { Index = 1, Name = "Bob" },
+                new Item { Index = 2, Name = "Charlie" },
+                new Item { Index = 3, Name = "Diana" },
+                new Item { Index = 4, Name = "Ethan" }
+            }
+        };
 
-            // Create the template document.
-            var template = new Document();
-            var builder = new DocumentBuilder(template);
+        var engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
 
-            // Begin foreach loop over Items.
-            builder.Writeln("<<foreach [item in Items]>>");
-
-            // Create a table for each item (header + data row).
-            Table table = builder.StartTable();
-
-            // Header row.
-            builder.InsertCell();
-            builder.Writeln("Index");
-            builder.InsertCell();
-            builder.Writeln("Name");
-            builder.EndRow();
-
-            // Data row with conditional background color for even rows.
-            builder.InsertCell();
-            builder.Writeln(
-                "<<if [item.Index % 2 == 0]>>" +
-                "<<backColor [\"LightGray\"]>><<[item.Index]>> <</backColor>><</if>>" +
-                "<<if [item.Index % 2 != 0]>>" +
-                "<<[item.Index]>>" +
-                "<</if>>");
-
-            builder.InsertCell();
-            builder.Writeln(
-                "<<if [item.Index % 2 == 0]>>" +
-                "<<backColor [\"LightGray\"]>><<[item.Name]>> <</backColor>><</if>>" +
-                "<<if [item.Index % 2 != 0]>>" +
-                "<<[item.Name]>>" +
-                "<</if>>");
-
-            builder.EndRow();
-            builder.EndTable();
-
-            // End foreach loop.
-            builder.Writeln("<</foreach>>");
-
-            // Save the template to disk.
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
-
-            // Load the template for report generation.
-            var doc = new Document(templatePath);
-
-            // Build the report.
-            var engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.None;
-            engine.BuildReport(doc, model, "model");
-
-            // Save the final report.
-            const string reportPath = "Report.docx";
-            doc.Save(reportPath);
-
-            Console.WriteLine($"Report generated: {reportPath}");
-        }
+        const string reportPath = "Report.docx";
+        reportDoc.Save(reportPath);
     }
 }

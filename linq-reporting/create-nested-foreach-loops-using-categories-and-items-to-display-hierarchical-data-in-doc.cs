@@ -1,85 +1,76 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Newtonsoft.Json;
 
-public class Program
+namespace LinqReportingNestedLoops
 {
-    public static void Main()
+    // Data model classes
+    public class Item
     {
-        // Register code page provider for Aspose.Words if needed.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        public string Name { get; set; } = "";
+        public int Quantity { get; set; }
+    }
 
-        // Prepare sample data.
-        ReportModel model = new()
+    public class Category
+    {
+        public string Name { get; set; } = "";
+        public List<Item> Items { get; set; } = new();
+    }
+
+    public class ReportModel
+    {
+        public List<Category> Categories { get; set; } = new();
+    }
+
+    public class Program
+    {
+        public static void Main()
         {
-            Categories = new()
+            // Prepare sample hierarchical data
+            var model = new ReportModel
             {
-                new Category
+                Categories = new List<Category>
                 {
-                    Name = "Fruits",
-                    Items = new()
+                    new Category
                     {
-                        new Item { Name = "Apple", Price = 0.5m },
-                        new Item { Name = "Banana", Price = 0.3m }
-                    }
-                },
-                new Category
-                {
-                    Name = "Vegetables",
-                    Items = new()
+                        Name = "Fruits",
+                        Items = new List<Item>
+                        {
+                            new Item { Name = "Apple", Quantity = 10 },
+                            new Item { Name = "Banana", Quantity = 20 }
+                        }
+                    },
+                    new Category
                     {
-                        new Item { Name = "Carrot", Price = 0.2m },
-                        new Item { Name = "Tomato", Price = 0.4m }
+                        Name = "Vegetables",
+                        Items = new List<Item>
+                        {
+                            new Item { Name = "Carrot", Quantity = 15 },
+                            new Item { Name = "Tomato", Quantity = 12 }
+                        }
                     }
                 }
-            }
-        };
+            };
 
-        // Create a template document programmatically.
-        string templatePath = "Template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            // Create a new blank document and a builder for the template
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
 
-        builder.Writeln("<<foreach [cat in Categories]>>");
-        builder.Writeln("Category: <<[cat.Name]>>");
-        builder.Writeln("<<foreach [itm in cat.Items]>>");
-        builder.Writeln("- <<[itm.Name]>>: $<<[itm.Price]>>");
-        builder.Writeln("<</foreach>>");
-        builder.Writeln("<</foreach>>");
+            // Build the LINQ Reporting template with nested foreach loops
+            builder.Writeln("<<foreach [category in Categories]>>");
+            builder.Writeln("Category: <<[category.Name]>>");
+            builder.Writeln("<<foreach [item in category.Items]>>");
+            builder.Writeln("- <<[item.Name]>> (Qty: <<[item.Quantity]>>)");
+            builder.Writeln("<</foreach>>");
+            builder.Writeln("<</foreach>>");
 
-        templateDoc.Save(templatePath);
+            // Generate the report using the ReportingEngine
+            var engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
 
-        // Load the template for reporting.
-        Document reportDoc = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine();
-
-        // Build the report using the model as the root object named "model".
-        engine.BuildReport(reportDoc, model, "model");
-
-        // Save the generated report.
-        string outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+            // Save the generated document
+            doc.Save("Report.docx");
+        }
     }
-}
-
-// Data model classes.
-public class ReportModel
-{
-    public List<Category> Categories { get; set; } = new();
-}
-
-public class Category
-{
-    public string Name { get; set; } = "";
-    public List<Item> Items { get; set; } = new();
-}
-
-public class Item
-{
-    public string Name { get; set; } = "";
-    public decimal Price { get; set; }
 }

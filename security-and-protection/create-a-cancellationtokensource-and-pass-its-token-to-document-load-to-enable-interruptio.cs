@@ -1,47 +1,52 @@
 using System;
 using System.IO;
 using System.Threading;
-using System.Threading.Tasks;
 using Aspose.Words;
+using Aspose.Words.Loading;
 
 public class Program
 {
-    public static async Task Main(string[] args)
+    public static void Main()
     {
-        const string filePath = "sample.docx";
+        // -----------------------------------------------------------------
+        // 1. Create a simple source document and save it locally.
+        // -----------------------------------------------------------------
+        const string sourcePath = "source.docx";
 
-        // Create a simple document and save it.
         var doc = new Document();
         var builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document for cancellation token demo.");
-        doc.Save(filePath);
+        builder.Writeln("Hello, Aspose.Words!");
+        doc.Save(sourcePath);
 
-        if (!File.Exists(filePath))
-            throw new FileNotFoundException("Failed to create the sample document.", filePath);
-
-        // Set up a cancellation token source that cancels after a short delay.
+        // -----------------------------------------------------------------
+        // 2. Prepare a CancellationTokenSource.
+        //    (The current Aspose.Words API does not expose a Load method
+        //     that accepts a CancellationToken, so we create the token
+        //     but load the document using the standard constructor.)
+        // -----------------------------------------------------------------
         using var cts = new CancellationTokenSource();
 
-        // Cancel after 100 ms.
-        _ = Task.Run(async () =>
-        {
-            await Task.Delay(100);
-            cts.Cancel();
-        });
+        // -----------------------------------------------------------------
+        // 3. Load the document with LoadOptions.
+        // -----------------------------------------------------------------
+        var loadOptions = new LoadOptions(); // No special options needed.
+        // The token is not used because the API version does not support it.
+        // If a future version adds overload Document.Load(string, LoadOptions, CancellationToken),
+        // the token can be passed there.
+        Document loadedDoc = new Document(sourcePath, loadOptions);
 
-        try
-        {
-            // Load the document inside a Task that observes the cancellation token.
-            var loadedDoc = await Task.Run(() => new Document(filePath), cts.Token);
-            Console.WriteLine("Document loaded successfully.");
-        }
-        catch (OperationCanceledException)
-        {
-            Console.WriteLine("Document loading was canceled.");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"An error occurred: {ex.Message}");
-        }
+        // -----------------------------------------------------------------
+        // 4. Save the loaded document to verify that loading succeeded.
+        // -----------------------------------------------------------------
+        const string outputPath = "loaded.docx";
+        loadedDoc.Save(outputPath);
+
+        // -----------------------------------------------------------------
+        // 5. Validate that the output file was created.
+        // -----------------------------------------------------------------
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The document was not saved as expected.");
+
+        Console.WriteLine("Document loaded and saved successfully.");
     }
 }

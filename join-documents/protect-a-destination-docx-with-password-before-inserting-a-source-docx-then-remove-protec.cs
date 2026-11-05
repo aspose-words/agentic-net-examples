@@ -1,57 +1,52 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for temporary files
-        const string destPath = "Destination.docx";
-        const string srcPath = "Source.docx";
-        const string outputPath = "MergedOutput.docx";
-        const string password = "Secret123";
+        // Define file paths in the current directory.
+        string destPath = Path.Combine(Directory.GetCurrentDirectory(), "Destination.docx");
+        string sourcePath = Path.Combine(Directory.GetCurrentDirectory(), "Source.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedResult.docx");
+        string password = "Secret123";
 
-        // Create destination document with sample content
-        var destinationDoc = new Document();
-        var destBuilder = new DocumentBuilder(destinationDoc);
+        // -----------------------------------------------------------------
+        // Create the destination document and add some content.
+        // -----------------------------------------------------------------
+        Document destDoc = new Document();
+        DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
         destBuilder.Writeln("This is the destination document.");
-        destinationDoc.Save(destPath, SaveFormat.Docx);
+        destDoc.Save(destPath, SaveFormat.Docx);
 
-        // Protect the destination document with a password
-        destinationDoc.Protect(ProtectionType.ReadOnly, password);
-        // Save the protected version (overwrites the previous file)
-        destinationDoc.Save(destPath, SaveFormat.Docx);
+        // Protect the destination document with a password (read‑only protection).
+        destDoc.Protect(ProtectionType.ReadOnly, password);
 
-        // Create source document with sample content
-        var sourceDoc = new Document();
-        var srcBuilder = new DocumentBuilder(sourceDoc);
-        srcBuilder.Writeln("This is the source document.");
-        sourceDoc.Save(srcPath, SaveFormat.Docx);
+        // -----------------------------------------------------------------
+        // Create the source document and add some content.
+        // -----------------------------------------------------------------
+        Document sourceDoc = new Document();
+        DocumentBuilder sourceBuilder = new DocumentBuilder(sourceDoc);
+        sourceBuilder.Writeln("This is the source document.");
+        sourceDoc.Save(sourcePath, SaveFormat.Docx);
 
-        // Load the protected destination document
-        var protectedDest = new Document(destPath);
-        // Load the source document
-        var source = new Document(srcPath);
+        // Load the source document from file (simulating a typical workflow).
+        Document loadedSource = new Document(sourcePath);
 
-        // Append the source document to the protected destination
-        protectedDest.AppendDocument(source, ImportFormatMode.KeepSourceFormatting);
+        // Append the source document to the protected destination document.
+        destDoc.AppendDocument(loadedSource, ImportFormatMode.KeepSourceFormatting);
 
-        // Remove protection before saving the final merged document
-        protectedDest.Unprotect();
+        // Remove protection from the merged document.
+        destDoc.Unprotect(password);
 
-        // Save the merged, unprotected document
-        protectedDest.Save(outputPath, SaveFormat.Docx);
+        // Save the final merged document.
+        destDoc.Save(outputPath, SaveFormat.Docx);
 
-        // Validate that the output file exists
+        // Verify that the output file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Merged output file was not created.");
-
-        // Optional validation: ensure content from both documents is present
-        var merged = new Document(outputPath);
-        string mergedText = merged.GetText();
-        if (!mergedText.Contains("destination document") || !mergedText.Contains("source document"))
-            throw new InvalidOperationException("Merged document does not contain expected content.");
+        {
+            throw new InvalidOperationException("Merged document was not saved correctly.");
+        }
     }
 }

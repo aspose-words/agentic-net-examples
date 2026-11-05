@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -6,38 +7,32 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a DocumentBuilder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Sample data to populate the table.
-        string[,] data = new string[,]
-        {
-            { "Product", "Description", "Price", "Quantity" },
-            { "Apple", "Fresh red apples", "$1.20", "50" },
-            { "Banana", "Ripe yellow bananas", "$0.80", "120" },
-            { "Cherry", "Sweet cherries from the valley", "$2.50", "30" }
-        };
-
-        // Start the table.
+        // Insert a table with 3 columns and 5 rows.
         Table table = builder.StartTable();
 
-        // Populate the table with data.
-        for (int row = 0; row < data.GetLength(0); row++)
+        // Define header row.
+        for (int col = 0; col < 3; col++)
         {
-            for (int col = 0; col < data.GetLength(1); col++)
+            builder.InsertCell();
+            builder.Write($"Header {col + 1}");
+        }
+        builder.EndRow();
+
+        // Fill table with sample data.
+        for (int row = 0; row < 4; row++)
+        {
+            for (int col = 0; col < 3; col++)
             {
-                // Insert cell text.
                 builder.InsertCell();
-                builder.Write(data[row, col]);
-
-                // Apply a simple border to each cell.
-                Cell cell = (Cell)builder.CurrentParagraph.ParentNode;
-                cell.CellFormat.Borders.LineWidth = 0.5;
-                cell.CellFormat.Borders.Color = System.Drawing.Color.Black;
+                // Vary content length to demonstrate width adjustment.
+                string content = $"Row {row + 1}, Column {col + 1}";
+                if (col == 1) content += " - longer text example";
+                builder.Write(content);
             }
-
-            // End the current row.
             builder.EndRow();
         }
 
@@ -45,11 +40,11 @@ public class Program
         builder.EndTable();
 
         // Adjust column widths proportionally to fit the content.
-        // AutoFitToContents makes each column width fit its longest cell content.
+        // AutoFitToContents resizes each column based on its longest cell content.
         table.AutoFit(AutoFitBehavior.AutoFitToContents);
 
-        // Save the document.
-        string outputPath = "AdjustedTable.docx";
+        // Save the document to a file.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "AdjustedTable.docx");
         doc.Save(outputPath);
     }
 }

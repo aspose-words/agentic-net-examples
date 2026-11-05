@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
 public class Program
 {
@@ -9,55 +10,46 @@ public class Program
         // Create a sample document with two pages.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Content of page 1.");
+        builder.Writeln("Page 1 content.");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Content of page 2.");
+        builder.Writeln("Page 2 content.");
 
-        // Save the source document.
-        string sourcePath = "Sample.docx";
+        const string sourcePath = "Sample.docx";
         doc.Save(sourcePath);
 
-        // Reload the document to ensure layout information is up‑to‑date.
-        doc = new Document(sourcePath);
+        // Ensure layout is up‑to‑date so we can obtain the page count.
         doc.UpdatePageLayout();
-
-        // Verify the source document was saved.
-        if (!File.Exists(sourcePath))
-            throw new FileNotFoundException("Source document was not saved.", sourcePath);
-
-        // Split the document into individual pages using ExtractPages.
         int pageCount = doc.PageCount;
-        for (int page = 1; page <= pageCount; page++)
+        Console.WriteLine($"Document contains {pageCount} page(s).");
+
+        // Split the document into individual pages.
+        for (int i = 1; i <= pageCount; i++)
         {
-            // Extract a single page. ExtractPages uses zero‑based start index and a page count.
-            Document pageDoc = doc.ExtractPages(page - 1, 1);
-
-            // Save the extracted page.
-            string pagePath = $"Page_{page}.docx";
+            // ExtractPages uses zero‑based start page index and a page count.
+            Document pageDoc = doc.ExtractPages(i - 1, 1);
+            string pagePath = $"Page_{i}.docx";
             pageDoc.Save(pagePath);
-
-            // Verify the page file was created.
-            if (!File.Exists(pagePath))
-                throw new FileNotFoundException($"Page {page} document was not saved.", pagePath);
+            Console.WriteLine($"Saved page {i} to '{pagePath}'.");
         }
 
-        // Write a simple report confirming the split operation.
-        string reportPath = "SplitReport.txt";
-        File.WriteAllText(reportPath,
-            $"Source document: {sourcePath}{Environment.NewLine}" +
-            $"Total pages split: {pageCount}{Environment.NewLine}" +
-            $"Generated files: {string.Join(", ", GetPageFileNames(pageCount))}");
+        // Verify that each split file was created.
+        for (int i = 1; i <= pageCount; i++)
+        {
+            string pagePath = $"Page_{i}.docx";
+            if (!File.Exists(pagePath))
+                throw new FileNotFoundException($"Expected split file not found: {pagePath}");
+        }
 
-        // Verify the report file exists.
-        if (!File.Exists(reportPath))
-            throw new FileNotFoundException("Split report was not saved.", reportPath);
-    }
+        // Clean up temporary files.
+        if (File.Exists(sourcePath))
+            File.Delete(sourcePath);
+        for (int i = 1; i <= pageCount; i++)
+        {
+            string pagePath = $"Page_{i}.docx";
+            if (File.Exists(pagePath))
+                File.Delete(pagePath);
+        }
 
-    private static string[] GetPageFileNames(int pageCount)
-    {
-        string[] names = new string[pageCount];
-        for (int i = 0; i < pageCount; i++)
-            names[i] = $"Page_{i + 1}.docx";
-        return names;
+        Console.WriteLine("Document split into individual pages completed successfully.");
     }
 }

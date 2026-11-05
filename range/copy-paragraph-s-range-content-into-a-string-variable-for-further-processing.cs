@@ -1,34 +1,24 @@
 using System;
 using Aspose.Words;
 
-namespace ParagraphRangeExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new document and add paragraphs with sample text.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln("This is the first paragraph.");
-            builder.Writeln("This is the second paragraph.");
+        // Create a new blank document.
+        Document doc = new Document();
 
-            // Save the document locally.
-            string filePath = "Sample.docx";
-            doc.Save(filePath);
+        // Create a paragraph and add a run of text.
+        Paragraph paragraph = new Paragraph(doc);
+        paragraph.AppendChild(new Run(doc, "Hello, Aspose.Words! This is a sample paragraph."));
 
-            // Load the document from the saved file.
-            Document loadedDoc = new Document(filePath);
+        // Insert the paragraph into the document body.
+        doc.FirstSection.Body.AppendChild(paragraph);
 
-            // Retrieve the first paragraph in the document.
-            Paragraph firstParagraph = loadedDoc.FirstSection.Body.Paragraphs[0];
+        // Copy the paragraph's range content into a string variable.
+        string paragraphText = paragraph.Range.Text;
 
-            // Copy the paragraph's range content into a string variable.
-            string paragraphText = firstParagraph.Range.Text;
-
-            // Use the extracted text for further processing (here we simply output it).
-            Console.WriteLine("Extracted paragraph text:");
-            Console.WriteLine(paragraphText);
-        }
+        // Output the extracted text (optional, for verification).
+        Console.WriteLine(paragraphText);
     }
 }

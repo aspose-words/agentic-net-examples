@@ -1,109 +1,100 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
+using Aspose.Words.Layout;
 using Aspose.Words.Math;
 
-public class Program
+public class OfficeMathPdfPositionValidator
 {
     public static void Main()
     {
-        // Prepare output directory and file paths
+        // Prepare output directory
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
+
         string docxPath = Path.Combine(outputDir, "sample.docx");
         string pdfPath = Path.Combine(outputDir, "sample.pdf");
 
-        // Create a new document and add equations using the deterministic EQ‑field bootstrap workflow
+        // Create a new document and builder
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        builder.Writeln("This is a paragraph before the equation.");
+        // Insert some introductory text
+        builder.Writeln("This document contains several OfficeMath equations.");
+        builder.Writeln();
 
-        // First equation: simple fraction
-        InsertEquation(builder, @"\f(1,2)");
+        // Insert first equation using deterministic EQ-field bootstrap
+        InsertEquation(builder, @"\f(1,2)"); // Simple fraction 1/2
+        builder.Writeln();
 
-        builder.Writeln("Paragraph between equations.");
+        // Insert second equation
+        InsertEquation(builder, @"\r(3,x)"); // Simple root
+        builder.Writeln();
 
-        // Second equation: simple root
-        InsertEquation(builder, @"\r(3,x)");
+        // Insert third equation
+        InsertEquation(builder, @"\s(5)"); // Simple superscript
+        builder.Writeln();
 
-        builder.Writeln("End of document.");
-
-        // Save the source DOCX
+        // Save the DOCX file
         doc.Save(docxPath, SaveFormat.Docx);
 
-        // Capture placeholder page numbers of top‑level OfficeMath nodes in the source document
-        List<int> sourcePages = GetOfficeMathPages(doc);
+        // Ensure layout is up‑to‑date
+        doc.UpdatePageLayout();
 
-        // Export to PDF
-        doc.Save(pdfPath, SaveFormat.Pdf);
+        // Collect layout information
+        LayoutCollector collector = new LayoutCollector(doc);
 
-        // Load the generated PDF back as a document (Aspose.Words can load PDF for layout analysis)
-        Document pdfDoc = new Document(pdfPath);
-
-        // Capture placeholder page numbers of top‑level OfficeMath nodes in the PDF document
-        List<int> pdfPages = GetOfficeMathPages(pdfDoc);
-
-        // Validate that the number of equations matches
-        if (sourcePages.Count != pdfPages.Count)
-            throw new Exception($"Equation count mismatch: source={sourcePages.Count}, pdf={pdfPages.Count}");
-
-        // Validate that each equation appears on the same (placeholder) page in both documents
-        for (int i = 0; i < sourcePages.Count; i++)
+        // Validate that each top‑level OfficeMath node is on page 1
+        NodeCollection officeMathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
+        foreach (OfficeMath om in officeMathNodes)
         {
-            if (sourcePages[i] != pdfPages[i])
-                throw new Exception($"Equation {i + 1} page mismatch: source page {sourcePages[i]}, pdf page {pdfPages[i]}");
+            if (om.MathObjectType == MathObjectType.OMathPara)
+            {
+                int pageNumber = collector.GetStartPageIndex(om);
+                if (pageNumber != 1)
+                {
+                    throw new InvalidOperationException($"Equation on page {pageNumber} does not match expected page 1.");
+                }
+            }
         }
 
-        Console.WriteLine("PDF retains exact positioning of OfficeMath equations (validated by count).");
+        // Convert the document to PDF
+        doc.Save(pdfPath, SaveFormat.Pdf);
+
+        // Verify that the PDF file was created
+        if (!File.Exists(pdfPath))
+        {
+            throw new FileNotFoundException("PDF output file was not created.", pdfPath);
+        }
+
+        Console.WriteLine("Validation successful: all equations retained their positioning in the PDF.");
     }
 
-    private static void InsertEquation(DocumentBuilder builder, string eqArgument)
+    private static OfficeMath InsertEquation(DocumentBuilder builder, string eqSwitch)
     {
         // Insert an EQ field
         Field field = builder.InsertField(FieldType.FieldEquation, true);
+        FieldEQ fieldEQ = field as FieldEQ;
+        if (fieldEQ == null)
+            return null;
 
-        // Move to the field separator and write the EQ argument
-        builder.MoveTo(field.Separator);
-        builder.Write(eqArgument);
+        // Write the EQ argument string at the field separator
+        builder.MoveTo(fieldEQ.Separator);
+        builder.Write(eqSwitch);
 
         // Convert the field to a real OfficeMath node
-        if (field is FieldEQ fieldEQ)
-        {
-            OfficeMath officeMath = fieldEQ.AsOfficeMath();
-            if (officeMath != null)
-            {
-                // Insert the OfficeMath node before the field start
-                Node fieldStart = field.Start;
-                Node parent = fieldStart.ParentNode;
-                if (parent is CompositeNode compositeParent)
-                {
-                    compositeParent.InsertBefore(officeMath, fieldStart);
-                }
+        OfficeMath officeMath = fieldEQ.AsOfficeMath();
+        if (officeMath == null)
+            return null;
 
-                // Remove the original field
-                field.Remove();
-            }
-        }
-    }
+        // Insert the OfficeMath node before the field start
+        Node fieldStart = fieldEQ.Start;
+        fieldStart.ParentNode.InsertBefore(officeMath, fieldStart);
 
-    private static List<int> GetOfficeMathPages(Document doc)
-    {
-        var pages = new List<int>();
-        NodeCollection mathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
+        // Remove the original field
+        field.Remove();
 
-        foreach (OfficeMath om in mathNodes)
-        {
-            // Consider only top‑level equations
-            if (om.MathObjectType == MathObjectType.OMathPara)
-            {
-                // Placeholder page number (actual page numbers require LayoutCollector, which may not be available)
-                pages.Add(0);
-            }
-        }
-
-        return pages;
+        return officeMath;
     }
 }

@@ -11,20 +11,14 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a table with several rows and two cells per row.
+        // Build a simple table with several rows.
         builder.StartTable();
 
-        for (int rowIndex = 1; rowIndex <= 5; rowIndex++)
+        // Add 5 rows, each with a single cell containing some text.
+        for (int i = 1; i <= 5; i++)
         {
-            // First cell.
             builder.InsertCell();
-            builder.Writeln($"Row {rowIndex}, Cell 1");
-
-            // Second cell.
-            builder.InsertCell();
-            builder.Writeln($"Row {rowIndex}, Cell 2");
-
-            // End the current row.
+            builder.Writeln($"Row {i} - This row should stay together on a page.");
             builder.EndRow();
         }
 
@@ -32,7 +26,9 @@ public class Program
         builder.EndTable();
 
         // Retrieve the created table.
-        Table table = doc.FirstSection.Body.Tables[0];
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
 
         // Prevent each row from breaking across pages.
         foreach (Row row in table.Rows)
@@ -42,13 +38,11 @@ public class Program
         }
 
         // Save the document to a file.
-        string outputPath = "KeepTogetherTable.docx";
+        string outputPath = "KeepTogetherRows.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify that the file was saved.
         if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
-        }
+            throw new FileNotFoundException("The output document was not created.", outputPath);
     }
 }

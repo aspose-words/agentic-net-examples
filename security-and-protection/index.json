@@ -1,15 +1,15 @@
 {
   "category": {
-    "name": "Security and Protection",
+    "name": "Security And Protection",
     "slug": "security-and-protection",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Use simple documented Aspose.Words security workflows. Prefer Document.Protect, Document.Unprotect, LoadOptions, and format-specific save options only when directly relevant, and keep validation narrow and task-specific.",
+    "preferred_workflow": "Create any required source files locally, use Document.Protect or Document.Unprotect together with documented ProtectionType values, employ LoadOptions for password handling, and wrap unsupported asynchronous or cancellable operations in Task.Run while checking CancellationToken.ThrowIfCancellationRequested. Always validate that the expected output file exists.",
     "required_packages": [
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.9.0"
+      "Aspose.Words": "26.10.0"
     },
     "required_namespaces": [
       "System",
@@ -20,34 +20,33 @@
       "Aspose.Words.Fields",
       "System.Threading.Tasks",
       "Aspose.Words.Saving",
-      "Aspose.Words.Layout",
-      "System.Collections",
       "System.Collections.Generic",
       "System.Linq",
       "Aspose.Words.Reporting",
       "Aspose.Words.Drawing",
-      "System.Diagnostics",
       "System.Net.Http"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
-      "Directory",
-      "Path",
-      "LoadOptions",
       "File",
+      "LoadOptions",
       "Range",
       "Field",
-      "FieldType",
-      "Run",
       "SaveFormat",
-      "Paragraph",
+      "Path",
+      "Run",
+      "Directory",
+      "Row",
       "ReportingEngine",
-      "ProtectionType",
       "NodeType",
+      "Paragraph",
+      "ProtectionType",
+      "FieldType",
       "MemoryStream",
       "Shape",
-      "ImageData"
+      "ImageData",
+      "Node"
     ]
   },
   "stats": {
@@ -58,40 +57,37 @@
     }
   },
   "rules_summary": {
-    "core_rules": [
-      "Use native Aspose.Words APIs directly.",
-      "Create local sample source documents when a task refers to an existing file, folder, stream, or template.",
-      "Do not assume external files or folders already exist.",
-      "Always save the requested protected or unprotected output document.",
-      "Keep validation narrow and task-specific."
+    "strict_api_bans": [
+      "Do not reference Aspose.Words members that are not present in version 26.10.0."
     ],
-    "protection_rules": [
-      "Use Document.Protect and Document.Unprotect for document protection workflows.",
-      "Use documented ProtectionType values only.",
-      "Use documented load and save options for password-protected workflows.",
-      "Do not invent protection, encryption, or permission APIs."
+    "canonical_patterns": [
+      "Create deterministic input files, apply protection with Document.Protect, and save using documented SaveOptions."
     ],
-    "api_safety_rules": [
-      "Do not invent unsupported Aspose.Words security or protection APIs.",
-      "Do not use fake namespaces.",
-      "Use documented protection, password, load, and save APIs only."
+    "nullable_warning_prevention": [
+      "Validate only the existence of the output document and the specific protection state required by the task."
     ]
   },
   "common_failure_patterns": [
     {
       "pattern": "Unsupported API invention",
-      "symptom": "Generated code references members that do not exist in the selected package version.",
-      "fix": "Replace invented members with documented Aspose.Words APIs already proven in this category."
+      "symptom": "Compilation fails because members such as LoadOptions.LoadingCallback, Document.LoadAsync, or Document.Dispose are not defined.",
+      "cause": "The code references APIs that do not exist in the shipped Aspose.Words package.",
+      "fix": "Replace invented members with the documented Document constructor, LoadOptions, and explicit token-aware wrappers using Task.Run.",
+      "prevention": "Consult the official Aspose.Words 26.10.0 reference and limit code to APIs listed in the key_apis set."
+    },
+    {
+      "pattern": "Missing CancellationToken support",
+      "symptom": "Build errors occur when passing a CancellationToken directly to Document.Load or Document.Save, and runtime checks cannot locate cancellation callbacks.",
+      "cause": "Aspose.Words does not expose overloads that accept a CancellationToken in this version.",
+      "fix": "Wrap the load or save call inside Task.Run and invoke token.ThrowIfCancellationRequested before and after the operation.",
+      "prevention": "Design cancellation logic around token checks surrounding synchronous Aspose.Words calls rather than expecting built-in overloads."
     },
     {
       "pattern": "Missing local bootstrap inputs",
-      "symptom": "The example assumes source files, folders, images, or data already exist.",
-      "fix": "Create deterministic local inputs before loading, processing, or validating them."
-    },
-    {
-      "pattern": "Over-broad validation",
-      "symptom": "The example fails at runtime while checking unrelated document internals.",
-      "fix": "Validate only the requested behavior and the existence of expected outputs."
+      "symptom": "Code assumes that source documents, templates, or image files already exist, leading to FileNotFound exceptions or invalid test results.",
+      "cause": "Samples do not create the required files before processing.",
+      "fix": "Generate deterministic sample documents, templates, or images at the start of each example and clean them up afterward.",
+      "prevention": "Always include a self-contained setup block that creates any files the task needs."
     }
   ],
   "examples": [
@@ -103,8 +99,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 2,
@@ -120,7 +116,7 @@
     {
       "id": 3,
       "file_name": "use-token-throwifcancellationrequested-inside-a-field-update-loop-to-abort-long-running-op.cs",
-      "task": "Use token.ThrowIfCancellationRequested inside a field update loop to abort long‑running operations efficiently.",
+      "task": "Use token.ThrowIfCancellationRequested inside a field update loop to abort long-running operations efficiently.",
       "workflow": "security-workflow",
       "outputs": [
         "docx"
@@ -131,7 +127,7 @@
     {
       "id": 4,
       "file_name": "implement-a-low-code-ui-button-that-calls-cancellationtokensource-cancel-to-stop-processin.cs",
-      "task": "Implement a low‑code UI button that calls CancellationTokenSource.Cancel to stop processing immediately.",
+      "task": "Implement a low-code UI button that calls CancellationTokenSource.Cancel to stop processing immediately.",
       "workflow": "security-workflow",
       "outputs": [
         "docx"
@@ -191,8 +187,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 10,
@@ -202,8 +198,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 11,
@@ -219,7 +215,7 @@
     {
       "id": 12,
       "file_name": "configure-documentloadingargs-to-invoke-a-user-defined-method-when-cancellation-is-request.cs",
-      "task": "Configure DocumentLoadingArgs to invoke a user‑defined method when cancellation is requested during loading.",
+      "task": "Configure DocumentLoadingArgs to invoke a user-defined method when cancellation is requested during loading.",
       "workflow": "security-workflow",
       "outputs": [
         "doc"
@@ -241,7 +237,7 @@
     {
       "id": 14,
       "file_name": "validate-that-long-running-field-updates-respect-the-token-by-inserting-periodic-cancellat.cs",
-      "task": "Validate that long‑running field updates respect the token by inserting periodic cancellation checks.",
+      "task": "Validate that long-running field updates respect the token by inserting periodic cancellation checks.",
       "workflow": "security-workflow",
       "outputs": [
         "docx"
@@ -329,7 +325,7 @@
     {
       "id": 22,
       "file_name": "document-the-required-net-version-for-cancellationtoken-support-in-the-project-s-readme-fi.cs",
-      "task": "Document the required .NET version for CancellationToken support in the project’s README file.",
+      "task": "Document the required .NET version for CancellationToken support in the project's README file.",
       "workflow": "security-workflow",
       "outputs": [
         "doc"
@@ -417,7 +413,7 @@
     {
       "id": 30,
       "file_name": "verify-that-document-processing-pipelines-respect-cancellation-when-integrated-with-third.cs",
-      "task": "Verify that document processing pipelines respect cancellation when integrated with third‑party reporting tools.",
+      "task": "Verify that document processing pipelines respect cancellation when integrated with third-party reporting tools.",
       "workflow": "security-workflow",
       "outputs": [
         "doc"
@@ -425,5 +421,15 @@
       "selected_engine": "mcp",
       "winner": "mcp"
     }
-  ]
+  ],
+  "narrative": {
+    "overview": "The Security and Protection category for Aspose.Words demonstrates how to apply document protection, load and save password-protected files, and manage cancellation of long-running operations. Verified examples show correct use of Document.Protect, Document.Unprotect, LoadOptions, and token-aware wrappers that respect the library's current API surface.",
+    "purpose": "Provide concise, task-focused code snippets that enable developers to protect, unprotect, and safely load or save Word documents while handling cancellation without relying on undocumented or unavailable APIs.",
+    "validation_priorities": [
+      "Confirm that the output file is created and that its protection status matches the requested ProtectionType."
+    ],
+    "maintenance_notes": [
+      "Update the examples whenever a new Aspose.Words version adds native CancellationToken overloads to simplify the wrappers."
+    ]
+  }
 }
