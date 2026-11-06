@@ -3,81 +3,97 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample PNG image.
-        string inputImagePath = "input.png";
-        CreateSamplePng(inputImagePath, 200, 200);
+        // Step 1: Create a deterministic sample PNG image.
+        const string sampleImagePath = "sample.png";
+        CreateSamplePng(sampleImagePath, 200, 200);
 
-        // Create a Word document and insert the PNG image.
-        string docPath = "sample.docx";
+        // Step 2: Create a Word document and insert the sample image.
+        const string docPath = "DocumentWithImage.docx";
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(inputImagePath);
+        builder.InsertImage(sampleImagePath);
         doc.Save(docPath);
 
-        // Load the document (demonstrates load lifecycle).
+        // Step 3: Load the document and extract PNG images.
         Document loadedDoc = new Document(docPath);
-
-        // Extract PNG images and generate 50% size previews.
+        NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
         int imageIndex = 0;
-        foreach (Shape shape in loadedDoc.GetChildNodes(NodeType.Shape, true))
+        foreach (Shape shape in shapes)
         {
-            if (shape.HasImage)
+            if (!shape.HasImage) continue;
+
+            // Save the original image to a memory stream.
+            using (MemoryStream originalStream = new MemoryStream())
             {
-                // Save the extracted original image.
-                string extractedPath = $"extracted-{imageIndex}.png";
-                shape.ImageData.Save(extractedPath);
+                shape.ImageData.Save(originalStream);
+                originalStream.Position = 0; // Reset before reading.
 
-                // Resize the extracted image to 50% of its original dimensions.
-                string previewPath = $"preview-{imageIndex}.png";
-                ResizePngHalf(extractedPath, previewPath);
+                // Load the image with Aspose.Drawing.
+                using (Bitmap originalBitmap = new Bitmap(originalStream))
+                {
+                    // Calculate 50% dimensions.
+                    int newWidth = originalBitmap.Width / 2;
+                    int newHeight = originalBitmap.Height / 2;
 
-                // Validate that the preview file was created.
-                if (!File.Exists(previewPath))
-                    throw new InvalidOperationException($"Resized preview not created: {previewPath}");
+                    // Create a new bitmap for the resized preview.
+                    using (Bitmap previewBitmap = new Bitmap(newWidth, newHeight))
+                    {
+                        using (Graphics graphics = Graphics.FromImage(previewBitmap))
+                        {
+                            // Draw the original image scaled down.
+                            graphics.DrawImage(originalBitmap, 0, 0, newWidth, newHeight);
+                        }
 
-                imageIndex++;
+                        // Save the preview image.
+                        string previewPath = $"preview-{imageIndex}.png";
+                        previewBitmap.Save(previewPath, ImageFormat.Png);
+
+                        // Validate that the preview file was created.
+                        if (!File.Exists(previewPath))
+                            throw new InvalidOperationException($"Failed to create preview image: {previewPath}");
+
+                        Console.WriteLine($"Preview image saved: {previewPath}");
+                    }
+                }
             }
+
+            imageIndex++;
         }
 
-        // Ensure at least one preview image was generated.
+        // Ensure at least one image was processed.
         if (imageIndex == 0)
-            throw new InvalidOperationException("No PNG images were extracted from the document.");
+            throw new InvalidOperationException("No images were found in the document.");
+
+        Console.WriteLine("Image resizing completed successfully.");
     }
 
-    // Creates a deterministic PNG image using Aspose.Drawing.
-    private static void CreateSamplePng(string path, int width, int height)
+    private static void CreateSamplePng(string filePath, int width, int height)
     {
-        Bitmap bitmap = new Bitmap(width, height);
-        Graphics g = Graphics.FromImage(bitmap);
-        g.Clear(Color.White);
-        using (SolidBrush brush = new SolidBrush(Color.Blue))
+        using (Bitmap bitmap = new Bitmap(width, height))
         {
-            g.FillRectangle(brush, 20, 20, width - 40, height - 40);
+            using (Graphics graphics = Graphics.FromImage(bitmap))
+            {
+                // Fill background with white.
+                graphics.Clear(Color.White);
+                // Draw a simple red rectangle.
+                using (Pen pen = new Pen(Color.Red, 5))
+                {
+                    graphics.DrawRectangle(pen, 10, 10, width - 20, height - 20);
+                }
+            }
+
+            // Save as PNG.
+            bitmap.Save(filePath, ImageFormat.Png);
         }
-        g.Dispose();
-        bitmap.Save(path);
-        bitmap.Dispose();
-    }
 
-    // Resizes a PNG image to 50% of its original size.
-    private static void ResizePngHalf(string sourcePath, string destPath)
-    {
-        Bitmap sourceBitmap = new Bitmap(sourcePath);
-        int newWidth = sourceBitmap.Width / 2;
-        int newHeight = sourceBitmap.Height / 2;
-
-        Bitmap destBitmap = new Bitmap(newWidth, newHeight);
-        Graphics g = Graphics.FromImage(destBitmap);
-        g.DrawImage(sourceBitmap, 0, 0, newWidth, newHeight);
-        g.Dispose();
-
-        destBitmap.Save(destPath);
-        sourceBitmap.Dispose();
-        destBitmap.Dispose();
+        // Validate that the sample image was created.
+        if (!File.Exists(filePath))
+            throw new InvalidOperationException($"Failed to create sample image: {filePath}");
     }
 }

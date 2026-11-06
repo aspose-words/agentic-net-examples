@@ -1,7 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
@@ -11,96 +10,104 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample JPEG image.
-        const string jpegPath = "sample.jpg";
-        using (Bitmap bitmap = new Bitmap(200, 200))
-        {
-            using (Graphics g = Graphics.FromImage(bitmap))
-            {
-                g.Clear(Color.LightBlue);
-                // Draw a simple rectangle.
-                g.FillRectangle(new SolidBrush(Color.DarkRed), 50, 50, 100, 100);
-            }
-            bitmap.Save(jpegPath, ImageFormat.Jpeg);
-        }
+        // Prepare sample JPEG images.
+        string[] jpegFiles = { "sample1.jpg", "sample2.jpg" };
+        CreateSampleJpeg(jpegFiles[0], 200, 100, Aspose.Drawing.Color.LightBlue);
+        CreateSampleJpeg(jpegFiles[1], 150, 150, Aspose.Drawing.Color.LightCoral);
 
-        // Create a Word document and insert the JPEG image.
-        const string docPath = "sample.docx";
+        // Create a Word document and insert the JPEG images.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(jpegPath);
+        foreach (string jpegPath in jpegFiles)
+        {
+            builder.InsertImage(jpegPath);
+            builder.Writeln(); // separate images
+        }
+        string docPath = "DocumentWithImages.docx";
         doc.Save(docPath);
 
-        // Load the document and extract JPEG images.
+        // Load the document for extraction.
         Document loadedDoc = new Document(docPath);
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        List<string> bmpFiles = new List<string>();
+        List<string> savedBmpFiles = new List<string>();
+        string archiveFolder = "SecureArchive";
+        Directory.CreateDirectory(archiveFolder);
         int imageIndex = 0;
 
         foreach (Shape shape in shapeNodes)
         {
-            if (!shape.HasImage)
-                continue;
+            if (!shape.HasImage) continue;
 
             // Process only JPEG images.
-            if (shape.ImageData.ImageType != ImageType.Jpeg)
-                continue;
+            if (shape.ImageData.ImageType != ImageType.Jpeg) continue;
 
-            // Load image bytes into a bitmap.
-            using (MemoryStream ms = new MemoryStream(shape.ImageData.ImageBytes))
+            using (MemoryStream imageStream = new MemoryStream())
             {
-                ms.Position = 0;
-                using (Bitmap original = new Bitmap(ms))
+                shape.ImageData.Save(imageStream);
+                imageStream.Position = 0;
+
+                using (Aspose.Drawing.Bitmap originalBitmap = new Aspose.Drawing.Bitmap(imageStream))
                 {
-                    // Create a grayscale bitmap.
-                    using (Bitmap grayBitmap = new Bitmap(original.Width, original.Height))
+                    // Convert to grayscale.
+                    using (Aspose.Drawing.Bitmap grayBitmap = new Aspose.Drawing.Bitmap(originalBitmap.Width, originalBitmap.Height))
                     {
-                        for (int y = 0; y < original.Height; y++)
+                        using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(grayBitmap))
                         {
-                            for (int x = 0; x < original.Width; x++)
+                            for (int y = 0; y < originalBitmap.Height; y++)
                             {
-                                Color pixel = original.GetPixel(x, y);
-                                int gray = (int)(pixel.R * 0.3 + pixel.G * 0.59 + pixel.B * 0.11);
-                                Color grayColor = Color.FromArgb(gray, gray, gray);
-                                grayBitmap.SetPixel(x, y, grayColor);
+                                for (int x = 0; x < originalBitmap.Width; x++)
+                                {
+                                    Aspose.Drawing.Color pixelColor = originalBitmap.GetPixel(x, y);
+                                    int luminance = (int)(0.299 * pixelColor.R + 0.587 * pixelColor.G + 0.114 * pixelColor.B);
+                                    Aspose.Drawing.Color gray = Aspose.Drawing.Color.FromArgb(luminance, luminance, luminance);
+                                    grayBitmap.SetPixel(x, y, gray);
+                                }
                             }
                         }
 
-                        // Save as BMP.
-                        string bmpPath = $"image_{imageIndex}.bmp";
-                        grayBitmap.Save(bmpPath, ImageFormat.Bmp);
-                        bmpFiles.Add(bmpPath);
+                        string bmpPath = Path.Combine(archiveFolder, $"image-{imageIndex}.bmp");
+                        grayBitmap.Save(bmpPath, Aspose.Drawing.Imaging.ImageFormat.Bmp);
+                        savedBmpFiles.Add(bmpPath);
                         imageIndex++;
                     }
                 }
             }
         }
 
-        // Validate that at least one BMP file was created.
-        if (bmpFiles.Count == 0)
+        // Validation: ensure at least one BMP file was created.
+        if (savedBmpFiles.Count == 0)
             throw new InvalidOperationException("No JPEG images were extracted and converted.");
 
-        // Store BMP files in a secure archive (ZIP).
-        const string archivePath = "secure_archive.zip";
-        using (FileStream zipToOpen = new FileStream(archivePath, FileMode.Create))
+        foreach (string bmpFile in savedBmpFiles)
         {
-            using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Update))
-            {
-                foreach (string filePath in bmpFiles)
-                {
-                    archive.CreateEntryFromFile(filePath, Path.GetFileName(filePath));
-                }
-            }
+            if (!File.Exists(bmpFile))
+                throw new FileNotFoundException($"Expected BMP file was not created: {bmpFile}");
         }
 
-        // Validate that the archive was created.
-        if (!File.Exists(archivePath))
-            throw new InvalidOperationException("Failed to create the secure archive.");
+        // Cleanup sample JPEG files and the intermediate document.
+        foreach (string jpegPath in jpegFiles)
+        {
+            if (File.Exists(jpegPath))
+                File.Delete(jpegPath);
+        }
+        if (File.Exists(docPath))
+            File.Delete(docPath);
+    }
 
-        // Cleanup temporary files (optional).
-        File.Delete(jpegPath);
-        File.Delete(docPath);
-        foreach (string filePath in bmpFiles)
-            File.Delete(filePath);
+    private static void CreateSampleJpeg(string filePath, int width, int height, Aspose.Drawing.Color backgroundColor)
+    {
+        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
+        {
+            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
+            {
+                g.Clear(backgroundColor);
+                // Draw a simple rectangle.
+                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Black))
+                {
+                    g.DrawRectangle(pen, 10, 10, width - 20, height - 20);
+                }
+            }
+            bitmap.Save(filePath, Aspose.Drawing.Imaging.ImageFormat.Jpeg);
+        }
     }
 }

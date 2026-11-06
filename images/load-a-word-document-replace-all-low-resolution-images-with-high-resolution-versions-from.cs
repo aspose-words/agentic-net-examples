@@ -2,89 +2,87 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Replacing;
 using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
+using Newtonsoft.Json;
 
-public class Program
+public class ReplaceLowResolutionImages
 {
     public static void Main()
     {
-        // Create sample low‑resolution image (100x100)
+        // Prepare sample images.
         const string lowResPath = "low.png";
-        using (Bitmap lowBmp = new Bitmap(100, 100))
-        {
-            using (Graphics g = Graphics.FromImage(lowBmp))
-            {
-                g.Clear(Color.White);
-                using (Pen pen = new Pen(Color.Red, 5))
-                {
-                    g.DrawRectangle(pen, 10, 10, 80, 80);
-                }
-            }
-            lowBmp.Save(lowResPath, ImageFormat.Png);
-        }
-
-        // Create sample high‑resolution image (500x500)
         const string highResPath = "high.png";
-        using (Bitmap highBmp = new Bitmap(500, 500))
+
+        CreateSampleImage(lowResPath, 100, 100, Aspose.Drawing.Color.LightGray);
+        CreateSampleImage(highResPath, 500, 500, Aspose.Drawing.Color.LightBlue);
+
+        // Create a sample Word document containing low‑resolution images.
+        const string inputDocPath = "input.docx";
+        CreateDocumentWithImages(inputDocPath, lowResPath, 3);
+
+        // Load the document.
+        Document doc = new Document(inputDocPath);
+
+        // Replace low‑resolution images with high‑resolution versions.
+        int replacedCount = 0;
+        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
         {
-            using (Graphics g = Graphics.FromImage(highBmp))
+            if (!shape.HasImage) continue;
+
+            // Determine image size in pixels.
+            ImageSize size = shape.ImageData.ImageSize;
+
+            // Consider images with both dimensions <= 150 as low‑resolution.
+            if (size.WidthPixels <= 150 && size.HeightPixels <= 150)
             {
-                g.Clear(Color.White);
-                using (Pen pen = new Pen(Color.Blue, 10))
-                {
-                    g.DrawEllipse(pen, 50, 50, 400, 400);
-                }
+                shape.ImageData.SetImage(highResPath);
+                replacedCount++;
             }
-            highBmp.Save(highResPath, ImageFormat.Png);
         }
 
-        // Create a Word document containing the low‑resolution image
-        const string inputDocPath = "docLowRes.docx";
+        // Validate that at least one image was replaced.
+        if (replacedCount == 0)
+            throw new InvalidOperationException("No low‑resolution images were found to replace.");
+
+        // Save the updated document.
+        const string outputDocPath = "output.docx";
+        doc.Save(outputDocPath);
+
+        // Validate output file existence.
+        if (!File.Exists(outputDocPath))
+            throw new FileNotFoundException("The output document was not created.", outputDocPath);
+
+        // Example usage of Newtonsoft.Json to satisfy package requirement.
+        var resultInfo = new { ReplacedImages = replacedCount, OutputFile = outputDocPath };
+        string json = JsonConvert.SerializeObject(resultInfo);
+        File.WriteAllText("result.json", json);
+    }
+
+    private static void CreateSampleImage(string path, int width, int height, Aspose.Drawing.Color backColor)
+    {
+        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
+        {
+            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
+            {
+                g.Clear(backColor);
+            }
+            bitmap.Save(path);
+        }
+    }
+
+    private static void CreateDocumentWithImages(string docPath, string imagePath, int repeatCount)
+    {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(lowResPath);
-        doc.Save(inputDocPath);
 
-        // Load the document and replace low‑resolution images with high‑resolution ones
-        Document loadedDoc = new Document(inputDocPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int replacedCount = 0;
-
-        foreach (Shape shape in shapeNodes)
+        for (int i = 0; i < repeatCount; i++)
         {
-            if (!shape.HasImage)
-                continue;
-
-            // Load the image bytes into Aspose.Drawing.Image to inspect pixel dimensions
-            using (MemoryStream imgStream = new MemoryStream(shape.ImageData.ImageBytes))
-            {
-                imgStream.Position = 0;
-                using (Image img = Image.FromStream(imgStream))
-                {
-                    // Define low‑resolution threshold (e.g., width or height <= 150 pixels)
-                    if (img.Width <= 150 && img.Height <= 150)
-                    {
-                        shape.ImageData.SetImage(highResPath);
-                        replacedCount++;
-                    }
-                }
-            }
+            builder.Writeln($"Image #{i + 1}:");
+            builder.InsertImage(imagePath);
+            builder.Writeln(); // Add spacing.
         }
 
-        const string outputDocPath = "docReplaced.docx";
-        loadedDoc.Save(outputDocPath);
-
-        // Validation
-        if (!File.Exists(outputDocPath))
-            throw new Exception($"Output document was not created: {outputDocPath}");
-
-        if (replacedCount == 0)
-            throw new Exception("No low‑resolution images were found to replace.");
-
-        // Clean up temporary files (optional)
-        // File.Delete(lowResPath);
-        // File.Delete(highResPath);
-        // File.Delete(inputDocPath);
+        doc.Save(docPath);
     }
 }

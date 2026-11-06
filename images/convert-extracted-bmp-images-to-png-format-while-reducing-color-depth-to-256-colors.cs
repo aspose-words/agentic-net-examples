@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
@@ -9,76 +10,69 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-
-        // 1. Create a sample BMP image using Aspose.Drawing
-        string bmpPath = Path.Combine(artifactsDir, "sample.bmp");
-        using (Bitmap bmp = new Bitmap(200, 200))
+        // Step 1: Create a deterministic BMP image using Aspose.Drawing.
+        const string bmpPath = "sample.bmp";
+        Aspose.Drawing.Bitmap bmp = new Aspose.Drawing.Bitmap(200, 200);
+        Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bmp);
+        g.Clear(Aspose.Drawing.Color.White);
+        // Draw a simple red rectangle.
+        using (Aspose.Drawing.SolidBrush brush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Red))
         {
-            using (Graphics g = Graphics.FromImage(bmp))
-            {
-                // Fill with a vertical gradient to make color reduction visible
-                for (int y = 0; y < 200; y++)
-                {
-                    int red = (y * 255) / 199;
-                    using (SolidBrush brush = new SolidBrush(Color.FromArgb(red, 0, 255 - red)))
-                    {
-                        g.FillRectangle(brush, 0, y, 200, 1);
-                    }
-                }
-            }
-            bmp.Save(bmpPath, ImageFormat.Bmp);
+            g.FillRectangle(brush, new Aspose.Drawing.Rectangle(50, 50, 100, 100));
         }
+        bmp.Save(bmpPath, Aspose.Drawing.Imaging.ImageFormat.Bmp);
+        g.Dispose();
+        bmp.Dispose();
 
-        // 2. Insert the BMP image into a Word document
+        // Step 2: Insert the BMP image into a Word document.
+        const string docPath = "DocumentWithBmp.docx";
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(bmpPath);
-        string docPath = Path.Combine(artifactsDir, "sample.docx");
         doc.Save(docPath);
 
-        // 3. Load the document and extract images
+        // Step 3: Load the document and convert each extracted image to PNG with 256‑color depth.
         Document loadedDoc = new Document(docPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        List<string> convertedFiles = new List<string>();
         int imageIndex = 0;
 
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        foreach (Shape shape in loadedDoc.GetChildNodes(NodeType.Shape, true))
         {
             if (!shape.HasImage)
-                continue; // Skip shapes without image data
+                continue;
 
-            // Save the original image to a memory stream
-            using (MemoryStream originalStream = new MemoryStream())
+            // Save the image data to a memory stream.
+            using (MemoryStream imgStream = new MemoryStream())
             {
-                shape.ImageData.Save(originalStream);
-                originalStream.Position = 0;
+                shape.ImageData.Save(imgStream);
+                imgStream.Position = 0;
 
-                // Load the image with Aspose.Drawing
-                using (Bitmap originalBmp = new Bitmap(originalStream))
+                // Load the image with Aspose.Drawing.
+                using (Aspose.Drawing.Bitmap originalBmp = new Aspose.Drawing.Bitmap(imgStream))
                 {
-                    // Clone the bitmap to an 8‑bpp indexed format (256 colors)
-                    using (Bitmap indexedBmp = originalBmp.Clone(
-                        new Rectangle(0, 0, originalBmp.Width, originalBmp.Height),
-                        PixelFormat.Format8bppIndexed))
+                    // Convert to 8‑bpp indexed (256 colors).
+                    using (Aspose.Drawing.Bitmap indexedBmp = originalBmp.Clone(
+                        new Aspose.Drawing.Rectangle(0, 0, originalBmp.Width, originalBmp.Height),
+                        Aspose.Drawing.Imaging.PixelFormat.Format8bppIndexed))
                     {
-                        // Save the indexed bitmap as PNG
-                        string pngPath = Path.Combine(artifactsDir, $"converted_{imageIndex}.png");
-                        indexedBmp.Save(pngPath, ImageFormat.Png);
-
-                        // Validate that the PNG file was created
-                        if (!File.Exists(pngPath))
-                            throw new InvalidOperationException($"Failed to create PNG file: {pngPath}");
+                        // Save as PNG.
+                        string pngPath = $"converted-{imageIndex}.png";
+                        indexedBmp.Save(pngPath, Aspose.Drawing.Imaging.ImageFormat.Png);
+                        convertedFiles.Add(pngPath);
+                        imageIndex++;
                     }
                 }
             }
-
-            imageIndex++;
         }
 
-        // Ensure at least one image was processed
-        if (imageIndex == 0)
-            throw new InvalidOperationException("No images were found and converted.");
+        // Step 4: Validate that at least one PNG file was created.
+        if (convertedFiles.Count == 0)
+        {
+            throw new InvalidOperationException("No images were found or converted.");
+        }
+
+        // Optional cleanup (comment out to keep files for inspection).
+        // File.Delete(bmpPath);
+        // File.Delete(docPath);
     }
 }

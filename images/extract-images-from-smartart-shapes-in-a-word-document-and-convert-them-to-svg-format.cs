@@ -1,90 +1,93 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Rendering;
-using Aspose.Words.Saving;
 using Aspose.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // ---------- Create a deterministic sample PNG image ----------
+        const string sampleImagePath = "sample.png";
+        const int imgWidth = 100;
+        const int imgHeight = 100;
 
-        // -----------------------------------------------------------------
-        // 1. Create a deterministic raster image using Aspose.Drawing.
-        // -----------------------------------------------------------------
-        string sampleImagePath = Path.Combine(outputDir, "sample.png");
-        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(200, 200);
-        try
+        // Create bitmap and draw a simple rectangle.
+        using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
         {
-            Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap);
-            try
+            using (Graphics g = Graphics.FromImage(bitmap))
             {
-                // Fill background with white.
-                graphics.Clear(Aspose.Drawing.Color.White);
-                // Draw a simple red rectangle.
-                graphics.FillRectangle(new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Red), 20, 20, 160, 160);
+                g.Clear(Color.White);
+                using (Pen pen = new Pen(Color.Blue, 3))
+                {
+                    g.DrawRectangle(pen, 10, 10, imgWidth - 20, imgHeight - 20);
+                }
             }
-            finally
-            {
-                graphics.Dispose();
-            }
-
-            // Save the bitmap to a PNG file.
             bitmap.Save(sampleImagePath);
         }
-        finally
-        {
-            bitmap.Dispose();
-        }
 
-        // -----------------------------------------------------------------
-        // 2. Create a new Word document and insert the sample image.
-        // -----------------------------------------------------------------
+        // Verify that the sample image was created.
+        if (!File.Exists(sampleImagePath))
+            throw new Exception($"Failed to create sample image: {sampleImagePath}");
+
+        // ---------- Create a Word document and insert the image ----------
+        const string docPath = "SmartArtDoc.docx";
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert the image as a shape (inline by default).
-        Shape imageShape = builder.InsertImage(sampleImagePath);
-        // Optionally, set a size for the shape.
-        imageShape.Width = 200;
-        imageShape.Height = 200;
+        // Insert the image as a picture shape.
+        Shape pictureShape = builder.InsertImage(sampleImagePath);
+        // Ensure the shape is added to the document.
+        if (pictureShape == null)
+            throw new Exception("Failed to insert image into the document.");
 
-        // Save the document (optional, just to have a source file).
-        string docPath = Path.Combine(outputDir, "DocumentWithImage.docx");
+        // Save the document.
         doc.Save(docPath);
+        if (!File.Exists(docPath))
+            throw new Exception($"Failed to save document: {docPath}");
 
-        // -----------------------------------------------------------------
-        // 3. Render each shape (including SmartArt) to SVG.
-        // -----------------------------------------------------------------
-        int svgIndex = 0;
-        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
+        // ---------- Load the document and extract images ----------
+        Document loadedDoc = new Document(docPath);
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        int imageIndex = 0;
+
+        foreach (Shape shape in shapeNodes)
         {
-            // Ensure SmartArt drawings are up‑to‑date.
-            shape.UpdateSmartArtDrawing();
-
-            // Prepare SVG save options – specify a resources folder to avoid
-            // the “Resource file(s) cannot be written to disk” exception.
-            SvgSaveOptions svgOptions = new SvgSaveOptions
+            // Process only shapes that actually contain an image.
+            if (shape.HasImage)
             {
-                ExportEmbeddedImages = false,
-                ResourcesFolder = outputDir
-            };
+                // Save image bytes to a memory stream.
+                byte[] imageBytes;
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    shape.ImageData.Save(ms);
+                    ms.Position = 0;
+                    imageBytes = ms.ToArray();
+                }
 
-            string svgPath = Path.Combine(outputDir, $"ExtractedShape_{svgIndex}.svg");
-            ShapeRenderer renderer = shape.GetShapeRenderer();
-            renderer.Save(svgPath, svgOptions);
-            svgIndex++;
+                // Convert the image to an SVG that embeds the bitmap as base64.
+                string base64 = Convert.ToBase64String(imageBytes);
+                string svgContent = $"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{imgWidth}\" height=\"{imgHeight}\">" +
+                                    $"<image href=\"data:image/png;base64,{base64}\" width=\"{imgWidth}\" height=\"{imgHeight}\"/>" +
+                                    $"</svg>";
+
+                string svgPath = $"extracted-image-{imageIndex}.svg";
+                File.WriteAllText(svgPath, svgContent, Encoding.UTF8);
+
+                if (!File.Exists(svgPath))
+                    throw new Exception($"Failed to create SVG file: {svgPath}");
+
+                imageIndex++;
+            }
         }
 
-        // -----------------------------------------------------------------
-        // 4. Validate that at least one SVG file was created.
-        // -----------------------------------------------------------------
-        if (svgIndex == 0 || !File.Exists(Path.Combine(outputDir, "ExtractedShape_0.svg")))
-            throw new InvalidOperationException("No SVG files were generated.");
+        if (imageIndex == 0)
+            throw new Exception("No images were extracted from the document.");
+
+        // Optional cleanup (uncomment if desired).
+        // File.Delete(sampleImagePath);
+        // File.Delete(docPath);
     }
 }

@@ -3,82 +3,80 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
         // Create a deterministic sample image (input.png)
-        const int sampleWidth = 200;
-        const int sampleHeight = 300;
-        string inputImagePath = "input.png";
-
-        using (Bitmap bitmap = new Bitmap(sampleWidth, sampleHeight))
-        using (Graphics g = Graphics.FromImage(bitmap))
+        const string inputImagePath = "input.png";
+        using (Bitmap bitmap = new Bitmap(300, 200))
         {
-            g.Clear(Color.White);
-            // Draw a simple rectangle to make the image recognizable
-            g.FillRectangle(new SolidBrush(Color.LightBlue), 20, 20, sampleWidth - 40, sampleHeight - 40);
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                g.Clear(Color.White);
+                g.FillRectangle(Brushes.Blue, 50, 30, 200, 140);
+            }
             bitmap.Save(inputImagePath);
         }
 
         // Create a Word document and insert the sample image
-        string docPath = "sample.docx";
+        const string docPath = "sample.docx";
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(inputImagePath);
         doc.Save(docPath);
 
-        // Load the document for image extraction
+        // Reload the document (optional, demonstrates load step)
         Document loadedDoc = new Document(docPath);
+
+        // Extract images, resize to 500x500 with padding, and save
+        const int targetSize = 500;
+        int imageIndex = 0;
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-
-        int extractedCount = 0;
-        int index = 0;
-
         foreach (Shape shape in shapeNodes)
         {
-            if (!shape.HasImage)
-                continue;
+            if (!shape.HasImage) continue;
 
-            // Extract the image to a memory stream
-            using (MemoryStream imageStream = new MemoryStream())
+            // Get original image bytes
+            byte[] imageBytes = shape.ImageData.ImageBytes;
+            using (MemoryStream ms = new MemoryStream(imageBytes))
             {
-                shape.ImageData.Save(imageStream);
-                imageStream.Position = 0;
-
-                // Load the extracted image into a bitmap
-                using (Bitmap originalBitmap = new Bitmap(imageStream))
+                ms.Position = 0; // Ensure stream is at start
+                using (Bitmap original = new Bitmap(ms))
                 {
-                    // Determine scaling to fit within 500x500 while preserving aspect ratio
-                    const int targetSize = 500;
-                    double scale = Math.Min((double)targetSize / originalBitmap.Width, (double)targetSize / originalBitmap.Height);
-                    int newWidth = (int)(originalBitmap.Width * scale);
-                    int newHeight = (int)(originalBitmap.Height * scale);
+                    // Calculate scaled dimensions while preserving aspect ratio
+                    float ratio = Math.Min((float)targetSize / original.Width, (float)targetSize / original.Height);
+                    int newWidth = (int)(original.Width * ratio);
+                    int newHeight = (int)(original.Height * ratio);
+                    int offsetX = (targetSize - newWidth) / 2;
+                    int offsetY = (targetSize - newHeight) / 2;
 
-                    // Create a new bitmap with padding (white background)
-                    using (Bitmap paddedBitmap = new Bitmap(targetSize, targetSize))
-                    using (Graphics graphics = Graphics.FromImage(paddedBitmap))
+                    // Create a new square bitmap with white background
+                    using (Bitmap resized = new Bitmap(targetSize, targetSize))
                     {
-                        graphics.Clear(Color.White);
-                        int offsetX = (targetSize - newWidth) / 2;
-                        int offsetY = (targetSize - newHeight) / 2;
-                        graphics.DrawImage(originalBitmap, new Rectangle(offsetX, offsetY, newWidth, newHeight));
+                        using (Graphics g = Graphics.FromImage(resized))
+                        {
+                            g.Clear(Color.White);
+                            g.DrawImage(original, offsetX, offsetY, newWidth, newHeight);
+                        }
 
                         // Save the resized image
-                        string outputImagePath = $"extracted_resized_{index}.png";
-                        paddedBitmap.Save(outputImagePath);
-                        extractedCount++;
+                        string outputImagePath = $"extracted_resized_{imageIndex}.png";
+                        resized.Save(outputImagePath, ImageFormat.Png);
+                        if (!File.Exists(outputImagePath))
+                            throw new InvalidOperationException($"Failed to create output image: {outputImagePath}");
                     }
                 }
             }
 
-            index++;
+            imageIndex++;
         }
 
         // Validate that at least one image was processed
-        if (extractedCount == 0)
-            throw new InvalidOperationException("No images were extracted and resized.");
+        if (imageIndex == 0)
+            throw new InvalidOperationException("No images were extracted from the document.");
 
         // Clean up temporary files (optional)
         // File.Delete(inputImagePath);

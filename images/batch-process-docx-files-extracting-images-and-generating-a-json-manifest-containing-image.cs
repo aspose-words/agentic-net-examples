@@ -9,58 +9,59 @@ using Newtonsoft.Json;
 
 public class Program
 {
-    // Entry point
+    // Manifest entry model
+    public class ImageInfo
+    {
+        public string Document { get; set; }
+        public string ImageFile { get; set; }
+        public int Width { get; set; }
+        public int Height { get; set; }
+    }
+
     public static void Main()
     {
-        // Prepare deterministic folders
+        // Prepare folders
         string baseDir = Directory.GetCurrentDirectory();
         string inputFolder = Path.Combine(baseDir, "InputDocs");
-        string imageOutputFolder = Path.Combine(baseDir, "ExtractedImages");
-        string manifestPath = Path.Combine(baseDir, "manifest.json");
-
+        string outputImageFolder = Path.Combine(baseDir, "ExtractedImages");
         Directory.CreateDirectory(inputFolder);
-        Directory.CreateDirectory(imageOutputFolder);
+        Directory.CreateDirectory(outputImageFolder);
 
-        // Create a sample image that will be inserted into documents
-        string sampleImagePath = Path.Combine(baseDir, "sample.png");
+        // Create a deterministic sample image (input.png)
+        string sampleImagePath = Path.Combine(baseDir, "input.png");
         CreateSampleImage(sampleImagePath, 200, 150);
 
-        // Create sample DOCX files containing the image
+        // Create sample DOCX files that contain the image
         CreateSampleDocument(Path.Combine(inputFolder, "Doc1.docx"), sampleImagePath);
         CreateSampleDocument(Path.Combine(inputFolder, "Doc2.docx"), sampleImagePath);
 
-        // Process each DOCX file: extract images and build manifest entries
-        var manifestEntries = new List<ManifestEntry>();
-        foreach (string docPath in Directory.GetFiles(inputFolder, "*.docx"))
+        // Batch process DOCX files
+        List<ImageInfo> manifest = new List<ImageInfo>();
+        string[] docFiles = Directory.GetFiles(inputFolder, "*.docx");
+        foreach (string docPath in docFiles)
         {
             Document doc = new Document(docPath);
-            NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+            NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
             int imageIndex = 0;
-
-            foreach (Shape shape in shapeNodes)
+            foreach (Shape shape in shapes)
             {
                 if (!shape.HasImage) continue;
 
-                // Save the extracted image
+                // Save extracted image
                 string imageFileName = $"{Path.GetFileNameWithoutExtension(docPath)}_image{imageIndex}.png";
-                string imageFilePath = Path.Combine(imageOutputFolder, imageFileName);
-                shape.ImageData.Save(imageFilePath);
+                string imageFullPath = Path.Combine(outputImageFolder, imageFileName);
+                shape.ImageData.Save(imageFullPath);
 
-                // Load image to obtain pixel dimensions
-                using (MemoryStream ms = new MemoryStream(shape.ImageData.ImageBytes))
+                // Load saved image to obtain dimensions
+                using (Aspose.Drawing.Image img = Aspose.Drawing.Image.FromFile(imageFullPath))
                 {
-                    ms.Position = 0;
-                    using (Bitmap bmp = new Bitmap(ms))
+                    manifest.Add(new ImageInfo
                     {
-                        var entry = new ManifestEntry
-                        {
-                            DocumentName = Path.GetFileName(docPath),
-                            ImageFileName = imageFileName,
-                            WidthPixels = bmp.Width,
-                            HeightPixels = bmp.Height
-                        };
-                        manifestEntries.Add(entry);
-                    }
+                        Document = Path.GetFileName(docPath),
+                        ImageFile = imageFileName,
+                        Width = img.Width,
+                        Height = img.Height
+                    });
                 }
 
                 imageIndex++;
@@ -68,28 +69,29 @@ public class Program
         }
 
         // Validation: ensure at least one image was extracted
-        if (manifestEntries.Count == 0)
-            throw new InvalidOperationException("No images were extracted from the DOCX files.");
+        if (manifest.Count == 0)
+            throw new InvalidOperationException("No images were extracted from the documents.");
 
         // Serialize manifest to JSON
-        string json = JsonConvert.SerializeObject(manifestEntries, Formatting.Indented);
+        string json = JsonConvert.SerializeObject(manifest, Formatting.Indented);
+        string manifestPath = Path.Combine(baseDir, "manifest.json");
         File.WriteAllText(manifestPath, json);
 
-        // Final validation: ensure manifest file exists
+        // Validate manifest file creation
         if (!File.Exists(manifestPath))
-            throw new InvalidOperationException("Failed to create the manifest JSON file.");
+            throw new InvalidOperationException("Failed to create the JSON manifest file.");
     }
 
-    // Creates a deterministic sample PNG image
+    // Creates a deterministic PNG image using Aspose.Drawing
     private static void CreateSampleImage(string path, int width, int height)
     {
         using (Bitmap bitmap = new Bitmap(width, height))
         {
             using (Graphics g = Graphics.FromImage(bitmap))
             {
-                g.Clear(Aspose.Drawing.Color.White);
+                g.Clear(Color.White);
                 // Draw a simple rectangle for visual distinction
-                using (Pen pen = new Pen(Aspose.Drawing.Color.Blue, 5))
+                using (Pen pen = new Pen(Color.Black, 3))
                 {
                     g.DrawRectangle(pen, 10, 10, width - 20, height - 20);
                 }
@@ -98,22 +100,13 @@ public class Program
         }
     }
 
-    // Creates a DOCX file with the provided image inserted
+    // Creates a DOCX file with the specified image inserted
     private static void CreateSampleDocument(string docPath, string imagePath)
     {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln($"Sample document: {Path.GetFileName(docPath)}");
+        builder.Writeln($"Document: {Path.GetFileName(docPath)}");
         builder.InsertImage(imagePath);
         doc.Save(docPath);
-    }
-
-    // Manifest entry definition
-    private class ManifestEntry
-    {
-        public string DocumentName { get; set; }
-        public string ImageFileName { get; set; }
-        public int WidthPixels { get; set; }
-        public int HeightPixels { get; set; }
     }
 }

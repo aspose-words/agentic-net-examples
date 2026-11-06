@@ -1,118 +1,161 @@
 using System;
 using System.IO;
-using System.Text;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for temporary files
-        const string imagePath = "input.png";
-        const string docPath = "sample.docx";
-        const string htmlPath = "output.html";
+        // Step 1: Create a deterministic sample image file.
+        const string sampleImagePath = "sample.png";
+        CreateSampleImage(sampleImagePath);
 
-        // -------------------------------------------------
-        // 1. Create a deterministic sample image (100x100 white)
-        // -------------------------------------------------
-        using (Bitmap bitmap = new Bitmap(100, 100))
+        // Step 2: Create a DOCX document and insert the sample image.
+        const string inputDocPath = "sample.docx";
+        CreateDocumentWithImage(inputDocPath, sampleImagePath);
+
+        // Step 3: Load the DOCX document.
+        Document doc = new Document(inputDocPath);
+
+        // Step 4: Extract images and convert them to Base64 strings.
+        List<(string MimeType, string Base64)> extractedImages = ExtractImagesAsBase64(doc);
+
+        // Validate that at least one image was extracted.
+        if (extractedImages.Count == 0)
+            throw new Exception("No images were extracted from the document.");
+
+        // Step 5: Build HTML content embedding the images.
+        string htmlContent = BuildHtmlWithImages(extractedImages);
+
+        // Step 6: Save the HTML to a file.
+        const string outputHtmlPath = "output.html";
+        File.WriteAllText(outputHtmlPath, htmlContent);
+
+        // Validate that the HTML file was created.
+        if (!File.Exists(outputHtmlPath))
+            throw new Exception("Failed to create the output HTML file.");
+    }
+
+    private static void CreateSampleImage(string path)
+    {
+        const int width = 200;
+        const int height = 200;
+
+        // Create a bitmap using Aspose.Drawing.
+        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height);
+        try
         {
-            using (Graphics graphics = Graphics.FromImage(bitmap))
+            // Obtain a graphics object for drawing.
+            Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap);
+            try
             {
+                // Fill background with white.
                 graphics.Clear(Aspose.Drawing.Color.White);
-                // Draw a simple black rectangle for visual distinction
-                using (Pen pen = new Pen(Aspose.Drawing.Color.Black))
+                // Draw a simple black rectangle.
+                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Black, 5))
                 {
-                    graphics.DrawRectangle(pen, 10, 10, 80, 80);
+                    graphics.DrawRectangle(pen, 10, 10, width - 20, height - 20);
                 }
             }
-            bitmap.Save(imagePath);
+            finally
+            {
+                graphics.Dispose();
+            }
+
+            // Save the bitmap to the specified path.
+            bitmap.Save(path);
+        }
+        finally
+        {
+            bitmap.Dispose();
         }
 
-        // -------------------------------------------------
-        // 2. Create a DOCX document and insert the sample image
-        // -------------------------------------------------
+        // Ensure the image file exists.
+        if (!File.Exists(path))
+            throw new Exception($"Failed to create sample image at '{path}'.");
+    }
+
+    private static void CreateDocumentWithImage(string docPath, string imagePath)
+    {
+        // Ensure the image file exists before insertion.
+        if (!File.Exists(imagePath))
+            throw new Exception($"Image file '{imagePath}' does not exist.");
+
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(imagePath);
         doc.Save(docPath);
 
-        // -------------------------------------------------
-        // 3. Load the DOCX document and extract images
-        // -------------------------------------------------
-        Document loadedDoc = new Document(docPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        var htmlBuilder = new StringBuilder();
+        // Ensure the document file exists.
+        if (!File.Exists(docPath))
+            throw new Exception($"Failed to create document at '{docPath}'.");
+    }
 
-        htmlBuilder.AppendLine("<!DOCTYPE html>");
-        htmlBuilder.AppendLine("<html>");
-        htmlBuilder.AppendLine("<head><meta charset=\"UTF-8\"><title>Extracted Images</title></head>");
-        htmlBuilder.AppendLine("<body>");
-
-        int extractedCount = 0;
-
-        foreach (Shape shape in shapeNodes)
+    private static List<(string MimeType, string Base64)> ExtractImagesAsBase64(Document doc)
+    {
+        List<(string MimeType, string Base64)> result = new List<(string, string)>();
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+        foreach (Shape shape in shapes)
         {
             if (!shape.HasImage)
                 continue;
 
-            // Get raw image bytes
-            byte[] imageBytes = shape.ImageData.ImageBytes;
-
-            // Determine MIME type based on image format
-            string mimeType = "application/octet-stream";
-            switch (shape.ImageData.ImageType)
+            using (MemoryStream ms = new MemoryStream())
             {
-                case ImageType.Jpeg:
-                    mimeType = "image/jpeg";
-                    break;
-                case ImageType.Png:
-                    mimeType = "image/png";
-                    break;
-                case ImageType.Gif:
-                    mimeType = "image/gif";
-                    break;
-                case ImageType.Bmp:
-                    mimeType = "image/bmp";
-                    break;
-                case ImageType.Emf:
-                    mimeType = "image/emf";
-                    break;
-                case ImageType.Wmf:
-                    mimeType = "image/wmf";
-                    break;
-                // Additional types can be added here if needed
+                shape.ImageData.Save(ms);
+                ms.Position = 0;
+                byte[] imageBytes = ms.ToArray();
+                string base64 = Convert.ToBase64String(imageBytes);
+                string mime = GetMimeType(shape.ImageData.ImageType);
+                result.Add((mime, base64));
             }
-
-            // Convert to Base64
-            string base64 = Convert.ToBase64String(imageBytes);
-
-            // Embed into HTML
-            htmlBuilder.AppendLine($"<img src=\"data:{mimeType};base64,{base64}\" alt=\"Extracted Image\" />");
-            extractedCount++;
         }
+        return result;
+    }
 
-        htmlBuilder.AppendLine("</body>");
-        htmlBuilder.AppendLine("</html>");
+    private static string GetMimeType(ImageType imageType)
+    {
+        switch (imageType)
+        {
+            case ImageType.Jpeg:
+                return "image/jpeg";
+            case ImageType.Png:
+                return "image/png";
+            case ImageType.Gif:
+                return "image/gif";
+            case ImageType.Bmp:
+                return "image/bmp";
+            case ImageType.Emf:
+                return "image/emf";
+            case ImageType.Wmf:
+                return "image/wmf";
+            default:
+                return "application/octet-stream";
+        }
+    }
 
-        // Validate that at least one image was extracted
-        if (extractedCount == 0)
-            throw new InvalidOperationException("No images were extracted from the document.");
-
-        // -------------------------------------------------
-        // 4. Write the HTML content to a file
-        // -------------------------------------------------
-        File.WriteAllText(htmlPath, htmlBuilder.ToString(), Encoding.UTF8);
-
-        // Validate that the HTML file was created
-        if (!File.Exists(htmlPath))
-            throw new InvalidOperationException("Failed to create the output HTML file.");
-
-        // Optional cleanup (commented out for inspection)
-        // File.Delete(imagePath);
-        // File.Delete(docPath);
+    private static string BuildHtmlWithImages(List<(string MimeType, string Base64)> images)
+    {
+        using (StringWriter writer = new StringWriter())
+        {
+            writer.WriteLine("<!DOCTYPE html>");
+            writer.WriteLine("<html>");
+            writer.WriteLine("<head>");
+            writer.WriteLine("<meta charset=\"UTF-8\">");
+            writer.WriteLine("<title>Extracted Images</title>");
+            writer.WriteLine("</head>");
+            writer.WriteLine("<body>");
+            foreach (var (mime, base64) in images)
+            {
+                writer.WriteLine($"<img src=\"data:{mime};base64,{base64}\" alt=\"Extracted Image\" />");
+                writer.WriteLine("<br/>");
+            }
+            writer.WriteLine("</body>");
+            writer.WriteLine("</html>");
+            return writer.ToString();
+        }
     }
 }

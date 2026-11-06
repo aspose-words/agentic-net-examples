@@ -1,95 +1,95 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
-using Aspose.Words.Saving;
+using Aspose.Words.Drawing;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
+using Newtonsoft.Json;
 
 public class Program
 {
-    private const string SampleImagePath = "sample.png";
-    private const string DownloadedImagePath = "downloaded.png";
-    private const string TemplatePath = "template.docx";
-    private const string OutputPdfPath = "output.pdf";
+    // Model for the simulated REST API response
+    private class ImageResponse
+    {
+        public string ImageData { get; set; }
+    }
 
     public static void Main()
     {
-        // Step 1: Create a deterministic sample image.
-        CreateSampleImage();
+        // 1. Create a deterministic sample image that will act as the image returned by the REST API
+        const string apiImagePath = "apiImage.png";
+        CreateSampleImage(apiImagePath);
 
-        // Step 2: Simulate a REST API call and retrieve the image.
-        byte[] imageBytes = GetImageFromApi();
+        // 2. Encode the image to Base64 and build a JSON string that mimics a REST API response
+        string base64Image = Convert.ToBase64String(File.ReadAllBytes(apiImagePath));
+        string jsonResponse = JsonConvert.SerializeObject(new ImageResponse { ImageData = base64Image });
 
-        // Step 3: Save the retrieved image locally.
-        File.WriteAllBytes(DownloadedImagePath, imageBytes);
+        // 3. Simulate calling a REST API and parsing the JSON response
+        ImageResponse response = JsonConvert.DeserializeObject<ImageResponse>(jsonResponse);
+        if (response == null || string.IsNullOrEmpty(response.ImageData))
+            throw new InvalidOperationException("Failed to retrieve image data from simulated API.");
 
-        // Step 4: Create a DOCX template with a bookmark where the image will be inserted.
-        CreateTemplateDocument();
+        // 4. Decode the Base64 image data and save it to a file that will be inserted into the document
+        byte[] imageBytes = Convert.FromBase64String(response.ImageData);
+        const string downloadedImagePath = "downloadedFromApi.png";
+        File.WriteAllBytes(downloadedImagePath, imageBytes);
 
-        // Step 5: Load the template and insert the image.
-        InsertImageIntoDocument();
+        // 5. Create a simple DOCX template file
+        const string templatePath = "template.docx";
+        CreateTemplateDocument(templatePath);
 
-        // Step 6: Validate that the PDF was created.
-        ValidateOutput();
+        // 6. Load the DOCX template
+        Document doc = new Document(templatePath);
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        Console.WriteLine("PDF created successfully at: " + Path.GetFullPath(OutputPdfPath));
+        // 7. Insert the image obtained from the simulated REST API into the document
+        builder.Writeln(); // Ensure we are on a new paragraph
+        builder.InsertImage(downloadedImagePath);
+
+        // 8. Save the final document as PDF
+        const string outputPdfPath = "output.pdf";
+        doc.Save(outputPdfPath, SaveFormat.Pdf);
+
+        // 9. Validate that the PDF was created
+        if (!File.Exists(outputPdfPath))
+            throw new FileNotFoundException("The PDF output file was not created.", outputPdfPath);
     }
 
-    private static void CreateSampleImage()
+    // Helper method to create a deterministic sample image using Aspose.Drawing
+    private static void CreateSampleImage(string filePath)
     {
-        // Create a 200x100 PNG with a red ellipse on a white background.
-        Bitmap bitmap = new Bitmap(200, 100);
-        Graphics graphics = Graphics.FromImage(bitmap);
-        graphics.Clear(Color.White);
-        using (SolidBrush brush = new SolidBrush(Color.Red))
+        const int width = 200;
+        const int height = 200;
+        using (Bitmap bitmap = new Bitmap(width, height))
         {
-            graphics.FillEllipse(brush, 10, 10, 180, 80);
+            using (Graphics graphics = Graphics.FromImage(bitmap))
+            {
+                graphics.Clear(Color.White);
+                // Draw a simple rectangle
+                using (Pen pen = new Pen(Color.Blue, 5))
+                {
+                    graphics.DrawRectangle(pen, 10, 10, width - 20, height - 20);
+                }
+            }
+            bitmap.Save(filePath, ImageFormat.Png);
         }
 
-        bitmap.Save(SampleImagePath, ImageFormat.Png);
-        graphics.Dispose();
-        bitmap.Dispose();
-
-        if (!File.Exists(SampleImagePath) || new FileInfo(SampleImagePath).Length == 0)
-            throw new Exception("Failed to create sample image.");
+        // Ensure the image file exists
+        if (!File.Exists(filePath))
+            throw new FileNotFoundException("Failed to create sample image.", filePath);
     }
 
-    // Simulates a REST API that would return the image as a base‑64 JSON payload.
-    // For the purpose of this example we simply read the locally created image file.
-    private static byte[] GetImageFromApi()
-    {
-        if (!File.Exists(SampleImagePath))
-            throw new FileNotFoundException("Sample image not found.", SampleImagePath);
-
-        return File.ReadAllBytes(SampleImagePath);
-    }
-
-    private static void CreateTemplateDocument()
+    // Helper method to create a minimal DOCX template
+    private static void CreateTemplateDocument(string filePath)
     {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a DOCX template.");
-        builder.StartBookmark("ImageHere");
-        builder.EndBookmark("ImageHere");
-        builder.Writeln("Text after the image placeholder.");
-        doc.Save(TemplatePath);
+        builder.Writeln("This is a DOCX template. The image will be inserted below:");
+        doc.Save(filePath, SaveFormat.Docx);
 
-        if (!File.Exists(TemplatePath) || new FileInfo(TemplatePath).Length == 0)
-            throw new Exception("Failed to create template document.");
-    }
-
-    private static void InsertImageIntoDocument()
-    {
-        Document doc = new Document(TemplatePath);
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.MoveToBookmark("ImageHere");
-        builder.InsertImage(DownloadedImagePath);
-        doc.Save(OutputPdfPath, SaveFormat.Pdf);
-    }
-
-    private static void ValidateOutput()
-    {
-        if (!File.Exists(OutputPdfPath) || new FileInfo(OutputPdfPath).Length == 0)
-            throw new Exception("PDF output was not created successfully.");
+        // Ensure the template file exists
+        if (!File.Exists(filePath))
+            throw new FileNotFoundException("Failed to create DOCX template.", filePath);
     }
 }

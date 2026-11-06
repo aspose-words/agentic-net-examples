@@ -10,83 +10,73 @@ public class Program
 {
     public static void Main()
     {
-        // Create a deterministic sample JPEG image using Aspose.Drawing.
-        string jpegPath = "sample.jpg";
-        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(200, 200))
+        // Create a deterministic sample JPEG image.
+        const string jpegPath = "sample.jpg";
+        using (Bitmap bitmap = new Bitmap(200, 200))
         {
-            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
+            using (Graphics g = Graphics.FromImage(bitmap))
             {
-                g.Clear(Aspose.Drawing.Color.LightBlue);
-                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.DarkBlue, 5))
-                {
-                    g.DrawRectangle(pen, 20, 20, 160, 160);
-                }
+                g.Clear(Color.LightBlue);
+                g.DrawEllipse(new Pen(Color.DarkBlue, 5), 20, 20, 160, 160);
             }
-            bitmap.Save(jpegPath, Aspose.Drawing.Imaging.ImageFormat.Jpeg);
+            bitmap.Save(jpegPath, ImageFormat.Jpeg);
         }
 
-        // Insert the JPEG image into a Word document.
+        // Create a Word document and insert the JPEG image.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(jpegPath);
-        string docPath = "sample.docx";
+        const string docPath = "sample.docx";
         doc.Save(docPath);
 
-        // Load the document and extract images.
+        // Reload the document (optional, demonstrates loading workflow).
         Document loadedDoc = new Document(docPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
 
-        int tiffCount = 0;
-        foreach (Shape shape in shapeNodes)
+        // Extract JPEG images and convert each to high‑resolution TIFF with LZW compression.
+        int imageIndex = 0;
+        foreach (Shape shape in loadedDoc.GetChildNodes(NodeType.Shape, true))
         {
             if (!shape.HasImage)
                 continue;
 
-            // Save the shape's image to a memory stream.
-            using (MemoryStream imageStream = new MemoryStream())
+            // Process only JPEG images.
+            if (shape.ImageData.ImageType != ImageType.Jpeg)
+                continue;
+
+            // Load the JPEG image into a bitmap.
+            using (MemoryStream ms = new MemoryStream(shape.ImageData.ImageBytes))
             {
-                shape.ImageData.Save(imageStream);
-                imageStream.Position = 0;
-
-                // Process only JPEG images.
-                if (shape.ImageData.ImageType == ImageType.Jpeg)
+                ms.Position = 0;
+                using (Bitmap bmp = new Bitmap(ms))
                 {
-                    // Load the JPEG image using Aspose.Drawing.
-                    using (Aspose.Drawing.Image img = Aspose.Drawing.Image.FromStream(imageStream))
-                    {
-                        // Create a high‑resolution bitmap (300 DPI) and draw the original image onto it.
-                        using (Aspose.Drawing.Bitmap highResBmp = new Aspose.Drawing.Bitmap(img.Width, img.Height))
-                        {
-                            highResBmp.SetResolution(300, 300);
-                            using (Aspose.Drawing.Graphics g2 = Aspose.Drawing.Graphics.FromImage(highResBmp))
-                            {
-                                g2.DrawImage(img, 0, 0, img.Width, img.Height);
-                            }
+                    // Set high resolution (e.g., 300 DPI).
+                    bmp.SetResolution(300f, 300f);
 
-                            // Prepare TIFF encoder with LZW compression.
-                            ImageCodecInfo tiffCodec = ImageCodecInfo.GetImageEncoders()
-                                .First(c => c.FormatID == Aspose.Drawing.Imaging.ImageFormat.Tiff.Guid);
-                            EncoderParameters encoderParams = new EncoderParameters(1);
-                            encoderParams.Param[0] = new EncoderParameter(
-                                Encoder.Compression,
-                                (long)EncoderValue.CompressionLZW);
+                    // Prepare TIFF encoder with LZW compression.
+                    ImageCodecInfo tiffCodec = ImageCodecInfo.GetImageEncoders()
+                        .FirstOrDefault(c => c.FormatID == ImageFormat.Tiff.Guid);
+                    if (tiffCodec == null)
+                        throw new InvalidOperationException("TIFF encoder not found.");
 
-                            // Save the high‑resolution image as TIFF.
-                            string tiffPath = $"image-{tiffCount}.tiff";
-                            highResBmp.Save(tiffPath, tiffCodec, encoderParams);
-                            tiffCount++;
-                        }
-                    }
+                    EncoderParameters encoderParams = new EncoderParameters(1);
+                    Encoder compressionEncoder = Encoder.Compression;
+                    EncoderParameter compressionParam = new EncoderParameter(compressionEncoder, (long)EncoderValue.CompressionLZW);
+                    encoderParams.Param[0] = compressionParam;
+
+                    // Save the TIFF file.
+                    string tiffPath = $"extracted-{imageIndex}.tiff";
+                    bmp.Save(tiffPath, tiffCodec, encoderParams);
+                    imageIndex++;
                 }
             }
         }
 
         // Validate that at least one TIFF file was created.
-        if (tiffCount == 0)
-            throw new InvalidOperationException("No JPEG images were found to convert to TIFF.");
+        if (imageIndex == 0)
+            throw new InvalidOperationException("No JPEG images were found and converted.");
 
-        // Cleanup temporary files.
-        File.Delete(jpegPath);
-        File.Delete(docPath);
+        // Cleanup sample files (optional).
+        // File.Delete(jpegPath);
+        // File.Delete(docPath);
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
@@ -9,90 +10,77 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a deterministic sample PNG image.
-        const string sampleImagePath = "sample.png";
-        CreateSamplePng(sampleImagePath, 200, 200);
+        // Create a deterministic sample PNG image.
+        const int imgWidth = 200;
+        const int imgHeight = 200;
+        string sampleImagePath = "sample.png";
 
-        // Step 2: Create a Word document and insert the sample image.
-        const string docPath = "DocumentWithImages.docx";
+        Bitmap bitmap = new Bitmap(imgWidth, imgHeight);
+        Graphics graphics = Graphics.FromImage(bitmap);
+        graphics.Clear(Color.White);
+        using (Pen pen = new Pen(Color.Blue, 5))
+        {
+            graphics.DrawRectangle(pen, 10, 10, imgWidth - 20, imgHeight - 20);
+        }
+        bitmap.Save(sampleImagePath, ImageFormat.Png);
+        graphics.Dispose();
+        bitmap.Dispose();
+
+        // Create a Word document and insert the sample image twice.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(sampleImagePath);
+        builder.Writeln();
+        builder.InsertImage(sampleImagePath);
+        string docPath = "sample.docx";
         doc.Save(docPath);
 
-        // Step 3: Load the document (optional, we already have it) and extract images.
+        // Load the document and extract all images.
         Document loadedDoc = new Document(docPath);
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        List<string> originalFiles = new List<string>();
+        List<string> compressedFiles = new List<string>();
         int imageIndex = 0;
-        bool anyImageExtracted = false;
 
         foreach (Shape shape in shapeNodes)
         {
-            if (!shape.HasImage) continue;
+            if (!shape.HasImage)
+                continue;
 
-            anyImageExtracted = true;
-            ImageData imgData = shape.ImageData;
-
-            // Save original extracted image to a temporary file.
-            string originalImagePath = $"extracted-{imageIndex}.png";
-            using (MemoryStream originalStream = new MemoryStream())
+            // Save the original extracted image.
+            string originalPath = $"extracted-{imageIndex}.png";
+            using (MemoryStream ms = new MemoryStream())
             {
-                imgData.Save(originalStream);
-                originalStream.Position = 0;
-                File.WriteAllBytes(originalImagePath, originalStream.ToArray());
+                shape.ImageData.Save(ms);
+                ms.Position = 0;
+                File.WriteAllBytes(originalPath, ms.ToArray());
             }
+            originalFiles.Add(originalPath);
 
-            // If the image is PNG, apply lossless compression by re‑saving it.
-            if (imgData.ImageType == ImageType.Png)
+            // Load the image into a bitmap and re‑save it (lossless PNG compression).
+            string compressedPath = $"compressed-{imageIndex}.png";
+            using (MemoryStream ms = new MemoryStream(File.ReadAllBytes(originalPath)))
             {
-                string compressedImagePath = $"compressed-{imageIndex}.png";
-
-                // Load the original PNG into Aspose.Drawing.Bitmap.
-                using (MemoryStream ms = new MemoryStream(File.ReadAllBytes(originalImagePath)))
+                ms.Position = 0;
+                using (Bitmap bmp = new Bitmap(ms))
                 {
-                    using (Bitmap bitmap = new Bitmap(ms))
-                    {
-                        // Re‑save the bitmap as PNG (lossless). This may reduce file size.
-                        bitmap.Save(compressedImagePath, ImageFormat.Png);
-                    }
+                    bmp.Save(compressedPath, ImageFormat.Png);
                 }
-
-                // Compare file sizes.
-                long originalSize = new FileInfo(originalImagePath).Length;
-                long compressedSize = new FileInfo(compressedImagePath).Length;
-                Console.WriteLine($"Image {imageIndex}: Original PNG size = {originalSize} bytes, " +
-                                  $"Compressed PNG size = {compressedSize} bytes, " +
-                                  $"Reduction = {originalSize - compressedSize} bytes.");
             }
-            else
-            {
-                Console.WriteLine($"Image {imageIndex}: Not a PNG image, skipped compression.");
-            }
-
+            compressedFiles.Add(compressedPath);
             imageIndex++;
         }
 
-        if (!anyImageExtracted)
-            throw new InvalidOperationException("No images were extracted from the document.");
+        if (originalFiles.Count == 0)
+            throw new Exception("No images were extracted from the document.");
 
-        Console.WriteLine("Processing completed.");
-    }
-
-    private static void CreateSamplePng(string filePath, int width, int height)
-    {
-        // Create a bitmap and draw deterministic content.
-        Bitmap bitmap = new Bitmap(width, height);
-        Graphics graphics = Graphics.FromImage(bitmap);
-        graphics.Clear(Color.White);
-        // Draw a simple red rectangle.
-        using (Pen pen = new Pen(Color.Red, 5))
+        // Compare file sizes and output statistics.
+        for (int i = 0; i < originalFiles.Count; i++)
         {
-            graphics.DrawRectangle(pen, 10, 10, width - 20, height - 20);
+            long originalSize = new FileInfo(originalFiles[i]).Length;
+            long compressedSize = new FileInfo(compressedFiles[i]).Length;
+            long reduction = originalSize - compressedSize;
+            Console.WriteLine($"Image {i}: Original = {originalSize} bytes, Compressed = {compressedSize} bytes, Reduction = {reduction} bytes");
         }
-        // Save the bitmap as PNG.
-        bitmap.Save(filePath, ImageFormat.Png);
-        // Clean up.
-        graphics.Dispose();
-        bitmap.Dispose();
     }
 }

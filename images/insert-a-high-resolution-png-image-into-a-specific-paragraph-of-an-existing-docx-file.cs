@@ -1,98 +1,66 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Define file names.
+        // Paths for the sample files
         const string imagePath = "input.png";
         const string sourceDocPath = "input.docx";
         const string outputDocPath = "output.docx";
 
-        // -------------------------------------------------
-        // 1. Create a high‑resolution PNG image.
-        // -------------------------------------------------
-        const int imgWidth = 2000;
-        const int imgHeight = 2000;
-        using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
+        // 1. Create a high‑resolution PNG image (2000x2000) using Aspose.Drawing
+        using (Bitmap bitmap = new Bitmap(2000, 2000))
         {
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                // Fill background with white.
-                graphics.Clear(Color.White);
-                // Draw a simple black rectangle for visual reference.
-                graphics.DrawRectangle(Pens.Black, 100, 100, imgWidth - 200, imgHeight - 200);
+                // Fill the background with white
+                graphics.Clear(Aspose.Drawing.Color.White);
+                // Draw a simple rectangle to have visible content
+                graphics.DrawRectangle(new Pen(Aspose.Drawing.Color.Black), 100, 100, 1800, 1800);
             }
-            // Save the image to a deterministic file.
-            bitmap.Save(imagePath, ImageFormat.Png);
+            // Save the image to a local file
+            bitmap.Save(imagePath);
         }
 
-        // Ensure the image file exists before proceeding.
+        // Ensure the image file was created
         if (!File.Exists(imagePath))
             throw new FileNotFoundException("Failed to create the sample image.", imagePath);
 
-        // -------------------------------------------------
-        // 2. Create a sample DOCX file with multiple paragraphs.
-        // -------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // 2. Create a sample DOCX file with several paragraphs
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("First paragraph.");
+        builder.Writeln("Target paragraph where the image will be inserted.");
+        builder.Writeln("Third paragraph.");
+        sourceDoc.Save(sourceDocPath);
+        // No need to dispose DocumentBuilder; it does not implement IDisposable
 
-        builder.Writeln("Paragraph 1");
-        builder.Writeln("Target Paragraph"); // This is the paragraph where we will insert the image.
-        builder.Writeln("Paragraph 3");
-
-        doc.Save(sourceDocPath);
-
-        // Ensure the source document exists.
+        // Ensure the source document was created
         if (!File.Exists(sourceDocPath))
-            throw new FileNotFoundException("Failed to create the sample document.", sourceDocPath);
+            throw new FileNotFoundException("Failed to create the source document.", sourceDocPath);
 
-        // -------------------------------------------------
-        // 3. Load the existing document.
-        // -------------------------------------------------
-        Document loadedDoc = new Document(sourceDocPath);
-        DocumentBuilder docBuilder = new DocumentBuilder(loadedDoc);
+        // 3. Load the existing DOCX file
+        Document doc = new Document(sourceDocPath);
+        DocumentBuilder docBuilder = new DocumentBuilder(doc);
 
-        // -------------------------------------------------
-        // 4. Locate the specific paragraph ("Target Paragraph").
-        // -------------------------------------------------
-        Paragraph targetParagraph = null;
-        NodeCollection paragraphs = loadedDoc.GetChildNodes(NodeType.Paragraph, true);
-        foreach (Paragraph para in paragraphs)
-        {
-            if (para.GetText().Trim().Equals("Target Paragraph", StringComparison.Ordinal))
-            {
-                targetParagraph = para;
-                break;
-            }
-        }
+        // 4. Locate the specific paragraph (second paragraph) and insert the image
+        NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
+        if (paragraphs.Count < 2)
+            throw new InvalidOperationException("The document does not contain enough paragraphs.");
 
-        if (targetParagraph == null)
-            throw new InvalidOperationException("Target paragraph not found in the document.");
-
-        // -------------------------------------------------
-        // 5. Insert the high‑resolution PNG image into the target paragraph.
-        // -------------------------------------------------
+        Paragraph targetParagraph = (Paragraph)paragraphs[1]; // zero‑based index
         docBuilder.MoveTo(targetParagraph);
-        Shape insertedShape = docBuilder.InsertImage(imagePath);
+        docBuilder.InsertImage(imagePath);
 
-        // Validate that the shape indeed contains an image.
-        if (!insertedShape.HasImage)
-            throw new InvalidOperationException("The inserted shape does not contain an image.");
+        // 5. Save the modified document
+        doc.Save(outputDocPath);
+        // No need to dispose DocumentBuilder
 
-        // -------------------------------------------------
-        // 6. Save the modified document.
-        // -------------------------------------------------
-        loadedDoc.Save(outputDocPath);
-
-        // -------------------------------------------------
-        // 7. Validate output.
-        // -------------------------------------------------
+        // 6. Validate that the output file exists
         if (!File.Exists(outputDocPath))
             throw new FileNotFoundException("The output document was not created.", outputDocPath);
     }

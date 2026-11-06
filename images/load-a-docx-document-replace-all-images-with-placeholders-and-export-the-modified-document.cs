@@ -9,85 +9,79 @@ public class Program
 {
     public static void Main()
     {
-        // Define file names
-        const string sampleImagePath = "sample.png";
+        // Define deterministic file names.
+        const string inputImagePath = "input.png";
         const string placeholderImagePath = "placeholder.png";
-        const string inputDocPath = "input.docx";
-        const string outputDocPath = "output.docx";
+        const string originalDocPath = "original.docx";
+        const string modifiedDocPath = "modified.docx";
 
         // -------------------------------------------------
-        // Step 1: Create a sample image to insert into the document
+        // Step 1: Create a sample input image (white square).
         // -------------------------------------------------
-        const int sampleWidth = 100;
-        const int sampleHeight = 100;
-        using (Bitmap sampleBitmap = new Bitmap(sampleWidth, sampleHeight))
+        const int imgWidth = 100;
+        const int imgHeight = 100;
+        using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
         {
-            using (Graphics g = Graphics.FromImage(sampleBitmap))
+            using (Graphics g = Graphics.FromImage(bitmap))
             {
-                g.Clear(Color.LightBlue);
+                g.Clear(Color.White);
             }
-            sampleBitmap.Save(sampleImagePath, ImageFormat.Png);
+            bitmap.Save(inputImagePath, ImageFormat.Png);
         }
 
         // -------------------------------------------------
-        // Step 2: Create a placeholder image that will replace existing images
+        // Step 2: Create a placeholder image (light gray square).
         // -------------------------------------------------
-        const int placeholderWidth = 100;
-        const int placeholderHeight = 100;
-        using (Bitmap placeholderBitmap = new Bitmap(placeholderWidth, placeholderHeight))
+        using (Bitmap placeholder = new Bitmap(imgWidth, imgHeight))
         {
-            using (Graphics g = Graphics.FromImage(placeholderBitmap))
+            using (Graphics g = Graphics.FromImage(placeholder))
             {
-                g.Clear(Color.Gray);
+                g.Clear(Color.LightGray);
             }
-            placeholderBitmap.Save(placeholderImagePath, ImageFormat.Png);
+            placeholder.Save(placeholderImagePath, ImageFormat.Png);
         }
 
         // -------------------------------------------------
-        // Step 3: Build a sample DOCX containing a few images
+        // Step 3: Build a sample DOCX containing the input image.
         // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        // Insert first image
-        builder.InsertImage(sampleImagePath);
-        builder.Writeln();
-        // Insert second image
-        builder.InsertImage(sampleImagePath);
-        // Save the input document
-        doc.Save(inputDocPath);
+        // Insert the sample image twice to have multiple images.
+        builder.InsertImage(inputImagePath);
+        builder.Writeln(); // Add a line break.
+        builder.InsertImage(inputImagePath);
+        doc.Save(originalDocPath);
 
         // -------------------------------------------------
-        // Step 4: Load the document and replace all images with the placeholder
+        // Step 4: Load the document and replace all images with the placeholder.
         // -------------------------------------------------
-        Document loadedDoc = new Document(inputDocPath);
+        Document loadedDoc = new Document(originalDocPath);
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int replacedCount = 0;
         foreach (Shape shape in shapeNodes)
         {
             if (shape.HasImage)
             {
+                // Replace the image data with the placeholder image.
                 shape.ImageData.SetImage(placeholderImagePath);
-                replacedCount++;
             }
         }
 
         // -------------------------------------------------
-        // Step 5: Save the modified document
+        // Step 5: Save the modified document.
         // -------------------------------------------------
-        loadedDoc.Save(outputDocPath);
+        loadedDoc.Save(modifiedDocPath);
 
         // -------------------------------------------------
-        // Validation
+        // Validation: Ensure the modified document was created.
         // -------------------------------------------------
-        if (!File.Exists(outputDocPath))
-            throw new Exception("The output document was not created.");
+        if (!File.Exists(modifiedDocPath))
+        {
+            throw new Exception($"Failed to create the modified document at '{modifiedDocPath}'.");
+        }
 
-        if (replacedCount == 0)
-            throw new Exception("No images were found to replace.");
-
-        // Clean up temporary files (optional)
-        // File.Delete(sampleImagePath);
+        // Optional: Clean up generated files (comment out if inspection is needed).
+        // File.Delete(inputImagePath);
         // File.Delete(placeholderImagePath);
-        // File.Delete(inputDocPath);
+        // File.Delete(originalDocPath);
     }
 }

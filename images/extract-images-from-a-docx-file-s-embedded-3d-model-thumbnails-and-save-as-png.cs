@@ -4,72 +4,68 @@ using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
 
-public class Program
+public class Extract3DModelThumbnails
 {
     public static void Main()
     {
-        // Create a deterministic sample image to be used as a thumbnail.
-        const string inputImagePath = "input.png";
+        // Prepare a deterministic sample image to act as a 3D model thumbnail.
+        const string thumbnailPath = "thumb.png";
         const int width = 200;
         const int height = 200;
 
+        // Create the sample thumbnail image.
         using (Bitmap bitmap = new Bitmap(width, height))
         {
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                // Fill background with white.
                 graphics.Clear(Color.White);
-                // Draw a simple red rectangle.
-                graphics.FillRectangle(new SolidBrush(Color.Red), 20, 20, width - 40, height - 40);
+                // Draw a simple red ellipse to make the thumbnail recognizable.
+                graphics.FillEllipse(new SolidBrush(Color.Red), 20, 20, width - 40, height - 40);
             }
-
-            // Save the sample image.
-            bitmap.Save(inputImagePath);
+            bitmap.Save(thumbnailPath);
         }
 
-        // Verify that the sample image was created.
-        if (!File.Exists(inputImagePath))
-            throw new Exception($"Failed to create sample image '{inputImagePath}'.");
-
-        // Create a new document and insert the sample image.
+        // Create a new Word document and insert the thumbnail as a shape.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(inputImagePath);
+
+        // Create a shape that holds the image (simulating a 3D model thumbnail).
+        Shape thumbnailShape = new Shape(doc, ShapeType.Image);
+        thumbnailShape.ImageData.SetImage(thumbnailPath);
+        // Append the shape to the current paragraph.
+        builder.CurrentParagraph.AppendChild(thumbnailShape);
+
+        // Save the document containing the embedded thumbnail.
         const string docPath = "sample.docx";
         doc.Save(docPath);
-
-        // Verify that the document was saved.
-        if (!File.Exists(docPath))
-            throw new Exception($"Failed to save document '{docPath}'.");
 
         // Load the document for extraction.
         Document loadedDoc = new Document(docPath);
 
-        // Iterate through all Shape nodes and extract images (thumbnails).
+        // Iterate through all Shape nodes and extract images.
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
         int extractedCount = 0;
+        int index = 0;
 
         foreach (Shape shape in shapeNodes)
         {
             if (shape.HasImage)
             {
-                string outputImagePath = $"thumbnail-{extractedCount}.png";
+                string outputImagePath = $"extracted-{index}.png";
                 shape.ImageData.Save(outputImagePath);
-
-                // Validate that the image file was created.
-                if (!File.Exists(outputImagePath))
-                    throw new Exception($"Failed to save extracted image '{outputImagePath}'.");
-
                 extractedCount++;
+                index++;
             }
         }
 
-        // Ensure at least one image was extracted.
+        // Validate that at least one image was extracted.
         if (extractedCount == 0)
-            throw new Exception("No images were extracted from the document.");
+        {
+            throw new InvalidOperationException("No images were extracted from the document.");
+        }
 
-        // Cleanup: optional removal of temporary files (commented out to keep outputs).
-        // File.Delete(inputImagePath);
+        // Optional: Clean up temporary files (comment out if you want to keep them).
+        // File.Delete(thumbnailPath);
         // File.Delete(docPath);
     }
 }

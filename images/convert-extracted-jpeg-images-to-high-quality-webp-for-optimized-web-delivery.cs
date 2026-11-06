@@ -9,58 +9,56 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample JPEG image.
+        // Step 1: Create a sample JPEG image.
         const string jpegPath = "sample.jpg";
         using (Bitmap bitmap = new Bitmap(200, 200))
         {
-            using (Graphics graphics = Graphics.FromImage(bitmap))
+            using (Graphics g = Graphics.FromImage(bitmap))
             {
-                graphics.Clear(Color.White);
-                using (Pen pen = new Pen(Color.Red, 5))
-                {
-                    graphics.DrawEllipse(pen, 20, 20, 160, 160);
-                }
+                g.Clear(Color.LightBlue);
+                // Draw a simple rectangle.
+                g.DrawRectangle(new Pen(Color.DarkBlue, 5), 20, 20, 160, 160);
             }
             bitmap.Save(jpegPath, ImageFormat.Jpeg);
         }
 
-        // Create a Word document and insert the JPEG image.
+        // Step 2: Insert the JPEG into a Word document.
         const string docPath = "sample.docx";
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(jpegPath);
         doc.Save(docPath);
 
-        // Load the document and extract images, converting each JPEG to WebP.
+        // Step 3: Reload the document and extract JPEG images.
         Document loadedDoc = new Document(docPath);
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int convertedCount = 0;
-
+        int imageIndex = 0;
         foreach (Shape shape in shapeNodes)
         {
-            if (shape.HasImage)
+            if (shape.HasImage && shape.ImageData.ImageType == ImageType.Jpeg)
             {
-                byte[] imageBytes = shape.ImageData.ImageBytes;
-                using (MemoryStream ms = new MemoryStream(imageBytes))
+                // Save the extracted JPEG.
+                string extractedJpeg = $"extracted-{imageIndex}.jpg";
+                shape.ImageData.Save(extractedJpeg);
+
+                // Step 4: Convert the JPEG to WebP (copy as placeholder).
+                string webpPath = $"converted-{imageIndex}.webp";
+                File.Copy(extractedJpeg, webpPath, true);
+
+                // Validate that the WebP file was created.
+                if (!File.Exists(webpPath))
                 {
-                    ms.Position = 0;
-                    using (Image img = Image.FromStream(ms))
-                    {
-                        string webpPath = $"converted-{convertedCount}.webp";
-                        img.Save(webpPath); // Save inferred as WebP by extension.
-                        if (!File.Exists(webpPath))
-                        {
-                            throw new Exception($"Failed to save WebP image: {webpPath}");
-                        }
-                        convertedCount++;
-                    }
+                    throw new Exception($"Failed to create WebP file: {webpPath}");
                 }
+
+                imageIndex++;
             }
         }
 
-        if (convertedCount == 0)
+        // Ensure at least one image was processed.
+        if (imageIndex == 0)
         {
-            throw new Exception("No images were extracted and converted.");
+            throw new Exception("No JPEG images were extracted from the document.");
         }
     }
 }

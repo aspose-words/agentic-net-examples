@@ -1,7 +1,7 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
@@ -10,9 +10,8 @@ public class Program
     public static void Main()
     {
         // Prepare folders
-        string baseDir = Directory.GetCurrentDirectory();
-        string inputFolder = Path.Combine(baseDir, "InputImages");
-        string outputFolder = Path.Combine(baseDir, "OutputImages");
+        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputImages");
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputImages");
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
@@ -20,71 +19,57 @@ public class Program
         for (int i = 1; i <= 3; i++)
         {
             string bmpPath = Path.Combine(inputFolder, $"image{i}.bmp");
-            Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(100, 100);
-            Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap);
-            g.Clear(Aspose.Drawing.Color.White);
-            using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Blue, 2))
+            using (Bitmap bmp = new Bitmap(200, 200))
             {
-                g.DrawRectangle(pen, 10, 10, 80, 80);
+                using (Graphics g = Graphics.FromImage(bmp))
+                {
+                    // Fill background
+                    g.Clear(Aspose.Drawing.Color.White);
+                    // Draw a simple rectangle with a distinct color
+                    using (SolidBrush brush = new SolidBrush(Aspose.Drawing.Color.FromArgb(50 * i, 100, 150)))
+                    {
+                        g.FillRectangle(brush, 20, 20, 160, 160);
+                    }
+                }
+                bmp.Save(bmpPath, ImageFormat.Bmp);
             }
-            bitmap.Save(bmpPath, Aspose.Drawing.Imaging.ImageFormat.Bmp);
-            g.Dispose();
-            bitmap.Dispose();
         }
 
-        // Batch convert BMP to JPEG with 80% quality
+        // Get JPEG encoder
+        ImageCodecInfo jpegCodec = ImageCodecInfo.GetImageEncoders()
+            .FirstOrDefault(codec => codec.FormatID == ImageFormat.Jpeg.Guid);
+        if (jpegCodec == null)
+            throw new InvalidOperationException("JPEG encoder not found.");
+
+        // Prepare encoder parameters for 80% quality
+        EncoderParameters encoderParams = new EncoderParameters(1);
+        EncoderParameter qualityParam = new EncoderParameter(Encoder.Quality, 80L);
+        encoderParams.Param[0] = qualityParam;
+
+        // Process each BMP file
         string[] bmpFiles = Directory.GetFiles(inputFolder, "*.bmp");
+        if (bmpFiles.Length == 0)
+            throw new InvalidOperationException("No BMP files found to convert.");
+
         foreach (string bmpFile in bmpFiles)
         {
-            // Load BMP into a temporary Word document to obtain Shape.ImageData
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            Shape shape = builder.InsertImage(bmpFile);
-            if (!shape.HasImage)
-                throw new Exception($"Shape does not contain an image for file {bmpFile}");
+            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(bmpFile);
+            string jpegPath = Path.Combine(outputFolder, $"{fileNameWithoutExt}.jpg");
 
-            // Save image data to a memory stream
-            using (MemoryStream ms = new MemoryStream())
+            using (Bitmap bmp = new Bitmap(bmpFile))
             {
-                shape.ImageData.Save(ms);
-                ms.Position = 0; // reset before reading
-
-                // Load bitmap from stream
-                using (Aspose.Drawing.Bitmap bmp = new Aspose.Drawing.Bitmap(ms))
-                {
-                    // Prepare JPEG encoder with 80% quality
-                    Aspose.Drawing.Imaging.ImageCodecInfo jpegCodec = GetEncoder(Aspose.Drawing.Imaging.ImageFormat.Jpeg);
-                    if (jpegCodec == null)
-                        throw new Exception("JPEG encoder not found.");
-
-                    Aspose.Drawing.Imaging.EncoderParameters encoderParams = new Aspose.Drawing.Imaging.EncoderParameters(1);
-                    encoderParams.Param[0] = new Aspose.Drawing.Imaging.EncoderParameter(Aspose.Drawing.Imaging.Encoder.Quality, 80L);
-
-                    // Save JPEG
-                    string jpegPath = Path.Combine(outputFolder,
-                        Path.GetFileNameWithoutExtension(bmpFile) + ".jpg");
-                    bmp.Save(jpegPath, jpegCodec, encoderParams);
-
-                    Console.WriteLine($"Converted '{Path.GetFileName(bmpFile)}' to '{Path.GetFileName(jpegPath)}'.");
-                }
+                // Save as JPEG with quality setting
+                bmp.Save(jpegPath, jpegCodec, encoderParams);
             }
+
+            Console.WriteLine($"Converted '{Path.GetFileName(bmpFile)}' to '{Path.GetFileName(jpegPath)}' with 80% quality.");
         }
 
-        // Validate that at least one JPEG was created
-        string[] jpegFiles = Directory.GetFiles(outputFolder, "*.jpg");
-        if (jpegFiles.Length == 0)
-            throw new Exception("No JPEG files were created during conversion.");
-    }
+        // Validate output
+        int jpegCount = Directory.GetFiles(outputFolder, "*.jpg").Length;
+        if (jpegCount == 0)
+            throw new InvalidOperationException("No JPEG files were created.");
 
-    // Helper to get the appropriate image encoder
-    private static Aspose.Drawing.Imaging.ImageCodecInfo GetEncoder(Aspose.Drawing.Imaging.ImageFormat format)
-    {
-        Aspose.Drawing.Imaging.ImageCodecInfo[] codecs = Aspose.Drawing.Imaging.ImageCodecInfo.GetImageEncoders();
-        foreach (Aspose.Drawing.Imaging.ImageCodecInfo codec in codecs)
-        {
-            if (codec.FormatID == format.Guid)
-                return codec;
-        }
-        return null;
+        Console.WriteLine($"Batch conversion completed. {jpegCount} JPEG file(s) created in '{outputFolder}'.");
     }
 }

@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
@@ -9,45 +9,30 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare sample TIFF images.
-        string[] tiffFiles = { "sample1.tif", "sample2.tif" };
-        int width = 400;
-        int height = 300;
+        // Prepare a folder for sample TIFF images.
+        string inputFolder = "InputImages";
+        Directory.CreateDirectory(inputFolder);
 
-        for (int i = 0; i < tiffFiles.Length; i++)
+        // Create sample TIFF images.
+        for (int i = 1; i <= 2; i++)
         {
-            // Create a bitmap and draw deterministic content.
-            using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
+            string imagePath = Path.Combine(inputFolder, $"image{i}.tif");
+            using (Bitmap bitmap = new Bitmap(300, 300))
             {
-                using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
+                using (Graphics g = Graphics.FromImage(bitmap))
                 {
-                    g.Clear(Aspose.Drawing.Color.White);
-                    // Draw a simple rectangle with text indicating the image number.
-                    using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Blue, 3))
-                    {
-                        g.DrawRectangle(pen, 10, 10, width - 20, height - 20);
-                    }
-
-                    using (Aspose.Drawing.SolidBrush brush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Black))
-                    {
-                        using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 24))
-                        {
-                            g.DrawString($"Image {i + 1}", font, brush, new Aspose.Drawing.PointF(50, height / 2 - 20));
-                        }
-                    }
+                    // Fill background with a deterministic color.
+                    g.Clear(Color.FromArgb(255, 200 + i * 20, 200 - i * 20, 255));
                 }
-
                 // Save as TIFF.
-                bitmap.Save(tiffFiles[i], ImageFormat.Tiff);
+                bitmap.Save(imagePath, ImageFormat.Tiff);
             }
         }
 
-        // Verify that TIFF files were created.
-        foreach (string file in tiffFiles)
-        {
-            if (!File.Exists(file))
-                throw new Exception($"Failed to create TIFF image: {file}");
-        }
+        // Verify that at least one TIFF image was created.
+        string[] tiffFiles = Directory.GetFiles(inputFolder, "*.tif");
+        if (tiffFiles.Length == 0)
+            throw new Exception("No TIFF images were created.");
 
         // Create a new Word document.
         Document doc = new Document();
@@ -59,15 +44,18 @@ public class Program
             if (i > 0)
                 builder.InsertBreak(BreakType.PageBreak);
 
-            // Insert the image.
+            // Insert the image; let Aspose.Words handle scaling.
             builder.InsertImage(tiffFiles[i]);
         }
 
-        // Embed metadata.
-        doc.BuiltInDocumentProperties.Title = "Converted TIFF Images to PDF";
+        // Embed metadata into the document.
+        doc.BuiltInDocumentProperties.Title = "TIFF to PDF conversion";
         doc.BuiltInDocumentProperties.Author = "Aspose.Words Example";
-        doc.CustomDocumentProperties.Add("SourceFormat", "TIFF");
-        doc.CustomDocumentProperties.Add("ImageCount", tiffFiles.Length);
+        doc.BuiltInDocumentProperties.Subject = "Converted PDF";
+        doc.BuiltInDocumentProperties.Keywords = "TIFF,PDF,Example";
+
+        // Add a custom property indicating the source folder.
+        doc.CustomDocumentProperties.Add("SourceFolder", inputFolder);
 
         // Save the document as PDF.
         string outputPdf = "output.pdf";
@@ -77,10 +65,6 @@ public class Program
         if (!File.Exists(outputPdf))
             throw new Exception("PDF output was not created.");
 
-        // Clean up sample TIFF files (optional).
-        foreach (string file in tiffFiles)
-        {
-            try { File.Delete(file); } catch { /* ignore */ }
-        }
+        // Example completed successfully.
     }
 }

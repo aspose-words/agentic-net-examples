@@ -2,8 +2,6 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Loading;
-using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
@@ -11,87 +9,99 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a sample JPEG image.
-        const string inputImagePath = "sample.jpg";
-        CreateSampleJpeg(inputImagePath);
+        // Step 1: Create a sample JPEG image using Aspose.Drawing.
+        const string sampleImagePath = "sample.jpg";
+        const int imgWidth = 200;
+        const int imgHeight = 100;
 
-        // Step 2: Create a Word document and insert the JPEG image.
-        const string docPath = "document.docx";
+        // Create bitmap.
+        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(imgWidth, imgHeight))
+        {
+            // Create graphics from bitmap.
+            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
+            {
+                // Fill background.
+                g.Clear(Aspose.Drawing.Color.White);
+
+                // Draw sample text.
+                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 20))
+                using (Aspose.Drawing.SolidBrush brush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Black))
+                {
+                    g.DrawString("Sample", font, brush, new Aspose.Drawing.PointF(10, 40));
+                }
+            }
+
+            // Save the bitmap as JPEG.
+            bitmap.Save(sampleImagePath, ImageFormat.Jpeg);
+        }
+
+        // Verify that the sample image was created.
+        if (!File.Exists(sampleImagePath))
+            throw new InvalidOperationException($"Failed to create sample image: {sampleImagePath}");
+
+        // Step 2: Insert the image into a Word document and save as PDF.
+        const string pdfPath = "sample.pdf";
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(inputImagePath);
-        doc.Save(docPath);
-
-        // Step 3: Convert the Word document to PDF (simulating a scanned PDF).
-        const string pdfPath = "scanned.pdf";
+        builder.InsertImage(sampleImagePath);
         doc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Step 4: Load the PDF back into Aspose.Words.
-        LoadOptions loadOptions = new LoadOptions { LoadFormat = LoadFormat.Pdf };
-        Document pdfDoc = new Document(pdfPath, loadOptions);
+        // Verify that the PDF was created.
+        if (!File.Exists(pdfPath))
+            throw new InvalidOperationException($"Failed to create PDF document: {pdfPath}");
 
-        // Step 5: Extract JPEG images, apply EXIF orientation correction, and save them.
-        NodeCollection shapes = pdfDoc.GetChildNodes(NodeType.Shape, true);
+        // Step 3: Load the PDF and extract images.
+        Document pdfDoc = new Document(pdfPath);
+        NodeCollection shapeNodes = pdfDoc.GetChildNodes(NodeType.Shape, true);
         int imageIndex = 0;
-        foreach (Shape shape in shapes)
+
+        foreach (Shape shape in shapeNodes)
         {
-            if (!shape.HasImage) continue;
+            if (!shape.HasImage)
+                continue;
 
-            // Extract raw image bytes.
-            byte[] imageBytes = shape.ImageData.ImageBytes;
-            using (MemoryStream ms = new MemoryStream(imageBytes))
+            // Save the extracted image to a memory stream.
+            using (MemoryStream imgStream = new MemoryStream())
             {
-                // Load image with Aspose.Drawing.
-                using (Bitmap bitmap = new Bitmap(ms))
-                {
-                    // Reset stream position for safety.
-                    ms.Position = 0;
+                shape.ImageData.Save(imgStream);
+                imgStream.Position = 0; // Reset stream position.
 
-                    // Apply EXIF orientation correction.
-                    // For demonstration, rotate 90 degrees clockwise.
-                    bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
+                // Load the image with Aspose.Drawing.
+                using (Aspose.Drawing.Bitmap extractedBitmap = new Aspose.Drawing.Bitmap(imgStream))
+                {
+                    // Simulate reading EXIF orientation.
+                    // In a real scenario, you would read the EXIF tag from the image.
+                    // Here we assume an orientation value of 6 (rotate 90° clockwise).
+                    int exifOrientation = 6;
+
+                    // Apply orientation correction if needed.
+                    if (exifOrientation == 3)
+                        extractedBitmap.RotateFlip(RotateFlipType.Rotate180FlipNone);
+                    else if (exifOrientation == 6)
+                        extractedBitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
+                    else if (exifOrientation == 8)
+                        extractedBitmap.RotateFlip(RotateFlipType.Rotate270FlipNone);
+                    // Orientation value 1 (normal) requires no action.
 
                     // Save the corrected image.
-                    string outputImagePath = $"extracted-{imageIndex}.jpg";
-                    bitmap.Save(outputImagePath, ImageFormat.Jpeg);
-                    Console.WriteLine($"Saved corrected image: {outputImagePath}");
+                    string correctedImagePath = $"extracted_corrected_{imageIndex}.jpg";
+                    extractedBitmap.Save(correctedImagePath, ImageFormat.Jpeg);
 
                     // Validate that the file was created.
-                    if (!File.Exists(outputImagePath))
-                        throw new InvalidOperationException($"Failed to create image file: {outputImagePath}");
+                    if (!File.Exists(correctedImagePath))
+                        throw new InvalidOperationException($"Failed to save corrected image: {correctedImagePath}");
                 }
             }
 
             imageIndex++;
         }
 
-        // Final validation: ensure at least one image was extracted.
+        // Validate that at least one image was extracted and corrected.
         if (imageIndex == 0)
-            throw new InvalidOperationException("No images were extracted from the PDF document.");
+            throw new InvalidOperationException("No images were found in the PDF document.");
 
-        Console.WriteLine("EXIF orientation correction completed successfully.");
-    }
-
-    private static void CreateSampleJpeg(string path)
-    {
-        // Create a deterministic 200x200 white bitmap with a black rectangle.
-        using (Bitmap bitmap = new Bitmap(200, 200))
-        {
-            using (Graphics g = Graphics.FromImage(bitmap))
-            {
-                g.Clear(Color.White);
-                using (Pen pen = new Pen(Color.Black, 5))
-                {
-                    g.DrawRectangle(pen, 25, 25, 150, 150);
-                }
-            }
-
-            // Save as JPEG.
-            bitmap.Save(path, ImageFormat.Jpeg);
-        }
-
-        // Validate that the image file exists.
-        if (!File.Exists(path))
-            throw new InvalidOperationException($"Failed to create sample JPEG image: {path}");
+        // Optional cleanup (commented out).
+        // File.Delete(sampleImagePath);
+        // File.Delete(pdfPath);
     }
 }

@@ -6,140 +6,146 @@ using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 using Aspose.Drawing.Drawing2D;
 
-public class ImageChartReplacementExample
+public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a sample template document with a placeholder image.
+        // File names
         const string placeholderImagePath = "placeholder.png";
         const string templatePath = "template.docx";
-        const string placeholderAltText = "ChartPlaceholder";
-
-        // Create a deterministic placeholder image.
-        CreatePlaceholderImage(placeholderImagePath, 100, 100);
-
-        // Build the template document and insert the placeholder image.
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        Shape placeholderShape = builder.InsertImage(placeholderImagePath);
-        placeholderShape.AlternativeText = placeholderAltText; // Mark for later replacement.
-        templateDoc.Save(templatePath);
-
-        // Step 2: Load the template document.
-        Document loadedDoc = new Document(templatePath);
-
-        // Step 3: Generate a chart image dynamically.
         const string chartImagePath = "chart.png";
-        CreateSampleChartImage(chartImagePath, 500, 300);
+        const string outputPath = "output.docx";
 
-        // Step 4: Replace placeholder images with the generated chart.
-        bool replacementMade = false;
-        NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        // 1. Create a placeholder image (white background with text)
+        CreatePlaceholderImage(placeholderImagePath);
+
+        // 2. Build a DOCX template containing the placeholder image
+        CreateTemplateDocument(templatePath, placeholderImagePath);
+
+        // 3. Load the template document
+        Document doc = new Document(templatePath);
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // 4. Generate a chart image
+        CreateChartImage(chartImagePath);
+
+        // 5. Replace each placeholder image with the generated chart
+        bool replaced = false;
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
         foreach (Shape shape in shapes)
         {
-            if (shape.HasImage && shape.AlternativeText == placeholderAltText)
+            if (shape.HasImage && shape.AlternativeText == "ChartPlaceholder")
             {
                 shape.ImageData.SetImage(chartImagePath);
-                replacementMade = true;
+                replaced = true;
             }
         }
 
-        if (!replacementMade)
-        {
+        if (!replaced)
             throw new InvalidOperationException("No placeholder image found to replace.");
-        }
 
-        // Step 5: Save the final document.
-        const string outputPath = "output.docx";
-        loadedDoc.Save(outputPath);
+        // 6. Save the resulting document
+        doc.Save(outputPath);
 
-        // Validation: ensure the output file exists.
+        // 7. Validate output
         if (!File.Exists(outputPath))
-        {
             throw new FileNotFoundException("The output document was not created.", outputPath);
-        }
-
-        Console.WriteLine($"Document saved successfully to '{outputPath}'.");
     }
 
-    // Creates a simple white placeholder PNG image.
-    private static void CreatePlaceholderImage(string filePath, int width, int height)
+    private static void CreatePlaceholderImage(string path)
     {
+        const int width = 200;
+        const int height = 150;
         using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
         {
-            using (Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap))
+            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
             {
-                graphics.Clear(Aspose.Drawing.Color.LightGray);
-                // Optionally draw a cross to indicate placeholder.
-                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.DarkGray, 2))
+                g.Clear(Aspose.Drawing.Color.White);
+                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Black, 2))
                 {
-                    graphics.DrawLine(pen, 0, 0, width, height);
-                    graphics.DrawLine(pen, width, 0, 0, height);
+                    g.DrawRectangle(pen, 0, 0, width - 1, height - 1);
                 }
-            }
-            bitmap.Save(filePath, Aspose.Drawing.Imaging.ImageFormat.Png);
-        }
-    }
-
-    // Generates a simple bar chart image.
-    private static void CreateSampleChartImage(string filePath, int width, int height)
-    {
-        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
-        {
-            using (Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap))
-            {
-                graphics.Clear(Aspose.Drawing.Color.White);
-
-                // Define chart area.
-                int chartLeft = 50;
-                int chartBottom = height - 50;
-                int chartTop = 50;
-                int chartWidth = width - 100;
-                int chartHeight = chartBottom - chartTop;
-
-                // Draw axes.
-                using (Aspose.Drawing.Pen axisPen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Black, 2))
-                {
-                    // Y axis.
-                    graphics.DrawLine(axisPen, chartLeft, chartTop, chartLeft, chartBottom);
-                    // X axis.
-                    graphics.DrawLine(axisPen, chartLeft, chartBottom, chartLeft + chartWidth, chartBottom);
-                }
-
-                // Sample data for bars.
-                int[] values = { 70, 40, 90, 55 };
-                int barCount = values.Length;
-                int maxValue = 100; // Assuming max value for scaling.
-
-                int barSpacing = chartWidth / (barCount * 2);
-                int barWidth = barSpacing;
-
-                using (Aspose.Drawing.SolidBrush barBrush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.SteelBlue))
-                {
-                    for (int i = 0; i < barCount; i++)
-                    {
-                        int barHeight = (int)((values[i] / (float)maxValue) * chartHeight);
-                        int x = chartLeft + barSpacing + i * (barWidth + barSpacing);
-                        int y = chartBottom - barHeight;
-                        graphics.FillRectangle(barBrush, x, y, barWidth, barHeight);
-                    }
-                }
-
-                // Optional: draw value labels.
-                using (Aspose.Drawing.SolidBrush textBrush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Black))
+                // Use fully qualified Aspose.Drawing.Font to avoid ambiguity
                 using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 12))
                 {
-                    for (int i = 0; i < barCount; i++)
+                    using (Aspose.Drawing.SolidBrush brush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Black))
                     {
-                        string label = values[i].ToString();
-                        SizeF textSize = graphics.MeasureString(label, font);
-                        int x = chartLeft + barSpacing + i * (barWidth + barSpacing) + (barWidth - (int)textSize.Width) / 2;
-                        int y = chartBottom - (int)((values[i] / (float)maxValue) * chartHeight) - (int)textSize.Height - 5;
-                        graphics.DrawString(label, font, textBrush, x, y);
+                        g.DrawString("Placeholder", font, brush, new Aspose.Drawing.PointF(20, height / 2 - 10));
                     }
                 }
             }
-            bitmap.Save(filePath, Aspose.Drawing.Imaging.ImageFormat.Png);
+            bitmap.Save(path, ImageFormat.Png);
+        }
+    }
+
+    private static void CreateTemplateDocument(string docPath, string imagePath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert placeholder image
+        Shape placeholderShape = builder.InsertImage(imagePath);
+        placeholderShape.AlternativeText = "ChartPlaceholder";
+
+        // Add some text after the image
+        builder.Writeln();
+        builder.Writeln("This document contains a placeholder image that will be replaced by a chart.");
+
+        doc.Save(docPath);
+    }
+
+    private static void CreateChartImage(string path)
+    {
+        const int width = 400;
+        const int height = 300;
+        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
+        {
+            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
+            {
+                g.Clear(Aspose.Drawing.Color.White);
+
+                // Draw axes
+                using (Aspose.Drawing.Pen axisPen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Black, 2))
+                {
+                    // Y axis
+                    g.DrawLine(axisPen, 50, 20, 50, height - 50);
+                    // X axis
+                    g.DrawLine(axisPen, 50, height - 50, width - 20, height - 50);
+                }
+
+                // Sample data
+                int[] values = { 70, 120, 90, 150, 110 };
+                Aspose.Drawing.Color[] barColors = {
+                    Aspose.Drawing.Color.Red,
+                    Aspose.Drawing.Color.Green,
+                    Aspose.Drawing.Color.Blue,
+                    Aspose.Drawing.Color.Orange,
+                    Aspose.Drawing.Color.Purple
+                };
+
+                int barWidth = 40;
+                int spacing = 30;
+                int maxBarHeight = height - 100;
+                int maxValue = 160; // for scaling
+
+                for (int i = 0; i < values.Length; i++)
+                {
+                    int barHeight = (int)((values[i] / (float)maxValue) * maxBarHeight);
+                    int x = 50 + spacing + i * (barWidth + spacing);
+                    int y = height - 50 - barHeight;
+
+                    using (Aspose.Drawing.SolidBrush brush = new Aspose.Drawing.SolidBrush(barColors[i]))
+                    {
+                        g.FillRectangle(brush, x, y, barWidth, barHeight);
+                    }
+
+                    using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Black, 1))
+                    {
+                        g.DrawRectangle(pen, x, y, barWidth, barHeight);
+                    }
+                }
+            }
+            bitmap.Save(path, ImageFormat.Png);
         }
     }
 }
