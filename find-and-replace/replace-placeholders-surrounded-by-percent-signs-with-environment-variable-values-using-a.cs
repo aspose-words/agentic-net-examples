@@ -11,21 +11,21 @@ public class Program
         // Create a sample document with placeholders surrounded by percent signs.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Current user: %USERNAME%");
+        builder.Writeln("User: %USERNAME%");
         builder.Writeln("Home directory: %USERPROFILE%");
         builder.Writeln("Path variable: %PATH%");
-        builder.Writeln("Undefined variable: %NON_EXISTENT_VAR%");
+        builder.Writeln("Undefined variable: %NON_EXISTENT%");
 
-        // Define a regex that matches placeholders like %PLACEHOLDER%.
-        Regex placeholderRegex = new Regex("%[^%]+%");
+        // Define a regex that matches placeholders like %VAR_NAME%.
+        Regex placeholderRegex = new Regex("%([^%]+)%", RegexOptions.Compiled);
 
         // Set up find-replace options with a custom callback.
         FindReplaceOptions options = new FindReplaceOptions
         {
-            ReplacingCallback = new EnvVarReplacingCallback()
+            ReplacingCallback = new EnvironmentVariableReplacer()
         };
 
-        // Perform the replacement. The callback supplies the actual replacement text.
+        // Perform the replacement.
         int replacedCount = doc.Range.Replace(placeholderRegex, string.Empty, options);
 
         // Validate that at least one replacement occurred.
@@ -35,19 +35,22 @@ public class Program
         // Save the modified document.
         const string outputPath = "output.docx";
         doc.Save(outputPath);
+
+        // Verify that the output file was created.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The output document was not created.", outputPath);
     }
 }
 
 // Custom callback that replaces each placeholder with the corresponding environment variable value.
-public class EnvVarReplacingCallback : IReplacingCallback
+public class EnvironmentVariableReplacer : IReplacingCallback
 {
     public ReplaceAction Replacing(ReplacingArgs args)
     {
-        // The matched placeholder, e.g., %USERNAME%
-        string placeholder = args.Match.Value;
-
-        // Extract the environment variable name without the surrounding percent signs.
-        string variableName = placeholder.Trim('%');
+        // The match contains the full placeholder, e.g., %USERNAME%.
+        Match match = args.Match;
+        // Extract the variable name without the surrounding percent signs.
+        string variableName = match.Groups[1].Value;
 
         // Retrieve the environment variable value; use empty string if not defined.
         string envValue = Environment.GetEnvironmentVariable(variableName) ?? string.Empty;
@@ -55,7 +58,7 @@ public class EnvVarReplacingCallback : IReplacingCallback
         // Set the replacement text.
         args.Replacement = envValue;
 
-        // Indicate that the match should be replaced.
+        // Indicate that the replacement should be performed.
         return ReplaceAction.Replace;
     }
 }

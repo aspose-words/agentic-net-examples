@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
@@ -8,59 +7,55 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with email addresses.
+        // Create a sample document containing email addresses.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Contact us at support@example.com or sales@example.org.");
-        builder.Writeln("Personal email: john.doe@mydomain.com.");
-        doc.Save("input.docx");
+        builder.Writeln("Another email: user.name+tag@sub.domain.co.uk");
+        builder.Writeln("No email on this line.");
 
-        // Load the document for processing.
-        Document loaded = new Document("input.docx");
+        // Regular expression that matches typical email addresses.
+        Regex emailRegex = new Regex(@"\b[\w\.\-+]+@[\w\.\-]+\.\w+\b", RegexOptions.Compiled);
 
-        // Regular expression to find email addresses.
-        Regex emailRegex = new Regex(@"\b[\w\.-]+@[\w\.-]+\.\w{2,}\b", RegexOptions.Compiled);
-
-        // Set up find‑replace options with a custom callback to mask the local part.
+        // Configure find‑replace to use a custom callback that masks the local part.
         FindReplaceOptions options = new FindReplaceOptions
         {
             ReplacingCallback = new EmailMaskCallback()
         };
 
-        // Perform the replacement. The replacement string is ignored when a callback is used.
-        int replacedCount = loaded.Range.Replace(emailRegex, string.Empty, options);
+        // Perform the replacement. The replacement string is ignored when a callback is supplied.
+        int replacedCount = doc.Range.Replace(emailRegex, string.Empty, options);
 
-        // Validate that at least one email was masked.
+        // Verify that at least one email address was masked.
         if (replacedCount == 0)
-            throw new InvalidOperationException("No email addresses were found to mask.");
+            throw new InvalidOperationException("Expected at least one email address to be masked.");
 
-        // Save the modified document.
-        loaded.Save("output.docx");
-
-        // Optional: indicate completion (no interactive input).
-        Console.WriteLine($"Masked {replacedCount} email address(es). Output saved to 'output.docx'.");
+        // Save the resulting document.
+        const string outputPath = "masked-emails.docx";
+        doc.Save(outputPath);
     }
-}
 
-// Callback that replaces each email with a masked version (e.g., *****@domain.com).
-public class EmailMaskCallback : IReplacingCallback
-{
-    public ReplaceAction Replacing(ReplacingArgs args)
+    // Callback that replaces the local part of an e‑mail address with asterisks.
+    private class EmailMaskCallback : IReplacingCallback
     {
-        string email = args.Match.Value;
-        int atPos = email.IndexOf('@');
-        if (atPos > 0)
+        public ReplaceAction Replacing(ReplacingArgs args)
         {
-            string domain = email.Substring(atPos);
-            string maskedLocal = new string('*', atPos);
-            args.Replacement = maskedLocal + domain;
-        }
-        else
-        {
-            // Fallback: no '@' found, leave the original text unchanged.
-            args.Replacement = email;
-        }
+            // Guard against a null match.
+            if (args?.Match == null)
+                return ReplaceAction.Skip;
 
-        return ReplaceAction.Replace;
+            string email = args.Match.Value;
+            int atIndex = email.IndexOf('@');
+            if (atIndex <= 0)
+                return ReplaceAction.Skip; // Not a valid e‑mail format.
+
+            // Create a masked local part of the same length.
+            string maskedLocal = new string('*', atIndex);
+            string maskedEmail = maskedLocal + email.Substring(atIndex);
+
+            // Set the replacement text.
+            args.Replacement = maskedEmail;
+            return ReplaceAction.Replace;
+        }
     }
 }

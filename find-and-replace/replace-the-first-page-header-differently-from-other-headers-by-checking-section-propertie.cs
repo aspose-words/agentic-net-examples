@@ -1,73 +1,95 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Aspose.Words.Tables;
-
-public class ReplaceHeaderCallback : IReplacingCallback
-{
-    public ReplaceAction Replacing(ReplacingArgs args)
-    {
-        // Determine the header/footer that contains the match.
-        var headerFooter = args.MatchNode?.GetAncestor(NodeType.HeaderFooter) as HeaderFooter;
-        if (headerFooter != null && headerFooter.HeaderFooterType == HeaderFooterType.HeaderFirst)
-        {
-            args.Replacement = "First Header";
-        }
-        else
-        {
-            args.Replacement = "Other Header";
-        }
-
-        return ReplaceAction.Replace;
-    }
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with a first page header and a primary header.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Create a temporary working folder.
+        string folder = Path.Combine(Path.GetTempPath(), "AsposeFindReplaceExample");
+        Directory.CreateDirectory(folder);
 
-        // Enable different first page header/footer.
+        string inputPath = Path.Combine(folder, "input.docx");
+        string outputPath = Path.Combine(folder, "output.docx");
+
+        // -----------------------------------------------------------------
+        // Build a sample document that contains different types of headers.
+        // -----------------------------------------------------------------
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // First section – enable a different first‑page header/footer.
         builder.PageSetup.DifferentFirstPageHeaderFooter = true;
 
-        // First page header.
+        // First‑page header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderFirst);
-        builder.Writeln("Header");
+        builder.Writeln("PLACEHOLDER");
 
-        // Primary header (used on other pages).
+        // Primary header for the first section.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Writeln("Header");
+        builder.Writeln("PLACEHOLDER");
 
-        // Add enough body content to generate multiple pages.
+        // Return to the main story before inserting a section break.
         builder.MoveToDocumentEnd();
-        for (int i = 0; i < 30; i++)
-        {
-            builder.Writeln($"Body line {i + 1}");
-        }
 
-        // Save the initial document.
-        const string inputPath = "input.docx";
+        // Add a second section.
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
+
+        // In the new section, disable a different first‑page header/footer.
+        builder.PageSetup.DifferentFirstPageHeaderFooter = false;
+
+        // Primary header for the second section.
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        builder.Writeln("PLACEHOLDER");
+
+        // Save the source document.
         doc.Save(inputPath);
 
-        // Load the document for processing.
-        var loaded = new Document(inputPath);
+        // --------------------------------------------------------------
+        // Load the document and replace the placeholder text with a
+        // custom value that depends on the header type.
+        // --------------------------------------------------------------
+        Document loaded = new Document(inputPath);
 
-        // Set up the replace callback to handle first page header differently.
-        var callback = new ReplaceHeaderCallback();
-        var options = new FindReplaceOptions { ReplacingCallback = callback };
+        FindReplaceOptions options = new FindReplaceOptions
+        {
+            ReplacingCallback = new HeaderReplacingCallback()
+        };
 
-        // Perform the replacement. The replacement text is supplied by the callback.
-        int replacedCount = loaded.Range.Replace("Header", string.Empty, options);
-
+        int replacedCount = loaded.Range.Replace("PLACEHOLDER", string.Empty, options);
         if (replacedCount == 0)
             throw new InvalidOperationException("Expected at least one replacement, but none occurred.");
 
         // Save the modified document.
-        const string outputPath = "output.docx";
         loaded.Save(outputPath);
+    }
+
+    // Callback that substitutes the placeholder with a different string
+    // depending on whether the match is inside a first‑page header or any other header.
+    private class HeaderReplacingCallback : IReplacingCallback
+    {
+        public ReplaceAction Replacing(ReplacingArgs args)
+        {
+            // Ascend the node hierarchy until we find the containing HeaderFooter node.
+            Node node = args.MatchNode;
+            while (node != null && !(node is HeaderFooter))
+                node = node.ParentNode;
+
+            // Default replacement text for normal headers.
+            string replacementText = "Other Header";
+
+            // If the match is inside a first‑page header, use a special text.
+            if (node is HeaderFooter headerFooter &&
+                headerFooter.HeaderFooterType == HeaderFooterType.HeaderFirst)
+            {
+                replacementText = "First Page Header";
+            }
+
+            // Set the replacement string.
+            args.Replacement = replacementText;
+            return ReplaceAction.Replace;
+        }
     }
 }

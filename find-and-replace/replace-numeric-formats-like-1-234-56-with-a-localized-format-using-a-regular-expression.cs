@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
@@ -8,64 +6,52 @@ using Aspose.Words.Replacing;
 
 public class Program
 {
-    // Callback that formats matched numeric strings from US to German locale.
-    private class NumericFormatCallback : IReplacingCallback
-    {
-        private readonly CultureInfo _sourceCulture = CultureInfo.InvariantCulture; // US style (comma thousand, dot decimal)
-        private readonly CultureInfo _targetCulture = new CultureInfo("de-DE");      // German style (dot thousand, comma decimal)
-
-        public ReplaceAction Replacing(ReplacingArgs args)
-        {
-            // Get the matched text (e.g., "1,234.56").
-            string match = args.Match.Value;
-
-            // Parse the number using the source culture.
-            if (decimal.TryParse(match, NumberStyles.Number, _sourceCulture, out decimal number))
-            {
-                // Format the number using the target culture.
-                string replacement = number.ToString(_targetCulture);
-                args.Replacement = replacement;
-            }
-            else
-            {
-                // If parsing fails, keep the original text.
-                args.Replacement = match;
-            }
-
-            return ReplaceAction.Replace;
-        }
-    }
-
     public static void Main()
     {
         // Create a sample document with numeric values in US format.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Invoice total: 1,234.56");
-        builder.Writeln("Tax amount: 78.90");
-        builder.Writeln("Discount: 12,345.00");
-        string inputPath = "input.docx";
-        doc.Save(inputPath);
+        builder.Writeln("The total is 1,234.56 dollars.");
+        builder.Writeln("Another amount: 12,345.67 euros.");
+        builder.Writeln("Simple number: 123.45.");
+        builder.Writeln("No thousand separator: 987.65.");
+        // Save the original document (optional, just for demonstration).
+        doc.Save("input.docx");
 
-        // Load the document for processing.
-        Document loaded = new Document(inputPath);
+        // Define a regex that matches numbers with optional thousand separators and a decimal part.
+        Regex numberRegex = new Regex(@"\b\d{1,3}(?:,\d{3})*(?:\.\d+)?\b");
 
-        // Define a regex that matches numbers with optional thousands separators and a decimal part.
-        Regex numericRegex = new Regex(@"\b\d{1,3}(?:,\d{3})*(?:\.\d+)?\b");
-
-        // Set up find-replace options with the custom callback.
+        // Set up find/replace options with a custom callback to perform locale conversion.
         FindReplaceOptions options = new FindReplaceOptions();
-        options.ReplacingCallback = new NumericFormatCallback();
+        options.ReplacingCallback = new NumericLocaleCallback();
 
         // Perform the replacement.
-        int replacedCount = loaded.Range.Replace(numericRegex, "", options);
-
-        // Validate that at least one replacement occurred.
+        int replacedCount = doc.Range.Replace(numberRegex, "", options);
         if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one numeric format replacement.");
+            throw new InvalidOperationException("Expected at least one numeric replacement.");
 
         // Save the modified document.
-        string outputPath = "output.docx";
-        loaded.Save(outputPath);
+        doc.Save("output.docx");
+    }
+
+    // Callback that converts a matched US-formatted number to a European-style format.
+    private class NumericLocaleCallback : IReplacingCallback
+    {
+        public ReplaceAction Replacing(ReplacingArgs args)
+        {
+            // The original matched text, e.g., "1,234.56".
+            string original = args.Match.Value;
+
+            // Swap commas and periods: commas become temporary placeholder, periods become commas,
+            // then placeholder becomes periods.
+            string temp = original.Replace(",", "#");
+            string swapped = temp.Replace(".", ",");
+            string localized = swapped.Replace("#", ".");
+
+            // Set the replacement text.
+            args.Replacement = localized;
+
+            return ReplaceAction.Replace;
+        }
     }
 }

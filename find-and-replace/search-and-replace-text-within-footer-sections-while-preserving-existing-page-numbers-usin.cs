@@ -2,65 +2,55 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Aspose.Words.Fields;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with a footer that contains placeholder text and page number fields.
+        // Create a sample document with a footer that contains page numbers and placeholder text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Add some body content.
-        builder.Writeln("This is the main document body.");
+        builder.Writeln("This is the main body of the document.");
 
-        // Move to the primary footer and add placeholder text and page number fields.
+        // Move to the primary footer of the first (and only) section.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.Write("Confidential - CompanyName ");
-        builder.InsertField(FieldType.FieldPage, true);
+        // Write static text, insert page number fields, and a placeholder to be replaced.
+        builder.Write("Confidential - ");
+        builder.InsertField("PAGE", "1");
         builder.Write(" of ");
-        builder.InsertField(FieldType.FieldNumPages, true);
+        builder.InsertField("NUMPAGES", "1");
+        builder.Write(" - CompanyName");
 
-        // Save the input document.
+        // Save the initial document.
         const string inputPath = "input.docx";
         doc.Save(inputPath);
 
-        // Load the document for processing.
-        Document loaded = new Document(inputPath);
+        // Load the document from the saved file.
+        Document loadedDoc = new Document(inputPath);
 
-        // Prepare find-and-replace options.
+        // Prepare find-replace options (default options are sufficient for this case).
         FindReplaceOptions options = new FindReplaceOptions();
 
-        // Replace the placeholder text "CompanyName" with "NewCompany" in all footers,
-        // preserving the page number fields.
+        // Perform replacement only within footer sections, preserving page number fields.
         int totalReplacements = 0;
-        HeaderFooterType[] footerTypes = new[]
+        foreach (Section section in loadedDoc.Sections)
         {
-            HeaderFooterType.FooterPrimary,
-            HeaderFooterType.FooterFirst,
-            HeaderFooterType.FooterEven
-        };
-
-        foreach (Section section in loaded.Sections)
-        {
-            foreach (HeaderFooterType type in footerTypes)
+            HeaderFooter footer = section.HeadersFooters[HeaderFooterType.FooterPrimary];
+            if (footer != null)
             {
-                HeaderFooter footer = section.HeadersFooters[type];
-                if (footer != null)
-                {
-                    int replaced = footer.Range.Replace("CompanyName", "NewCompany", options);
-                    totalReplacements += replaced;
-                }
+                int replaced = footer.Range.Replace("CompanyName", "Acme Corp", options);
+                totalReplacements += replaced;
             }
         }
 
         // Validate that at least one replacement occurred.
         if (totalReplacements == 0)
-            throw new InvalidOperationException("Expected at least one replacement in footers.");
+            throw new InvalidOperationException("Expected at least one replacement in the footer.");
 
         // Save the modified document.
         const string outputPath = "output.docx";
-        loaded.Save(outputPath);
+        loadedDoc.Save(outputPath);
     }
 }

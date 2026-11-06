@@ -6,6 +6,56 @@ using Aspose.Words;
 using Aspose.Words.Replacing;
 using Newtonsoft.Json;
 
+public class Program
+{
+    public static void Main()
+    {
+        // Create a sample JSON configuration file with placeholder values.
+        const string jsonPath = "config.json";
+        string jsonContent = @"{
+            ""FirstName"": ""John"",
+            ""LastName"": ""Doe"",
+            ""Company"": ""Acme Corp""
+        }";
+        File.WriteAllText(jsonPath, jsonContent);
+
+        // Load the JSON into a dictionary for quick lookup.
+        var placeholderValues = JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(jsonPath))
+                                 ?? new Dictionary<string, string>();
+
+        // Create a sample Word document containing placeholders surrounded by double brackets.
+        const string inputPath = "input.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello [[FirstName]] [[LastName]], welcome to [[Company]].");
+        doc.Save(inputPath);
+
+        // Load the document for processing.
+        var loadedDoc = new Document(inputPath);
+
+        // Define a regex that matches placeholders like [[Key]].
+        var placeholderRegex = new Regex(@"\[\[(.+?)\]\]");
+
+        // Set up find‑replace options with a custom callback.
+        var options = new FindReplaceOptions
+        {
+            ReplacingCallback = new PlaceholderReplacer(placeholderValues)
+        };
+
+        // Perform the replacement. The replacement string argument is ignored because the callback supplies it.
+        int replacedCount = loadedDoc.Range.Replace(placeholderRegex, string.Empty, options);
+
+        // Validate that at least one replacement occurred.
+        if (replacedCount == 0)
+            throw new InvalidOperationException("No placeholders were replaced. Check the input document and JSON configuration.");
+
+        // Save the modified document.
+        const string outputPath = "output.docx";
+        loadedDoc.Save(outputPath);
+    }
+}
+
+// Callback that replaces each matched placeholder with the corresponding value from the JSON dictionary.
 public class PlaceholderReplacer : IReplacingCallback
 {
     private readonly IDictionary<string, string> _values;
@@ -17,85 +67,22 @@ public class PlaceholderReplacer : IReplacingCallback
 
     public ReplaceAction Replacing(ReplacingArgs args)
     {
-        // The whole match includes the surrounding brackets, e.g. [[Name]]
+        // args.Match.Value includes the surrounding brackets, e.g., [[FirstName]].
         string placeholder = args.Match.Value;
-        if (placeholder.Length < 4) // Minimum length for [[x]]
-            return ReplaceAction.Skip;
 
         // Extract the key without the brackets.
         string key = placeholder.Substring(2, placeholder.Length - 4);
+
+        // Look up the replacement value; if not found, keep the original placeholder.
         if (_values.TryGetValue(key, out string replacement))
         {
             args.Replacement = replacement;
-            return ReplaceAction.Replace;
+        }
+        else
+        {
+            args.Replacement = placeholder;
         }
 
-        // No matching key – leave the placeholder unchanged.
-        return ReplaceAction.Skip;
-    }
-}
-
-public class Program
-{
-    public static void Main()
-    {
-        // Prepare a temporary working directory.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "FindReplaceExample");
-        Directory.CreateDirectory(workDir);
-
-        // Create a JSON configuration file with placeholder values.
-        string jsonPath = Path.Combine(workDir, "config.json");
-        var configData = new Dictionary<string, string>
-        {
-            { "Name", "John Doe" },
-            { "Date", "2023-10-01" },
-            { "Location", "New York" }
-        };
-        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(configData));
-
-        // Create a sample Word document containing placeholders.
-        string inputPath = Path.Combine(workDir, "input.docx");
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Dear [[Name]],");
-        builder.Writeln("Your appointment is scheduled on [[Date]] at [[Location]].");
-        builder.Writeln("Thank you, [[Name]].");
-        doc.Save(inputPath);
-
-        // Load the JSON configuration into a dictionary.
-        string jsonContent = File.ReadAllText(jsonPath);
-        var values = JsonConvert.DeserializeObject<Dictionary<string, string>>(jsonContent)
-                     ?? new Dictionary<string, string>();
-
-        // Load the document for processing.
-        Document loadedDoc = new Document(inputPath);
-
-        // Set up the find-and-replace options with a callback.
-        FindReplaceOptions options = new FindReplaceOptions();
-        options.ReplacingCallback = new PlaceholderReplacer(values);
-
-        // Regex pattern to match placeholders like [[Key]].
-        Regex placeholderPattern = new Regex(@"\[\[(.+?)\]\]");
-
-        // Perform the replacement.
-        int replacedCount = loadedDoc.Range.Replace(placeholderPattern, string.Empty, options);
-
-        if (replacedCount == 0)
-            throw new InvalidOperationException("No placeholders were replaced. Expected at least one replacement.");
-
-        // Save the modified document.
-        string outputPath = Path.Combine(workDir, "output.docx");
-        loadedDoc.Save(outputPath);
-
-        // Optional: write a simple report of the operation.
-        string reportPath = Path.Combine(workDir, "report.json");
-        var report = new
-        {
-            InputDocument = inputPath,
-            OutputDocument = outputPath,
-            ReplacementsMade = replacedCount,
-            Timestamp = DateTime.UtcNow
-        };
-        File.WriteAllText(reportPath, JsonConvert.SerializeObject(report, Formatting.Indented));
+        return ReplaceAction.Replace;
     }
 }

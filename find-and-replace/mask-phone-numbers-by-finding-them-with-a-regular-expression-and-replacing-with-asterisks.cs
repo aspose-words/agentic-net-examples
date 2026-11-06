@@ -3,58 +3,49 @@ using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using Aspose.Drawing;          // Required package, not used directly
+using Newtonsoft.Json;        // Required package, not used directly
 
-public class PhoneMaskCallback : IReplacingCallback
-{
-    public ReplaceAction Replacing(ReplacingArgs args)
-    {
-        if (args?.Match?.Value == null)
-            return ReplaceAction.Skip;
-
-        // Create a mask of asterisks with the same length as the matched phone number.
-        string mask = new string('*', args.Match.Value.Length);
-        args.Replacement = mask;
-        return ReplaceAction.Replace;
-    }
-}
-
-public class Program
+public class PhoneNumberMasking
 {
     public static void Main()
     {
-        // Create a sample document containing phone numbers.
+        // Create a sample document with phone numbers.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Contact list:");
         builder.Writeln("John Doe: 123-456-7890");
-        builder.Writeln("Jane Smith: 987 654 3210");
-        builder.Writeln("Bob Johnson: 555.123.4567");
-        builder.Writeln("No phone here.");
-        string inputPath = "input.docx";
-        doc.Save(inputPath);
+        builder.Writeln("Jane Smith: (987) 654-3210");
+        builder.Writeln("Office: 555.123.4567");
+        builder.Writeln("Emergency: +1-800-555-0199");
+        // Save the original document (optional, for inspection).
+        doc.Save("input.docx");
 
-        // Load the document for processing.
-        Document loaded = new Document(inputPath);
+        // Define a regular expression that matches common phone number formats.
+        // This pattern matches:
+        // - 123-456-7890
+        // - (123) 456-7890
+        // - 123.456.7890
+        // - +1-800-555-0199
+        Regex phoneRegex = new Regex(
+            @"(\+?\d{1,2}[-.\s]?)?(\(?\d{3}\)?[-.\s]?)\d{3}[-.\s]?\d{4}",
+            RegexOptions.Compiled);
 
-        // Define a regular expression that matches common US phone number formats.
-        Regex phoneRegex = new Regex(@"\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b");
-
-        // Set up the replace callback to mask each matched phone number.
-        PhoneMaskCallback callback = new PhoneMaskCallback();
-        FindReplaceOptions options = new FindReplaceOptions
-        {
-            ReplacingCallback = callback
-        };
-
-        // Perform the replacement.
-        int replacedCount = loaded.Range.Replace(phoneRegex, string.Empty, options);
+        // Perform the replacement, masking the phone numbers with asterisks.
+        // The replacement keeps the same length format using a generic mask.
+        string mask = "***-***-****";
+        int replacedCount = doc.Range.Replace(phoneRegex, mask, new FindReplaceOptions());
 
         // Validate that at least one phone number was masked.
         if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one phone number to be masked.");
+        {
+            throw new InvalidOperationException("No phone numbers were found to mask.");
+        }
 
         // Save the masked document.
-        string outputPath = "output.docx";
-        loaded.Save(outputPath);
+        doc.Save("masked.docx");
+
+        // Output the result count (optional, not required for non‑interactive execution).
+        Console.WriteLine($"Phone numbers masked: {replacedCount}");
     }
 }

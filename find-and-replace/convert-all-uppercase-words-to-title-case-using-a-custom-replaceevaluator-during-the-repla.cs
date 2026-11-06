@@ -1,51 +1,60 @@
 using System;
+using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+
+public class UppercaseToTitleCaseCallback : IReplacingCallback
+{
+    public ReplaceAction Replacing(ReplacingArgs args)
+    {
+        // Get the matched uppercase word.
+        string match = args.Match.Value;
+        if (string.IsNullOrEmpty(match))
+            return ReplaceAction.Skip;
+
+        // Convert to title case (first letter uppercase, rest lowercase).
+        string titleCase = char.ToUpper(match[0]) + match.Substring(1).ToLower();
+
+        // Set the replacement text.
+        args.Replacement = titleCase;
+        return ReplaceAction.Replace;
+    }
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document and add sample text containing uppercase words.
+        // Create a sample document with uppercase words.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("THIS is a TEST document.");
-        builder.Writeln("IT contains SOME UPPERCASE WORDS like EXAMPLE and SAMPLE.");
+        builder.Writeln("THIS IS A TEST DOCUMENT. SOME WORDS LIKE EXAMPLE, SAMPLE, AND CODE ARE UPPERCASE.");
+        builder.Writeln("Mixed case words such as Hello and WORLD should be handled correctly.");
+        const string inputPath = "input.docx";
+        doc.Save(inputPath);
 
-        // Define a regex that matches whole words composed only of uppercase letters.
-        Regex uppercaseWordRegex = new Regex(@"\b[A-Z]+\b");
+        // Load the document for processing.
+        Document loaded = new Document(inputPath);
 
-        // Set up find‑replace options with a custom callback that converts each match to title case.
-        FindReplaceOptions options = new FindReplaceOptions();
-        options.ReplacingCallback = new UppercaseToTitleCaseCallback();
+        // Define a regex that matches whole words consisting of two or more uppercase letters.
+        Regex uppercaseWordRegex = new Regex(@"\b[A-Z]{2,}\b");
 
-        // Perform the replacement using the overload that accepts a regex, a dummy replacement string,
-        // and the FindReplaceOptions containing the callback.
-        int replacedCount = doc.Range.Replace(uppercaseWordRegex, string.Empty, options);
+        // Set up the find-and-replace options with the custom callback.
+        FindReplaceOptions options = new FindReplaceOptions
+        {
+            ReplacingCallback = new UppercaseToTitleCaseCallback()
+        };
+
+        // Perform the replacement. The replacement string argument is ignored because the callback provides the text.
+        int replacedCount = loaded.Range.Replace(uppercaseWordRegex, string.Empty, options);
 
         // Validate that at least one replacement occurred.
         if (replacedCount == 0)
-            throw new InvalidOperationException("No uppercase words were replaced.");
+            throw new InvalidOperationException("Expected at least one uppercase word to be replaced.");
 
         // Save the modified document.
-        string outputPath = "output.docx";
-        doc.Save(outputPath);
-    }
-
-    // Callback that receives each regex match and replaces it with its title‑cased version.
-    private class UppercaseToTitleCaseCallback : IReplacingCallback
-    {
-        public ReplaceAction Replacing(ReplacingArgs args)
-        {
-            string word = args.Match.Value;
-            if (!string.IsNullOrEmpty(word))
-            {
-                // Convert first character to upper case and the rest to lower case.
-                string titleCase = char.ToUpper(word[0]) + word.Substring(1).ToLower();
-                args.Replacement = titleCase;
-            }
-            return ReplaceAction.Replace;
-        }
+        const string outputPath = "output.docx";
+        loaded.Save(outputPath);
     }
 }

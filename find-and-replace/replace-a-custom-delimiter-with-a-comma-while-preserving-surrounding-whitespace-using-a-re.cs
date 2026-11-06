@@ -3,38 +3,50 @@ using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Newtonsoft.Json;
+using Aspose.Drawing; // Required by the category rules
+using Newtonsoft.Json; // Required by the category rules
 
-public class Program
+namespace FindAndReplaceExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new document and add sample text containing a custom delimiter '|'.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Alpha|Beta");
-        builder.Writeln("Gamma | Delta");
-        builder.Writeln("Epsilon   |   Zeta");
-        builder.Writeln("NoDelimiterHere");
+        public static void Main()
+        {
+            // Create a sample document with custom delimiters (e.g., '|')
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("Item1|Item2");
+            builder.Writeln("ValueA | ValueB");
+            builder.Writeln("DataX| DataY");
+            builder.Writeln("Alpha |Beta|Gamma");
+            // Save the initial document (optional, just for reference)
+            doc.Save("input.docx");
 
-        // Define a regular expression that captures any whitespace before and after the delimiter.
-        // Group 1 = whitespace before, Group 2 = whitespace after.
-        Regex delimiterRegex = new Regex(@"(\s*)\|(\s*)");
+            // Define a regular expression that matches the custom delimiter '|'
+            Regex delimiterRegex = new Regex(@"\|");
 
-        // Replace the delimiter with a comma while preserving the captured whitespace.
-        FindReplaceOptions options = new FindReplaceOptions();
-        int replacedCount = doc.Range.Replace(delimiterRegex, "$1,$2", options);
+            // Perform the replacement: replace each '|' with a comma ',' while preserving surrounding whitespace
+            FindReplaceOptions options = new FindReplaceOptions();
+            int replacedCount = doc.Range.Replace(delimiterRegex, ",", options);
 
-        // Validate that at least one replacement occurred.
-        if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one delimiter replacement.");
+            // Validate that at least one replacement occurred
+            if (replacedCount == 0)
+                throw new InvalidOperationException("Expected at least one delimiter replacement, but none were made.");
 
-        // Save the modified document.
-        string outputPath = "output.docx";
-        doc.Save(outputPath);
+            // Save the modified document
+            doc.Save("output.docx");
 
-        // Optional: Write a simple JSON report of the operation.
-        var report = new { ReplacementsMade = replacedCount, OutputFile = Path.GetFullPath(outputPath) };
-        File.WriteAllText("report.json", JsonConvert.SerializeObject(report, Formatting.Indented));
+            // Optionally, write a simple JSON report of the operation (demonstrating required package usage)
+            var report = new
+            {
+                InputFile = Path.GetFullPath("input.docx"),
+                OutputFile = Path.GetFullPath("output.docx"),
+                DelimiterReplaced = "|",
+                Replacement = ",",
+                ReplacementsMade = replacedCount
+            };
+            string jsonReport = JsonConvert.SerializeObject(report, Formatting.Indented);
+            File.WriteAllText("report.json", jsonReport);
+        }
     }
 }

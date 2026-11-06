@@ -1,85 +1,80 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+
+public class ReplaceLanguageCallback : IReplacingCallback
+{
+    private readonly Dictionary<string, string> _languageMap = new()
+    {
+        { "en", "English" },
+        { "fr", "French" },
+        { "es", "Spanish" },
+        { "de", "German" },
+        { "it", "Italian" }
+        // Add more mappings as needed
+    };
+
+    public int ReplacementsMade { get; private set; }
+
+    public ReplaceAction Replacing(ReplacingArgs args)
+    {
+        // Extract the language code from the match (e.g., "en" from "[en]")
+        string code = args.Match.Groups[1].Value;
+
+        if (_languageMap.TryGetValue(code, out string fullName))
+        {
+            // Set the replacement text to the full language name
+            args.Replacement = fullName;
+            ReplacementsMade++;
+        }
+        else
+        {
+            // If the code is unknown, keep the original tag
+            args.Replacement = args.Match.Value;
+        }
+
+        return ReplaceAction.Replace;
+    }
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with language code tags.
+        // Create a sample document containing language code tags.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Welcome to our site.");
-        builder.Writeln("[en] Hello!");
-        builder.Writeln("[fr] Bonjour!");
-        builder.Writeln("[es] Hola!");
-        builder.Writeln("[de] Guten Tag!");
+        builder.Writeln("Welcome message: [en]");
+        builder.Writeln("Message en français: [fr]");
+        builder.Writeln("Mensaje en español: [es]");
+        builder.Writeln("Unbekannte Sprache: [xx]"); // This tag will remain unchanged.
 
-        // Save the input document (optional, demonstrates file creation).
-        doc.Save("input.docx");
+        // Define a regular expression to match tags like [en], [fr], etc.
+        Regex languageTagRegex = new Regex(@"\[([a-z]{2})\]", RegexOptions.IgnoreCase);
 
-        // Mapping from language codes to full language names.
-        var languageMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        // Set up the callback that will replace each tag with the full language name.
+        ReplaceLanguageCallback callback = new ReplaceLanguageCallback();
+        FindReplaceOptions options = new FindReplaceOptions
         {
-            { "en", "English" },
-            { "fr", "French" },
-            { "es", "Spanish" },
-            { "de", "German" }
+            ReplacingCallback = callback
         };
 
-        // Define a callback that replaces each tag with the full language name.
-        var callback = new LanguageTagReplacer(languageMap);
-
-        // Set up find‑replace options with the callback.
-        var options = new FindReplaceOptions
-        {
-            ReplacingCallback = callback,
-            // Ensure the search is case‑insensitive.
-            MatchCase = false
-        };
-
-        // Regular expression to match tags like [en], [fr], etc.
-        Regex regex = new Regex(@"\[(?<code>[a-z]{2})\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-        // Perform the replacement. The replacement string is ignored because the callback provides the value.
-        int replacedCount = doc.Range.Replace(regex, string.Empty, options);
+        // Perform the replacement using the regex and callback.
+        int totalReplacements = doc.Range.Replace(languageTagRegex, string.Empty, options);
 
         // Validate that at least one replacement occurred.
-        if (replacedCount == 0)
+        if (totalReplacements == 0)
             throw new InvalidOperationException("No language tags were replaced.");
 
         // Save the modified document.
-        doc.Save("output.docx");
-    }
+        const string outputPath = "output.docx";
+        doc.Save(outputPath);
 
-    // Callback implementation for custom replacement logic.
-    private class LanguageTagReplacer : IReplacingCallback
-    {
-        private readonly IDictionary<string, string> _languageMap;
-
-        public LanguageTagReplacer(IDictionary<string, string> languageMap)
-        {
-            _languageMap = languageMap ?? throw new ArgumentNullException(nameof(languageMap));
-        }
-
-        public ReplaceAction Replacing(ReplacingArgs args)
-        {
-            // Extract the language code from the match.
-            string code = args.Match.Groups["code"].Value;
-
-            // Look up the full language name; if not found, keep the original tag.
-            if (_languageMap.TryGetValue(code, out string fullName))
-            {
-                args.Replacement = fullName;
-            }
-            else
-            {
-                args.Replacement = args.Match.Value; // fallback to original tag
-            }
-
-            return ReplaceAction.Replace;
-        }
+        // Optional: write a simple confirmation to the console.
+        Console.WriteLine($"Replacements performed: {callback.ReplacementsMade}");
+        Console.WriteLine($"Document saved to: {Path.GetFullPath(outputPath)}");
     }
 }

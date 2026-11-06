@@ -6,31 +6,32 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with normal text and a field containing the target word.
+        // Create a sample document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a PLACEHOLDER in normal text.");
-        // Insert a MERGEFIELD whose field code includes the word PLACEHOLDER.
-        builder.InsertField("MERGEFIELD PLACEHOLDER \\* MERGEFORMAT");
-        builder.Writeln(); // Add a line break.
+        builder.Writeln("This is a sample document.");
+        // Insert a field that also contains the word "sample".
+        builder.InsertField("MERGEFIELD  sampleField \\* MERGEFORMAT");
+        builder.Writeln();
+        builder.Writeln("Another sample line.");
 
-        // Save the input document.
+        // Save the initial document.
         const string inputPath = "input.docx";
         doc.Save(inputPath);
 
-        // Load the document for find-and-replace.
+        // Load the document for processing.
         Document loaded = new Document(inputPath);
 
-        // Configure find-replace options to ignore field codes.
+        // Configure find-and-replace to ignore field codes.
         FindReplaceOptions options = new FindReplaceOptions
         {
             IgnoreFields = true
         };
 
-        // Perform the replacement.
-        int replacedCount = loaded.Range.Replace("PLACEHOLDER", "REPLACED", options);
+        // Replace the word "sample" with "example".
+        int replacedCount = loaded.Range.Replace("sample", "example", options);
 
-        // Validate that at least one replacement occurred (the normal text only).
+        // Ensure that at least one replacement occurred.
         if (replacedCount == 0)
             throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 

@@ -1,18 +1,19 @@
 {
   "category": {
-    "name": "Find and Replace",
+    "name": "Find And Replace",
     "slug": "find-and-replace",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Use native Aspose.Words find and replace APIs directly. Create realistic local sample DOC, DOCX, HTML, TXT, stream, or folder inputs inside the example whenever the task references an existing file, stream, folder, or batch of documents. Perform replacements through Range.Replace with supported options, callbacks, and regex only.",
+    "preferred_workflow": "Create a sample DOCX (or other supported format) in the example, load it with a Document object, configure a FindReplaceOptions instance with the appropriate flags, and invoke Document.Range.Replace using either a literal string, a Regex, or a custom IReplacingCallback; finally, save the modified document to the desired output path.",
     "required_packages": [
       "Aspose.Words",
       "Aspose.Drawing.Common",
       "Newtonsoft.Json"
     ],
     "package_versions": {
-      "Aspose.Words": "26.9.0",
-      "Aspose.Drawing.Common": "26.8.0"
+      "Aspose.Words": "26.10.0",
+      "Aspose.Drawing.Common": "26.10.0",
+      "Newtonsoft.Json": ""
     },
     "required_namespaces": [
       "System",
@@ -23,8 +24,8 @@
       "Newtonsoft.Json",
       "System.Text.RegularExpressions",
       "System.Collections.Generic",
-      "System.Text",
-      "System.Globalization",
+      "Aspose.Words.Drawing",
+      "Aspose.Words.Saving",
       "Aspose.Words.Fields",
       "Aspose.Words.Tables"
     ],
@@ -33,19 +34,19 @@
       "DocumentBuilder",
       "Range",
       "FindReplaceOptions",
-      "Path",
-      "Directory",
       "File",
-      "Paragraph",
+      "NodeType",
+      "Path",
+      "Run",
       "SaveFormat",
       "MemoryStream",
-      "NodeType",
-      "Node",
+      "Paragraph",
       "StyleIdentifier",
-      "Font",
+      "Node",
+      "Directory",
       "FieldType",
       "Style",
-      "Run",
+      "Font",
       "Table"
     ]
   },
@@ -62,48 +63,56 @@
   },
   "rules_summary": {
     "strict_api_bans": [
-      "Do not use System.Drawing in this category.",
-      "Do not assume source documents or folders already exist; bootstrap them locally when needed.",
-      "Do not invent unsupported find-replace APIs or callback hooks.",
-      "Do not skip writing the requested output artifact when the task expects one."
+      "Do not reference System.Drawing; use Aspose.Drawing for any drawing-related types.",
+      "Do not assume that source files, streams, or folders exist; generate minimal sample inputs within the example code.",
+      "Do not call undocumented helpers such as Document.ReplaceAll or Paragraph.Replace."
     ],
     "canonical_patterns": [
-      "Use Range.Replace with the correct FindReplaceOptions or Regex only when the task requires it.",
-      "Implement IReplacingCallback only through documented Aspose.Words APIs when custom replacement logic is required.",
-      "Bootstrap local DOC, DOCX, HTML, TXT, stream, or folder inputs whenever the task implies an existing source.",
-      "Use Newtonsoft.Json for JSON reporting tasks and Aspose.Drawing instead of System.Drawing when drawing-related types are needed."
+      "Use Document.Range.Replace with a literal string, a Regex, or a FindReplaceOptions instance for all supported replacement scenarios.",
+      "Implement IReplacingCallback when custom replacement logic is required and assign it to FindReplaceOptions.ReplacingCallback.",
+      "When a task mentions placeholders, headers, footers, or other sections, access the corresponding Nodes collection and apply the same replace pattern."
     ],
     "nullable_warning_prevention": [
-      "Initialize all non-nullable reference type properties to avoid CS8618 warnings.",
-      "Avoid CS8600, CS8602, and CS8604 by guarding maybe-null values before dereference or assignment.",
-      "Declare nullable locals when a value may legitimately be null and null-check before use."
+      "Initialize all non-nullable reference-type fields or properties before use to avoid CS8618 warnings.",
+      "Guard any value that may be null with an explicit null-check before dereferencing to prevent CS8600, CS8602, and CS8604.",
+      "Declare local variables as nullable when a null value is legitimate and handle the null case explicitly."
     ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "Invented find-replace APIs",
-      "symptom": "Code tries to use unsupported helpers such as Document.ReplaceAll or Paragraph.Replace.",
-      "fix": "Use Document.Range.Replace with supported FindReplaceOptions and callback APIs only."
+      "pattern": "Missing FindReplaceOptions property",
+      "symptom": "The compiler reports that FindReplaceOptions does not contain definitions such as MatchWholeWord, UseRegularExpressions, or FindWholeWords.",
+      "cause": "The code references property names that were renamed or never existed in the Aspose.Words API version 26.10.0.",
+      "fix": "Use the correct property names: MatchCase for case sensitivity, FindWholeWordsOnly for whole-word matching, and rely on the Regex overload to enable regular-expression mode.",
+      "prevention": "Consult the official Aspose.Words API reference for the exact property names and avoid hard-coding undocumented members."
     },
     {
-      "pattern": "Callback misuse",
-      "symptom": "Custom replacement logic fails because IReplacingCallback or ReplacingArgs are used incorrectly.",
-      "fix": "Implement IReplacingCallback with the documented Replacing method and assign it through FindReplaceOptions.ReplacingCallback."
+      "pattern": "Undefined ReplaceEvaluator type",
+      "symptom": "Compilation fails with CS0246 because the type ReplaceEvaluator cannot be found.",
+      "cause": "The example attempts to use a non-existent delegate type instead of the documented IReplacingCallback interface.",
+      "fix": "Implement a class that inherits from IReplacingCallback and assign an instance to FindReplaceOptions.ReplacingCallback.",
+      "prevention": "Always use IReplacingCallback for custom replacement logic and verify its namespace (Aspose.Words.Replacing)."
     },
     {
-      "pattern": "Metacharacter source content mismatch",
-      "symptom": "Line-break or metacharacter replacement finds no matches because the source document was built with plain literal text instead of real control structures.",
-      "fix": "Create real line breaks or control characters in the source document and validate that Range.Replace returns a replacement count greater than zero."
+      "pattern": "Incorrect overload arguments",
+      "symptom": "The compiler reports CS1503 errors when a Regex and a FindReplaceOptions object are passed to an overload expecting string arguments.",
+      "cause": "The code calls the string-based Replace overload instead of the Regex overload that accepts a Regex, a replacement string, and FindReplaceOptions.",
+      "fix": "Call Document.Range.Replace with the Regex overload: Replace(Regex pattern, string replacement, FindReplaceOptions options).",
+      "prevention": "Match the argument types exactly to the overload signature; use IntelliSense or the API docs to select the correct method."
     },
     {
-      "pattern": "Invalid formatting insertion",
-      "symptom": "Replacement logic inserts formatted content into invalid node parents or assumes every match belongs to a single Run.",
-      "fix": "Use supported run, font, paragraph, or builder logic and preserve valid parent-child insertion structure."
+      "pattern": "Metacharacter replacement without real line breaks",
+      "symptom": "Runtime throws an InvalidOperationException because no replacements were made when attempting to replace multiple line-break sequences with \"\\n\" or \"&p\".",
+      "cause": "The source document contains plain text literals instead of actual ControlChar.LineBreak characters, so the regex never matches.",
+      "fix": "Insert real line-break characters using ControlChar.LineBreak when building the sample document, and match them with a regex such as \"(\\v){2,}\".",
+      "prevention": "Bootstrap the input document with the exact control characters that the replacement logic expects."
     },
     {
-      "pattern": "Drawing ambiguity",
-      "symptom": "Compile errors caused by System.Drawing usage or ambiguous Font references.",
-      "fix": "Use Aspose.Drawing only and prefer explicit Aspose.Drawing type names when ambiguity is possible."
+      "pattern": "Callback misuse leading to null parent",
+      "symptom": "Runtime throws an InvalidOperationException or ArgumentException when the callback attempts to move the DocumentBuilder to a node with a null parent.",
+      "cause": "The IReplacingCallback implementation accesses args.MatchNode without verifying that it belongs to the main story or attempts to insert breaks outside a valid paragraph.",
+      "fix": "Validate that args.MatchNode is not null and that its parent story is the main document before performing insertions; use DocumentBuilder.MoveTo(args.MatchNode) only on nodes within the main story.",
+      "prevention": "Add defensive null checks and story-type checks inside the Replacing method to ensure safe node manipulation."
     }
   ],
   "examples": [
@@ -121,7 +130,7 @@
     {
       "id": 2,
       "file_name": "perform-a-case-sensitive-replace-using-findreplaceoptions-with-matchcase-enabled-on-the-lo.cs",
-      "task": "Perform a case‑sensitive replace using FindReplaceOptions with MatchCase enabled on the loaded document.",
+      "task": "Perform a case-sensitive replace using FindReplaceOptions with MatchCase enabled on the loaded document.",
       "workflow": "plain-replace",
       "outputs": [
         "docx"
@@ -143,7 +152,7 @@
     {
       "id": 4,
       "file_name": "execute-a-regular-expression-replace-that-converts-dates-from-mm-dd-yyyy-to-yyyy-mm-dd-for.cs",
-      "task": "Execute a regular expression replace that converts dates from MM‑DD‑YYYY to YYYY‑MM‑DD format.",
+      "task": "Execute a regular expression replace that converts dates from MM-DD-YYYY to YYYY-MM-DD format.",
       "workflow": "formatting-aware-replace",
       "outputs": [
         "docx"
@@ -203,8 +212,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 10,
@@ -242,7 +251,7 @@
     {
       "id": 13,
       "file_name": "enable-regex-mode-by-setting-findreplaceoptions-useregularexpressions-to-true-for-pattern.cs",
-      "task": "Enable regex mode by setting FindReplaceOptions.UseRegularExpressions to true for pattern‑based replacements.",
+      "task": "Enable regex mode by setting FindReplaceOptions.UseRegularExpressions to true for pattern-based replacements.",
       "workflow": "regex-replace",
       "outputs": [
         "docx"
@@ -275,7 +284,7 @@
     {
       "id": 16,
       "file_name": "execute-a-case-insensitive-replace-that-changes-all-instances-of-color-to-colour-throughou.cs",
-      "task": "Execute a case‑insensitive replace that changes all instances of ‘color’ to ‘colour’ throughout the document.",
+      "task": "Execute a case-insensitive replace that changes all instances of 'color' to 'colour' throughout the document.",
       "workflow": "formatting-aware-replace",
       "outputs": [
         "docx"
@@ -286,7 +295,7 @@
     {
       "id": 17,
       "file_name": "apply-whole-word-matching-to-avoid-partial-replacements-inside-longer-words-such-as-catalo.cs",
-      "task": "Apply whole‑word matching to avoid partial replacements inside longer words such as ‘catalogue’.",
+      "task": "Apply whole-word matching to avoid partial replacements inside longer words such as 'catalogue'.",
       "workflow": "callback-reporting",
       "outputs": [
         "docx"
@@ -352,13 +361,13 @@
     {
       "id": 23,
       "file_name": "set-matchcase-false-and-matchwholeword-true-to-replace-whole-words-case-insensitively-acro.cs",
-      "task": "Set MatchCase false and MatchWholeWord true to replace whole words case‑insensitively across the document.",
+      "task": "Set MatchCase false and MatchWholeWord true to replace whole words case-insensitively across the document.",
       "workflow": "plain-replace",
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 24,
@@ -401,8 +410,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 28,
@@ -418,7 +427,7 @@
     {
       "id": 29,
       "file_name": "replace-deprecated-terms-with-new-equivalents-across-multiple-languages-using-culture-spec.cs",
-      "task": "Replace deprecated terms with new equivalents across multiple languages using culture‑specific regular expressions.",
+      "task": "Replace deprecated terms with new equivalents across multiple languages using culture-specific regular expressions.",
       "workflow": "plain-replace",
       "outputs": [
         "docx"
@@ -478,19 +487,19 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 35,
       "file_name": "replace-the-word-foo-only-when-it-appears-at-the-start-of-a-paragraph-using-a-custom-evalu.cs",
-      "task": "Replace the word ‘foo’ only when it appears at the start of a paragraph using a custom evaluator.",
+      "task": "Replace the word 'foo' only when it appears at the start of a paragraph using a custom evaluator.",
       "workflow": "plain-replace",
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 36,
@@ -572,7 +581,7 @@
     {
       "id": 43,
       "file_name": "convert-date-strings-from-january-1-2020-to-01-01-2020-using-a-regular-expression.cs",
-      "task": "Convert date strings from ‘January 1, 2020’ to ‘01/01/2020’ using a regular expression.",
+      "task": "Convert date strings from 'January 1, 2020' to '01/01/2020' using a regular expression.",
       "workflow": "plain-replace",
       "outputs": [
         "docx"
@@ -753,8 +762,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 60,
@@ -775,8 +784,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 62,
@@ -797,8 +806,18 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     }
-  ]
+  ],
+  "narrative": {
+    "overview": "The Find and Replace category demonstrates how to perform literal, case-sensitive, whole-word, and regular-expression replacements in Word documents using Aspose.Words. Verified examples show correct usage of Document.Range.Replace, FindReplaceOptions, and IReplacingCallback with locally bootstrapped sample files.",
+    "purpose": "Provide an AI coding assistant with clear, reproducible patterns for implementing robust find-and-replace operations in Aspose.Words, ensuring that all required namespaces are imported, documents are created or loaded locally, and only supported APIs are used.",
+    "validation_priorities": [
+      "Verify that the replacement count returned by Document.Range.Replace is greater than zero; otherwise throw an informative exception."
+    ],
+    "maintenance_notes": [
+      "Update the example code whenever a new Aspose.Words version changes property names or overload signatures, and run the verification suite after each upgrade."
+    ]
+  }
 }

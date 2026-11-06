@@ -1,55 +1,70 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using Newtonsoft.Json;
 
 public class Program
 {
-    // Callback that replaces only words longer than ten characters with "SHORT".
-    private class LongWordReplacer : IReplacingCallback
-    {
-        public ReplaceAction Replacing(ReplacingArgs args)
-        {
-            // If the matched word is longer than ten characters, replace it.
-            if (args.Match.Value.Length > 10)
-                args.Replacement = "SHORT";
-
-            // Apply the (possibly modified) replacement.
-            return ReplaceAction.Replace;
-        }
-    }
-
     public static void Main()
     {
-        // Create a new document and add sample text.
+        // Create a sample document with words longer than ten characters.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln(
-            "This document contains some extraordinarilylongword and anotherSupercalifragilisticexpialidocious example.");
-        builder.Writeln("Short words stay unchanged.");
+            "This document contains some extraordinarilylongword and anotherSupercalifragilisticexpialidocious word.");
+        doc.Save("input.docx");
 
-        // Regex that matches words longer than ten characters.
+        // Regex to match words longer than ten characters.
         Regex longWordRegex = new Regex(@"\b\w{11,}\b", RegexOptions.Compiled);
 
-        // Set up find/replace options with the custom callback.
+        // Collect original words that are replaced.
+        List<string> replacedWords = new List<string>();
+
+        // Set up FindReplaceOptions with a custom callback.
         FindReplaceOptions options = new FindReplaceOptions
         {
-            ReplacingCallback = new LongWordReplacer()
+            ReplacingCallback = new LongWordReplacer(replacedWords)
         };
 
-        // Perform the replace using the regex and callback.
-        // The replacement string is ignored because the callback supplies the value.
+        // Perform the replacement using the custom callback.
+        // The replacement string is ignored because the callback provides its own replacement.
         int replacedCount = doc.Range.Replace(longWordRegex, string.Empty, options);
 
-        // Validate that at least one replacement occurred.
         if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one replacement, but none were made.");
+            throw new InvalidOperationException("Expected at least one replacement of a long word.");
 
         // Save the modified document.
-        const string outputPath = "output.docx";
-        doc.Save(outputPath);
+        doc.Save("output.docx");
 
-        // Indicate success.
-        Console.WriteLine($"Replacements performed: {replacedCount}. Output saved to '{outputPath}'.");
+        // Create a simple JSON report of the replacements.
+        var report = new
+        {
+            ReplacedCount = replacedCount,
+            Words = replacedWords
+        };
+        string jsonReport = JsonConvert.SerializeObject(report, Formatting.Indented);
+        File.WriteAllText("report.json", jsonReport);
+    }
+
+    // Custom callback that records each match and replaces it with asterisks.
+    private class LongWordReplacer : IReplacingCallback
+    {
+        private readonly List<string> _replacedWords;
+
+        public LongWordReplacer(List<string> replacedWords)
+        {
+            _replacedWords = replacedWords ?? throw new ArgumentNullException(nameof(replacedWords));
+        }
+
+        public ReplaceAction Replacing(ReplacingArgs args)
+        {
+            string originalWord = args.Match.Value;
+            _replacedWords.Add(originalWord);
+            args.Replacement = new string('*', originalWord.Length);
+            return ReplaceAction.Replace;
+        }
     }
 }

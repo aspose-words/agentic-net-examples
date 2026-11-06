@@ -1,55 +1,94 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Aspose.Words.Fields;
+using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // -----------------------------------------------------------------
+        // 1. Create a sample document that contains the QR code placeholder.
+        // -----------------------------------------------------------------
+        const string inputPath = "input.docx";
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This document contains a QR code placeholder:");
+        builder.Writeln("[QR]");
+        builder.Writeln("End of document.");
+        doc.Save(inputPath);
 
-        // Write some text with a placeholder that will be replaced by a QR code.
-        builder.Writeln("Please scan the following QR code:");
-        builder.Writeln("_QR_"); // Placeholder to be replaced.
+        // -----------------------------------------------------------------
+        // 2. Load the document for processing.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(inputPath);
 
-        // Set up find-and-replace options with a custom callback.
+        // -----------------------------------------------------------------
+        // 3. Prepare the callback that will replace the placeholder with an image.
+        // -----------------------------------------------------------------
+        var callback = new QrCodeReplacingCallback();
+
         FindReplaceOptions options = new FindReplaceOptions
         {
-            ReplacingCallback = new QrCodeReplacingCallback()
+            ReplacingCallback = callback,
+            MatchCase = true
         };
 
-        // Perform the replacement. The placeholder text will be removed and a QR code field inserted.
-        int replaced = doc.Range.Replace("_QR_", string.Empty, options);
-        if (replaced == 0)
-            throw new InvalidOperationException("Expected at least one replacement.");
+        // -----------------------------------------------------------------
+        // 4. Perform the replacement using a literal string placeholder.
+        // -----------------------------------------------------------------
+        int replacedCount = loadedDoc.Range.Replace("[QR]", string.Empty, options);
 
-        // Save the resulting document.
+        if (replacedCount == 0)
+            throw new InvalidOperationException("No placeholder was replaced.");
+
+        // -----------------------------------------------------------------
+        // 5. Save the modified document.
+        // -----------------------------------------------------------------
         const string outputPath = "output.docx";
-        doc.Save(outputPath);
-        if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not created.", outputPath);
+        loadedDoc.Save(outputPath);
+
+        // -----------------------------------------------------------------
+        // 6. Write a JSON report of the replacements.
+        // -----------------------------------------------------------------
+        var report = new
+        {
+            Placeholder = "[QR]",
+            Replacements = callback.MatchedPlaceholders,
+            ReplacedCount = replacedCount,
+            OutputDocument = outputPath
+        };
+        string json = JsonConvert.SerializeObject(report, Formatting.Indented);
+        File.WriteAllText("report.json", json);
     }
 
-    // Callback that inserts a QR code field at the location of each match.
+    // -----------------------------------------------------------------
+    // Callback that inserts a QR code image in place of the matched placeholder.
+    // -----------------------------------------------------------------
     private class QrCodeReplacingCallback : IReplacingCallback
     {
+        public List<string> MatchedPlaceholders { get; } = new List<string>();
+
+        // A simple 1×1 black PNG used as a placeholder QR code image.
+        private static readonly byte[] QrCodePng = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=");
+
         public ReplaceAction Replacing(ReplacingArgs args)
         {
-            // Create a builder positioned at the start of the matched node.
-            // args.MatchNode.Document returns DocumentBase, so cast to Document.
-            DocumentBuilder cb = new DocumentBuilder((Document)args.MatchNode.Document);
-            cb.MoveTo(args.MatchNode);
+            // Record the matched placeholder text.
+            MatchedPlaceholders.Add(args.Match.Value);
 
-            // Insert a QR code field. The QR code encodes a sample URL.
-            string qrData = "https://example.com";
-            cb.InsertField($"DISPLAYBARCODE QR \"{qrData}\"");
+            // Insert the QR code image at the location of the match.
+            DocumentBuilder imageBuilder = new DocumentBuilder((Document)args.MatchNode.Document);
+            imageBuilder.MoveTo(args.MatchNode);
+            using (MemoryStream imageStream = new MemoryStream(QrCodePng))
+            {
+                imageBuilder.InsertImage(imageStream);
+            }
 
-            // Remove the placeholder text by replacing it with an empty string.
-            args.Replacement = string.Empty;
+            // Let the engine perform the default replacement (replace with empty string).
             return ReplaceAction.Replace;
         }
     }

@@ -1,14 +1,14 @@
 # Find and Replace Examples for Aspose.Words for .NET
 
-This folder contains the live, publish-ready C# examples for the Find and Replace category. Each file is a standalone console example selected from the verified 26.9.0 run.
+The Find and Replace category demonstrates how to perform literal, case-sensitive, whole-word, and regular-expression replacements in Word documents using Aspose.Words. Verified examples show correct usage of Document.Range.Replace, FindReplaceOptions, and IReplacingCallback with locally bootstrapped sample files.
 
 ## Snapshot
 
-- Category: Find and Replace
+- Category: Find And Replace
 - Slug: find-and-replace
 - Total examples: 63
 - Publish-ready successful examples: 63 / 63
-- Source run: 20260925_194858_2eeab9
+- Source run: 20261102_031946_08fb5b
 - Plain Replace examples: 41
 - Formatting Aware Replace examples: 7
 - Regex Replace examples: 7
@@ -17,34 +17,31 @@ This folder contains the live, publish-ready C# examples for the Find and Replac
 
 ## Category rules that shaped these examples
 
-- Do not use System.Drawing in this category.
-- Do not assume source documents or folders already exist; bootstrap them locally when needed.
-- Do not invent unsupported find-replace APIs or callback hooks.
-- Do not skip writing the requested output artifact when the task expects one.
-- Use Range.Replace with the correct FindReplaceOptions or Regex only when the task requires it.
-- Implement IReplacingCallback only through documented Aspose.Words APIs when custom replacement logic is required.
-- Bootstrap local DOC, DOCX, HTML, TXT, stream, or folder inputs whenever the task implies an existing source.
-- Use Newtonsoft.Json for JSON reporting tasks and Aspose.Drawing instead of System.Drawing when drawing-related types are needed.
-- Initialize all non-nullable reference type properties to avoid CS8618 warnings.
-- Avoid CS8600, CS8602, and CS8604 by guarding maybe-null values before dereference or assignment.
-- Declare nullable locals when a value may legitimately be null and null-check before use.
+- Do not reference System.Drawing; use Aspose.Drawing for any drawing-related types.
+- Do not assume that source files, streams, or folders exist; generate minimal sample inputs within the example code.
+- Do not call undocumented helpers such as Document.ReplaceAll or Paragraph.Replace.
+- Use Document.Range.Replace with a literal string, a Regex, or a FindReplaceOptions instance for all supported replacement scenarios.
+- Implement IReplacingCallback when custom replacement logic is required and assign it to FindReplaceOptions.ReplacingCallback.
+- When a task mentions placeholders, headers, footers, or other sections, access the corresponding Nodes collection and apply the same replace pattern.
+- Initialize all non-nullable reference-type fields or properties before use to avoid CS8618 warnings.
+- Guard any value that may be null with an explicit null-check before dereferencing to prevent CS8600, CS8602, and CS8604.
+- Declare local variables as nullable when a null value is legitimate and handle the null case explicitly.
 
 ## Prerequisites
 
 - .NET SDK 8.0 or later
-- Aspose.Words 26.9.0
-- Aspose.Drawing.Common 26.8.0
-- Newtonsoft.Json
+- Aspose.Words for .NET `26.10.0`
 
 ## Running Examples
 
-Each file in this folder is a single, standalone `.cs` console example. To run one example:
+Each file in this folder is a **single, standalone `.cs` console example**. To run one example:
 
 ```bash
+# From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.9.0
-dotnet add package Aspose.Drawing.Common --version 26.8.0
+dotnet add package Aspose.Words --version 26.10.0
+dotnet add package Aspose.Drawing.Common --version 26.10.0
 dotnet add package Newtonsoft.Json
 
 # Copy one example from this folder into the project as Program.cs
@@ -66,9 +63,7 @@ Example:
 # From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.9.0
-dotnet add package Aspose.Drawing.Common --version 26.8.0
-dotnet add package Newtonsoft.Json
+dotnet add package Aspose.Words --version 26.10.0
 
 # PowerShell example
 Copy-Item ..\find-and-replace\load-a-docx-file-into-a-document-object-and-replace-all-literal-string-occurrences.cs .\Program.cs
@@ -89,16 +84,16 @@ dotnet run --configuration Release --no-build
 | 6 | `search-and-replace-text-within-header-sections-by-accessing-the-document-s-headersfooters.cs` | Search and replace text within header sections by accessing the document's HeadersFooters collection. | plain-replace | docx | mcp |
 | 7 | `search-and-replace-text-within-footer-sections-while-preserving-existing-page-numbers-usin.cs` | Search and replace text within footer sections while preserving existing page numbers using FindReplaceOptions. | plain-replace | docx | mcp |
 | 8 | `ignore-field-codes-during-replacement-by-enabling-findreplaceoptions-ignorefields-before-c.cs` | Ignore field codes during replacement by enabling FindReplaceOptions.IgnoreFields before calling Replace. | plain-replace | docx | mcp |
-| 9 | `implement-a-custom-replaceevaluator-delegate-to-replace-only-words-longer-than-ten-charact.cs` | Implement a custom ReplaceEvaluator delegate to replace only words longer than ten characters. | plain-replace | docx | mcp |
+| 9 | `implement-a-custom-replaceevaluator-delegate-to-replace-only-words-longer-than-ten-charact.cs` | Implement a custom ReplaceEvaluator delegate to replace only words longer than ten characters. | plain-replace | docx | llm |
 | 10 | `count-the-number-of-replacements-performed-by-storing-the-integer-result-returned-from-the.cs` | Count the number of replacements performed by storing the integer result returned from the Replace method. | plain-replace | docx | mcp |
 | 11 | `chain-multiple-replace-calls-to-sequentially-replace-email-addresses-phone-numbers-and-url.cs` | Chain multiple Replace calls to sequentially replace email addresses, phone numbers, and URLs in the document. | plain-replace | docx | mcp |
 | 12 | `combine-findreplaceoptions-with-documentbuilder-to-insert-dynamic-content-after-each-succe.cs` | Combine FindReplaceOptions with DocumentBuilder to insert dynamic content after each successful replacement. | plain-replace | docx | mcp |
 | 13 | `enable-regex-mode-by-setting-findreplaceoptions-useregularexpressions-to-true-for-pattern.cs` | Enable regex mode by setting FindReplaceOptions.UseRegularExpressions to true for pattern-based replacements. | regex-replace | docx | mcp |
 | 14 | `replace-tab-characters-with-four-spaces-using-a-regular-expression-pattern-matching-the-t.cs` | Replace tab characters with four spaces using a regular expression pattern matching the \t escape sequence. | regex-replace | docx | mcp |
 | 15 | `replace-placeholder-tokens-like-name-with-actual-values-using-a-dictionary-inside-a-replac.cs` | Replace placeholder tokens like {{Name}} with actual values using a dictionary inside a ReplaceEvaluator. | plain-replace | docx | mcp |
-| 16 | `execute-a-case-insensitive-replace-that-changes-all-instances-of-color-to-colour-throughou.cs` | Execute a case-insensitive replace that changes all instances of ‘color' to ‘colour' throughout the document. | formatting-aware-replace | docx | mcp |
-| 17 | `apply-whole-word-matching-to-avoid-partial-replacements-inside-longer-words-such-as-catalo.cs` | Apply whole-word matching to avoid partial replacements inside longer words such as ‘catalogue'. | callback-reporting | docx | mcp |
-| 18 | `replace-multiple-line-break-sequences-with-a-single-paragraph-break-using-the-metacharacte.cs` | Replace multiple line break sequences with a single paragraph break using the metacharacter \n in the replacement. | regex-replace | docx | mcp |
+| 16 | `execute-a-case-insensitive-replace-that-changes-all-instances-of-color-to-colour-throughou.cs` | Execute a case-insensitive replace that changes all instances of 'color' to 'colour' throughout the document. | formatting-aware-replace | docx | mcp |
+| 17 | `apply-whole-word-matching-to-avoid-partial-replacements-inside-longer-words-such-as-catalo.cs` | Apply whole-word matching to avoid partial replacements inside longer words such as 'catalogue'. | callback-reporting | docx | mcp |
+| 18 | `replace-multiple-line-break-sequences-with-a-single-paragraph-break-using-the-metacharacte.cs` | Replace multiple line break sequences with a single paragraph break using the metacharacter \n in the replacement. | regex-replace | docx | existing_repo |
 | 19 | `perform-find-and-replace-on-a-document-loaded-from-a-memory-stream-without-writing-to-disk.cs` | Perform find and replace on a document loaded from a memory stream without writing to disk. | input-bootstrap | docx | mcp |
 | 20 | `configure-findreplaceoptions-replacingcallback-to-log-each-replacement-occurrence-to-a-cus.cs` | Configure FindReplaceOptions.ReplacingCallback to log each replacement occurrence to a custom logger. | callback-reporting | docx | mcp |
 | 21 | `use-a-regular-expression-to-locate-and-replace-all-html-tags-embedded-in-the-document-text.cs` | Use a regular expression to locate and replace all HTML tags embedded in the document text. | input-bootstrap | html | mcp |
@@ -115,7 +110,7 @@ dotnet run --configuration Release --no-build
 | 32 | `add-a-suffix-to-each-matched-numeric-value-using-a-custom-replaceevaluator-during-the-repl.cs` | Add a suffix to each matched numeric value using a custom ReplaceEvaluator during the replace operation. | plain-replace | docx | mcp |
 | 33 | `replace-language-code-tags-with-full-language-names-using-a-regular-expression-for-accurat.cs` | Replace language code tags with full language names using a regular expression for accurate localization. | plain-replace | docx | mcp |
 | 34 | `replace-placeholder-merge-fields-with-actual-data-by-evaluating-each-field-inside-a-replac.cs` | Replace placeholder merge fields with actual data by evaluating each field inside a ReplaceEvaluator delegate. | plain-replace | docx | mcp |
-| 35 | `replace-the-word-foo-only-when-it-appears-at-the-start-of-a-paragraph-using-a-custom-evalu.cs` | Replace the word ‘foo' only when it appears at the start of a paragraph using a custom evaluator. | plain-replace | docx | mcp |
+| 35 | `replace-the-word-foo-only-when-it-appears-at-the-start-of-a-paragraph-using-a-custom-evalu.cs` | Replace the word 'foo' only when it appears at the start of a paragraph using a custom evaluator. | plain-replace | docx | llm |
 | 36 | `replace-the-first-page-header-differently-from-other-headers-by-checking-section-propertie.cs` | Replace the first page header differently from other headers by checking section properties during replacement. | plain-replace | docx | mcp |
 | 37 | `insert-a-page-break-after-each-replaced-heading-using-the-metacharacter-f-in-the-replaceme.cs` | Insert a page break after each replaced heading using the metacharacter \f in the replacement string. | regex-replace | docx | mcp |
 | 38 | `replace-color-names-with-their-hexadecimal-representations-using-a-regular-expression-for.cs` | Replace color names with their hexadecimal representations using a regular expression for color conversion. | formatting-aware-replace | docx | mcp |
@@ -123,7 +118,7 @@ dotnet run --configuration Release --no-build
 | 40 | `replace-a-custom-delimiter-with-a-comma-while-preserving-surrounding-whitespace-using-a-re.cs` | Replace a custom delimiter with a comma while preserving surrounding whitespace using a regular expression. | plain-replace | docx | mcp |
 | 41 | `mask-email-addresses-by-locating-them-with-a-regular-expression-and-replacing-with-a-maske.cs` | Mask email addresses by locating them with a regular expression and replacing with a masked version. | plain-replace | docx | mcp |
 | 42 | `expand-macro-names-to-their-full-code-using-a-custom-replaceevaluator-delegate-during-repl.cs` | Expand macro names to their full code using a custom ReplaceEvaluator delegate during replacement. | plain-replace | docx | mcp |
-| 43 | `convert-date-strings-from-january-1-2020-to-01-01-2020-using-a-regular-expression.cs` | Convert date strings from ‘January 1, 2020' to ‘01/01/2020' using a regular expression. | plain-replace | docx | mcp |
+| 43 | `convert-date-strings-from-january-1-2020-to-01-01-2020-using-a-regular-expression.cs` | Convert date strings from 'January 1, 2020' to '01/01/2020' using a regular expression. | plain-replace | docx | mcp |
 | 44 | `replace-abbreviations-with-their-full-forms-while-preserving-surrounding-punctuation-using.cs` | Replace abbreviations with their full forms while preserving surrounding punctuation using a regular expression. | plain-replace | docx | mcp |
 | 45 | `replace-placeholders-surrounded-by-double-brackets-with-values-from-a-json-configuration-f.cs` | Replace placeholders surrounded by double brackets with values from a JSON configuration file using a callback. | callback-reporting | json | mcp |
 | 46 | `replace-text-in-headers-containing-a-specific-keyword-while-leaving-other-headers-unchange.cs` | Replace text in headers containing a specific keyword while leaving other headers unchanged. | plain-replace | docx | mcp |
@@ -135,7 +130,7 @@ dotnet run --configuration Release --no-build
 | 52 | `replace-the-copyright-symbol-with-the-unicode-character-using-a-regular-expression.cs` | Replace the copyright symbol with the Unicode © character using a regular expression. | plain-replace | docx | mcp |
 | 53 | `insert-a-page-number-field-after-each-replaced-heading-using-documentbuilder-for-automatic.cs` | Insert a page number field after each replaced heading using DocumentBuilder for automatic numbering. | plain-replace | docx | mcp |
 | 54 | `replace-numeric-formats-like-1-234-56-with-a-localized-format-using-a-regular-expression.cs` | Replace numeric formats like 1,234.56 with a localized format using a regular expression. | formatting-aware-replace | docx | mcp |
-| 55 | `add-a-hyperlink-to-each-replaced-email-address-using-documentbuilder-during-the-replacemen.cs` | Add a hyperlink to each replaced email address using DocumentBuilder during the replacement operation. | plain-replace | docx | existing_repo |
+| 55 | `add-a-hyperlink-to-each-replaced-email-address-using-documentbuilder-during-the-replacemen.cs` | Add a hyperlink to each replaced email address using DocumentBuilder during the replacement operation. | plain-replace | docx | llm |
 | 56 | `ignore-case-and-match-whole-words-when-updating-product-names-across-the-document-using-fi.cs` | Ignore case and match whole words when updating product names across the document using FindReplaceOptions. | plain-replace | docx | mcp |
 | 57 | `replace-placeholders-surrounded-by-percent-signs-with-environment-variable-values-using-a.cs` | Replace placeholders surrounded by percent signs with environment variable values using a custom callback. | callback-reporting | docx | mcp |
 | 58 | `replace-multiple-consecutive-spaces-with-a-single-space-throughout-the-document-using-a-re.cs` | Replace multiple consecutive spaces with a single space throughout the document using a regular expression. | plain-replace | docx | mcp |
@@ -143,34 +138,44 @@ dotnet run --configuration Release --no-build
 | 60 | `standardize-date-range-patterns-to-a-unified-format-across-the-document-using-a-regular-ex.cs` | Standardize date range patterns to a unified format across the document using a regular expression. | regex-replace | docx | mcp |
 | 61 | `insert-a-table-of-figures-after-each-replaced-figure-caption-using-documentbuilder-for-aut.cs` | Insert a table of figures after each replaced figure caption using DocumentBuilder for automatic generation. | plain-replace | docx | mcp |
 | 62 | `use-a-custom-replaceevaluator-to-replace-only-the-first-occurrence-of-a-pattern-in-each-se.cs` | Use a custom ReplaceEvaluator to replace only the first occurrence of a pattern in each section. | regex-replace | docx | mcp |
-| 63 | `replace-a-placeholder-with-a-generated-qr-code-image-using-documentbuilder-during-the-repl.cs` | Replace a placeholder with a generated QR code image using DocumentBuilder during the replacement. | plain-replace | docx | existing_repo |
+| 63 | `replace-a-placeholder-with-a-generated-qr-code-image-using-documentbuilder-during-the-repl.cs` | Replace a placeholder with a generated QR code image using DocumentBuilder during the replacement. | plain-replace | docx | llm |
 
 ## Common failure patterns seen during generation and how they were corrected
 
-### Invented find-replace APIs
+### Missing FindReplaceOptions property
 
-- Symptom: Code tries to use unsupported helpers such as Document.ReplaceAll or Paragraph.Replace.
-- Fix: Use Document.Range.Replace with supported FindReplaceOptions and callback APIs only.
+- Symptom: The compiler reports that FindReplaceOptions does not contain definitions such as MatchWholeWord, UseRegularExpressions, or FindWholeWords.
+- Root cause: The code references property names that were renamed or never existed in the Aspose.Words API version 26.10.0.
+- Preferred fix: Use the correct property names: MatchCase for case sensitivity, FindWholeWordsOnly for whole-word matching, and rely on the Regex overload to enable regular-expression mode.
+- Prevention: Consult the official Aspose.Words API reference for the exact property names and avoid hard-coding undocumented members.
 
-### Callback misuse
+### Undefined ReplaceEvaluator type
 
-- Symptom: Custom replacement logic fails because IReplacingCallback or ReplacingArgs are used incorrectly.
-- Fix: Implement IReplacingCallback with the documented Replacing method and assign it through FindReplaceOptions.ReplacingCallback.
+- Symptom: Compilation fails with CS0246 because the type ReplaceEvaluator cannot be found.
+- Root cause: The example attempts to use a non-existent delegate type instead of the documented IReplacingCallback interface.
+- Preferred fix: Implement a class that inherits from IReplacingCallback and assign an instance to FindReplaceOptions.ReplacingCallback.
+- Prevention: Always use IReplacingCallback for custom replacement logic and verify its namespace (Aspose.Words.Replacing).
 
-### Metacharacter source content mismatch
+### Incorrect overload arguments
 
-- Symptom: Line-break or metacharacter replacement finds no matches because the source document was built with plain literal text instead of real control structures.
-- Fix: Create real line breaks or control characters in the source document and validate that Range.Replace returns a replacement count greater than zero.
+- Symptom: The compiler reports CS1503 errors when a Regex and a FindReplaceOptions object are passed to an overload expecting string arguments.
+- Root cause: The code calls the string-based Replace overload instead of the Regex overload that accepts a Regex, a replacement string, and FindReplaceOptions.
+- Preferred fix: Call Document.Range.Replace with the Regex overload: Replace(Regex pattern, string replacement, FindReplaceOptions options).
+- Prevention: Match the argument types exactly to the overload signature; use IntelliSense or the API docs to select the correct method.
 
-### Invalid formatting insertion
+### Metacharacter replacement without real line breaks
 
-- Symptom: Replacement logic inserts formatted content into invalid node parents or assumes every match belongs to a single Run.
-- Fix: Use supported run, font, paragraph, or builder logic and preserve valid parent-child insertion structure.
+- Symptom: Runtime throws an InvalidOperationException because no replacements were made when attempting to replace multiple line-break sequences with "\n" or "&p".
+- Root cause: The source document contains plain text literals instead of actual ControlChar.LineBreak characters, so the regex never matches.
+- Preferred fix: Insert real line-break characters using ControlChar.LineBreak when building the sample document, and match them with a regex such as "(\v){2,}".
+- Prevention: Bootstrap the input document with the exact control characters that the replacement logic expects.
 
-### Drawing ambiguity
+### Callback misuse leading to null parent
 
-- Symptom: Compile errors caused by System.Drawing usage or ambiguous Font references.
-- Fix: Use Aspose.Drawing only and prefer explicit Aspose.Drawing type names when ambiguity is possible.
+- Symptom: Runtime throws an InvalidOperationException or ArgumentException when the callback attempts to move the DocumentBuilder to a node with a null parent.
+- Root cause: The IReplacingCallback implementation accesses args.MatchNode without verifying that it belongs to the main story or attempts to insert breaks outside a valid paragraph.
+- Preferred fix: Validate that args.MatchNode is not null and that its parent story is the main document before performing insertions; use DocumentBuilder.MoveTo(args.MatchNode) only on nodes within the main story.
+- Prevention: Add defensive null checks and story-type checks inside the Replacing method to ensure safe node manipulation.
 
 ## See Also
 
@@ -183,6 +188,5 @@ dotnet run --configuration Release --no-build
 
 ## Notes for maintainers
 
-- This category is 100% publish-ready for the 26.9.0 run.
-- Preserve file-to-task traceability when updating this folder.
-- Keep examples standalone and bootstrap local inputs inside the example whenever external sources are mentioned.
+- This category is 100% publish-ready for the 26.10.0 run.
+- Update the example code whenever a new Aspose.Words version changes property names or overload signatures, and run the verification suite after each upgrade.

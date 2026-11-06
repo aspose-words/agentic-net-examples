@@ -1,53 +1,60 @@
 using System;
 using System.IO;
-using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Define the old year to replace and obtain the current year.
-        int oldYear = 2022;
-        int newYear = DateTime.Now.Year;
-
-        // Create a sample document with header and footer containing the old year.
+        // Create a sample document with header and footer containing an old year.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Header.
+        // Header with old year.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Writeln($"© {oldYear} My Company");
+        builder.Writeln("© 2022 My Company");
 
-        // Footer.
+        // Footer with old year.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.Writeln($"© {oldYear} My Company");
+        builder.Writeln("© 2022 My Company - All rights reserved");
 
-        // Main body content.
+        // Body content.
         builder.MoveToDocumentEnd();
-        builder.Writeln("This is a sample document.");
-        builder.Writeln($"All rights reserved © {oldYear}.");
+        builder.Writeln("Document body content.");
 
-        // Save the input document.
+        // Save the initial document.
         const string inputPath = "input.docx";
         doc.Save(inputPath);
 
-        // Load the document for replacement.
-        Document loadedDoc = new Document(inputPath);
+        // Load the document as if it were an existing file.
+        Document loaded = new Document(inputPath);
 
-        // Prepare a regex that matches the old year as a whole word.
-        Regex yearRegex = new Regex(@"\b" + oldYear + @"\b");
+        // Define the old year to replace and the new current year.
+        string oldYear = "2022";
+        string newYear = DateTime.Now.Year.ToString();
 
-        // Perform the replacement across the whole document (including headers/footers).
-        int replacedCount = loadedDoc.Range.Replace(yearRegex, newYear.ToString(), new FindReplaceOptions());
+        // Perform the replacement throughout the document (including headers/footers).
+        int replacedCount = loaded.Range.Replace(oldYear, newYear, new FindReplaceOptions());
 
         // Validate that at least one replacement occurred.
         if (replacedCount == 0)
-            throw new InvalidOperationException("No year replacements were made.");
+            throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
-        // Save the updated document.
+        // Save the modified document.
         const string outputPath = "output.docx";
-        loadedDoc.Save(outputPath);
+        loaded.Save(outputPath);
+
+        // Create a simple JSON report of the operation.
+        var report = new
+        {
+            Replacements = replacedCount,
+            OldYear = oldYear,
+            NewYear = newYear,
+            OutputDocument = outputPath
+        };
+        string jsonReport = JsonConvert.SerializeObject(report, Formatting.Indented);
+        File.WriteAllText("report.json", jsonReport);
     }
 }
