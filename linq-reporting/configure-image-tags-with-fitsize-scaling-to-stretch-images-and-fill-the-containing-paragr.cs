@@ -1,66 +1,71 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Reporting;
-
-public class ReportModel
-{
-    // Path to the image file that will be inserted into the report.
-    public string ImagePath { get; set; } = string.Empty;
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Ensure the output directory exists.
-        Directory.CreateDirectory("output");
+        // Register code page provider (required for some Aspose.Words features)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create a simple PNG image (a red square) and save it locally.
-        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJ" +
-                                 "bWFnZVJlYWR5ccllPAAAAAlwSFlzAAAOxAAADsQBlSsOGwAAABl0RVh0Q3JlYXRpb24gVGltZQAw" +
-                                 "OC8wOS8xM6V6LwAAABl0RVh0U291cmNlAEFkb2JlIEltYWdlUmVhZHlxyWUAAAAZdEVYdFNvZnR3" +
-                                 "YXJlAHd3dy5pbWFnZW1hZ2UuY29t7eJ0NwAAABh0RVh0Q3JlYXRpb24gVGltZQAyMDIzLTA5LTI2" +
-                                 "VDE2OjM0OjU5KzAwOjAwcZ6XWQAAABV0RVh0U291cmNlIFRpbWUAMjAyMy0wOS0yNlQxNjozNDo1" +
-                                 "OSswMDowMHR6K6UAAAAASUVORK5CYII=";
+        // Prepare working directories
+        string workDir = Directory.GetCurrentDirectory();
+        string templatePath = Path.Combine(workDir, "Template.docx");
+        string outputPath = Path.Combine(workDir, "Report.docx");
+        string imagePath = Path.Combine(workDir, "sample.png");
+
+        // Create a tiny PNG image (1x1 pixel, red) and save it locally
+        // Base64 for a 1x1 red PNG
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BAQAE/wJ/6VZcWQAAAABJRU5ErkJggg==";
         byte[] imageBytes = Convert.FromBase64String(base64Png);
-        string imagePath = Path.GetFullPath("sample.png");
         File.WriteAllBytes(imagePath, imageBytes);
 
-        // Create the template document programmatically.
+        // -------------------------
+        // Create the LINQ Reporting template
+        // -------------------------
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Add a heading.
-        builder.Writeln("Image Report with fitSize scaling:");
+        // Insert a paragraph describing the image
+        builder.Writeln("Below is an image stretched to fill the textbox using -fitSize:");
 
-        // Insert a textbox that will contain the image.
+        // Insert a textbox shape that will contain the image tag
         Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 200);
+        // Move cursor inside the textbox
         builder.MoveTo(textBox.FirstParagraph);
-
-        // Insert the LINQ Reporting image tag with -fitSize switch.
+        // Write the image tag with -fitSize switch
         builder.Write("<<image [model.ImagePath] -fitSize>>");
 
-        // Save the template to disk.
-        string templatePath = Path.GetFullPath("template.docx");
+        // Save the template to disk
         templateDoc.Save(templatePath);
 
-        // Load the template for reporting.
+        // -------------------------
+        // Load the template for report generation
+        // -------------------------
         Document reportDoc = new Document(templatePath);
 
-        // Prepare the data model.
+        // Prepare the data model
         ReportModel model = new ReportModel
         {
             ImagePath = imagePath
         };
 
-        // Build the report using the LINQ Reporting engine.
+        // Build the report
         ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(reportDoc, model, "model");
 
-        // Save the generated report.
-        string outputPath = Path.Combine("output", "report.docx");
+        // Save the generated report
         reportDoc.Save(outputPath);
     }
+}
+
+// Data model used by the LINQ Reporting engine
+public class ReportModel
+{
+    // Path to the image file that will be inserted into the document
+    public string ImagePath { get; set; } = string.Empty;
 }

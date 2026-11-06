@@ -1,65 +1,81 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Tables;
+
+#nullable enable
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare paths
-        string templatePath = "Template.docx";
-        string resultPath = "Result.docx";
-
-        // 1. Create the template document programmatically
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Paragraph with a required field
-        builder.Writeln("Name: <<[model.Name]>>");
-
-        // Paragraph that may become empty after rendering (optional field)
-        builder.Writeln("<<[model.Optional]>>");
-
-        // Save the template
-        templateDoc.Save(templatePath);
-
-        // 2. Load the template for reporting
-        Document doc = new Document(templatePath);
-
-        // 3. Prepare the data model
-        ReportModel model = new ReportModel
+        // Prepare sample data model.
+        var model = new ReportModel
         {
             Name = "John Doe",
-            Optional = null // This will cause the second paragraph to be empty after rendering
+            // OptionalLine is left null to produce an empty paragraph after rendering.
+            OptionalLine = null
         };
 
-        // 4. Build the report using LINQ Reporting Engine
-        ReportingEngine engine = new ReportingEngine();
+        // Create a template document programmatically.
+        var templatePath = "Template.docx";
+        CreateTemplate(templatePath);
+
+        // Load the template.
+        var doc = new Document(templatePath);
+
+        // Build the report using LINQ Reporting Engine.
+        var engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
-        // 5. Remove empty paragraphs that resulted from empty placeholders
-        List<Paragraph> emptyParagraphs = new();
+        // Remove empty paragraphs that may have been left after rendering.
+        RemoveEmptyParagraphs(doc);
+
+        // Save the final document.
+        var outputPath = "Report.docx";
+        doc.Save(outputPath);
+    }
+
+    private static void CreateTemplate(string path)
+    {
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        // Greeting line with a placeholder.
+        builder.Writeln("Hello <<[model.Name]>>!");
+
+        // This line contains only a placeholder that may become empty.
+        builder.Writeln("<<[model.OptionalLine]>>");
+
+        // Save the template.
+        doc.Save(path);
+    }
+
+    private static void RemoveEmptyParagraphs(Document doc)
+    {
+        // Collect paragraphs to remove to avoid modifying the collection while iterating.
+        var paragraphsToRemove = new List<Paragraph>();
+
         foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
         {
-            // GetText includes the paragraph break; Trim removes whitespace and the break
-            if (string.IsNullOrWhiteSpace(para.GetText()))
-                emptyParagraphs.Add(para);
+            // Get the paragraph text without the end-of-paragraph marker.
+            var text = para.GetText().Replace("\a", string.Empty).Trim();
+
+            if (string.IsNullOrEmpty(text))
+                paragraphsToRemove.Add(para);
         }
 
-        foreach (Paragraph para in emptyParagraphs)
+        foreach (var para in paragraphsToRemove)
             para.Remove();
-
-        // 6. Save the final document
-        doc.Save(resultPath);
     }
+}
 
-    // Public data model class required by the reporting engine
-    public class ReportModel
-    {
-        public string Name { get; set; } = string.Empty;
-        public string? Optional { get; set; }
-    }
+// Data model used by the report.
+public class ReportModel
+{
+    public string Name { get; set; } = string.Empty;
+    public string? OptionalLine { get; set; }
 }

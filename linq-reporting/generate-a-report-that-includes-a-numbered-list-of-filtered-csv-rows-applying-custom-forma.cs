@@ -1,89 +1,89 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class CsvItem
+{
+    public int Index { get; set; }
+    public string Name { get; set; } = "";
+    public string Category { get; set; } = "";
+}
+
+public class ReportModel
+{
+    public List<CsvItem> Items { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for possible CSV encodings.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
         // Prepare sample CSV data.
-        string csvPath = "data.csv";
-        File.WriteAllText(csvPath, @"Id,Name,Category,Value
-1,Alpha,A,100
-2,Beta,B,200
-3,Gamma,A,150
-4,Delta,C,300
-5,Epsilon,A,120");
+        const string csvPath = "data.csv";
+        File.WriteAllText(csvPath,
+            "Id,Name,Category\n" +
+            "1,Apple,A\n" +
+            "2,Banana,B\n" +
+            "3,Cherry,A\n" +
+            "4,Date,B\n" +
+            "5,Elderberry,A");
 
-        // Load CSV rows into objects.
-        List<CsvRow> allRows = new();
-        foreach (var line in File.ReadAllLines(csvPath, Encoding.UTF8))
+        // Load and filter CSV rows where Category == "A".
+        var model = new ReportModel();
+        var lines = File.ReadAllLines(csvPath);
+        var dataLines = lines.Skip(1); // Skip header.
+        int index = 1;
+        foreach (var line in dataLines)
         {
-            if (string.IsNullOrWhiteSpace(line) || line.StartsWith("Id,"))
-                continue; // Skip header or empty lines.
+            var parts = line.Split(',');
+            if (parts.Length < 3) continue;
+            var category = parts[2].Trim();
+            if (category != "A") continue;
 
-            string[] parts = line.Split(',');
-            if (parts.Length != 4)
-                continue;
-
-            allRows.Add(new CsvRow
+            model.Items.Add(new CsvItem
             {
-                Id = parts[0],
-                Name = parts[1],
-                Category = parts[2],
-                Value = parts[3]
+                Index = index++,
+                Name = parts[1].Trim(),
+                Category = category
             });
         }
 
-        // Filter rows where Category == "A".
-        ReportModel model = new()
-        {
-            Items = allRows.FindAll(r => r.Category == "A")
-        };
+        // Create the LINQ Reporting template.
+        const string templatePath = "template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // Create a Word template programmatically.
-        Document doc = new();
-        DocumentBuilder builder = new(doc);
+        builder.Writeln("Filtered Items Report");
+        builder.Writeln(""); // Empty line.
 
-        builder.Writeln("Filtered Items (Category = A):");
-        builder.ListFormat.ApplyNumberDefault();
+        // Begin foreach over Items.
+        builder.Writeln("<<foreach [item in Items]>>");
 
-        // Restart numbering and start foreach loop.
-        builder.Writeln("<<restartNum>><<foreach [item in Items]>>");
-        // Custom formatting: blue text for the name.
-        builder.Writeln("<<textColor [\"Blue\"]>><<[item.Name]>> <</textColor>> - <<[item.Value]>>");
+        // Apply background color to even-indexed rows.
+        builder.Writeln(
+            "<<if [item.Index % 2 == 0]>>" +
+            "<<backColor [\"LightGray\"]>><<[item.Index]>>. <<[item.Name]>> <</backColor>><</if>>" +
+            "<<if [item.Index % 2 != 0]>> <<[item.Index]>>. <<[item.Name]>> <</if>>");
+
+        // End foreach.
         builder.Writeln("<</foreach>>");
 
-        builder.ListFormat.RemoveNumbers();
+        // Save the template.
+        templateDoc.Save(templatePath);
+
+        // Load the template for report generation.
+        var reportDoc = new Document(templatePath);
 
         // Build the report.
-        ReportingEngine engine = new();
-        engine.BuildReport(doc, model, "model");
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None;
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Save the result.
-        string outputPath = "Report.docx";
-        doc.Save(outputPath);
-        Console.WriteLine($"Report generated: {outputPath}");
+        // Save the final report.
+        const string outputPath = "report.docx";
+        reportDoc.Save(outputPath);
     }
-}
-
-// Data model for a CSV row.
-public class CsvRow
-{
-    public string Id { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public string Category { get; set; } = string.Empty;
-    public string Value { get; set; } = string.Empty;
-}
-
-// Wrapper model passed to the reporting engine.
-public class ReportModel
-{
-    public List<CsvRow> Items { get; set; } = new();
 }

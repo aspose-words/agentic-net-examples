@@ -8,11 +8,12 @@ using Aspose.Words.Reporting;
 
 public class Item
 {
-    public string Category { get; set; } = "";
+    public int Id { get; set; } = 0;
     public string Name { get; set; } = "";
+    public string Category { get; set; } = "";
 }
 
-public class Group
+public class ItemGroup
 {
     public string Key { get; set; } = "";
     public List<Item> Items { get; set; } = new();
@@ -20,8 +21,7 @@ public class Group
 
 public class ReportModel
 {
-    public List<Item> Items { get; set; } = new();
-    public List<Group> Groups { get; set; } = new();
+    public List<ItemGroup> Groups { get; set; } = new();
 }
 
 public class Program
@@ -29,63 +29,63 @@ public class Program
     public static void Main()
     {
         // Prepare sample XML data.
-        string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
+        string xmlContent = @"
 <Items>
-    <Item Category=""Fruits"" Name=""Apple"" />
-    <Item Category=""Fruits"" Name=""Banana"" />
-    <Item Category=""Vegetables"" Name=""Carrot"" />
-    <Item Category=""Fruits"" Name=""Orange"" />
-    <Item Category=""Vegetables"" Name=""Lettuce"" />
+    <Item Id='1' Name='Apple' Category='Fruit' />
+    <Item Id='2' Name='Banana' Category='Fruit' />
+    <Item Id='3' Name='Carrot' Category='Vegetable' />
+    <Item Id='4' Name='Broccoli' Category='Vegetable' />
+    <Item Id='5' Name='Chicken' Category='Meat' />
 </Items>";
-        string xmlPath = "items.xml";
-        File.WriteAllText(xmlPath, xmlContent);
-
-        // Load XML into model.
-        ReportModel model = new();
-        XDocument doc = XDocument.Load(xmlPath);
-        foreach (XElement elem in doc.Root!.Elements("Item"))
-        {
-            model.Items.Add(new Item
+        XDocument xDoc = XDocument.Parse(xmlContent);
+        List<Item> items = xDoc.Root!
+            .Elements("Item")
+            .Select(e => new Item
             {
-                Category = (string?)elem.Attribute("Category") ?? "",
-                Name = (string?)elem.Attribute("Name") ?? ""
-            });
-        }
+                Id = (int)e.Attribute("Id")!,
+                Name = (string)e.Attribute("Name")!,
+                Category = (string)e.Attribute("Category")!
+            })
+            .ToList();
 
-        // Create groups for reporting (Category -> Items).
-        model.Groups = model.Items
+        // Group items by Category.
+        var groups = items
             .GroupBy(i => i.Category)
-            .Select(g => new Group
+            .Select(g => new ItemGroup
             {
                 Key = g.Key,
                 Items = g.ToList()
             })
             .ToList();
 
-        // Create template document.
-        Document template = new();
-        DocumentBuilder builder = new(template);
+        // Build the model.
+        ReportModel model = new()
+        {
+            Groups = groups
+        };
+
+        // Create the template document.
+        string templatePath = "template.docx";
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
 
         builder.Writeln("Items grouped by Category:");
-        builder.Writeln("<<foreach [g in Groups]>>");
-        builder.Writeln("Category: <<[g.Key]>>");
-        builder.Writeln("<<foreach [i in g.Items]>>");
-        builder.Writeln("- <<[i.Name]>>");
+        builder.Writeln("<<foreach [group in Groups]>>");
+        builder.Writeln("Category: <<[group.Key]>>");
+        builder.Writeln("<<foreach [item in group.Items]>>");
+        builder.Writeln("- Id: <<[item.Id]>>, Name: <<[item.Name]>>");
         builder.Writeln("<</foreach>>");
         builder.Writeln("<</foreach>>");
 
-        string templatePath = "template.docx";
-        template.Save(templatePath);
+        templateDoc.Save(templatePath);
 
-        // Load template for reporting.
-        Document reportDoc = new(templatePath);
+        // Load the template and generate the report.
+        Document doc = new(templatePath);
         ReportingEngine engine = new();
+        engine.BuildReport(doc, model, "model");
 
-        // Build the report.
-        engine.BuildReport(reportDoc, model, "model");
-
-        // Save the generated report.
+        // Save the final report.
         string outputPath = "output.docx";
-        reportDoc.Save(outputPath);
+        doc.Save(outputPath);
     }
 }

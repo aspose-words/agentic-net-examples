@@ -6,75 +6,73 @@ using Aspose.Words;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
 
-namespace LinqReportingJsonArrayExample
+public class Program
 {
-    // Data model classes
-    public class Person
+    public static void Main()
     {
-        public string Name { get; set; } = "";
-        public int Age { get; set; }
-    }
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    public class Model
-    {
-        public List<Person> Persons { get; set; } = new();
-    }
-
-    public class Program
-    {
-        public static void Main()
+        // Prepare sample data model.
+        ReportModel model = new()
         {
-            // Register code page provider for Aspose.Words (required for some encodings)
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            Items =
+            {
+                new Item { Title = "Item 1", Description = "First item description.", Price = 10.5 },
+                new Item { Title = "Item 2", Description = "Second item description.", Price = 20.0 },
+                new Item { Title = "Item 3", Description = "Third item description.", Price = 30.75 }
+            }
+        };
 
-            // Prepare sample JSON data
-            string jsonContent = @"{
-                ""Persons"": [
-                    { ""Name"": ""Alice"", ""Age"": 30 },
-                    { ""Name"": ""Bob"",   ""Age"": 25 },
-                    { ""Name"": ""Charlie"", ""Age"": 28 }
-                ]
-            }";
+        // Serialize model to JSON file.
+        const string jsonPath = "data.json";
+        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(model, Formatting.Indented));
 
-            string jsonPath = Path.Combine(Directory.GetCurrentDirectory(), "data.json");
-            File.WriteAllText(jsonPath, jsonContent, Encoding.UTF8);
+        // Create the template document programmatically.
+        const string templatePath = "Template.docx";
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
 
-            // Deserialize JSON into the model
-            Model model = JsonConvert.DeserializeObject<Model>(File.ReadAllText(jsonPath, Encoding.UTF8))!;
+        builder.Writeln("Report of Items");
+        builder.Writeln("==============");
+        builder.Writeln();
 
-            // Create the LINQ Reporting template programmatically
-            string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "template.docx");
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Begin foreach over Items collection.
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("Title: <<[item.Title]>>");
+        builder.Writeln("Description: <<[item.Description]>>");
+        builder.Writeln("Price: $<<[item.Price]>>");
+        builder.Writeln("<</foreach>>");
 
-            // Insert a title for the report
-            builder.Writeln("People Report");
-            builder.Writeln();
+        // Save the template.
+        templateDoc.Save(templatePath);
 
-            // Begin foreach loop over the Persons collection
-            builder.Writeln("<<foreach [person in Persons]>>");
+        // Load the template for reporting.
+        Document doc = new(templatePath);
 
-            // Each person gets its own section (heading + paragraph)
-            builder.Writeln("<<[person.Name]>>");
-            builder.Writeln("Age: <<[person.Age]>>");
-            builder.Writeln(); // blank line between entries
+        // Load JSON data back into the model.
+        ReportModel data = JsonConvert.DeserializeObject<ReportModel>(File.ReadAllText(jsonPath))!;
 
-            // End foreach loop
-            builder.Writeln("<</foreach>>");
+        // Build the report.
+        ReportingEngine engine = new();
+        engine.BuildReport(doc, data, "model");
 
-            // Save the template to disk
-            templateDoc.Save(templatePath);
-
-            // Load the template for report generation
-            Document reportDoc = new Document(templatePath);
-
-            // Build the report using the LINQ Reporting engine
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(reportDoc, model, "model");
-
-            // Save the generated report
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "report.docx");
-            reportDoc.Save(outputPath);
-        }
+        // Save the generated report.
+        const string outputPath = "Report.docx";
+        doc.Save(outputPath);
     }
+}
+
+// Root wrapper class for the JSON data.
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
+
+// Individual item class.
+public class Item
+{
+    public string Title { get; set; } = "";
+    public string Description { get; set; } = "";
+    public double Price { get; set; }
 }

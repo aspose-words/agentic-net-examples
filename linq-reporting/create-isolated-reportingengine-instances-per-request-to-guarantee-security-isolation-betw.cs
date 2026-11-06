@@ -1,93 +1,86 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingIsolationExample
+public class Program
 {
-    // Sample data models
-    public class Order
+    public static void Main()
     {
-        public string CustomerName { get; set; } = "";
-        public List<Service> Services { get; set; } = new();
-    }
+        // Register code page provider for Aspose.Words if needed.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    public class Service
-    {
-        public string Name { get; set; } = "";
-    }
+        // Prepare output directories.
+        string baseDir = Directory.GetCurrentDirectory();
+        string templatePath = Path.Combine(baseDir, "Template.docx");
+        string outputDir = Path.Combine(baseDir, "Output");
+        Directory.CreateDirectory(outputDir);
 
-    class Program
-    {
-        static void Main()
+        // -----------------------------------------------------------------
+        // 1. Create a LINQ Reporting template programmatically.
+        // -----------------------------------------------------------------
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+
+        // Add a simple heading.
+        builder.Writeln("User Report");
+        builder.Writeln();
+
+        // Insert a foreach tag that iterates over a collection named Persons.
+        builder.Writeln("<<foreach [p in Persons]>>");
+        builder.Writeln("Name: <<[p.Name]>>   Age: <<[p.Age]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        template.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Prepare sample data model.
+        // -----------------------------------------------------------------
+        ReportModel model = new()
         {
-            // Ensure output directory exists
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-            Directory.CreateDirectory(outputDir);
-
-            // Path for the template document
-            string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "template.docx");
-
-            // Create the LINQ Reporting template programmatically
-            CreateTemplate(templatePath);
-
-            // Simulate two independent user requests
-            var orderUserA = new Order
+            Persons = new()
             {
-                CustomerName = "Alice Johnson",
-                Services = new List<Service>
-                {
-                    new Service { Name = "Consultation" },
-                    new Service { Name = "Implementation" }
-                }
-            };
+                new Person { Name = "Alice", Age = 30 },
+                new Person { Name = "Bob", Age = 25 },
+                new Person { Name = "Charlie", Age = 35 }
+            }
+        };
 
-            var orderUserB = new Order
-            {
-                CustomerName = "Bob Smith",
-                Services = new List<Service>
-                {
-                    new Service { Name = "Support" },
-                    new Service { Name = "Maintenance" },
-                    new Service { Name = "Upgrade" }
-                }
-            };
-
-            // Process each request with its own ReportingEngine instance
-            ProcessRequest(orderUserA, templatePath, Path.Combine(outputDir, "Report_A.docx"));
-            ProcessRequest(orderUserB, templatePath, Path.Combine(outputDir, "Report_B.docx"));
-        }
-
-        // Creates a simple Word template containing LINQ Reporting tags
-        private static void CreateTemplate(string path)
+        // -----------------------------------------------------------------
+        // 3. Simulate multiple isolated reporting requests.
+        // -----------------------------------------------------------------
+        for (int requestId = 1; requestId <= 3; requestId++)
         {
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
+            // Each request gets its own ReportingEngine instance.
+            ReportingEngine engine = new();
 
-            builder.Writeln("Customer: <<[order.CustomerName]>>");
-            builder.Writeln("Services:");
-            builder.Writeln("<<foreach [svc in order.Services]>>");
-            builder.Writeln("- <<[svc.Name]>>");
-            builder.Writeln("<</foreach>>");
+            // Load a fresh copy of the template for this request.
+            Document reportDoc = new Document(templatePath);
 
-            doc.Save(path);
-        }
+            // Build the report using the isolated engine.
+            engine.BuildReport(reportDoc, model, "model");
 
-        // Generates a report for a single request using an isolated ReportingEngine
-        private static void ProcessRequest(Order order, string templatePath, string outputPath)
-        {
-            // Load the template document
-            var doc = new Document(templatePath);
-
-            // Each request gets its own ReportingEngine instance
-            var engine = new ReportingEngine();
-
-            // Build the report using the order object as the root with name "order"
-            engine.BuildReport(doc, order, "order");
-
-            // Save the generated report
-            doc.Save(outputPath);
+            // Save the generated report.
+            string reportPath = Path.Combine(outputDir, $"Report_{requestId}.docx");
+            reportDoc.Save(reportPath);
         }
     }
+}
+
+// ---------------------------------------------------------------------
+// Data model classes.
+// ---------------------------------------------------------------------
+public class ReportModel
+{
+    // Initialize the collection to avoid nullable warnings.
+    public List<Person> Persons { get; set; } = new();
+}
+
+public class Person
+{
+    public string Name { get; set; } = string.Empty;
+    public int Age { get; set; }
 }

@@ -1,72 +1,73 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingConversionExample
+Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+public class ReportExample
 {
-    // Custom type with an explicit conversion operator to string.
-    public class MyValue
+    public static void Main()
     {
-        public int Number { get; set; }
+        // Create a template document programmatically.
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Explicit conversion to string.
-        public static explicit operator string(MyValue value) => value.Number.ToString();
-    }
+        // Insert a foreach block that iterates over Items.
+        builder.Writeln("<<foreach [item in Items]>>");
+        // Explicitly cast the custom type to string inside the expression.
+        builder.Writeln("<<[(string)item.Value]>>");
+        builder.Writeln("<</foreach>>");
 
-    // Model class used in the report.
-    public class Item
-    {
-        public MyValue Value { get; set; } = new MyValue();
-    }
+        // Save the template to a local file.
+        const string templatePath = "template.docx";
+        templateDoc.Save(templatePath);
 
-    // Public wrapper for the data source required by the ReportingEngine.
-    public class ReportModel
-    {
-        public List<Item> Items { get; set; } = new();
-    }
+        // Load the template back for report generation.
+        Document loadedTemplate = new Document(templatePath);
 
-    public class Program
-    {
-        public static void Main()
+        // Prepare sample data.
+        ReportModel model = new()
         {
-            // Register code page provider for Aspose.Words.
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            // Prepare sample data.
-            var items = new List<Item>
+            Items = new()
             {
-                new() { Value = new MyValue { Number = 10 } },
-                new() { Value = new MyValue { Number = 20 } },
-                new() { Value = new MyValue { Number = 30 } }
-            };
+                new Item { Value = new CustomValue(10) },
+                new Item { Value = new CustomValue(20) },
+                new Item { Value = new CustomValue(30) }
+            }
+        };
 
-            // Create the template document programmatically.
-            var templatePath = "Template.docx";
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
+        // Build the report.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(loadedTemplate, model, "model");
 
-            builder.Writeln("Sample Report");
-            builder.Writeln("<<foreach [item in Items]>>");
-            // Explicitly cast MyValue to string using the user‑defined conversion operator.
-            builder.Writeln("Value: <<[(string)item.Value]>>");
-            builder.Writeln("<</foreach>>");
-
-            doc.Save(templatePath);
-
-            // Load the template for reporting.
-            var template = new Document(templatePath);
-
-            // Build the report using the LINQ Reporting engine.
-            var engine = new ReportingEngine();
-
-            var model = new ReportModel { Items = items };
-            engine.BuildReport(template, model, "model");
-
-            // Save the generated report.
-            var outputPath = "Report.docx";
-            template.Save(outputPath);
-        }
+        // Save the generated report.
+        const string outputPath = "output.docx";
+        loadedTemplate.Save(outputPath);
     }
+}
+
+// Wrapper class for the root data source.
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
+
+// Sample item class containing the custom type.
+public class Item
+{
+    public CustomValue Value { get; set; } = new();
+}
+
+// Custom type with an explicit conversion operator to string.
+public struct CustomValue
+{
+    public int Number { get; set; }
+
+    public CustomValue(int number) => Number = number;
+
+    // Explicit conversion to string.
+    public static explicit operator string(CustomValue value) => $"CustomValue: {value.Number}";
 }

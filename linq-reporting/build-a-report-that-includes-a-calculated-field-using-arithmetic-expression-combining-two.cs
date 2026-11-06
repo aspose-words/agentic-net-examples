@@ -4,82 +4,102 @@ using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
 using Newtonsoft.Json;
 
-public class Program
+// Register code page provider for Aspose.Words if needed.
+Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+public class ReportGenerator
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Sample JSON data.
-        string json = @"{
-  ""Items"": [
-    { ""Name"": ""Apple"",  ""Price"": 0.5, ""Quantity"": 10 },
-    { ""Name"": ""Banana"", ""Price"": 0.3, ""Quantity"": 5 },
-    { ""Name"": ""Orange"", ""Price"": 0.8, ""Quantity"": 7 }
-  ]
-}";
-        // Deserialize JSON into model.
-        Order order = JsonConvert.DeserializeObject<Order>(json)!;
-
-        // Create a Word template programmatically.
+        // Paths for the template and output documents.
         const string templatePath = "Template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        const string outputPath = "Report.docx";
+        const string jsonPath = "Data.json";
 
-        builder.Writeln("Items Report");
+        // 1. Create sample JSON data.
+        var sampleData = new DataRoot
+        {
+            Orders = new()
+            {
+                new Order { Id = 1, Price = 19.99m, Quantity = 2, Tax = 3.20m },
+                new Order { Id = 2, Price = 5.50m, Quantity = 5, Tax = 1.10m },
+                new Order { Id = 3, Price = 12.00m, Quantity = 1, Tax = 0.96m }
+            }
+        };
+        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(sampleData, Formatting.Indented));
+
+        // 2. Build the LINQ Reporting template programmatically.
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+
+        builder.Writeln("Order Report");
+        builder.Writeln("==============");
         builder.Writeln();
 
-        // Header table (static, not repeated).
-        Table headerTable = builder.StartTable();
-        builder.InsertCell(); builder.Writeln("Name");
-        builder.InsertCell(); builder.Writeln("Price");
-        builder.InsertCell(); builder.Writeln("Quantity");
-        builder.InsertCell(); builder.Writeln("Total (Price * Quantity)");
+        // Table header.
+        var table = builder.StartTable();
+        builder.InsertCell();
+        builder.Writeln("Id");
+        builder.InsertCell();
+        builder.Writeln("Price");
+        builder.InsertCell();
+        builder.Writeln("Quantity");
+        builder.InsertCell();
+        builder.Writeln("Tax");
+        builder.InsertCell();
+        builder.Writeln("Total (Price*Qty + Tax)");
         builder.EndRow();
-        builder.EndTable();
 
-        // Data rows – wrapped in a foreach block.
-        builder.Writeln("<<foreach [item in Items]>>");
-        Table dataTable = builder.StartTable();
-        builder.InsertCell(); builder.Writeln("<<[item.Name]>>");
-        builder.InsertCell(); builder.Writeln("<<[item.Price]>>");
-        builder.InsertCell(); builder.Writeln("<<[item.Quantity]>>");
-        builder.InsertCell(); builder.Writeln("<<[item.Price * item.Quantity]>>");
+        // Data rows using foreach tag.
+        builder.Writeln("<<foreach [order in Orders]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[order.Id]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[order.Price]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[order.Quantity]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[order.Tax]>>");
+        builder.InsertCell();
+        // Calculated field: Price * Quantity + Tax
+        builder.Writeln("<<[order.Price * order.Quantity + order.Tax]>>");
         builder.EndRow();
-        builder.EndTable();
         builder.Writeln("<</foreach>>");
 
-        // Save the template.
+        builder.EndTable();
+
+        // Save the template to disk.
         templateDoc.Save(templatePath);
 
-        // Load the template for reporting.
-        Document reportDoc = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine();
+        // 3. Load the template document.
+        var doc = new Document(templatePath);
 
-        // Build the report using the root object name "order".
-        engine.BuildReport(reportDoc, order, "order");
+        // 4. Load JSON data into the model.
+        var jsonContent = File.ReadAllText(jsonPath);
+        var model = JsonConvert.DeserializeObject<DataRoot>(jsonContent)!;
 
-        // Save the generated report.
-        const string outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+        // 5. Build the report.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+        // 6. Save the generated report.
+        doc.Save(outputPath);
     }
 }
 
-// Data model classes.
-public class Order
+// Root object that matches the JSON structure.
+public class DataRoot
 {
-    public List<Item> Items { get; set; } = new();
+    public List<Order> Orders { get; set; } = new();
 }
 
-public class Item
+// Order model with numeric properties.
+public class Order
 {
-    public string Name { get; set; } = "";
+    public int Id { get; set; }
     public decimal Price { get; set; }
     public int Quantity { get; set; }
+    public decimal Tax { get; set; }
 }

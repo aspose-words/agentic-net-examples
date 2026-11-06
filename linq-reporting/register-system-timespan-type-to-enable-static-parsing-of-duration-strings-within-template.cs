@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -6,24 +7,38 @@ public class Program
 {
     public static void Main()
     {
-        // Create a blank document and a builder to insert LINQ Reporting tags.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Insert a tag that calls the static TimeSpan.Parse method.
-        // The engine will evaluate this expression and output the resulting TimeSpan.
-        builder.Writeln("Parsed duration: <<[TimeSpan.Parse(\"01:30:00\")]>>");
+        // Create a template document with a LINQ Reporting tag for a TimeSpan property.
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Duration: <<[model.Duration]>>");
+        templateDoc.Save(templatePath);
 
-        // Initialize the reporting engine.
+        // Load the template for reporting.
+        Document reportDoc = new Document(templatePath);
+
+        // Prepare the data model.
+        ReportModel model = new ReportModel
+        {
+            Duration = TimeSpan.FromHours(1.5) // 01:30:00
+        };
+
+        // Build the report.
         ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Register System.TimeSpan so that static members (e.g., Parse) can be used in templates.
-        engine.KnownTypes.Add(typeof(TimeSpan));
-
-        // Build the report. No data source is required for this example, so we pass an empty object.
-        engine.BuildReport(doc, new object());
-
-        // Save the resulting document.
-        doc.Save("Output.docx");
+        // Save the generated report.
+        string reportPath = Path.Combine(outputDir, "Report.docx");
+        reportDoc.Save(reportPath);
     }
+}
+
+// Public data model with a TimeSpan property.
+public class ReportModel
+{
+    public TimeSpan Duration { get; set; } = TimeSpan.Zero;
 }

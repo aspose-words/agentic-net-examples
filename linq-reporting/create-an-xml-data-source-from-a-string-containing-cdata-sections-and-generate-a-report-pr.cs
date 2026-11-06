@@ -1,95 +1,59 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static void Main()
     {
-        // Register code page provider for any required encodings.
+        // Register code page provider (required for some encodings)
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // -----------------------------------------------------------------
-        // 1. Prepare XML with CDATA sections.
-        // -----------------------------------------------------------------
-        string xmlContent = @"<?xml version=""1.0"" encoding=""UTF-8""?>
-<catalog>
-    <product>
-        <name><![CDATA[Widget <Pro>]]></name>
-        <description><![CDATA[This is a ""special"" product & more.]]></description>
-    </product>
-    <product>
-        <name><![CDATA[Gadget & Co]]></name>
-        <description><![CDATA[Another product with <tags> and ""quotes"".]]></description>
-    </product>
-</catalog>";
+        // XML data source with CDATA sections
+        string xmlData = @"<?xml version=""1.0"" encoding=""UTF-8""?>
+<Report>
+  <Title><![CDATA[Report <b>Title</b>]]></Title>
+  <Items>
+    <Item>
+      <Name><![CDATA[Item &amp; One]]></Name>
+      <Description><![CDATA[Description with <i>HTML</i> content]]></Description>
+    </Item>
+    <Item>
+      <Name><![CDATA[Second Item]]></Name>
+      <Description><![CDATA[Another description]]></Description>
+    </Item>
+  </Items>
+</Report>";
 
-        // -----------------------------------------------------------------
-        // 2. Load XML into a strongly‑typed model.
-        // -----------------------------------------------------------------
-        XDocument doc = XDocument.Parse(xmlContent);
-        var model = new Catalog
-        {
-            Products = doc
-                .Descendants("product")
-                .Select(p => new Product
-                {
-                    Name = (string)p.Element("name") ?? string.Empty,
-                    Description = (string)p.Element("description") ?? string.Empty
-                })
-                .ToList()
-        };
+        // Create XML data source from a memory stream (XmlDataSource expects a file path or stream)
+        using var xmlStream = new MemoryStream(Encoding.UTF8.GetBytes(xmlData));
+        XmlDataSource dataSource = new XmlDataSource(xmlStream);
 
-        // -----------------------------------------------------------------
-        // 3. Create the template document programmatically.
-        // -----------------------------------------------------------------
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Create a template document programmatically
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        builder.Writeln("Product Report");
-        builder.Writeln("<<foreach [p in Products]>>");
-        builder.Writeln("Name: <<[p.Name]>>");
-        builder.Writeln("Description: <<[p.Description]>>");
+        // Title (preserve CDATA content as plain text)
+        builder.Writeln("<<[report.Title]>>");
+        builder.Writeln();
+
+        // Begin foreach over items
+        builder.Writeln("<<foreach [item in report.Items.Item]>>");
+        builder.Writeln("Name: <<[item.Name]>>");
+        builder.Writeln("Description: <<[item.Description]>>");
         builder.Writeln("<</foreach>>");
 
-        templateDoc.Save(templatePath);
+        // Build the report
+        ReportingEngine engine = new ReportingEngine();
+        bool success = engine.BuildReport(template, dataSource, "report");
 
-        // -----------------------------------------------------------------
-        // 4. Build the report using the model as the data source.
-        // -----------------------------------------------------------------
-        var reportDoc = new Document(templatePath);
-        var engine = new ReportingEngine();
+        // Save the result
+        string outputPath = "ReportOutput.docx";
+        template.Save(outputPath);
 
-        // The root object name used in the template is "data".
-        engine.BuildReport(reportDoc, model, "data");
-
-        // -----------------------------------------------------------------
-        // 5. Save the generated report.
-        // -----------------------------------------------------------------
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        reportDoc.Save(outputPath);
-
-        Console.WriteLine($"Report generated: {outputPath}");
+        // Indicate completion (no interactive input)
+        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Saved to {outputPath}");
     }
-}
-
-// ---------------------------------------------------------------------
-// Data model classes.
-// ---------------------------------------------------------------------
-public class Catalog
-{
-    // The property name must match the name used in the template (Products).
-    public List<Product> Products { get; set; } = new();
-}
-
-public class Product
-{
-    public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
 }

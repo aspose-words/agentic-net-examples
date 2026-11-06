@@ -1,74 +1,107 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
 
 namespace LinqReportingReflectionOptimization
 {
-    // Sample data model
-    public class ReportModel
-    {
-        public List<Item> Items { get; set; } = new();
-    }
-
-    public class Item
+    // Simple product model.
+    public class Product
     {
         public int Index { get; set; }
         public string Name { get; set; } = string.Empty;
+    }
+
+    // Wrapper class that holds the collection used by the report and additional metadata.
+    public class ReportData
+    {
+        public List<Product> Products { get; set; } = new();
+        public string GeneratedOn { get; set; } = string.Empty;
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Ensure code page provider is available (required by Aspose.Words for some encodings)
-            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+            // Register code page provider for any encoding needs.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            // Create a large data set
-            var model = new ReportModel();
+            // Prepare output folder.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
+
+            // Paths for the template and the generated report.
+            string templatePath = Path.Combine(outputDir, "Template.docx");
+            string resultPath = Path.Combine(outputDir, "Report.docx");
+
+            // -----------------------------------------------------------------
+            // Create a template document with LINQ Reporting tags.
+            // -----------------------------------------------------------------
+            Document templateDoc = new();
+            DocumentBuilder builder = new(templateDoc);
+
+            builder.Writeln("Product Report");
+            builder.Writeln("Generated on: <<[GeneratedOn]>>");
+            builder.Writeln();
+
+            // Begin foreach over Products.
+            builder.Writeln("<<foreach [p in Products]>>");
+
+            // Create a table header.
+            Table table = builder.StartTable();
+            builder.InsertCell();
+            builder.Writeln("Index");
+            builder.InsertCell();
+            builder.Writeln("Name");
+            builder.EndRow();
+
+            // Row that will be repeated for each product.
+            builder.InsertCell();
+            builder.Writeln("<<[p.Index]>>");
+            builder.InsertCell();
+            builder.Writeln("<<[p.Name]>>");
+            builder.EndRow();
+
+            // Finish the table.
+            builder.EndTable();
+
+            // End foreach.
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // Load the template and generate the report.
+            // -----------------------------------------------------------------
+            Document doc = new(templatePath);
+
+            // Enable reflection optimization (engine caching).
+            ReportingEngine.UseReflectionOptimization = true;
+
+            // Create a large data set.
+            ReportData data = new();
+            data.GeneratedOn = DateTime.Now.ToString("g");
             for (int i = 1; i <= 1000; i++)
             {
-                model.Items.Add(new Item
+                data.Products.Add(new Product
                 {
                     Index = i,
-                    Name = $"Item #{i}"
+                    Name = $"Product #{i}"
                 });
             }
 
-            // Create a template document programmatically
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
+            // Build the report.
+            ReportingEngine engine = new();
+            engine.BuildReport(doc, data, "data");
 
-            // Insert a simple heading
-            builder.Writeln("Large Data Set Report");
-            builder.Writeln();
+            // Save the generated report.
+            doc.Save(resultPath);
 
-            // Insert LINQ Reporting tags for iterating over Items
-            builder.Writeln("<<foreach [item in Items]>>");
-            builder.Writeln("Index: <<[item.Index]>> - Name: <<[item.Name]>>");
-            builder.Writeln("<</foreach>>");
-
-            // Save the template to a temporary file
-            string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-            doc.Save(templatePath);
-
-            // Load the template for reporting
-            var templateDoc = new Document(templatePath);
-
-            // Enable reflection optimization (caching) for the reporting engine
-            ReportingEngine.UseReflectionOptimization = true;
-
-            // Build the report
-            var engine = new ReportingEngine();
-            engine.BuildReport(templateDoc, model, "model");
-
-            // Save the generated report
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report_Output.docx");
-            templateDoc.Save(outputPath);
-
-            // Optionally, indicate completion (no interactive input)
-            Console.WriteLine($"Report generated: {outputPath}");
+            Console.WriteLine($"Report generated: {resultPath}");
         }
     }
 }

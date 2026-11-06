@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
@@ -9,95 +10,88 @@ public class Program
 {
     public static void Main()
     {
-        // Sample XML data.
+        // Prepare sample XML data.
         string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<Catalog>
-  <Category Name=""Fruits"" Type=""A"">
-    <Product Name=""Apple"" />
-    <Product Name=""Banana"" />
-  </Category>
-  <Category Name=""Vegetables"" Type=""B"">
-    <Product Name=""Carrot"" />
-    <Product Name=""Lettuce"" />
-  </Category>
-  <Category Name=""Beverages"" Type=""A"">
-    <Product Name=""Coffee"" />
-    <Product Name=""Tea"" />
-  </Category>
-</Catalog>";
-
-        // Write XML to a temporary file (optional, just to keep the example self‑contained).
-        string xmlPath = Path.Combine(Directory.GetCurrentDirectory(), "catalog.xml");
+<Root>
+    <Category Name=""Fruits"">
+        <Item>Apple</Item>
+        <Item>Banana</Item>
+        <Item>Cherry</Item>
+    </Category>
+    <Category Name=""Vegetables"">
+        <Item>Carrot</Item>
+        <Item>Broccoli</Item>
+    </Category>
+    <Category Name=""Fungi"">
+        <Item>Mushroom</Item>
+    </Category>
+</Root>";
+        string xmlPath = "data.xml";
         File.WriteAllText(xmlPath, xmlContent);
 
-        // Load XML into strongly‑typed model classes.
-        Catalog catalog = LoadCatalogFromXml(xmlPath);
+        // Load XML and filter categories whose Name starts with 'F'.
+        XDocument xDoc = XDocument.Load(xmlPath);
+        List<Category> filteredCategories = xDoc.Root?
+            .Elements("Category")
+            .Where(c => c.Attribute("Name")?.Value?.StartsWith("F") == true)
+            .Select(c => new Category
+            {
+                Name = c.Attribute("Name")?.Value ?? string.Empty,
+                Items = c.Elements("Item")
+                         .Select(i => i.Value ?? string.Empty)
+                         .ToList()
+            })
+            .ToList() ?? new List<Category>();
 
-        // Build the template document with LINQ Reporting tags.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        builder.Writeln("<<foreach [cat in catalog.Category]>>");
-        builder.Writeln("<<if [cat.Type == \"A\"]>>");
-        builder.Writeln("• <<[cat.Name]>>");
-        builder.Writeln("<<foreach [prod in cat.Product]>>");
-        builder.Writeln("   • <<[prod.Name]>>");
-        builder.Writeln("<</foreach>>");
-        builder.Writeln("<</if>>");
-        builder.Writeln("<</foreach>>");
-
-        // Generate the report.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, catalog, "catalog");
-
-        // Save the resulting document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        doc.Save(outputPath);
-    }
-
-    private static Catalog LoadCatalogFromXml(string xmlPath)
-    {
-        XDocument xdoc = XDocument.Load(xmlPath);
-        Catalog catalog = new Catalog();
-
-        foreach (XElement catElem in xdoc.Root.Elements("Category"))
+        // Build the model for the report.
+        ReportModel model = new()
         {
-            Category category = new Category
-            {
-                Name = (string)catElem.Attribute("Name") ?? string.Empty,
-                Type = (string)catElem.Attribute("Type") ?? string.Empty
-            };
+            Categories = filteredCategories
+        };
 
-            foreach (XElement prodElem in catElem.Elements("Product"))
-            {
-                Product product = new Product
-                {
-                    Name = (string)prodElem.Attribute("Name") ?? string.Empty
-                };
-                category.Product.Add(product);
-            }
+        // Create the template document programmatically.
+        Document template = new();
+        DocumentBuilder builder = new(template);
 
-            catalog.Category.Add(category);
-        }
+        builder.Writeln("Hierarchical Bullet List Report");
+        builder.Writeln();
 
-        return catalog;
+        // Begin outer foreach over categories.
+        builder.Writeln("<<foreach [cat in Categories]>>");
+        // Bullet for category name.
+        builder.Writeln("• <<[cat.Name]>>");
+        // Begin inner foreach over items.
+        builder.Writeln("<<foreach [item in cat.Items]>>");
+        // Indented bullet for each item.
+        builder.Writeln("   • <<[item]>>");
+        builder.Writeln("<</foreach>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template (optional, for inspection).
+        string templatePath = "Template.docx";
+        template.Save(templatePath);
+
+        // Build the report using the LINQ Reporting engine.
+        ReportingEngine engine = new();
+        engine.BuildReport(template, model, "model");
+
+        // Save the final report.
+        string outputPath = "Report.docx";
+        template.Save(outputPath);
+
+        // Indicate completion.
+        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
     }
 }
 
-// Public data model classes.
-public class Catalog
+// Data model classes.
+public class ReportModel
 {
-    public List<Category> Category { get; set; } = new();
+    public List<Category> Categories { get; set; } = new();
 }
 
 public class Category
 {
     public string Name { get; set; } = string.Empty;
-    public string Type { get; set; } = string.Empty;
-    public List<Product> Product { get; set; } = new();
-}
-
-public class Product
-{
-    public string Name { get; set; } = string.Empty;
+    public List<string> Items { get; set; } = new();
 }

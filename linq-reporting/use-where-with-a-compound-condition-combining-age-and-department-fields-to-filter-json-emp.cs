@@ -7,81 +7,76 @@ using Aspose.Words;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
 
+public class Employee
+{
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
+    public string Department { get; set; } = "";
+}
+
+public class EmployeeData
+{
+    public List<Employee> Employees { get; set; } = new();
+}
+
+public class FilteredData
+{
+    public List<Employee> Employees { get; set; } = new();
+}
+
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required by Aspose.Words for some encodings)
+        // Register code page provider for Aspose.Words.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare sample JSON data
+        // Create sample JSON data file.
         string jsonPath = "employees.json";
-        string jsonContent = @"
-[
-    { ""Name"": ""Alice Johnson"", ""Age"": 28, ""Department"": ""HR"" },
-    { ""Name"": ""Bob Smith"", ""Age"": 35, ""Department"": ""Sales"" },
-    { ""Name"": ""Carol White"", ""Age"": 42, ""Department"": ""Sales"" },
-    { ""Name"": ""David Brown"", ""Age"": 31, ""Department"": ""IT"" },
-    { ""Name"": ""Eve Davis"", ""Age"": 45, ""Department"": ""Sales"" }
-]";
-        File.WriteAllText(jsonPath, jsonContent.Trim());
+        var sampleData = new EmployeeData
+        {
+            Employees = new List<Employee>
+            {
+                new Employee { Name = "John Doe", Age = 35, Department = "Sales" },
+                new Employee { Name = "Jane Smith", Age = 28, Department = "HR" },
+                new Employee { Name = "Bob Johnson", Age = 45, Department = "Sales" },
+                new Employee { Name = "Alice Brown", Age = 32, Department = "IT" }
+            }
+        };
+        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(sampleData, Formatting.Indented));
 
-        // Deserialize JSON to list of employees
-        List<Employee> allEmployees = JsonConvert.DeserializeObject<List<Employee>>(File.ReadAllText(jsonPath)) ?? new List<Employee>();
+        // Load JSON data.
+        var jsonContent = File.ReadAllText(jsonPath);
+        var employeeData = JsonConvert.DeserializeObject<EmployeeData>(jsonContent) ?? new EmployeeData();
 
-        // Filter employees: Age > 30 AND Department == "Sales"
-        List<Employee> filteredEmployees = allEmployees
+        // Apply compound filter: Age > 30 AND Department == "Sales".
+        var filteredEmployees = employeeData.Employees
             .Where(e => e.Age > 30 && e.Department == "Sales")
             .ToList();
 
-        // Prepare the model for the report
-        ReportModel model = new()
-        {
-            Employees = filteredEmployees
-        };
+        var model = new FilteredData { Employees = filteredEmployees };
 
-        // Create a Word template with LINQ Reporting tags
-        string templatePath = "EmployeeReportTemplate.docx";
-        Document templateDoc = new();
-        DocumentBuilder builder = new(templateDoc);
-
-        builder.Writeln("Employee Report - Filtered List");
-        builder.Writeln("-------------------------------------------------");
+        // Create LINQ Reporting template.
+        string templatePath = "Template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Employee Report");
         builder.Writeln("<<foreach [emp in Employees]>>");
         builder.Writeln("Name: <<[emp.Name]>>");
         builder.Writeln("Age: <<[emp.Age]>>");
-        builder.Writeln("Department: <<[emp.Department]>>");
+        builder.Writeln("Dept: <<[emp.Department]>>");
         builder.Writeln("<</foreach>>");
-        builder.Writeln("-------------------------------------------------");
-
         templateDoc.Save(templatePath);
 
-        // Load the template document
-        Document doc = new(templatePath);
+        // Load the template for reporting.
+        var reportDoc = new Document(templatePath);
 
-        // Build the report
-        ReportingEngine engine = new();
-        engine.BuildReport(doc, model, "model");
+        // Build the report using the filtered data.
+        var engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Save the generated report
-        string outputPath = "EmployeeReport.docx";
-        doc.Save(outputPath);
-
-        // Clean up temporary files (optional)
-        // File.Delete(jsonPath);
-        // File.Delete(templatePath);
+        // Save the generated report.
+        string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
-}
-
-// Data model classes
-public class Employee
-{
-    public string Name { get; set; } = string.Empty;
-    public int Age { get; set; }
-    public string Department { get; set; } = string.Empty;
-}
-
-public class ReportModel
-{
-    public List<Employee> Employees { get; set; } = new();
 }

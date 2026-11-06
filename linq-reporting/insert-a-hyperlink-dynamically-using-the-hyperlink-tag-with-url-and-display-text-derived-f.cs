@@ -4,43 +4,53 @@ using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
+public class ReportModel
+{
+    public string Url { get; set; } = "https://example.com";
+    public string LinkText { get; set; } = "Visit Example";
+}
+
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words compatibility.
+        // Register code page provider for any encoding needs.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare a simple data model with URL and display text.
-        var model = new ReportModel
+        // Paths for template and output documents.
+        string templatePath = "template.docx";
+        string outputPath = "output.docx";
+
+        // -------------------------------------------------
+        // Create the template document with a LINQ Reporting link tag.
+        // -------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        builder.Writeln("Dynamic hyperlink example:");
+        // The link tag uses expressions that will be replaced from the model.
+        builder.Writeln("<<link [model.Url] [model.LinkText]>>");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -------------------------------------------------
+        // Load the template and build the report.
+        // -------------------------------------------------
+        Document reportDoc = new Document(templatePath);
+
+        // Sample data model.
+        ReportModel model = new ReportModel
         {
-            Url = "https://example.com",
-            LinkText = "Visit Example"
+            Url = "https://www.aspose.com",
+            LinkText = "Aspose.Words"
         };
 
-        // Create the template document programmatically.
-        var templatePath = "Template.docx";
-        var builder = new DocumentBuilder();
-        // Insert a LINQ Reporting link tag that uses the model fields.
-        builder.Writeln("<<link [model.Url] [model.LinkText]>>");
-        builder.Document.Save(templatePath);
-
-        // Load the template for report generation.
-        var doc = new Document(templatePath);
-
         // Build the report using the LINQ Reporting engine.
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
 
         // Save the generated report.
-        var outputPath = "Report.docx";
-        doc.Save(outputPath);
+        reportDoc.Save(outputPath);
     }
-}
-
-// Public data model class required by the template.
-public class ReportModel
-{
-    public string Url { get; set; } = string.Empty;
-    public string LinkText { get; set; } = string.Empty;
 }

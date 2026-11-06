@@ -1,54 +1,23 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Saving;
 using Aspose.Words.Tables;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some encodings).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Register code page provider for encoding support required by Aspose.Words.
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        // Create a template document programmatically.
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("Order Report");
-        builder.Writeln("<<foreach [item in Items]>>");
-
-        // Table header.
-        Table table = builder.StartTable();
-        builder.InsertCell();
-        builder.Writeln("Index");
-        builder.InsertCell();
-        builder.Writeln("Name");
-        builder.EndRow();
-
-        // Table row for each item.
-        builder.InsertCell();
-        builder.Writeln("<<[item.Index]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[item.Name]>>");
-        builder.EndRow();
-
-        builder.EndTable();
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to a file.
-        const string templatePath = "Template.docx";
-        templateDoc.Save(templatePath);
-
-        // Load the template for report generation.
-        Document reportDoc = new Document(templatePath);
-
-        // Sample data model.
+        // Prepare sample data model.
         ReportModel model = new()
         {
+            Title = "Sample LINQ Reporting",
+            HtmlSnippet = "<b>Bold Text</b>",
             Items = new()
             {
                 new Item { Index = 1, Name = "Apple" },
@@ -57,31 +26,69 @@ public class Program
             }
         };
 
+        // Create a template document programmatically.
+        Document template = new();
+        DocumentBuilder builder = new(template);
+
+        // Title placeholder.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Title;
+        builder.Writeln("<<[model.Title]>>");
+
+        // Insert HTML snippet.
+        builder.Writeln("<<[model.HtmlSnippet] -html>>");
+
+        // Begin foreach loop.
+        builder.Writeln("<<foreach [item in model.Items]>>");
+
+        // Table definition inside the loop.
+        Table table = builder.StartTable();
+
+        // Header row (only once, so we add it before the first data row).
+        builder.InsertCell();
+        builder.Writeln("Index");
+        builder.InsertCell();
+        builder.Writeln("Name");
+        builder.EndRow();
+
+        // Data row template.
+        builder.InsertCell();
+        builder.Writeln("<<[item.Index]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[item.Name]>>");
+        builder.EndRow();
+
+        // End of table.
+        builder.EndTable();
+
+        // End foreach loop.
+        builder.Writeln("<</foreach>>");
+
         // Build the report.
         ReportingEngine engine = new();
-        engine.BuildReport(reportDoc, model, "model");
+        engine.Options = ReportBuildOptions.None;
+        bool success = engine.BuildReport(template, model, "model");
 
         // Serialize the generated report to a memory stream.
         using MemoryStream reportStream = new();
-        reportDoc.Save(reportStream, SaveFormat.Docx);
-        reportStream.Position = 0;
+        template.Save(reportStream, SaveFormat.Docx);
+        reportStream.Position = 0; // Reset for further processing.
 
-        // Example usage of the memory stream (e.g., write length to console).
-        Console.WriteLine($"Report generated. Stream length: {reportStream.Length} bytes.");
-
-        // Optionally, save the report to a file for verification.
-        File.WriteAllBytes("Report.docx", reportStream.ToArray());
+        // Demonstrate that the report was generated.
+        Console.WriteLine($"Report generated successfully: {success}");
+        Console.WriteLine($"Report size (bytes): {reportStream.Length}");
     }
-}
 
-// Data model classes.
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
+    // Data model classes.
+    public class ReportModel
+    {
+        public string Title { get; set; } = string.Empty;
+        public string HtmlSnippet { get; set; } = string.Empty;
+        public List<Item> Items { get; set; } = new();
+    }
 
-public class Item
-{
-    public int Index { get; set; }
-    public string Name { get; set; } = string.Empty;
+    public class Item
+    {
+        public int Index { get; set; }
+        public string Name { get; set; } = string.Empty;
+    }
 }

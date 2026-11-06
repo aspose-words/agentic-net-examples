@@ -5,64 +5,50 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+public class Order
 {
-    public static void Main()
-    {
-        // Prepare sample data
-        ReportModel model = new()
-        {
-            Orders = new()
-            {
-                new Order { CustomerName = "Alice", Total = 120.50m },
-                new Order { CustomerName = "Bob", Total = 75.00m },
-                new Order { CustomerName = "Charlie", Total = 210.30m }
-            }
-        };
-
-        // Create template document
-        string templatePath = "Template.docx";
-        Document templateDoc = new();
-        DocumentBuilder builder = new(templateDoc);
-
-        builder.Writeln("Order Report");
-        builder.Writeln();
-
-        // List each order
-        builder.Writeln("<<foreach [order in Orders]>>");
-        builder.Writeln("Customer: <<[order.CustomerName]>> - Total: $<<[order.Total]>>");
-        builder.Writeln("<</foreach>>");
-        builder.Writeln();
-
-        // Summary section using LINQ aggregation inside a tag expression
-        builder.Writeln("Summary:");
-        builder.Writeln("Total Orders: <<[Orders.Count]>>");
-        builder.Writeln("Grand Total: $<<[Orders.Sum(o => o.Total)]>>");
-
-        // Save the template
-        templateDoc.Save(templatePath);
-
-        // Load the template for reporting
-        Document doc = new(templatePath);
-        ReportingEngine engine = new();
-        engine.BuildReport(doc, model, "model");
-
-        // Save the generated report
-        string outputPath = "Report.docx";
-        doc.Save(outputPath);
-
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
-    }
+    public int Id { get; set; } = 0;
+    public string CustomerName { get; set; } = "";
+    public decimal Total { get; set; } = 0m;
 }
 
-// Data model classes
 public class ReportModel
 {
     public List<Order> Orders { get; set; } = new();
 }
 
-public class Order
+public class Program
 {
-    public string CustomerName { get; set; } = string.Empty;
-    public decimal Total { get; set; }
+    public static void Main()
+    {
+        // Prepare sample data.
+        var model = new ReportModel
+        {
+            Orders = new List<Order>
+            {
+                new Order { Id = 1, CustomerName = "Alice", Total = 120.50m },
+                new Order { Id = 2, CustomerName = "Bob",   Total = 75.00m },
+                new Order { Id = 3, CustomerName = "Carol", Total = 210.25m }
+            }
+        };
+
+        // Create the template document programmatically.
+        var templatePath = "Template.docx";
+        var builder = new DocumentBuilder();
+        builder.Writeln("Order Summary");
+        builder.Writeln("Total of all orders: <<[model.Orders.Sum(o => o.Total)]>>");
+        builder.Document.Save(templatePath);
+
+        // Load the template for reporting.
+        var doc = new Document(templatePath);
+
+        // Build the report using LINQ Reporting Engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
+
+        // Save the generated report.
+        var outputPath = Path.Combine("output", "Report.docx");
+        Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
+        doc.Save(outputPath);
+    }
 }

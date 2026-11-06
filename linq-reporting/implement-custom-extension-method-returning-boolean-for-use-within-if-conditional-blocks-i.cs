@@ -1,65 +1,87 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingExtensionExample
+public class Program
 {
-    // Data model representing a person.
-    public class Person
+    public static void Main()
     {
-        public string Name { get; set; } = string.Empty;
-        public int Age { get; set; }
+        // Register code page provider for Aspose.Words
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Instance method used inside the template's if condition.
-        public bool IsAdult() => Age >= 18;
-    }
-
-    // Wrapper model passed as the root object to the reporting engine.
-    public class ReportModel
-    {
-        public List<Person> Persons { get; set; } = new();
-    }
-
-    public class Program
-    {
-        public static void Main()
+        // Prepare sample data
+        Order sampleOrder = new()
         {
-            // Prepare sample data.
-            var model = new ReportModel
+            Id = 12345,
+            CustomerName = "John Doe",
+            TotalAmount = 1500.75m,
+            Items = new()
             {
-                Persons = new()
-                {
-                    new Person { Name = "Alice", Age = 30 },
-                    new Person { Name = "Bob", Age = 15 },
-                    new Person { Name = "Charlie", Age = 22 }
-                }
-            };
+                new OrderItem { Name = "Laptop", Price = 1200.00m },
+                new OrderItem { Name = "Mouse", Price = 25.50m },
+                new OrderItem { Name = "Keyboard", Price = 75.25m }
+            }
+        };
 
-            // Create the template document programmatically.
-            const string templatePath = "template.docx";
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
+        // Create template document programmatically
+        string templatePath = "Template.docx";
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
 
-            // Write LINQ Reporting tags.
-            builder.Writeln("<<foreach [p in Persons]>>");
-            builder.Writeln("Name: <<[p.Name]>>");
-            builder.Writeln("<<if [p.IsAdult()]>> (Adult) <</if>>");
-            builder.Writeln("<</foreach>>");
+        builder.Writeln("Order Report");
+        builder.Writeln("==============");
+        builder.Writeln("Order ID: <<[order.Id]>>");
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Total Amount: $<<[order.TotalAmount]>>");
+        builder.Writeln();
+        builder.Writeln("<<if [order.IsHighValue()]>>");
+        builder.Writeln("** This is a high‑value order! **");
+        builder.Writeln("<</if>>");
+        builder.Writeln();
+        builder.Writeln("Items:");
+        builder.Writeln("<<foreach [item in order.Items]>>");
+        builder.Writeln("- <<[item.Name]>> : $<<[item.Price]>>");
+        builder.Writeln("<</foreach>>");
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
+        templateDoc.Save(templatePath);
 
-            // Load the template for report generation.
-            var doc = new Document(templatePath);
+        // Load the template for reporting
+        Document reportDoc = new(templatePath);
 
-            // Build the report using the model.
-            var engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
+        // Build the report using the custom method in the conditional
+        ReportingEngine engine = new();
+        engine.Options = ReportBuildOptions.None;
+        bool success = engine.BuildReport(reportDoc, sampleOrder, "order");
 
-            // Save the generated report.
-            const string outputPath = "output.docx";
-            doc.Save(outputPath);
-        }
+        // Save the generated report
+        string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
+
+        // Indicate completion (no interactive input)
+        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to '{outputPath}'.");
     }
+}
+
+// Data model classes
+public class Order
+{
+    public int Id { get; set; }
+    public string CustomerName { get; set; } = string.Empty;
+    public decimal TotalAmount { get; set; }
+    public List<OrderItem> Items { get; set; } = new();
+
+    // Method used in the template conditional
+    public bool IsHighValue()
+    {
+        // Define high value as total amount greater than 1000
+        return TotalAmount > 1000m;
+    }
+}
+
+public class OrderItem
+{
+    public string Name { get; set; } = string.Empty;
+    public decimal Price { get; set; }
 }

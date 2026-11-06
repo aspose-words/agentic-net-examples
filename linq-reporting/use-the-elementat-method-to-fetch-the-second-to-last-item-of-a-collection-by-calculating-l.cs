@@ -1,52 +1,57 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class ReportModel
 {
-    // Initialize the collection to avoid nullable warnings.
     public List<string> Items { get; set; } = new();
+    public string SecondToLastItem { get; set; } = string.Empty;
 
-    // Optional helper property that uses ElementAt to get the second‑to‑last item.
-    public string? SecondToLast => Items.Count >= 2 ? Items.ElementAt(Items.Count - 2) : null;
+    public ReportModel()
+    {
+        // Sample collection.
+        Items = new List<string> { "Apple", "Banana", "Cherry", "Date" };
+
+        // Fetch the second‑to‑last item using ElementAt and the collection length.
+        if (Items.Count >= 2)
+        {
+            SecondToLastItem = Items.ElementAt(Items.Count - 2);
+        }
+    }
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document and a builder to insert the template content.
+        // Prepare output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // Create the template document.
+        string templatePath = Path.Combine(outputDir, "template.docx");
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Insert a simple paragraph that displays the second‑to‑last item using ElementAt.
-        // The expression calculates the index based on the collection length.
-        builder.Writeln("Second to last item (using ElementAt): <<[model.Items.ElementAt(model.Items.Count - 2)]>>");
-
-        // Save the template to disk.
-        const string templatePath = "Template.docx";
+        builder.Writeln("Second to last item: <<[model.SecondToLastItem]>>");
         templateDoc.Save(templatePath);
 
-        // Load the template back for report generation.
-        Document reportDoc = new Document(templatePath);
+        // Load the template for reporting.
+        Document doc = new Document(templatePath);
 
-        // Prepare sample data.
-        ReportModel model = new ReportModel
-        {
-            Items = new List<string> { "Alpha", "Beta", "Gamma", "Delta", "Epsilon" }
-        };
+        // Prepare the data model.
+        ReportModel model = new ReportModel();
 
-        // Build the report using Aspose.Words LINQ Reporting Engine.
+        // Build the report.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+        engine.BuildReport(doc, model, "model");
 
         // Save the generated report.
-        const string outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+        string resultPath = Path.Combine(outputDir, "output.docx");
+        doc.Save(resultPath);
 
-        // Indicate completion.
-        Console.WriteLine($"Report generated: {outputPath}");
+        Console.WriteLine($"Report generated: {resultPath}");
     }
 }

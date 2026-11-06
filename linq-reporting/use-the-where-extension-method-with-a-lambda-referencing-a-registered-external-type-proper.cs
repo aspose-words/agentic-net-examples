@@ -1,66 +1,80 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class ExternalInfo
+namespace LinqReportingExample
 {
-    public bool IsActive { get; set; } = true;
-}
-
-public class Person
-{
-    public string Name { get; set; } = "";
-    public int Age { get; set; }
-    public ExternalInfo Info { get; set; } = new();
-}
-
-public class ReportModel
-{
-    public List<Person> Persons { get; set; } = new();
-
-    // Advanced filtering using Where with a lambda that references an external type property (Info.IsActive)
-    public IEnumerable<Person> ActivePersons => Persons.Where(p => p.Info.IsActive);
-}
-
-public class Program
-{
-    public static void Main()
+    public static class FilterSettings
     {
-        // Prepare sample data
-        var model = new ReportModel
+        // External static property used for filtering
+        public static string Category { get; set; } = "Electronics";
+    }
+
+    public class Product
+    {
+        public string Name { get; set; } = "";
+        public string Category { get; set; } = "";
+        public decimal Price { get; set; }
+    }
+
+    public class ReportModel
+    {
+        public List<Product> Products { get; set; } = new();
+    }
+
+    public class Program
+    {
+        public static void Main()
         {
-            Persons = new()
+            // Prepare sample data
+            var allProducts = new List<Product>
             {
-                new Person { Name = "Alice", Age = 30, Info = new ExternalInfo { IsActive = true } },
-                new Person { Name = "Bob", Age = 45, Info = new ExternalInfo { IsActive = false } },
-                new Person { Name = "Charlie", Age = 25, Info = new ExternalInfo { IsActive = true } }
-            }
-        };
+                new() { Name = "Smartphone", Category = "Electronics", Price = 699.99m },
+                new() { Name = "Laptop", Category = "Electronics", Price = 1199.49m },
+                new() { Name = "Desk Chair", Category = "Furniture", Price = 149.00m },
+                new() { Name = "Coffee Table", Category = "Furniture", Price = 89.99m },
+                new() { Name = "Headphones", Category = "Electronics", Price = 199.95m }
+            };
 
-        // Create template document programmatically
-        string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+            // Advanced filtering using Where and external static property
+            var filteredProducts = allProducts
+                .Where(p => p.Category == FilterSettings.Category)
+                .ToList();
 
-        builder.Writeln("Active Persons:");
-        builder.Writeln("<<foreach [p in ActivePersons]>>");
-        builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
-        builder.Writeln("<</foreach>>");
+            var model = new ReportModel { Products = filteredProducts };
 
-        templateDoc.Save(templatePath);
+            // Create template document programmatically
+            string templatePath = "ReportTemplate.docx";
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Load the template for reporting
-        var doc = new Document(templatePath);
+            builder.Writeln("Product Report - Category: " + FilterSettings.Category);
+            builder.Writeln();
+            builder.Writeln("<<foreach [p in Products]>>");
+            builder.Writeln("Name: <<[p.Name]>>");
+            builder.Writeln("Category: <<[p.Category]>>");
+            builder.Writeln("Price: $<<[p.Price]>>");
+            builder.Writeln("<</foreach>>");
 
-        // Build the report
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+            templateDoc.Save(templatePath);
 
-        // Save the generated report
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "Report.docx");
-        doc.Save(outputPath);
+            // Load the template for reporting
+            Document doc = new Document(templatePath);
+
+            // Configure reporting engine
+            ReportingEngine engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.None;
+
+            // Build the report
+            bool success = engine.BuildReport(doc, model, "model");
+
+            // Save the generated report
+            string outputPath = "ProductReport.docx";
+            doc.Save(outputPath);
+
+            // Simple verification output (no interactive input)
+            Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to '{outputPath}'.");
+        }
     }
 }

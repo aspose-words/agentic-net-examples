@@ -3,51 +3,47 @@ using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Saving;
 
-public class JsonReportExample
+public class Program
 {
     public static void Main()
     {
-        // Register code page provider for required encodings.
+        // Register code page provider (required for some encodings)
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Sample JSON data.
+        // Sample JSON data
         string json = @"{
-            ""CustomerName"": ""John Doe"",
-            ""OrderDate"": ""2023-01-01"",
-            ""Items"": [
-                { ""Index"": 1, ""Name"": ""Item A"", ""Price"": 10.5 },
-                { ""Index"": 2, ""Name"": ""Item B"", ""Price"": 20.0 },
-                { ""Index"": 3, ""Name"": ""Item C"", ""Price"": 15.75 }
+            ""people"": [
+                { ""Name"": ""Alice"", ""Age"": 30 },
+                { ""Name"": ""Bob"", ""Age"": 25 }
             ]
         }";
 
-        // Load JSON from a memory stream (JsonDataSource expects a path or stream).
-        using var jsonStream = new MemoryStream(Encoding.UTF8.GetBytes(json));
-        var dataSource = new JsonDataSource(jsonStream, new JsonDataLoadOptions());
+        // Create a Word document template programmatically
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build the template document programmatically.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("Order Date: <<[order.OrderDate]>>");
-        builder.Writeln();
-        builder.Writeln("Items:");
-        builder.Writeln("<<foreach [item in order.Items]>>");
-        builder.Writeln("- <<[item.Index]>>: <<[item.Name]>> - $<<[item.Price]>>");
+        builder.Writeln("People Report");
+        builder.Writeln("<<foreach [p in people]>>");
+        builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
         builder.Writeln("<</foreach>>");
 
-        // Build the report using the LINQ Reporting engine.
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, dataSource, "order");
+        // Load JSON data source from a memory stream (JsonDataSource expects a path or stream)
+        using (MemoryStream jsonStream = new MemoryStream(Encoding.UTF8.GetBytes(json)))
+        {
+            JsonDataSource jsonDataSource = new JsonDataSource(jsonStream);
 
-        // Write the generated report to a memory stream.
-        using var outputStream = new MemoryStream();
-        doc.Save(outputStream, SaveFormat.Docx);
-        outputStream.Position = 0;
+            // Build the report
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(doc, jsonDataSource, "people");
 
-        // Output the size of the generated document.
-        Console.WriteLine($"Report generated successfully. Size: {outputStream.Length} bytes.");
+            // Write the generated report to a memory stream
+            using (MemoryStream output = new MemoryStream())
+            {
+                doc.Save(output, SaveFormat.Docx);
+                Console.WriteLine($"Report generated, size: {output.Length} bytes");
+            }
+        }
     }
 }

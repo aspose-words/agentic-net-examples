@@ -5,80 +5,87 @@ using System.Text;
 using System.Threading.Tasks;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Newtonsoft.Json;
 
 namespace LinqReportingAsyncExample
 {
-    // Sample data model.
+    // Sample data model
     public class Order
     {
-        public string CustomerName { get; set; } = string.Empty;
+        public string CustomerName { get; set; } = "John Doe";
         public List<Item> Items { get; set; } = new();
     }
 
     public class Item
     {
+        public int Index { get; set; }
         public string Name { get; set; } = string.Empty;
-        public int Quantity { get; set; }
     }
 
-    class Program
+    public class Program
     {
-        static async Task Main(string[] args)
+        public static async Task Main()
         {
-            // Ensure code page support (required for some data sources).
+            // Register code page provider for possible encoding needs
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            // Paths for template and output.
-            string templatePath = "template.docx";
-            string outputPath = "report.docx";
+            await GenerateReportAsync();
+        }
 
-            // 1. Create the template document programmatically.
+        private static async Task GenerateReportAsync()
+        {
+            // Paths for template and output
+            string templatePath = "ReportTemplate.docx";
+            string outputPath = "ReportResult.docx";
+
+            // -------------------------------------------------
+            // Create the template document programmatically
+            // -------------------------------------------------
             Document templateDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            builder.Writeln("Customer: <<[order.CustomerName]>>");
-            builder.Writeln("Items:");
-            builder.Writeln("<<foreach [item in order.Items]>>");
-            builder.Writeln("- <<[item.Name]>>: <<[item.Quantity]>>");
+            // Write a title and a placeholder for the customer name
+            builder.Writeln("Order Report");
+            builder.Writeln("Customer: <<[model.CustomerName]>>");
+            builder.Writeln();
+
+            // Begin foreach loop over Items
+            builder.Writeln("<<foreach [item in model.Items]>>");
+            builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
             builder.Writeln("<</foreach>>");
 
-            // Save the template to disk.
+            // Save the template to disk
             templateDoc.Save(templatePath);
 
-            // 2. Load the template (simulating a separate load step).
+            // -------------------------------------------------
+            // Load the template for reporting
+            // -------------------------------------------------
             Document doc = new Document(templatePath);
 
-            // 3. Prepare sample data.
-            Order order = new Order
+            // Prepare sample data
+            Order order = new()
             {
-                CustomerName = "John Doe",
-                Items = new List<Item>
+                CustomerName = "Acme Corp",
+                Items = new()
                 {
-                    new Item { Name = "Apple", Quantity = 3 },
-                    new Item { Name = "Banana", Quantity = 5 },
-                    new Item { Name = "Orange", Quantity = 2 }
+                    new Item { Index = 1, Name = "Widget A" },
+                    new Item { Index = 2, Name = "Widget B" },
+                    new Item { Index = 3, Name = "Widget C" }
                 }
             };
 
-            // (Optional) Serialize to JSON just to demonstrate the required package.
-            string json = JsonConvert.SerializeObject(order, Formatting.Indented);
-            Console.WriteLine("Sample data in JSON format:");
-            Console.WriteLine(json);
-
-            // 4. Build the report asynchronously.
+            // -------------------------------------------------
+            // Build the report asynchronously (wrapped in Task.Run)
+            // -------------------------------------------------
             ReportingEngine engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.None;
 
-            await BuildReportAsync(engine, doc, order, "order");
+            bool success = await Task.Run(() => engine.BuildReport(doc, order, "model"));
 
-            // 5. Save the generated report.
-            doc.Save(outputPath);
-        }
-
-        // Wrap the synchronous BuildReport call in a Task to make it asynchronous.
-        private static Task BuildReportAsync(ReportingEngine engine, Document doc, object root, string rootName)
-        {
-            return Task.Run(() => engine.BuildReport(doc, root, rootName));
+            // Save the generated report if successful
+            if (success)
+            {
+                doc.Save(outputPath);
+            }
         }
     }
 }

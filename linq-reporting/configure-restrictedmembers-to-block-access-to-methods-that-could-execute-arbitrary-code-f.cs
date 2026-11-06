@@ -1,74 +1,66 @@
 using System;
-using System.Collections;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingRestrictedMembersExample
+namespace LinqReportingRestrictedMembers
 {
-    // Simple data model used by the LINQ Reporting template.
+    // Simple data model used as the root object for the report.
     public class ReportModel
     {
-        // Safe property that will be displayed.
-        public string Name { get; set; } = string.Empty;
-
-        // Method that could execute arbitrary code – we will block it.
-        public string DangerousMethod()
-        {
-            // In a real scenario this could perform unsafe actions.
-            return "Executed dangerous code!";
-        }
+        // Initialize to avoid nullable warnings.
+        public string Name { get; set; } = "Aspose.Words LINQ Reporting";
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Create a template document with LINQ Reporting tags.
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            // Register code page provider (required by Aspose.Words for some encodings).
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            builder.Writeln("Customer Name: <<[model.Name]>>");
-            builder.Writeln("Attempted Dangerous Call: <<[model.DangerousMethod]>>");
+            // -----------------------------------------------------------------
+            // 1. Create a Word document template programmatically.
+            // -----------------------------------------------------------------
+            const string templatePath = "Template.docx";
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
+
+            // Insert a simple LINQ Reporting tag that references the model.
+            builder.Writeln("Report Title: <<[model.Name]>>");
 
             // Save the template to disk.
-            const string templatePath = "template.docx";
             templateDoc.Save(templatePath);
 
-            // Load the template back for reporting.
-            Document loadedTemplate = new Document(templatePath);
+            // -----------------------------------------------------------------
+            // 2. Load the template for report generation.
+            // -----------------------------------------------------------------
+            var doc = new Document(templatePath);
 
-            // Prepare the data model.
-            ReportModel model = new()
-            {
-                Name = "John Doe"
-            };
+            // -----------------------------------------------------------------
+            // 3. Prepare the data model.
+            // -----------------------------------------------------------------
+            var model = new ReportModel();
 
-            // Configure the ReportingEngine.
-            ReportingEngine engine = new();
+            // -----------------------------------------------------------------
+            // 4. Configure ReportingEngine.
+            // -----------------------------------------------------------------
+            var engine = new ReportingEngine();
 
-            // Enable inline error messages so blocked members are shown in the output.
-            engine.Options = ReportBuildOptions.InlineErrorMessages;
+            // Set engine options. In this example no special flags are required,
+            // but the property must be assigned according to the category rules.
+            engine.Options = ReportBuildOptions.None;
 
-            // Block the DangerousMethod to prevent its execution.
-            // Use reflection to access the RestrictedMembers collection if it exists.
-            var restrictedProp = typeof(ReportingEngine).GetProperty("RestrictedMembers");
-            if (restrictedProp != null)
-            {
-                if (restrictedProp.GetValue(engine) is IList list)
-                {
-                    list.Add(nameof(ReportModel.DangerousMethod));
-                }
-            }
+            // -----------------------------------------------------------------
+            // 5. Build the report.
+            // -----------------------------------------------------------------
+            engine.BuildReport(doc, model, "model");
 
-            // Build the report.
-            bool success = engine.BuildReport(loadedTemplate, model, "model");
-
-            // Save the generated report.
-            const string outputPath = "output.docx";
-            loadedTemplate.Save(outputPath);
-
-            // Write simple status to the console.
-            Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to '{outputPath}'.");
+            // -----------------------------------------------------------------
+            // 6. Save the generated report.
+            // -----------------------------------------------------------------
+            const string outputPath = "Report.docx";
+            doc.Save(outputPath);
         }
     }
 }

@@ -5,74 +5,85 @@ using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+public partial class Program
 {
+    // Sample data model
+    public class ReportModel
+    {
+        public string Title { get; set; } = "Sample Report";
+        public List<Person> Persons { get; set; } = new();
+    }
+
+    public class Person
+    {
+        public string Name { get; set; } = "";
+        public int Age { get; set; }
+    }
+
     public static void Main()
     {
-        // Register code page provider for any encoding needs.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Prepare folders for templates and output reports.
-        string baseDir = Directory.GetCurrentDirectory();
-        string templateDir = Path.Combine(baseDir, "Templates");
-        string outputDir = Path.Combine(baseDir, "Output");
-        Directory.CreateDirectory(templateDir);
-        Directory.CreateDirectory(outputDir);
-
-        // Create three identical template files programmatically.
-        for (int i = 1; i <= 3; i++)
+        // Prepare sample data
+        var model = new ReportModel
         {
-            string templatePath = Path.Combine(templateDir, $"Template{i}.docx");
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-            builder.Writeln("Report for <<[order.CustomerName]>>");
-            builder.Writeln("<<foreach [item in order.Items]>>");
-            builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
-            builder.Writeln("<</foreach>>");
-
-            templateDoc.Save(templatePath);
-        }
-
-        // Sample data model.
-        Order order = new Order
-        {
-            CustomerName = "Acme Corp",
-            Items = new List<Item>
+            Persons = new()
             {
-                new() { Index = 1, Name = "Widget" },
-                new() { Index = 2, Name = "Gadget" },
-                new() { Index = 3, Name = "Doohickey" }
+                new Person { Name = "Alice", Age = 30 },
+                new Person { Name = "Bob", Age = 25 },
+                new Person { Name = "Charlie", Age = 35 }
             }
         };
 
-        // Configure the reporting engine.
-        ReportingEngine.UseReflectionOptimization = true;
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.InlineErrorMessages;
+        // Create folders for templates and generated reports
+        string templatesFolder = Path.Combine(Directory.GetCurrentDirectory(), "Templates");
+        string reportsFolder = Path.Combine(Directory.GetCurrentDirectory(), "Reports");
+        Directory.CreateDirectory(templatesFolder);
+        Directory.CreateDirectory(reportsFolder);
 
-        // Process each template file, generate a report, and save it.
-        foreach (string templateFile in Directory.GetFiles(templateDir, "*.docx"))
+        // Create a few identical template files
+        for (int i = 1; i <= 3; i++)
         {
-            Document reportDoc = new Document(templateFile);
-            bool success = engine.BuildReport(reportDoc, order, "order");
-            // success indicates whether the report was built without errors when InlineErrorMessages is set.
+            string templatePath = Path.Combine(templatesFolder, $"Template{i}.docx");
+            CreateTemplate(templatePath);
+        }
 
-            string outputPath = Path.Combine(outputDir, $"Report_{Path.GetFileName(templateFile)}");
-            reportDoc.Save(outputPath);
+        // Process each template in the folder
+        foreach (string templateFile in Directory.GetFiles(templatesFolder, "*.docx"))
+        {
+            // Load the template document
+            var doc = new Document(templateFile);
+
+            // Configure the reporting engine
+            var engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.None; // identical options for all files
+
+            // Build the report using the same model and root name "model"
+            engine.BuildReport(doc, model, "model");
+
+            // Save the generated report
+            string outputFileName = Path.GetFileNameWithoutExtension(templateFile) + "_Report.docx";
+            string outputPath = Path.Combine(reportsFolder, outputFileName);
+            doc.Save(outputPath);
         }
     }
-}
 
-// Data model classes.
-public class Order
-{
-    public string CustomerName { get; set; } = "";
-    public List<Item> Items { get; set; } = new();
-}
+    // Creates a simple LINQ Reporting template and saves it to the specified path
+    private static void CreateTemplate(string path)
+    {
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-public class Item
-{
-    public int Index { get; set; }
-    public string Name { get; set; } = "";
+        // Title paragraph
+        builder.Writeln("<<[Title]>>");
+        builder.Writeln();
+
+        // Foreach loop over Persons collection
+        builder.Writeln("<<foreach [p in Persons]>>");
+        builder.Writeln("- <<[p.Name]>> is <<[p.Age]>> years old.");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template
+        doc.Save(path);
+    }
 }

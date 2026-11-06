@@ -3,49 +3,45 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Order
+public class Customer
 {
-    public int Id { get; set; }
-    public string CustomerName { get; set; } = string.Empty;
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample data collection.
-        List<Order> orders = new()
-        {
-            new Order { Id = 1, CustomerName = "Alice" },
-            new Order { Id = 2, CustomerName = "Bob" },
-            new Order { Id = 3, CustomerName = "Charlie" }
-        };
-
         // Create a template document with LINQ Reporting tags.
-        Document template = new();
-        DocumentBuilder builder = new(template);
+        string templatePath = "Template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("Orders Report");
-        builder.Writeln("<<foreach [order in orders]>>");
-        builder.Writeln("Order ID: <<[order.Id]>>, Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Customer List:");
+        builder.Writeln("<<foreach [c in customers]>>");
+        builder.Writeln("Name: <<[c.Name]>>, Age: <<[c.Age]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template (optional, but ensures the document is fully created before building).
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        templateDoc.Save(templatePath);
 
         // Load the template for report generation.
-        Document doc = new(templatePath);
+        var doc = new Document(templatePath);
 
-        // Build the report using the collection name overload.
-        ReportingEngine engine = new();
-        bool success = engine.BuildReport(doc, orders, "orders");
+        // Prepare a collection of customers.
+        var customers = new List<Customer>
+        {
+            new() { Name = "Alice", Age = 30 },
+            new() { Name = "Bob", Age = 25 },
+            new() { Name = "Charlie", Age = 28 }
+        };
+
+        // Build the report, specifying the collection name "customers".
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, customers, "customers");
 
         // Save the generated report.
-        const string outputPath = "Report.docx";
+        string outputPath = "Report.docx";
         doc.Save(outputPath);
-
-        // Indicate completion (no interactive input).
-        Console.WriteLine(success ? "Report generated successfully." : "Report generation failed.");
     }
 }

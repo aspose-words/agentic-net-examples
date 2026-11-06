@@ -1,50 +1,62 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Model
+public class ReportModel
 {
-    public string Name { get; set; } = "John Doe";
+    // Initialize property to avoid nullable warnings.
+    public string Name { get; set; } = "World";
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Create a temporary folder for the example files.
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "LinqReportingExample");
+        Directory.CreateDirectory(workDir);
 
-        // Prepare directories.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
+        // Paths for the template and the generated report.
+        string templatePath = Path.Combine(workDir, "template.docx");
+        string outputPath = Path.Combine(workDir, "output.docx");
 
-        // Create template document with a simple LINQ Reporting tag.
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Customer Name: <<[model.Name]>>");
+        // -----------------------------------------------------------------
+        // 1. Build the template document with a simple LINQ Reporting tag.
+        // -----------------------------------------------------------------
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
+        builder.Writeln("Hello <<[model.Name]>>!"); // Tag references the root object named "model".
         templateDoc.Save(templatePath);
 
-        // Load the template.
-        var doc = new Document(templatePath);
+        // -----------------------------------------------------------------
+        // 2. Load the template back (required before building the report).
+        // -----------------------------------------------------------------
+        Document doc = new(templatePath);
 
-        // Prepare the data model.
-        var model = new Model();
+        // -----------------------------------------------------------------
+        // 3. Prepare the data model.
+        // -----------------------------------------------------------------
+        ReportModel model = new();
 
-        // Configure the reporting engine with InlineErrorMessages.
-        var engine = new ReportingEngine();
+        // -----------------------------------------------------------------
+        // 4. Configure the ReportingEngine with InlineErrorMessages option.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new();
         engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-        // Build the report and capture the success flag.
+        // -----------------------------------------------------------------
+        // 5. Build the report and capture the success flag.
+        // -----------------------------------------------------------------
         bool success = engine.BuildReport(doc, model, "model");
 
-        // Save the generated report.
-        string reportPath = Path.Combine(outputDir, "report.docx");
-        doc.Save(reportPath);
+        // -----------------------------------------------------------------
+        // 6. Save the generated report.
+        // -----------------------------------------------------------------
+        doc.Save(outputPath);
 
-        // Output the success flag.
+        // Output the result.
         Console.WriteLine($"Report build success: {success}");
+        Console.WriteLine($"Generated document saved to: {outputPath}");
     }
 }

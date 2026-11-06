@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -8,82 +7,89 @@ public class Program
 {
     public static void Main()
     {
-        // Enable reflection optimization.
-        ReportingEngine.UseReflectionOptimization = true;
-
-        // Create a template document.
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("Company: <<[model.Name]>>");
-        builder.Writeln("<<foreach [dept in model.Departments]>>");
-        builder.Writeln("Department: <<[dept.Name]>>");
-        builder.Writeln("<<foreach [emp in dept.Employees]>>");
-        builder.Writeln("- <<[emp.Name]>> (<<[emp.Position]>>), Age: <<[emp.Age]>>");
-        builder.Writeln("<</foreach>>");
-        builder.Writeln("<</foreach>>");
-
-        templateDoc.Save(templatePath);
-
-        // Load the template for reporting.
-        Document reportDoc = new Document(templatePath);
-
-        // Prepare hierarchical data.
-        Company company = new Company
+        // Sample hierarchical data
+        Company company = new()
         {
-            Name = "Tech Solutions Ltd.",
-            Departments = new List<Department>
+            Name = "Tech Corp",
+            Departments = new()
             {
                 new Department
                 {
                     Name = "Research & Development",
-                    Employees = new List<Employee>
+                    Employees = new()
                     {
-                        new Employee { Name = "Alice Johnson", Age = 30, Position = "Senior Engineer" },
-                        new Employee { Name = "Bob Smith", Age = 28, Position = "Engineer" }
+                        new Employee { Name = "Alice", Title = "Engineer" },
+                        new Employee { Name = "Bob", Title = "Senior Engineer" }
                     }
                 },
                 new Department
                 {
                     Name = "Human Resources",
-                    Employees = new List<Employee>
+                    Employees = new()
                     {
-                        new Employee { Name = "Carol White", Age = 35, Position = "HR Manager" },
-                        new Employee { Name = "David Brown", Age = 32, Position = "Recruiter" }
+                        new Employee { Name = "Carol", Title = "HR Manager" }
                     }
                 }
             }
         };
 
-        // Create and configure the reporting engine.
-        ReportingEngine engine = new ReportingEngine();
+        // Create template document programmatically
+        Document template = new();
+        DocumentBuilder builder = new(template);
 
-        // Build the report.
-        engine.BuildReport(reportDoc, company, "model");
+        builder.Writeln("Company: <<[company.Name]>>");
+        builder.Writeln("<<foreach [dept in company.Departments]>>");
+        builder.Writeln("Department: <<[dept.Name]>>");
+        builder.Writeln("<<foreach [emp in dept.Employees]>>");
+        builder.Writeln("- <<[emp.Name]>> (<<[emp.Title]>>)");
+        builder.Writeln("<</foreach>>");
+        builder.Writeln("<</foreach>>");
 
-        // Save the generated report.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        reportDoc.Save(outputPath);
+        // Save template to disk
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
+
+        // Load the template for reporting
+        Document doc = new(templatePath);
+
+        // Enable reflection optimization
+        ReportingEngine.UseReflectionOptimization = true;
+
+        // Create reporting engine
+        ReportingEngine engine = new();
+
+        // (Optional) Register external types if the API supports it.
+        // engine.RegisterExternalType("Company", typeof(Company));
+        // engine.RegisterExternalType("Department", typeof(Department));
+        // engine.RegisterExternalType("Employee", typeof(Employee));
+
+        // Build the report
+        engine.BuildReport(doc, company, "company");
+
+        // Save the generated report
+        const string reportPath = "Report.docx";
+        doc.Save(reportPath);
+
+        // Indicate completion
+        Console.WriteLine($"Report generated: {reportPath}");
     }
 }
 
-// Data model classes.
+// Data model classes
 public class Company
 {
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; set; } = "";
     public List<Department> Departments { get; set; } = new();
 }
 
 public class Department
 {
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; set; } = "";
     public List<Employee> Employees { get; set; } = new();
 }
 
 public class Employee
 {
-    public string Name { get; set; } = string.Empty;
-    public int Age { get; set; }
-    public string Position { get; set; } = string.Empty;
+    public string Name { get; set; } = "";
+    public string Title { get; set; } = "";
 }

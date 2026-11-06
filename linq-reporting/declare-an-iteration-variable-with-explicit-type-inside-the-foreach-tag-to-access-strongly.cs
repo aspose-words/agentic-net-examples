@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -18,32 +19,36 @@ public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // Create a template document that contains a foreach tag.
-        // The iteration variable is declared without an explicit type,
-        // which is the correct syntax for Aspose.Words LINQ Reporting.
-        // -----------------------------------------------------------------
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Register code page provider (required for some encodings).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Correct foreach syntax: <<foreach [p in Persons]>>
+        // Paths for template and output.
+        string templatePath = "Template.docx";
+        string outputPath = "Report.docx";
+
+        // -------------------------------------------------
+        // Create the template document with LINQ Reporting tags.
+        // -------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Insert a foreach tag (iteration variable does not include type per LINQ Reporting syntax).
         builder.Writeln("<<foreach [p in Persons]>>");
         builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
         builder.Writeln("<</foreach>>");
 
         // Save the template to disk.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
         // Load the template for report generation.
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
         Document doc = new Document(templatePath);
 
         // Prepare sample data.
-        ReportModel model = new()
+        ReportModel model = new ReportModel
         {
-            Persons = new()
+            Persons = new List<Person>
             {
                 new Person { Name = "Alice", Age = 30 },
                 new Person { Name = "Bob", Age = 25 },
@@ -56,7 +61,6 @@ public class Program
         engine.BuildReport(doc, model, "model");
 
         // Save the generated report.
-        const string outputPath = "Report.docx";
         doc.Save(outputPath);
     }
 }

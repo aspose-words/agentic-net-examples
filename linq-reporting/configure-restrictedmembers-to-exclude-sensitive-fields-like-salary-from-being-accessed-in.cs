@@ -1,67 +1,77 @@
 using System;
-using System.Reflection;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace LinqReportingRestrictedMembersExample
 {
-    public static void Main()
+    // Sample data model.
+    public class Employee
     {
-        // Register code page provider (required by Aspose.Words for some encodings)
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
-
-        // Sample data
-        Employee employee = new Employee
-        {
-            Name = "John Doe",
-            Position = "Software Engineer",
-            Salary = 95000m
-        };
-
-        // Create a template document programmatically
-        const string templatePath = "template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("Employee Report");
-        builder.Writeln("Name: <<[emp.Name]>>");
-        builder.Writeln("Position: <<[emp.Position]>>");
-        // Salary field will be restricted
-        builder.Writeln("Salary: <<[emp.Salary]>>");
-
-        templateDoc.Save(templatePath);
-
-        // Load the template for reporting
-        Document reportDoc = new Document(templatePath);
-
-        // Configure ReportingEngine
-        ReportingEngine engine = new ReportingEngine();
-
-        // Set RestrictedMembers via reflection (property may not exist in older versions)
-        PropertyInfo? restrictedProp = typeof(ReportingEngine).GetProperty("RestrictedMembers");
-        if (restrictedProp != null && restrictedProp.CanWrite)
-        {
-            restrictedProp.SetValue(engine, new[] { "Salary" });
-        }
-
-        engine.Options = ReportBuildOptions.InlineErrorMessages;
-
-        // Build the report
-        bool success = engine.BuildReport(reportDoc, employee, "emp");
-
-        // Save the generated report
-        const string outputPath = "report.docx";
-        reportDoc.Save(outputPath);
-
-        // Output result information (non‑interactive)
-        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to '{outputPath}'.");
+        public string Name { get; set; } = "John Doe";
+        public decimal Salary { get; set; } = 75000m; // Sensitive field.
+        public string Position { get; set; } = "Software Engineer";
     }
-}
 
-// Public data model
-public class Employee
-{
-    public string Name { get; set; } = string.Empty;
-    public string Position { get; set; } = string.Empty;
-    public decimal Salary { get; set; }
+    public class Program
+    {
+        public static void Main()
+        {
+            // Register code page provider for any encoding needs.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Paths for template and output.
+            const string templatePath = "EmployeeTemplate.docx";
+            const string outputPath = "EmployeeReport.docx";
+
+            // -----------------------------------------------------------------
+            // 1. Create the template document programmatically.
+            // -----------------------------------------------------------------
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
+
+            builder.Writeln("Employee Report");
+            builder.Writeln("Name: <<[employee.Name]>>");
+            builder.Writeln("Position: <<[employee.Position]>>");
+            // This field is sensitive and will be restricted.
+            builder.Writeln("Salary: <<[employee.Salary]>>");
+
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 2. Load the template for report generation.
+            // -----------------------------------------------------------------
+            var doc = new Document(templatePath);
+
+            // -----------------------------------------------------------------
+            // 3. Prepare the data source.
+            // -----------------------------------------------------------------
+            var employee = new Employee();
+
+            // -----------------------------------------------------------------
+            // 4. Configure the ReportingEngine.
+            // -----------------------------------------------------------------
+            var engine = new ReportingEngine();
+
+            // Enable inline error messages so attempts to access restricted members
+            // (e.g., Salary) will be shown directly in the generated document.
+            engine.Options = ReportBuildOptions.InlineErrorMessages;
+
+            // -----------------------------------------------------------------
+            // 5. Build the report.
+            // -----------------------------------------------------------------
+            bool success = engine.BuildReport(doc, employee, "employee");
+
+            // -----------------------------------------------------------------
+            // 6. Save the generated report.
+            // -----------------------------------------------------------------
+            doc.Save(outputPath);
+
+            // Simple console output to indicate completion.
+            Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}.");
+            Console.WriteLine($"Template: {templatePath}");
+            Console.WriteLine($"Report:   {outputPath}");
+        }
+    }
 }

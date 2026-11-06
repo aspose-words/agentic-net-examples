@@ -6,49 +6,56 @@ using Aspose.Words.Reporting;
 
 public class Person
 {
-    public string Name { get; set; } = "John Doe";
-    public int Age { get; set; } = 30;
-    public string Email { get; set; } = "john.doe@example.com";
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
+    public string Email { get; set; } = "";
+    
+    public Person(string name, int age, string email)
+    {
+        Name = name;
+        Age = age;
+        Email = email;
+    }
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words.
+        // Register code page provider for Aspose.Words if needed.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Paths for template and output documents.
-        string templatePath = "Template.docx";
-        string outputPath = "Report.docx";
-
-        // Create a template document with LINQ Reporting tags.
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
+        
+        // Sample data.
+        Person person = new("John Doe", 30, "john.doe@example.com");
+        
+        // Create template document.
+        Document template = new();
+        DocumentBuilder builder = new(template);
+        
+        builder.Writeln("Person Report");
         builder.Writeln("Name: <<[person.Name]>>");
         builder.Writeln("Age: <<[person.Age]>>");
         builder.Writeln("Email: <<[person.Email]>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // Load the template for report generation.
-        Document reportDoc = new Document(templatePath);
-
-        // Sample data.
-        Person person = new Person
-        {
-            Name = "Alice Smith",
-            Age = 28,
-            Email = "alice.smith@example.com"
-        };
-
-        // Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, person, "person");
-
+        
+        // Save template to disk (required before building the report).
+        string templatePath = "Template.docx";
+        template.Save(templatePath);
+        
+        // Load the template back.
+        Document doc = new(templatePath);
+        
+        // Build the report.
+        ReportingEngine engine = new();
+        engine.Options = ReportBuildOptions.None;
+        bool success = engine.BuildReport(doc, person, "person");
+        
         // Save the generated report.
-        reportDoc.Save(outputPath);
+        string outputPath = "Report.docx";
+        doc.Save(outputPath);
+        
+        // Indicate completion.
+        Console.WriteLine(success
+            ? $"Report generated successfully: {Path.GetFullPath(outputPath)}"
+            : "Report generation failed.");
     }
 }

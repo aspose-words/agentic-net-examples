@@ -1,64 +1,42 @@
 using System;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
 
-public class Program
+namespace LinqReportingAssemblyMergeExample
 {
-    public static void Main()
+    // Simple data model used by the template.
+    public class ReportModel
     {
-        // Prepare sample data.
-        Order order = new()
-        {
-            CustomerName = "John Doe",
-            Items = new()
-            {
-                new Item { Name = "Apple", Quantity = 3 },
-                new Item { Name = "Banana", Quantity = 5 },
-                new Item { Name = "Cherry", Quantity = 7 }
-            }
-        };
-
-        // Create a template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-
-        builder.Writeln("Order Report");
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("Items:");
-        builder.Writeln("<<foreach [item in order.Items]>>");
-
-        Table table = builder.StartTable();
-        builder.InsertCell();
-        builder.Writeln("<<[item.Name]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[item.Quantity]>>");
-        builder.EndRow();
-        builder.EndTable();
-
-        builder.Writeln("<</foreach>>");
-
-        // Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(template, order, "order");
-
-        // Save the generated report.
-        string outputPath = "OrderReport.docx";
-        template.Save(outputPath);
-        Console.WriteLine($"Report generated: {outputPath}");
+        public string Name { get; set; } = "World";
     }
-}
 
-// Data model classes.
-public class Order
-{
-    public string CustomerName { get; set; } = string.Empty;
-    public List<Item> Items { get; set; } = new();
-}
+    public class Program
+    {
+        public static void Main()
+        {
+            // Paths for the template and the generated report.
+            const string templatePath = "Template.docx";
+            const string outputPath = "Report.docx";
 
-public class Item
-{
-    public string Name { get; set; } = string.Empty;
-    public int Quantity { get; set; }
+            // -----------------------------------------------------------------
+            // Create a Word document template with a LINQ Reporting tag.
+            // -----------------------------------------------------------------
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
+            builder.Writeln("Hello <<[model.Name]>>!");
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // Load the template and build the report.
+            // -----------------------------------------------------------------
+            var doc = new Document(templatePath);
+            var model = new ReportModel(); // model.Name is already initialized.
+
+            var engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
+
+            // Save the generated report.
+            doc.Save(outputPath);
+        }
+    }
 }

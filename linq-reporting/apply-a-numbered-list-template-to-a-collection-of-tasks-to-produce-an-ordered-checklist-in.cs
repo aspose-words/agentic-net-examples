@@ -1,17 +1,17 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class TaskItem
 {
+    // Description of the task; initialized to avoid nullable warnings.
     public string Description { get; set; } = string.Empty;
-    public bool IsCompleted { get; set; }
 }
 
 public class ReportModel
 {
+    // Collection of tasks to be listed.
     public List<TaskItem> Tasks { get; set; } = new();
 }
 
@@ -24,52 +24,53 @@ public class Program
         {
             Tasks = new List<TaskItem>
             {
-                new TaskItem { Description = "Review project requirements", IsCompleted = false },
-                new TaskItem { Description = "Design architecture diagram", IsCompleted = true },
-                new TaskItem { Description = "Implement core modules", IsCompleted = false },
-                new TaskItem { Description = "Write unit tests", IsCompleted = false },
-                new TaskItem { Description = "Perform code review", IsCompleted = true }
+                new TaskItem { Description = "Buy groceries" },
+                new TaskItem { Description = "Call the dentist" },
+                new TaskItem { Description = "Finish the report" },
+                new TaskItem { Description = "Plan weekend trip" }
             }
         };
 
-        // Paths for template and output.
-        string templatePath = "ChecklistTemplate.docx";
-        string outputPath = "ChecklistResult.docx";
-
-        // -----------------------------------------------------------------
         // Create the template document programmatically.
-        // -----------------------------------------------------------------
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        const string templatePath = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Title.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Title;
-        builder.Writeln("Project Checklist");
-        builder.ParagraphFormat.ClearFormatting();
+        builder.Writeln("Task Checklist:");
+        builder.Writeln(); // Blank line for spacing.
 
-        // Start a numbered list for the tasks.
+        // Apply a numbered list style to the upcoming paragraphs.
         builder.ListFormat.ApplyNumberDefault();
 
-        // Insert LINQ Reporting tags.
-        // <<restartNum>> placed in the same numbered paragraph before the foreach.
-        builder.Writeln("<<restartNum>><<foreach [task in Tasks]>><<[task.Description]>> <</foreach>>");
+        // LINQ Reporting tags:
+        // Open the foreach loop.
+        builder.Writeln("<<foreach [task in Tasks]>>");
+        // Each task description is a numbered paragraph; restart numbering for each item.
+        builder.Writeln("<<restartNum>><<[task.Description]>>");
+        // Close the foreach loop.
+        builder.Writeln("<</foreach>>");
 
-        // End the numbered list.
+        // Remove list formatting after the loop.
         builder.ListFormat.RemoveNumbers();
 
         // Save the template to disk.
-        templateDoc.Save(templatePath);
+        doc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // Load the template and build the report.
-        // -----------------------------------------------------------------
-        var doc = new Document(templatePath);
-        var engine = new ReportingEngine();
+        // Load the template back (ensures the document is fully prepared before building the report).
+        var templateDoc = new Document(templatePath);
 
-        // Build the report using the model as the root object named "model".
-        engine.BuildReport(doc, model, "model");
+        // Build the report using the LINQ Reporting engine.
+        var engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.None // No special options needed.
+        };
+        bool success = engine.BuildReport(templateDoc, model, "model");
 
-        // Save the generated document.
-        doc.Save(outputPath);
+        // Save the generated report if the build succeeded.
+        if (success)
+        {
+            const string outputPath = "Checklist.docx";
+            templateDoc.Save(outputPath);
+        }
     }
 }

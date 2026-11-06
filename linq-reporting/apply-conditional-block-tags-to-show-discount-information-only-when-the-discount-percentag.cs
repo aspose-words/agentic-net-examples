@@ -1,67 +1,54 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class Order
+{
+    public string CustomerName { get; set; } = "";
+    public double DiscountPercentage { get; set; }
+    public double DiscountAmount { get; set; }
+    public double Total { get; set; }
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Ensure output directory exists
-        string outputDir = "Output";
-        Directory.CreateDirectory(outputDir);
+        // Register code page provider (required for some environments)
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        // Create the template document with LINQ Reporting tags
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-
-        // Write a simple report that lists orders and shows discount only when > 0
-        builder.Writeln("Order Report");
-        builder.Writeln("==============");
-        builder.Writeln("<<foreach [order in Orders]>>");
-        builder.Writeln("Order ID: <<[order.Id]>>");
-        builder.Writeln("<<if [order.DiscountPercent > 0]>>Discount: <<[order.DiscountPercent]>>%<</if>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        template.Save(templatePath);
-
-        // Load the template for report generation
-        Document doc = new Document(templatePath);
-
-        // Prepare sample data
-        ReportModel model = new ReportModel
+        // Sample data
+        var order = new Order
         {
-            Orders = new List<Order>
-            {
-                new Order { Id = 1, DiscountPercent = 15 },
-                new Order { Id = 2, DiscountPercent = 0 },
-                new Order { Id = 3, DiscountPercent = 5 }
-            }
+            CustomerName = "John Doe",
+            DiscountPercentage = 10.0,
+            DiscountAmount = 15.0,
+            Total = 150.0
         };
 
-        // Build the report
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        // Create template document
+        var templatePath = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Save the generated report
-        string reportPath = Path.Combine(outputDir, "Report.docx");
-        doc.Save(reportPath);
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Total: $<<[order.Total]>>");
+        // Conditional block: show discount only when percentage > 0
+        builder.Writeln("<<if [order.DiscountPercentage > 0]>>Discount: <<[order.DiscountPercentage]>>% (-$<<[order.DiscountAmount]>>)<</if>>");
 
-        Console.WriteLine($"Report generated: {reportPath}");
+        // Save template
+        doc.Save(templatePath);
+
+        // Load template for report generation
+        var reportDoc = new Document(templatePath);
+
+        // Build report
+        var engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, order, "order");
+
+        // Save final report
+        var outputPath = "report.docx";
+        reportDoc.Save(outputPath);
     }
-}
-
-// Data model classes
-public class ReportModel
-{
-    public List<Order> Orders { get; set; } = new();
-}
-
-public class Order
-{
-    public int Id { get; set; }
-    public int DiscountPercent { get; set; }
 }

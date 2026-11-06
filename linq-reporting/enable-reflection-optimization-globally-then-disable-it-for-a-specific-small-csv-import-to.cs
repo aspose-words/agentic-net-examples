@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Aspose.Words;
@@ -9,75 +8,46 @@ public class Program
 {
     public static void Main()
     {
-        // Enable reflection optimization globally.
-        ReportingEngine.UseReflectionOptimization = true;
-
-        // Register code page provider for CSV encoding support.
+        // Register code page provider for CSV handling.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare a small CSV file.
-        string csvPath = Path.Combine(Directory.GetCurrentDirectory(), "sample.csv");
-        File.WriteAllText(csvPath, "Name,Age\nAlice,30\nBob,25");
+        // Prepare working directories.
+        string workDir = Directory.GetCurrentDirectory();
+        string templatePath = Path.Combine(workDir, "template.docx");
+        string csvPath = Path.Combine(workDir, "data.csv");
+        string outputDir = Path.Combine(workDir, "output");
+        Directory.CreateDirectory(outputDir);
 
-        // Load CSV data into a strongly‑typed model.
-        var people = LoadCsv(csvPath);
-        var model = new ReportModel { Data = people };
-
-        // Create a template document with LINQ Reporting tags.
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "template.docx");
+        // Create a simple LINQ Reporting template.
         var templateDoc = new Document();
         var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Customer Report");
-        builder.Writeln("<<foreach [person in Data]>>");
-        builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
+        builder.Writeln("<<foreach [row in data]>>");
+        builder.Writeln("Name: <<[row.Name]>>, Age: <<[row.Age]>>");
         builder.Writeln("<</foreach>>");
         templateDoc.Save(templatePath);
 
-        // Load the template for report generation.
-        var reportDoc = new Document(templatePath);
+        // Create a small CSV file with headers.
+        File.WriteAllText(csvPath, "Name,Age\r\nAlice,30\r\nBob,25\r\nCharlie,35");
 
-        // Disable reflection optimization for this small CSV import to reduce overhead.
+        // ---------- Report with reflection optimization enabled ----------
+        ReportingEngine.UseReflectionOptimization = true;
+
+        var docWithOpt = new Document(templatePath);
+        var csvLoadOptions = new CsvDataLoadOptions { HasHeaders = true };
+        var csvDataSource = new CsvDataSource(csvPath, csvLoadOptions);
+        var engineOpt = new ReportingEngine();
+        engineOpt.BuildReport(docWithOpt, csvDataSource, "data");
+        string optOutputPath = Path.Combine(outputDir, "report_optimized.docx");
+        docWithOpt.Save(optOutputPath);
+
+        // ---------- Report with reflection optimization disabled ----------
         ReportingEngine.UseReflectionOptimization = false;
 
-        // Build the report.
-        var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
-
-        // Save the generated report.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "report.docx");
-        reportDoc.Save(outputPath);
-    }
-
-    private static List<Person> LoadCsv(string path)
-    {
-        var list = new List<Person>();
-        foreach (var line in File.ReadAllLines(path))
-        {
-            // Skip header line.
-            if (line.StartsWith("Name", StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            var parts = line.Split(',');
-            if (parts.Length >= 2)
-            {
-                list.Add(new Person
-                {
-                    Name = parts[0],
-                    Age = int.TryParse(parts[1], out var age) ? age : 0
-                });
-            }
-        }
-        return list;
-    }
-
-    public class Person
-    {
-        public string Name { get; set; } = string.Empty;
-        public int Age { get; set; }
-    }
-
-    public class ReportModel
-    {
-        public List<Person> Data { get; set; } = new();
+        var docWithoutOpt = new Document(templatePath);
+        var csvDataSourceNoOpt = new CsvDataSource(csvPath, csvLoadOptions);
+        var engineNoOpt = new ReportingEngine();
+        engineNoOpt.BuildReport(docWithoutOpt, csvDataSourceNoOpt, "data");
+        string noOptOutputPath = Path.Combine(outputDir, "report_no_optimization.docx");
+        docWithoutOpt.Save(noOptOutputPath);
     }
 }

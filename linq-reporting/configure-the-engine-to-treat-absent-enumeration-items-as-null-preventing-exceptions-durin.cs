@@ -4,62 +4,64 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-#nullable enable
-
 public class Program
 {
     public static void Main()
     {
-        // Create output folder.
-        string folder = "Output";
-        Directory.CreateDirectory(folder);
+        // Prepare working directories.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
 
-        // 1. Create the template document.
-        string templatePath = Path.Combine(folder, "Template.docx");
+        // Create a template document with LINQ Reporting tags.
+        string templatePath = Path.Combine(outputDir, "template.docx");
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("Persons Report:");
-        // LINQ Reporting foreach tag.
+        // Write a simple foreach loop that accesses a possibly missing property.
         builder.Writeln("<<foreach [p in Persons]>>");
-        builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
+        builder.Writeln("Name: <<[p.Name]>>");
+        builder.Writeln("Age: <<[p.Age]>>"); // Age may be null.
         builder.Writeln("<</foreach>>");
 
         // Save the template.
         templateDoc.Save(templatePath);
 
-        // 2. Load the template for reporting.
+        // Load the template for reporting.
         Document doc = new Document(templatePath);
 
-        // 3. Prepare the data model with an empty collection (treated as absent enumeration).
+        // Prepare sample data.
         ReportModel model = new()
         {
-            Persons = new() // Empty list instead of null to avoid exceptions.
+            Persons = new()
+            {
+                new Person { Name = "Alice", Age = 30 },
+                new Person { Name = "Bob", Age = null }, // Missing Age.
+                new Person { Name = "Charlie", Age = 25 }
+            }
         };
 
-        // 4. Create the reporting engine (no special options needed for this scenario).
+        // Configure the reporting engine.
+        // By default, missing members are treated as null, so no special option is required.
         ReportingEngine engine = new();
 
-        // 5. Build the report.
+        // Build the report.
         engine.BuildReport(doc, model, "model");
 
-        // 6. Save the generated report.
-        string outputPath = Path.Combine(folder, "Report.docx");
-        doc.Save(outputPath);
-
-        Console.WriteLine($"Report generated: {outputPath}");
+        // Save the generated report.
+        string resultPath = Path.Combine(outputDir, "result.docx");
+        doc.Save(resultPath);
     }
 }
 
-// Data model classes.
+// Root data model.
 public class ReportModel
 {
-    // When empty, the foreach loop produces no output.
     public List<Person> Persons { get; set; } = new();
 }
 
+// Sample item class.
 public class Person
 {
-    public string Name { get; set; } = "";
-    public int Age { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public int? Age { get; set; }
 }

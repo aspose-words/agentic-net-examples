@@ -3,56 +3,80 @@ using System.Collections.Generic;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
 
-public class Person
+public class Product
 {
     public string Name { get; set; } = "";
-    public int Age { get; set; }
+    public decimal Price { get; set; }
 }
 
 public class ReportModel
 {
-    public List<Person> Persons { get; set; } = new();
+    public List<Product> Products { get; set; } = new();
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
+        // Sample data (unsorted).
         var model = new ReportModel
         {
-            Persons = new List<Person>
+            Products = new List<Product>
             {
-                new Person { Name = "Alice", Age = 30 },
-                new Person { Name = "Bob", Age = 25 },
-                new Person { Name = "Charlie", Age = 35 }
+                new Product { Name = "Apple",  Price = 1.20m },
+                new Product { Name = "Banana", Price = 0.80m },
+                new Product { Name = "Cherry", Price = 2.50m },
+                new Product { Name = "Date",   Price = 3.00m }
             }
         };
 
-        // Create the template document with inline sorting using LINQ extension methods.
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Sorted Persons (by Name):");
-        builder.Writeln("<<foreach [person in model.Persons.OrderBy(p => p.Name)]>>");
-        builder.Writeln("<<[person.Name]>> - <<[person.Age]>>");
+        // Create the LINQ Reporting template.
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
+
+        builder.Writeln("Product List (sorted by Price ascending):");
+
+        // Begin foreach loop with inline sorting.
+        builder.Writeln("<<foreach [p in Products.OrderBy(p => p.Price)]>>");
+
+        // Table that will be repeated for each product.
+        Table table = builder.StartTable();
+
+        // Header row.
+        builder.InsertCell();
+        builder.Writeln("Product");
+        builder.InsertCell();
+        builder.Writeln("Price");
+        builder.EndRow();
+
+        // Data row.
+        builder.InsertCell();
+        builder.Writeln("<<[p.Name]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[p.Price]>>");
+        builder.EndRow();
+
+        // End of table for this iteration.
+        builder.EndTable();
+
+        // Close foreach.
         builder.Writeln("<</foreach>>");
 
-        // Save and reload the template to simulate a real file scenario.
+        // Save the template.
         const string templatePath = "Template.docx";
-        templateDoc.Save(templatePath);
-        var loadedTemplate = new Document(templatePath);
+        template.Save(templatePath);
+
+        // Load the template for report generation.
+        var doc = new Document(templatePath);
 
         // Build the report.
         var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        bool success = engine.BuildReport(loadedTemplate, model, "model");
+        engine.BuildReport(doc, model, "model");
 
         // Save the generated report.
         const string outputPath = "Report.docx";
-        loadedTemplate.Save(outputPath);
-
-        // Indicate completion.
-        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output file: {outputPath}");
+        doc.Save(outputPath);
     }
 }

@@ -4,59 +4,50 @@ using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Reporting;
 
-public class Program
+public class ImageNullStreamTest
 {
+    // Model class with a nullable Stream property for the image.
+    public class ReportModel
+    {
+        public Stream? ImageStream { get; set; } = null;
+    }
+
     public static void Main()
     {
-        // Create output directory.
-        string outputDir = "output";
-        Directory.CreateDirectory(outputDir);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create the template document with an image tag inside a textbox.
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Insert a textbox to host the image tag.
+        // Insert a textbox shape to host the image tag.
         Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
         builder.MoveTo(textBox.FirstParagraph);
+
+        // Write the LINQ Reporting image tag that references the nullable stream.
         builder.Write("<<image [model.ImageStream]>>");
 
-        // Save the template.
-        templateDoc.Save(templatePath);
-
-        // Load the template for reporting.
-        Document reportDoc = new Document(templatePath);
-
         // Prepare the model with a null image stream.
-        ReportModel model = new ReportModel();
+        ReportModel model = new ReportModel(); // ImageStream is already null.
 
         // Configure the reporting engine to use inline error messages.
         ReportingEngine engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-        // Build the report.
-        bool success = engine.BuildReport(reportDoc, model, "model");
+        // Build the report. The method returns false when a graceful failure occurs.
+        bool success = engine.BuildReport(doc, model, "model");
 
-        // Save the generated document.
-        string resultPath = Path.Combine(outputDir, "result.docx");
-        reportDoc.Save(resultPath);
-
-        // Verify that the engine reported failure due to the null image stream.
+        // Verify that the engine reported a failure due to the null stream.
         if (!success)
         {
-            Console.WriteLine("Test Passed: BuildReport returned false for null image stream.");
+            Console.WriteLine("Test passed: Graceful failure detected for null image stream.");
         }
         else
         {
-            Console.WriteLine("Test Failed: BuildReport succeeded unexpectedly.");
+            Console.WriteLine("Test failed: Report built successfully despite null image stream.");
         }
-    }
 
-    // Model class used by the LINQ Reporting template.
-    public class ReportModel
-    {
-        // Intentionally null to simulate a missing image.
-        public Stream? ImageStream { get; set; } = null;
+        // Optionally save the resulting document for inspection (will contain an error placeholder).
+        string outputPath = "ImageNullStreamTest_Output.docx";
+        doc.Save(outputPath);
+        Console.WriteLine($"Output document saved to: {outputPath}");
     }
 }

@@ -1,99 +1,61 @@
 using System;
-using System.IO;
-using System.Reflection;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Newtonsoft.Json;
-using System.Text;
 
-// Assembly attribute to specify the custom logger for the reporting engine.
-[assembly: ReportingEngineLogging(typeof(CustomLogger))]
-
-public class ReportingEngineLoggingAttribute : Attribute
+namespace LinqReportingExample
 {
-    public Type LoggerType { get; }
-
-    public ReportingEngineLoggingAttribute(Type loggerType)
+    // Simple data model used by the LINQ Reporting template.
+    public class ReportModel
     {
-        LoggerType = loggerType;
+        // Initialize to avoid nullable warnings.
+        public string Name { get; set; } = "World";
     }
-}
 
-public static class CustomLogger
-{
-    public static void Log(string message)
+    public class Program
     {
-        // Simple console logging; in real scenarios this could write to a file or logging framework.
-        Console.WriteLine($"[CustomLogger] {message}");
-    }
-}
-
-// Sample data model.
-public class ReportModel
-{
-    public string Name { get; set; } = "World";
-    // Intentionally omitted property to trigger an inline error.
-    // public string Missing { get; set; }
-}
-
-public class Program
-{
-    public static void Main()
-    {
-        // Register code page provider for potential encoding needs.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Prepare a temporary folder for files.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
-
-        // Create a simple Word template with LINQ Reporting tags.
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Hello <<[model.Name]>>!");
-        // This tag references a non‑existent property to demonstrate error handling.
-        builder.Writeln("Missing property: <<[model.Missing]>>");
-        templateDoc.Save(templatePath);
-
-        // Load the template.
-        Document doc = new Document(templatePath);
-
-        // Prepare the data model.
-        ReportModel model = new ReportModel();
-
-        // Configure the reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.InlineErrorMessages;
-
-        // Retrieve the custom logger from the assembly attribute.
-        var loggingAttr = Assembly.GetExecutingAssembly()
-            .GetCustomAttribute<ReportingEngineLoggingAttribute>();
-        Action<string>? logAction = null;
-        if (loggingAttr != null && typeof(CustomLogger).IsAssignableFrom(loggingAttr.LoggerType))
+        public static void Main()
         {
-            // Use reflection to obtain the static Log method.
-            MethodInfo? logMethod = loggingAttr.LoggerType.GetMethod("Log", BindingFlags.Public | BindingFlags.Static);
-            if (logMethod != null)
-            {
-                logAction = (msg) => logMethod.Invoke(null, new object[] { msg });
-            }
+            // Register code page provider for any legacy encodings that might be needed.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Paths for the template and the generated report.
+            const string templatePath = "Template.docx";
+            const string reportPath = "Report.docx";
+
+            // -------------------------------------------------
+            // Create a Word document template programmatically.
+            // -------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            // Insert a simple LINQ Reporting tag that references the model.
+            builder.Writeln("Hello <<[model.Name]>>!");
+
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
+
+            // -------------------------------------------------
+            // Load the template for report generation.
+            // -------------------------------------------------
+            Document loadedTemplate = new Document(templatePath);
+
+            // Prepare the root data object.
+            ReportModel model = new ReportModel { Name = "Aspose.Words" };
+
+            // Configure the reporting engine.
+            ReportingEngine.UseReflectionOptimization = true;
+            ReportingEngine engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.InlineErrorMessages;
+
+            // Build the report.
+            bool success = engine.BuildReport(loadedTemplate, model, "model");
+
+            // Save the generated report.
+            loadedTemplate.Save(reportPath);
+
+            // Output simple status (no interactive prompts).
+            Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to '{reportPath}'.");
         }
-
-        // Build the report.
-        bool success = engine.BuildReport(doc, model, "model");
-
-        // Log the result using the custom logger if available.
-        if (logAction != null)
-        {
-            if (success)
-                logAction("Report built successfully.");
-            else
-                logAction("Report build failed; see inline error messages in the document.");
-        }
-
-        // Save the generated report.
-        string resultPath = Path.Combine(outputDir, "Result.docx");
-        doc.Save(resultPath);
     }
 }

@@ -2,102 +2,97 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
-
-public class CsvRow
-{
-    public string Item { get; set; } = "";
-    public int Quantity { get; set; }
-    public decimal Price { get; set; }
-}
-
-public class ReportModel
-{
-    public List<CsvRow> Rows { get; set; } = new();
-    public decimal GrandTotal { get; set; }
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
+        // Prepare sample CSV data.
+        string csvPath = "data.csv";
+        File.WriteAllText(csvPath,
+            "Item,Quantity,UnitPrice\r\n" +
+            "Apple,3,0.50\r\n" +
+            "Banana,5,0.30\r\n" +
+            "Orange,2,0.80\r\n");
 
-        // Create sample CSV file.
-        string csvPath = Path.Combine(outputDir, "data.csv");
-        File.WriteAllLines(csvPath, new[]
+        // Load CSV rows into a strongly‑typed list.
+        var model = new ReportModel();
+        foreach (var line in File.ReadAllLines(csvPath))
         {
-            "Item,Quantity,Price",
-            "Apple,10,0.5",
-            "Banana,5,0.3",
-            "Orange,8,0.6"
-        });
-
-        // Load CSV data into the model.
-        ReportModel model = new();
-        string[] lines = File.ReadAllLines(csvPath);
-        for (int i = 1; i < lines.Length; i++)
-        {
-            string[] parts = lines[i].Split(',');
+            if (string.IsNullOrWhiteSpace(line) || line.StartsWith("Item")) continue; // Skip header.
+            var parts = line.Split(',');
             if (parts.Length != 3) continue;
 
-            model.Rows.Add(new CsvRow
+            var row = new CsvRow
             {
                 Item = parts[0],
                 Quantity = int.Parse(parts[1], CultureInfo.InvariantCulture),
-                Price = decimal.Parse(parts[2], CultureInfo.InvariantCulture)
-            });
+                UnitPrice = decimal.Parse(parts[2], CultureInfo.InvariantCulture)
+            };
+            model.Items.Add(row);
+            model.GrandTotal += row.Quantity * row.UnitPrice;
         }
 
-        model.GrandTotal = model.Rows.Sum(r => r.Quantity * r.Price);
-
-        // Build the LINQ Reporting template.
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        Document templateDoc = new();
-        DocumentBuilder builder = new(templateDoc);
+        // Create the LINQ Reporting template.
+        var templatePath = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
         builder.Writeln("Sales Report");
         builder.Writeln();
 
-        // Begin foreach block.
-        builder.Writeln("<<foreach [row in Rows]>>");
-        Table table = builder.StartTable();
-
-        // Header row.
+        // Table header.
+        var table = builder.StartTable();
         builder.InsertCell(); builder.Writeln("Item");
         builder.InsertCell(); builder.Writeln("Quantity");
-        builder.InsertCell(); builder.Writeln("Price");
-        builder.InsertCell(); builder.Writeln("Total");
+        builder.InsertCell(); builder.Writeln("Unit Price");
+        builder.InsertCell(); builder.Writeln("Line Total");
         builder.EndRow();
 
-        // Data row with inline calculation.
-        builder.InsertCell(); builder.Writeln("<<[row.Item]>>");
-        builder.InsertCell(); builder.Writeln("<<[row.Quantity]>>");
-        builder.InsertCell(); builder.Writeln("<<[row.Price]>>");
-        builder.InsertCell(); builder.Writeln("<<[row.Quantity * row.Price]>>");
+        // Data rows.
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.InsertCell(); builder.Writeln("<<[item.Item]>>");
+        builder.InsertCell(); builder.Writeln("<<[item.Quantity]>>");
+        builder.InsertCell(); builder.Writeln("<<[item.UnitPrice]>>");
+        builder.InsertCell(); builder.Writeln("<<[item.Quantity * item.UnitPrice]>>");
+        builder.EndRow();
+        builder.Writeln("<</foreach>>");
+
+        // Grand total row.
+        builder.InsertCell(); builder.Writeln("Grand Total");
+        builder.InsertCell(); builder.Writeln("");
+        builder.InsertCell(); builder.Writeln("");
+        builder.InsertCell(); builder.Writeln("<<[model.GrandTotal]>>");
         builder.EndRow();
 
         builder.EndTable();
-        builder.Writeln("<</foreach>>");
 
-        builder.Writeln();
-        builder.Writeln("Grand Total: <<[GrandTotal]>>");
+        doc.Save(templatePath);
 
-        // Save the template and reload it for reporting.
-        templateDoc.Save(templatePath);
-        Document doc = new(templatePath);
-
-        // Build the report.
-        ReportingEngine engine = new();
-        engine.BuildReport(doc, model, "model");
+        // Load the template and build the report.
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
 
         // Save the final report.
-        string reportPath = Path.Combine(outputDir, "report.docx");
-        doc.Save(reportPath);
+        string outputPath = "report.docx";
+        reportDoc.Save(outputPath);
     }
+}
+
+// Root data model.
+public class ReportModel
+{
+    public List<CsvRow> Items { get; set; } = new();
+    public decimal GrandTotal { get; set; }
+}
+
+// CSV row representation.
+public class CsvRow
+{
+    public string Item { get; set; } = "";
+    public int Quantity { get; set; }
+    public decimal UnitPrice { get; set; }
 }

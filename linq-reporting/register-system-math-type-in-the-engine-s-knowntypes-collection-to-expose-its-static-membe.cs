@@ -3,37 +3,41 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Model
-{
-    // No properties needed for this example.
-}
-
 public class Program
 {
     public static void Main()
     {
-        // Define file paths.
-        string templatePath = "template.docx";
-        string outputPath = "output.docx";
+        // Create a template document with LINQ Reporting tags that use System.Math static members.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Create a new document and add a LINQ Reporting tag that uses System.Math.
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Rounded value of Pi (2 decimals): <<[Math.Round(3.14159, 2)]>>");
-        templateDoc.Save(templatePath);
+        builder.Writeln("Value of PI: <<[Math.PI]>>");
+        builder.Writeln("Sin(0.5): <<[Math.Sin(0.5)]>>");
 
-        // Load the template document.
-        Document doc = new Document(templatePath);
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
 
-        // Create the reporting engine and register System.Math as a known type.
+        // Load the template for reporting.
+        Document reportDoc = new Document(templatePath);
+
+        // Dummy root model (not used in the template).
+        var model = new Model();
+
+        // Configure the reporting engine and register System.Math type.
         ReportingEngine engine = new ReportingEngine();
-        engine.KnownTypes.Add(typeof(System.Math));
+        engine.KnownTypes.Add(typeof(Math));
 
-        // Build the report using an empty model as the root object.
-        Model model = new Model();
-        engine.BuildReport(doc, model, "model");
+        // Build the report.
+        engine.BuildReport(reportDoc, model, "model");
 
         // Save the generated report.
-        doc.Save(outputPath);
+        const string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
+    }
+
+    // Empty model class required by the engine.
+    public class Model
+    {
     }
 }

@@ -1,82 +1,72 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Drawing;
 
-public class Item
+namespace LinqReportingRemoveEmptyParagraphs
 {
-    public string Name { get; set; } = "";
-    public string? Description { get; set; }
-}
-
-public class Order
-{
-    public string CustomerName { get; set; } = "";
-    public List<Item> Items { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main()
+    // Data model classes
+    public class Person
     {
-        // Register code page provider (required for some Aspose.Words features).
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        public string Name { get; set; } = string.Empty;
+        public int Age { get; set; }
+    }
 
-        const string templatePath = "Template.docx";
-        const string outputPath = "Report.docx";
+    public class ReportModel
+    {
+        public List<Person> Persons { get; set; } = new();
+    }
 
-        // -------------------------------------------------
-        // 1. Create the LINQ Reporting template programmatically.
-        // -------------------------------------------------
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-
-        // Title paragraph.
-        builder.Writeln("Order Report for <<[order.CustomerName]>>");
-        builder.Writeln();
-
-        // Begin foreach over Items.
-        builder.Writeln("<<foreach [item in Items]>>");
-
-        // Paragraph with item name.
-        builder.Writeln("Item: <<[item.Name]>>");
-
-        // Conditional paragraph that may be empty if Description is null.
-        builder.Writeln("<<if [item.Description != null]>>Description: <<[item.Description]>> <</if>>");
-
-        // End foreach.
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -------------------------------------------------
-        // 2. Load the template and prepare sample data.
-        // -------------------------------------------------
-        var doc = new Document(templatePath);
-
-        var order = new Order
+    public class Program
+    {
+        public static void Main()
         {
-            CustomerName = "Acme Corp",
-            Items = new()
+            // Register code page provider for Aspose.Words (required for some encodings)
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Prepare folders
+            string outputDir = "output";
+            Directory.CreateDirectory(outputDir);
+
+            // Create template document programmatically
+            string templatePath = Path.Combine(outputDir, "template.docx");
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            builder.Writeln("Persons Report");
+            builder.Writeln("<<foreach [person in Persons]>>");
+            // Paragraph that may become empty if Name is empty
+            builder.Writeln("<<if [person.Name != \"\"]>><<[person.Name]>> - <<[person.Age]>> <</if>>");
+            builder.Writeln("<</foreach>>");
+
+            templateDoc.Save(templatePath);
+
+            // Load the template for reporting
+            Document reportDoc = new Document(templatePath);
+
+            // Sample data with an empty Name to produce an empty paragraph
+            ReportModel model = new()
             {
-                new Item { Name = "Widget", Description = "A useful widget." },
-                new Item { Name = "Gadget", Description = null }, // No description – will produce an empty paragraph.
-                new Item { Name = "Doohickey", Description = "An interesting doohickey." }
-            }
-        };
+                Persons = new()
+                {
+                    new Person { Name = "Alice", Age = 30 },
+                    new Person { Name = "", Age = 25 }, // This will generate an empty paragraph
+                    new Person { Name = "Bob", Age = 40 }
+                }
+            };
 
-        // -------------------------------------------------
-        // 3. Build the report with the RemoveEmptyParagraphs option.
-        // -------------------------------------------------
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
-        engine.BuildReport(doc, order, "order");
+            // Configure ReportingEngine to remove empty paragraphs
+            ReportingEngine engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
 
-        // -------------------------------------------------
-        // 4. Save the final report.
-        // -------------------------------------------------
-        doc.Save(outputPath);
+            // Build the report
+            engine.BuildReport(reportDoc, model, "model");
+
+            // Save the final document
+            string resultPath = Path.Combine(outputDir, "result.docx");
+            reportDoc.Save(resultPath);
+        }
     }
 }

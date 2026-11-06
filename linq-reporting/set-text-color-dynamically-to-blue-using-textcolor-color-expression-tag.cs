@@ -1,48 +1,52 @@
 using System;
-using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace LinqReportingTextColorExample
 {
-    public static void Main()
+    // Simple data model with a color property.
+    public class ReportModel
     {
-        // Register code page provider (required for some Aspose.Words features)
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Returns the name of the color to apply.
+        public string ColorName { get; set; } = "Blue";
 
-        // Prepare folders
-        string workDir = Directory.GetCurrentDirectory();
-        string templatePath = Path.Combine(workDir, "template.docx");
-        string outputPath = Path.Combine(workDir, "output.docx");
-
-        // Create the template document with a textColor tag
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("<<textColor [model.ColorName]>>This text is blue<</textColor>>");
-        templateDoc.Save(templatePath);
-
-        // Load the template for reporting
-        Document doc = new Document(templatePath);
-
-        // Prepare the data model
-        ReportModel model = new ReportModel
-        {
-            ColorName = "Blue"
-        };
-
-        // Build the report
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
-
-        // Save the generated document
-        doc.Save(outputPath);
+        // Sample text to display (optional, can be hard‑coded in the template).
+        public string Message { get; set; } = "This text should be blue.";
     }
-}
 
-// Data model used by the LINQ Reporting engine
-public class ReportModel
-{
-    // The color expression used by the <<textColor>> tag
-    public string ColorName { get; set; } = "Blue";
+    public class Program
+    {
+        public static void Main()
+        {
+            // Register code page provider (required for some Aspose.Words features).
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Create a new blank document that will serve as the template.
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
+
+            // Insert the LINQ Reporting tag that sets the text color dynamically.
+            // The expression [model.ColorName] evaluates to "Blue".
+            builder.Writeln("<<textColor [model.ColorName]>><<[model.Message]>> <</textColor>>");
+
+            // Save the template to disk (optional, but demonstrates the full workflow).
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
+
+            // Load the template back (simulating a real‑world scenario where the template is read from storage).
+            Document doc = new Document(templatePath);
+
+            // Prepare the data model.
+            ReportModel model = new ReportModel();
+
+            // Build the report using the LINQ Reporting engine.
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
+
+            // Save the generated report.
+            const string outputPath = "Report.docx";
+            doc.Save(outputPath);
+        }
+    }
 }

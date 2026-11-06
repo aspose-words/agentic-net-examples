@@ -1,53 +1,48 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class CustomerInfo
 {
-    public string Name { get; set; } = "";
-    public string Email { get; set; } = "";
-
-    public CustomerInfo(string name, string email)
-    {
-        Name = name;
-        Email = email;
-    }
+    public string Name { get; set; } = "John Doe";
+    public string Email { get; set; } = "john.doe@example.com";
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Enable code page support required by Aspose.Words in some environments.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Prepare output directory
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        string resultPath = Path.Combine(outputDir, "Result.docx");
 
-        // Sample data.
-        var customer = new CustomerInfo("John Doe", "john.doe@example.com");
-
-        // Create a template document.
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Create template document with LINQ Reporting tags
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
         builder.Writeln("Customer Report");
-        builder.Writeln("Name: <<[CustomerInfo.Name]>>");
-        builder.Writeln("Email: <<[CustomerInfo.Email]>>");
+        builder.Writeln("Name : <<[model.Name]>>");
+        builder.Writeln("Email: <<[model.Email]>>");
         templateDoc.Save(templatePath);
 
-        // Load the template for reporting.
-        var reportDoc = new Document(templatePath);
+        // Load the template for reporting
+        Document doc = new Document(templatePath);
 
-        // Configure the reporting engine.
-        var engine = new ReportingEngine();
+        // Prepare model data
+        CustomerInfo model = new CustomerInfo();
 
-        // Build the report using the CustomerInfo instance as the root object named "CustomerInfo".
-        engine.BuildReport(reportDoc, customer, "CustomerInfo");
+        // Configure ReportingEngine
+        ReportingEngine engine = new ReportingEngine();
 
-        // Save the generated report.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        reportDoc.Save(outputPath);
+        // Build the report (root object is the model, root name is "model")
+        bool success = engine.BuildReport(doc, model, "model");
 
-        Console.WriteLine($"Report generated: {outputPath}");
+        // Save the generated report
+        doc.Save(resultPath);
+
+        // Indicate completion
+        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to: {resultPath}");
     }
 }

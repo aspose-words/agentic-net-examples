@@ -1,67 +1,115 @@
 using System;
 using System.IO;
+using System.Reflection;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace LinqReportingRestrictedTypeTest
 {
-    public static void Main()
+    // Sample data model.
+    public class ReportModel
     {
-        // Prepare working directories.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
-        string templatePath = Path.Combine(outputDir, "template.docx");
+        public SecretInfo Secret { get; set; } = new();
+        public string Title { get; set; } = "Report Title";
+    }
 
-        // Create a simple template with a tag that references a restricted type property.
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        // The tag tries to access a property of type CustomData, which is not allowed by default.
-        builder.Writeln("<<[model.Custom.Info]>>");
-        templateDoc.Save(templatePath);
+    // Type that will be restricted.
+    public class SecretInfo
+    {
+        public string Name { get; set; } = "Classified";
+    }
 
-        // Load the template for reporting.
-        Document doc = new Document(templatePath);
-
-        // Prepare the data model.
-        ReportModel model = new();
-
-        // Configure the reporting engine.
-        ReportingEngine engine = new();
-        // By default, the engine restricts non‑primitive types. No explicit RestrictedTypes property exists
-        // in the current version, so we rely on the default enforcement.
-
-        try
+    public class Program
+    {
+        public static void Main()
         {
-            // This should throw because the model contains a property of type CustomData, which is restricted.
-            engine.BuildReport(doc, model, "model");
-            Console.WriteLine("Test failed: no exception was thrown.");
-        }
-        catch (Exception ex)
-        {
-            // Verify that the exception is due to restricted type enforcement.
-            if (ex.Message.Contains("restricted", StringComparison.OrdinalIgnoreCase) ||
-                ex.Message.Contains("type", StringComparison.OrdinalIgnoreCase))
+            // Register code page provider required by Aspose.Words for some encodings.
+            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
+            // Create a working directory.
+            string workDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+            Directory.CreateDirectory(workDir);
+
+            // -----------------------------------------------------------------
+            // 1. Build the template document programmatically.
+            // -----------------------------------------------------------------
+            string templatePath = Path.Combine(workDir, "template.docx");
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            // Insert a LINQ Reporting tag that accesses a property of a restricted type.
+            builder.Writeln("Secret name: <<[model.Secret.Name]>>");
+
+            // Save the template.
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 2. Load the template for reporting.
+            // -----------------------------------------------------------------
+            Document loadedTemplate = new Document(templatePath);
+
+            // -----------------------------------------------------------------
+            // 3. Prepare the model instance.
+            // -----------------------------------------------------------------
+            ReportModel model = new ReportModel
             {
-                Console.WriteLine("Test passed: expected exception was thrown.");
-                Console.WriteLine($"Exception: {ex.GetType().Name} - {ex.Message}");
-            }
-            else
+                Secret = new SecretInfo { Name = "TopSecret" },
+                Title = "Demo Report"
+            };
+
+            // -----------------------------------------------------------------
+            // 4. Configure the ReportingEngine with restricted types (allow only string).
+            // -----------------------------------------------------------------
+            ReportingEngine engine = new ReportingEngine();
+
+            // The RestrictedTypes property may not be present in all versions.
+            // Use reflection to set it when available.
+            PropertyInfo? restrictedProp = typeof(ReportingEngine).GetProperty("RestrictedTypes",
+                BindingFlags.Public | BindingFlags.Instance);
+            if (restrictedProp != null && restrictedProp.CanWrite)
             {
-                Console.WriteLine("Test failed: unexpected exception type.");
-                Console.WriteLine($"Exception: {ex.GetType().Name} - {ex.Message}");
+                restrictedProp.SetValue(engine, new Type[] { typeof(string) });
             }
+
+            // Enable inline error messages so that BuildReport returns false on failure.
+            engine.Options = ReportBuildOptions.InlineErrorMessages;
+
+            // -----------------------------------------------------------------
+            // 5. Attempt to build the report and verify that the expected exception is thrown.
+            // -----------------------------------------------------------------
+            bool exceptionThrown = false;
+            try
+            {
+                // BuildReport returns true on success; we expect it to fail because SecretInfo is restricted.
+                bool success = engine.BuildReport(loadedTemplate, model, "model");
+
+                // If BuildReport returns false, retrieve the inline error messages.
+                if (!success)
+                {
+                    // The engine inserts error messages into the document; we can also treat this as a failure.
+                    Console.WriteLine("Test failed: BuildReport returned false without throwing an exception.");
+                }
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains(nameof(SecretInfo)))
+            {
+                exceptionThrown = true;
+                Console.WriteLine("Test passed: restricted type exception was thrown as expected.");
+                Console.WriteLine($"Exception message: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Test failed: an unexpected exception was thrown.");
+                Console.WriteLine($"Exception type: {ex.GetType().FullName}");
+                Console.WriteLine($"Message: {ex.Message}");
+            }
+
+            if (!exceptionThrown)
+            {
+                Console.WriteLine("Test failed: no exception was thrown when accessing a restricted type.");
+            }
+
+            // Optional clean‑up.
+            // File.Delete(templatePath);
         }
     }
-}
-
-// Public data model classes.
-public class ReportModel
-{
-    public string Name { get; set; } = "Sample Name";
-    public CustomData Custom { get; set; } = new();
-}
-
-public class CustomData
-{
-    public string Info { get; set; } = "Restricted Info";
 }

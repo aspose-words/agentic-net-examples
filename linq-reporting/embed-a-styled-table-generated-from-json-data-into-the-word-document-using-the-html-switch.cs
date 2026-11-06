@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Text.Encodings.Web;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
@@ -10,88 +11,76 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for potential encoding needs.
+        // Register code page provider for any legacy encodings.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Sample JSON data representing a collection of items.
-        string jsonData = @"[
-            { ""Id"": 1, ""Name"": ""Apple"",  ""Price"": 0.5 },
-            { ""Id"": 2, ""Name"": ""Banana"", ""Price"": 0.3 },
-            { ""Id"": 3, ""Name"": ""Cherry"", ""Price"": 0.8 }
-        ]";
-
-        // Deserialize JSON into a list of Item objects.
-        List<Item> items = JsonConvert.DeserializeObject<List<Item>>(jsonData) ?? new();
-
-        // Generate styled HTML table from the deserialized data.
-        string tableHtml = GenerateHtmlTable(items);
-
-        // Prepare the model that will be passed to the reporting engine.
-        ReportModel model = new()
+        // Prepare sample JSON data file.
+        const string jsonPath = "data.json";
+        var sampleData = new List<Product>
         {
-            TableHtml = tableHtml
+            new Product { Name = "Apple", Price = 0.99m },
+            new Product { Name = "Banana", Price = 0.59m },
+            new Product { Name = "Cherry", Price = 2.99m }
+        };
+        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(sampleData, Formatting.Indented));
+
+        // Load JSON data.
+        var json = File.ReadAllText(jsonPath);
+        var products = JsonConvert.DeserializeObject<List<Product>>(json) ?? new List<Product>();
+
+        // Generate styled HTML table from the data.
+        var htmlBuilder = new StringBuilder();
+        htmlBuilder.AppendLine("<table style=\"border-collapse:collapse;width:100%;font-family:Arial;\">");
+        htmlBuilder.AppendLine("<tr>");
+        htmlBuilder.AppendLine("<th style=\"border:1px solid #dddddd;padding:8px;background:#f2f2f2;\">Product</th>");
+        htmlBuilder.AppendLine("<th style=\"border:1px solid #dddddd;padding:8px;background:#f2f2f2;\">Price (USD)</th>");
+        htmlBuilder.AppendLine("</tr>");
+        foreach (var p in products)
+        {
+            htmlBuilder.AppendLine("<tr>");
+            htmlBuilder.AppendLine($"<td style=\"border:1px solid #dddddd;padding:8px;\">{HtmlEncoder.Default.Encode(p.Name)}</td>");
+            htmlBuilder.AppendLine($"<td style=\"border:1px solid #dddddd;padding:8px;text-align:right;\">{p.Price:F2}</td>");
+            htmlBuilder.AppendLine("</tr>");
+        }
+        htmlBuilder.AppendLine("</table>");
+
+        // Prepare the model for LINQ Reporting.
+        var model = new ReportModel
+        {
+            HtmlTable = htmlBuilder.ToString()
         };
 
-        // Create a Word template programmatically.
-        Document template = new();
-        DocumentBuilder builder = new(template);
-
-        // Insert a paragraph with the LINQ Reporting HTML switch.
-        builder.Writeln("<<[model.TableHtml] -html>>");
-
-        // Save the template to disk.
+        // Create the template document programmatically.
         const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Report generated from JSON data:");
+        builder.Writeln("<<[model.HtmlTable] -html>>");
+        templateDoc.Save(templatePath);
 
-        // Load the template for report generation.
-        Document doc = new(templatePath);
+        // Load the template for reporting.
+        var doc = new Document(templatePath);
 
-        // Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new();
+        // Build the report using LINQ Reporting Engine.
+        var engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
-        // Save the final document.
+        // Save the final report.
         const string outputPath = "Report.docx";
         doc.Save(outputPath);
     }
-
-    // Generates an HTML table with basic styling from a list of items.
-    private static string GenerateHtmlTable(List<Item> items)
-    {
-        StringBuilder sb = new();
-        sb.AppendLine(@"<table style=""border-collapse:collapse;width:100%;font-family:Arial,Helvetica,sans-serif;"">");
-        sb.AppendLine(@"  <tr>");
-        sb.AppendLine(@"    <th style=""border:1px solid #000;padding:5px;background:#f2f2f2;"">Id</th>");
-        sb.AppendLine(@"    <th style=""border:1px solid #000;padding:5px;background:#f2f2f2;"">Name</th>");
-        sb.AppendLine(@"    <th style=""border:1px solid #000;padding:5px;background:#f2f2f2;"">Price</th>");
-        sb.AppendLine(@"  </tr>");
-
-        for (int i = 0; i < items.Count; i++)
-        {
-            Item item = items[i];
-            string bgColor = i % 2 == 0 ? "#ffffff" : "#e9e9e9";
-            sb.AppendLine(@"  <tr>");
-            sb.AppendLine($@"    <td style=""border:1px solid #000;padding:5px;background:{bgColor};"">{item.Id}</td>");
-            sb.AppendLine($@"    <td style=""border:1px solid #000;padding:5px;background:{bgColor};"">{System.Net.WebUtility.HtmlEncode(item.Name)}</td>");
-            sb.AppendLine($@"    <td style=""border:1px solid #000;padding:5px;background:{bgColor};"">{item.Price:C}</td>");
-            sb.AppendLine(@"  </tr>");
-        }
-
-        sb.AppendLine(@"</table>");
-        return sb.ToString();
-    }
 }
 
-// Model class used as the root object for the LINQ Reporting engine.
+// Root model class used by the reporting engine.
 public class ReportModel
 {
-    public string TableHtml { get; set; } = string.Empty;
+    // HTML snippet that will be inserted into the document.
+    public string HtmlTable { get; set; } = string.Empty;
 }
 
-// Simple data class representing an item in the JSON array.
-public class Item
+// Simple data class representing a product.
+public class Product
 {
-    public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
-    public double Price { get; set; }
+    public decimal Price { get; set; }
 }

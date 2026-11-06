@@ -1,62 +1,80 @@
 using System;
-using System.IO;
+using System.Collections.Generic;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class InlineErrorMessageExample
+public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words.
+        // Register code page provider (required for some environments)
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Paths for template and output documents
+        string templatePath = "template.docx";
+        string outputPath = "output.docx";
 
-        // Create a simple template with a valid tag and an intentional reference error.
-        string templatePath = Path.Combine(outputDir, "template.docx");
+        // -----------------------------------------------------------------
+        // Step 1: Create a template document with an intentional runtime error
+        // -----------------------------------------------------------------
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Correct tag.
-        builder.Writeln("Hello, <<[model.Name]>>!");
+        // Write a simple heading
+        builder.Writeln("Report with Inline Error Messages");
 
-        // Intentional reference error (property does not exist).
-        builder.Writeln("This line has a reference error: <<[model.Unknown]>>");
+        // Correct foreach loop
+        builder.Writeln("<<foreach [item in Items]>>");
+        // The expression <<[item.Unknown]>> does not exist in the data model and will trigger an inline error message
+        builder.Writeln("Item: <<[item.Name]>> <<[item.Unknown]>>");
+        builder.Writeln("<</foreach>>");
 
-        // Save the template.
+        // Save the template to disk
         templateDoc.Save(templatePath);
 
-        // Load the template for reporting.
-        Document reportDoc = new Document(templatePath);
-
-        // Sample data model.
+        // -----------------------------------------------------------------
+        // Step 2: Prepare sample data model
+        // -----------------------------------------------------------------
         ReportModel model = new()
         {
-            Name = "John Doe"
+            Items = new()
+            {
+                new Item { Name = "Alpha" },
+                new Item { Name = "Beta" },
+                new Item { Name = "Gamma" }
+            }
         };
 
-        // Configure the reporting engine to show inline error messages.
+        // -----------------------------------------------------------------
+        // Step 3: Load the template and build the report with inline errors
+        // -----------------------------------------------------------------
+        Document reportDoc = new Document(templatePath);
         ReportingEngine engine = new ReportingEngine();
+
+        // Enable inline error messages (default template will be used)
         engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-        // Build the report.
+        // Build the report; success will be false due to the runtime error
         bool success = engine.BuildReport(reportDoc, model, "model");
 
-        // Save the generated report.
-        string resultPath = Path.Combine(outputDir, "result.docx");
-        reportDoc.Save(resultPath);
+        // Save the resulting document
+        reportDoc.Save(outputPath);
 
-        // Output the result status.
-        Console.WriteLine($"Report generation success: {success}");
-        Console.WriteLine($"Result saved to: {resultPath}");
+        // Output the success flag (optional, not required for the report)
+        Console.WriteLine($"Report build success: {success}");
     }
+}
 
-    // Simple data model used by the template.
-    public class ReportModel
-    {
-        public string Name { get; set; } = string.Empty;
-    }
+// ---------------------------------------------------------------------
+// Data model classes
+// ---------------------------------------------------------------------
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    public string Name { get; set; } = string.Empty;
 }

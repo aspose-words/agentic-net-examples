@@ -19,33 +19,37 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
-        var model = new ReportModel();
-        model.Items.Add(new Item { Index = 1, Name = "Alice" });
-        model.Items.Add(new Item { Index = 2, Name = "Bob" });
-        model.Items.Add(new Item { Index = 3, Name = "Charlie" });
+        // Register code page provider (required for some environments)
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        // Create the template document programmatically.
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
-        builder.Writeln("LINQ Reporting Example");
+        // Prepare sample data
+        var model = new ReportModel();
+        model.Items.Add(new Item { Index = 1, Name = "Alpha" });
+        model.Items.Add(new Item { Index = 2, Name = "Beta" });
+        model.Items.Add(new Item { Index = 3, Name = "Gamma" });
+
+        // Create the template document with LINQ Reporting tags
+        var templatePath = "Template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+
+        builder.Writeln("Item List:");
         builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
+        builder.Writeln("Index: <<[item.Index]>>, Name: <<[item.Name]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        // Save the template
+        templateDoc.Save(templatePath);
 
-        // Load the template for report generation.
-        var doc = new Document(templatePath);
+        // Load the template for report generation
+        var reportDoc = new Document(templatePath);
 
-        // Build the report using the LINQ Reporting engine.
+        // Build the report
         var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Save the generated report.
-        const string outputPath = "Report.docx";
-        doc.Save(outputPath);
+        // Save the generated report
+        var outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
 }

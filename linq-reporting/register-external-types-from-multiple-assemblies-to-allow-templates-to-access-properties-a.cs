@@ -1,76 +1,83 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Newtonsoft.Json;
 
-public class Program
+namespace LinqReportingExternalTypesExample
 {
-    // Simple data model used as the root object for the report.
-    public class Person
+    // Simulate external assembly A
+    namespace LibraryA
     {
-        public string Name { get; set; } = "John Doe";
-        public int Age { get; set; } = 30;
+        public class Person
+        {
+            public string Name { get; set; } = "John Doe";
+            public int Age { get; set; } = 30;
+        }
     }
 
-    public static void Main()
+    // Simulate external assembly B
+    namespace LibraryB
     {
-        // Register code page provider required by Aspose.Words for some encodings.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        public class Address
+        {
+            public string City { get; set; } = "New York";
+            public string Street { get; set; } = "5th Avenue";
+        }
+    }
 
-        // -----------------------------------------------------------------
-        // 1. Create a template document with LINQ Reporting tags.
-        // -----------------------------------------------------------------
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+    // Wrapper model used as the root object for the report
+    public class ReportModel
+    {
+        public LibraryA.Person Person { get; set; } = new();
+        public LibraryB.Address Address { get; set; } = new();
+    }
 
-        // Plain data from the root object.
-        builder.Writeln("Name: <<[model.Name]>>");
-        builder.Writeln("Age: <<[model.Age]>>");
+    public class Program
+    {
+        public static void Main()
+        {
+            // Ensure output directory exists
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+            Directory.CreateDirectory(outputDir);
 
-        // Use a static method from System.Guid (built‑in assembly).
-        builder.Writeln("Generated GUID: <<[System.Guid.NewGuid()]>>");
+            // Create a template document with LINQ Reporting tags
+            string templatePath = Path.Combine(outputDir, "template.docx");
+            CreateTemplate(templatePath);
 
-        // Use a static method from Newtonsoft.Json (external assembly) to serialize the model.
-        builder.Writeln("JSON representation: <<[Newtonsoft.Json.JsonConvert.SerializeObject(model)]>>");
+            // Load the template
+            Document doc = new(templatePath);
 
-        // Save the template to disk.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+            // Prepare the data model
+            ReportModel model = new();
 
-        // -----------------------------------------------------------------
-        // 2. Load the template back (ensures the template is fully persisted before building).
-        // -----------------------------------------------------------------
-        Document loadedTemplate = new Document(templatePath);
+            // Build the report
+            ReportingEngine engine = new();
+            engine.BuildReport(doc, model, "model");
 
-        // -----------------------------------------------------------------
-        // 3. Prepare the root data object.
-        // -----------------------------------------------------------------
-        Person model = new Person();
+            // Save the generated report
+            string reportPath = Path.Combine(outputDir, "report.docx");
+            doc.Save(reportPath);
 
-        // -----------------------------------------------------------------
-        // 4. Configure the ReportingEngine.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
+            // Indicate completion (no interactive input)
+            Console.WriteLine($"Report generated at: {reportPath}");
+        }
 
-        // Register external types from multiple assemblies so that the template can access them.
-        engine.KnownTypes.Add(typeof(System.Guid));                     // mscorlib / System assembly
-        engine.KnownTypes.Add(typeof(Newtonsoft.Json.JsonConvert));    // Newtonsoft.Json assembly
+        private static void CreateTemplate(string path)
+        {
+            Document doc = new();
+            DocumentBuilder builder = new(doc);
 
-        // -----------------------------------------------------------------
-        // 5. Build the report.
-        // -----------------------------------------------------------------
-        // The root name used in the template tags is "model".
-        engine.BuildReport(loadedTemplate, model, "model");
+            builder.Writeln("=== LINQ Reporting Example with External Types ===");
+            builder.Writeln();
 
-        // -----------------------------------------------------------------
-        // 6. Save the generated report.
-        // -----------------------------------------------------------------
-        const string outputPath = "Report.docx";
-        loadedTemplate.Save(outputPath);
+            // Insert tags that reference properties from both external types
+            builder.Writeln("Person Name: <<[model.Person.Name]>>");
+            builder.Writeln("Person Age: <<[model.Person.Age]>>");
+            builder.Writeln("Address City: <<[model.Address.City]>>");
+            builder.Writeln("Address Street: <<[model.Address.Street]>>");
 
-        // Inform the user (no interactive input required).
-        Console.WriteLine($"Report generated successfully: {Path.GetFullPath(outputPath)}");
+            // Save the template
+            doc.Save(path);
+        }
     }
 }

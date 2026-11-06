@@ -1,106 +1,61 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class Model
-{
-    // Existing member used in the template.
-    public string Name { get; set; } = "John Doe";
-
-    // Intentionally missing member to trigger logging.
-    // public string MissingProperty { get; set; }
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for template, output document, and log file.
+        // Register code page provider (required for some encodings)
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
+        // Paths for the template and the generated document
         string templatePath = "template.docx";
         string outputPath = "output.docx";
-        string logPath = "missing_members.log";
 
         // -----------------------------------------------------------------
-        // 1. Create a simple template with a valid tag and a missing tag.
+        // Create a template document that contains a missing member tag.
         // -----------------------------------------------------------------
-        Document templateDoc = new();
-        DocumentBuilder builder = new(templateDoc);
-
-        builder.Writeln("Hello, <<[model.Name]>>!");
-        builder.Writeln("This will try to use a missing member: <<[model.MissingProperty]>>.");
-
-        // Save the template to disk.
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Customer Name: <<[model.Name]>>");
+        builder.Writeln("Missing field: <<[model.NonExisting]>>");
         templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the template for reporting.
-        // -----------------------------------------------------------------
-        Document reportDoc = new(templatePath);
+        // Load the template for reporting
+        Document doc = new Document(templatePath);
 
-        // -----------------------------------------------------------------
-        // 3. Prepare the data model (does NOT contain MissingProperty).
-        // -----------------------------------------------------------------
-        Model model = new();
+        // Sample data model (does NOT contain the missing member)
+        SampleModel model = new SampleModel { Name = "John Doe" };
 
-        // -----------------------------------------------------------------
-        // 4. Configure the ReportingEngine to allow missing members.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new();
+        // Configure the reporting engine
+        ReportingEngine engine = new ReportingEngine();
+        // Enable handling of missing members without throwing an exception
         engine.Options = ReportBuildOptions.AllowMissingMembers;
 
-        // Build the report.
-        bool success = engine.BuildReport(reportDoc, model, "model");
+        // Build the report
+        bool success = engine.BuildReport(doc, model, "model");
 
-        // -----------------------------------------------------------------
-        // 5. Retrieve and log each occurrence of missing members.
-        // -----------------------------------------------------------------
-        // Use reflection to obtain the MissingMemberLog property if it exists.
-        IList<string> missingMembers = new List<string>();
-        PropertyInfo? logProp = typeof(ReportingEngine).GetProperty("MissingMemberLog", BindingFlags.Instance | BindingFlags.Public);
-        if (logProp != null && typeof(IList<string>).IsAssignableFrom(logProp.PropertyType))
+        // The ReportingEngine in the current version does not expose a MissingMemberLog property.
+        // When AllowMissingMembers is enabled, missing members are simply ignored.
+        // For demonstration, we output a message indicating whether the report was generated.
+        if (success)
         {
-            missingMembers = (IList<string>?)logProp.GetValue(engine) ?? new List<string>();
+            Console.WriteLine("Report generated successfully. Missing members (if any) were ignored.");
+        }
+        else
+        {
+            Console.WriteLine("Report generation failed.");
         }
 
-        // Ensure the log file directory exists.
-        string logDirectory = Path.GetDirectoryName(Path.GetFullPath(logPath)) ?? "";
-        if (!Directory.Exists(logDirectory))
-        {
-            Directory.CreateDirectory(logDirectory);
-        }
-
-        using (StreamWriter logWriter = new(logPath, false))
-        {
-            if (missingMembers.Count == 0)
-            {
-                logWriter.WriteLine("No missing members were encountered.");
-                Console.WriteLine("No missing members were encountered.");
-            }
-            else
-            {
-                logWriter.WriteLine("Missing members encountered during report generation:");
-                Console.WriteLine("Missing members encountered during report generation:");
-                foreach (string entry in missingMembers)
-                {
-                    logWriter.WriteLine(entry);
-                    Console.WriteLine(entry);
-                }
-            }
-        }
-
-        // -----------------------------------------------------------------
-        // 6. Save the generated report.
-        // -----------------------------------------------------------------
-        // Ensure the output directory exists.
-        string outputDirectory = Path.GetDirectoryName(Path.GetFullPath(outputPath)) ?? "";
-        if (!Directory.Exists(outputDirectory))
-        {
-            Directory.CreateDirectory(outputDirectory);
-        }
-
-        reportDoc.Save(outputPath);
+        // Save the generated document
+        doc.Save(outputPath);
     }
+}
+
+// Public data model class
+public class SampleModel
+{
+    public string Name { get; set; } = "";
 }

@@ -1,116 +1,133 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
+using System.Text;
 using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
 
-public class Department
+public class Category
 {
-    public int Id { get; set; }
     public string Name { get; set; } = "";
 }
 
-public class Employee
+public class Product
 {
-    public int Id { get; set; }
+    public string CategoryName { get; set; } = "";
     public string Name { get; set; } = "";
-    public int DeptId { get; set; }
+    public decimal Price { get; set; }
 }
 
 public class ReportModel
 {
-    public List<Department> Departments { get; set; } = new();
-    public List<Employee> Employees { get; set; } = new();
+    public List<Category> Categories { get; set; } = new();
+    public List<Product> Products { get; set; } = new();
 }
 
 public class Program
 {
     public static void Main()
     {
-        // ---------- Create sample XML ----------
-        string xmlPath = "departments.xml";
-        string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<Departments>
-  <Department>
-    <Id>1</Id>
-    <Name>Human Resources</Name>
-  </Department>
-  <Department>
-    <Id>2</Id>
-    <Name>Engineering</Name>
-  </Department>
-</Departments>";
-        File.WriteAllText(xmlPath, xmlContent);
+        // Register code page provider for any legacy encodings.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // ---------- Create sample JSON ----------
-        string jsonPath = "employees.json";
-        string jsonContent = @"[
-  { ""Id"": 1, ""Name"": ""Alice"", ""DeptId"": 1 },
-  { ""Id"": 2, ""Name"": ""Bob"",   ""DeptId"": 2 },
-  { ""Id"": 3, ""Name"": ""Carol"", ""DeptId"": 2 },
-  { ""Id"": 4, ""Name"": ""David"", ""DeptId"": 1 }
+        // -----------------------------------------------------------------
+        // Create sample XML data (categories).
+        // -----------------------------------------------------------------
+        const string xmlPath = "categories.xml";
+        var xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<Categories>
+    <Category><Name>Electronics</Name></Category>
+    <Category><Name>Books</Name></Category>
+    <Category><Name>Clothing</Name></Category>
+</Categories>";
+        File.WriteAllText(xmlPath, xmlContent, Encoding.UTF8);
+
+        // -----------------------------------------------------------------
+        // Create sample JSON data (products).
+        // -----------------------------------------------------------------
+        const string jsonPath = "products.json";
+        var jsonContent = @"[
+    { ""CategoryName"": ""Electronics"", ""Name"": ""Smartphone"", ""Price"": 699.99 },
+    { ""CategoryName"": ""Electronics"", ""Name"": ""Laptop"", ""Price"": 1199.50 },
+    { ""CategoryName"": ""Books"", ""Name"": ""C# Programming"", ""Price"": 39.99 },
+    { ""CategoryName"": ""Clothing"", ""Name"": ""T-Shirt"", ""Price"": 19.95 },
+    { ""CategoryName"": ""Clothing"", ""Name"": ""Jeans"", ""Price"": 49.99 }
 ]";
-        File.WriteAllText(jsonPath, jsonContent);
+        File.WriteAllText(jsonPath, jsonContent, Encoding.UTF8);
 
-        // ---------- Load data into model ----------
-        var departments = XDocument.Load(xmlPath)
-            .Descendants("Department")
-            .Select(d => new Department
+        // -----------------------------------------------------------------
+        // Load XML into Category objects.
+        // -----------------------------------------------------------------
+        var xDoc = XDocument.Load(xmlPath);
+        var categories = new List<Category>();
+        foreach (var elem in xDoc.Root?.Elements("Category") ?? [])
+        {
+            var nameElem = elem.Element("Name");
+            if (nameElem != null)
             {
-                Id = (int)d.Element("Id")!,
-                Name = (string)d.Element("Name")!
-            })
-            .ToList();
+                categories.Add(new Category { Name = nameElem.Value });
+            }
+        }
 
-        var employees = JsonConvert.DeserializeObject<List<Employee>>(jsonContent) ?? new List<Employee>();
+        // -----------------------------------------------------------------
+        // Load JSON into Product objects.
+        // -----------------------------------------------------------------
+        var products = JsonConvert.DeserializeObject<List<Product>>(jsonContent) ?? new List<Product>();
 
+        // -----------------------------------------------------------------
+        // Assemble the root model.
+        // -----------------------------------------------------------------
         var model = new ReportModel
         {
-            Departments = departments,
-            Employees = employees
+            Categories = categories,
+            Products = products
         };
 
-        // ---------- Build template document ----------
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // -----------------------------------------------------------------
+        // Create the template document programmatically.
+        // -----------------------------------------------------------------
+        const string templatePath = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Title
-        builder.Writeln("Company Report");
+        // Title section.
+        builder.Writeln("Multi‑Section Report");
         builder.Writeln();
 
-        // Outer foreach over departments
-        builder.Writeln("<<foreach [dept in model.Departments]>>");
-        builder.Writeln("Department: <<[dept.Name]>>");
-        builder.Writeln();
-
-        // Inner foreach over employees with filter
-        builder.Writeln("Employees:");
-        builder.Writeln("<<foreach [emp in model.Employees]>>");
-        builder.Writeln("<<if [emp.DeptId == dept.Id]>>- <<[emp.Name]>> <</if>>");
-        builder.Writeln("<</foreach>>");
-        builder.Writeln();
-
-        // Insert a section break after each department
+        // Start a new section for the data.
         builder.InsertBreak(BreakType.SectionBreakNewPage);
 
-        // Close outer foreach
+        // Outer foreach over categories (using the root model name).
+        builder.Writeln("<<foreach [cat in model.Categories]>>");
+        builder.Writeln("Category: <<[cat.Name]>>");
+        builder.Writeln();
+
+        // Inner foreach over products, filtered by the current category.
+        builder.Writeln("<<foreach [prod in model.Products]>>");
+        builder.Writeln("<<if [prod.CategoryName == cat.Name]>>");
+        builder.Writeln("- Product: <<[prod.Name]>> (Price: $<<[prod.Price]>>)");
+        builder.Writeln("<</if>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template
-        string templatePath = "template.docx";
-        templateDoc.Save(templatePath);
+        // Close the outer foreach.
+        builder.Writeln("<</foreach>>");
 
-        // ---------- Generate report ----------
-        var doc = new Document(templatePath);
+        // Save the template to disk.
+        doc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // Load the template and build the report.
+        // -----------------------------------------------------------------
+        var templateDoc = new Document(templatePath);
         var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        engine.BuildReport(doc, model, "model");
 
-        // Save final document
-        string outputPath = "output.docx";
-        doc.Save(outputPath);
+        // Build the report using the model and the root name "model".
+        engine.BuildReport(templateDoc, model, "model");
+
+        // Save the final document.
+        const string outputPath = "output.docx";
+        templateDoc.Save(outputPath);
     }
 }

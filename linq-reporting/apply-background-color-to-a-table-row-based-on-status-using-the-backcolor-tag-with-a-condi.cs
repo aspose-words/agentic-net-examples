@@ -1,54 +1,37 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Tables;
-
-public class ReportItem
-{
-    public int Id { get; set; } = 0;
-    public string Name { get; set; } = "";
-    public string Status { get; set; } = "";
-}
-
-public class ReportModel
-{
-    public List<ReportItem> Items { get; set; } = new();
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for Aspose.Words).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
         // Sample data.
         var model = new ReportModel
         {
-            Items = new List<ReportItem>
+            Items = new()
             {
-                new ReportItem { Id = 1, Name = "Task A", Status = "Completed" },
-                new ReportItem { Id = 2, Name = "Task B", Status = "Pending" },
-                new ReportItem { Id = 3, Name = "Task C", Status = "Failed" }
+                new Item { Name = "Task A", Status = "Completed" },
+                new Item { Name = "Task B", Status = "Pending" },
+                new Item { Name = "Task C", Status = "Completed" },
+                new Item { Name = "Task D", Status = "InProgress" }
             }
         };
 
-        // Create template.
-        var templatePath = "Template.docx";
+        // Create template document.
+        const string templatePath = "Template.docx";
         var doc = new Document();
         var builder = new DocumentBuilder(doc);
 
-        // Begin foreach loop.
+        // Begin foreach loop for data rows.
         builder.Writeln("<<foreach [item in Items]>>");
 
-        // Table for each iteration.
+        // Create a table for each item (header + data row).
         Table table = builder.StartTable();
 
         // Header row.
-        builder.InsertCell();
-        builder.Writeln("Id");
         builder.InsertCell();
         builder.Writeln("Name");
         builder.InsertCell();
@@ -56,32 +39,46 @@ public class Program
         builder.EndRow();
 
         // Data row with conditional background color.
-        string backColorExpr = "<<backColor [item.Status == \"Completed\" ? \"LightGreen\" : item.Status == \"Pending\" ? \"LightYellow\" : \"LightCoral\"]>>";
+        builder.InsertCell();
+        builder.Writeln(
+            "<<if [item.Status == \"Completed\"]>><<backColor [\"LightGreen\"]>><<[item.Name]>> <</backColor>><</if>>" +
+            "<<if [item.Status != \"Completed\"]>><<[item.Name]>> <</if>>");
 
         builder.InsertCell();
-        builder.Writeln($"{backColorExpr}<<[item.Id]>> <</backColor>>");
-        builder.InsertCell();
-        builder.Writeln($"{backColorExpr}<<[item.Name]>> <</backColor>>");
-        builder.InsertCell();
-        builder.Writeln($"{backColorExpr}<<[item.Status]>> <</backColor>>");
+        builder.Writeln(
+            "<<if [item.Status == \"Completed\"]>><<backColor [\"LightGreen\"]>><<[item.Status]>> <</backColor>><</if>>" +
+            "<<if [item.Status != \"Completed\"]>><<[item.Status]>> <</if>>");
+
         builder.EndRow();
-
-        // End table.
         builder.EndTable();
 
         // End foreach loop.
         builder.Writeln("<</foreach>>");
 
-        // Save template.
+        // Save the template.
         doc.Save(templatePath);
 
-        // Load template and build report.
+        // Load the template for reporting.
         var reportDoc = new Document(templatePath);
         var engine = new ReportingEngine();
+
+        // Build the report.
         engine.BuildReport(reportDoc, model, "model");
 
-        // Save final report.
-        var outputPath = "Report.docx";
+        // Save the generated report.
+        const string outputPath = "ReportOutput.docx";
         reportDoc.Save(outputPath);
     }
+}
+
+// Data model classes.
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    public string Name { get; set; } = "";
+    public string Status { get; set; } = "";
 }

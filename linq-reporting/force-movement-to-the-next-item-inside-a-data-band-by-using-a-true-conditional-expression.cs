@@ -1,66 +1,69 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using System.Text;
 
-public class Program
+namespace LinqReportingTrueConditional
 {
-    public static void Main()
+    public class Item
     {
-        // Create a template document with LINQ Reporting tags.
-        var templatePath = "Template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        // Begin a data band that iterates over Items.
-        builder.Writeln("<<foreach [item in Items]>>");
-        // Output the item name.
-        builder.Writeln("Item: <<[item.Name]>>");
-        // Force movement to the next item using a true conditional expression.
-        builder.Writeln("<<if [true]>>");
-        builder.Writeln("<<next>>");
-        builder.Writeln("<</if>>");
-        // This line will be skipped because of the <<next>> tag.
-        builder.Writeln("This line will be skipped.");
-        // End of the data band.
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        doc.Save(templatePath);
-
-        // Load the template for report generation.
-        var templateDoc = new Document(templatePath);
-
-        // Prepare sample data.
-        var model = new ReportModel
-        {
-            Items = new List<Item>
-            {
-                new Item { Name = "Alpha", Value = 1 },
-                new Item { Name = "Beta", Value = 2 },
-                new Item { Name = "Gamma", Value = 3 }
-            }
-        };
-
-        // Build the report.
-        var engine = new ReportingEngine();
-        engine.BuildReport(templateDoc, model, "model");
-
-        // Save the generated report.
-        var outputPath = "Report.docx";
-        templateDoc.Save(outputPath);
+        public int Index { get; set; } = 0;
+        public string Name { get; set; } = string.Empty;
     }
-}
 
-// Root data model.
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
+    public class ReportModel
+    {
+        public List<Item> Items { get; set; } = new();
+    }
 
-// Item class used in the data band.
-public class Item
-{
-    public string Name { get; set; } = "";
-    public int Value { get; set; }
+    public class Program
+    {
+        public static void Main()
+        {
+            // Register code page provider for Aspose.Words if needed
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Paths for template and output
+            string templatePath = "template.docx";
+            string outputPath = "output.docx";
+
+            // Create template document with LINQ Reporting tags
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            builder.Writeln("Report generated with LINQ Reporting");
+            builder.Writeln("<<foreach [item in Items]>>");
+            // Output item details
+            builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
+            // True conditional expression to force movement to next item (no additional content)
+            builder.Writeln("<<if [true]>> <<[item.Name]>> <</if>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template
+            templateDoc.Save(templatePath);
+
+            // Load the template for reporting
+            Document doc = new Document(templatePath);
+
+            // Prepare sample data
+            ReportModel model = new()
+            {
+                Items = new()
+                {
+                    new Item { Index = 1, Name = "Alpha" },
+                    new Item { Index = 2, Name = "Beta" },
+                    new Item { Index = 3, Name = "Gamma" }
+                }
+            };
+
+            // Build the report
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
+
+            // Save the generated report
+            doc.Save(outputPath);
+        }
+    }
 }

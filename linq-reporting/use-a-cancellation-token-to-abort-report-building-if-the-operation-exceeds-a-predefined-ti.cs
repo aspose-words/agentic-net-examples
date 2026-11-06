@@ -1,89 +1,91 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class ReportModel
+public class Program
 {
+    public static void Main()
+    {
+        // Register code page provider required by Aspose.Words.
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
+        // Sample data model.
+        var order = new Order
+        {
+            CustomerName = "John Doe",
+            Items = new List<Item>
+            {
+                new Item { Index = 1, Name = "Apple" },
+                new Item { Index = 2, Name = "Banana" },
+                new Item { Index = 3, Name = "Cherry" }
+            }
+        };
+
+        // Create and save the template document.
+        const string templatePath = "Template.docx";
+        CreateTemplate(templatePath);
+
+        // Load the template.
+        var doc = new Document(templatePath);
+
+        // Prepare the reporting engine.
+        var engine = new ReportingEngine();
+
+        // Cancellation token that triggers after a predefined time limit.
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        CancellationToken token = cts.Token;
+
+        // Run the report building in a separate task.
+        Task<bool> buildTask = Task.Run(() => engine.BuildReport(doc, order, "order"));
+
+        // A task that completes when the cancellation token is triggered.
+        Task delayTask = Task.Delay(Timeout.Infinite, token);
+
+        // Wait for either the report to finish or the timeout to occur.
+        Task completed = Task.WhenAny(buildTask, delayTask).Result;
+
+        if (completed == buildTask && buildTask.IsCompletedSuccessfully)
+        {
+            // Report built within the time limit – save the result.
+            const string outputPath = "Report.docx";
+            doc.Save(outputPath);
+            Console.WriteLine($"Report generated: {outputPath}");
+        }
+        else
+        {
+            // Timeout reached – abort the operation.
+            Console.WriteLine("Report generation was cancelled due to timeout.");
+        }
+    }
+
+    private static void CreateTemplate(string path)
+    {
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        // Insert LINQ Reporting tags.
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Items:");
+        builder.Writeln("<<foreach [item in order.Items]>>");
+        builder.Writeln(" - <<[item.Index]>>: <<[item.Name]>>");
+        builder.Writeln("<</foreach>>");
+
+        doc.Save(path);
+    }
+}
+
+// Public data model classes.
+public class Order
+{
+    public string CustomerName { get; set; } = "";
     public List<Item> Items { get; set; } = new();
 }
 
 public class Item
 {
     public int Index { get; set; }
-    public string Name { get; set; } = string.Empty;
-}
-
-public class Program
-{
-    public static void Main()
-    {
-        // Ensure the working directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
-
-        // 1. Create the LINQ Reporting template programmatically.
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("Sample Report");
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
-        builder.Writeln("<</foreach>>");
-
-        templateDoc.Save(templatePath);
-
-        // 2. Load the template for report generation.
-        Document doc = new Document(templatePath);
-
-        // 3. Prepare sample data.
-        ReportModel model = new ReportModel();
-        for (int i = 1; i <= 5000; i++)
-        {
-            model.Items.Add(new Item { Index = i, Name = $"Product {i}" });
-        }
-
-        // 4. Build the report with a cancellation token that aborts after a time limit.
-        ReportingEngine engine = new ReportingEngine();
-
-        using CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
-        Task<bool> buildTask = Task.Run(() =>
-        {
-            // The BuildReport method returns a bool indicating success when InlineErrorMessages is used.
-            // Here we just call it; the result is not needed for this example.
-            engine.BuildReport(doc, model, "model");
-            return true;
-        }, cts.Token);
-
-        try
-        {
-            // Wait for the task to complete within the timeout.
-            bool completed = buildTask.Wait(TimeSpan.FromSeconds(2), cts.Token);
-            if (completed)
-            {
-                // Report built successfully within the time limit.
-                string resultPath = Path.Combine(outputDir, "ReportOutput.docx");
-                doc.Save(resultPath);
-                Console.WriteLine($"Report generated: {resultPath}");
-            }
-            else
-            {
-                // Timeout occurred; report generation is considered aborted.
-                Console.WriteLine("Report generation aborted due to timeout.");
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            // The cancellation token triggered cancellation.
-            Console.WriteLine("Report generation cancelled.");
-        }
-        catch (AggregateException ae) when (ae.InnerException is OperationCanceledException)
-        {
-            Console.WriteLine("Report generation cancelled via aggregate exception.");
-        }
-    }
+    public string Name { get; set; } = "";
 }

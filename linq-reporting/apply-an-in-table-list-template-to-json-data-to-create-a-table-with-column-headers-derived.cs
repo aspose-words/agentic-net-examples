@@ -1,8 +1,10 @@
 using System;
-using System.Collections.Generic;
+using System.Data;
+using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
 using Newtonsoft.Json;
 
 public class Program
@@ -12,86 +14,74 @@ public class Program
         // Register code page provider for Aspose.Words.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Sample JSON data.
-        string json = @"
-        [
-            { ""Name"": ""Alice"", ""Age"": 30, ""Country"": ""USA"" },
-            { ""Name"": ""Bob"",   ""Age"": 25, ""Country"": ""Canada"" },
-            { ""Name"": ""Charlie"", ""Age"": 35, ""Country"": ""UK"" }
+        // ---------- Step 1: Create sample JSON data ----------
+        string json = @"[
+            { ""Name"": ""Alice"", ""Age"": 30, ""City"": ""New York"" },
+            { ""Name"": ""Bob"",   ""Age"": 25, ""City"": ""Los Angeles"" },
+            { ""Name"": ""Carol"", ""Age"": 28, ""City"": ""Chicago"" }
         ]";
 
-        // Deserialize JSON into a list of Person objects.
-        List<Person> persons = JsonConvert.DeserializeObject<List<Person>>(json) ?? new();
+        const string jsonPath = "data.json";
+        File.WriteAllText(jsonPath, json);
 
-        // Wrapper model for the report.
-        ReportModel model = new()
+        // ---------- Step 2: Load JSON into a DataTable ----------
+        DataTable table = JsonConvert.DeserializeObject<DataTable>(File.ReadAllText(jsonPath))!;
+
+        // Wrap the DataTable rows for the reporting engine.
+        var model = new ReportModel
         {
-            Persons = persons
+            TableRows = table.Rows
         };
 
-        // Create a Word template programmatically.
-        Document template = new();
-        DocumentBuilder builder = new(template);
+        // ---------- Step 3: Create the LINQ Reporting template ----------
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // -----------------------------------------------------------------
-        // Header table (static, appears once)
-        // -----------------------------------------------------------------
-        builder.StartTable();
+        // Begin foreach loop over rows.
+        builder.Writeln("<<foreach [row in TableRows]>>");
 
-        builder.InsertCell();
-        builder.Writeln(nameof(Person.Name));
-        builder.InsertCell();
-        builder.Writeln(nameof(Person.Age));
-        builder.InsertCell();
-        builder.Writeln(nameof(Person.Country));
+        // Start the table.
+        Table reportTable = builder.StartTable();
+
+        // Header row: column names derived from the DataTable schema.
+        foreach (DataColumn column in table.Columns)
+        {
+            builder.InsertCell();
+            builder.Writeln(column.ColumnName);
+        }
         builder.EndRow();
 
-        builder.EndTable();
-
-        // -----------------------------------------------------------------
-        // Data rows – generated inside a foreach block
-        // -----------------------------------------------------------------
-        builder.Writeln("<<foreach [person in Persons]>>");
-
-        // Table that will be repeated for each person.
-        builder.StartTable();
-
-        builder.InsertCell();
-        builder.Writeln("<<[person.Name]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[person.Age]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[person.Country]>>");
+        // Data row: each cell contains a field tag referencing the column name via indexer.
+        foreach (DataColumn column in table.Columns)
+        {
+            builder.InsertCell();
+            // Use the DataRow indexer syntax: row["ColumnName"]
+            builder.Writeln($"<<[row[\"{column.ColumnName}\"]]>>");
+        }
         builder.EndRow();
 
+        // End the table.
         builder.EndTable();
 
+        // End foreach loop.
         builder.Writeln("<</foreach>>");
 
         // Save the template (optional, for inspection).
         const string templatePath = "template.docx";
-        template.Save(templatePath);
+        doc.Save(templatePath);
 
-        // Build the report using the template and the model.
-        ReportingEngine engine = new();
-        engine.BuildReport(template, model, "model");
+        // ---------- Step 4: Build the report ----------
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-        // Save the generated report.
-        const string outputPath = "report.docx";
-        template.Save(outputPath);
+        // ---------- Step 5: Save the generated report ----------
+        const string outputPath = "output.docx";
+        doc.Save(outputPath);
     }
 }
 
-// Data model representing a person.
-public class Person
-{
-    public string Name { get; set; } = string.Empty;
-    public int Age { get; set; }
-    public string Country { get; set; } = string.Empty;
-}
-
-// Wrapper model for the report.
+// Wrapper class exposing the rows collection to the template.
 public class ReportModel
 {
-    public List<Person> Persons { get; set; } = new();
+    public DataRowCollection TableRows { get; set; } = null!;
 }

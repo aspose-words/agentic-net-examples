@@ -1,52 +1,63 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Newtonsoft.Json;
 
-namespace LinqReportingInlineErrorExample
+public class Program
 {
-    public class Model
+    public static void Main()
     {
-        public string Name { get; set; } = "John Doe";
-    }
+        // Prepare output folder
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
 
-    public class Program
-    {
-        public static void Main()
+        // Create a template document with LINQ Reporting tags, including an intentional syntax error
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Correct tag
+        builder.Writeln("Customer: <<[model.CustomerName]>>");
+
+        // Incorrect tag (missing closing bracket) to trigger an error
+        builder.Writeln("Bad tag: <<[model.Missing>>");
+
+        // Placeholder for inline error messages
+        builder.Writeln("Error message: <<error>>");
+
+        // Save the template
+        templateDoc.Save(templatePath);
+
+        // Load the template for reporting
+        Document reportDoc = new Document(templatePath);
+
+        // Prepare the data model
+        ReportModel model = new ReportModel
         {
-            // Register code pages provider required by Aspose.Words.
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            CustomerName = "John Doe"
+        };
 
-            // Create a template document with a correct tag, an incorrect tag, and the <<error>> placeholder.
-            var templatePath = "template.docx";
-            var builder = new DocumentBuilder();
-            builder.Writeln("Customer: <<[model.Name]>>");
-            builder.Writeln("Invalid expression: <<[model.NonExistent]>>");
-            builder.Writeln("<<error>>");
-            builder.Document.Save(templatePath);
+        // Configure the reporting engine to inline error messages
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-            // Load the template for reporting.
-            var doc = new Document(templatePath);
+        // Build the report; the returned bool indicates success (true) or failure (false)
+        bool success = engine.BuildReport(reportDoc, model, "model");
 
-            // Prepare the data model.
-            var model = new Model();
+        // Save the generated report
+        string outputPath = Path.Combine(outputDir, "output.docx");
+        reportDoc.Save(outputPath);
 
-            // Configure the reporting engine to inline error messages.
-            var engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.InlineErrorMessages;
-
-            // Build the report.
-            bool success = engine.BuildReport(doc, model, "model");
-
-            // Save the generated report.
-            var outputPath = "report.docx";
-            doc.Save(outputPath);
-
-            // Output the result.
-            Console.WriteLine($"Report generation success: {success}");
-            Console.WriteLine($"Report saved to: {Path.GetFullPath(outputPath)}");
-        }
+        // Output the result status
+        Console.WriteLine($"Report generation success: {success}");
+        Console.WriteLine($"Template saved to: {templatePath}");
+        Console.WriteLine($"Report saved to: {outputPath}");
     }
+}
+
+// Public data model aligned with the template root name "model"
+public class ReportModel
+{
+    public string CustomerName { get; set; } = string.Empty;
 }

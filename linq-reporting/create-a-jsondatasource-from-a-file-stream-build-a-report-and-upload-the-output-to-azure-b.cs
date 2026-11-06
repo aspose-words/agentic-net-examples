@@ -1,138 +1,128 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
-using Azure.Storage.Blobs;
+using Newtonsoft.Json;
 
-public class Program
+// Register code pages (required by Aspose.Words on some platforms)
+Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+public partial class Program
 {
     public static void Main()
     {
-        // Register code pages for Aspose.Words if needed.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Prepare sample data model (used only for JSON serialization)
+        var model = new ReportModel
+        {
+            Orders = new()
+            {
+                new Order
+                {
+                    CustomerName = "Alice",
+                    Items = new()
+                    {
+                        new Item { Name = "Apple", Quantity = 3 },
+                        new Item { Name = "Banana", Quantity = 5 }
+                    }
+                },
+                new Order
+                {
+                    CustomerName = "Bob",
+                    Items = new()
+                    {
+                        new Item { Name = "Orange", Quantity = 2 },
+                        new Item { Name = "Grapes", Quantity = 7 }
+                    }
+                }
+            }
+        };
 
-        // File paths.
-        const string jsonPath = "data.json";
-        const string templatePath = "template.docx";
-        const string reportPath = "Report.docx";
+        // Create working directory
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "work");
+        Directory.CreateDirectory(workDir);
 
-        // Create sample JSON data.
-        const string jsonContent = @"{
-  ""Title"": ""Sales Report"",
-  ""Date"": ""2023-01-01"",
-  ""Items"": [
-    { ""Name"": ""Product A"", ""Quantity"": 10, ""Price"": 9.99 },
-    { ""Name"": ""Product B"", ""Quantity"": 5, ""Price"": 19.99 }
-  ]
-}";
-        File.WriteAllText(jsonPath, jsonContent);
-
-        // Build a Word template with LINQ Reporting tags.
+        // 1. Create the template document programmatically
+        string templatePath = Path.Combine(workDir, "template.docx");
         var templateDoc = new Document();
         var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("<<[model.Title]>>");
-        builder.Writeln("Date: <<[model.Date]>>");
-        builder.Writeln("");
-        builder.Writeln("<<foreach [item in model.Items]>>");
-
-        // Table header.
-        Table table = builder.StartTable();
-        builder.InsertCell();
-        builder.Writeln("Product");
-        builder.InsertCell();
-        builder.Writeln("Quantity");
-        builder.InsertCell();
-        builder.Writeln("Price");
-        builder.EndRow();
-
-        // Data row.
-        builder.InsertCell();
-        builder.Writeln("<<[item.Name]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[item.Quantity]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[item.Price]>>");
-        builder.EndRow();
-        builder.EndTable();
-
+        builder.Writeln("=== Orders Report ===");
+        // Use the root name "model" in the LINQ tags
+        builder.Writeln("<<foreach [order in model.Orders]>>");
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Items:");
+        builder.Writeln("<<foreach [item in order.Items]>>");
+        builder.Writeln("- <<[item.Name]>>: <<[item.Quantity]>>");
+        builder.Writeln("<</foreach>>");
         builder.Writeln("<</foreach>>");
         templateDoc.Save(templatePath);
 
-        // Load the template for reporting.
-        var reportDoc = new Document(templatePath);
+        // 2. Serialize sample data to JSON file
+        string jsonPath = Path.Combine(workDir, "data.json");
+        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(model, Formatting.Indented));
 
-        // Load JSON data source from a file stream.
-        using (FileStream jsonStream = File.OpenRead(jsonPath))
+        // 3. Load the template document
+        var doc = new Document(templatePath);
+
+        // 4. Create JsonDataSource from file stream and build the report
+        using (FileStream jsonStream = new FileStream(jsonPath, FileMode.Open, FileAccess.Read))
         {
             var jsonDataSource = new JsonDataSource(jsonStream);
             var engine = new ReportingEngine();
-            engine.BuildReport(reportDoc, jsonDataSource, "model");
+            // Build the report using root name "model"
+            engine.BuildReport(doc, jsonDataSource, "model");
         }
 
-        // Save the generated report.
-        reportDoc.Save(reportPath);
+        // 5. Save the generated report
+        string reportPath = Path.Combine(workDir, "report.docx");
+        doc.Save(reportPath);
 
-        // Upload the report to Azure Blob Storage (mock implementation).
+        // 6. (Optional) Upload the report to Azure Blob Storage
+        // Uncomment and add the Azure.Storage.Blobs NuGet package to enable.
+        /*
+        string connectionString = Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTION_STRING")
+                                  ?? "UseDevelopmentStorage=true";
+        string containerName = "reports";
+
         try
         {
-            const string connectionString = "UseDevelopmentStorage=true";
-            const string containerName = "sample-container";
-            string blobName = Path.GetFileName(reportPath);
-
-            var blobServiceClient = new BlobServiceClient(connectionString);
+            var blobServiceClient = new Azure.Storage.Blobs.BlobServiceClient(connectionString);
             var containerClient = blobServiceClient.GetBlobContainerClient(containerName);
             containerClient.CreateIfNotExists();
 
-            var blobClient = containerClient.GetBlobClient(blobName);
-            using (FileStream fileStream = File.OpenRead(reportPath))
+            var blobClient = containerClient.GetBlobClient("report.docx");
+            using (FileStream uploadStream = File.OpenRead(reportPath))
             {
-                blobClient.Upload(fileStream, overwrite: true);
+                blobClient.Upload(uploadStream, overwrite: true);
             }
+
+            Console.WriteLine("Report uploaded successfully to Azure Blob Storage.");
         }
-        catch
+        catch (Exception ex)
         {
-            // Swallow any exceptions for this example.
+            Console.WriteLine($"Azure Blob upload failed: {ex.Message}");
         }
+        */
+
+        Console.WriteLine($"Report generated at: {reportPath}");
     }
 }
 
-// ---------------------------------------------------------------------------
-// Mock Azure.Storage.Blobs implementation to allow compilation without the
-// real Azure SDK. In a real scenario replace this with the official package.
-// ---------------------------------------------------------------------------
-namespace Azure.Storage.Blobs
+// Data model classes (public, non‑nullable properties initialized)
+public class ReportModel
 {
-    public class BlobServiceClient
-    {
-        private readonly string _connectionString;
-        public BlobServiceClient(string connectionString) => _connectionString = connectionString;
-        public BlobContainerClient GetBlobContainerClient(string containerName) => new BlobContainerClient(containerName);
-    }
+    public List<Order> Orders { get; set; } = new();
+}
 
-    public class BlobContainerClient
-    {
-        private readonly string _containerName;
-        public BlobContainerClient(string containerName) => _containerName = containerName;
-        public void CreateIfNotExists()
-        {
-            // No‑op for mock; in real code this would create the container.
-        }
+public class Order
+{
+    public string CustomerName { get; set; } = string.Empty;
+    public List<Item> Items { get; set; } = new();
+}
 
-        public BlobClient GetBlobClient(string blobName) => new BlobClient(blobName);
-    }
-
-    public class BlobClient
-    {
-        private readonly string _blobName;
-        public BlobClient(string blobName) => _blobName = blobName;
-
-        public void Upload(Stream content, bool overwrite = false)
-        {
-            // Simple mock: write the stream to a local file with the blob name.
-            using var file = File.Create(_blobName);
-            content.CopyTo(file);
-        }
-    }
+public class Item
+{
+    public string Name { get; set; } = string.Empty;
+    public int Quantity { get; set; }
 }

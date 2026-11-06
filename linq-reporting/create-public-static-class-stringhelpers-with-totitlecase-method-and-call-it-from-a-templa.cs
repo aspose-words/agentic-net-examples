@@ -1,18 +1,20 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public static class StringHelpers
+public class StringHelpers
 {
     // Converts a string to title case (first letter of each word capitalized).
-    public static string ToTitleCase(string input)
+    public string ToTitleCase(string input)
     {
         if (string.IsNullOrEmpty(input))
             return input;
 
-        return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(input.ToLower());
+        TextInfo textInfo = CultureInfo.CurrentCulture.TextInfo;
+        return textInfo.ToTitleCase(input.ToLower());
     }
 }
 
@@ -20,9 +22,6 @@ public static class StringHelpers
 public class Person
 {
     public string Name { get; set; } = string.Empty;
-
-    // Exposes the title‑cased version of the name for the template.
-    public string TitleCaseName => StringHelpers.ToTitleCase(Name);
 }
 
 public class ReportModel
@@ -34,48 +33,55 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for template and output documents
-        const string templatePath = "template.docx";
-        const string outputPath = "report.docx";
+        // Ensure output directory exists
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // -------------------------------------------------
-        // Create the LINQ Reporting template programmatically
-        // -------------------------------------------------
+        // 1. Create the template document programmatically
+        string templatePath = Path.Combine(outputDir, "Template.docx");
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Write a simple foreach loop that uses the TitleCaseName property
+        // Write a heading
+        builder.Writeln("Person List:");
+
+        // Begin foreach loop over Persons collection
         builder.Writeln("<<foreach [p in Persons]>>");
-        builder.Writeln("Name: <<[p.TitleCaseName]>>");
+        // Use StringHelpers.ToTitleCase to format the name
+        builder.Writeln("Name: <<[StringHelpers.ToTitleCase(p.Name)]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk
+        // Save the template
         templateDoc.Save(templatePath);
 
-        // -------------------------------------------------
-        // Load the template for report generation
-        // -------------------------------------------------
-        Document doc = new Document(templatePath);
+        // 2. Load the template for reporting
+        Document reportDoc = new Document(templatePath);
 
-        // Prepare sample data
+        // 3. Prepare sample data
         ReportModel model = new()
         {
-            Persons = new List<Person>
+            Persons = new()
             {
-                new() { Name = "john doe" },
-                new() { Name = "jane SMITH" },
-                new() { Name = "alice o'connor" }
+                new Person { Name = "john doe" },
+                new Person { Name = "jane smith" },
+                new Person { Name = "alice johnson" }
             }
         };
 
-        // Build the report using LINQ Reporting engine
+        // 4. Build the report using LINQ Reporting Engine
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
 
-        // Save the generated report
-        doc.Save(outputPath);
+        // Provide both the model and the helper class instance as data sources
+        engine.BuildReport(
+            reportDoc,
+            new object[] { model, new StringHelpers() },
+            new[] { "model", "StringHelpers" });
 
-        // Indicate completion (no interactive prompts)
-        Console.WriteLine($"Report generated: {outputPath}");
+        // 5. Save the generated report
+        string reportPath = Path.Combine(outputDir, "Report.docx");
+        reportDoc.Save(reportPath);
+
+        // Indicate completion
+        Console.WriteLine($"Report generated at: {reportPath}");
     }
 }

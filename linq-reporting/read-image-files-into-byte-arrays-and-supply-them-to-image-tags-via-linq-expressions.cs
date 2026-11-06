@@ -2,91 +2,117 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Reporting;
 using Aspose.Words.Drawing;
+using Aspose.Words.Reporting;
 using Aspose.Words.Tables;
-
-public class Product
-{
-    public string Name { get; set; } = "";
-    public byte[] ImageData { get; set; } = Array.Empty<byte>();
-}
-
-public class ReportModel
-{
-    public List<Product> Products { get; set; } = new();
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Ensure output directory exists
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        // Prepare output folder.
+        string outputDir = "output";
         Directory.CreateDirectory(outputDir);
 
-        // Create a simple PNG image from a Base64 string and save it
-        string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==";
-        byte[] pngBytes = Convert.FromBase64String(base64Png);
-        string imagePath = Path.Combine(outputDir, "sample.png");
-        File.WriteAllBytes(imagePath, pngBytes);
-
-        // Prepare data model
-        ReportModel model = new();
-        model.Products.Add(new Product
+        // Create two 1x1 pixel PNG images (red and green) from Base64 strings.
+        string[] imagePaths =
         {
-            Name = "Sample Product",
-            ImageData = File.ReadAllBytes(imagePath)
-        });
+            Path.Combine(outputDir, "red.png"),
+            Path.Combine(outputDir, "green.png")
+        };
 
-        // Create template document programmatically
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        string[] base64Images =
+        {
+            // Red pixel PNG
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+hHgAFgwJ/lKXcVwAAAABJRU5ErkJggg==",
+            // Green pixel PNG
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8DAAQAB/6F9WQAAAABJRU5ErkJggg=="
+        };
 
-        // Begin foreach over Products
+        for (int i = 0; i < imagePaths.Length; i++)
+        {
+            byte[] pngBytes = Convert.FromBase64String(base64Images[i]);
+            File.WriteAllBytes(imagePaths[i], pngBytes);
+        }
+
+        // Load images into the data model.
+        var products = new List<Product>();
+        for (int i = 0; i < imagePaths.Length; i++)
+        {
+            products.Add(new Product
+            {
+                Name = $"Product {(i + 1)}",
+                ImageBytes = File.ReadAllBytes(imagePaths[i])
+            });
+        }
+
+        var model = new ReportModel
+        {
+            Products = products
+        };
+
+        // Create the LINQ Reporting template programmatically.
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        builder.Writeln("Product Catalog");
+
+        // Begin foreach loop.
         builder.Writeln("<<foreach [p in Products]>>");
 
-        // Create a table with two columns: Name and Image
+        // Start table inside the loop.
         Table table = builder.StartTable();
 
-        // Header row
+        // Header row (will be repeated for each product – acceptable for this simple example).
         builder.InsertCell();
         builder.Writeln("Name");
         builder.InsertCell();
         builder.Writeln("Image");
         builder.EndRow();
 
-        // Data row
+        // Data row for each product.
         builder.InsertCell();
-        builder.Writeln("<<[p.Name]>>");
+        builder.Write("<<[p.Name]>>");
         builder.InsertCell();
 
-        // Insert a textbox shape to host the image tag
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 150, 100);
+        // Insert a textbox to host the image tag.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
         builder.MoveTo(textBox.FirstParagraph);
-        builder.Write("<<image [p.ImageData] -fitSize>>");
+        builder.Write("<<image [p.ImageBytes] -fitSize>>");
 
-        // End the data row
         builder.EndRow();
+
+        // Close the table.
         builder.EndTable();
 
-        // End foreach
+        // End foreach loop.
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        templateDoc.Save(templatePath);
+        // Save the template.
+        doc.Save(templatePath);
 
-        // Load the template for reporting
-        Document doc = new Document(templatePath);
+        // Load the template for report generation.
+        var templateDoc = new Document(templatePath);
 
-        // Build the report
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        engine.BuildReport(doc, model, "model");
+        // Build the report.
+        var engine = new ReportingEngine();
+        engine.BuildReport(templateDoc, model, "model");
 
-        // Save the final report
+        // Save the final report.
         string reportPath = Path.Combine(outputDir, "report.docx");
-        doc.Save(reportPath);
+        templateDoc.Save(reportPath);
     }
+}
+
+// Data model classes.
+public class ReportModel
+{
+    public List<Product> Products { get; set; } = new();
+}
+
+public class Product
+{
+    public string Name { get; set; } = string.Empty;
+    public byte[] ImageBytes { get; set; } = Array.Empty<byte>();
 }

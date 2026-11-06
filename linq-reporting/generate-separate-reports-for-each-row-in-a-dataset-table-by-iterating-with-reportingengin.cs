@@ -1,53 +1,49 @@
 using System;
 using System.Data;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+public class LinqReportingSeparateRows
 {
     public static void Main()
     {
         // Create sample DataSet with one DataTable.
         DataSet dataSet = new DataSet();
-        DataTable table = new DataTable("SampleTable");
-        table.Columns.Add("Id", typeof(int));
+        DataTable table = new DataTable("People");
         table.Columns.Add("Name", typeof(string));
-        table.Columns.Add("Amount", typeof(decimal));
-
-        table.Rows.Add(1, "Alice", 123.45m);
-        table.Rows.Add(2, "Bob", 678.90m);
-        table.Rows.Add(3, "Charlie", 250.00m);
-
+        table.Columns.Add("Age", typeof(int));
+        table.Rows.Add("Alice", 30);
+        table.Rows.Add("Bob", 45);
+        table.Rows.Add("Charlie", 28);
         dataSet.Tables.Add(table);
 
-        // Create the LINQ Reporting template programmatically.
+        // Create a template document with LINQ Reporting tags.
+        string templatePath = "Template.docx";
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("Report for a single row");
-        builder.Writeln("Id: <<[row.Id]>>");
-        builder.Writeln("Name: <<[row.Name]>>");
-        builder.Writeln("Amount: <<[row.Amount]>>");
-
-        // Save the template to disk.
-        const string templatePath = "Template.docx";
+        builder.Writeln("Report for <<[row.Name]>>");
+        builder.Writeln("Age: <<[row.Age]>>");
         templateDoc.Save(templatePath);
 
-        // Prepare the reporting engine.
-        ReportingEngine engine = new ReportingEngine();
+        // Ensure the output directory exists.
+        string outputDir = "Reports";
+        Directory.CreateDirectory(outputDir);
 
         // Iterate over each DataRow and generate a separate report.
-        foreach (DataRow dataRow in table.Rows)
+        foreach (DataRow dataRow in dataSet.Tables["People"].Rows)
         {
-            // Load a fresh copy of the template for each iteration.
+            // Load a fresh copy of the template for each report.
             Document reportDoc = new Document(templatePath);
 
             // Build the report using the current DataRow as the root object.
+            ReportingEngine engine = new ReportingEngine();
             engine.BuildReport(reportDoc, dataRow, "row");
 
             // Save the generated report with a unique file name.
-            string outputPath = $"Report_{dataRow["Id"]}.docx";
-            reportDoc.Save(outputPath);
+            string name = dataRow["Name"]?.ToString() ?? "Unnamed";
+            string reportPath = Path.Combine(outputDir, $"Report_{name}.docx");
+            reportDoc.Save(reportPath);
         }
     }
 }

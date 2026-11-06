@@ -1,74 +1,80 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-#nullable enable
-
-namespace LinqReportingMissingItems
+public class Person
 {
-    // Data model classes
-    public class Person
-    {
-        // Name may be null to simulate missing data
-        public string? Name { get; set; }
-    }
+    // Name may be null in the data source.
+    public string? Name { get; set; }
+}
 
-    public class Model
-    {
-        public List<Person> Persons { get; set; } = new();
-    }
+public class ReportModel
+{
+    // Collection of persons to be iterated in the template.
+    public List<Person> Persons { get; set; } = new();
+}
 
-    public class Program
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
+        // Ensure the output directory exists.
+        Directory.CreateDirectory("Output");
+
+        // -----------------------------------------------------------------
+        // 1. Create the LINQ Reporting template programmatically.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Write a foreach loop that iterates over the Persons collection.
+        builder.Writeln("<<foreach [p in Persons]>>");
+        // The Name field may be null; the engine will treat it as an empty string.
+        builder.Writeln("Name: <<[p.Name]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        string templatePath = Path.Combine("Output", "Template.docx");
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template for report generation.
+        // -----------------------------------------------------------------
+        Document reportDoc = new Document(templatePath);
+
+        // -----------------------------------------------------------------
+        // 3. Prepare sample data with a missing collection item (null Name).
+        // -----------------------------------------------------------------
+        ReportModel model = new()
         {
-            // Register code page provider (required for some encodings)
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            // -----------------------------------------------------------------
-            // Create a template document with LINQ Reporting tags
-            // -----------------------------------------------------------------
-            const string templatePath = "Template.docx";
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
-
-            builder.Writeln("Persons list:");
-            builder.Writeln("<<foreach [p in Persons]>>");
-            builder.Writeln("Name: <<[p.Name]>>");
-            builder.Writeln("<</foreach>>");
-
-            // Save the template to disk
-            templateDoc.Save(templatePath);
-
-            // Load the template for report generation
-            var doc = new Document(templatePath);
-
-            // -----------------------------------------------------------------
-            // Prepare sample data with some missing (null) collection items
-            // -----------------------------------------------------------------
-            var model = new Model
+            Persons = new()
             {
-                Persons = new List<Person>
-                {
-                    new Person { Name = "Alice" },
-                    new Person { Name = null }, // Missing name should become empty string
-                    new Person { Name = "Bob" }
-                }
-            };
+                new Person { Name = null },          // Missing value.
+                new Person { Name = "Alice" },
+                new Person { Name = "Bob" }
+            }
+        };
 
-            // -----------------------------------------------------------------
-            // Configure the ReportingEngine (default behavior already treats null as empty)
-            // -----------------------------------------------------------------
-            var engine = new ReportingEngine();
+        // -----------------------------------------------------------------
+        // 4. Configure the ReportingEngine.
+        //    The default behavior already treats null members as empty strings,
+        //    so no special flag is required.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None; // No special options needed.
 
-            // Build the report
-            engine.BuildReport(doc, model, "model");
+        // Build the report. The root object name must match the template references.
+        bool success = engine.BuildReport(reportDoc, model, "model");
 
-            // Save the generated report
-            const string outputPath = "Report.docx";
-            doc.Save(outputPath);
-        }
+        // -----------------------------------------------------------------
+        // 5. Save the generated report.
+        // -----------------------------------------------------------------
+        string outputPath = Path.Combine("Output", "Report.docx");
+        reportDoc.Save(outputPath);
+
+        // Indicate completion (no interactive prompts).
+        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to: {outputPath}");
     }
 }

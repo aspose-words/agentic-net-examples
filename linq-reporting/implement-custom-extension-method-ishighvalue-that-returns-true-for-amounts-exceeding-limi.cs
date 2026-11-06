@@ -1,70 +1,95 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
 
-public class Order
+namespace LinqReportingExample
 {
-    public string Description { get; set; } = string.Empty;
-    public decimal Amount { get; set; }
-
-    // Returns true when the order amount exceeds the supplied limit.
-    public bool IsHighValue(decimal limit) => Amount > limit;
-}
-
-public class ReportModel
-{
-    public List<Order> Orders { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main()
+    // Data model
+    public class Transaction
     {
-        // -----------------------------------------------------------------
-        // Create the template document with LINQ Reporting tags.
-        // -----------------------------------------------------------------
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        public decimal Amount { get; set; }
+        public bool IsHigh { get; set; } = false; // initialized to avoid nullable warnings
+    }
 
-        // Begin foreach over the Orders collection.
-        builder.Writeln("<<foreach [order in model.Orders]>>");
-        // Output order description and amount.
-        builder.Writeln("Order: <<[order.Description]>> Amount: <<[order.Amount]>>");
-        // Use the custom method to test for high‑value orders.
-        builder.Writeln("<<if [order.IsHighValue(1000)]>>");
-        builder.Writeln(" - High value order!");
-        builder.Writeln("<</if>>");
-        // End foreach.
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // Load the template and build the report.
-        // -----------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
-
-        // Sample data.
-        ReportModel model = new()
+    // Extension method
+    public static class TransactionExtensions
+    {
+        public static bool IsHighValue(this Transaction transaction, decimal limit)
         {
-            Orders = new()
+            return transaction.Amount > limit;
+        }
+    }
+
+    public class Program
+    {
+        public static void Main()
+        {
+            // Sample data
+            List<Transaction> transactions = new()
             {
-                new Order { Description = "Standard Item", Amount = 250m },
-                new Order { Description = "Premium Item", Amount = 1500m },
-                new Order { Description = "Basic Item", Amount = 75m }
+                new Transaction { Amount = 500m },
+                new Transaction { Amount = 1500m },
+                new Transaction { Amount = 2500m },
+                new Transaction { Amount = 750m }
+            };
+
+            // Apply extension method to set IsHigh flag
+            const decimal limit = 1000m;
+            foreach (var t in transactions)
+            {
+                t.IsHigh = t.IsHighValue(limit);
             }
-        };
 
-        // Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+            // Create template document
+            string templatePath = "Template.docx";
+            Document templateDoc = new();
+            DocumentBuilder builder = new(templateDoc);
 
-        // Save the generated report.
-        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        reportDoc.Save(reportPath);
+            // Title
+            builder.Writeln("Transaction Report");
+            builder.Writeln();
+
+            // Start foreach block
+            builder.Writeln("<<foreach [item in transactions]>>");
+
+            // Table header (only once, before first row)
+            builder.Writeln("<<if [item == transactions[0]]>>");
+            Table headerTable = builder.StartTable();
+            builder.InsertCell();
+            builder.Writeln("Amount");
+            builder.InsertCell();
+            builder.Writeln("High Value");
+            builder.EndRow();
+            builder.EndTable();
+            builder.Writeln("<</if>>");
+
+            // Table row for each item
+            Table rowTable = builder.StartTable();
+            builder.InsertCell();
+            builder.Writeln("<<[item.Amount]>>");
+            builder.InsertCell();
+            builder.Writeln("<<if [item.IsHigh]>>Yes<</if>><<if [!item.IsHigh]>>No<</if>>");
+            builder.EndRow();
+            builder.EndTable();
+
+            // End foreach block
+            builder.Writeln("<</foreach>>");
+
+            // Save template
+            templateDoc.Save(templatePath);
+
+            // Load template for reporting
+            Document doc = new(templatePath);
+            ReportingEngine engine = new();
+
+            // Build report using the list as the root object named "transactions"
+            engine.BuildReport(doc, transactions, "transactions");
+
+            // Save final report
+            string outputPath = "Report.docx";
+            doc.Save(outputPath);
+        }
     }
 }

@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Reporting;
@@ -7,59 +9,52 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
-        var model = new Person
+        // Register code page provider (required for some Aspose.Words features)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Prepare sample data model
+        var model = new ReportModel
         {
             Email = "test@example.com"
         };
 
-        // -----------------------------------------------------------------
-        // 1. Create a template document programmatically.
-        // -----------------------------------------------------------------
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
+        // Create a template document programmatically
+        const string templatePath = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Insert a line that shows the raw email address.
+        // Insert template tags
         builder.Writeln("Email: <<[model.Email]>>");
+        builder.Writeln("<<if [model.IsValidEmail]>>Valid Email<</if>>");
+        builder.Writeln("<<if [!model.IsValidEmail]>>Invalid Email<</if>>");
 
-        // Insert a line that validates the email using Regex.IsMatch.
-        // The regular expression is escaped for C# string literals.
-        builder.Writeln(
-            "IsValid: <<[Regex.IsMatch(model.Email, \"^\\\\S+@\\\\S+\\\\.\\\\S+$\")]>>");
+        // Save the template
+        doc.Save(templatePath);
 
-        // Save the template to disk.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        // Load the template for reporting
+        var template = new Document(templatePath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the template document (required before building the report).
-        // -----------------------------------------------------------------
-        var loadedTemplate = new Document(templatePath);
-
-        // -----------------------------------------------------------------
-        // 3. Configure the ReportingEngine.
-        // -----------------------------------------------------------------
+        // Configure the reporting engine
         var engine = new ReportingEngine();
 
-        // Register the Regex type so that static members can be used in template expressions.
-        engine.KnownTypes.Add(typeof(Regex));
+        // Build the report
+        engine.BuildReport(template, model, "model");
 
-        // -----------------------------------------------------------------
-        // 4. Build the report.
-        // -----------------------------------------------------------------
-        // The root object name used in the template is "model".
-        engine.BuildReport(loadedTemplate, model, "model");
-
-        // -----------------------------------------------------------------
-        // 5. Save the generated report.
-        // -----------------------------------------------------------------
-        const string reportPath = "Report.docx";
-        loadedTemplate.Save(reportPath);
+        // Save the generated report
+        const string outputPath = "output.docx";
+        template.Save(outputPath);
     }
 }
 
-// Simple data model with a non‑nullable Email property.
-public class Person
+// Public data model class
+public class ReportModel
 {
+    // Email address to validate
     public string Email { get; set; } = string.Empty;
+
+    // Regular expression pattern for a simple email validation
+    private const string EmailPattern = @"^\S+@\S+\.\S+$";
+
+    // Computed property that indicates whether the email matches the pattern
+    public bool IsValidEmail => Regex.IsMatch(Email, EmailPattern);
 }

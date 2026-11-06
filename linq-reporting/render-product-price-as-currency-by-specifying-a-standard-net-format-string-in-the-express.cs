@@ -1,58 +1,89 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Product
+namespace LinqReportingCurrencyExample
 {
-    public string Name { get; set; } = "";
-    public decimal Price { get; set; }
-}
-
-public class ReportModel
-{
-    public List<Product> Products { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main()
+    // Data model classes
+    public class Product
     {
-        // Prepare template document.
-        string templatePath = "Template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        public string Name { get; set; } = "";
+        public decimal Price { get; set; }
+    }
 
-        builder.Writeln("Product Report");
-        builder.Writeln("<<foreach [p in Products]>>");
-        builder.Writeln("Name: <<[p.Name]>>");
-        // Render price as currency using standard .NET format string.
-        builder.Writeln("Price: <<[p.Price.ToString(\"C\")]>>");
-        builder.Writeln("<</foreach>>");
+    public class ReportModel
+    {
+        public List<Product> Products { get; set; } = new();
+    }
 
-        templateDoc.Save(templatePath);
-
-        // Load the template for reporting.
-        Document doc = new Document(templatePath);
-
-        // Create sample data.
-        ReportModel model = new()
+    public class Program
+    {
+        public static void Main()
         {
-            Products = new()
+            // Register code page provider (required by Aspose.Words for some encodings)
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Prepare sample data
+            var model = new ReportModel
             {
-                new Product { Name = "Apple", Price = 0.99m },
-                new Product { Name = "Banana", Price = 0.59m },
-                new Product { Name = "Coffee", Price = 4.75m }
-            }
-        };
+                Products = new List<Product>
+                {
+                    new Product { Name = "Apple", Price = 0.99m },
+                    new Product { Name = "Banana", Price = 0.59m },
+                    new Product { Name = "Cherry", Price = 2.49m }
+                }
+            };
 
-        // Build the report.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+            // Create template document programmatically
+            var templatePath = "Template.docx";
+            var builder = new DocumentBuilder();
 
-        // Save the generated report.
-        string outputPath = "Report.docx";
-        doc.Save(outputPath);
+            // Document title
+            builder.Writeln("Product Price Report");
+            builder.Writeln();
+
+            // Begin foreach loop over Products
+            builder.Writeln("<<foreach [p in Products]>>");
+
+            // Table for each product
+            var table = builder.StartTable();
+
+            // Header row
+            builder.InsertCell();
+            builder.Writeln("Product");
+            builder.InsertCell();
+            builder.Writeln("Price");
+            builder.EndRow();
+
+            // Data row
+            builder.InsertCell();
+            builder.Writeln("<<[p.Name]>>");
+            builder.InsertCell();
+            // Render price as currency using standard .NET format string
+            builder.Writeln("<<[p.Price.ToString(\"C\")]>>");
+            builder.EndRow();
+
+            // End table for this iteration
+            builder.EndTable();
+
+            // End foreach
+            builder.Writeln("<</foreach>>");
+
+            // Save the template
+            builder.Document.Save(templatePath);
+
+            // Load the template for reporting
+            var doc = new Document(templatePath);
+
+            // Build the report
+            var engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
+
+            // Save the final report
+            var outputPath = "Report.docx";
+            doc.Save(outputPath);
+        }
     }
 }
