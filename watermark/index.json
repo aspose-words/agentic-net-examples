@@ -4,23 +4,25 @@
     "slug": "watermark",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Use simple documented watermark workflows. Prefer Document.Watermark APIs when they directly match the task. For lower-level or cell-scoped scenarios, use compile-safe shape or image placement only when needed. Keep validation narrow and task-specific.",
+    "preferred_workflow": "Create any required input files (documents, images) programmatically, load the Document, configure the appropriate WatermarkOptions, invoke Document.Watermark.SetText or SetImage with a file path or stream, and finally save the document to the desired format. For cell-level watermarks, add the watermark shape to the target cell after removing it from the header, ensuring the shape is inline to preserve layout.",
     "required_packages": [
-      "Aspose.Words"
+      "Aspose.Words",
+      "SkiaSharp"
     ],
     "package_versions": {
-      "Aspose.Words": "26.9.0"
+      "Aspose.Words": "26.10.0",
+      "SkiaSharp": "4.152.1"
     },
     "required_namespaces": [
       "System",
       "System.IO",
       "Aspose.Words",
       "Aspose.Words.Drawing",
-      "System.Drawing",
       "Aspose.Words.Tables",
+      "System.Drawing",
       "Aspose.Words.Settings",
+      "SkiaSharp",
       "Aspose.Words.Saving",
-      "System.Text",
       "System.Text.Json"
     ],
     "key_apis": [
@@ -33,59 +35,65 @@
       "ImageWatermarkOptions",
       "SaveFormat",
       "MemoryStream",
-      "TextWatermarkOptions",
+      "NodeType",
+      "Shape",
+      "Table",
       "Cell",
       "Paragraph",
       "Run",
-      "Shape",
-      "Table",
+      "Font",
+      "Row",
       "CellFormat",
-      "Row"
+      "TextWatermarkOptions"
     ]
   },
   "stats": {
-    "total_examples": 34,
-    "publish_ready_successful_examples": 34,
+    "total_examples": 33,
+    "publish_ready_successful_examples": 33,
     "workflow_counts": {
-      "watermark-workflow": 33,
-      "watermark-api": 1
+      "watermark-workflow": 33
     }
   },
   "rules_summary": {
-    "core_rules": [
-      "Use native Aspose.Words APIs directly.",
-      "Create local sample source documents or images when a task refers to an existing file, folder, stream, template, or input asset.",
-      "Do not assume external files or folders already exist.",
-      "Always save the requested output document or report when the task expects one.",
-      "Keep validation narrow and task-specific."
+    "strict_api_bans": [
+      "Do not reference members that are not present in the Aspose.Words 26.10.0 API, such as WatermarkLayout, TextBox.Text, or Shape.Transparency."
     ],
-    "watermark_rules": [
-      "Use Document.Watermark.SetText and SetImage when those APIs directly fit the task.",
-      "Avoid unsupported System.Drawing-based image generation in this environment.",
-      "For cell-level or merged-cell scenarios, use compile-safe shape or image insertion patterns only.",
-      "Use stream-based or local-file image workflows for image watermarks."
+    "canonical_patterns": [
+      "Use Document.Watermark.SetText(string, TextWatermarkOptions) for text watermarks and Document.Watermark.SetImage(string, ImageWatermarkOptions) for image watermarks.",
+      "When inserting a watermark into a table cell, retrieve the watermark shape from the primary header, detach it, set WrapType to Inline, and append it to the target cell's first paragraph."
     ],
-    "api_safety_rules": [
-      "Do not invent unsupported watermark APIs.",
-      "Do not use fake namespaces.",
-      "Do not use unsupported WordArt or TextPath members in cell-level watermark tasks."
+    "nullable_warning_prevention": [
+      "Validate that image files exist before calling SetImage, and ensure that options objects are instantiated before use."
     ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "Unsupported API invention",
-      "symptom": "Generated code references members that do not exist in the selected package version.",
-      "fix": "Replace invented members with documented Aspose.Words APIs already proven in this category."
+      "pattern": "Incorrect overload for SetImage",
+      "symptom": "Compilation fails with CS1503 because a string or stream is passed where an SKBitmap is expected.",
+      "cause": "The code uses the overload that requires a SkiaSharp.SKBitmap instead of the overload that accepts a file path or stream.",
+      "fix": "Call Document.Watermark.SetImage(string path, ImageWatermarkOptions) or SetImage(Stream stream, ImageWatermarkOptions) as demonstrated in the verified examples.",
+      "prevention": "Always select the overload that matches the argument type; consult the API reference for the correct signatures."
     },
     {
-      "pattern": "Missing local bootstrap inputs",
-      "symptom": "The example assumes source files, folders, images, or data already exist.",
-      "fix": "Create deterministic local inputs before loading, processing, or validating them."
+      "pattern": "Reference to non-existent types or members",
+      "symptom": "Build errors such as CS0246, CS1061, or CS0117 indicate missing types like Table, Cell, WatermarkLayout, or members like Shape.Text.",
+      "cause": "The code invents or assumes APIs that are not part of the current Aspose.Words version.",
+      "fix": "Remove invented references and use only documented types (DocumentBuilder, Table, Cell, Shape) and members (WrapType, FillColor, etc.).",
+      "prevention": "Rely exclusively on the official Aspose.Words documentation and the verified code snippets for supported members."
     },
     {
-      "pattern": "Over-broad validation",
-      "symptom": "The example fails at runtime while checking unrelated document internals.",
-      "fix": "Validate only the requested behavior and the existence of expected outputs."
+      "pattern": "Misuse of using directives",
+      "symptom": "Compilation fails with CS0138 because a type is treated as a namespace in a using statement.",
+      "cause": "The code attempts to write \"using Watermark;\" or similar, treating the Watermark class as a namespace.",
+      "fix": "Remove the invalid using directive; reference the Watermark class directly via the Document instance.",
+      "prevention": "Only include using statements for actual namespaces; never use a class name in a using directive."
+    },
+    {
+      "pattern": "Assignment to read-only TextBox property",
+      "symptom": "CS0200 errors occur when the code tries to assign to Shape.TextBox or its Text property.",
+      "cause": "The TextBox property of Shape is read-only, and its Text member does not exist in this API version.",
+      "fix": "Create a Shape, set its properties (Width, Height, FillColor, etc.), and add a Run with the desired text inside a Paragraph appended to the shape.",
+      "prevention": "Do not attempt to modify Shape.TextBox; instead build the watermark content using Paragraph and Run objects."
     }
   ],
   "examples": [
@@ -130,8 +138,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 5,
@@ -224,17 +232,6 @@
     },
     {
       "id": 13,
-      "file_name": "insert-an-image-watermark-from-a-system-drawing-image-object-into-a-document-after-calling.cs",
-      "task": "Insert an image watermark from a System.Drawing.Image object into a document after calling Optimize.",
-      "workflow": "watermark-api",
-      "outputs": [
-        "image"
-      ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
-    },
-    {
-      "id": 14,
       "file_name": "insert-an-image-watermark-from-a-file-path-into-a-word-document-after-optimizing-the-docum.cs",
       "task": "Insert an image watermark from a file path into a Word document after optimizing the document.",
       "workflow": "watermark-workflow",
@@ -245,7 +242,7 @@
       "winner": "existing_repo"
     },
     {
-      "id": 15,
+      "id": 14,
       "file_name": "use-watermark-setimage-with-a-stream-to-embed-a-logo-watermark-into-a-document-stored-in-a.cs",
       "task": "Use Watermark.SetImage with a stream to embed a logo watermark into a document stored in Azure Blob storage.",
       "workflow": "watermark-workflow",
@@ -256,18 +253,18 @@
       "winner": "existing_repo"
     },
     {
-      "id": 16,
+      "id": 15,
       "file_name": "use-watermark-setimage-with-a-byte-array-stream-to-embed-a-dynamically-generated-barcode-w.cs",
       "task": "Use Watermark.SetImage with a byte array stream to embed a dynamically generated barcode watermark.",
       "workflow": "watermark-workflow",
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
-      "id": 17,
+      "id": 16,
       "file_name": "optimize-a-large-docx-file-before-applying-an-image-watermark-to-improve-performance-and-m.cs",
       "task": "Optimize a large DOCX file before applying an image watermark to improve performance and memory usage.",
       "workflow": "watermark-workflow",
@@ -279,7 +276,7 @@
       "winner": "existing_repo"
     },
     {
-      "id": 18,
+      "id": 17,
       "file_name": "remove-all-existing-watermarks-from-a-loaded-word-document-using-the-watermark-remove-meth.cs",
       "task": "Remove all existing watermarks from a loaded Word document using the Watermark.Remove method.",
       "workflow": "watermark-workflow",
@@ -290,7 +287,7 @@
       "winner": "mcp"
     },
     {
-      "id": 19,
+      "id": 18,
       "file_name": "create-a-utility-method-that-removes-all-watermarks-from-a-document-using-watermark-remove.cs",
       "task": "Create a utility method that removes all watermarks from a Document using Watermark.Remove.",
       "workflow": "watermark-workflow",
@@ -301,18 +298,18 @@
       "winner": "mcp"
     },
     {
-      "id": 20,
+      "id": 19,
       "file_name": "validate-that-a-document-contains-no-watermarks-before-publishing-by-using-watermarktype-n.cs",
       "task": "Validate that a document contains no watermarks before publishing by using WatermarkType.None check.",
       "workflow": "watermark-workflow",
       "outputs": [
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
-      "id": 21,
+      "id": 20,
       "file_name": "use-watermarktype-enumeration-to-verify-a-document-has-no-watermark-before-adding-a-new-on.cs",
       "task": "Use WatermarkType enumeration to verify a document has no watermark before adding a new one.",
       "workflow": "watermark-workflow",
@@ -323,7 +320,7 @@
       "winner": "mcp"
     },
     {
-      "id": 22,
+      "id": 21,
       "file_name": "use-watermarktype-enumeration-to-switch-between-text-and-image-watermarks-based-on-user-se.cs",
       "task": "Use WatermarkType enumeration to switch between text and image watermarks based on user selection.",
       "workflow": "watermark-workflow",
@@ -334,7 +331,7 @@
       "winner": "existing_repo"
     },
     {
-      "id": 23,
+      "id": 22,
       "file_name": "save-a-watermarked-word-document-directly-to-pdf-format-while-preserving-watermark-appeara.cs",
       "task": "Save a watermarked Word document directly to PDF format while preserving watermark appearance.",
       "workflow": "watermark-workflow",
@@ -346,7 +343,7 @@
       "winner": "mcp"
     },
     {
-      "id": 24,
+      "id": 23,
       "file_name": "apply-a-text-watermark-to-a-word-document-and-then-save-the-document-as-docx.cs",
       "task": "Apply a text watermark to a Word document and then save the document as DOCX.",
       "workflow": "watermark-workflow",
@@ -358,7 +355,7 @@
       "winner": "mcp"
     },
     {
-      "id": 25,
+      "id": 24,
       "file_name": "apply-an-image-watermark-to-a-word-document-and-then-save-the-document-as-docx.cs",
       "task": "Apply an image watermark to a Word document and then save the document as DOCX.",
       "workflow": "watermark-workflow",
@@ -366,11 +363,11 @@
         "docx",
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
-      "id": 26,
+      "id": 25,
       "file_name": "batch-process-a-folder-of-doc-files-to-add-the-same-image-watermark-to-each-document.cs",
       "task": "Batch process a folder of DOC files to add the same image watermark to each document.",
       "workflow": "watermark-workflow",
@@ -381,7 +378,7 @@
       "winner": "llm"
     },
     {
-      "id": 27,
+      "id": 26,
       "file_name": "batch-process-multiple-word-documents-in-a-directory-to-add-a-text-watermark-to-each-file.cs",
       "task": "Batch process multiple Word documents in a directory to add a text watermark to each file.",
       "workflow": "watermark-workflow",
@@ -392,7 +389,7 @@
       "winner": "mcp"
     },
     {
-      "id": 28,
+      "id": 27,
       "file_name": "batch-process-multiple-word-documents-in-a-directory-to-remove-existing-watermarks-from-ea.cs",
       "task": "Batch process multiple Word documents in a directory to remove existing watermarks from each file.",
       "workflow": "watermark-workflow",
@@ -403,7 +400,7 @@
       "winner": "mcp"
     },
     {
-      "id": 29,
+      "id": 28,
       "file_name": "batch-convert-docx-files-to-pdf-while-adding-a-corporate-logo-image-watermark-to-each-pdf.cs",
       "task": "Batch convert DOCX files to PDF while adding a corporate logo image watermark to each PDF.",
       "workflow": "watermark-workflow",
@@ -416,9 +413,9 @@
       "winner": "existing_repo"
     },
     {
-      "id": 30,
+      "id": 29,
       "file_name": "create-a-command-line-tool-that-accepts-a-directory-path-and-adds-a-specified-watermark-to.cs",
-      "task": "Create a command‑line tool that accepts a directory path and adds a specified watermark to each file.",
+      "task": "Create a command-line tool that accepts a directory path and adds a specified watermark to each file.",
       "workflow": "watermark-workflow",
       "outputs": [
         "docx"
@@ -427,7 +424,7 @@
       "winner": "mcp"
     },
     {
-      "id": 31,
+      "id": 30,
       "file_name": "use-a-configuration-file-to-define-watermark-text-font-and-opacity-then-apply-it-to-multip.cs",
       "task": "Use a configuration file to define watermark text, font, and opacity, then apply it to multiple documents.",
       "workflow": "watermark-workflow",
@@ -438,7 +435,7 @@
       "winner": "existing_repo"
     },
     {
-      "id": 32,
+      "id": 31,
       "file_name": "implement-a-unit-test-that-verifies-watermark-remove-successfully-deletes-a-previously-add.cs",
       "task": "Implement a unit test that verifies Watermark.Remove successfully deletes a previously added text watermark.",
       "workflow": "watermark-workflow",
@@ -449,7 +446,7 @@
       "winner": "mcp"
     },
     {
-      "id": 33,
+      "id": 32,
       "file_name": "add-a-watermark-to-a-document-opened-from-a-network-share-ensuring-proper-disposal-of-file.cs",
       "task": "Add a watermark to a document opened from a network share, ensuring proper disposal of file handles.",
       "workflow": "watermark-workflow",
@@ -460,7 +457,7 @@
       "winner": "mcp"
     },
     {
-      "id": 34,
+      "id": 33,
       "file_name": "create-a-reusable-method-that-adds-a-configurable-text-watermark-to-any-document-object.cs",
       "task": "Create a reusable method that adds a configurable text watermark to any Document object.",
       "workflow": "watermark-workflow",
@@ -470,5 +467,15 @@
       "selected_engine": "existing_repo",
       "winner": "existing_repo"
     }
-  ]
+  ],
+  "narrative": {
+    "overview": "The Watermark category demonstrates how to apply text and image watermarks to Word documents using Aspose.Words 26.10.0. Verified examples cover document-level, table-cell-level, batch, and combined watermark scenarios with correct API usage.",
+    "purpose": "Provide an AI coding agent with concise guidance for generating reliable watermark code snippets that load or create documents, configure TextWatermarkOptions or ImageWatermarkOptions, apply the watermark via Document.Watermark, and persist the result while handling resources safely.",
+    "validation_priorities": [
+      "Confirm that the output file is created and that the document contains the expected watermark without throwing exceptions."
+    ],
+    "maintenance_notes": [
+      "Periodically verify that the Watermark API signatures have not changed in newer Aspose.Words releases and update the examples accordingly."
+    ]
+  }
 }

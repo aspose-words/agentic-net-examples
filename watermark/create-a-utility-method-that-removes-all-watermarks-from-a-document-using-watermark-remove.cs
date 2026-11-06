@@ -1,38 +1,33 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
-public class Program
+namespace WatermarkRemovalDemo
 {
-    public static void Main()
+    class Program
     {
-        // Create a new document.
-        Document doc = new Document();
-        // Add a paragraph so the document has content.
-        doc.FirstSection.Body.AppendChild(new Paragraph(doc));
+        static void Main()
+        {
+            // Create a sample document with some content.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("This is a sample document.");
 
-        // Apply a text watermark.
-        doc.Watermark.SetText("Confidential");
+            // Apply a text watermark to demonstrate removal.
+            doc.Watermark.SetText("CONFIDENTIAL");
 
-        // Save the document with the watermark.
-        string withWatermarkPath = "WithWatermark.docx";
-        doc.Save(withWatermarkPath);
+            // Remove all watermarks using the utility method.
+            RemoveAllWatermarks(doc);
 
-        // Remove all watermarks from the document.
-        RemoveAllWatermarks(doc);
+            // Save the document without watermarks.
+            string outputPath = "Output_NoWatermark.docx";
+            doc.Save(outputPath);
+        }
 
-        // Save the document after watermark removal.
-        string withoutWatermarkPath = "WithoutWatermark.docx";
-        doc.Save(withoutWatermarkPath);
-
-        // Simple validation that the files were saved.
-        Console.WriteLine(File.Exists(withWatermarkPath) ? "Watermark file saved." : "Failed to save watermark file.");
-        Console.WriteLine(File.Exists(withoutWatermarkPath) ? "Watermark removed file saved." : "Failed to save removed file.");
-    }
-
-    // Utility method that removes all watermarks from a document.
-    public static void RemoveAllWatermarks(Document document)
-    {
-        document.Watermark.Remove();
+        // Utility method that removes all watermarks from the provided document.
+        static void RemoveAllWatermarks(Document document)
+        {
+            // Watermark.Remove clears any watermark applied to the document.
+            document.Watermark.Remove();
+        }
     }
 }

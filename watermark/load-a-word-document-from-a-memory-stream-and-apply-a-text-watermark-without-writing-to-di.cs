@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 public class Program
 {
@@ -12,12 +11,11 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(sampleDoc);
         builder.Writeln("This is a sample document.");
 
-        // Save the sample document to a memory stream.
+        // Save the document to a memory stream.
         using (MemoryStream stream = new MemoryStream())
         {
             sampleDoc.Save(stream, SaveFormat.Docx);
-            // Reset the stream position before loading.
-            stream.Position = 0;
+            stream.Position = 0; // Reset stream position for reading.
 
             // Load the document from the memory stream.
             Document loadedDoc = new Document(stream);
@@ -26,7 +24,14 @@ public class Program
             loadedDoc.Watermark.SetText("CONFIDENTIAL");
 
             // Save the watermarked document to disk.
-            loadedDoc.Save("Watermarked.docx");
+            string outputPath = "Watermarked.docx";
+            loadedDoc.Save(outputPath);
+
+            // Simple validation that the file was created.
+            if (File.Exists(outputPath))
+            {
+                Console.WriteLine($"Watermark applied successfully. Output saved to '{outputPath}'.");
+            }
         }
     }
 }
