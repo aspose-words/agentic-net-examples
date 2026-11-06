@@ -1,6 +1,6 @@
 using System;
+using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Tables;
 
 public class Program
 {
@@ -10,47 +10,37 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add sample content: headings and normal paragraphs.
+        // Insert sample heading paragraphs.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 1: Introduction");
-
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("This is a normal paragraph under the first heading.");
+        builder.Writeln("First Heading (Heading 1)");
 
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Section 1.1: Overview");
+        builder.Writeln("Second Heading (Heading 2)");
 
+        // Insert a normal paragraph for contrast.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Another normal paragraph.");
+        builder.Writeln("This is a normal paragraph.");
 
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 2: Details");
+        // Create a custom style that will be applied to all headings.
+        Style customStyle = doc.Styles.Add(StyleType.Paragraph, "MyHeadingStyle");
+        customStyle.Font.Color = Color.Blue;
+        customStyle.Font.Size = 14;
+        customStyle.Font.Bold = true;
 
-        // Define the target style to apply to all heading paragraphs.
-        // For this example we use the built‑in "Intense Quote" style.
-        StyleIdentifier targetStyle = StyleIdentifier.IntenseQuote;
-
-        // Loop through all paragraphs in the document.
+        // Loop through all paragraphs and apply the custom style to heading paragraphs.
         foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
         {
+            StyleIdentifier styleId = para.ParagraphFormat.StyleIdentifier;
+
             // Check if the paragraph uses any built‑in heading style.
-            StyleIdentifier currentStyle = para.ParagraphFormat.StyleIdentifier;
-            if (currentStyle == StyleIdentifier.Heading1 ||
-                currentStyle == StyleIdentifier.Heading2 ||
-                currentStyle == StyleIdentifier.Heading3 ||
-                currentStyle == StyleIdentifier.Heading4 ||
-                currentStyle == StyleIdentifier.Heading5 ||
-                currentStyle == StyleIdentifier.Heading6 ||
-                currentStyle == StyleIdentifier.Heading7 ||
-                currentStyle == StyleIdentifier.Heading8 ||
-                currentStyle == StyleIdentifier.Heading9)
+            if (styleId >= StyleIdentifier.Heading1 && styleId <= StyleIdentifier.Heading9)
             {
-                // Apply the target style to the heading paragraph.
-                para.ParagraphFormat.StyleIdentifier = targetStyle;
+                // Apply the custom style.
+                para.ParagraphFormat.StyleName = "MyHeadingStyle";
             }
         }
 
         // Save the modified document.
-        doc.Save("StyledHeadings.docx");
+        doc.Save("Output.docx");
     }
 }

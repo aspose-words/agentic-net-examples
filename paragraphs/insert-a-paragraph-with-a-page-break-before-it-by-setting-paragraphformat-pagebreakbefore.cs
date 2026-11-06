@@ -7,19 +7,23 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Use DocumentBuilder for simple paragraph insertion.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Add an initial paragraph.
         builder.Writeln("First paragraph.");
 
-        // Insert a new empty paragraph and set a page break before it.
-        builder.InsertParagraph();
-        builder.CurrentParagraph.ParagraphFormat.PageBreakBefore = true;
+        // Insert the target paragraph.
+        builder.Writeln("Paragraph with page break before.");
 
-        // Add text to the paragraph that has the page break before it.
-        builder.Writeln("Paragraph with a page break before.");
+        // Retrieve the paragraph that was just added.
+        Paragraph targetParagraph = (Paragraph)doc.LastSection.Body.LastParagraph;
 
-        // Save the document to a file.
+        // Set the PageBreakBefore property to true.
+        targetParagraph.ParagraphFormat.PageBreakBefore = true;
+
+        // Save the document.
         doc.Save("Output.docx");
     }
 }

@@ -8,19 +8,18 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Add a paragraph containing mixed left‑to‑right and right‑to‑left text.
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello world! שלום עולם!");
 
-        // Add sample paragraphs containing left‑to‑right and right‑to‑left text.
-        builder.Writeln("This is an English paragraph.");
-        builder.Writeln("هذا نص عربي لتجربة الاتجاه من اليمين إلى اليسار.");
-
-        // Enable insertion of Unicode bi‑directional marks when saving to plain text.
+        // Configure plain‑text save options to add bi‑directional marks.
         TxtSaveOptions saveOptions = new TxtSaveOptions
         {
             AddBidiMarks = true
         };
 
-        // Save the document as plain text with the specified options.
-        doc.Save("Output.txt", saveOptions);
+        // Save the document as plain text with the configured options.
+        doc.Save("output.txt", saveOptions);
     }
 }

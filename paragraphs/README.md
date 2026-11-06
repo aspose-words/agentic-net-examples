@@ -1,6 +1,6 @@
 # Paragraphs Examples for Aspose.Words for .NET
 
-This folder contains the live, publish-ready C# examples for the Paragraphs category. Each file is a standalone console example selected from the verified 26.9.0 run.
+The Paragraphs category covers insertion, formatting, traversal, and export of Word document paragraphs using Aspose.Words 26.10.0. Verified examples demonstrate safe DocumentBuilder usage, style-separator handling, bi-directional text options, TXT save options, and plain-text list detection.
 
 ## Snapshot
 
@@ -8,7 +8,7 @@ This folder contains the live, publish-ready C# examples for the Paragraphs cate
 - Slug: paragraphs
 - Total examples: 35
 - Publish-ready successful examples: 35 / 35
-- Source run: 20260925_194858_2eeab9
+- Source run: 20261102_031946_08fb5b
 - Insertion examples: 6
 - Paragraph Formatting examples: 16
 - Traversal Reporting examples: 6
@@ -17,25 +17,26 @@ This folder contains the live, publish-ready C# examples for the Paragraphs cate
 
 ## Category rules that shaped these examples
 
-- Use real `Paragraph` nodes and `ParagraphFormat` APIs for paragraph operations.
-- Prefer `DocumentBuilder` for insertion and simple formatting workflows.
-- Use direct paragraph traversal for reporting, counting, filtering, export, and structural editing tasks.
-- Bootstrap DOCX, DOC, and TXT inputs locally instead of assuming external files exist.
-- Keep validation task-specific and verify the exact target paragraph or output artifact.
+- Never reference namespaces or members that are not part of the official Aspose.Words API.
+- Do not call Run.Replace; modify Run.Text directly to preserve formatting.
+- Use Paragraph.ParagraphFormat for all alignment, spacing, indent, bidi, shading, outline level, and page-break settings.
+- Apply built-in styles via ParagraphFormat.StyleIdentifier and custom styles via ParagraphFormat.StyleName.
+- Validate only the specific paragraph or range required for the task, avoiding blanket paragraph-count assertions.
 
 ## Prerequisites
 
 - .NET SDK 8.0 or later
-- Aspose.Words 26.9.0
+- Aspose.Words for .NET `26.10.0`
 
 ## Running Examples
 
-Each file in this folder is a single, standalone `.cs` console example. To run one example:
+Each file in this folder is a **single, standalone `.cs` console example**. To run one example:
 
 ```bash
+# From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.9.0
+dotnet add package Aspose.Words --version 26.10.0
 
 # Copy one example from this folder into the project as Program.cs
 # PowerShell:
@@ -56,7 +57,7 @@ Example:
 # From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.9.0
+dotnet add package Aspose.Words --version 26.10.0
 
 # PowerShell example
 Copy-Item ..\paragraphs\insert-a-new-paragraph-with-custom-text-using-documentbuilder-writeln-inside-a-document-lo.cs .\Program.cs
@@ -103,29 +104,44 @@ dotnet run --configuration Release --no-build
 | 32 | `insert-a-paragraph-with-a-field-code-such-as-date-and-format-the-field-result-using-paragr.cs` | Insert a paragraph with a field code such as DATE and format the field result using paragraph formatting. | insertion | docx | mcp |
 | 33 | `determine-whether-a-paragraph-resides-inside-a-table-by-checking-paragraph-isintable-prope.cs` | Determine whether a paragraph resides inside a table by checking Paragraph.IsInTable property value. | traversal-reporting | docx | mcp |
 | 34 | `export-paragraphs-to-plain-text-with-line-numbers-prefixed-by-enabling-line-numbering-opti.cs` | Export paragraphs to plain text with line numbers prefixed by enabling line numbering option in SaveOptions. | text-export | docx | mcp |
-| 35 | `load-a-txt-file-with-list-detection-disabled-and-compare-the-resulting-document-s-list-for.cs` | Load a TXT file with list detection disabled and compare the resulting document's list formatting to enabled mode. | text-export | txt, docx | mcp |
+| 35 | `load-a-txt-file-with-list-detection-disabled-and-compare-the-resulting-document-s-list-for.cs` | Load a TXT file with list detection disabled and compare the resulting document's list formatting to enabled mode. | text-export | txt, docx | existing_repo |
 
 ## Common failure patterns seen during generation and how they were corrected
 
-### Fake Paragraph namespace
+### Use of non-existent API members
 
-- Symptom: Compiler error that Aspose.Words.Paragraphs does not exist.
-- Fix: Use only documented Aspose.Words namespaces.
+- Symptom: Compiler reports missing definitions for properties such as Document.AddBidiMarks, TxtSaveOptions.ExportHeadersFooters, or StyleIdentifier.StyleSeparator.
+- Root cause: The code references members that were never implemented in the Aspose.Words library.
+- Preferred fix: Replace the call with the supported alternative (e.g., configure TxtSaveOptions.AddBidiMarks, use the Unicode unit separator character for style separators, or omit unsupported options).
+- Prevention: Consult the official Aspose.Words API reference for the exact version before using a property or method.
 
-### Unsupported paragraph line-count API
+### Incorrect overload usage
 
-- Symptom: Compiler errors around Paragraph.GetLinesCount and invented layout helpers.
-- Fix: Use a compile-safe approximation for line-count tasks rather than unsupported APIs.
+- Symptom: Build fails because DocumentBuilder.MoveTo or MoveToParagraph is called with an invalid number of arguments.
+- Root cause: The code supplies parameters that do not match any overload defined in the library.
+- Preferred fix: Use the overload signatures documented for the current version, providing both paragraph index and character index for MoveToParagraph, or call MoveTo with a Node argument.
+- Prevention: Review method signatures in the API docs and pass the required arguments exactly as specified.
 
-### Invalid run replacement API
+### Applying paragraph style to a run
 
-- Symptom: Compiler error that Run does not expose Replace.
-- Fix: Edit Run.Text while preserving run formatting.
+- Symptom: Runtime throws ArgumentException stating that the style is not a character style when assigning a StyleIdentifier to Font.StyleIdentifier.
+- Root cause: A paragraph-level style (e.g., Heading1) is being applied to a Run, which only accepts character styles.
+- Preferred fix: Assign a character style such as StyleIdentifier.DefaultParagraphFont to the run, or leave the run with the document's default character formatting.
+- Prevention: Distinguish between paragraph and character styles; use Font.StyleIdentifier only for character styles.
+
+### Assuming unsupported layout helpers
+
+- Symptom: Compiler errors appear for calls to Paragraph.GetLinesCount or other invented layout APIs.
+- Root cause: The code attempts to use methods that are not part of the Aspose.Words API for line-count or layout information.
+- Preferred fix: Remove the unsupported call and, if line count is needed, approximate it by measuring the rendered height or by using a custom layout engine outside Aspose.Words.
+- Prevention: Limit paragraph-related logic to properties and methods documented in the API reference.
 
 ### Over-broad paragraph count validation
 
-- Symptom: Runtime failures caused by asserting total paragraph counts for tasks that only required a targeted insertion or formatting change.
-- Fix: Validate the exact target paragraph or target scope only.
+- Symptom: Runtime failures occur when the test asserts the total number of paragraphs instead of the targeted subset.
+- Root cause: The validation logic checks the entire document rather than the specific paragraph(s) affected by the operation.
+- Preferred fix: Validate only the paragraph(s) that the task modifies or queries, using precise node references.
+- Prevention: Scope assertions to the exact nodes involved in the operation.
 
 ## See Also
 
@@ -138,6 +154,5 @@ dotnet run --configuration Release --no-build
 
 ## Notes for maintainers
 
-- This category is 100% publish-ready for the 26.9.0 run.
-- Preserve file-to-task traceability when updating this folder.
-- Keep examples standalone and bootstrap local inputs inside the example whenever external sources are mentioned.
+- This category is 100% publish-ready for the 26.10.0 run.
+- Update the examples whenever a new Aspose.Words version introduces or deprecates API members, and verify all referenced members against the official documentation.

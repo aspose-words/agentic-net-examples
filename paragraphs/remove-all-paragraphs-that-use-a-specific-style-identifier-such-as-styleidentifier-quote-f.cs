@@ -5,22 +5,22 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Add paragraphs with various built‑in styles.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("This is a normal paragraph.");
+
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Quote;
         builder.Writeln("This is a quote paragraph that should be removed.");
-
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("This is a normal paragraph that should stay.");
 
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Quote;
         builder.Writeln("Another quote paragraph to be removed.");
 
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Heading paragraph that should stay.");
+        builder.Writeln("This is a heading paragraph.");
 
         // Remove all paragraphs that use the Quote style.
         // Iterate backwards to safely remove nodes while traversing.

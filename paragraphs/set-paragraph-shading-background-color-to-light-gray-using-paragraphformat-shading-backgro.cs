@@ -8,15 +8,15 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to add a paragraph with some text.
         DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert a paragraph with some text.
         builder.Writeln("This paragraph has a light gray background shading.");
 
-        // Retrieve the paragraph that was just added.
-        Paragraph paragraph = doc.FirstSection.Body.LastParagraph;
+        // Retrieve the paragraph we just added.
+        Paragraph paragraph = doc.LastSection.Body.LastParagraph;
 
-        // Set the paragraph shading background color to light gray.
+        // Set the shading background color to light gray.
         paragraph.ParagraphFormat.Shading.BackgroundPatternColor = Color.LightGray;
 
         // Save the document to a file.
