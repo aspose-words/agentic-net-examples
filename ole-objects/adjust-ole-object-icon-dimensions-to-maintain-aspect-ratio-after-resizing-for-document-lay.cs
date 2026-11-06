@@ -4,52 +4,22 @@ public class Program
 {
     public static void Main()
     {
-        // Original OLE icon dimensions (e.g., pixels)
-        double originalWidth = 200;
-        double originalHeight = 100;
+        // Original OLE object icon dimensions (in points)
+        double originalWidth = 200.0;
+        double originalHeight = 120.0;
 
-        // Resize based on a new width while preserving aspect ratio
-        double targetWidth = 150;
-        var resizedByWidth = OLEIconResizer.ResizeByWidth(originalWidth, originalHeight, targetWidth);
-        Console.WriteLine($"Original size: {originalWidth} x {originalHeight}");
-        Console.WriteLine($"Resized to width {targetWidth}: {resizedByWidth.Width:F2} x {resizedByWidth.Height:F2}");
+        // Desired new width after layout resizing
+        double newWidth = 150.0;
 
-        // Resize based on a new height while preserving aspect ratio
-        double targetHeight = 80;
-        var resizedByHeight = OLEIconResizer.ResizeByHeight(originalWidth, originalHeight, targetHeight);
-        Console.WriteLine($"Resized to height {targetHeight}: {resizedByHeight.Width:F2} x {resizedByHeight.Height:F2}");
-    }
-}
+        // Calculate new height to maintain aspect ratio
+        double aspectRatio = originalHeight / originalWidth;
+        double newHeight = newWidth * aspectRatio;
 
-public static class OLEIconResizer
-{
-    public struct Size
-    {
-        public double Width;
-        public double Height;
-
-        public Size(double width, double height)
-        {
-            Width = width;
-            Height = height;
-        }
-    }
-
-    // Adjust dimensions based on a new width, maintaining aspect ratio
-    public static Size ResizeByWidth(double originalWidth, double originalHeight, double newWidth)
-    {
-        if (originalWidth == 0) return new Size(0, 0);
-        double scale = newWidth / originalWidth;
-        double newHeight = originalHeight * scale;
-        return new Size(newWidth, newHeight);
-    }
-
-    // Adjust dimensions based on a new height, maintaining aspect ratio
-    public static Size ResizeByHeight(double originalWidth, double originalHeight, double newHeight)
-    {
-        if (originalHeight == 0) return new Size(0, 0);
-        double scale = newHeight / originalHeight;
-        double newWidth = originalWidth * scale;
-        return new Size(newWidth, newHeight);
+        Console.WriteLine("OLE Object Icon Resize Example");
+        Console.WriteLine("--------------------------------");
+        Console.WriteLine($"Original Size : {originalWidth} x {originalHeight}");
+        Console.WriteLine($"Requested Width: {newWidth}");
+        Console.WriteLine($"Calculated Height (maintaining aspect ratio): {newHeight:F2}");
+        Console.WriteLine($"Resized Size : {newWidth} x {newHeight:F2}");
     }
 }

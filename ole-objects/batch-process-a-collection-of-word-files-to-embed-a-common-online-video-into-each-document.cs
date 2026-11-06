@@ -1,56 +1,65 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Folder containing the source Word documents.
-        // Use a path relative to the current working directory.
-        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
-        // Folder where the modified documents will be saved.
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputDocs");
+        // Folder containing source Word documents (relative to the executable location)
+        string inputFolder = Path.GetFullPath("InputDocs");
+        // Folder where processed documents will be saved
+        string outputFolder = Path.GetFullPath("OutputDocs");
+        // URL of the online video to embed
+        string videoUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
 
-        // Ensure both directories exist.
-        Directory.CreateDirectory(inputFolder);
+        // Ensure the output directory exists
         Directory.CreateDirectory(outputFolder);
 
-        // URL of the online video to embed in each document.
-        const string videoUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
-
-        // Process every .docx file in the input folder.
-        foreach (string inputPath in Directory.GetFiles(inputFolder, "*.docx"))
+        // Verify that the input directory exists; if not, inform the user and exit
+        if (!Directory.Exists(inputFolder))
         {
-            // Load the existing document.
-            Document doc = new Document(inputPath);
+            Console.WriteLine($"Input folder not found: {inputFolder}");
+            Console.WriteLine("Create the folder and place .docx files inside before running the program.");
+            return;
+        }
 
-            // Create a builder to modify the document.
+        // Get all .docx files in the input folder
+        string[] files = Directory.GetFiles(inputFolder, "*.docx", SearchOption.TopDirectoryOnly);
+
+        // If no files are found, inform the user and exit
+        if (files.Length == 0)
+        {
+            Console.WriteLine($"No .docx files found in: {inputFolder}");
+            return;
+        }
+
+        foreach (string filePath in files)
+        {
+            // Load the Word document
+            Document doc = new Document(filePath);
+
+            // Create a DocumentBuilder for editing
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Move the cursor to the end of the document.
+            // Move cursor to the end of the document
             builder.MoveToDocumentEnd();
 
-            // Optional: add a paragraph break before the video.
+            // Add a blank paragraph before inserting the video
             builder.Writeln();
 
-            // Insert the online video with a fixed size (width x height in points).
-            // This uses the InsertOnlineVideo(string, double, double) overload.
-            builder.InsertOnlineVideo(videoUrl, 320, 180);
+            // Insert the online video with specified size (width, height)
+            Shape videoShape = builder.InsertOnlineVideo(videoUrl, 400, 300);
 
-            // Save the modified document to the output folder, preserving the original file name.
-            string outputPath = Path.Combine(outputFolder, Path.GetFileName(inputPath));
-            doc.Save(outputPath);
+            // Build output file name
+            string fileName = Path.GetFileNameWithoutExtension(filePath);
+            string outPath = Path.Combine(outputFolder, $"{fileName}_video.docx");
+
+            // Save the modified document
+            doc.Save(outPath);
         }
 
-        // Inform the user if no documents were found.
-        if (Directory.GetFiles(inputFolder, "*.docx").Length == 0)
-        {
-            Console.WriteLine($"No .docx files were found in '{inputFolder}'. Place documents there and rerun the program.");
-        }
-        else
-        {
-            Console.WriteLine("Processing completed successfully.");
-        }
+        Console.WriteLine("Processing completed successfully.");
     }
 }

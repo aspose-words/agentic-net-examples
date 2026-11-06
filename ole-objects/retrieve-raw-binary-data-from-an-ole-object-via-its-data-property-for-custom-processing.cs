@@ -1,43 +1,39 @@
 using System;
-using System.IO;
 using System.Security.Cryptography;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample OLE object with binary data
-        var ole = new SampleOleObject();
+        // Simulated OLE object containing raw binary data (e.g., "Hello World")
+        var oleObject = new OleObjectMock(new byte[] { 0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x20, 0x57, 0x6F, 0x72, 0x6C, 0x64 });
 
         // Retrieve raw binary data via the Data property
-        byte[] rawData = ole.Data;
+        byte[] rawData = oleObject.Data;
 
-        // Custom processing: compute SHA256 hash of the raw data
-        string hash = ComputeSha256(rawData);
-        Console.WriteLine($"SHA256: {hash}");
+        // Custom processing: compute SHA256 hash of the binary data
+        string hash = ComputeSha256Hash(rawData);
 
-        // Write the raw data to a file for demonstration purposes
-        const string outputPath = "output.bin";
-        File.WriteAllBytes(outputPath, rawData);
-        Console.WriteLine($"Raw data written to {outputPath}");
+        Console.WriteLine($"SHA256 hash of OLE data: {hash}");
     }
 
-    private static string ComputeSha256(byte[] data)
+    private static string ComputeSha256Hash(byte[] data)
     {
-        using SHA256 sha = SHA256.Create();
-        byte[] hashBytes = sha.ComputeHash(data);
+        using var sha256 = SHA256.Create();
+        byte[] hashBytes = sha256.ComputeHash(data);
         return BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
     }
 }
 
-// Mock OLE object class with a Data property returning raw binary data
-public class SampleOleObject
+public class OleObjectMock
 {
-    public byte[] Data { get; }
+    private readonly byte[] _data;
 
-    public SampleOleObject()
+    public OleObjectMock(byte[] data)
     {
-        // Example binary content (could represent an image, document, etc.)
-        Data = new byte[] { 0xDE, 0xAD, 0xBE, 0xEF, 0x01, 0x02, 0x03 };
+        _data = data;
     }
+
+    // Exposes the raw binary data of the OLE object
+    public byte[] Data => _data;
 }

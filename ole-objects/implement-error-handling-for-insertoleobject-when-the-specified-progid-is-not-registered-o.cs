@@ -1,40 +1,41 @@
 using System;
-using System.IO;
-using Aspose.Words;
-using Aspose.Words.Drawing;
+using System.Runtime.InteropServices;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Example with a ProgID that is unlikely to be registered.
+        string progId = "Non.Existent.ProgId";
+        InsertOleObject(progId);
+    }
 
-        // Path to a sample file that could be embedded (not required for the error case).
-        string sampleFilePath = "sample.txt";
-
-        // Ensure the sample file exists to avoid file‑not‑found errors.
-        File.WriteAllText(sampleFilePath, "This is a sample text file.");
-
+    private static void InsertOleObject(string progId)
+    {
         try
         {
-            // Open the file as a stream because the InsertOleObject overload expects streams.
-            using (FileStream oleStream = File.OpenRead(sampleFilePath))
+            // Attempt to get the COM type for the specified ProgID.
+            Type comType = Type.GetTypeFromProgID(progId, throwOnError: true);
+            // Try to create an instance of the COM object.
+            object comObject = Activator.CreateInstance(comType);
+            Console.WriteLine($"Successfully created OLE object for ProgID '{progId}'.");
+            // Release the COM object if applicable.
+            if (comObject != null && Marshal.IsComObject(comObject))
             {
-                // Attempt to insert an OLE object using a ProgId that is not registered.
-                // This will throw an exception because the ProgId does not exist on the system.
-                // The fourth parameter (icon stream) is set to null because we are not providing a custom icon.
-                builder.InsertOleObject(oleStream, "NonExistent.ProgId", false, null);
+                Marshal.ReleaseComObject(comObject);
             }
+        }
+        catch (COMException comEx)
+        {
+            Console.WriteLine($"COMException: ProgID '{progId}' is not registered. Details: {comEx.Message}");
+        }
+        catch (ArgumentException argEx)
+        {
+            Console.WriteLine($"ArgumentException: ProgID '{progId}' is invalid. Details: {argEx.Message}");
         }
         catch (Exception ex)
         {
-            // Handle the error gracefully and inform the user.
-            Console.WriteLine("Error inserting OLE object: " + ex.Message);
+            Console.WriteLine($"Unexpected error for ProgID '{progId}': {ex.Message}");
         }
-
-        // Save the document (it will be empty or contain whatever succeeded before the error).
-        doc.Save("Output.docx");
     }
 }

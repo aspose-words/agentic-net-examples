@@ -4,42 +4,43 @@ using System.Text;
 
 public class OlePackage
 {
-    public byte[] Data { get; private set; }
+    public byte[] Data { get; set; }
     public string Label { get; set; }
+    public string FileName { get; set; }
+    public string Path { get; set; }
 
-    public OlePackage(byte[] data, string label)
+    public OlePackage(byte[] data, string label, string fileName, string path)
     {
-        Data = data ?? Array.Empty<byte>();
-        Label = label ?? string.Empty;
+        Data = data;
+        Label = label;
+        FileName = fileName;
+        Path = path;
     }
 
-    // Save the package to a file using a simple binary format:
-    // [labelLength][labelUtf8][dataLength][data]
-    public void SaveToFile(string path)
+    public void SaveToFile(string filePath)
     {
-        using (var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None))
-        using (var writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: false))
+        using var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write);
+        using var bw = new BinaryWriter(fs, Encoding.UTF8, leaveOpen: false);
+        bw.Write(Label ?? string.Empty);
+        bw.Write(FileName ?? string.Empty);
+        bw.Write(Path ?? string.Empty);
+        bw.Write(Data?.Length ?? 0);
+        if (Data != null && Data.Length > 0)
         {
-            byte[] labelBytes = Encoding.UTF8.GetBytes(Label);
-            writer.Write(labelBytes.Length);
-            writer.Write(labelBytes);
-            writer.Write(Data.Length);
-            writer.Write(Data);
+            bw.Write(Data);
         }
     }
 
-    // Load a package from a file written by SaveToFile.
-    public static OlePackage LoadFromFile(string path)
+    public static OlePackage FromFile(string filePath)
     {
-        using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
-        using (var reader = new BinaryReader(stream, Encoding.UTF8, leaveOpen: false))
-        {
-            int labelLength = reader.ReadInt32();
-            string label = Encoding.UTF8.GetString(reader.ReadBytes(labelLength));
-            int dataLength = reader.ReadInt32();
-            byte[] data = reader.ReadBytes(dataLength);
-            return new OlePackage(data, label);
-        }
+        using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+        using var br = new BinaryReader(fs, Encoding.UTF8, leaveOpen: false);
+        string label = br.ReadString();
+        string fileName = br.ReadString();
+        string path = br.ReadString();
+        int dataLength = br.ReadInt32();
+        byte[] data = br.ReadBytes(dataLength);
+        return new OlePackage(data, label, fileName, path);
     }
 }
 
@@ -47,37 +48,38 @@ public class OlePackageDemo
 {
     public static void Main()
     {
-        // Prepare temporary file path
-        string tempFile = Path.Combine(Path.GetTempPath(), "OlePackageDemo.bin");
+        // Prepare sample data for the OLE package
+        byte[] sampleData = Encoding.UTF8.GetBytes("Hello OLE Package");
 
-        try
-        {
-            // Create sample data for the OLE package
-            byte[] data = Encoding.UTF8.GetBytes("Sample OLE package content");
+        // Create an OlePackage instance with initial properties
+        OlePackage package = new OlePackage(
+            data: sampleData,
+            label: "OriginalLabel",
+            fileName: "example.txt",
+            path: @"C:\Temp"
+        );
 
-            // Create an OlePackage with an initial label
-            OlePackage package = new OlePackage(data, "Original Package");
-            package.SaveToFile(tempFile);
+        // Define file paths for saving
+        string originalFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "package_original.bin");
+        string modifiedFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "package_modified.bin");
 
-            // Load the package from the file and display its label
-            OlePackage loaded = OlePackage.LoadFromFile(tempFile);
-            Console.WriteLine($"Loaded label: {loaded.Label}");
+        // Save the original package to disk
+        package.SaveToFile(originalFile);
+        Console.WriteLine($"Original package saved to: {originalFile}");
 
-            // Modify the label and save again
-            loaded.Label = "Modified Package";
-            loaded.SaveToFile(tempFile);
+        // Load the package back from the file
+        OlePackage loadedPackage = OlePackage.FromFile(originalFile);
+        Console.WriteLine($"Loaded package label: {loadedPackage.Label}");
 
-            // Reload to verify the change
-            OlePackage reloaded = OlePackage.LoadFromFile(tempFile);
-            Console.WriteLine($"Reloaded label: {reloaded.Label}");
-        }
-        finally
-        {
-            // Clean up the temporary file
-            if (File.Exists(tempFile))
-            {
-                File.Delete(tempFile);
-            }
-        }
+        // Modify a property (e.g., the label)
+        loadedPackage.Label = "ModifiedLabel";
+
+        // Save the modified package to a new file
+        loadedPackage.SaveToFile(modifiedFile);
+        Console.WriteLine($"Modified package saved to: {modifiedFile}");
+
+        // Verify modification by loading again
+        OlePackage verifiedPackage = OlePackage.FromFile(modifiedFile);
+        Console.WriteLine($"Verified package label: {verifiedPackage.Label}");
     }
 }
