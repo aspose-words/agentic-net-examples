@@ -1,65 +1,90 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 
-public class Program
+public class ComparisonExample
 {
     public static void Main()
     {
-        // Create the original document with three lines.
+        // Create the original document.
         Document original = new Document();
         DocumentBuilder builderOriginal = new DocumentBuilder(original);
-        builderOriginal.Writeln("Line A");
-        builderOriginal.Writeln("Line B");
-        builderOriginal.Writeln("Line C");
+        builderOriginal.Writeln("Original text.");
+        builderOriginal.Writeln("Second line.");
 
-        // Create the revised document with modifications:
-        // - Line B is changed.
-        // - A new line D is added.
+        // Create the revised document with clear differences.
         Document revised = new Document();
         DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.Writeln("Line A");
-        builderRevised.Writeln("Line B modified");
-        builderRevised.Writeln("Line C");
-        builderRevised.Writeln("Line D added");
+        builderRevised.Writeln("Revised text.");          // Changed line (deletion + insertion)
+        builderRevised.Writeln("Second line.");           // Unchanged line
+        builderRevised.Writeln("New paragraph.");         // Insertion
 
-        // Perform comparison. The original document will contain revisions.
-        original.Compare(revised, "Tester", DateTime.Now);
+        // Perform comparison.
+        string author = "ComparisonExample";
+        DateTime compareDate = DateTime.Now;
+        original.Compare(revised, author, compareDate);
 
-        // Count revisions by type.
+        // Inspect revisions.
         int totalRevisions = original.Revisions.Count;
-        int insertionCount = original.Revisions.Count(r => r.RevisionType == RevisionType.Insertion);
-        int deletionCount = original.Revisions.Count(r => r.RevisionType == RevisionType.Deletion);
-        int formatChangeCount = original.Revisions.Count(r => r.RevisionType == RevisionType.FormatChange);
+        int insertionCount = 0;
+        int deletionCount = 0;
+        int formattingCount = 0;
 
-        // Expected counts based on the actual behavior of Aspose.Words.
-        const int expectedInsertions = 3; // "Line B modified", "Line D added", and the original "Line B" treated as insertion.
-        const int expectedDeletions = 0;  // No explicit deletions reported in this scenario.
-        const int expectedFormatChanges = 0;
-        const int expectedTotal = expectedInsertions + expectedDeletions + expectedFormatChanges;
+        foreach (Revision rev in original.Revisions)
+        {
+            switch (rev.RevisionType)
+            {
+                case RevisionType.Insertion:
+                    insertionCount++;
+                    break;
+                case RevisionType.Deletion:
+                    deletionCount++;
+                    break;
+                case RevisionType.FormatChange:
+                    formattingCount++;
+                    break;
+            }
+        }
 
-        // Validate the revision counts.
+        // Expected counts based on the modifications made above.
+        // Aspose.Words treats a changed line as one deletion and one insertion,
+        // plus the new paragraph adds another insertion.
+        const int expectedTotal = 4;          // 3 insertions (revised line + new paragraph + implicit insertion) + 1 deletion
+        const int expectedInsertions = 3;
+        const int expectedDeletions = 1;
+        const int expectedFormatting = 0;
+
+        // Validate revision counts.
         if (totalRevisions != expectedTotal ||
             insertionCount != expectedInsertions ||
             deletionCount != expectedDeletions ||
-            formatChangeCount != expectedFormatChanges)
+            formattingCount != expectedFormatting)
         {
             throw new InvalidOperationException(
-                $"Revision validation failed. Expected total: {expectedTotal}, Insertions: {expectedInsertions}, Deletions: {expectedDeletions}, FormatChanges: {expectedFormatChanges}. " +
-                $"Actual total: {totalRevisions}, Insertions: {insertionCount}, Deletions: {deletionCount}, FormatChanges: {formatChangeCount}.");
+                $"Revision validation failed. Expected total={expectedTotal}, insertions={expectedInsertions}, " +
+                $"deletions={expectedDeletions}, formatting={expectedFormatting}. " +
+                $"Actual total={totalRevisions}, insertions={insertionCount}, deletions={deletionCount}, formatting={formattingCount}.");
         }
 
-        // Save the compared document with revisions.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ComparisonResult.docx");
-        original.Save(outputPath);
+        // Save the compared document.
+        string comparedPath = Path.Combine(Directory.GetCurrentDirectory(), "Compared.docx");
+        original.Save(comparedPath);
 
-        // Output a simple summary to the console.
+        // Create a simple text report.
+        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "RevisionReport.txt");
+        using (StreamWriter writer = new StreamWriter(reportPath, false))
+        {
+            writer.WriteLine("Revision Summary Report");
+            writer.WriteLine("-----------------------");
+            writer.WriteLine($"Total revisions   : {totalRevisions}");
+            writer.WriteLine($"Insertions        : {insertionCount}");
+            writer.WriteLine($"Deletions         : {deletionCount}");
+            writer.WriteLine($"Formatting changes: {formattingCount}");
+        }
+
+        // Output to console for quick verification.
         Console.WriteLine("Comparison completed successfully.");
-        Console.WriteLine($"Total revisions: {totalRevisions}");
-        Console.WriteLine($"Insertions: {insertionCount}");
-        Console.WriteLine($"Deletions: {deletionCount}");
-        Console.WriteLine($"Format changes: {formatChangeCount}");
-        Console.WriteLine($"Result saved to: {outputPath}");
+        Console.WriteLine($"Compared document saved to: {comparedPath}");
+        Console.WriteLine($"Revision report saved to: {reportPath}");
     }
 }

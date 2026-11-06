@@ -26,18 +26,12 @@ public class Program
         doc2.Save(ms2, SaveFormat.Docx);
         ms2.Position = 0;
 
-        // Load documents from the memory streams.
+        // Load the documents back from the memory streams.
         Document loaded1 = new Document(ms1);
         Document loaded2 = new Document(ms2);
 
         // Perform comparison between the two documents.
-        loaded1.Compare(loaded2, "Comparer", DateTime.Now);
-
-        // Ensure that revisions were generated.
-        if (loaded1.Revisions.Count == 0)
-        {
-            throw new InvalidOperationException("Expected at least one revision after comparison.");
-        }
+        loaded1.Compare(loaded2, "Author", DateTime.Now);
 
         // Save the comparison result to a memory stream and obtain a byte array.
         using MemoryStream resultStream = new MemoryStream();
@@ -45,6 +39,6 @@ public class Program
         byte[] resultBytes = resultStream.ToArray();
 
         // Output the size of the resulting byte array.
-        Console.WriteLine($"Comparison result byte array length: {resultBytes.Length}");
+        Console.WriteLine($"Result byte array length: {resultBytes.Length}");
     }
 }

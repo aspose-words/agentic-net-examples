@@ -7,26 +7,26 @@ public class Program
     {
         // Create the original document.
         Document original = new Document();
-        DocumentBuilder builder1 = new DocumentBuilder(original);
-        builder1.Writeln("Hello world.");
+        DocumentBuilder builderOriginal = new DocumentBuilder(original);
+        builderOriginal.Writeln("Hello world.");
 
-        // Create the revised document with a change.
+        // Create the revised document with a difference.
         Document revised = new Document();
-        DocumentBuilder builder2 = new DocumentBuilder(revised);
-        builder2.Writeln("Hello revised world.");
+        DocumentBuilder builderRevised = new DocumentBuilder(revised);
+        builderRevised.Writeln("Hello revised world.");
 
         // Compare the documents to generate revisions.
-        original.Compare(revised, "Comparer", DateTime.Now);
+        original.Compare(revised, "Author", DateTime.Now);
 
-        // Iterate through the revisions and log their type and affected text.
+        // Save the compared document as an artifact.
+        original.Save("Compared.docx");
+
+        // Iterate through the revisions and log each revision type and its affected text.
         foreach (Revision rev in original.Revisions)
         {
-            // The affected text can be obtained from the revision's parent node.
-            string text = rev.ParentNode?.GetText()?.Trim() ?? string.Empty;
-            Console.WriteLine($"Revision Type: {rev.RevisionType}, Text: \"{text}\"");
+            // The revision's parent node contains the actual text that was changed.
+            string affectedText = rev.ParentNode?.GetText() ?? string.Empty;
+            Console.WriteLine($"{rev.RevisionType}: {affectedText}");
         }
-
-        // Save the document that contains the revisions.
-        original.Save("compared.docx");
     }
 }

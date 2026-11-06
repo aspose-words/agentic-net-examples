@@ -8,43 +8,29 @@ public class Program
     {
         // Create the original document with some content.
         Document original = new Document();
-        DocumentBuilder builderOriginal = new DocumentBuilder(original);
-        builderOriginal.Writeln("This is the original paragraph.");
-        builderOriginal.Writeln("It will be compared against the revised version.");
+        DocumentBuilder originalBuilder = new DocumentBuilder(original);
+        originalBuilder.Writeln("This is the original paragraph.");
 
-        // Create the revised document with modifications.
+        // Create the revised document with a modification.
         Document revised = new Document();
-        DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.Writeln("This is the revised paragraph."); // changed text
-        builderRevised.Writeln("It will be compared against the original version."); // changed text
+        DocumentBuilder revisedBuilder = new DocumentBuilder(revised);
+        revisedBuilder.Writeln("This is the revised paragraph with extra text.");
 
-        // Define custom author name and timestamp for the comparison.
+        // Define a custom author name and a specific timestamp.
         string customAuthor = "John Doe";
-        DateTime customDate = new DateTime(2023, 1, 1, 12, 0, 0);
+        DateTime customTimestamp = new DateTime(2023, 1, 1, 12, 0, 0, DateTimeKind.Utc);
 
-        // Perform the comparison. Revisions will be attributed to the custom author and date.
-        original.Compare(revised, customAuthor, customDate);
+        // Compare the documents, attributing revisions to the custom author and timestamp.
+        original.Compare(revised, customAuthor, customTimestamp);
 
-        // Verify that revisions have the expected author and date.
-        int revisionCount = original.Revisions.Count;
-        Console.WriteLine($"Total revisions detected: {revisionCount}");
-
+        // Output revision details to the console.
         foreach (Revision revision in original.Revisions)
         {
-            // Output revision details.
-            Console.WriteLine($"Revision Type: {revision.RevisionType}");
-            Console.WriteLine($"Author: {revision.Author}");
-            Console.WriteLine($"Date: {revision.DateTime}");
-
-            // Get the text associated with the revision via its parent node.
-            string revisionText = revision.ParentNode?.GetText() ?? string.Empty;
-            Console.WriteLine($"Text: {revisionText}");
-            Console.WriteLine(new string('-', 40));
+            Console.WriteLine($"Revision Type: {revision.RevisionType}, Author: {revision.Author}, Date: {revision.DateTime:u}");
         }
 
-        // Save the compared document with revisions.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ComparisonResult.docx");
+        // Save the resulting document with revisions.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ComparedDocument.docx");
         original.Save(outputPath);
-        Console.WriteLine($"Compared document saved to: {outputPath}");
     }
 }

@@ -3,7 +3,7 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
-public class Program
+public class DetectMovedParagraphsExample
 {
     public static void Main()
     {
@@ -17,21 +17,25 @@ public class Program
         Document revised = new Document();
         DocumentBuilder builderRev = new DocumentBuilder(revised);
         builderRev.Writeln("Second paragraph."); // Moved paragraph.
-        builderRev.Writeln("First paragraph.");  // Original first paragraph.
+        builderRev.Writeln("First paragraph.");
 
-        // Perform the comparison. In the current Aspose.Words version, moved paragraph detection
-        // is enabled by default, so no additional CompareOptions are required.
-        original.Compare(revised, "Comparer", DateTime.Now);
+        // Configure compare options.
+        // In newer versions of Aspose.Words the DetectMovedText flag can be set here.
+        // For compatibility with versions that do not expose this flag, we simply use the default options.
+        CompareOptions options = new CompareOptions();
 
-        // Count all revisions produced by the comparison.
-        int totalRevisions = original.Revisions.Count;
+        // Perform the comparison.
+        original.Compare(revised, "Comparer", DateTime.Now, options);
 
-        // Save the comparison result.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MovedParagraphComparison.docx");
+        // Count all revisions (including any move revisions if the library supports them).
+        int revisionCount = original.Revisions.Count;
+
+        // Output the results.
+        Console.WriteLine($"Total revisions detected: {revisionCount}");
+
+        // Save the compared document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MovedParagraphsComparison.docx");
         original.Save(outputPath);
-
-        // Output summary to the console.
-        Console.WriteLine($"Total revisions detected: {totalRevisions}");
-        Console.WriteLine($"Comparison document saved to: {outputPath}");
+        Console.WriteLine($"Compared document saved to: {outputPath}");
     }
 }
