@@ -1,6 +1,6 @@
 using System;
-using System.IO;
 using System.Drawing;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -13,25 +13,19 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert an original rectangle shape.
-        Shape originalShape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
-        originalShape.FillColor = Color.Blue;
+        builder.InsertShape(ShapeType.Rectangle, 150, 80);
+        // Retrieve the inserted shape.
+        Shape originalShape = (Shape)doc.GetChildNodes(NodeType.Shape, true)[0];
 
         // Clone the original shape (deep clone).
         Shape clonedShape = (Shape)originalShape.Clone(true);
+        // Change the fill color of the cloned shape.
+        clonedShape.FillColor = Color.Blue;
 
-        // Modify the clone's fill color.
-        clonedShape.FillColor = Color.Green;
-
-        // Configure the clone as a floating shape and position it elsewhere.
-        clonedShape.WrapType = WrapType.None;
-        clonedShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        clonedShape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-        clonedShape.Left = 150;   // Points from the left edge of the page.
-        clonedShape.Top = 150;    // Points from the top edge of the page.
-
-        // Insert the cloned shape at the end of the document.
-        builder.MoveToDocumentEnd();
-        builder.InsertNode(clonedShape);
+        // Move the builder to a new paragraph after the original shape.
+        builder.Writeln(); // creates a new paragraph.
+        // Append the cloned shape to the new paragraph.
+        builder.CurrentParagraph.AppendChild(clonedShape);
 
         // Save the document.
         string outputPath = "ClonedShape.docx";
@@ -39,6 +33,6 @@ public class Program
 
         // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not saved successfully.");
+            throw new Exception($"Failed to create the output file: {outputPath}");
     }
 }

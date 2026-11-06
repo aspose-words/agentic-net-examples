@@ -12,31 +12,32 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a textbox shape with specific dimensions.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 100);
+        // Insert a textbox shape with defined dimensions.
+        double width = 200;   // Width in points.
+        double height = 100;  // Height in points.
+        Shape textbox = builder.InsertShape(ShapeType.TextBox, width, height);
 
         // Apply border (stroke) formatting.
-        textBox.StrokeColor = Color.Blue;          // Border color.
-        textBox.StrokeWeight = 2.0;                // Border thickness (points).
-        textBox.Stroke.DashStyle = DashStyle.Solid; // Border style.
+        textbox.Stroke.Color = Color.Black;
+        textbox.Stroke.Weight = 1.5;               // Border thickness in points.
+        textbox.Stroke.DashStyle = DashStyle.Dash; // Dashed border.
 
-        // Apply interior (fill) formatting.
-        textBox.FillColor = Color.LightYellow;     // Background color.
+        // Apply interior fill formatting.
+        textbox.Fill.Color = Color.LightYellow;
 
-        // Optionally add some text inside the textbox.
-        Paragraph para = new Paragraph(doc);
-        Run run = new Run(doc, "Sample textbox content");
-        para.AppendChild(run);
-        textBox.AppendChild(para);
+        // Insert text into the textbox.
+        builder.MoveTo(textbox.FirstParagraph);
+        builder.Font.Size = 12;
+        builder.Write("This is a textbox shape.");
 
         // Save the document to disk.
         string outputPath = "TextboxShape.docx";
         doc.Save(outputPath);
 
-        // Validate that the file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
         {
-            throw new Exception($"Failed to create the output file: {outputPath}");
+            throw new Exception("The output document was not created.");
         }
     }
 }

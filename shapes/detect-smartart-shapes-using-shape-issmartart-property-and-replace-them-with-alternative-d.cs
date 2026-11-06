@@ -3,54 +3,61 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class DetectAndReplaceSmartArt
+namespace SmartArtReplacementExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert a sample shape (not SmartArt) to have at least one shape in the document.
-        // This shape will remain unchanged because it does not contain SmartArt.
-        builder.InsertShape(ShapeType.Rectangle, 100, 50);
-
-        // Traverse all shapes in the document.
-        Shape[] shapes = doc.GetChildNodes(NodeType.Shape, true).OfType<Shape>().ToArray();
-
-        foreach (Shape shape in shapes)
+        public static void Main()
         {
-            // Detect SmartArt shapes using the HasSmartArt property.
-            if (shape.HasSmartArt)
+            // Create a new document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Add a paragraph to describe the content.
+            builder.Writeln("Document with SmartArt placeholder:");
+
+            // Insert a rectangle shape that will act as a SmartArt placeholder.
+            // Use AlternativeText to mark it as SmartArt for detection later.
+            Shape smartArtPlaceholder = builder.InsertShape(ShapeType.Rectangle, 300, 200);
+            smartArtPlaceholder.AlternativeText = "SmartArt";
+            smartArtPlaceholder.Stroke.Color = System.Drawing.Color.DarkBlue;
+            smartArtPlaceholder.Fill.Color = System.Drawing.Color.LightBlue;
+
+            // Save an intermediate document (optional).
+            string intermediatePath = "Intermediate.docx";
+            doc.Save(intermediatePath);
+
+            // Traverse all shapes in the document.
+            NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+            foreach (Shape shape in shapeNodes)
             {
-                // Create a replacement shape (simple rectangle) with the same size and position.
-                Shape replacement = new Shape(doc, ShapeType.Rectangle)
+                // Detect shapes that were marked as SmartArt.
+                if (shape.AlternativeText == "SmartArt")
                 {
-                    Width = shape.Width,
-                    Height = shape.Height,
-                    Left = shape.Left,
-                    Top = shape.Top,
-                    RelativeHorizontalPosition = shape.RelativeHorizontalPosition,
-                    RelativeVerticalPosition = shape.RelativeVerticalPosition,
-                    WrapType = shape.WrapType,
-                    HorizontalAlignment = shape.HorizontalAlignment,
-                    VerticalAlignment = shape.VerticalAlignment
-                };
+                    // Create a replacement rectangle shape.
+                    Shape replacement = new Shape(doc, ShapeType.Rectangle);
+                    replacement.Width = shape.Width;
+                    replacement.Height = shape.Height;
+                    replacement.Left = shape.Left;
+                    replacement.Top = shape.Top;
+                    replacement.WrapType = shape.WrapType;
+                    replacement.Stroke.Color = System.Drawing.Color.Black;
+                    replacement.Fill.Color = System.Drawing.Color.LightGray;
 
-                // Insert the replacement after the original SmartArt shape and then remove the original.
-                shape.ParentNode.InsertAfter(replacement, shape);
-                shape.Remove();
+                    // Insert the replacement after the original shape.
+                    shape.ParentNode.InsertAfter(replacement, shape);
+                    // Remove the original SmartArt placeholder.
+                    shape.Remove();
+                }
             }
+
+            // Save the final document.
+            string outputPath = "Output.docx";
+            doc.Save(outputPath);
+
+            // Validate that the output file was created.
+            if (!File.Exists(outputPath))
+                throw new Exception($"Failed to create the output file: {outputPath}");
         }
-
-        // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
-
-        // Save the modified document.
-        doc.Save(outputPath);
-
-        // Simple validation to ensure the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not saved correctly.");
     }
 }

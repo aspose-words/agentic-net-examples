@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -8,41 +7,34 @@ public class Program
 {
     public static void Main()
     {
-        // Define output file path
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CustomShapeMetadata.docx");
-
-        // Create a new blank document
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a rectangle shape and set its size
-        Shape shape = builder.InsertShape(ShapeType.Rectangle, 150, 80);
-        // Store custom metadata in the Title property
-        shape.Title = "CustomMetadata:SampleValue";
+        // Insert a rectangle shape.
+        Shape shape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
 
-        // Save the document
-        doc.Save(outputPath);
+        // Store custom metadata in the shape's Title property.
+        shape.Title = "CustomId:ABC123";
 
-        // Validate that the file was created
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The document was not saved correctly.");
+        // Save the document.
+        string filePath = "ShapeMetadata.docx";
+        doc.Save(filePath);
 
-        // Load the document for processing
-        Document loadedDoc = new Document(outputPath);
+        // Verify that the file was saved.
+        if (!File.Exists(filePath))
+            throw new Exception("The document was not saved correctly.");
 
-        // Traverse all shapes in the document
-        var shapes = loadedDoc.GetChildNodes(NodeType.Shape, true)
-                              .Cast<Shape>();
+        // Load the document for later processing.
+        Document loadedDoc = new Document(filePath);
 
-        // Retrieve the custom metadata from the Title property
-        foreach (var s in shapes)
+        // Traverse all shapes and retrieve the Title property.
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        foreach (Shape s in shapeNodes)
         {
-            if (!string.IsNullOrEmpty(s.Title) && s.Title.StartsWith("CustomMetadata:"))
+            if (!string.IsNullOrEmpty(s.Title))
             {
-                string metadata = s.Title.Substring("CustomMetadata:".Length);
-                Console.WriteLine($"Retrieved metadata: {metadata}");
-                // Since we only expect one shape, we can break after finding it
-                break;
+                Console.WriteLine($"Found shape with Title: {s.Title}");
             }
         }
     }

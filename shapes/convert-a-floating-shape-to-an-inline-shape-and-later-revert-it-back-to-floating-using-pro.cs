@@ -3,7 +3,7 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class Program
+public class ShapeConversionExample
 {
     public static void Main()
     {
@@ -11,42 +11,45 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a rectangle shape and configure it as a floating shape.
-        Shape shape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
-        shape.WrapType = WrapType.Square;
-        shape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        shape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-        shape.Left = 100;
-        shape.Top = 100;
+        // Insert a rectangle shape. By default InsertShape creates an inline shape,
+        // so we immediately change its properties to make it floating.
+        Shape floatingShape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
+        floatingShape.WrapType = WrapType.Square;                         // Floating wrap.
+        floatingShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
+        floatingShape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
+        floatingShape.Left = 100; // Position from the left edge of the page.
+        floatingShape.Top = 100;  // Position from the top edge of the page.
 
-        // Ensure the shape is floating (not inline).
-        if (shape.WrapType == WrapType.Inline)
-            throw new Exception("Shape should be floating after initial insertion.");
+        // Save the document that contains the floating shape.
+        string floatingPath = "FloatingShape.docx";
+        doc.Save(floatingPath);
+        ValidateFileExists(floatingPath, "floating shape document");
 
-        // Convert the floating shape to an inline shape.
-        shape.WrapType = WrapType.Inline;
+        // ----- Convert the floating shape to an inline shape -----
+        // Making a shape inline is done by setting its WrapType to Inline.
+        floatingShape.WrapType = WrapType.Inline;
 
-        // Verify the conversion succeeded.
-        if (shape.WrapType != WrapType.Inline)
-            throw new Exception("Conversion to inline shape failed.");
+        // Save the document that now contains the shape as inline.
+        string inlinePath = "InlineShape.docx";
+        doc.Save(inlinePath);
+        ValidateFileExists(inlinePath, "inline shape document");
 
-        // Revert the shape back to floating.
-        shape.WrapType = WrapType.Square;
-        shape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        shape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-        shape.Left = 150;
-        shape.Top = 150;
+        // ----- Convert the inline shape back to a floating shape -----
+        floatingShape.WrapType = WrapType.Square;                         // Restore floating wrap.
+        floatingShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
+        floatingShape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
+        floatingShape.Left = 150; // New horizontal position.
+        floatingShape.Top = 150;  // New vertical position.
 
-        // Verify the shape is floating again.
-        if (shape.WrapType == WrapType.Inline)
-            throw new Exception("Reverting to floating shape failed.");
+        // Save the document with the restored floating shape.
+        string restoredPath = "RestoredFloatingShape.docx";
+        doc.Save(restoredPath);
+        ValidateFileExists(restoredPath, "restored floating shape document");
+    }
 
-        // Save the document.
-        string outputPath = "FloatingInlineFloating.docx";
-        doc.Save(outputPath);
-
-        // Validate that the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("The output document was not saved correctly.");
+    private static void ValidateFileExists(string path, string description)
+    {
+        if (!File.Exists(path))
+            throw new InvalidOperationException($"Failed to create the {description} at '{path}'.");
     }
 }

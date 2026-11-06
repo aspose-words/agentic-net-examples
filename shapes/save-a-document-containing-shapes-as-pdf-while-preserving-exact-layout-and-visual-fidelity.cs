@@ -2,66 +2,54 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using System.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a paragraph to hold the shapes.
-        builder.Writeln("Document with shapes saved as PDF:");
+        // Insert a rectangle shape.
+        Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 150, 100);
+        rectangle.StrokeColor = Color.Blue;
+        rectangle.FillColor = Color.LightBlue;
+        rectangle.WrapType = WrapType.None; // Keep exact layout.
+
+        // Insert a line break.
         builder.Writeln();
 
-        // Insert a floating rectangle shape.
-        Shape rectangle = new Shape(doc, ShapeType.Rectangle);
-        rectangle.Width = 150;
-        rectangle.Height = 100;
-        rectangle.Left = 100; // points from the left edge of the page
-        rectangle.Top = 100;  // points from the top edge of the page
-        rectangle.WrapType = WrapType.None; // No text wrapping
-        rectangle.StrokeColor = System.Drawing.Color.Blue;
-        rectangle.FillColor = System.Drawing.Color.LightBlue;
-        rectangle.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        rectangle.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-
-        // Append the rectangle to the document body.
-        builder.CurrentParagraph.AppendChild(rectangle);
-        builder.Writeln(); // Add space after the shape.
-
-        // Insert a floating ellipse shape.
-        Shape ellipse = new Shape(doc, ShapeType.Ellipse);
-        ellipse.Width = 120;
-        ellipse.Height = 80;
-        ellipse.Left = 300;
-        ellipse.Top = 150;
+        // Insert an ellipse shape.
+        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 120, 80);
+        ellipse.StrokeColor = Color.Green;
+        ellipse.FillColor = Color.LightGreen;
         ellipse.WrapType = WrapType.None;
-        ellipse.StrokeColor = System.Drawing.Color.Green;
-        ellipse.FillColor = System.Drawing.Color.LightGreen;
-        ellipse.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        ellipse.RelativeVerticalPosition = RelativeVerticalPosition.Page;
 
-        // Append the ellipse to the document body.
-        builder.CurrentParagraph.AppendChild(ellipse);
-        builder.Writeln(); // Add space after the shape.
+        // Insert a line break.
+        builder.Writeln();
 
-        // Define output paths.
-        string outputDir = Path.Combine(Path.GetTempPath(), "AsposeShapesExample");
-        Directory.CreateDirectory(outputDir);
-        string pdfPath = Path.Combine(outputDir, "ShapesDocument.pdf");
+        // Insert a text box shape.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 100);
+        textBox.WrapType = WrapType.None;
+        // Add text inside the text box.
+        builder.MoveTo(textBox.FirstParagraph);
+        builder.Writeln("Sample text inside a text box.");
+
+        // Define output PDF path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ShapesOutput.pdf");
 
         // Save the document as PDF.
-        doc.Save(pdfPath, SaveFormat.Pdf);
+        doc.Save(outputPath, SaveFormat.Pdf);
 
         // Validate that the PDF file was created.
-        if (!File.Exists(pdfPath))
+        if (!File.Exists(outputPath))
         {
-            throw new InvalidOperationException($"Failed to create PDF file at '{pdfPath}'.");
+            throw new Exception("Failed to create the PDF file.");
         }
 
-        // Optionally, clean up (comment out if you want to inspect the file).
-        // File.Delete(pdfPath);
+        // Optionally, clean up (not required for the task).
+        // Console.WriteLine($"PDF saved to: {outputPath}");
     }
 }

@@ -11,20 +11,18 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a rectangle shape.
-        Shape shape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
+        // Insert a rectangle shape with initial size.
+        Shape shape = builder.InsertShape(ShapeType.Rectangle, 150, 100);
 
         // Lock the aspect ratio of the shape.
         shape.AspectRatioLocked = true;
 
-        // Save the document.
+        // Save the document to disk.
         string outputPath = "AspectRatioLocked.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Validate that the file was created.
         if (!File.Exists(outputPath))
-        {
-            throw new Exception($"Failed to create the output file: {outputPath}");
-        }
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
     }
 }

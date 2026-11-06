@@ -1,64 +1,57 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
-using Aspose.Words.Rendering;
 
-namespace ShapeExportExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a simple 1x1 PNG image file programmatically (no System.Drawing dependency).
+        string sampleImagePath = "sample_image.png";
+        // PNG data for a single blue pixel.
+        byte[] pngData = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=");
+        File.WriteAllBytes(sampleImagePath, pngData);
+
+        // Create a new document and insert several shapes.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert a rectangle shape.
+        builder.InsertShape(ShapeType.Rectangle, 150, 80);
+        builder.Writeln();
+
+        // Insert an ellipse shape.
+        builder.InsertShape(ShapeType.Ellipse, 120, 120);
+        builder.Writeln();
+
+        // Insert an image shape using the sample image.
+        builder.InsertImage(sampleImagePath);
+        builder.Writeln();
+
+        // Save the document.
+        string docPath = "ShapesDocument.docx";
+        doc.Save(docPath);
+
+        // Traverse all shapes in the document and export each as an image file.
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+        for (int i = 0; i < shapeNodes.Count; i++)
         {
-            // Prepare output directory.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-            Directory.CreateDirectory(outputDir);
+            Shape shape = (Shape)shapeNodes[i];
+            string fileName = $"shape_{i}_{shape.ShapeType}.png";
 
-            // Create a new document and a builder.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            // Render the shape to a PNG image.
+            shape.GetShapeRenderer().Save(fileName, new ImageSaveOptions(SaveFormat.Png));
 
-            // Insert a rectangle shape.
-            builder.InsertShape(ShapeType.Rectangle, 100, 50);
-
-            // Insert an ellipse shape.
-            builder.InsertShape(ShapeType.Ellipse, 80, 80);
-
-            // Create a tiny PNG image (1x1 pixel) from a byte array.
-            // This avoids the need for System.Drawing.
-            byte[] pngBytes = Convert.FromBase64String(
-                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=");
-            string imagePath = Path.Combine(outputDir, "sample.png");
-            File.WriteAllBytes(imagePath, pngBytes);
-
-            // Insert the image as a shape.
-            builder.InsertImage(imagePath);
-
-            // Save the document (optional, just to have a reference file).
-            string docPath = Path.Combine(outputDir, "Shapes.docx");
-            doc.Save(docPath);
-
-            // Export each shape's visual representation to a separate PNG file.
-            var shapeNodes = doc.GetChildNodes(NodeType.Shape, true)
-                                .OfType<Shape>()
-                                .ToList();
-
-            for (int i = 0; i < shapeNodes.Count; i++)
-            {
-                Shape shape = shapeNodes[i];
-                ShapeRenderer renderer = shape.GetShapeRenderer();
-
-                string fileName = Path.Combine(
-                    outputDir,
-                    $"shape_{i}_{shape.ShapeType}.png");
-
-                // Render the shape as PNG.
-                renderer.Save(fileName, new ImageSaveOptions(SaveFormat.Png));
-            }
-
-            Console.WriteLine($"Exported {shapeNodes.Count} shape images to \"{outputDir}\".");
+            // Validate that the image file was created.
+            if (!File.Exists(fileName))
+                throw new Exception($"Failed to save shape image: {fileName}");
         }
+
+        // Clean up the temporary sample image file.
+        if (File.Exists(sampleImagePath))
+            File.Delete(sampleImagePath);
     }
 }
