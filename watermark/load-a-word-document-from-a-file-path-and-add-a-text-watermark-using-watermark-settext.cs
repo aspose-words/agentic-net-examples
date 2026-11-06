@@ -6,27 +6,26 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample source document.
-        string inputPath = "sample.docx";
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document.");
-        doc.Save(inputPath);
+        // Paths for the input and output documents.
+        string inputPath = "input.docx";
+        string outputPath = "output.docx";
 
-        // Load the document from the file path.
-        Document loadedDoc = new Document(inputPath);
+        // Create a sample source document if it does not already exist.
+        if (!File.Exists(inputPath))
+        {
+            Document sampleDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+            builder.Writeln("This is a sample document.");
+            sampleDoc.Save(inputPath);
+        }
+
+        // Load the existing document.
+        Document doc = new Document(inputPath);
 
         // Add a text watermark.
-        loadedDoc.Watermark.SetText("CONFIDENTIAL");
+        doc.Watermark.SetText("CONFIDENTIAL");
 
-        // Save the document with the watermark.
-        string outputPath = "output.docx";
-        loadedDoc.Save(outputPath);
-
-        // Validate that the output file was created.
-        if (File.Exists(outputPath))
-        {
-            Console.WriteLine("Watermark added and document saved to " + outputPath);
-        }
+        // Save the document with the watermark applied.
+        doc.Save(outputPath);
     }
 }
