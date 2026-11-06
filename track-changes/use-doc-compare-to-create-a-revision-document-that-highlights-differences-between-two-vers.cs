@@ -5,26 +5,39 @@ public class Program
 {
     public static void Main()
     {
-        // Create the original document.
-        Document original = new Document();
-        DocumentBuilder builder = new DocumentBuilder(original);
-        builder.Writeln("Hello world!");
-        builder.Writeln("This is a sample document.");
-        original.Save("original.docx");
+        // Create the first (original) document.
+        Document originalDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(originalDoc);
+        builder.Writeln("This is the first paragraph.");
+        builder.Writeln("This paragraph will stay the same.");
+        builder.Writeln("This is the third paragraph.");
+        originalDoc.Save("Original.docx");
 
-        // Create the modified document with some changes.
-        Document modified = new Document();
-        DocumentBuilder builder2 = new DocumentBuilder(modified);
-        builder2.Writeln("Hello world!");
-        builder2.Writeln("This is an updated sample document."); // Modified line
-        builder2.Writeln("Additional paragraph."); // New line
-        modified.Save("modified.docx");
+        // Create the second (modified) document.
+        Document modifiedDoc = new Document();
+        builder = new DocumentBuilder(modifiedDoc);
+        builder.Writeln("This is the first paragraph."); // unchanged
+        builder.Writeln("This paragraph has been modified."); // changed text
+        builder.Writeln("This is the third paragraph."); // unchanged
+        builder.Writeln("An additional paragraph is added."); // new paragraph
+        modifiedDoc.Save("Modified.docx");
 
-        // Load the original document again (or reuse the instance) and compare it with the modified one.
-        // The Compare method adds revision marks to the original document.
-        original.Compare(modified, "Comparer", DateTime.Now);
+        // Load the documents for comparison.
+        Document docToCompare = new Document("Original.docx");
+        Document docModified = new Document("Modified.docx");
 
-        // Save the document that now contains revisions highlighting the differences.
-        original.Save("revisions.docx");
+        // Compare the documents. The result (revisions) are stored in docToCompare.
+        docToCompare.Compare(docModified, "Comparer", DateTime.Now);
+
+        // Save the comparison result which contains revision marks.
+        docToCompare.Save("ComparisonResult.docx");
+
+        // Output revision information to the console.
+        RevisionCollection revisions = docToCompare.Revisions;
+        Console.WriteLine($"Total revisions detected: {revisions.Count}");
+        foreach (Revision rev in revisions)
+        {
+            Console.WriteLine($"Type: {rev.RevisionType}, Author: {rev.Author}, Date: {rev.DateTime}");
+        }
     }
 }

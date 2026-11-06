@@ -10,29 +10,23 @@ product: Aspose.Words
 
 ## Purpose
 
-This folder is a live, curated example set for Track Changes scenarios. Treat every `.cs` file as a standalone console application. The goal is correct, warning-free examples that use documented Aspose APIs and match the original task intent.
+Provide an AI coding assistant with concise guidance for implementing revision workflows that start tracking, generate edits, verify revision metadata, and accept or reject changes using only supported Aspose.Words APIs.
 
 ## Non-negotiable conventions
 
-- Always use documented Aspose.Words APIs directly.
-- Always create local sample source documents when a task refers to an existing file, folder, stream, template, or input asset.
-- Prefer `StartTrackRevisions`, `StopTrackRevisions`, `Document.Revisions`, and documented accept/reject workflows.
-- Keep validation narrow and task-specific.
-- Do not invent revision helper APIs.
+- Do not call members that are absent from Aspose.Words 26.10.0; only use documented types such as Document, DocumentBuilder, Revision, RevisionCollection, and RevisionGroup.
+- Bootstrap local sample inputs for existing-file, folder, stream, image, and data workflows.
+- Prefer simple, verifiable workflows over speculative formatting shortcuts.
 
 ## Recommended workflow selection
 
-- Track Changes Workflow workflow: 40 examples
+- **Track Changes Workflow workflow**: 40 examples
 
 Use the simplest workflow that satisfies the task.
 
 ## Validation priorities
 
-1. The code must compile and run without manual input.
-2. API usage must be supported by the configured package versions.
-3. Exported outputs must actually be written by the example.
-4. Validation scenarios must inspect only the behavior requested by the task.
-5. Examples that depend on files, folders, streams, images, or data should bootstrap those inputs locally during the example run.
+1. Confirm that the revision collection contains the expected number of items before proceeding with accept/reject logic.
 
 ## File-to-task reference
 
@@ -45,7 +39,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Create a new document, start tracking revisions, insert a paragraph, then stop tracking.
   - Workflow: track-changes-workflow
   - Outputs: doc
-  - Selected engine: mcp
+  - Selected engine: llm
 - `enable-revision-tracking-modify-a-table-cell-and-verify-the-revision-appears-in-the-collec.cs`
   - Task: Enable revision tracking, modify a table cell, and verify the revision appears in the collection.
   - Workflow: track-changes-workflow
@@ -55,7 +49,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Enable tracking, apply a style change to multiple paragraphs, stop tracking, and verify a single revision group.
   - Workflow: track-changes-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `start-tracking-revisions-insert-an-image-stop-tracking-and-verify-the-image-insertion-appe.cs`
   - Task: Start tracking revisions, insert an image, stop tracking, and verify the image insertion appears as a revision.
   - Workflow: track-changes-workflow
@@ -65,7 +59,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Load a document, start tracking, insert a table, stop tracking, then accept the table insertion revision.
   - Workflow: track-changes-workflow
   - Outputs: doc
-  - Selected engine: mcp
+  - Selected engine: llm
 - `start-tracking-delete-a-sentence-stop-tracking-then-accept-the-deletion-revision-individua.cs`
   - Task: Start tracking, delete a sentence, stop tracking, then accept the deletion revision individually.
   - Workflow: track-changes-workflow
@@ -95,7 +89,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Use the HasRevisions property to conditionally apply a watermark indicating pending changes.
   - Workflow: track-changes-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `iterate-through-all-revisions-in-the-document-and-log-each-revision-s-author-and-timestamp.cs`
   - Task: Iterate through all revisions in the document and log each revision's author and timestamp.
   - Workflow: track-changes-workflow
@@ -160,7 +154,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Reject all tracked changes in a document, then verify the HasRevisions property returns false.
   - Workflow: track-changes-workflow
   - Outputs: doc
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `compare-two-word-documents-to-generate-revision-differences-specifying-author-name-and-com.cs`
   - Task: Compare two Word documents to generate revision differences, specifying author name and comparison date.
   - Workflow: track-changes-workflow
@@ -185,7 +179,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Generate a report listing each revision's type, author, and the paragraph number where it occurs.
   - Workflow: track-changes-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `develop-a-utility-to-export-revision-metadata-to-a-csv-file-for-external-analysis.cs`
   - Task: Develop a utility to export revision metadata to a CSV file for external analysis.
   - Workflow: track-changes-workflow
@@ -195,7 +189,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Create a custom logger that captures revision metadata during document editing for audit purposes.
   - Workflow: track-changes-workflow
   - Outputs: doc
-  - Selected engine: mcp
+  - Selected engine: llm
 - `create-a-function-that-returns-true-if-any-revision-author-matches-a-specified-list-of-nam.cs`
   - Task: Create a function that returns true if any revision author matches a specified list of names.
   - Workflow: track-changes-workflow
@@ -225,7 +219,7 @@ Use the simplest workflow that satisfies the task.
   - Task: After rejecting all revisions, verify that the document's original content matches a baseline file.
   - Workflow: track-changes-workflow
   - Outputs: doc
-  - Selected engine: llm
+  - Selected engine: mcp
 - `implement-error-handling-for-attempts-to-accept-a-revision-that-has-already-been-rejected.cs`
   - Task: Implement error handling for attempts to accept a revision that has already been rejected.
   - Workflow: track-changes-workflow
@@ -239,45 +233,52 @@ Use the simplest workflow that satisfies the task.
 
 ## Common failure patterns and preferred agent fixes
 
-- **Unsupported API invention**
-  - Symptom: Generated code references members that do not exist in the selected package version.
-  - Preferred fix: Replace invented members with documented Aspose.Words APIs already proven in this category.
+- **Unsupported API usage**
+  - Symptom: Compilation fails because the code references types or members that do not exist in the selected Aspose.Words version.
+  - Root cause: Invented or outdated APIs were used instead of the documented members for the current package.
+  - Preferred fix: Replace the nonexistent members with supported APIs such as Document.StartTrackRevisions, Revision.RevisionType, Revision.Author, and Revision.DateTime.
+  - Prevention: Consult the official Aspose.Words 26.10.0 reference before writing code and avoid guessing API names.
 
-- **Missing local bootstrap inputs**
-  - Symptom: The example assumes source files, folders, images, or data already exist.
-  - Preferred fix: Create deterministic local inputs before loading, processing, or validating them.
+- **Incorrect method overload**
+  - Symptom: CS1501 errors indicate that a called method has no matching overload signature.
+  - Root cause: Methods like InsertParagraph were invoked with arguments that the API does not accept.
+  - Preferred fix: Use the correct overloads, for example DocumentBuilder.Writeln(string) or Paragraph.ParagraphFormat.Style assignment.
+  - Prevention: Verify method signatures via IntelliSense or the API documentation prior to coding.
 
-- **Over-broad validation**
-  - Symptom: The example fails at runtime while checking unrelated document internals.
-  - Preferred fix: Validate only the requested behavior and the existence of expected outputs.
+- **Revision collection mutation during enumeration**
+  - Symptom: Runtime InvalidOperationException reports that the RevisionCollection was modified while being enumerated.
+  - Root cause: Accepting or rejecting revisions inside a foreach loop over doc.Revisions alters the collection during iteration.
+  - Preferred fix: Copy the collection to an array (e.g., doc.Revisions.Cast<Revision>().ToArray()) before iterating, or iterate by index while adjusting for removals.
+  - Prevention: Never modify RevisionCollection directly inside its enumerator.
+
+- **Missing property in current API**
+  - Symptom: CS1061 errors appear for members such as RevisionDateTime or RevisionGroup.Revisions.
+  - Root cause: The referenced property does not exist in Aspose.Words 26.10.0; the correct property is Revision.DateTime.
+  - Preferred fix: Replace RevisionDateTime with Revision.DateTime and avoid accessing non-existent RevisionGroup members.
+  - Prevention: Reference the exact property names listed in the version-specific documentation.
+
+- **Missing local input files**
+  - Symptom: Runtime failures occur when loading a document that was never created on disk.
+  - Root cause: Examples assume external files, folders, or images already exist without creating them first.
+  - Preferred fix: Generate deterministic sample documents in memory or write them to a temporary file before loading or processing.
+  - Prevention: Always bootstrap required inputs within the sample code.
 
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.9.0`
+- Primary package: `Aspose.Words` `26.10.0`
 
 ## Command reference
-
-### Create a temporary console project
 
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
+dotnet add package Aspose.Words --version 26.10.0
 ```
-
-### Add required packages
-
-```bash
-dotnet add package Aspose.Words --version 26.9.0
-```
-
-### Copy a category example into the temp project
 
 ```powershell
 Copy-Item ..\track-changes\<example-file>.cs .\Program.cs
 ```
-
-### Build and run
 
 ```bash
 dotnet build --configuration Release --verbosity minimal
@@ -286,6 +287,4 @@ dotnet run --configuration Release --no-build
 
 ## Category update guidance
 
-- Preserve file-to-task traceability. Any future update should keep the original task text associated with the file in metadata.
-- When replacing a file, prefer the latest verified publish-ready version rather than a merely compiling draft.
-- Keep examples standalone, bootstrap missing inputs locally, and prefer documented Aspose APIs over speculative shortcuts.
+- Review and update all examples when a new Aspose.Words version deprecates or renames revision-related members.

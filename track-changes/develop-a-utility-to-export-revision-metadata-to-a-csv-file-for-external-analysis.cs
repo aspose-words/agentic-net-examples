@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -13,56 +14,56 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Add initial content.
-        builder.Writeln("This is the first paragraph.");
-        builder.Writeln("This is the second paragraph.");
-        builder.Writeln("This is the third paragraph.");
+        builder.Writeln("This is the original paragraph.");
 
-        // Enable track changes.
+        // Start tracking revisions.
         string author = "John Doe";
         DateTime revisionDate = DateTime.Now;
         doc.StartTrackRevisions(author, revisionDate);
 
-        // Perform some modifications to generate revisions.
-        // Insert a new paragraph.
+        // Insert a new paragraph – this will be recorded as an insertion revision.
+        builder.Writeln("This paragraph was inserted while tracking changes.");
+
+        // Delete a word from the original paragraph – this will be recorded as a deletion revision.
+        // Move the cursor to the first paragraph.
+        builder.MoveToParagraph(0, 0);
+        // Replace the word "original" with an empty string.
+        doc.Range.Replace(new Regex("original"), "", new FindReplaceOptions(FindReplaceDirection.Forward));
+
+        // Change formatting of a word – this will be recorded as a format‑change revision.
         builder.MoveToDocumentEnd();
-        builder.Writeln("This is an inserted paragraph.");
-
-        // Delete the second paragraph.
-        Paragraph secondParagraph = (Paragraph)doc.GetChild(NodeType.Paragraph, 1, true);
-        secondParagraph.Remove();
-
-        // Change formatting of the first paragraph (make it bold).
-        Paragraph firstParagraph = (Paragraph)doc.GetChild(NodeType.Paragraph, 0, true);
-        firstParagraph.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Font.Bold = true;
+        builder.Writeln("Bold text added.");
 
         // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Save the document (optional, demonstrates that the document contains revisions).
-        string docPath = "Sample.docx";
+        // Save the document that contains the revisions.
+        string docPath = "TrackedDocument.docx";
         doc.Save(docPath);
 
         // Export revision metadata to CSV.
-        StringBuilder csvBuilder = new StringBuilder();
-        csvBuilder.AppendLine("RevisionIndex,RevisionType,Author,DateTime,Text");
-
-        RevisionCollection revisions = doc.Revisions;
-        for (int i = 0; i < revisions.Count; i++)
+        string csvPath = "Revisions.csv";
+        using (var writer = new StreamWriter(csvPath, false, Encoding.UTF8))
         {
-            Revision rev = revisions[i];
-            string revType = rev.RevisionType.ToString();
-            string revAuthor = rev.Author;
-            string revDate = rev.DateTime.ToString("o"); // ISO 8601 format
-            string revText = rev.ParentNode?.GetText()?.Replace("\r", " ").Replace("\n", " ").Trim();
+            // Write CSV header.
+            writer.WriteLine("Index,Type,Author,DateTime,ParentNodeText");
 
-            // Escape commas in text.
-            if (revText != null && revText.Contains(","))
-                revText = $"\"{revText}\"";
+            int index = 0;
+            foreach (Revision rev in doc.Revisions)
+            {
+                // Get the text of the parent node for context and escape quotes.
+                string parentText = rev.ParentNode?.GetText()?.Replace("\"", "\"\"") ?? string.Empty;
+                parentText = $"\"{parentText}\"";
 
-            csvBuilder.AppendLine($"{i},{revType},{revAuthor},{revDate},{revText}");
+                string line = $"{index},{rev.RevisionType},{rev.Author},{rev.DateTime:o},{parentText}";
+                writer.WriteLine(line);
+                index++;
+            }
         }
 
-        string csvPath = "Revisions.csv";
-        File.WriteAllText(csvPath, csvBuilder.ToString(), Encoding.UTF8);
+        // Accept all revisions and save the final document.
+        doc.AcceptAllRevisions();
+        doc.Save("FinalDocument.docx");
     }
 }

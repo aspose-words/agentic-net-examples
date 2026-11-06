@@ -2,49 +2,46 @@ using System;
 using System.IO;
 using Aspose.Words;
 
-public class BatchRevisionProcessor
+public class Program
 {
     public static void Main()
     {
-        // Define sample document file names.
-        string[] docFiles = { "Sample1.docx", "Sample2.docx", "Sample3.docx" };
+        // Directory to hold sample documents.
+        string docsDir = Path.Combine(Directory.GetCurrentDirectory(), "Docs");
+        Directory.CreateDirectory(docsDir);
 
         // Create sample documents with revisions.
-        foreach (string file in docFiles)
+        CreateSampleDocument(Path.Combine(docsDir, "Doc1.docx"));
+        CreateSampleDocument(Path.Combine(docsDir, "Doc2.docx"));
+
+        // Batch process: accept all revisions and save in place.
+        foreach (string filePath in Directory.GetFiles(docsDir, "*.docx"))
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Add initial content.
-            builder.Writeln("Original paragraph.");
-
-            // Start tracking revisions.
-            doc.StartTrackRevisions("BatchProcessor", DateTime.Now);
-
-            // Make some changes that will be recorded as revisions.
-            builder.Writeln("Inserted paragraph while tracking.");
-            builder.MoveToDocumentEnd();
-            builder.Writeln("Another inserted paragraph.");
-
-            // Stop tracking revisions.
-            doc.StopTrackRevisions();
-
-            // Save the document to disk.
-            doc.Save(file);
-        }
-
-        // Batch process: open each document, accept all revisions, and save in place.
-        foreach (string file in docFiles)
-        {
-            // Load the existing document.
-            Document doc = new Document(file);
-
-            // Accept all revisions in the document.
+            Document doc = new Document(filePath);
             doc.AcceptAllRevisions();
-
-            // Save the document, overwriting the original file.
-            doc.Save(file);
+            doc.Save(filePath);
         }
+    }
+
+    // Creates a document, enables tracking, makes a change, then saves it.
+    private static void CreateSampleDocument(string filePath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Initial content.
+        builder.Writeln("Original paragraph.");
+
+        // Enable tracking.
+        doc.StartTrackRevisions("Author", DateTime.Now);
+
+        // Make a revision: insert a new paragraph.
+        builder.Writeln("Inserted paragraph while tracking changes.");
+
+        // Stop tracking.
+        doc.StopTrackRevisions();
+
+        // Save the document.
+        doc.Save(filePath);
     }
 }

@@ -1,88 +1,77 @@
 using System;
-using System.IO;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using Aspose.Words;
+using Aspose.Words.Replacing;
 
-public class RevisionUtility
+namespace RevisionUtility
 {
-    // Minimum word count a revision must have to be accepted.
-    private const int MinWordCount = 3;
-
-    public static void Main()
+    public class Program
     {
-        // Create a new document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Minimum word count a revision must have to be accepted.
+        private const int MinWordCount = 5;
 
-        // Add initial content.
-        builder.Writeln("This is the original paragraph.");
-
-        // Start tracking revisions.
-        doc.StartTrackRevisions("Author", DateTime.Now);
-
-        // Insert a short revision (should be rejected).
-        builder.Writeln("Hi.");
-
-        // Insert a longer revision (should be accepted).
-        builder.Writeln("This is a longer inserted sentence with several words.");
-
-        // Stop tracking revisions.
-        doc.StopTrackRevisions();
-
-        // Process revisions: accept only those meeting the word count threshold.
-        int accepted = 0;
-        int rejected = 0;
-
-        // Create a snapshot of the revisions collection to avoid modification issues during iteration.
-        List<Revision> revisions = doc.Revisions.Cast<Revision>().ToList();
-
-        foreach (Revision rev in revisions)
+        public static void Main()
         {
-            if (rev.RevisionType == RevisionType.Insertion)
+            // Create a new document and add initial content.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("This is the original paragraph of the document.");
+
+            // Enable tracking of revisions.
+            doc.StartTrackRevisions("RevisionUtility", DateTime.Now);
+
+            // Insert a short paragraph (will be rejected).
+            builder.Writeln("Short.");
+
+            // Insert a longer paragraph (will be accepted).
+            builder.Writeln("This is a longer inserted sentence with several words.");
+
+            // Stop tracking revisions.
+            doc.StopTrackRevisions();
+
+            // Save the document that contains the revisions.
+            doc.Save("Revisions.docx");
+
+            // Create a stable list of revisions to avoid modifying the collection while iterating.
+            List<Revision> revisions = doc.Revisions.Cast<Revision>().ToList();
+
+            // Process each revision: accept only if it meets the minimum word count.
+            foreach (Revision rev in revisions)
             {
-                // Get the text of the inserted node.
-                string insertedText = rev.ParentNode.GetText();
-
-                // Count words (simple split on whitespace).
-                int wordCount = CountWords(insertedText);
-
-                if (wordCount >= MinWordCount)
+                if (rev.RevisionType == RevisionType.Insertion)
                 {
-                    rev.Accept();
-                    accepted++;
+                    // Get the text of the inserted node.
+                    string insertedText = rev.ParentNode.GetText();
+
+                    // Count words in the inserted text.
+                    int wordCount = CountWords(insertedText);
+
+                    // Accept or reject based on the word count threshold.
+                    if (wordCount >= MinWordCount)
+                        rev.Accept();
+                    else
+                        rev.Reject();
                 }
                 else
                 {
+                    // For non‑insertion revisions, reject by default.
                     rev.Reject();
-                    rejected++;
                 }
             }
-            else
-            {
-                // For non‑insertion revisions, reject by default.
-                rev.Reject();
-                rejected++;
-            }
+
+            // Save the final document after processing revisions.
+            doc.Save("Processed.docx");
         }
 
-        // Save the resulting document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
-        doc.Save(outputPath);
+        // Helper method to count words in a string.
+        private static int CountWords(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return 0;
 
-        // Output summary (no interactive input required).
-        Console.WriteLine($"Revisions processed. Accepted: {accepted}, Rejected: {rejected}");
-        Console.WriteLine($"Document saved to: {outputPath}");
-    }
-
-    // Helper method to count words in a string.
-    private static int CountWords(string text)
-    {
-        if (string.IsNullOrWhiteSpace(text))
-            return 0;
-
-        // Split on whitespace characters.
-        string[] words = text.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
-        return words.Length;
+            char[] delimiters = { ' ', '\t', '\r', '\n' };
+            return text.Split(delimiters, StringSplitOptions.RemoveEmptyEntries).Length;
+        }
     }
 }
