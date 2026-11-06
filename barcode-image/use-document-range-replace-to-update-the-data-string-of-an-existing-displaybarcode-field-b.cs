@@ -1,4 +1,3 @@
-using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Replacing;
@@ -7,28 +6,25 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a DISPLAYBARCODE field using the typed API.
-        FieldDisplayBarcode barcodeField = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
-        barcodeField.BarcodeType = "CODE39";
-        barcodeField.BarcodeValue = "12345"; // Initial data string.
-        barcodeField.AddStartStopChar = true;
-        builder.Writeln();
+        // Insert a DISPLAYBARCODE field with a placeholder value.
+        FieldDisplayBarcode field = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
+        field.BarcodeType = "CODE128";
+        field.BarcodeValue = "PLACEHOLDER";
+        field.ForegroundColor = "0x000000";
+        field.BackgroundColor = "0xFFFFFF";
 
-        // Ensure the field result is up‑to‑date.
-        doc.UpdateFields();
+        // Replace the placeholder value using Document.Range.Replace.
+        FindReplaceOptions options = new FindReplaceOptions();
+        doc.Range.Replace("PLACEHOLDER", "NEWVALUE", options);
 
-        // Replace the barcode data string using Find/Replace.
-        FindReplaceOptions replaceOptions = new FindReplaceOptions();
-        doc.Range.Replace("12345", "ABCDE", replaceOptions);
-
-        // Update fields again so the DISPLAYBARCODE reflects the new value.
+        // Update fields to reflect the new barcode value.
         doc.UpdateFields();
 
         // Save the document.
-        doc.Save("UpdatedBarcode.docx");
+        doc.Save("output.docx");
     }
 }

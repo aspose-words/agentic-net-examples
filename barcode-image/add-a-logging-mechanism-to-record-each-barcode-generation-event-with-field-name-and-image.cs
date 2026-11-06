@@ -1,281 +1,88 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
-using Aspose.Words.Saving;
+using Aspose.Words.Replacing;
 using Aspose.BarCode.Generation;
 using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
+
+public sealed class CustomBarcodeGenerator : IBarcodeGenerator
+{
+    // Simple in‑memory logger.
+    private static readonly List<string> _log = new List<string>();
+
+    public static IReadOnlyList<string> Log => _log.AsReadOnly();
+
+    public Stream GetBarcodeImage(Aspose.Words.Fields.BarcodeParameters parameters)
+    {
+        // Generate barcode image using Aspose.BarCode.
+        MemoryStream stream = new MemoryStream();
+        using (BarcodeGenerator generator = new BarcodeGenerator(EncodeTypes.Code128, parameters.BarcodeValue))
+        {
+            // Optional: set colors if needed.
+            generator.Parameters.Barcode.BarColor = Color.Black;
+            generator.Parameters.BackColor = Color.White;
+
+            generator.Save(stream, BarCodeImageFormat.Png);
+        }
+
+        // Record image size (bytes) and barcode value (used as field identifier).
+        long imageSize = stream.Length;
+        string entry = $"BarcodeValue: {parameters.BarcodeValue}, ImageSizeBytes: {imageSize}";
+        _log.Add(entry);
+
+        // Reset stream position for the caller.
+        stream.Position = 0;
+        return stream;
+    }
+
+    public Stream GetOldBarcodeImage(Aspose.Words.Fields.BarcodeParameters parameters)
+    {
+        // Delegate to the current implementation.
+        return GetBarcodeImage(parameters);
+    }
+}
 
 public class Program
 {
-    // Simple file logger.
-    private static class Logger
-    {
-        private const string LogFile = "barcode_log.txt";
-
-        public static void Log(string message)
-        {
-            using (var writer = new StreamWriter(LogFile, true))
-            {
-                writer.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {message}");
-            }
-        }
-    }
-
-    // Utility class taken from the reference implementation.
-    internal class CustomBarcodeGeneratorUtils
-    {
-        public static double TwipsToPixels(string heightInTwips, double defVal)
-        {
-            return TwipsToPixels(heightInTwips, 96, defVal);
-        }
-
-        public static double TwipsToPixels(string heightInTwips, double resolution, double defVal)
-        {
-            try
-            {
-                int lVal = int.Parse(heightInTwips);
-                return (lVal / 1440.0) * resolution;
-            }
-            catch
-            {
-                return defVal;
-            }
-        }
-
-        public static float GetRotationAngle(string rotationAngle, float defVal)
-        {
-            switch (rotationAngle)
-            {
-                case "0": return 0;
-                case "1": return 270;
-                case "2": return 180;
-                case "3": return 90;
-                default: return defVal;
-            }
-        }
-
-        public static QRErrorLevel GetQRCorrectionLevel(string errorCorrectionLevel, QRErrorLevel def)
-        {
-            switch (errorCorrectionLevel)
-            {
-                case "0": return QRErrorLevel.LevelL;
-                case "1": return QRErrorLevel.LevelM;
-                case "2": return QRErrorLevel.LevelQ;
-                case "3": return QRErrorLevel.LevelH;
-                default: return def;
-            }
-        }
-
-        public static SymbologyEncodeType GetBarcodeEncodeType(string encodeTypeFromWord)
-        {
-            switch (encodeTypeFromWord)
-            {
-                case "QR": return EncodeTypes.QR;
-                case "CODE128": return EncodeTypes.Code128;
-                case "JPPOST": return EncodeTypes.RM4SCC;
-                case "EAN8":
-                case "JAN8": return EncodeTypes.EAN8;
-                case "EAN13":
-                case "JAN13": return EncodeTypes.EAN13;
-                case "UPCA": return EncodeTypes.UPCA;
-                case "UPCE": return EncodeTypes.UPCE;
-                case "CASE":
-                case "ITF14": return EncodeTypes.ITF14;
-                case "NW7": return EncodeTypes.Codabar;
-                default: return EncodeTypes.None;
-            }
-        }
-
-        public static Color ConvertColor(string inputColor, Color defVal)
-        {
-            if (string.IsNullOrEmpty(inputColor)) return defVal;
-            try
-            {
-                int color = Convert.ToInt32(inputColor, 16);
-                return Color.FromArgb(color & 0xFF, (color >> 8) & 0xFF, (color >> 16) & 0xFF);
-            }
-            catch
-            {
-                return defVal;
-            }
-        }
-
-        public static double ScaleFactor(string scaleFactor, double defVal)
-        {
-            try
-            {
-                int scale = int.Parse(scaleFactor);
-                return scale / 100.0;
-            }
-            catch
-            {
-                return defVal;
-            }
-        }
-
-        public static void SetPosCodeStyle(BarcodeGenerator gen, string posCodeStyle, string barcodeValue)
-        {
-            switch (posCodeStyle)
-            {
-                case "SUP2":
-                    gen.CodeText = barcodeValue.Substring(0, barcodeValue.Length - 2);
-                    gen.Parameters.Barcode.Supplement.SupplementData = barcodeValue.Substring(barcodeValue.Length - 2, 2);
-                    break;
-                case "SUP5":
-                    gen.CodeText = barcodeValue.Substring(0, barcodeValue.Length - 5);
-                    gen.Parameters.Barcode.Supplement.SupplementData = barcodeValue.Substring(barcodeValue.Length - 5, 5);
-                    break;
-                case "CASE":
-                    gen.Parameters.Border.Visible = true;
-                    gen.Parameters.Border.Color = gen.Parameters.Barcode.BarColor;
-                    gen.Parameters.Border.DashStyle = BorderDashStyle.Solid;
-                    gen.Parameters.Border.Width.Pixels = gen.Parameters.Barcode.XDimension.Pixels * 5;
-                    break;
-            }
-        }
-
-        public const double DefaultQRXDimensionInPixels = 4.0;
-        public const double Default1DXDimensionInPixels = 1.0;
-
-        public static Bitmap DrawErrorImage(Exception error)
-        {
-            Bitmap bmp = new Bitmap(100, 100);
-            using (Graphics grf = Graphics.FromImage(bmp))
-            {
-                // Use fully qualified Aspose.Drawing types to avoid ambiguity.
-                grf.DrawString(error.Message,
-                    new Aspose.Drawing.Font("Microsoft Sans Serif", 8f, FontStyle.Regular),
-                    Aspose.Drawing.Brushes.Red,
-                    new Rectangle(0, 0, bmp.Width, bmp.Height));
-            }
-            return bmp;
-        }
-
-        public static Stream ConvertImageToWord(Bitmap bmp)
-        {
-            MemoryStream ms = new MemoryStream();
-            bmp.Save(ms, ImageFormat.Png);
-            ms.Position = 0;
-            return ms;
-        }
-    }
-
-    // Custom barcode generator that logs each generation.
-    internal class CustomBarcodeGenerator : IBarcodeGenerator
-    {
-        public Stream GetBarcodeImage(Aspose.Words.Fields.BarcodeParameters parameters)
-        {
-            try
-            {
-                BarcodeGenerator gen = new BarcodeGenerator(
-                    CustomBarcodeGeneratorUtils.GetBarcodeEncodeType(parameters.BarcodeType),
-                    parameters.BarcodeValue);
-
-                gen.Parameters.Barcode.BarColor = CustomBarcodeGeneratorUtils.ConvertColor(
-                    parameters.ForegroundColor, gen.Parameters.Barcode.BarColor);
-                gen.Parameters.BackColor = CustomBarcodeGeneratorUtils.ConvertColor(
-                    parameters.BackgroundColor, gen.Parameters.BackColor);
-
-                if (!parameters.DisplayText)
-                    gen.Parameters.Barcode.CodeTextParameters.Location = CodeLocation.None;
-                else
-                    gen.Parameters.Barcode.CodeTextParameters.Location = CodeLocation.Below;
-
-                gen.Parameters.Barcode.QR.ErrorLevel = QRErrorLevel.LevelH;
-                if (!string.IsNullOrEmpty(parameters.ErrorCorrectionLevel))
-                    gen.Parameters.Barcode.QR.ErrorLevel = CustomBarcodeGeneratorUtils.GetQRCorrectionLevel(
-                        parameters.ErrorCorrectionLevel, gen.Parameters.Barcode.QR.ErrorLevel);
-
-                if (!string.IsNullOrEmpty(parameters.SymbolRotation))
-                    gen.Parameters.RotationAngle = CustomBarcodeGeneratorUtils.GetRotationAngle(
-                        parameters.SymbolRotation, gen.Parameters.RotationAngle);
-
-                double scalingFactor = 1;
-                if (!string.IsNullOrEmpty(parameters.ScalingFactor))
-                    scalingFactor = CustomBarcodeGeneratorUtils.ScaleFactor(parameters.ScalingFactor, scalingFactor);
-
-                if (gen.BarcodeType == EncodeTypes.QR)
-                    gen.Parameters.Barcode.XDimension.Pixels = (float)Math.Max(1.0,
-                        Math.Round(CustomBarcodeGeneratorUtils.DefaultQRXDimensionInPixels * scalingFactor));
-                else
-                    gen.Parameters.Barcode.XDimension.Pixels = (float)Math.Max(1.0,
-                        Math.Round(CustomBarcodeGeneratorUtils.Default1DXDimensionInPixels * scalingFactor));
-
-                if (!string.IsNullOrEmpty(parameters.SymbolHeight))
-                    gen.Parameters.Barcode.BarHeight.Pixels = (float)Math.Max(5.0,
-                        Math.Round(CustomBarcodeGeneratorUtils.TwipsToPixels(parameters.SymbolHeight,
-                        gen.Parameters.Barcode.BarHeight.Pixels) * scalingFactor));
-
-                if (!string.IsNullOrEmpty(parameters.PosCodeStyle))
-                    CustomBarcodeGeneratorUtils.SetPosCodeStyle(gen, parameters.PosCodeStyle, parameters.BarcodeValue);
-
-                Stream imgStream = CustomBarcodeGeneratorUtils.ConvertImageToWord(gen.GenerateBarCodeImage());
-
-                // Log the barcode value (as field name) and image size in bytes.
-                Logger.Log($"Barcode '{parameters.BarcodeValue}' generated, size = {imgStream.Length} bytes.");
-
-                return imgStream;
-            }
-            catch (Exception e)
-            {
-                Stream errStream = CustomBarcodeGeneratorUtils.ConvertImageToWord(
-                    CustomBarcodeGeneratorUtils.DrawErrorImage(e));
-
-                Logger.Log($"Error generating barcode '{parameters.BarcodeValue}': {e.Message}");
-                return errStream;
-            }
-        }
-
-        public Stream GetOldBarcodeImage(Aspose.Words.Fields.BarcodeParameters parameters)
-        {
-            // Delegate to the primary method.
-            return GetBarcodeImage(parameters);
-        }
-    }
-
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Register the custom barcode generator (required for rendered outputs).
+        // First barcode field.
+        FieldDisplayBarcode field1 = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
+        field1.BarcodeType = "CODE128";
+        field1.BarcodeValue = "1234567890";
+        field1.ForegroundColor = "0x000000";
+        field1.BackgroundColor = "0xFFFFFF";
+
+        // Insert a paragraph break.
+        builder.Writeln();
+
+        // Second barcode field.
+        FieldDisplayBarcode field2 = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
+        field2.BarcodeType = "QR";
+        field2.BarcodeValue = "HelloWorld";
+        field2.ForegroundColor = "0x000000";
+        field2.BackgroundColor = "0xFFFFFF";
+
+        // Register the custom barcode generator for rendered output (PDF).
         doc.FieldOptions.BarcodeGenerator = new CustomBarcodeGenerator();
 
-        // Insert a QR code field.
-        FieldDisplayBarcode qrField = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
-        qrField.BarcodeType = "QR";
-        qrField.BarcodeValue = "QR12345";
-        qrField.BackgroundColor = "0xF8BD69";
-        qrField.ForegroundColor = "0xB5413B";
-        qrField.ErrorCorrectionLevel = "3";
-        qrField.ScalingFactor = "250";
-        qrField.SymbolHeight = "1000";
-        qrField.SymbolRotation = "0";
-        builder.Writeln();
-
-        // Insert an EAN13 code field.
-        FieldDisplayBarcode eanField = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
-        eanField.BarcodeType = "EAN13";
-        eanField.BarcodeValue = "501234567890";
-        eanField.DisplayText = true;
-        eanField.PosCodeStyle = "CASE";
-        eanField.FixCheckDigit = true;
-        builder.Writeln();
-
-        // Insert a CODE39 field with start/stop characters.
-        FieldDisplayBarcode code39Field = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
-        code39Field.BarcodeType = "CODE39";
-        code39Field.BarcodeValue = "CODE39TEST";
-        code39Field.AddStartStopChar = true;
-        builder.Writeln();
-
-        // Update fields to ensure they are ready for rendering.
+        // Update fields to trigger barcode generation.
         doc.UpdateFields();
 
-        // Save the document as PDF – this triggers barcode generation via the custom generator.
-        doc.Save("Barcodes.pdf", SaveFormat.Pdf);
+        // Save the document as PDF (rendered barcodes).
+        doc.Save("BarcodesOutput.pdf");
+
+        // Output the logging information.
+        Console.WriteLine("Barcode generation log:");
+        foreach (string entry in CustomBarcodeGenerator.Log)
+        {
+            Console.WriteLine(entry);
+        }
     }
 }
