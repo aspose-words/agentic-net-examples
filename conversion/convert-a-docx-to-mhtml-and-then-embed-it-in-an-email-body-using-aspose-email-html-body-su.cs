@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -7,56 +8,49 @@ public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create a sample DOCX document.
-        // -----------------------------------------------------------------
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Hello, this is a sample DOCX content.");
-        sourceDoc.Save("sample.docx", SaveFormat.Docx);
+        // Step 1: Create a sample DOCX document.
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        builder.Writeln("This is a sample document for DOCX to MHTML conversion.");
+        const string docxPath = "sample.docx";
+        sampleDoc.Save(docxPath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // 2. Load the DOCX document.
-        // -----------------------------------------------------------------
-        Document doc = new Document("sample.docx");
+        // Verify DOCX creation.
+        if (!File.Exists(docxPath))
+            throw new InvalidOperationException("The sample DOCX file was not created.");
 
-        // -----------------------------------------------------------------
-        // 3. Convert the DOCX to MHTML and read the content.
-        // -----------------------------------------------------------------
-        string mhtmlContent;
-        using (MemoryStream mhtmlStream = new MemoryStream())
-        {
-            doc.Save(mhtmlStream, SaveFormat.Mhtml);
+        // Step 2: Load the DOCX document.
+        Document loadedDoc = new Document(docxPath);
 
-            if (mhtmlStream.Length == 0)
-                throw new InvalidOperationException("MHTML conversion produced no data.");
+        // Step 3: Convert the document to MHTML and save it.
+        const string mhtmlPath = "sample.mhtml";
+        loadedDoc.Save(mhtmlPath, SaveFormat.Mhtml);
 
-            mhtmlStream.Position = 0;
-            using (StreamReader reader = new StreamReader(mhtmlStream))
-            {
-                mhtmlContent = reader.ReadToEnd();
-            }
-        }
+        // Verify MHTML creation.
+        if (!File.Exists(mhtmlPath))
+            throw new InvalidOperationException("The MHTML file was not created.");
 
-        // -----------------------------------------------------------------
-        // 4. Build a simple RFC‑822 email message with the MHTML as the HTML body.
-        // -----------------------------------------------------------------
-        string emailPath = "email.eml";
-        using (StreamWriter writer = new StreamWriter(emailPath, false))
-        {
-            writer.WriteLine("From: sender@example.com");
-            writer.WriteLine("To: recipient@example.com");
-            writer.WriteLine("Subject: Test Email with MHTML Body");
-            writer.WriteLine("MIME-Version: 1.0");
-            writer.WriteLine("Content-Type: text/html; charset=utf-8");
-            writer.WriteLine(); // Blank line separates headers from body.
-            writer.WriteLine(mhtmlContent);
-        }
+        // Step 4: Read the MHTML content.
+        string mhtmlContent = File.ReadAllText(mhtmlPath);
 
-        // -----------------------------------------------------------------
-        // 5. Verify that the email file was created.
-        // -----------------------------------------------------------------
-        if (!File.Exists(emailPath))
+        // Step 5: Create a simple .eml file with the MHTML as the HTML body.
+        const string emlPath = "email.eml";
+        string emlContent =
+            "From: sender@example.com\r\n" +
+            "To: recipient@example.com\r\n" +
+            "Subject: Document converted to MHTML\r\n" +
+            "MIME-Version: 1.0\r\n" +
+            "Content-Type: text/html; charset=utf-8\r\n" +
+            "\r\n" +
+            mhtmlContent;
+
+        File.WriteAllText(emlPath, emlContent);
+
+        // Verify email file creation.
+        if (!File.Exists(emlPath))
             throw new InvalidOperationException("The email file was not created.");
+
+        // All steps completed successfully.
+        Console.WriteLine("DOCX converted to MHTML and embedded in email successfully.");
     }
 }

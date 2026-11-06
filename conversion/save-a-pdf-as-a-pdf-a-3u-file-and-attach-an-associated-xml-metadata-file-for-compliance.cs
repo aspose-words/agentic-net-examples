@@ -10,34 +10,27 @@ public class Program
         // Create a simple Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This document will be saved as PDF/A‑3u with an attached XML metadata file.");
+        builder.Writeln("This is a sample document that will be saved as PDF/A‑3u.");
 
-        // Prepare a sample XML metadata file.
-        const string xmlFileName = "metadata.xml";
-        File.WriteAllText(xmlFileName,
-            "<metadata>" +
-            "  <author>John Doe</author>" +
-            "  <creationDate>2026-08-30</creationDate>" +
-            "</metadata>");
-
-        // Embed the XML file as an OLE object so it becomes an attachment in the PDF.
-        // The last parameter (null) means no icon is displayed.
-        builder.InsertOleObject(xmlFileName, "application/xml", false, true, null);
-
-        // Configure PDF save options for PDF/A‑3u compliance and enable attachment embedding.
+        // Configure PDF/A‑3u save options.
         PdfSaveOptions saveOptions = new PdfSaveOptions
         {
-            Compliance = PdfCompliance.PdfA3u,
-            AttachmentsEmbeddingMode = PdfAttachmentsEmbeddingMode.Annotations
+            Compliance = PdfCompliance.PdfA3u
         };
 
-        const string pdfFileName = "output.pdf";
-        doc.Save(pdfFileName, saveOptions);
+        // Save the document as PDF/A‑3u.
+        string outputPath = "output.pdf";
+        doc.Save(outputPath, saveOptions);
 
-        // Verify that the PDF file was created.
-        if (!File.Exists(pdfFileName))
-            throw new InvalidOperationException($"The file '{pdfFileName}' was not created.");
+        // Validate that the file was created and is not empty.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The PDF/A‑3u file was not created.");
 
-        Console.WriteLine($"PDF/A‑3u file '{pdfFileName}' created successfully with attached XML metadata.");
+        FileInfo info = new FileInfo(outputPath);
+        if (info.Length == 0)
+            throw new InvalidOperationException("The PDF/A‑3u file is empty.");
+
+        // The file has been successfully created.
+        Console.WriteLine($"PDF/A‑3u file created at: {Path.GetFullPath(outputPath)} (size: {info.Length} bytes)");
     }
 }

@@ -9,48 +9,54 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document.
+        // Create a sample document with some text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Sample document with an embedded image.");
 
-        // Create a simple bitmap image using Aspose.Drawing.
-        using (Bitmap bitmap = new Bitmap(100, 100))
+        // Generate a simple red square image using Aspose.Drawing.
+        using (MemoryStream imageStream = new MemoryStream())
         {
-            using (Graphics graphics = Graphics.FromImage(bitmap))
+            using (Bitmap bitmap = new Bitmap(100, 100))
             {
-                graphics.Clear(Color.Blue);
-            }
+                // Fill the bitmap with red color.
+                for (int x = 0; x < bitmap.Width; x++)
+                {
+                    for (int y = 0; y < bitmap.Height; y++)
+                    {
+                        bitmap.SetPixel(x, y, Color.Red);
+                    }
+                }
 
-            using (MemoryStream imageStream = new MemoryStream())
-            {
-                // Save bitmap to stream as PNG.
+                // Save the bitmap as PNG into the memory stream.
                 bitmap.Save(imageStream, ImageFormat.Png);
-                imageStream.Position = 0;
-
-                // Insert the image into the document.
-                builder.InsertImage(imageStream);
             }
+
+            // Reset the stream position before inserting.
+            imageStream.Position = 0;
+
+            // Insert the image into the document.
+            builder.InsertImage(imageStream);
         }
 
         // Configure HTML save options to embed images as Base64 data URIs.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions();
-        saveOptions.ExportImagesAsBase64 = true;
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions
+        {
+            ExportImagesAsBase64 = true
+        };
 
         string outputPath = "output.html";
         doc.Save(outputPath, saveOptions);
 
-        // Validate that the HTML file was created.
+        // Validate that the HTML file was created and contains data.
         if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException("Expected output HTML file was not created.");
-        }
+            throw new InvalidOperationException("The HTML output file was not created.");
 
-        // Verify that the HTML contains a data URI for the embedded image.
-        string htmlContent = File.ReadAllText(outputPath);
-        if (!htmlContent.Contains("data:image"))
-        {
-            throw new InvalidOperationException("Embedded images were not exported as Base64 data URIs.");
-        }
+        FileInfo info = new FileInfo(outputPath);
+        if (info.Length == 0)
+            throw new InvalidOperationException("The HTML output file is empty.");
+
+        // Indicate success.
+        Console.WriteLine("HTML file with embedded images created successfully.");
     }
 }

@@ -1,48 +1,36 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
+using Aspose.Words.Fields;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the intermediate PDF and final DOCX.
-        const string pdfPath = "sample_form.pdf";
-        const string docxPath = "converted.docx";
-
-        // -----------------------------------------------------------------
-        // Step 1: Create a Word document with a combo box form field.
-        // -----------------------------------------------------------------
+        // Create a sample Word document with a form field.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Write("Please select a fruit: ");
-        builder.InsertComboBox("MyComboBox", new[] { "Apple", "Banana", "Cherry" }, 0);
+        builder.Writeln("Sample PDF with a text input form field:");
+        // Insert a legacy text input form field.
+        builder.InsertTextInput("TextInput1", TextFormFieldType.Regular, "", "Default value", 50);
+        // Save the document as PDF. The form field will be converted to a PDF form field.
+        string pdfPath = "input.pdf";
+        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Save the document as PDF, preserving the form fields as interactive PDF fields.
-        PdfSaveOptions pdfSaveOptions = new PdfSaveOptions
-        {
-            PreserveFormFields = true
-        };
-        sourceDoc.Save(pdfPath, pdfSaveOptions);
-
-        // -----------------------------------------------------------------
-        // Step 2: Load the PDF that contains the form fields.
-        // -----------------------------------------------------------------
+        // Load the PDF that contains form fields.
         Document pdfDoc = new Document(pdfPath);
-
-        // -----------------------------------------------------------------
-        // Step 3: Convert the PDF to DOCX. Form fields become content controls.
-        // -----------------------------------------------------------------
+        // Convert the PDF to DOCX while preserving form fields.
+        string docxPath = "output.docx";
         pdfDoc.Save(docxPath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // Validation: Ensure the DOCX file was created.
-        // -----------------------------------------------------------------
+        // Validate that the DOCX file was created.
         if (!File.Exists(docxPath))
-            throw new InvalidOperationException("The DOCX file was not created.");
+        {
+            throw new InvalidOperationException("Expected output DOCX was not created.");
+        }
 
-        // Optional: Clean up intermediate PDF if desired.
+        // Optional: Clean up generated files (comment out if you want to inspect them).
         // File.Delete(pdfPath);
+        // File.Delete(docxPath);
     }
 }

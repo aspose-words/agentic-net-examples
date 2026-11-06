@@ -7,39 +7,35 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a sample document and save it as PDF (input.pdf).
-        Document sampleDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-        builder.Writeln("This is a sample PDF document generated for conversion to PNG.");
-        string inputPdfPath = "input.pdf";
-        sampleDoc.Save(inputPdfPath, SaveFormat.Pdf);
+        // Create a sample PDF file to act as the input.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("Sample PDF content for conversion.");
+        string inputPdfPath = "sample.pdf";
+        sourceDoc.Save(inputPdfPath, SaveFormat.Pdf);
 
         // Verify the PDF was created.
         if (!File.Exists(inputPdfPath))
             throw new InvalidOperationException("The input PDF file was not created.");
 
-        // Step 2: Load the PDF document.
-        Document pdfDoc = new Document(inputPdfPath);
+        // Load the PDF document.
+        Document pdfDocument = new Document(inputPdfPath);
 
-        // Step 3: Configure high‑resolution PNG conversion.
+        // Configure high‑resolution PNG export (e.g., 300 DPI).
         ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png)
         {
-            // Set a high DPI for detailed analysis (e.g., 300 DPI).
-            Resolution = 300,
-            // Save only the first page (page index is zero‑based).
-            PageSet = new PageSet(0)
+            Resolution = 300
         };
 
-        // Step 4: Save the PDF as a PNG image.
+        // Save the PDF as a PNG image.
         string outputPngPath = "output.png";
-        pdfDoc.Save(outputPngPath, pngOptions);
+        pdfDocument.Save(outputPngPath, pngOptions);
 
-        // Step 5: Validate that the PNG file was created.
-        if (!File.Exists(outputPngPath))
-            throw new InvalidOperationException("The output PNG file was not created.");
+        // Validate that the PNG file was created and has content.
+        if (!File.Exists(outputPngPath) || new FileInfo(outputPngPath).Length == 0)
+            throw new InvalidOperationException("The PNG image was not created or is empty.");
 
-        // Optional: Clean up temporary files (comment out if you want to keep them).
+        // Optionally, clean up the temporary PDF file.
         // File.Delete(inputPdfPath);
-        // File.Delete(outputPngPath);
     }
 }

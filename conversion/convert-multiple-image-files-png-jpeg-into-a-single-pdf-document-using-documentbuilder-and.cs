@@ -4,71 +4,81 @@ using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
+using Aspose.Drawing.Drawing2D;
 
 public class ImageToPdfConverter
 {
     public static void Main()
     {
-        // Prepare sample images folder
-        string imagesFolder = "Images";
+        // Prepare a temporary folder for sample images.
+        string imagesFolder = Path.Combine(Directory.GetCurrentDirectory(), "Images");
         Directory.CreateDirectory(imagesFolder);
 
-        // Define image file paths
-        string pngPath = Path.Combine(imagesFolder, "image1.png");
-        string jpgPath = Path.Combine(imagesFolder, "image2.jpg");
+        // Create a sample PNG image.
+        string pngPath = Path.Combine(imagesFolder, "sample1.png");
+        CreateSampleImage(pngPath, ImageFormat.Png, Color.LightBlue, Color.Red);
 
-        // Create a PNG image (200x200, light blue)
-        CreateSampleImage(pngPath, 200, 200, Color.LightBlue, ImageFormat.Png);
+        // Create a sample JPEG image.
+        string jpegPath = Path.Combine(imagesFolder, "sample2.jpg");
+        CreateSampleImage(jpegPath, ImageFormat.Jpeg, Color.LightGreen, Color.Blue);
 
-        // Create a JPEG image (300x150, light coral)
-        CreateSampleImage(jpgPath, 300, 150, Color.LightCoral, ImageFormat.Jpeg);
-
-        // List of image files to insert
-        string[] imageFiles = new[] { pngPath, jpgPath };
-
-        // Create a new Word document
+        // Create a new Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert each image into the document, adding a page break after each except the last
-        for (int i = 0; i < imageFiles.Length; i++)
-        {
-            string imgPath = imageFiles[i];
-            builder.InsertImage(imgPath);
-            if (i < imageFiles.Length - 1)
-            {
-                builder.InsertBreak(BreakType.PageBreak);
-            }
-        }
+        // Insert the PNG image.
+        builder.InsertImage(pngPath);
+        // Insert a page break before the next image.
+        builder.InsertBreak(BreakType.PageBreak);
 
-        // Save the document as PDF
-        string outputPdf = "output.pdf";
+        // Insert the JPEG image.
+        builder.InsertImage(jpegPath);
+
+        // Save the document as PDF.
+        string outputPdf = Path.Combine(Directory.GetCurrentDirectory(), "output.pdf");
         doc.Save(outputPdf, SaveFormat.Pdf);
 
-        // Validate that the PDF was created
+        // Validate that the PDF was created.
         if (!File.Exists(outputPdf))
-        {
             throw new InvalidOperationException("Expected output PDF was not created.");
-        }
 
-        // Clean up sample images (optional)
-        // File.Delete(pngPath);
-        // File.Delete(jpgPath);
-        // Directory.Delete(imagesFolder);
+        // Clean up temporary images (optional).
+        try
+        {
+            File.Delete(pngPath);
+            File.Delete(jpegPath);
+            Directory.Delete(imagesFolder);
+        }
+        catch
+        {
+            // Ignored – cleanup is not critical for the example.
+        }
     }
 
-    private static void CreateSampleImage(string filePath, int width, int height, Color fillColor, ImageFormat format)
+    private static void CreateSampleImage(string filePath, ImageFormat format, Color backgroundColor, Color shapeColor)
     {
-        // Create a bitmap with the specified dimensions
+        const int width = 300;
+        const int height = 200;
+
         using (Bitmap bitmap = new Bitmap(width, height))
         {
-            // Fill the bitmap with the specified color
+            // Obtain a Graphics object from the bitmap.
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                graphics.Clear(fillColor);
+                // Fill background.
+                using (SolidBrush backgroundBrush = new SolidBrush(backgroundColor))
+                {
+                    graphics.FillRectangle(backgroundBrush, 0, 0, width, height);
+                }
+
+                // Draw a colored ellipse.
+                using (SolidBrush shapeBrush = new SolidBrush(shapeColor))
+                {
+                    graphics.FillEllipse(shapeBrush, 50, 30, width - 100, height - 60);
+                }
             }
 
-            // Save the bitmap to the given file path using the desired image format
+            // Save the image in the requested format.
             bitmap.Save(filePath, format);
         }
     }

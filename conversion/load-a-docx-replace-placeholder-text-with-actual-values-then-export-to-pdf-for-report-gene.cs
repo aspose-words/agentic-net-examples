@@ -8,27 +8,31 @@ public class Program
     public static void Main()
     {
         // Step 1: Create a sample DOCX with a placeholder.
-        Document sourceDocument = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDocument);
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
         builder.Writeln("Report for {{Name}}");
-        sourceDocument.Save("input.docx", SaveFormat.Docx);
+        const string inputPath = "input.docx";
+        sampleDoc.Save(inputPath, SaveFormat.Docx);
 
-        // Step 2: Load the DOCX and replace the placeholder with actual value.
-        Document document = new Document("input.docx");
-        FindReplaceOptions replaceOptions = new FindReplaceOptions();
-        document.Range.Replace("{{Name}}", "John Doe", replaceOptions);
+        // Step 2: Load the DOCX.
+        Document doc = new Document(inputPath);
 
-        // Step 3: Export the modified document to PDF.
-        document.Save("output.pdf", SaveFormat.Pdf);
+        // Step 3: Replace the placeholder with actual value.
+        const string placeholder = "{{Name}}";
+        const string actualValue = "John Doe";
+        doc.Range.Replace(placeholder, actualValue, new FindReplaceOptions(FindReplaceDirection.Forward));
 
-        // Step 4: Validate that the PDF was created.
-        if (!File.Exists("output.pdf"))
+        // Step 4: Export to PDF.
+        const string outputPath = "output.pdf";
+        doc.Save(outputPath, SaveFormat.Pdf);
+
+        // Step 5: Validate that the PDF was created.
+        if (!File.Exists(outputPath))
         {
             throw new InvalidOperationException("Expected output PDF was not created.");
         }
 
-        // Optional: Clean up created files (comment out if you want to keep them).
-        // File.Delete("input.docx");
-        // File.Delete("output.pdf");
+        // Optional: Clean up sample input file (not required, but keeps the folder tidy).
+        // File.Delete(inputPath);
     }
 }

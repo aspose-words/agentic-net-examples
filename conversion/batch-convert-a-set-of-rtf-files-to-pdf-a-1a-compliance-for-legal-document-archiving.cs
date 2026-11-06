@@ -3,53 +3,64 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class BatchRtfToPdfA
+public class Program
 {
     public static void Main()
     {
-        // Define input and output directories.
-        string inputDir = "InputRtf";
-        string outputDir = "OutputPdf";
+        // Define folders for input RTF files and output PDF/A-1a files.
+        string inputFolder = "InputRtf";
+        string outputFolder = "OutputPdf";
 
-        // Ensure directories exist.
-        Directory.CreateDirectory(inputDir);
-        Directory.CreateDirectory(outputDir);
+        // Ensure the folders exist.
+        Directory.CreateDirectory(inputFolder);
+        Directory.CreateDirectory(outputFolder);
 
-        // Create sample RTF files.
+        // Create a few sample RTF files.
         for (int i = 1; i <= 3; i++)
         {
+            // Create a new empty document.
             Document sampleDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(sampleDoc);
             builder.Writeln($"Sample RTF content for document {i}.");
-            string rtfPath = Path.Combine(inputDir, $"Sample{i}.rtf");
-            sampleDoc.Save(rtfPath, SaveFormat.Rtf);
+            string inputPath = Path.Combine(inputFolder, $"sample{i}.rtf");
+            // Save the document as RTF.
+            sampleDoc.Save(inputPath, SaveFormat.Rtf);
         }
 
-        // Batch convert each RTF to PDF/A‑1a.
-        string[] rtfFiles = Directory.GetFiles(inputDir, "*.rtf");
+        // Get all RTF files from the input folder.
+        string[] rtfFiles = Directory.GetFiles(inputFolder, "*.rtf");
+        if (rtfFiles.Length == 0)
+        {
+            throw new InvalidOperationException("No RTF files were found for conversion.");
+        }
+
+        // Prepare PDF/A-1a save options.
+        PdfSaveOptions pdfOptions = new PdfSaveOptions
+        {
+            Compliance = PdfCompliance.PdfA1a
+        };
+
+        // Convert each RTF file to PDF/A-1a.
         foreach (string rtfFile in rtfFiles)
         {
+            // Load the RTF document.
             Document doc = new Document(rtfFile);
 
-            PdfSaveOptions pdfOptions = new PdfSaveOptions
+            // Determine the output PDF file path.
+            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(rtfFile);
+            string outputPath = Path.Combine(outputFolder, $"{fileNameWithoutExt}.pdf");
+
+            // Save the document as PDF/A-1a.
+            doc.Save(outputPath, pdfOptions);
+
+            // Verify that the PDF file was created.
+            if (!File.Exists(outputPath))
             {
-                Compliance = PdfCompliance.PdfA1a
-            };
-
-            string outputFileName = Path.GetFileNameWithoutExtension(rtfFile) + ".pdf";
-            string pdfPath = Path.Combine(outputDir, outputFileName);
-            doc.Save(pdfPath, pdfOptions);
+                throw new InvalidOperationException($"Expected output PDF/A file was not created: {outputPath}");
+            }
         }
 
-        // Validate that all PDFs were created.
-        foreach (string rtfFile in rtfFiles)
-        {
-            string expectedPdf = Path.Combine(outputDir, Path.GetFileNameWithoutExtension(rtfFile) + ".pdf");
-            if (!File.Exists(expectedPdf))
-                throw new InvalidOperationException($"Expected PDF/A file was not created: {expectedPdf}");
-        }
-
-        // Optionally, indicate success (no interactive output required).
-        Console.WriteLine("Batch conversion to PDF/A‑1a completed successfully.");
+        // Optional: indicate successful completion.
+        Console.WriteLine("Batch conversion to PDF/A-1a completed successfully.");
     }
 }

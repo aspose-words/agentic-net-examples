@@ -10,25 +10,23 @@ public class Program
         // Create a sample DOC file.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Sample content for DOC to XLSX conversion.");
-        string inputPath = "sample.doc";
-        sourceDoc.Save(inputPath, SaveFormat.Doc);
+        builder.Writeln("Sample DOC content.");
+        sourceDoc.Save("input.doc", SaveFormat.Doc);
 
         // Load the DOC file.
-        Document doc = new Document(inputPath);
+        Document doc = new Document("input.doc");
 
-        // Prepare XlsxSaveOptions with default compression (Normal).
-        XlsxSaveOptions saveOptions = new XlsxSaveOptions
+        // Prepare XLSX save options with default compression.
+        XlsxSaveOptions xlsxOptions = new XlsxSaveOptions
         {
-            CompressionLevel = CompressionLevel.Normal
+            CompressionLevel = CompressionLevel.Normal // Default compression.
         };
 
-        // Save as XLSX.
-        string outputPath = "output.xlsx";
-        doc.Save(outputPath, saveOptions);
+        // Save the document as XLSX.
+        doc.Save("output.xlsx", xlsxOptions);
 
         // Verify that the XLSX file was created.
-        if (!File.Exists(outputPath))
+        if (!File.Exists("output.xlsx"))
         {
             throw new InvalidOperationException("Expected output XLSX was not created.");
         }

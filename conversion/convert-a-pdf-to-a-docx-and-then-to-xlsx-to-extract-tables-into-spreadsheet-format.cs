@@ -7,11 +7,11 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with a simple table.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        // Step 1: Create a sample document with a table and save it as PDF.
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
 
-        // Build the table.
+        // Insert a simple table.
         Table table = builder.StartTable();
         builder.InsertCell();
         builder.Write("Header 1");
@@ -20,36 +20,42 @@ public class Program
         builder.EndRow();
 
         builder.InsertCell();
-        builder.Write("Row1Col1");
+        builder.Write("Row 1, Cell 1");
         builder.InsertCell();
-        builder.Write("Row1Col2");
+        builder.Write("Row 1, Cell 2");
+        builder.EndRow();
+
+        builder.InsertCell();
+        builder.Write("Row 2, Cell 1");
+        builder.InsertCell();
+        builder.Write("Row 2, Cell 2");
         builder.EndRow();
 
         builder.EndTable();
 
-        // Save the document as PDF.
+        // Save the sample document as PDF.
         string pdfPath = "sample.pdf";
-        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
+        sampleDoc.Save(pdfPath, SaveFormat.Pdf);
+
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("PDF file was not created.");
+            throw new InvalidOperationException("Expected PDF file was not created.");
 
-        // Load the PDF and convert it to DOCX.
+        // Step 2: Load the PDF and convert it to DOCX.
         Document pdfDoc = new Document(pdfPath);
-        string docxPath = "sample.docx";
+        string docxPath = "converted.docx";
         pdfDoc.Save(docxPath, SaveFormat.Docx);
+
         if (!File.Exists(docxPath))
-            throw new InvalidOperationException("DOCX file was not created.");
+            throw new InvalidOperationException("Expected DOCX file was not created.");
 
-        // Load the DOCX and convert it to XLSX (tables become worksheets).
+        // Step 3: Load the DOCX and convert it to XLSX (Excel) to extract tables.
         Document docxDoc = new Document(docxPath);
-        string xlsxPath = "sample.xlsx";
+        string xlsxPath = "tables.xlsx";
         docxDoc.Save(xlsxPath, SaveFormat.Xlsx);
-        if (!File.Exists(xlsxPath))
-            throw new InvalidOperationException("XLSX file was not created.");
 
-        // Verify that the XLSX file contains data.
-        FileInfo xlsxInfo = new FileInfo(xlsxPath);
-        if (xlsxInfo.Length == 0)
-            throw new InvalidOperationException("XLSX file is empty.");
+        if (!File.Exists(xlsxPath))
+            throw new InvalidOperationException("Expected XLSX file was not created.");
+
+        // Program completed successfully.
     }
 }

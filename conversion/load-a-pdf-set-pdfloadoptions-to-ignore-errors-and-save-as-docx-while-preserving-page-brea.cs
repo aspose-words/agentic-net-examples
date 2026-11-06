@@ -7,39 +7,35 @@ public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // Create a sample PDF file with two pages.
-        // -----------------------------------------------------------------
-        Document pdfSource = new Document();
-        DocumentBuilder builder = new DocumentBuilder(pdfSource);
-        builder.Writeln("First page of the PDF.");
+        // Create a sample document with a page break.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("First page content.");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Second page of the PDF.");
+        builder.Writeln("Second page content.");
 
-        string pdfPath = "sample.pdf";
-        pdfSource.Save(pdfPath, SaveFormat.Pdf);
+        // Save the sample as PDF – this will be the input file.
+        const string inputPdfPath = "input.pdf";
+        sourceDoc.Save(inputPdfPath, SaveFormat.Pdf);
 
-        // -----------------------------------------------------------------
-        // Load the PDF. Aspose.Words automatically ignores non‑critical
-        // errors during PDF import, so no explicit IgnoreErrors flag is needed.
-        // -----------------------------------------------------------------
-        PdfLoadOptions loadOptions = new PdfLoadOptions(); // No IgnoreErrors property in current API.
-        Document loadedPdf = new Document(pdfPath, loadOptions);
-
-        // -----------------------------------------------------------------
-        // Save the loaded document as DOCX. Page breaks are preserved by default.
-        // -----------------------------------------------------------------
-        string docxPath = "output.docx";
-        loadedPdf.Save(docxPath, SaveFormat.Docx);
-
-        // -----------------------------------------------------------------
-        // Validate that the DOCX file was created.
-        // -----------------------------------------------------------------
-        if (!File.Exists(docxPath))
+        // Load the PDF with options that ignore errors.
+        PdfLoadOptions loadOptions = new PdfLoadOptions
         {
-            throw new InvalidOperationException("The DOCX file was not created as expected.");
-        }
+            // By default, Aspose.Words ignores most loading errors.
+            // If specific error‑ignoring flags existed, they would be set here.
+        };
+        Document pdfDoc = new Document(inputPdfPath, loadOptions);
 
-        Console.WriteLine("Conversion completed successfully.");
+        // Save the loaded PDF as DOCX while preserving page breaks.
+        const string outputDocxPath = "output.docx";
+        pdfDoc.Save(outputDocxPath, SaveFormat.Docx);
+
+        // Validate that the DOCX file was created.
+        if (!File.Exists(outputDocxPath))
+            throw new InvalidOperationException("The DOCX output file was not created.");
+
+        // Optional cleanup (not required, but keeps the example tidy).
+        // File.Delete(inputPdfPath);
+        // File.Delete(outputDocxPath);
     }
 }

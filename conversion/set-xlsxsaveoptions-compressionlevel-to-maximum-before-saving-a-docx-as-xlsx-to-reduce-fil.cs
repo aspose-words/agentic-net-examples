@@ -8,24 +8,25 @@ public class Program
     public static void Main()
     {
         // Create a sample DOCX document.
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
         builder.Writeln("Sample content for DOCX to XLSX conversion.");
-        string inputPath = "input.docx";
-        source.Save(inputPath, SaveFormat.Docx);
+        const string inputPath = "input.docx";
+        sourceDoc.Save(inputPath, SaveFormat.Docx);
 
         // Load the created DOCX document.
         Document doc = new Document(inputPath);
 
-        // Configure XLSX save options with maximum compression.
-        XlsxSaveOptions xlsxOptions = new XlsxSaveOptions
+        // Configure XlsxSaveOptions with maximum compression.
+        XlsxSaveOptions saveOptions = new XlsxSaveOptions
         {
-            CompressionLevel = CompressionLevel.Maximum
+            // Use the Aspose.Words.Saving.CompressionLevel enum to avoid ambiguity.
+            CompressionLevel = Aspose.Words.Saving.CompressionLevel.Maximum
         };
 
         // Save the document as XLSX using the configured options.
-        string outputPath = "output.xlsx";
-        doc.Save(outputPath, xlsxOptions);
+        const string outputPath = "output.xlsx";
+        doc.Save(outputPath, saveOptions);
 
         // Validate that the XLSX file was created.
         if (!File.Exists(outputPath))
@@ -33,8 +34,7 @@ public class Program
             throw new InvalidOperationException("Expected output XLSX was not created.");
         }
 
-        // Optional cleanup (comment out if you want to inspect the files).
-        // File.Delete(inputPath);
-        // File.Delete(outputPath);
+        // Optional: Clean up the temporary input file.
+        File.Delete(inputPath);
     }
 }

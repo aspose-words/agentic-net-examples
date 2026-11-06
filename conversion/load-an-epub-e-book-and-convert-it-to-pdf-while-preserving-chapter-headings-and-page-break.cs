@@ -8,32 +8,29 @@ public class Program
     public static void Main()
     {
         // Create a sample document with chapter headings and page breaks.
-        Document sampleDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        Document source = new Document();
+        DocumentBuilder builder = new DocumentBuilder(source);
 
-        // Chapter 1
+        // Chapter 1 heading.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Writeln("Chapter 1");
+        // Chapter 1 content.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Content of the first chapter.");
+        builder.Writeln("This is the content of chapter 1.");
+
+        // Insert a page break between chapters.
         builder.InsertBreak(BreakType.PageBreak);
 
-        // Chapter 2
+        // Chapter 2 heading.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Writeln("Chapter 2");
+        // Chapter 2 content.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Content of the second chapter.");
-        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("This is the content of chapter 2.");
 
-        // Chapter 3
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 3");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Content of the third chapter.");
-
-        // Save the document as EPUB.
+        // Save the document as an EPUB file.
         string epubPath = "sample.epub";
-        sampleDoc.Save(epubPath, SaveFormat.Epub);
+        source.Save(epubPath, SaveFormat.Epub);
 
         // Load the EPUB file.
         Document epubDoc = new Document(epubPath);
@@ -42,16 +39,10 @@ public class Program
         string pdfPath = "output.pdf";
         epubDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Validate that the PDF was created.
+        // Verify that the PDF was created.
         if (!File.Exists(pdfPath))
         {
             throw new InvalidOperationException("Expected output PDF was not created.");
-        }
-
-        // Optional: clean up intermediate EPUB file.
-        if (File.Exists(epubPath))
-        {
-            File.Delete(epubPath);
         }
     }
 }

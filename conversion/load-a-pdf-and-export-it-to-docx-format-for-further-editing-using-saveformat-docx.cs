@@ -6,25 +6,29 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document and save it as PDF (input.pdf)
-        Document sample = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sample);
-        builder.Writeln("Sample PDF content generated for conversion.");
-        string pdfPath = "input.pdf";
-        sample.Save(pdfPath, SaveFormat.Pdf);
+        // Step 1: Create a sample PDF file.
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        builder.Writeln("This is a sample PDF content created for conversion.");
+        string pdfPath = "sample.pdf";
+        sampleDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Load the PDF and convert it to DOCX
-        Document pdfDoc = new Document(pdfPath);
-        string docxPath = "output.docx";
-        pdfDoc.Save(docxPath, SaveFormat.Docx);
+        // Verify the PDF was created.
+        if (!File.Exists(pdfPath))
+            throw new InvalidOperationException("The sample PDF file was not created.");
 
-        // Validate that the DOCX file was created
+        // Step 2: Load the PDF file.
+        Document pdfDocument = new Document(pdfPath);
+
+        // Step 3: Convert and save as DOCX.
+        string docxPath = "converted.docx";
+        pdfDocument.Save(docxPath, SaveFormat.Docx);
+
+        // Verify the DOCX was created.
         if (!File.Exists(docxPath))
-        {
-            throw new InvalidOperationException("Expected output DOCX was not created.");
-        }
+            throw new InvalidOperationException("The DOCX file was not created after conversion.");
 
-        // Optional cleanup (comment out if you want to inspect files)
+        // Optional: Clean up generated files (comment out if you want to keep them).
         // File.Delete(pdfPath);
         // File.Delete(docxPath);
     }

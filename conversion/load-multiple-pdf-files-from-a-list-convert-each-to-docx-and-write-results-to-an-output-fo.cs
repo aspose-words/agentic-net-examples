@@ -1,58 +1,62 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Loading;
 
 public class PdfToDocxBatchConverter
 {
     public static void Main()
     {
-        // Define folders for input PDFs and output DOCX files.
-        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputPdfs");
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputDocx");
+        // Define input and output directories.
+        string inputDir = "input_pdfs";
+        string outputDir = "output_docx";
 
-        // Ensure the folders exist.
-        Directory.CreateDirectory(inputFolder);
-        Directory.CreateDirectory(outputFolder);
+        // Ensure the directories exist.
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(outputDir);
 
         // Create sample PDF files to simulate existing inputs.
-        for (int i = 1; i <= 3; i++)
-        {
-            Document sampleDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-            builder.Writeln($"Sample PDF content {i}");
-            string pdfPath = Path.Combine(inputFolder, $"sample{i}.pdf");
-            sampleDoc.Save(pdfPath, SaveFormat.Pdf);
-        }
+        CreateSamplePdf(Path.Combine(inputDir, "sample1.pdf"), "This is the first sample PDF.");
+        CreateSamplePdf(Path.Combine(inputDir, "sample2.pdf"), "This is the second sample PDF.");
+        CreateSamplePdf(Path.Combine(inputDir, "sample3.pdf"), "This is the third sample PDF.");
 
-        // Get all PDF files from the input folder.
-        string[] pdfFiles = Directory.GetFiles(inputFolder, "*.pdf");
+        // Retrieve all PDF files from the input folder.
+        string[] pdfFiles = Directory.GetFiles(inputDir, "*.pdf");
 
-        // Convert each PDF to DOCX.
-        foreach (string pdfFilePath in pdfFiles)
+        // Convert each PDF file to DOCX format.
+        foreach (string pdfPath in pdfFiles)
         {
-            // Load the PDF document using LoadOptions for PDF format.
-            LoadOptions loadOptions = new LoadOptions
-            {
-                LoadFormat = LoadFormat.Pdf
-            };
-            Document pdfDocument = new Document(pdfFilePath, loadOptions);
+            // Load the PDF document.
+            Document pdfDoc = new Document(pdfPath);
 
             // Determine the output DOCX file path.
-            string outputFileName = Path.GetFileNameWithoutExtension(pdfFilePath) + ".docx";
-            string outputPath = Path.Combine(outputFolder, outputFileName);
+            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(pdfPath);
+            string docxPath = Path.Combine(outputDir, fileNameWithoutExt + ".docx");
 
             // Save the document as DOCX.
-            pdfDocument.Save(outputPath, SaveFormat.Docx);
+            pdfDoc.Save(docxPath, SaveFormat.Docx);
 
-            // Validate that the DOCX file was created.
-            if (!File.Exists(outputPath))
+            // Verify that the DOCX file was created.
+            if (!File.Exists(docxPath))
             {
-                throw new InvalidOperationException($"Expected output DOCX was not created: {outputPath}");
+                throw new InvalidOperationException($"Conversion failed: {docxPath} was not created.");
             }
         }
+    }
 
-        // Optional: indicate completion (no interactive input required).
-        Console.WriteLine("PDF to DOCX batch conversion completed successfully.");
+    private static void CreateSamplePdf(string filePath, string text)
+    {
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln(text);
+
+        // Save the document as PDF.
+        doc.Save(filePath, SaveFormat.Pdf);
+
+        // Verify that the PDF file was created.
+        if (!File.Exists(filePath))
+        {
+            throw new InvalidOperationException($"Sample PDF creation failed: {filePath} was not created.");
+        }
     }
 }

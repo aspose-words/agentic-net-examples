@@ -6,39 +6,30 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
+        // Create a sample DOCX document.
+        Document sourceDoc = new Document();
+        DocumentBuilder sourceBuilder = new DocumentBuilder(sourceDoc);
+        sourceBuilder.Writeln("This is the main body of the document.");
+        sourceDoc.Save("input.docx", SaveFormat.Docx);
 
-        // Add some body content.
-        builder.Writeln("This is the main document body.");
+        // Load the DOCX document.
+        Document doc = new Document("input.docx");
 
-        // Move to the primary header (creates it if it does not exist) and write text.
-        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Writeln("Sample Header Text");
+        // Add a header.
+        DocumentBuilder headerBuilder = new DocumentBuilder(doc);
+        headerBuilder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        headerBuilder.Writeln("Sample Header");
 
-        // Move to the primary footer (creates it if it does not exist) and write page numbers.
-        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.Writeln("Page ");
-        builder.InsertField("PAGE", "?");
-        builder.Write(" of ");
-        builder.InsertField("NUMPAGES", "?");
+        // Add a footer.
+        DocumentBuilder footerBuilder = new DocumentBuilder(doc);
+        footerBuilder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+        footerBuilder.Writeln("Sample Footer");
 
-        // Save the document as DOCX.
-        string docxPath = "sample.docx";
-        source.Save(docxPath, SaveFormat.Docx);
+        // Convert the document to PDF.
+        doc.Save("output.pdf", SaveFormat.Pdf);
 
-        // Load the DOCX file.
-        Document doc = new Document(docxPath);
-
-        // Convert the loaded document to PDF.
-        string pdfPath = "output.pdf";
-        doc.Save(pdfPath, SaveFormat.Pdf);
-
-        // Verify that the PDF was created.
-        if (!File.Exists(pdfPath))
-        {
+        // Validate that the PDF was created.
+        if (!File.Exists("output.pdf"))
             throw new InvalidOperationException("Expected output PDF was not created.");
-        }
     }
 }

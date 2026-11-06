@@ -4,37 +4,36 @@
     "slug": "conversion",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Create local sample input documents or source files inside the example whenever the task references an existing file, stream, DOC, DOCX, HTML, TXT, XML, or other source. Load with the correct Aspose.Words APIs and options, save using the correct SaveFormat or SaveOptions, validate the output or output stream, and exit without hosting a real server or waiting for external input.",
+    "preferred_workflow": "Bootstrap any required input files locally, load them with the correct Aspose.Words constructors, configure the matching SaveFormat or specialized SaveOptions, write the result to a file or MemoryStream, verify that the output exists and contains data, and exit without launching servers or awaiting external input.",
     "required_packages": [
       "Aspose.Words",
       "Aspose.Drawing.Common"
     ],
     "package_versions": {
-      "Aspose.Words": "26.9.0",
-      "Aspose.Drawing.Common": "26.8.0"
+      "Aspose.Words": "26.10.0",
+      "Aspose.Drawing.Common": "26.10.0"
     },
     "required_namespaces": [
       "System",
       "System.IO",
       "Aspose.Words",
       "Aspose.Words.Saving",
-      "System.Net.Http",
       "Aspose.Drawing",
       "Aspose.Drawing.Imaging",
-      "Aspose.Drawing.Drawing2D",
       "System.Linq",
-      "System.Net",
+      "Aspose.Drawing.Drawing2D",
       "System.Net.Mail",
-      "System.Text",
-      "Aspose.Words.Loading",
-      "Aspose.Words.Fields",
       "Aspose.Words.Replacing",
       "Aspose.Words.Drawing",
-      "System.Text.RegularExpressions",
-      "Aspose.Words.BuildingBlocks",
+      "System.Net.Mime",
+      "System.Net.Http",
+      "System.Threading.Tasks",
+      "Aspose.Words.Fields",
+      "System.Drawing",
       "Aspose.Words.Tables",
-      "Aspose.Words.Layout",
-      "System.Collections.Generic"
+      "System.Text",
+      "Aspose.Words.Loading",
+      "Aspose.Drawing.Text"
     ],
     "key_apis": [
       "Document",
@@ -48,12 +47,13 @@
       "ImageSaveOptions",
       "HtmlSaveOptions",
       "Font",
-      "Cell",
       "Range",
-      "StyleIdentifier",
       "FindReplaceOptions",
+      "StyleIdentifier",
+      "LoadOptions",
+      "Table",
       "Row",
-      "Table"
+      "Cell"
     ]
   },
   "stats": {
@@ -81,36 +81,53 @@
       "Validate output files exist or output streams contain data before finishing."
     ],
     "nullable_warning_prevention": [
-      "Initialize all non-nullable reference type properties to avoid CS8618 warnings.",
-      "Avoid CS8600, CS8602, and CS8604 by guarding maybe-null values before dereference or assignment.",
-      "Declare nullable locals when a value may legitimately be null and null-check before use."
+      "Initialize all non-nullable reference-type properties to avoid CS8618 warnings.",
+      "Guard against possible null values before dereferencing to prevent CS8600, CS8602, and CS8604.",
+      "Declare locals as nullable when a null value is legitimate and perform explicit null checks."
     ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "System.Drawing or Font ambiguity",
-      "symptom": "Compile errors caused by System.Drawing usage or ambiguous Font references between Aspose.Drawing.Font and Aspose.Words.Font.",
-      "fix": "Use Aspose.Drawing only, and declare drawing fonts explicitly as Aspose.Drawing.Font."
+      "pattern": "Missing API member",
+      "symptom": "Compilation fails because the referenced type, property, or enum value does not exist in the installed Aspose.Words version.",
+      "cause": "The code targets an API that was removed, renamed, or introduced in a different version of the library.",
+      "fix": "Reference the correct member available in the installed version or upgrade the package to a version that provides the member.",
+      "prevention": "Consult the official Aspose.Words documentation for the exact version and avoid hard-coding members that may not exist."
+    },
+    {
+      "pattern": "Enum ambiguity",
+      "symptom": "The compiler reports an ambiguous reference between System.IO.Compression.CompressionLevel and Aspose.Words.Saving.CompressionLevel.",
+      "cause": "Both namespaces define a CompressionLevel enum and the code does not qualify the intended one.",
+      "fix": "Fully qualify the enum with its namespace or create an alias for the Aspose.Words enum.",
+      "prevention": "Always reference Aspose.Words.Saving.CompressionLevel when configuring compression options for Aspose.Words."
+    },
+    {
+      "pattern": "System.Drawing conflict",
+      "symptom": "Compilation errors arise from ambiguous Font types between Aspose.Drawing.Font and System.Drawing.Font.",
+      "cause": "The example imports System.Drawing while also using Aspose.Drawing, causing type collisions.",
+      "fix": "Remove System.Drawing usage and declare fonts explicitly as Aspose.Drawing.Font.",
+      "prevention": "Do not import System.Drawing in conversion samples; rely solely on Aspose.Drawing for graphics."
     },
     {
       "pattern": "Missing input bootstrap",
-      "symptom": "Conversion task assumes a DOC, DOCX, HTML, TXT, XML, folder, or other source already exists.",
-      "fix": "Create the local source file, source document, or input folder inside the example before loading it."
-    },
-    {
-      "pattern": "Response-stream task hangs",
-      "symptom": "Example starts a server or waits for a request instead of finishing.",
-      "fix": "Simulate the response with a MemoryStream, write conversion output to it, validate length, and exit."
-    },
-    {
-      "pattern": "Incorrect SaveFormat or extension pairing",
-      "symptom": "Output format does not match the requested target type or file extension.",
-      "fix": "Use the correct SaveFormat or specialized SaveOptions for the requested output."
+      "symptom": "Runtime throws a file-not-found exception because the example assumes a source file already exists.",
+      "cause": "The sample does not create the required input document or image before loading it.",
+      "fix": "Generate the input file locally within the example prior to loading.",
+      "prevention": "Always bootstrap required input files in the code to make the example self-contained."
     },
     {
       "pattern": "Stream position or disposal issue",
-      "symptom": "Reloading or reading a stream fails because Position was not reset or the stream was disposed too early.",
-      "fix": "Reset MemoryStream.Position before reading and keep the stream alive until validation is complete."
+      "symptom": "Reading from a MemoryStream after saving fails because the stream position is at the end or the stream has been disposed.",
+      "cause": "The stream is not reset to position 0 or is disposed before validation.",
+      "fix": "Reset MemoryStream.Position to 0 and keep the stream alive until after validation is complete.",
+      "prevention": "Validate stream length after resetting position and dispose the stream only after all checks are finished."
+    },
+    {
+      "pattern": "Incorrect SaveFormat pairing",
+      "symptom": "The generated file has an extension that does not match the SaveFormat used, leading to invalid output or runtime errors.",
+      "cause": "The code selects a SaveFormat that does not correspond to the desired output type.",
+      "fix": "Use the SaveFormat or specialized SaveOptions that exactly matches the target file extension.",
+      "prevention": "Map each target format to its corresponding SaveFormat constant before saving."
     }
   ],
   "examples": [
@@ -129,7 +146,7 @@
     {
       "id": 2,
       "file_name": "convert-a-doc-file-to-pdf-a-1b-by-setting-pdfsaveoptions-compliance-before-saving.cs",
-      "task": "Convert a DOC file to PDF/A‑1b by setting PdfSaveOptions.Compliance before saving.",
+      "task": "Convert a DOC file to PDF/A-1b by setting PdfSaveOptions.Compliance before saving.",
       "workflow": "input-bootstrap",
       "outputs": [
         "pdf",
@@ -213,7 +230,7 @@
     {
       "id": 9,
       "file_name": "convert-a-pdf-document-to-high-quality-jpg-images-by-setting-jpegsaveoptions-quality-befor.cs",
-      "task": "Convert a PDF document to high‑quality JPG images by setting JpegSaveOptions.Quality before saving.",
+      "task": "Convert a PDF document to high-quality JPG images by setting JpegSaveOptions.Quality before saving.",
       "workflow": "save-options",
       "outputs": [
         "pdf",
@@ -230,8 +247,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 11,
@@ -249,7 +266,7 @@
     {
       "id": 12,
       "file_name": "transform-a-pdf-into-an-epub-e-book-by-loading-the-pdf-and-saving-with-saveformat-epub.cs",
-      "task": "Transform a PDF into an EPUB e‑book by loading the PDF and saving with SaveFormat.Epub.",
+      "task": "Transform a PDF into an EPUB e-book by loading the PDF and saving with SaveFormat.Epub.",
       "workflow": "native-conversion-api",
       "outputs": [
         "pdf",
@@ -273,7 +290,7 @@
     {
       "id": 14,
       "file_name": "batch-convert-all-docx-files-in-a-directory-to-html-with-round-trip-information-enabled.cs",
-      "task": "Batch convert all DOCX files in a directory to HTML with round‑trip information enabled.",
+      "task": "Batch convert all DOCX files in a directory to HTML with round-trip information enabled.",
       "workflow": "batch-bootstrap",
       "outputs": [
         "docx",
@@ -291,20 +308,20 @@
         "docx",
         "html"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 16,
       "file_name": "enable-exportroundtripinfo-when-saving-docx-to-html-to-retain-editing-capabilities-after-r.cs",
-      "task": "Enable ExportRoundTripInfo when saving DOCX to HTML to retain editing capabilities after round‑trip.",
+      "task": "Enable ExportRoundTripInfo when saving DOCX to HTML to retain editing capabilities after round-trip.",
       "workflow": "input-bootstrap",
       "outputs": [
         "docx",
         "html"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 17,
@@ -366,7 +383,7 @@
     {
       "id": 22,
       "file_name": "apply-a-find-and-replace-operation-on-a-word-document-before-exporting-it-to-excel-format.cs",
-      "task": "Apply a find‑and‑replace operation on a Word document before exporting it to Excel format.",
+      "task": "Apply a find-and-replace operation on a Word document before exporting it to Excel format.",
       "workflow": "save-options",
       "outputs": [
         "docx"
@@ -388,13 +405,13 @@
     {
       "id": 24,
       "file_name": "stream-a-large-pdf-directly-to-a-memorystream-as-pdf-a-2b-without-loading-the-entire-file.cs",
-      "task": "Stream a large PDF directly to a MemoryStream as PDF/A‑2b without loading the entire file into memory.",
+      "task": "Stream a large PDF directly to a MemoryStream as PDF/A-2b without loading the entire file into memory.",
       "workflow": "stream-response",
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 25,
@@ -411,7 +428,7 @@
     {
       "id": 26,
       "file_name": "load-an-epub-e-book-and-convert-it-to-pdf-while-preserving-chapter-headings-and-page-break.cs",
-      "task": "Load an EPUB e‑book and convert it to PDF while preserving chapter headings and page breaks.",
+      "task": "Load an EPUB e-book and convert it to PDF while preserving chapter headings and page breaks.",
       "workflow": "native-conversion-api",
       "outputs": [
         "pdf",
@@ -441,8 +458,8 @@
         "pdf",
         "xps"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 29,
@@ -459,7 +476,7 @@
     {
       "id": 30,
       "file_name": "load-a-docx-from-a-network-stream-and-convert-it-to-pdf-a-2u-compliance-using-pdfsaveoptio.cs",
-      "task": "Load a DOCX from a network stream and convert it to PDF/A‑2u compliance using PdfSaveOptions.",
+      "task": "Load a DOCX from a network stream and convert it to PDF/A-2u compliance using PdfSaveOptions.",
       "workflow": "stream-response",
       "outputs": [
         "pdf",
@@ -555,7 +572,7 @@
     {
       "id": 38,
       "file_name": "save-a-pdf-as-pdf-a-3b-with-embedded-xml-metadata-using-pdfsaveoptions-custommetadataexpor.cs",
-      "task": "Save a PDF as PDF/A‑3b with embedded XML metadata using PdfSaveOptions.CustomMetadataExport for archival.",
+      "task": "Save a PDF as PDF/A-3b with embedded XML metadata using PdfSaveOptions.CustomMetadataExport for archival.",
       "workflow": "input-bootstrap",
       "outputs": [
         "pdf",
@@ -592,7 +609,7 @@
     {
       "id": 41,
       "file_name": "batch-convert-a-set-of-rtf-files-to-pdf-a-1a-compliance-for-legal-document-archiving.cs",
-      "task": "Batch convert a set of RTF files to PDF/A‑1a compliance for legal document archiving.",
+      "task": "Batch convert a set of RTF files to PDF/A-1a compliance for legal document archiving.",
       "workflow": "batch-bootstrap",
       "outputs": [
         "pdf",
@@ -659,13 +676,13 @@
         "docx",
         "doc"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 47,
       "file_name": "batch-convert-html-files-to-epub-format-for-creating-a-collection-of-e-books-from-web-cont.cs",
-      "task": "Batch convert HTML files to EPUB format for creating a collection of e‑books from web content.",
+      "task": "Batch convert HTML files to EPUB format for creating a collection of e-books from web content.",
       "workflow": "batch-bootstrap",
       "outputs": [
         "html",
@@ -695,8 +712,8 @@
         "pdf",
         "html"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 50,
@@ -743,8 +760,8 @@
         "docx",
         "mhtml"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 54,
@@ -820,13 +837,13 @@
     {
       "id": 60,
       "file_name": "convert-a-pdf-to-a-searchable-pdf-a-2b-by-enabling-ocr-during-the-save-operation.cs",
-      "task": "Convert a PDF to a searchable PDF/A‑2b by enabling OCR during the save operation.",
+      "task": "Convert a PDF to a searchable PDF/A-2b by enabling OCR during the save operation.",
       "workflow": "save-options",
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 61,
@@ -843,7 +860,7 @@
     {
       "id": 62,
       "file_name": "load-a-pdf-and-convert-it-to-a-high-resolution-png-image-for-detailed-graphical-analysis.cs",
-      "task": "Load a PDF and convert it to a high‑resolution PNG image for detailed graphical analysis.",
+      "task": "Load a PDF and convert it to a high-resolution PNG image for detailed graphical analysis.",
       "workflow": "native-conversion-api",
       "outputs": [
         "pdf",
@@ -861,8 +878,8 @@
         "docx",
         "html"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 64,
@@ -879,13 +896,13 @@
     {
       "id": 65,
       "file_name": "save-a-pdf-as-a-pdf-a-1b-compliant-file-with-embedded-icc-color-profile-using-pdfsaveoptio.cs",
-      "task": "Save a PDF as a PDF/A‑1b compliant file with embedded ICC color profile using PdfSaveOptions.",
+      "task": "Save a PDF as a PDF/A-1b compliant file with embedded ICC color profile using PdfSaveOptions.",
       "workflow": "save-options",
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 66,
@@ -914,7 +931,7 @@
     {
       "id": 68,
       "file_name": "convert-a-pdf-containing-vector-graphics-to-high-resolution-png-to-retain-visual-fidelity.cs",
-      "task": "Convert a PDF containing vector graphics to high‑resolution PNG to retain visual fidelity.",
+      "task": "Convert a PDF containing vector graphics to high-resolution PNG to retain visual fidelity.",
       "workflow": "native-conversion-api",
       "outputs": [
         "pdf",
@@ -979,20 +996,20 @@
         "pdf",
         "html"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 74,
       "file_name": "save-a-pdf-as-a-pdf-a-3u-document-and-embed-an-associated-xml-file-for-enhanced-metadata.cs",
-      "task": "Save a PDF as a PDF/A‑3u document and embed an associated XML file for enhanced metadata.",
+      "task": "Save a PDF as a PDF/A-3u document and embed an associated XML file for enhanced metadata.",
       "workflow": "input-bootstrap",
       "outputs": [
         "pdf",
         "xml"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 75,
@@ -1015,8 +1032,8 @@
         "pdf",
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 77,
@@ -1033,7 +1050,7 @@
     {
       "id": 78,
       "file_name": "batch-convert-multiple-pdfs-to-high-resolution-png-images-with-600-dpi-for-print-ready-out.cs",
-      "task": "Batch convert multiple PDFs to high‑resolution PNG images with 600 DPI for print‑ready output.",
+      "task": "Batch convert multiple PDFs to high-resolution PNG images with 600 DPI for print-ready output.",
       "workflow": "batch-bootstrap",
       "outputs": [
         "pdf",
@@ -1045,7 +1062,7 @@
     {
       "id": 79,
       "file_name": "save-a-pdf-as-a-compressed-pdf-a-2u-file-by-enabling-image-compression-and-removing-unused.cs",
-      "task": "Save a PDF as a compressed PDF/A‑2u file by enabling image compression and removing unused objects.",
+      "task": "Save a PDF as a compressed PDF/A-2u file by enabling image compression and removing unused objects.",
       "workflow": "save-options",
       "outputs": [
         "pdf"
@@ -1079,14 +1096,14 @@
     {
       "id": 82,
       "file_name": "batch-process-docx-files-applying-a-company-wide-header-before-converting-each-to-pdf-for.cs",
-      "task": "Batch process DOCX files, applying a company‑wide header before converting each to PDF for distribution.",
+      "task": "Batch process DOCX files, applying a company-wide header before converting each to PDF for distribution.",
       "workflow": "batch-bootstrap",
       "outputs": [
         "pdf",
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 83,
@@ -1097,8 +1114,8 @@
         "pdf",
         "png"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 84,
@@ -1109,13 +1126,13 @@
         "pdf",
         "html"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 85,
       "file_name": "load-a-docx-from-a-sharepoint-stream-and-convert-it-to-pdf-for-on-demand-download.cs",
-      "task": "Load a DOCX from a SharePoint stream and convert it to PDF for on‑demand download.",
+      "task": "Load a DOCX from a SharePoint stream and convert it to PDF for on-demand download.",
       "workflow": "stream-response",
       "outputs": [
         "pdf",
@@ -1127,7 +1144,7 @@
     {
       "id": 86,
       "file_name": "batch-convert-a-set-of-pdf-files-to-epub-preserving-original-chapter-structure-for-e-readi.cs",
-      "task": "Batch convert a set of PDF files to EPUB, preserving original chapter structure for e‑reading devices.",
+      "task": "Batch convert a set of PDF files to EPUB, preserving original chapter structure for e-reading devices.",
       "workflow": "batch-bootstrap",
       "outputs": [
         "pdf",
@@ -1139,24 +1156,24 @@
     {
       "id": 87,
       "file_name": "apply-a-custom-pdf-a-2b-compliance-level-when-converting-doc-to-pdf-using-pdfsaveoptions.cs",
-      "task": "Apply a custom PDF/A‑2b compliance level when converting DOC to PDF using PdfSaveOptions.",
+      "task": "Apply a custom PDF/A-2b compliance level when converting DOC to PDF using PdfSaveOptions.",
+      "workflow": "save-options",
+      "outputs": [
+        "pdf"
+      ],
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
+    },
+    {
+      "id": 88,
+      "file_name": "convert-a-pdf-to-a-searchable-pdf-a-1a-by-enabling-ocr-and-setting-appropriate-compliance.cs",
+      "task": "Convert a PDF to a searchable PDF/A-1a by enabling OCR and setting appropriate compliance.",
       "workflow": "save-options",
       "outputs": [
         "pdf"
       ],
       "selected_engine": "llm",
       "winner": "llm"
-    },
-    {
-      "id": 88,
-      "file_name": "convert-a-pdf-to-a-searchable-pdf-a-1a-by-enabling-ocr-and-setting-appropriate-compliance.cs",
-      "task": "Convert a PDF to a searchable PDF/A‑1a by enabling OCR and setting appropriate compliance.",
-      "workflow": "save-options",
-      "outputs": [
-        "pdf"
-      ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
     },
     {
       "id": 89,
@@ -1167,8 +1184,8 @@
         "docx",
         "html"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 90,
@@ -1191,8 +1208,8 @@
         "pdf",
         "xps"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 92,
@@ -1210,14 +1227,14 @@
     {
       "id": 93,
       "file_name": "save-a-pdf-as-a-pdf-a-3u-file-and-attach-an-associated-xml-metadata-file-for-compliance.cs",
-      "task": "Save a PDF as a PDF/A‑3u file and attach an associated XML metadata file for compliance.",
+      "task": "Save a PDF as a PDF/A-3u file and attach an associated XML metadata file for compliance.",
       "workflow": "input-bootstrap",
       "outputs": [
         "pdf",
         "xml"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 94,
@@ -1234,7 +1251,7 @@
     {
       "id": 95,
       "file_name": "convert-a-pdf-to-a-high-resolution-jpeg-image-setting-jpegsaveoptions-compressionlevel-to.cs",
-      "task": "Convert a PDF to a high‑resolution JPEG image, setting JpegSaveOptions.CompressionLevel to Low for quality.",
+      "task": "Convert a PDF to a high-resolution JPEG image, setting JpegSaveOptions.CompressionLevel to Low for quality.",
       "workflow": "save-options",
       "outputs": [
         "pdf",
@@ -1301,8 +1318,8 @@
         "pdf",
         "png"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 101,
@@ -1333,7 +1350,7 @@
     {
       "id": 103,
       "file_name": "export-a-pdf-to-a-single-high-quality-jpeg-image-using-multipagelayout-horizontal-and-cust.cs",
-      "task": "Export a PDF to a single high‑quality JPEG image using MultiPageLayout.Horizontal and custom JpegQuality.",
+      "task": "Export a PDF to a single high-quality JPEG image using MultiPageLayout.Horizontal and custom JpegQuality.",
       "workflow": "save-options",
       "outputs": [
         "pdf",
@@ -1345,7 +1362,7 @@
     {
       "id": 104,
       "file_name": "export-a-pdf-as-a-series-of-png-files-using-pageset-to-export-only-even-numbered-pages.cs",
-      "task": "Export a PDF as a series of PNG files, using PageSet to export only even‑numbered pages.",
+      "task": "Export a PDF as a series of PNG files, using PageSet to export only even-numbered pages.",
       "workflow": "save-options",
       "outputs": [
         "pdf",
@@ -1363,8 +1380,8 @@
         "pdf",
         "png"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 106,
@@ -1375,8 +1392,8 @@
         "pdf",
         "md"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 107,
@@ -1399,8 +1416,20 @@
         "pdf",
         "tiff"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     }
-  ]
+  ],
+  "narrative": {
+    "overview": "The Conversion category demonstrates how to transform documents, images, and other media between supported formats using Aspose.Words 26.10.0. Verified examples cover HTML-to-PDF, image-to-PDF, PDF-to-JPG, PDF/UA compliance, HTML saving with font handling, round-trip HTML, font resource export, DOCX-to-MHTML, XLSX compression, and streaming PDF/A conversions.",
+    "purpose": "Provide concise, version-aware code snippets that load a source document or image, apply the appropriate Aspose.Words SaveFormat or SaveOptions, validate the generated output, and terminate without external dependencies, enabling an AI coding agent to generate reliable conversion solutions.",
+    "validation_priorities": [
+      "Confirm that the output file or stream is created and non-empty before the program terminates."
+    ],
+    "maintenance_notes": [
+      "Upgrade to newer Aspose.Words releases when additional API members become available and adjust code accordingly.",
+      "After each code change, recompile and verify that all referenced types and members exist in the current package version.",
+      "Keep the input-bootstrap logic synchronized with the conversion workflow to ensure examples remain self-contained."
+    ]
+  }
 }

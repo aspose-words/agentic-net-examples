@@ -11,24 +11,26 @@ public class Program
         Document source = new Document();
         DocumentBuilder builder = new DocumentBuilder(source);
         builder.Font.Name = "Arial";
-        builder.Writeln("This is a sample document using Arial font.");
+        builder.Writeln("This is a sample document using a custom font.");
         source.Save("input.docx", SaveFormat.Docx);
 
         // Load the DOCX document.
         Document doc = new Document("input.docx");
 
         // Configure PDF save options to embed all fonts.
-        // The enum value for embedding all fonts is the first value (0) in PdfFontEmbeddingMode.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions
-        {
-            FontEmbeddingMode = (PdfFontEmbeddingMode)0 // EmbedAllFonts
-        };
+        PdfSaveOptions saveOptions = new PdfSaveOptions();
 
-        // Save as PDF with the specified options.
-        doc.Save("output.pdf", pdfOptions);
+        // The enum value for embedding all fonts may be named EmbedAll in some library versions.
+        // Adjust the value according to the available enum members.
+        saveOptions.FontEmbeddingMode = PdfFontEmbeddingMode.EmbedAll;
 
-        // Validate that the PDF was created.
+        // Save as PDF with embedded fonts.
+        doc.Save("output.pdf", saveOptions);
+
+        // Verify that the PDF was created.
         if (!File.Exists("output.pdf"))
+        {
             throw new InvalidOperationException("Expected output PDF was not created.");
+        }
     }
 }
