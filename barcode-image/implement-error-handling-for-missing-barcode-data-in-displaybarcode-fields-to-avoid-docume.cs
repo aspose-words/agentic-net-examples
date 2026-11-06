@@ -2,58 +2,76 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
+using Aspose.BarCode.Generation;
+
+public sealed class CustomBarcodeGenerator : IBarcodeGenerator
+{
+    public Stream GetBarcodeImage(Aspose.Words.Fields.BarcodeParameters parameters)
+    {
+        var stream = new MemoryStream();
+        using (var generator = new BarcodeGenerator(EncodeTypes.Code128, parameters.BarcodeValue))
+        {
+            generator.Save(stream, BarCodeImageFormat.Png);
+        }
+        stream.Position = 0;
+        return stream;
+    }
+
+    public Stream GetOldBarcodeImage(Aspose.Words.Fields.BarcodeParameters parameters)
+    {
+        return GetBarcodeImage(parameters);
+    }
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a DISPLAYBARCODE field with valid data.
-        FieldDisplayBarcode validField = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
-        validField.BarcodeType = "CODE39";
-        validField.BarcodeValue = "12345ABCDE";
-        validField.AddStartStopChar = true;
-        builder.Writeln();
-
         // Insert a DISPLAYBARCODE field with missing barcode value.
-        FieldDisplayBarcode missingField = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
-        missingField.BarcodeType = "CODE39";
-        // Intentionally leave BarcodeValue empty to simulate missing data.
-        missingField.BarcodeValue = string.Empty;
-        missingField.AddStartStopChar = true;
-        builder.Writeln();
+        FieldDisplayBarcode field1 = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
+        field1.BarcodeType = "CODE128";
+        field1.BarcodeValue = ""; // Missing data.
+        field1.ForegroundColor = "0x000000";
+        field1.BackgroundColor = "0xFFFFFF";
 
-        // Update fields to generate initial results.
-        doc.UpdateFields();
+        // Insert another DISPLAYBARCODE field with proper data.
+        FieldDisplayBarcode field2 = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
+        field2.BarcodeType = "QR";
+        field2.BarcodeValue = "SampleData";
+        field2.ForegroundColor = "0x000000";
+        field2.BackgroundColor = "0xFFFFFF";
 
-        // Iterate over all fields and handle missing barcode data.
+        // Register custom barcode generator for rendered output (PDF).
+        doc.FieldOptions.BarcodeGenerator = new CustomBarcodeGenerator();
+
+        // Validate barcode fields and provide fallback values for missing data.
         foreach (Field field in doc.Range.Fields)
         {
-            if (field is FieldDisplayBarcode barcodeField)
+            if (field.Type == FieldType.FieldDisplayBarcode)
             {
-                // If the barcode value is null or empty, replace it with a placeholder.
+                var barcodeField = (FieldDisplayBarcode)field;
                 if (string.IsNullOrWhiteSpace(barcodeField.BarcodeValue))
                 {
-                    // Set a default value that will not cause generation errors.
-                    barcodeField.BarcodeValue = "0";
-                    // Mark the field as dirty so it will be re‑evaluated.
-                    barcodeField.IsDirty = true;
+                    barcodeField.BarcodeValue = "N/A";
+                    if (string.IsNullOrWhiteSpace(barcodeField.BarcodeType))
+                    {
+                        barcodeField.BarcodeType = "CODE128";
+                    }
                 }
             }
         }
 
-        // Re‑update fields after fixing missing data.
+        // Update fields to render barcodes.
         doc.UpdateFields();
 
-        // Save the document with error handling.
+        // Save the document as PDF.
         try
         {
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
-            doc.Save(outputPath);
-            Console.WriteLine("Document saved successfully to: " + outputPath);
+            doc.Save("output.pdf");
         }
         catch (Exception ex)
         {

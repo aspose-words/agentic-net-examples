@@ -4,55 +4,55 @@
     "slug": "barcode-image",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Use custom barcode generator by default for non-DOCX outputs and for DOCX tasks with advanced/rendered/generator indications. Use plain barcode fields only for simple Word-field-only DOCX scenarios.",
+    "preferred_workflow": "Use the typed FieldDisplayBarcode API for all Word-field scenarios, call doc.UpdateFields() after setting properties, and register a custom IBarcodeGenerator for any rendered output such as PDF, PNG, or high-resolution images. Reserve plain DISPLAYBARCODE string switches for the limited Word-only DOCX cases that do not require rendering.",
     "required_packages": [
       "Aspose.Words",
       "Aspose.BarCode",
       "Aspose.Drawing.Common"
     ],
     "package_versions": {
-      "Aspose.Words": "26.9.0",
-      "Aspose.BarCode": "26.8.0",
-      "Aspose.Drawing.Common": "26.8.0"
+      "Aspose.Words": "26.10.0",
+      "Aspose.BarCode": "26.10.0",
+      "Aspose.Drawing.Common": "26.10.0"
     },
     "required_namespaces": [
-      "System",
       "Aspose.Words",
       "Aspose.Words.Fields",
+      "System",
       "System.IO",
-      "Aspose.Drawing",
-      "Aspose.Words.Drawing",
-      "Aspose.Words.Replacing",
       "Aspose.BarCode.Generation",
+      "Aspose.Drawing",
+      "Aspose.Words.Replacing",
       "Aspose.Drawing.Imaging",
-      "Aspose.Words.Saving",
-      "Aspose.Words.BuildingBlocks",
       "System.Collections.Generic",
-      "Aspose.Drawing.Drawing2D",
-      "Aspose.BarCode",
-      "System.Threading.Tasks"
+      "System.Text",
+      "Aspose.Words.Loading",
+      "Aspose.Words.Saving",
+      "System.Threading.Tasks",
+      "Aspose.Words.Drawing"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
       "FieldType",
       "FieldDisplayBarcode",
-      "Directory",
-      "Path",
-      "NodeType",
       "MemoryStream",
-      "Shape",
       "BarcodeParameters",
       "IBarcodeGenerator",
       "File",
+      "Path",
       "Font",
-      "SaveFormat",
       "Range",
-      "Field",
       "FindReplaceOptions",
+      "Field",
+      "LoadOptions",
+      "SaveFormat",
+      "Directory",
+      "NodeType",
+      "Shape",
       "ImageData",
-      "Node",
-      "PdfSaveOptions"
+      "PdfSaveOptions",
+      "Node"
     ]
   },
   "stats": {
@@ -64,79 +64,64 @@
     }
   },
   "rules_summary": {
-    "absolute_ambiguity_bans": [
-      "Never use unqualified BarcodeParameters anywhere in this category. Always write Aspose.Words.Fields.BarcodeParameters.",
-      "Never use unqualified Font anywhere in this category. Always write Aspose.Drawing.Font.",
-      "Never use unqualified Color anywhere in this category for drawing or barcode color conversion logic. Always write Aspose.Drawing.Color.",
-      "Never use System.Drawing.Font, System.Drawing.Color, System.Drawing.Bitmap, or other System.Drawing types in this category.",
-      "If an API name can be ambiguous, use the fully qualified type name instead of adding a broad using directive."
+    "strict_api_bans": [
+      "Never reference Font, Color, or BarcodeParameters without their full Aspose.Drawing or Aspose.Words.Fields qualification.",
+      "Do not use builder.InsertField with a raw DISPLAYBARCODE string or any string-based field switches.",
+      "Never rely on the DISPLAYBARCODE field rendering path when the target format is PDF or an image."
     ],
-    "strict_barcode_field_usage_rules": [
-      "Do NOT use builder.InsertField with DISPLAYBARCODE string syntax.",
-      "Do NOT use string-based DISPLAYBARCODE fields.",
-      "Always create barcode fields using FieldDisplayBarcode object only.",
-      "Always set properties explicitly: BarcodeType, BarcodeValue, colors, scaling etc.",
-      "Always call doc.UpdateFields() after setting properties."
+    "canonical_patterns": [
+      "Create a barcode field via DocumentBuilder.InsertField(FieldType.FieldDisplayBarcode, true) and cast to FieldDisplayBarcode.",
+      "Assign barcode properties (BarcodeType, BarcodeValue, ForegroundColor, BackgroundColor, ScalingFactor, SymbolRotation) directly on the FieldDisplayBarcode instance.",
+      "Register a custom IBarcodeGenerator on doc.FieldOptions.BarcodeGenerator for all non-DOCX rendered outputs."
     ],
-    "custom_barcode_generator_enforcement_rules": [
-      "If output format is PDF, image, or rendered output, ALWAYS use CustomBarcodeGenerator.",
-      "If barcode type is not natively supported by MS Word fields, ALWAYS use CustomBarcodeGenerator.",
-      "If task involves validation, extraction, or rendering, ALWAYS use CustomBarcodeGenerator.",
-      "Never rely on DISPLAYBARCODE field rendering for PDF output."
-    ],
-    "typed_construction_rules": [
-      "When a typed barcode field is required, create it via DocumentBuilder.InsertField(FieldType.FieldDisplayBarcode, true) and cast to FieldDisplayBarcode.",
-      "Do not instantiate FieldDisplayBarcode directly with a constructor.",
-      "Do not append FieldDisplayBarcode directly as a Node."
-    ],
-    "typed_parameter_rules": [
-      "When generator workflow is required, prefer typed FieldDisplayBarcode property assignment over raw DISPLAYBARCODE string switch syntax.",
-      "For generator-based verification or direct generator calls, create an Aspose.Words.Fields.BarcodeParameters instance explicitly and populate matching values.",
-      "Do not rely on raw field switch strings like \\f, \\b, or similar as the primary implementation pattern for generator-required scenarios."
+    "nullable_warning_prevention": [
+      "Always check that BarcodeValue and BarcodeType are non-empty before updating fields.",
+      "Guard file-system paths with existence checks before loading templates or assets.",
+      "Validate that enum values used with EncodeTypes or SymbologyEncodeType exist in the referenced Aspose.BarCode version."
     ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "Ambiguous Font type",
-      "seen_count": 3,
-      "symptom": "Compiler error: 'Font' is an ambiguous reference between Aspose.Drawing.Font and Aspose.Words.Font.",
-      "fix": "Always use Aspose.Drawing.Font explicitly in DrawErrorImage and any barcode-image drawing code."
+      "pattern": "Ambiguous type references",
+      "symptom": "Compiler reports an ambiguous reference for Font or BarcodeParameters.",
+      "cause": "Both Aspose.Drawing and Aspose.Words (or Aspose.BarCode) define types with the same name, and the code uses an unqualified identifier.",
+      "fix": "Qualify the type with its full namespace (Aspose.Drawing.Font, Aspose.Words.Fields.BarcodeParameters) everywhere barcode code is written.",
+      "prevention": "Avoid adding broad using directives for conflicting namespaces; always use fully qualified names for Font, Color, and BarcodeParameters."
     },
     {
-      "pattern": "Ambiguous BarcodeParameters type",
-      "seen_count": 1,
-      "symptom": "Compiler error: 'BarcodeParameters' is ambiguous between Aspose.Words.Fields and Aspose.BarCode.Generation.",
-      "fix": "Always use Aspose.Words.Fields.BarcodeParameters in IBarcodeGenerator signatures and in any verification object construction."
+      "pattern": "Use of non-existent FieldDisplayBarcode members",
+      "symptom": "CS1061 errors such as \"FieldDisplayBarcode does not contain a definition for 'Height'\" or \"'Switches'\".",
+      "cause": "Legacy examples rely on field-code string switches that are not exposed as properties on the typed FieldDisplayBarcode class.",
+      "fix": "Set only the supported typed properties (BarcodeType, BarcodeValue, ForegroundColor, BackgroundColor, ScalingFactor, SymbolRotation) and let the custom generator handle size and orientation.",
+      "prevention": "Consult the Aspose.Words API reference for FieldDisplayBarcode and remove any code that accesses undefined members."
     },
     {
-      "pattern": "Incorrect FieldDisplayBarcode.BarcodeParameters usage",
-      "seen_count": 1,
-      "symptom": "Compiler error: FieldDisplayBarcode does not expose a BarcodeParameters property.",
-      "fix": "Set typed FieldDisplayBarcode properties directly. When a parameter object is needed, create a new Aspose.Words.Fields.BarcodeParameters instance instead of reading a non-existent field property."
+      "pattern": "Incorrect namespace usage",
+      "symptom": "CS0234 errors indicating that namespaces such as Aspose.Words.Building, Aspose.Words.Nodes, or Aspose.Words.Builder do not exist.",
+      "cause": "Typographical errors or outdated documentation introduced invalid namespace names.",
+      "fix": "Replace the incorrect namespaces with the correct ones (e.g., Aspose.Words.Loading, Aspose.Words.Saving, Aspose.Words.Replacing).",
+      "prevention": "Reference the official Aspose.Words documentation for the exact namespace hierarchy before adding using directives."
     },
     {
-      "pattern": "Wrong Aspose.Drawing FontStyle / constructor usage",
-      "seen_count": 1,
-      "symptom": "Compiler/runtime errors around Aspose.Drawing.Drawing2D.FontStyle or invalid Aspose.Drawing.Font constructor arguments.",
-      "fix": "Use new Aspose.Drawing.Font(\"Microsoft Sans Serif\", 8f, Aspose.Drawing.FontStyle.Regular) and avoid Aspose.Drawing.Drawing2D.FontStyle."
+      "pattern": "Invalid EncodeTypes enum members",
+      "symptom": "CS0117 or CS0722 errors stating that EncodeTypes does not contain definitions such as Code39Standard or that EncodeTypes is used as a static type.",
+      "cause": "The code uses obsolete or non-existent enum members from an older version of Aspose.BarCode.",
+      "fix": "Use the current enum members (e.g., EncodeTypes.Code39, EncodeTypes.QR, SymbologyEncodeType) that exist in version 26.10.0.",
+      "prevention": "Verify enum members against the installed Aspose.BarCode package version and avoid hard-coding values that are not present."
     },
     {
-      "pattern": "Invalid EncodeTypes member",
-      "seen_count": 1,
-      "symptom": "Compiler error: EncodeTypes does not contain a definition for Code39Standard.",
-      "fix": "Use only valid Aspose.BarCode.Generation.EncodeTypes members and keep the Word-to-BarCode mapping method constrained to supported values."
-    },
-    {
-      "pattern": "Verifier missing input asset/path",
-      "seen_count": 2,
-      "symptom": "Runtime failures caused by missing Template.docx or missing input directories during sandbox verification.",
-      "fix": "Create temporary sample input assets inside the example before loading them, or guard file-system input scenarios with existence checks and bootstrap sample files/folders."
+      "pattern": "Missing input assets at runtime",
+      "symptom": "FileNotFoundException or DirectoryNotFoundException when loading template.docx, input.docx, or processing a folder of documents.",
+      "cause": "Sample code assumes external files exist in the execution directory without creating or checking them.",
+      "fix": "Create temporary sample files programmatically before loading, or add existence checks and fallback sample content.",
+      "prevention": "Always bootstrap required assets in examples or guard file-system operations with File.Exists / Directory.Exists checks."
     },
     {
       "pattern": "Transient MCP gateway timeout",
-      "seen_count": 2,
-      "symptom": "504 Gateway Time-out during generation, not a code-quality issue.",
-      "fix": "Treat as infrastructure noise. Re-run generation or allow the alternate engine result when the produced example is otherwise verified."
+      "symptom": "504 Gateway Time-out errors during generation.",
+      "cause": "Intermittent network or service availability issues unrelated to the source code.",
+      "fix": "Retry the generation or allow the alternative engine to produce the output when the primary engine fails.",
+      "prevention": "Implement retry logic with exponential back-off for network-bound operations; this does not require code changes to the barcode logic."
     }
   ],
   "examples": [
@@ -148,8 +133,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 2,
@@ -159,8 +144,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 3,
@@ -170,8 +155,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 4,
@@ -181,8 +166,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 5,
@@ -192,8 +177,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 6,
@@ -203,8 +188,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 7,
@@ -225,8 +210,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 9,
@@ -236,8 +221,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 10,
@@ -247,8 +232,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 11,
@@ -258,8 +243,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 12,
@@ -269,8 +254,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 13,
@@ -280,8 +265,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 14,
@@ -291,19 +276,19 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 15,
       "file_name": "configure-the-barcode-generator-to-produce-high-resolution-images-suitable-for-large-forma.cs",
-      "task": "Configure the barcode generator to produce high‑resolution images suitable for large‑format PDF printing.",
+      "task": "Configure the barcode generator to produce high-resolution images suitable for large-format PDF printing.",
       "workflow": "custom-generator",
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 16,
@@ -313,8 +298,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 17,
@@ -324,8 +309,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 18,
@@ -336,8 +321,8 @@
         "docx",
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 19,
@@ -347,8 +332,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 20,
@@ -358,8 +343,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 21,
@@ -370,8 +355,8 @@
         "docx",
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 22,
@@ -382,8 +367,8 @@
         "docx",
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 23,
@@ -393,8 +378,8 @@
       "outputs": [
         "rtf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 24,
@@ -404,8 +389,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 25,
@@ -415,8 +400,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 26,
@@ -426,8 +411,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 27,
@@ -437,8 +422,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 28,
@@ -448,8 +433,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 29,
@@ -459,8 +444,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 30,
@@ -471,8 +456,19 @@
         "docx",
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     }
-  ]
+  ],
+  "narrative": {
+    "overview": "The BarCode Image category demonstrates how to generate and render barcodes in Aspose.Words documents using the typed FieldDisplayBarcode API and a custom IBarcodeGenerator implementation. Verified examples cover inserting barcode fields, configuring visual properties, handling orientation, caching images, and exporting to PDF with high-resolution output.",
+    "purpose": "Provide an AI coding assistant with clear guidance on creating, configuring, and rendering barcode fields in Aspose.Words documents while avoiding common compilation and runtime pitfalls, and ensuring that generated PDFs contain correctly rendered barcode images.",
+    "validation_priorities": [
+      "Compile the sample with the exact package versions listed; any ambiguous type or missing member error must be resolved before runtime testing."
+    ],
+    "maintenance_notes": [
+      "Update the fully qualified type references if future Aspose releases introduce new conflicting namespaces.",
+      "Periodically verify that the custom IBarcodeGenerator implementation still matches the latest Aspose.BarCode API signatures."
+    ]
+  }
 }
