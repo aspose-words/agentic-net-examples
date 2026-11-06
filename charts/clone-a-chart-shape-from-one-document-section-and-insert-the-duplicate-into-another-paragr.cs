@@ -11,24 +11,21 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart into the first section.
-        Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
-        if (!chartShape.HasChart)
-            throw new InvalidOperationException("The inserted shape does not contain a chart.");
+        // Insert a column chart into the first paragraph.
+        Shape originalChart = builder.InsertChart(ChartType.Column, 432, 252);
 
-        // Insert a section break to start a new section.
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
+        // Add a paragraph that will contain the cloned chart.
+        builder.Writeln(); // Paragraph break.
+        builder.Writeln("Paragraph that will contain the cloned chart:");
 
-        // Write a paragraph that will hold the cloned chart.
-        builder.Writeln("Cloned chart inserted below:");
+        // Clone the original chart shape (deep clone).
+        Shape clonedChart = (Shape)originalChart.Clone(true);
 
-        // Clone the original chart shape.
-        Shape clonedChartShape = (Shape)chartShape.Clone(true);
+        // Move the builder to the paragraph we just added.
+        builder.MoveTo(builder.CurrentParagraph);
 
         // Insert the cloned chart into the current paragraph.
-        Paragraph currentParagraph = builder.CurrentParagraph 
-            ?? throw new InvalidOperationException("Current paragraph is null.");
-        currentParagraph.AppendChild(clonedChartShape);
+        builder.InsertNode(clonedChart);
 
         // Save the document.
         doc.Save("ClonedChart.docx");

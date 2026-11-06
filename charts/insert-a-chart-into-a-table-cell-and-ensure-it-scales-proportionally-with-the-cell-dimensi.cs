@@ -1,66 +1,49 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
 using Aspose.Words.Tables;
 
-public class ChartInTableExample
+public class Program
 {
     public static void Main()
     {
-        // Create a new document and a DocumentBuilder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
+        // Start a table and insert the first cell where the chart will be placed.
         builder.StartTable();
-
-        // First cell – just some text.
-        builder.InsertCell();
-        builder.Write("Sales Data");
-
-        // Second cell – will contain the chart.
         builder.InsertCell();
 
-        // Define the original chart size (points).
-        const double originalChartWidth = 300.0;
-        const double originalChartHeight = 180.0;
+        // Obtain the current cell to set its dimensions.
+        Cell? cell = builder.CurrentParagraph?.ParentNode as Cell;
+        if (cell == null)
+            throw new InvalidOperationException("Current node is not a table cell.");
 
-        // Desired cell width (points). Height will be calculated to keep the aspect ratio.
-        const double desiredCellWidth = 400.0;
+        // Define the desired width of the cell (in points).
+        const double cellWidth = 300.0;
+        cell.CellFormat.Width = cellWidth;
 
-        // Calculate scaling factor and the new chart height to keep the proportion.
-        double scale = desiredCellWidth / originalChartWidth;
-        double scaledChartHeight = originalChartHeight * scale;
+        // Insert a column chart into the cell.
+        Shape chartShape = builder.InsertChart(ChartType.Column, cellWidth, 180.0);
 
-        // Set the cell width for the current cell.
-        Cell? chartCell = builder.CurrentParagraph?.ParentNode as Cell;
-        if (chartCell != null)
-        {
-            chartCell.CellFormat.Width = desiredCellWidth;
-        }
+        // Ensure the shape actually contains a chart.
+        if (!chartShape.HasChart)
+            throw new InvalidOperationException("Inserted shape does not contain a chart.");
 
-        // Insert the chart with the original size; we'll resize it after insertion.
-        Shape chartShape = builder.InsertChart(ChartType.Column, originalChartWidth, originalChartHeight);
         Chart chart = chartShape.Chart;
 
-        // Populate the chart with sample data.
-        chart.Series.Clear();
-        chart.Series.Add("Q1", new double[] { 120, 150, 180 });
-        chart.Series.Add("Q2", new double[] { 130, 160, 190 });
-
-        // Resize the chart to match the cell dimensions while preserving the aspect ratio.
-        chartShape.Width = desiredCellWidth;
-        chartShape.Height = scaledChartHeight;
+        // Preserve the original aspect ratio of the chart and scale it to the cell width.
+        double originalRatio = chartShape.Height / chartShape.Width;
+        chartShape.Width = cellWidth;
+        chartShape.Height = chartShape.Width * originalRatio;
 
         // End the row and the table.
         builder.EndRow();
         builder.EndTable();
 
         // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ChartInTable.docx");
-        doc.Save(outputPath);
-        Console.WriteLine($"Document saved to: {outputPath}");
+        doc.Save("ChartInTable.docx");
     }
 }

@@ -1,7 +1,7 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Drawing.Charts;
+using Aspose.Words.Drawing.Charts;   // Required for Chart, ChartType, etc.
 
 public class Program
 {
@@ -11,17 +11,17 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart with specific dimensions.
+        // Insert a column chart with the desired size.
         Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
         Chart chart = chartShape.Chart;
 
-        // Remove any default series that may exist.
+        // Remove any automatically added default series.
         chart.Series.Clear();
 
-        // Add a labeled series using the overload that accepts a name and an array of values.
-        chart.Series.Add("Quarterly Sales", new double[] { 15000, 20000, 25000, 30000 });
+        // Add a labeled series in a single call using the overload that accepts a name and values.
+        chart.Series.Add("Quarterly Sales", new double[] { 15000, 20000, 18000, 22000 });
 
-        // Save the document to the working directory.
+        // Save the document.
         doc.Save("LabeledSeriesChart.docx");
     }
 }

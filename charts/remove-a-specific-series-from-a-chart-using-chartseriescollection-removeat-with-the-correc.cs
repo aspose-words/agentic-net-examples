@@ -1,10 +1,9 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
 
-public class RemoveChartSeriesExample
+public class Program
 {
     public static void Main()
     {
@@ -14,32 +13,32 @@ public class RemoveChartSeriesExample
 
         // Insert a column chart into the document.
         Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
+
+        // Ensure the shape actually contains a chart.
         if (!chartShape.HasChart)
-            throw new InvalidOperationException("The inserted shape does not contain a chart.");
+            return;
 
         // Access the chart object.
         Chart chart = chartShape.Chart;
 
-        // Clear any default series that Aspose.Words may have added.
+        // Remove any default series that were added automatically.
         chart.Series.Clear();
 
-        // Add three series to the chart.
+        // Add three series with sample data.
         chart.Series.Add("Series 1", new double[] { 10, 20, 30 });
         chart.Series.Add("Series 2", new double[] { 15, 25, 35 });
         chart.Series.Add("Series 3", new double[] { 12, 22, 32 });
 
-        // Index of the series to remove (e.g., remove the second series).
+        // Define the index of the series to remove (e.g., the second series).
         int removeIndex = 1;
 
-        // Validate the index before removal.
-        if (removeIndex < 0 || removeIndex >= chart.Series.Count)
-            throw new ArgumentOutOfRangeException(nameof(removeIndex), "Invalid series index.");
+        // Validate the index before attempting removal.
+        if (removeIndex >= 0 && removeIndex < chart.Series.Count)
+        {
+            chart.Series.RemoveAt(removeIndex);
+        }
 
-        // Remove the series at the specified index.
-        chart.Series.RemoveAt(removeIndex);
-
-        // Save the document to the working directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ChartSeriesRemoved.docx");
-        doc.Save(outputPath);
+        // Save the modified document.
+        doc.Save("remove-series.docx");
     }
 }
