@@ -1,113 +1,83 @@
 using System;
 using System.IO;
-using System.Collections.Concurrent;
-using System.Text;
 using System.Threading.Tasks;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Newtonsoft.Json;
 
-public class Program
+public class ParallelExtractionExample
 {
     public static void Main()
     {
-        // Prepare directories
-        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "ExtractionDemo");
-        string inputDir = Path.Combine(baseDir, "Input");
-        string outputDir = Path.Combine(baseDir, "Output");
+        // Prepare input and output directories.
+        string baseDir = Directory.GetCurrentDirectory();
+        string inputDir = Path.Combine(baseDir, "InputDocs");
+        string outputDir = Path.Combine(baseDir, "OutputDocs");
         Directory.CreateDirectory(inputDir);
         Directory.CreateDirectory(outputDir);
 
-        // Create sample documents
-        int documentCount = 3;
-        for (int i = 1; i <= documentCount; i++)
+        // Create a set of sample documents.
+        int documentCount = 5;
+        for (int i = 0; i < documentCount; i++)
         {
-            CreateSampleDocument(Path.Combine(inputDir, $"doc{i}.docx"), i);
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln($"Document {i} - Intro paragraph.");
+            builder.Writeln($"Document {i} - Target paragraph 1.");
+            builder.Writeln($"Document {i} - Target paragraph 2.");
+            builder.Writeln($"Document {i} - End paragraph.");
+            string filePath = Path.Combine(inputDir, $"doc{i}.docx");
+            doc.Save(filePath);
         }
 
-        // Collection for extraction results
-        var results = new ConcurrentBag<ExtractionResult>();
+        // Gather all input files.
+        string[] inputFiles = Directory.GetFiles(inputDir, "*.docx");
 
-        // Parallel processing of documents
-        string[] files = Directory.GetFiles(inputDir, "*.docx");
-        Parallel.ForEach(files, filePath =>
+        // Process each document in parallel, extracting a specific range of paragraphs.
+        Parallel.ForEach(inputFiles, inputFile =>
         {
-            Document doc = new Document(filePath);
-            string extractedText = ExtractTextBetweenBookmarks(doc, "Start", "End");
+            // Load the source document.
+            Document source = new Document(inputFile);
 
-            string fileName = Path.GetFileNameWithoutExtension(filePath);
-            string outPath = Path.Combine(outputDir, $"{fileName}_extracted.txt");
-            File.WriteAllText(outPath, extractedText ?? string.Empty);
+            // Identify the paragraphs to extract (indexes 1 and 2).
+            Paragraph startParagraph = source.FirstSection?.Body?.Paragraphs[1];
+            Paragraph endParagraph = source.FirstSection?.Body?.Paragraphs[2];
+            if (startParagraph == null || endParagraph == null)
+                throw new InvalidOperationException($"Required paragraphs not found in {Path.GetFileName(inputFile)}.");
 
-            if (!File.Exists(outPath))
-                throw new InvalidOperationException($"Failed to create output file {outPath}");
+            // Create a new empty document that will hold the extracted range.
+            Document extracted = new Document();
+            extracted.RemoveAllChildren(); // Remove the default empty section.
+            Section section = new Section(extracted);
+            extracted.AppendChild(section);
+            Body body = new Body(extracted);
+            section.AppendChild(body);
 
-            results.Add(new ExtractionResult
-            {
-                DocumentName = fileName,
-                ExtractedText = extractedText ?? string.Empty,
-                OutputPath = outPath
-            });
+            // Use a NodeImporter to import nodes from the source document into the destination document.
+            NodeImporter importer = new NodeImporter(source, extracted, ImportFormatMode.KeepSourceFormatting);
+            Node importedStart = importer.ImportNode(startParagraph, true);
+            Node importedEnd = importer.ImportNode(endParagraph, true);
+
+            // Append the imported paragraphs to the new document's body.
+            body.AppendChild(importedStart);
+            body.AppendChild(importedEnd);
+
+            // Define output file paths.
+            string baseName = Path.GetFileNameWithoutExtension(inputFile);
+            string outputDocPath = Path.Combine(outputDir, $"{baseName}_extracted.docx");
+            string outputTxtPath = Path.Combine(outputDir, $"{baseName}_extracted.txt");
+
+            // Save the extracted document.
+            extracted.Save(outputDocPath);
+
+            // Also write the extracted plain text to a .txt file.
+            string extractedText = extracted.GetText();
+            File.WriteAllText(outputTxtPath, extractedText);
+
+            // Verify that the output files were created.
+            if (!File.Exists(outputDocPath) || !File.Exists(outputTxtPath))
+                throw new InvalidOperationException($"Extraction output not created for {baseName}.");
         });
 
-        // Write summary JSON
-        string summaryPath = Path.Combine(outputDir, "summary.json");
-        string json = JsonConvert.SerializeObject(results, Formatting.Indented);
-        File.WriteAllText(summaryPath, json);
-        if (!File.Exists(summaryPath))
-            throw new InvalidOperationException("Summary JSON file was not created.");
-    }
-
-    private static void CreateSampleDocument(string path, int index)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        builder.Writeln($"Document {index} - Intro paragraph.");
-
-        builder.StartBookmark("Start");
-        builder.Writeln($"Document {index} - Content inside Start bookmark.");
-        builder.EndBookmark("Start");
-
-        builder.StartBookmark("End");
-        builder.Writeln($"Document {index} - Content inside End bookmark.");
-        builder.EndBookmark("End");
-
-        builder.Writeln($"Document {index} - Closing paragraph.");
-
-        doc.Save(path);
-        if (!File.Exists(path))
-            throw new InvalidOperationException($"Failed to create sample document {path}");
-    }
-
-    private static string ExtractTextBetweenBookmarks(Document doc, string startBookmarkName, string endBookmarkName)
-    {
-        Bookmark start = doc.Range.Bookmarks[startBookmarkName];
-        Bookmark end = doc.Range.Bookmarks[endBookmarkName];
-        if (start == null || end == null)
-            throw new InvalidOperationException("Required bookmarks not found.");
-
-        // Collect text from nodes that appear after the start bookmark and before the end bookmark.
-        Node current = start.BookmarkEnd.NextSibling;
-        var sb = new StringBuilder();
-
-        while (current != null && current != end.BookmarkStart)
-        {
-            if (current.NodeType == NodeType.Paragraph)
-                sb.Append(((Paragraph)current).GetText());
-            else if (current.NodeType == NodeType.Table)
-                sb.Append(((Table)current).GetText());
-
-            current = current.NextSibling;
-        }
-
-        return sb.ToString();
-    }
-
-    private class ExtractionResult
-    {
-        public string DocumentName { get; set; }
-        public string ExtractedText { get; set; }
-        public string OutputPath { get; set; }
+        // Extraction completed.
     }
 }

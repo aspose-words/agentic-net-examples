@@ -1,7 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Notes;
 
@@ -9,92 +7,85 @@ public class Program
 {
     public static void Main()
     {
-        // -------------------------------------------------
-        // 1. Create a sample document containing footnotes.
-        // -------------------------------------------------
-        Document sampleDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-
-        builder.Writeln("Paragraph 0 - introductory text.");
+        // Create a sample document with footnotes.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Paragraph 1 with a footnote.
-        builder.Writeln("Paragraph 1 with a footnote reference.");
-        Footnote footnote1 = new Footnote(sampleDoc, FootnoteType.Footnote);
-        Paragraph footnotePara1 = new Paragraph(sampleDoc);
-        footnotePara1.AppendChild(new Run(sampleDoc, "First footnote content."));
-        footnote1.AppendChild(footnotePara1);
-        builder.CurrentParagraph.AppendChild(footnote1);
+        builder.Writeln("Paragraph 1.");
+        InsertFootnote(builder, "Footnote 1 content.");
 
-        // Paragraph 2 without footnote.
-        builder.Writeln("Paragraph 2 - no footnote here.");
+        // Paragraph 2 with a footnote.
+        builder.Writeln("Paragraph 2.");
+        InsertFootnote(builder, "Footnote 2 content.");
 
-        // Paragraph 3 with another footnote.
-        builder.Writeln("Paragraph 3 with a second footnote reference.");
-        Footnote footnote2 = new Footnote(sampleDoc, FootnoteType.Footnote);
-        Paragraph footnotePara2 = new Paragraph(sampleDoc);
-        footnotePara2.AppendChild(new Run(sampleDoc, "Second footnote content."));
-        footnote2.AppendChild(footnotePara2);
-        builder.CurrentParagraph.AppendChild(footnote2);
+        // Paragraph 3 without a footnote.
+        builder.Writeln("Paragraph 3.");
 
-        // Paragraph 4 - final.
-        builder.Writeln("Paragraph 4 - end of document.");
+        // Paragraph 4 with a footnote.
+        builder.Writeln("Paragraph 4.");
+        InsertFootnote(builder, "Footnote 4 content.");
 
-        // Save the sample document locally.
-        const string inputFileName = "footnote-sample.docx";
-        sampleDoc.Save(inputFileName);
+        // Save the source document.
+        string sourcePath = "footnote-input.docx";
+        doc.Save(sourcePath);
 
-        // -------------------------------------------------
-        // 2. Load the document and define extraction range.
-        // -------------------------------------------------
-        Document loadedDoc = new Document(inputFileName);
-        Body body = loadedDoc.FirstSection.Body;
+        // Load the document for extraction.
+        Document loaded = new Document(sourcePath);
 
-        // Define start (Paragraph 1) and end (Paragraph 3) inclusive.
-        Paragraph startParagraph = body.Paragraphs[1]; // "Paragraph 1 ..."
-        Paragraph endParagraph = body.Paragraphs[3];   // "Paragraph 3 ..."
-        if (startParagraph == null || endParagraph == null)
-            throw new InvalidOperationException("Start or end paragraph not found.");
+        // Define start and end paragraphs (second and fourth paragraphs).
+        Paragraph startPara = loaded.FirstSection.Body.Paragraphs[1];
+        Paragraph endPara = loaded.FirstSection.Body.Paragraphs[3];
 
-        int startIndex = body.Paragraphs.IndexOf(startParagraph);
-        int endIndex = body.Paragraphs.IndexOf(endParagraph);
-        if (startIndex < 0 || endIndex < 0 || startIndex > endIndex)
-            throw new InvalidOperationException("Invalid paragraph range.");
+        if (startPara == null || endPara == null)
+            throw new InvalidOperationException("Boundary paragraphs not found.");
 
-        // -------------------------------------------------
-        // 3. Extract footnotes that appear within the range.
-        // -------------------------------------------------
-        int fileIndex = 0;
-        for (int i = startIndex; i <= endIndex; i++)
+        // Extract footnotes that belong to paragraphs between the boundaries.
+        int footnoteIndex = 0;
+        bool withinRange = false;
+
+        foreach (Paragraph para in loaded.FirstSection.Body.Paragraphs)
         {
-            Paragraph para = body.Paragraphs[i];
+            if (para == startPara)
+                withinRange = true;
 
-            // Footnote nodes act as the reference and also contain the footnote content.
-            IEnumerable<Footnote> footnotesInPara = para.GetChildNodes(NodeType.Footnote, true)
-                                                       .Cast<Footnote>();
-
-            foreach (Footnote footnote in footnotesInPara)
+            if (withinRange)
             {
-                string outputFileName = $"footnote-{fileIndex}.txt";
-                // GetText returns the footnote's paragraph text plus a trailing line break.
-                File.WriteAllText(outputFileName, footnote.GetText().Trim());
-                fileIndex++;
+                foreach (Node node in para.GetChildNodes(NodeType.Footnote, true))
+                {
+                    Footnote footnote = node as Footnote;
+                    if (footnote != null)
+                    {
+                        string fileName = $"footnote-{footnoteIndex}.txt";
+                        File.WriteAllText(fileName, footnote.GetText().Trim());
+                        footnoteIndex++;
+                    }
+                }
             }
+
+            if (para == endPara)
+                break;
         }
 
-        // -------------------------------------------------
-        // 4. Validation – ensure at least one file was created.
-        // -------------------------------------------------
-        if (fileIndex == 0)
+        if (footnoteIndex == 0)
             throw new InvalidOperationException("No footnote files were generated.");
 
-        for (int i = 0; i < fileIndex; i++)
+        // Verify that each footnote file was created.
+        for (int i = 0; i < footnoteIndex; i++)
         {
-            string path = $"footnote-{i}.txt";
-            if (!File.Exists(path))
-                throw new InvalidOperationException($"Expected output file '{path}' was not created.");
+            string fileName = $"footnote-{i}.txt";
+            if (!File.Exists(fileName))
+                throw new InvalidOperationException($"Expected footnote file {fileName} was not created.");
         }
+    }
 
-        // Optional: indicate success.
-        Console.WriteLine($"{fileIndex} footnote file(s) successfully created.");
+    private static void InsertFootnote(DocumentBuilder builder, string text)
+    {
+        // Create a footnote and attach it to the current paragraph.
+        Footnote footnote = new Footnote(builder.Document, FootnoteType.Footnote);
+        Paragraph footnoteParagraph = new Paragraph(builder.Document);
+        footnoteParagraph.AppendChild(new Run(builder.Document, text));
+        footnote.AppendChild(footnoteParagraph);
+        builder.CurrentParagraph.AppendChild(footnote);
     }
 }
