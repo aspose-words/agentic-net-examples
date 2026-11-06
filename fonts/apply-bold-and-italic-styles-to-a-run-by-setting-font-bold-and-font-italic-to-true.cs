@@ -6,35 +6,33 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
 
-        // Create a new paragraph and add it to the document body.
+        // Add a new paragraph to the document body.
         Paragraph paragraph = new Paragraph(doc);
         doc.FirstSection.Body.AppendChild(paragraph);
 
         // Create a run with sample text.
         Run run = new Run(doc, "This text is bold and italic.");
 
-        // Apply bold and italic styles.
+        // Apply bold and italic styles using the Font properties.
         run.Font.Bold = true;
         run.Font.Italic = true;
 
-        // Add the run to the paragraph.
+        // Append the run to the paragraph.
         paragraph.AppendChild(run);
 
         // Validate that the styles were applied.
-        if (run.Font.Bold && run.Font.Italic)
-        {
-            // Save the document to disk.
-            string outputPath = "BoldItalic.docx";
-            doc.Save(outputPath);
+        bool isBold = run.Font.Bold;
+        bool isItalic = run.Font.Italic;
+        Console.WriteLine($"Bold applied: {isBold}, Italic applied: {isItalic}");
 
-            // Verify that the file was created.
-            if (File.Exists(outputPath))
-            {
-                Console.WriteLine("Document saved successfully to " + outputPath);
-            }
-        }
+        // Save the document to a file.
+        string outputPath = "StyledText.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        Console.WriteLine(File.Exists(outputPath) ? "Document saved successfully." : "Failed to save document.");
     }
 }

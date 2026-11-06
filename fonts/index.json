@@ -4,47 +4,49 @@
     "slug": "fonts",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Use Aspose.Words font APIs with correct type usage and explicit namespace disambiguation.",
+    "preferred_workflow": "Use Aspose.Words font APIs exclusively for document text formatting, qualify ambiguous types with their full namespace, apply formatting through Run.Font, Style.Font, ParagraphFormat, or DocumentBuilder.Font, and verify each change before saving the document.",
     "required_packages": [
       "Aspose.Words",
       "Aspose.Drawing.Common",
       "Newtonsoft.Json"
     ],
     "package_versions": {
-      "Aspose.Words": "26.9.0",
-      "Aspose.Drawing.Common": "26.8.0"
+      "Aspose.Words": "26.10.0",
+      "Aspose.Drawing.Common": "26.10.0",
+      "Newtonsoft.Json": ""
     },
     "required_namespaces": [
       "System",
       "Aspose.Words",
       "System.IO",
-      "Aspose.Words.Drawing",
-      "Aspose.Words.Saving",
-      "System.Diagnostics",
-      "Aspose.Words.Fonts",
-      "Aspose.Words.Themes",
       "Aspose.Drawing",
       "Newtonsoft.Json",
-      "Aspose.Words.Settings",
+      "Aspose.Words.Fonts",
+      "Aspose.Words.Drawing",
       "System.Globalization",
-      "Aspose.Words.Loading",
-      "Aspose.Words.Replacing",
+      "System.Linq",
+      "System.Reflection",
+      "System.Xml.Linq",
+      "Aspose.Words.Saving",
+      "Aspose.Words.Tables",
+      "System.Drawing",
       "System.Collections.Generic"
     ],
     "key_apis": [
       "Document",
+      "File",
       "Paragraph",
       "Run",
       "Font",
       "DocumentBuilder",
-      "File",
-      "Path",
-      "Directory",
       "SaveFormat",
       "Style",
+      "Path",
       "NodeType",
-      "LoadOptions",
+      "Directory",
+      "Table",
       "PdfSaveOptions",
+      "Node",
       "StyleIdentifier"
     ]
   },
@@ -61,44 +63,60 @@
   },
   "rules_summary": {
     "strict_api_bans": [
-      "Do not use using System.Drawing in this category.",
-      "Do not use bare Color or bare Font when ambiguity is possible.",
-      "Do not assume source documents, folders, or external font files already exist.",
-      "Do not invent unsupported font APIs, embedding APIs, or substitution hooks."
+      "Do not import System.Drawing in this category; use Aspose.Drawing only when a drawing-specific color is required.",
+      "Never reference bare Font or Color types without disambiguation when both Aspose.Words and Aspose.Drawing define them."
     ],
     "canonical_patterns": [
-      "Use Aspose.Words.Font for document text formatting through Run, Style, Paragraph, or DocumentBuilder objects.",
-      "Use Aspose.Drawing.Font only for true drawing-font scenarios, with an explicit fully qualified type name.",
-      "Use fully qualified Aspose.Drawing.Color and explicit System.Drawing.Color only where the target API requires disambiguation.",
-      "Bootstrap local sample documents and validate that requested outputs are written."
+      "Apply text formatting through Run.Font, Style.Font, ParagraphFormat, or DocumentBuilder.Font, never through Aspose.Drawing.Font.",
+      "Convert Aspose.Drawing.Color to System.Drawing.Color before assigning it to Font.Color or Font.Fill.Color.",
+      "Create local sample documents, apply formatting, and validate the properties before persisting the file."
     ],
-    "nullable_warning_prevention": []
+    "nullable_warning_prevention": [
+      "Validate that objects such as Document, Paragraph, and Run are instantiated before accessing their Font members to avoid null-reference warnings."
+    ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "Font type ambiguity",
-      "symptom": "Compile errors because Font is ambiguous between Aspose.Drawing.Font and Aspose.Words.Font.",
-      "fix": "Use fully qualified names and use Aspose.Words.Font for document formatting versus Aspose.Drawing.Font only for real drawing scenarios."
+      "pattern": "Underline enum misuse",
+      "symptom": "Compilation fails because UnderlineType is not defined in Aspose.Words.",
+      "cause": "The code references a non-existent UnderlineType enum instead of the correct Aspose.Words.Underline enum.",
+      "fix": "Replace UnderlineType with Aspose.Words.Underline and assign values such as Underline.Single or Underline.WavyDouble.",
+      "prevention": "Consult the Aspose.Words API reference for the exact enum name and use IntelliSense to select the correct member."
+    },
+    {
+      "pattern": "Line spacing property misuse",
+      "symptom": "The compiler reports that Font.LineSpacing is read-only and cannot be assigned.",
+      "cause": "Line spacing is a paragraph-level attribute, not a font attribute.",
+      "fix": "Set ParagraphFormat.LineSpacingRule to Multiple and ParagraphFormat.LineSpacing to the desired multiplier (e.g., 1.5 or 2.0).",
+      "prevention": "Apply line-spacing changes through ParagraphFormat rather than Font, and reset to default by assigning 0 to ParagraphFormat.LineSpacing."
+    },
+    {
+      "pattern": "EmphasisMark enum mismatch",
+      "symptom": "Compilation fails because EmphasisMark does not contain a member named Dot.",
+      "cause": "The Aspose.Words.Fonts.EmphasisMark enum does not define a Dot value; the closest supported value is OverSolidCircle.",
+      "fix": "Use EmphasisMark.OverSolidCircle (or another valid member) from Aspose.Words.Fonts.",
+      "prevention": "Reference the Aspose.Words.Fonts namespace and verify available enum members before coding."
+    },
+    {
+      "pattern": "Font substitution API misuse",
+      "symptom": "Compilation fails due to missing members such as FontSubstitutionSettings.FontSubstitutes or DefaultFontName.",
+      "cause": "The code uses outdated or non-existent properties of FontSettings; the current API exposes FontSettings.SubstitutionSettings.",
+      "fix": "Configure substitution via FontSettings.SubstitutionSettings.DefaultFontName and SubstitutionSettings.AddSubstitutes.",
+      "prevention": "Review the latest Aspose.Words documentation for FontSettings and use the SubstitutionSettings property for custom mappings."
     },
     {
       "pattern": "Color type ambiguity",
-      "symptom": "Compile or assignment issues because Color is ambiguous or the wrong color type is used for the target property.",
-      "fix": "Use fully qualified Aspose.Drawing.Color or explicit System.Drawing.Color conversion only where the Aspose.Words API expects it."
+      "symptom": "Compilation errors arise from implicit conversion between Aspose.Drawing.Color and System.Drawing.Color.",
+      "cause": "Font.Color and Font.Fill.Color expect System.Drawing.Color, while sample code creates Aspose.Drawing.Color objects.",
+      "fix": "Convert Aspose.Drawing.Color to System.Drawing.Color using System.Drawing.Color.FromArgb(asposeColor.ToArgb()).",
+      "prevention": "Always create the final color value as System.Drawing.Color before assigning it to Font properties."
     },
     {
-      "pattern": "Wrong formatting object",
-      "symptom": "A drawing font object is treated as if it were a document text-formatting object.",
-      "fix": "Apply document font values through Run.Font, Style.Font, ParagraphBreakFont, or DocumentBuilder.Font."
-    },
-    {
-      "pattern": "Missing local bootstrap inputs",
-      "symptom": "Examples assume existing documents, folders, or font resources already exist.",
-      "fix": "Create local sample documents and deterministic local scenarios inside the example."
-    },
-    {
-      "pattern": "Weak validation",
-      "symptom": "Examples save output but do not verify that the intended font change, report, or render actually occurred.",
-      "fix": "Validate the changed font property, configured font setting, or output file existence before finishing."
+      "pattern": "Namespace directive misuse",
+      "symptom": "CS0138 errors indicate that a using directive targets a type rather than a namespace.",
+      "cause": "The code attempts to write \"using Font;\" or \"using Style;\" instead of proper namespace imports.",
+      "fix": "Remove type-level using statements; import only namespaces such as Aspose.Words, Aspose.Words.Fonts, or use fully qualified type names.",
+      "prevention": "Limit using directives to namespaces and rely on fully qualified names when type name collisions exist."
     }
   ],
   "examples": [
@@ -209,8 +227,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 11,
@@ -220,8 +238,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 12,
@@ -237,7 +255,7 @@
     {
       "id": 13,
       "file_name": "apply-a-semi-transparent-fill-to-text-by-setting-font-fill-color-and-font-fill-transparenc.cs",
-      "task": "Apply a semi‑transparent fill to text by setting Font.Fill.Color and Font.Fill.Transparency together.",
+      "task": "Apply a semi-transparent fill to text by setting Font.Fill.Color and Font.Fill.Transparency together.",
       "workflow": "document-formatting",
       "outputs": [
         "docx"
@@ -341,8 +359,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 23,
@@ -363,8 +381,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 25,
@@ -374,8 +392,8 @@
       "outputs": [
         "xml"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 26,
@@ -479,7 +497,7 @@
     {
       "id": 35,
       "file_name": "load-a-document-change-all-headings-to-use-a-bold-sixteen-point-font-then-save.cs",
-      "task": "Load a document, change all headings to use a bold sixteen‑point font, then save.",
+      "task": "Load a document, change all headings to use a bold sixteen-point font, then save.",
       "workflow": "document-formatting",
       "outputs": [
         "docx"
@@ -487,5 +505,15 @@
       "selected_engine": "mcp",
       "winner": "mcp"
     }
-  ]
+  ],
+  "narrative": {
+    "overview": "The Fonts category demonstrates how to manipulate text appearance in Aspose.Words documents using the library's Font, Style, and DocumentBuilder APIs. Verified examples show correct handling of font properties, underline styles, line spacing, emphasis marks, and color conversion while avoiding common ambiguities.",
+    "purpose": "Provide concise, reproducible code snippets that illustrate proper font manipulation in Aspose.Words, enabling AI agents to generate reliable examples that compile, run, and validate the intended visual changes.",
+    "validation_priorities": [
+      "Always assert that the expected Font property (e.g., Underline, LineSpacingRule, EmphasisMark) matches the value set before saving the document."
+    ],
+    "maintenance_notes": [
+      "Update examples when new Aspose.Words versions introduce renamed enums or additional font-related properties."
+    ]
+  }
 }
