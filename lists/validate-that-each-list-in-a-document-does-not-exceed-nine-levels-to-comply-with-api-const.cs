@@ -1,43 +1,69 @@
 using System;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Lists;
+using Aspose.Words.Tables;
 
-public class Program
+namespace ListLevelValidationExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Build a list with 10 levels (exceeds the nine‑level limit).
-        builder.ListFormat.ApplyNumberDefault();
-        builder.Writeln("Level 1");
-        for (int i = 2; i <= 10; i++)
+        public static void Main()
         {
-            builder.ListFormat.ListIndent();
-            builder.Writeln($"Level {i}");
-        }
+            // Create a new document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Validate that each list does not exceed nine levels.
-        bool allValid = true;
-        foreach (List list in doc.Lists)
-        {
-            // ListLevelCollection contains the defined levels for the list.
-            int definedLevels = list.ListLevels.Count;
-            if (definedLevels > 9)
+            // Create a list using a built‑in template.
+            List list = doc.Lists.Add(ListTemplate.NumberDefault);
+
+            // Build a list with varying nesting levels (including an invalid level > 9).
+            for (int level = 1; level <= 10; level++)
             {
-                allValid = false;
-                Console.WriteLine($"List ID {list.ListId} exceeds nine levels: {definedLevels} levels.");
+                // Assign the list to the builder.
+                builder.ListFormat.List = list;
+
+                // Set the desired nesting level.
+                builder.ListFormat.ListLevelNumber = level;
+
+                // Write the list item.
+                builder.Writeln($"Item at level {level}");
+            }
+
+            // End list formatting.
+            builder.ListFormat.RemoveNumbers();
+
+            // Save the document (optional, just to demonstrate full workflow).
+            doc.Save("ListLevelValidationOutput.docx");
+
+            // Validate that no list exceeds nine levels.
+            List<Paragraph> invalidParagraphs = new List<Paragraph>();
+
+            foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
+            {
+                if (para.IsListItem)
+                {
+                    int currentLevel = para.ListFormat.ListLevelNumber;
+                    if (currentLevel > 9)
+                    {
+                        invalidParagraphs.Add(para);
+                    }
+                }
+            }
+
+            // Output validation results.
+            if (invalidParagraphs.Count == 0)
+            {
+                Console.WriteLine("All lists are within the allowed nine levels.");
+            }
+            else
+            {
+                Console.WriteLine($"Found {invalidParagraphs.Count} paragraph(s) exceeding nine list levels:");
+                foreach (Paragraph p in invalidParagraphs)
+                {
+                    Console.WriteLine($"- Text: \"{p.GetText().Trim()}\" (Level {p.ListFormat.ListLevelNumber})");
+                }
             }
         }
-
-        if (allValid)
-            Console.WriteLine("All lists are within nine levels.");
-        else
-            Console.WriteLine("One or more lists exceed nine levels.");
-
-        // Save the document (optional, demonstrates saving).
-        doc.Save("Output.docx");
     }
 }

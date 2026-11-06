@@ -2,37 +2,40 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
-namespace ListFormattingExample
+public class Program
 {
-    class Program
+    public static void Main()
     {
-        static void Main()
-        {
-            // Create a new document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Start a numbered list.
-            builder.ListFormat.ApplyNumberDefault();
+        // Create a numbered list and add two items.
+        List numberedList = doc.Lists.Add(ListTemplate.NumberDefault);
+        builder.ListFormat.List = numberedList;
+        builder.Writeln("First item");
+        builder.Writeln("Second item");
+        // End the list.
+        builder.ListFormat.RemoveNumbers();
 
-            // Add list items.
-            builder.Writeln("First item");
-            builder.Writeln("Second item");
-            builder.Writeln("Third item");
+        // Add a normal paragraph (not part of any list).
+        builder.Writeln("A regular paragraph.");
 
-            // End list formatting for any following paragraphs.
-            builder.ListFormat.RemoveNumbers();
+        // Create a bulleted list and add three items.
+        List bulletList = doc.Lists.Add(ListTemplate.BulletDefault);
+        builder.ListFormat.List = bulletList;
+        builder.Writeln("Bullet 1");
+        builder.Writeln("Bullet 2");
+        builder.Writeln("Bullet 3");
+        // End the bulleted list.
+        builder.ListFormat.RemoveNumbers();
 
-            // Remove list formatting from the first two paragraphs while preserving indentation.
-            Paragraph para1 = doc.FirstSection.Body.Paragraphs[0];
-            Paragraph para2 = doc.FirstSection.Body.Paragraphs[1];
+        // Remove list formatting from the second item of the numbered list
+        // while preserving its indentation.
+        Paragraph secondNumberedParagraph = doc.FirstSection.Body.Paragraphs[1];
+        secondNumberedParagraph.ListFormat.RemoveNumbers();
 
-            para1.ListFormat.RemoveNumbers();
-            para2.ListFormat.RemoveNumbers();
-
-            // Save the document.
-            string outputPath = "Result.docx";
-            doc.Save(outputPath);
-        }
+        // Save the document to disk.
+        doc.Save("ListFormattingRemoved.docx");
     }
 }
