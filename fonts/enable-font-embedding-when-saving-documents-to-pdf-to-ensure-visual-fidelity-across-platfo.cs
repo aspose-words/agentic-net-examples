@@ -7,31 +7,39 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a paragraph with sample text.
-        builder.Writeln("This is a sample text to demonstrate font embedding in PDF.");
+        // Set a font that is likely to be available.
+        string fontName = "Arial";
+        builder.Font.Name = fontName;
 
-        // Set the font for the paragraph.
-        builder.Font.Name = "Arial";
-
-        // Define PDF save options with font embedding enabled.
-        PdfSaveOptions saveOptions = new PdfSaveOptions
+        // Validate that the font was set correctly.
+        if (builder.Font.Name != fontName)
         {
-            // Embed all fonts used in the document.
+            throw new InvalidOperationException("Failed to set the font name.");
+        }
+
+        // Add some text to the document.
+        builder.Writeln("This text should be embedded in the PDF to preserve its appearance.");
+
+        // Configure PDF save options to embed all fonts.
+        PdfSaveOptions pdfOptions = new PdfSaveOptions
+        {
             EmbedFullFonts = true
         };
 
-        // Define output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "EmbeddedFontOutput.pdf");
+        // Define the output PDF file path.
+        string outputPath = "EmbeddedFontOutput.pdf";
 
-        // Save the document as PDF with the specified options.
-        doc.Save(outputPath, saveOptions);
+        // Save the document as PDF with font embedding enabled.
+        doc.Save(outputPath, pdfOptions);
 
-        // Verify that the file was created.
-        bool fileExists = File.Exists(outputPath);
-        Console.WriteLine($"PDF saved to '{outputPath}'. File exists: {fileExists}");
+        // Verify that the PDF file was created successfully.
+        if (!File.Exists(outputPath))
+        {
+            throw new FileNotFoundException("The PDF file was not created.", outputPath);
+        }
     }
 }

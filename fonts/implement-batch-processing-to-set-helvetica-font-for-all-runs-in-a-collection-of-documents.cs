@@ -1,58 +1,61 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 
 public class Program
 {
-    // Entry point of the console application.
     public static void Main()
     {
-        // Define the collection of document file paths to process.
-        // In a real scenario, populate this array with actual file locations.
-        string[] documentPaths = new string[]
-        {
-            "Document1.docx",
-            "Document2.docx",
-            "Document3.docx"
-        };
+        // Folder to store sample and output documents
+        string folder = Path.Combine(Directory.GetCurrentDirectory(), "Docs");
+        Directory.CreateDirectory(folder);
 
-        // Process each document.
-        foreach (string inputPath in documentPaths)
+        // Create sample documents
+        List<string> docPaths = new List<string>();
+        for (int i = 1; i <= 3; i++)
         {
-            // Verify the input file exists before attempting to load.
-            if (!File.Exists(inputPath))
-            {
-                Console.WriteLine($"Input file not found: {inputPath}");
-                continue;
-            }
+            string path = Path.Combine(folder, $"Sample{i}.docx");
+            CreateSampleDocument(path, $"This is sample document {i}.");
+            docPaths.Add(path);
+        }
 
-            // Load the document using Aspose.Words.
+        // Process each document: set Helvetica font for all runs
+        foreach (string inputPath in docPaths)
+        {
             Document doc = new Document(inputPath);
 
-            // Iterate over all Run nodes in the document and set the font to Helvetica.
+            // Iterate through all Run nodes
             foreach (Run run in doc.GetChildNodes(NodeType.Run, true))
             {
-                // Use the Font property of the Run node to set the font name.
+                // Set font name to Helvetica
                 run.Font.Name = "Helvetica";
+
+                // Validate assignment
+                if (run.Font.Name != "Helvetica")
+                {
+                    throw new InvalidOperationException("Font assignment failed.");
+                }
             }
 
-            // Define the output file name (original name with "_out" suffix).
-            string outputPath = Path.Combine(
-                Path.GetDirectoryName(inputPath) ?? string.Empty,
-                Path.GetFileNameWithoutExtension(inputPath) + "_out" + Path.GetExtension(inputPath));
-
-            // Save the modified document.
+            // Save output document
+            string outputPath = Path.Combine(folder, Path.GetFileNameWithoutExtension(inputPath) + "_out.docx");
             doc.Save(outputPath);
 
-            // Validate that the output file was created.
-            if (File.Exists(outputPath))
+            // Ensure output file exists
+            if (!File.Exists(outputPath))
             {
-                Console.WriteLine($"Successfully processed and saved: {outputPath}");
-            }
-            else
-            {
-                Console.WriteLine($"Failed to save the document: {outputPath}");
+                throw new FileNotFoundException("Output file was not created.", outputPath);
             }
         }
+    }
+
+    // Helper method to create a simple document with a single paragraph
+    private static void CreateSampleDocument(string filePath, string text)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln(text);
+        doc.Save(filePath);
     }
 }

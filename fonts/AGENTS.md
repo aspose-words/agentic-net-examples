@@ -10,35 +10,28 @@ product: Aspose.Words
 
 ## Purpose
 
-This folder is a live, curated example set for Fonts scenarios. Treat every `.cs` file as a standalone console application. The goal is correct, warning-free examples that use documented Aspose APIs and match the original task intent.
+Provide concise, reproducible code snippets that illustrate proper font manipulation in Aspose.Words, enabling AI agents to generate reliable examples that compile, run, and validate the intended visual changes.
 
 ## Non-negotiable conventions
 
-- Use native Aspose.Words font APIs directly.
-- Use Aspose.Words.Font for document text formatting.
-- Use Aspose.Drawing.Font only for true drawing scenarios and with a fully qualified type name.
-- Do not use using System.Drawing.
-- Do not use bare Font or bare Color when ambiguity is possible.
-- Bootstrap local source documents, files, streams, or folders whenever the task implies an existing source.
-- Guard maybe-null values to avoid nullable-reference warnings such as CS8600, CS8602, and CS8604.
+- Do not import System.Drawing in this category; use Aspose.Drawing only when a drawing-specific color is required.
+- Never reference bare Font or Color types without disambiguation when both Aspose.Words and Aspose.Drawing define them.
+- Bootstrap local sample inputs for existing-file, folder, stream, image, and data workflows.
+- Prefer simple, verifiable workflows over speculative formatting shortcuts.
 
 ## Recommended workflow selection
 
-- Document Formatting workflow: 27 examples
-- Font Settings And Sources workflow: 4 examples
-- Embedding And Rendering workflow: 2 examples
-- Reporting And Inspection workflow: 1 examples
-- Input Bootstrap workflow: 1 examples
+- **Document Formatting workflow**: 27 examples
+- **Font Settings And Sources workflow**: 4 examples
+- **Embedding And Rendering workflow**: 2 examples
+- **Reporting And Inspection workflow**: 1 examples
+- **Input Bootstrap workflow**: 1 examples
 
 Use the simplest workflow that satisfies the task.
 
 ## Validation priorities
 
-1. The code must compile and run without manual input.
-2. API usage must be supported by the configured package versions.
-3. Exported outputs must actually be written by the example.
-4. Validation scenarios must inspect only the behavior requested by the task.
-5. Examples that depend on files, folders, streams, images, or data should bootstrap those inputs locally during the example run.
+1. Always assert that the expected Font property (e.g., Underline, LineSpacingRule, EmphasisMark) matches the value set before saving the document.
 
 ## File-to-task reference
 
@@ -91,12 +84,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply underline style to a Run by setting Font.Underline to UnderlineType.Single.
   - Workflow: document-formatting
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `apply-bold-italic-and-underline-simultaneously-to-a-run-using-respective-font-properties.cs`
   - Task: Apply bold, italic, and underline simultaneously to a Run using respective Font properties.
   - Workflow: document-formatting
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `set-text-fill-color-to-red-and-thirty-percent-transparency-using-font-fill-color-and-font.cs`
   - Task: Set text fill color to red and thirty percent transparency using Font.Fill.Color and Font.Fill.Transparency.
   - Workflow: document-formatting
@@ -111,7 +104,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Set the underline type to double wave for a Run by assigning Font.Underline to UnderlineType.DoubleWave.
   - Workflow: document-formatting
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `adjust-a-paragraph-s-line-spacing-to-1-5-lines-by-assigning-font-linespacing-to-1-5.cs`
   - Task: Adjust a paragraph's line spacing to 1.5 lines by assigning Font.LineSpacing to 1.5.
   - Workflow: document-formatting
@@ -131,17 +124,17 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply East Asian emphasis mark Dot to a Run by setting Font.EmphasisMark to EmphasisMark.Dot.
   - Workflow: document-formatting
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `apply-east-asian-emphasis-mark-only-when-document-language-is-japanese-by-checking-languag.cs`
   - Task: Apply East Asian emphasis mark only when document language is Japanese by checking language before setting Font.EmphasisMark.
   - Workflow: document-formatting
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `retrieve-and-display-the-emphasismark-value-of-a-run-for-debugging-east-asian-formatting.cs`
   - Task: Retrieve and display the EmphasisMark value of a Run for debugging East Asian formatting.
   - Workflow: document-formatting
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `retrieve-and-display-the-current-font-size-of-a-run-for-debugging-purposes.cs`
   - Task: Retrieve and display the current font size of a Run for debugging purposes.
   - Workflow: document-formatting
@@ -151,22 +144,22 @@ Use the simplest workflow that satisfies the task.
   - Task: Define a custom font substitution rule that replaces missing Times New Roman with Calibri.
   - Workflow: font-settings-and-sources
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `configure-font-substitution-to-map-missing-garamond-to-a-locally-installed-georgia-font.cs`
   - Task: Configure font substitution to map missing Garamond to a locally installed Georgia font.
   - Workflow: font-settings-and-sources
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `enable-automatic-font-substitution-for-missing-fonts-during-document-loading-by-configurin.cs`
   - Task: Enable automatic font substitution for missing fonts during document loading by configuring FontSettings.
   - Workflow: font-settings-and-sources
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `create-a-custom-font-substitution-table-and-load-it-from-an-xml-configuration-file.cs`
   - Task: Create a custom font substitution table and load it from an XML configuration file.
   - Workflow: font-settings-and-sources
   - Outputs: xml
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `embed-all-used-fonts-into-the-document-when-saving-by-enabling-the-embedfullfonts-option.cs`
   - Task: Embed all used fonts into the document when saving by enabling the EmbedFullFonts option.
   - Workflow: embedding-and-rendering
@@ -220,57 +213,60 @@ Use the simplest workflow that satisfies the task.
 
 ## Common failure patterns and preferred agent fixes
 
-- **Font type ambiguity**
-  - Symptom: Compile errors because Font is ambiguous between Aspose.Drawing.Font and Aspose.Words.Font.
-  - Preferred fix: Use fully qualified names and use Aspose.Words.Font for document formatting versus Aspose.Drawing.Font only for real drawing scenarios.
+- **Underline enum misuse**
+  - Symptom: Compilation fails because UnderlineType is not defined in Aspose.Words.
+  - Root cause: The code references a non-existent UnderlineType enum instead of the correct Aspose.Words.Underline enum.
+  - Preferred fix: Replace UnderlineType with Aspose.Words.Underline and assign values such as Underline.Single or Underline.WavyDouble.
+  - Prevention: Consult the Aspose.Words API reference for the exact enum name and use IntelliSense to select the correct member.
+
+- **Line spacing property misuse**
+  - Symptom: The compiler reports that Font.LineSpacing is read-only and cannot be assigned.
+  - Root cause: Line spacing is a paragraph-level attribute, not a font attribute.
+  - Preferred fix: Set ParagraphFormat.LineSpacingRule to Multiple and ParagraphFormat.LineSpacing to the desired multiplier (e.g., 1.5 or 2.0).
+  - Prevention: Apply line-spacing changes through ParagraphFormat rather than Font, and reset to default by assigning 0 to ParagraphFormat.LineSpacing.
+
+- **EmphasisMark enum mismatch**
+  - Symptom: Compilation fails because EmphasisMark does not contain a member named Dot.
+  - Root cause: The Aspose.Words.Fonts.EmphasisMark enum does not define a Dot value; the closest supported value is OverSolidCircle.
+  - Preferred fix: Use EmphasisMark.OverSolidCircle (or another valid member) from Aspose.Words.Fonts.
+  - Prevention: Reference the Aspose.Words.Fonts namespace and verify available enum members before coding.
+
+- **Font substitution API misuse**
+  - Symptom: Compilation fails due to missing members such as FontSubstitutionSettings.FontSubstitutes or DefaultFontName.
+  - Root cause: The code uses outdated or non-existent properties of FontSettings; the current API exposes FontSettings.SubstitutionSettings.
+  - Preferred fix: Configure substitution via FontSettings.SubstitutionSettings.DefaultFontName and SubstitutionSettings.AddSubstitutes.
+  - Prevention: Review the latest Aspose.Words documentation for FontSettings and use the SubstitutionSettings property for custom mappings.
 
 - **Color type ambiguity**
-  - Symptom: Compile or assignment issues because Color is ambiguous or the wrong color type is used for the target property.
-  - Preferred fix: Use fully qualified Aspose.Drawing.Color or explicit System.Drawing.Color conversion only where the Aspose.Words API expects it.
+  - Symptom: Compilation errors arise from implicit conversion between Aspose.Drawing.Color and System.Drawing.Color.
+  - Root cause: Font.Color and Font.Fill.Color expect System.Drawing.Color, while sample code creates Aspose.Drawing.Color objects.
+  - Preferred fix: Convert Aspose.Drawing.Color to System.Drawing.Color using System.Drawing.Color.FromArgb(asposeColor.ToArgb()).
+  - Prevention: Always create the final color value as System.Drawing.Color before assigning it to Font properties.
 
-- **Wrong formatting object**
-  - Symptom: A drawing font object is treated as if it were a document text-formatting object.
-  - Preferred fix: Apply document font values through Run.Font, Style.Font, ParagraphBreakFont, or DocumentBuilder.Font.
-
-- **Missing local bootstrap inputs**
-  - Symptom: Examples assume existing documents, folders, or font resources already exist.
-  - Preferred fix: Create local sample documents and deterministic local scenarios inside the example.
-
-- **Weak validation**
-  - Symptom: Examples save output but do not verify that the intended font change, report, or render actually occurred.
-  - Preferred fix: Validate the changed font property, configured font setting, or output file existence before finishing.
+- **Namespace directive misuse**
+  - Symptom: CS0138 errors indicate that a using directive targets a type rather than a namespace.
+  - Root cause: The code attempts to write "using Font;" or "using Style;" instead of proper namespace imports.
+  - Preferred fix: Remove type-level using statements; import only namespaces such as Aspose.Words, Aspose.Words.Fonts, or use fully qualified type names.
+  - Prevention: Limit using directives to namespaces and rely on fully qualified names when type name collisions exist.
 
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.9.0`
-- Package: `Aspose.Drawing.Common` `26.8.0`
-- Package: `Newtonsoft.Json`
+- Primary package: `Aspose.Words` `26.10.0`
 
 ## Command reference
-
-### Create a temporary console project
 
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-```
-
-### Add required packages
-
-```bash
-dotnet add package Aspose.Words --version 26.9.0
-dotnet add package Aspose.Drawing.Common --version 26.8.0
+dotnet add package Aspose.Words --version 26.10.0
+dotnet add package Aspose.Drawing.Common --version 26.10.0
 dotnet add package Newtonsoft.Json
 ```
-
-### Copy a category example into the temp project
 
 ```powershell
 Copy-Item ..\fonts\<example-file>.cs .\Program.cs
 ```
-
-### Build and run
 
 ```bash
 dotnet build --configuration Release --verbosity minimal
@@ -279,6 +275,4 @@ dotnet run --configuration Release --no-build
 
 ## Category update guidance
 
-- Preserve file-to-task traceability. Any future update should keep the original task text associated with the file in metadata.
-- When replacing a file, prefer the latest verified publish-ready version rather than a merely compiling draft.
-- Keep examples standalone, bootstrap missing inputs locally, and prefer documented Aspose APIs over speculative shortcuts.
+- Update examples when new Aspose.Words versions introduce renamed enums or additional font-related properties.

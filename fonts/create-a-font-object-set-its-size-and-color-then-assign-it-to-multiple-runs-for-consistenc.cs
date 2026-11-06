@@ -1,5 +1,3 @@
-using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Drawing;
 
@@ -11,44 +9,38 @@ public class Program
         var doc = new Document();
         var builder = new DocumentBuilder(doc);
 
-        // Define a shared font.
-        var sharedFont = builder.Font;
-        sharedFont.Size = 16;
+        // Obtain the Font object from the DocumentBuilder.
+        var font = builder.Font; // Aspose.Words.Font
 
-        // Define color using Aspose.Drawing.Color and convert to System.Drawing.Color.
-        var awColor = Color.Blue;
-        sharedFont.Color = System.Drawing.Color.FromArgb(awColor.ToArgb());
+        // Set font size.
+        font.Size = 14;
 
-        // Create first run with shared font.
-        var run1 = new Run(doc, "Hello, ");
-        run1.Font.Size = sharedFont.Size;
-        run1.Font.Color = sharedFont.Color;
+        // Set font color using Aspose.Drawing.Color and convert to System.Drawing.Color.
+        var aspColor = Aspose.Drawing.Color.Red;
+        var sysColor = System.Drawing.Color.FromArgb(aspColor.ToArgb());
+        font.Color = sysColor;
 
-        // Create second run with shared font.
-        var run2 = new Run(doc, "world!");
-        run2.Font.Size = sharedFont.Size;
-        run2.Font.Color = sharedFont.Color;
+        // Insert multiple runs that share the same font settings.
+        builder.Write("First run with custom font. ");
+        builder.Write("Second run with the same custom font.");
 
-        // Add runs to a paragraph.
-        var paragraph = new Paragraph(doc);
-        paragraph.AppendChild(run1);
-        paragraph.AppendChild(run2);
-        doc.FirstSection.Body.AppendChild(paragraph);
+        // Validate that the font properties were applied to the runs.
+        var firstParagraph = doc.FirstSection.Body.FirstParagraph;
+        var firstRun = (Run)firstParagraph.Runs[0];
+        var secondRun = (Run)firstParagraph.Runs[1];
 
-        // Validate font properties.
-        if (run1.Font.Size != 16 || run2.Font.Size != 16)
-            throw new Exception("Font size mismatch.");
-        var expectedColor = System.Drawing.Color.FromArgb(awColor.ToArgb());
-        if (run1.Font.Color.ToArgb() != expectedColor.ToArgb() ||
-            run2.Font.Color.ToArgb() != expectedColor.ToArgb())
-            throw new Exception("Font color mismatch.");
+        if (firstRun.Font.Size != 14 || firstRun.Font.Color.ToArgb() != sysColor.ToArgb())
+            throw new System.Exception("Font properties not applied correctly to the first run.");
 
-        // Save document.
-        string outputPath = "Output.docx";
+        if (secondRun.Font.Size != 14 || secondRun.Font.Color.ToArgb() != sysColor.ToArgb())
+            throw new System.Exception("Font properties not applied correctly to the second run.");
+
+        // Save the document.
+        const string outputPath = "Output.docx";
         doc.Save(outputPath);
 
-        // Ensure file exists.
-        if (!File.Exists(outputPath))
-            throw new Exception("Output file was not created.");
+        // Ensure the output file exists.
+        if (!System.IO.File.Exists(outputPath))
+            throw new System.Exception("Failed to create the output file.");
     }
 }

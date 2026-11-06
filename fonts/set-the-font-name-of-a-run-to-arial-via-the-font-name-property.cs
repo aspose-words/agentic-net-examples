@@ -9,11 +9,11 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Add a new paragraph to the document.
+        // Add a paragraph to the document.
         Paragraph paragraph = new Paragraph(doc);
         doc.FirstSection.Body.AppendChild(paragraph);
 
-        // Create a Run with sample text.
+        // Create a Run with some text.
         Run run = new Run(doc, "Hello, Aspose.Words!");
         paragraph.AppendChild(run);
 
@@ -26,16 +26,14 @@ public class Program
             throw new InvalidOperationException("Font name was not set to Arial.");
         }
 
-        // Define the output file path.
-        string outputPath = "Output.docx";
-
         // Save the document to disk.
+        string outputPath = "Output.docx";
         doc.Save(outputPath);
 
-        // Verify that the output file was created.
+        // Ensure the output file exists.
         if (!File.Exists(outputPath))
         {
-            throw new FileNotFoundException("The output file was not created.", outputPath);
+            throw new FileNotFoundException("The document was not saved correctly.", outputPath);
         }
     }
 }

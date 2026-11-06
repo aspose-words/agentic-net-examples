@@ -6,38 +6,34 @@ public class Program
 {
     public static void Main()
     {
-        // Define output file path
-        string outputPath = "DefaultFont.docx";
-
-        // Create a new blank document
+        // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize DocumentBuilder for the document
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set the default font name for all subsequently inserted content
-        string desiredFont = "Arial";
-        builder.Font.Name = desiredFont;
+        // Set the default font name for any subsequently inserted content.
+        builder.Font.Name = "Arial";
 
-        // Validate that the font name was set correctly
-        if (!string.Equals(builder.Font.Name, desiredFont, StringComparison.OrdinalIgnoreCase))
+        // Validate that the font name was correctly assigned.
+        if (builder.Font.Name != "Arial")
         {
-            throw new InvalidOperationException($"Failed to set font name to '{desiredFont}'.");
+            throw new InvalidOperationException("Failed to set the default font name.");
         }
 
-        // Insert a paragraph using the default font
-        builder.Writeln("This paragraph is formatted with the default font set to Arial.");
+        // Insert a line of text that will use the default font.
+        builder.Writeln("This text is formatted with the default font set to Arial.");
 
-        // Save the document to disk
+        // Define the output file path.
+        string outputPath = "DefaultFontExample.docx";
+
+        // Save the document to disk.
         doc.Save(outputPath);
 
-        // Verify that the file was created
+        // Verify that the output file was created successfully.
         if (!File.Exists(outputPath))
         {
-            throw new FileNotFoundException($"The document was not saved to '{outputPath}'.");
+            throw new FileNotFoundException("The document was not saved correctly.", outputPath);
         }
-
-        // Optional: indicate success (no user interaction required)
-        Console.WriteLine("Document created successfully at " + Path.GetFullPath(outputPath));
     }
 }

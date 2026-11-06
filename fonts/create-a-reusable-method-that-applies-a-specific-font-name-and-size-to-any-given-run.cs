@@ -2,17 +2,17 @@ using System;
 using System.IO;
 using Aspose.Words;
 
-public class Program
+public class FontApplier
 {
     // Reusable method that applies a specific font name and size to a Run.
     public static void ApplyFont(Run run, string fontName, double fontSize)
     {
-        // Apply font properties.
+        // Apply font name and size.
         run.Font.Name = fontName;
         run.Font.Size = fontSize;
 
         // Validate that the properties were set correctly.
-        if (run.Font.Name != fontName || Math.Abs(run.Font.Size - fontSize) > 0.001)
+        if (run.Font.Name != fontName || Math.Abs(run.Font.Size - fontSize) > 0.01)
         {
             throw new InvalidOperationException("Failed to apply font properties to the Run.");
         }
@@ -22,36 +22,33 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Use DocumentBuilder to add a paragraph with a Run.
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a sample text that will have its font changed.");
 
-        // Add a paragraph with a single run.
-        builder.Writeln("This is a sample text.");
-
-        // After Writeln the builder moves to a new empty paragraph.
-        // Retrieve the paragraph that contains the text (the previous sibling).
-        Paragraph textParagraph = builder.CurrentParagraph.PreviousSibling as Paragraph;
-        if (textParagraph == null || textParagraph.Runs.Count == 0)
+        // Retrieve the first Run in the document.
+        Run firstRun = (Run)doc.GetChild(NodeType.Run, 0, true);
+        if (firstRun == null)
         {
-            throw new InvalidOperationException("The expected paragraph or run was not found.");
+            throw new InvalidOperationException("No Run found in the document.");
         }
 
-        // Retrieve the first run in that paragraph.
-        Run firstRun = textParagraph.Runs[0];
-
-        // Apply the desired font to the run.
+        // Apply the desired font name and size.
         ApplyFont(firstRun, "Arial", 16);
 
         // Save the document to disk.
         string outputPath = "Output.docx";
         doc.Save(outputPath);
 
-        // Ensure the output file exists.
-        if (!File.Exists(outputPath))
+        // Verify that the file was created.
+        if (File.Exists(outputPath))
         {
-            throw new FileNotFoundException("The output document was not created.", outputPath);
+            Console.WriteLine($"Document saved successfully to '{Path.GetFullPath(outputPath)}'.");
         }
-
-        // Indicate success (no interactive prompts).
-        Console.WriteLine("Document created successfully at: " + Path.GetFullPath(outputPath));
+        else
+        {
+            Console.WriteLine("Failed to save the document.");
+        }
     }
 }
