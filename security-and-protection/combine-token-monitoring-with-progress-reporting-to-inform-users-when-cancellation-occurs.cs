@@ -1,72 +1,74 @@
 using System;
 using System.IO;
 using System.Threading;
-using System.Threading.Tasks;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with many paragraphs.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-        for (int i = 0; i < 500; i++)
+        const int totalParagraphs = 5000;
+        const string outputPath = "output.docx";
+
+        // Create a cancellation token that will be triggered after a short delay.
+        using CancellationTokenSource cts = new CancellationTokenSource();
+        // Cancel after 200 ms.
+        Timer cancelTimer = new Timer(_ => cts.Cancel(), null, 200, Timeout.Infinite);
+
+        // Build the document while reporting progress and checking for cancellation.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        for (int i = 0; i < totalParagraphs; i++)
         {
+            // Write a paragraph.
             builder.Writeln($"Paragraph {i + 1}");
+
+            // Report progress.
+            int percentDone = (i + 1) * 100 / totalParagraphs;
+            Console.WriteLine($"Building progress: {percentDone}%");
+
+            // If cancellation was requested, stop building.
+            if (cts.IsCancellationRequested)
+            {
+                Console.WriteLine("Cancellation requested during document building. Stopping.");
+                break;
+            }
         }
 
-        string sourcePath = "source.docx";
-        doc.Save(sourcePath);
+        // Dispose the timer – no longer needed.
+        cancelTimer.Dispose();
 
-        // Load the document for processing.
-        var loadedDoc = new Document(sourcePath);
-
-        // Set up cancellation to occur after a short delay.
-        var cts = new CancellationTokenSource();
-        Task.Delay(100).ContinueWith(_ => cts.Cancel());
-
-        // Progress reporter that writes percentage to the console.
-        var progress = new Progress<double>(p => Console.WriteLine($"Progress: {p:P0}"));
-
-        try
+        // If the document was fully built, attempt to save it.
+        if (!cts.IsCancellationRequested)
         {
-            // Process the document while monitoring cancellation and reporting progress.
-            ProcessDocument(loadedDoc, cts.Token, progress);
-
-            // Save the processed document.
-            string outputPath = "processed.docx";
-            loadedDoc.Save(outputPath);
-
-            // Validate that the output file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException($"Failed to create output file: {outputPath}");
-
-            Console.WriteLine($"Document saved to {outputPath}");
+            try
+            {
+                // Save the document; no special progress callback is needed here.
+                OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx);
+                doc.Save(outputPath, saveOptions);
+                Console.WriteLine("Document saved successfully.");
+            }
+            catch (OperationCanceledException)
+            {
+                // This block is kept for completeness; Aspose.Words may throw this if it supports cancellation.
+                Console.WriteLine("Save operation was canceled.");
+            }
         }
-        catch (OperationCanceledException)
+        else
         {
-            Console.WriteLine("Processing was cancelled by the token.");
+            Console.WriteLine("Document was not saved due to cancellation.");
         }
-    }
 
-    private static void ProcessDocument(Document doc, CancellationToken token, IProgress<double> progress)
-    {
-        // Retrieve all paragraphs in the document.
-        var paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
-        int total = paragraphs.Count;
-
-        for (int i = 0; i < total; i++)
+        // Verify whether the file was created.
+        if (File.Exists(outputPath))
         {
-            // Throw if cancellation has been requested.
-            token.ThrowIfCancellationRequested();
-
-            // Simulate work: append a marker to each paragraph.
-            var paragraph = (Paragraph)paragraphs[i];
-            paragraph.AppendChild(new Run(doc, " [processed]"));
-
-            // Report progress as a fraction of total work completed.
-            progress.Report((i + 1) / (double)total);
+            Console.WriteLine($"File '{outputPath}' exists.");
+        }
+        else
+        {
+            Console.WriteLine($"File '{outputPath}' was not created.");
         }
     }
 }

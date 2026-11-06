@@ -1,49 +1,67 @@
 using System;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using Aspose.Words;
+using Aspose.Words.Loading;
 
 public class Program
 {
-    public static void Main()
+    public static async Task Main()
     {
-        // Create a temporary directory for the sample document.
-        string tempDir = Path.Combine(Path.GetTempPath(), "AsposeWordsDemo");
-        Directory.CreateDirectory(tempDir);
-
-        // Path of the sample document.
-        string docPath = Path.Combine(tempDir, "Sample.docx");
-
-        // Create a simple document and save it.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a simple source document.
+        string sourcePath = "sample.docx";
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
         builder.Writeln("Hello, Aspose.Words!");
-        doc.Save(docPath);
+        sourceDoc.Save(sourcePath);
 
-        // Prepare a cancelled token.
-        CancellationTokenSource cts = new CancellationTokenSource();
-        cts.Cancel(); // Cancel before the load operation.
+        // Prepare load options (default).
+        LoadOptions loadOptions = new LoadOptions();
 
-        try
+        // Open a stream for loading the document.
+        using (FileStream stream = new FileStream(sourcePath, FileMode.Open, FileAccess.Read))
         {
-            // Simulate a load that respects cancellation.
-            if (cts.Token.IsCancellationRequested)
-                throw new OperationCanceledException(cts.Token);
+            // Cancel the token before starting the load operation.
+            CancellationTokenSource cts = new CancellationTokenSource();
+            cts.Cancel();
 
-            // Normal load (won't be reached because token is cancelled).
-            Document loadedDoc = new Document(docPath);
+            try
+            {
+                // Attempt to load the document with a cancelled token.
+                Document loadedDoc = await Task.Run(() => new Document(stream, loadOptions), cts.Token);
+
+                // If loading somehow succeeds, save the document to verify.
+                string outputPath = "loaded.docx";
+                loadedDoc.Save(outputPath);
+                Console.WriteLine($"Document loaded and saved to {outputPath}");
+            }
+            catch (OperationCanceledException)
+            {
+                // Handle cancellation and perform cleanup.
+                Console.WriteLine("Document load was cancelled. Performing cleanup.");
+                string partialPath = "loaded.docx";
+                if (File.Exists(partialPath))
+                {
+                    File.Delete(partialPath);
+                }
+            }
+            catch (AggregateException aggEx) when (aggEx.InnerException is OperationCanceledException)
+            {
+                // Handle cancellation wrapped in an AggregateException.
+                Console.WriteLine("Document load was cancelled (AggregateException). Performing cleanup.");
+                string partialPath = "loaded.docx";
+                if (File.Exists(partialPath))
+                {
+                    File.Delete(partialPath);
+                }
+            }
         }
-        catch (OperationCanceledException)
+
+        // Final cleanup: delete the source document.
+        if (File.Exists(sourcePath))
         {
-            // Perform necessary cleanup after a cancelled load.
-            if (File.Exists(docPath))
-                File.Delete(docPath);
-
-            // Remove the temporary directory if it is empty.
-            if (Directory.Exists(tempDir) && Directory.GetFileSystemEntries(tempDir).Length == 0)
-                Directory.Delete(tempDir);
+            File.Delete(sourcePath);
         }
-
-        // Ensure the program exits without waiting for user input.
     }
 }

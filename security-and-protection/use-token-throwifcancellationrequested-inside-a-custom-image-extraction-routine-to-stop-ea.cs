@@ -8,51 +8,63 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with a tiny PNG image.
-        string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X6ZcAAAAASUVORK5CYII=";
-        byte[] pngBytes = Convert.FromBase64String(base64Png);
-        using (var imageStream = new MemoryStream(pngBytes))
+        // Create a sample document and insert an in‑memory PNG image.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // 1x1 pixel transparent PNG (base64 encoded).
+        const string pngBase64 =
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X5eUAAAAASUVORK5CYII=";
+        byte[] pngBytes = Convert.FromBase64String(pngBase64);
+
+        using (MemoryStream imgStream = new MemoryStream(pngBytes))
         {
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
-            builder.InsertImage(imageStream);
-            doc.Save("Sample.docx");
+            // Insert the image into the document.
+            builder.InsertImage(imgStream);
         }
 
-        // Load the document we just created.
-        var loadedDoc = new Document("Sample.docx");
+        // Save the source document (optional, just to have a file on disk).
+        const string sourcePath = "Source.docx";
+        doc.Save(sourcePath);
 
-        // Create a cancellation token that is already cancelled.
-        var cts = new CancellationTokenSource();
-        cts.Cancel();
+        // Set up cancellation support.
+        CancellationTokenSource cts = new CancellationTokenSource();
+        CancellationToken token = cts.Token;
 
         try
         {
-            // Attempt to extract images; should stop early due to cancellation.
-            ExtractImages(loadedDoc, cts.Token);
-            Console.WriteLine("Image extraction completed without cancellation (unexpected).");
+            // Run the custom image extraction routine.
+            ExtractImages(doc, token, cts);
         }
         catch (OperationCanceledException)
         {
-            Console.WriteLine("Image extraction was cancelled as requested.");
+            Console.WriteLine("Image extraction was cancelled.");
         }
     }
 
-    // Custom image extraction routine that respects cancellation.
-    private static void ExtractImages(Document doc, CancellationToken token)
+    private static void ExtractImages(Document doc, CancellationToken token, CancellationTokenSource cts)
     {
-        var shapes = doc.GetChildNodes(NodeType.Shape, true);
+        // Retrieve all shapes that may contain images.
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
         int imageIndex = 0;
 
         foreach (Shape shape in shapes)
         {
-            // Throw if cancellation has been requested.
+            // Throw if cancellation was requested before processing the next shape.
             token.ThrowIfCancellationRequested();
 
             if (shape.HasImage)
             {
-                string fileName = $"ExtractedImage_{imageIndex}.png";
-                shape.ImageData.Save(fileName);
+                string imageFile = $"Image_{imageIndex}.png";
+                shape.ImageData.Save(imageFile);
+                Console.WriteLine($"Saved {imageFile}");
+
+                // Cancel after the first image to demonstrate early termination.
+                if (imageIndex == 0)
+                {
+                    cts.Cancel();
+                }
+
                 imageIndex++;
             }
         }

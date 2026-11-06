@@ -7,65 +7,48 @@ using Aspose.Words.Saving;
 
 public class Program
 {
-    // Helper method that runs the synchronous Save inside a Task and observes the cancellation token.
-    private static async Task SaveDocumentAsync(Document doc, string path, SaveOptions options, CancellationToken token)
+    public static async Task Main()
     {
-        // Run the save operation on a background thread so it can be cancelled before it starts.
-        await Task.Run(() =>
-        {
-            // Throw if cancellation was already requested.
-            token.ThrowIfCancellationRequested();
-
-            // Perform the actual save.
-            doc.Save(path, options);
-        }, token);
-    }
-
-    public static async Task Main(string[] args)
-    {
-        // Create a sample document with many paragraphs to make the save operation take noticeable time.
+        // Create a simple document.
         Document doc = new Document();
-        for (int i = 0; i < 5000; i++)
-        {
-            Paragraph para = new Paragraph(doc);
-            para.AppendChild(new Run(doc, $"Paragraph {i + 1}"));
-            doc.FirstSection.Body.AppendChild(para);
-        }
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This document will be saved asynchronously with cancellation support.");
 
-        // Define the output file path.
-        string outputPath = Path.Combine(Path.GetTempPath(), "AsyncSave.docx");
+        string outputPath = Path.Combine(Path.GetTempPath(), "AsyncCancelled.docx");
 
-        // Ensure any previous file is removed.
+        // Remove any existing file.
         if (File.Exists(outputPath))
             File.Delete(outputPath);
 
-        // ---------- Normal asynchronous save (no cancellation) ----------
-        await SaveDocumentAsync(doc, outputPath, new OoxmlSaveOptions(), CancellationToken.None);
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Document was not saved as expected.");
+        // Set up a cancellation token that will be triggered shortly.
+        using CancellationTokenSource cts = new CancellationTokenSource();
 
-        // ---------- Asynchronous save with cancellation ----------
-        using (CancellationTokenSource cts = new CancellationTokenSource())
+        // Cancel after 100 milliseconds.
+        Task cancelTask = Task.Delay(100).ContinueWith(_ => cts.Cancel());
+
+        try
         {
-            // Cancel the token after 10 milliseconds.
-            cts.CancelAfter(10);
+            // Perform the save operation on a background thread, passing the token.
+            await Task.Run(() =>
+            {
+                // Throw if cancellation was already requested.
+                cts.Token.ThrowIfCancellationRequested();
 
-            try
-            {
-                // Attempt to save the document asynchronously with the cancellable token.
-                await SaveDocumentAsync(doc, outputPath, new OoxmlSaveOptions(), cts.Token);
-                // If the operation completes without cancellation, indicate success.
-                Console.WriteLine("Document saved successfully (cancellation did not occur).");
-            }
-            catch (OperationCanceledException)
-            {
-                // Expected path when the token is cancelled during the save operation.
-                Console.WriteLine("Document save was cancelled via CancellationToken.");
-            }
+                // Save the document synchronously (Aspose.Words does not provide SaveAsync).
+                doc.Save(outputPath, new OoxmlSaveOptions(SaveFormat.Docx));
+            }, cts.Token);
+
+            Console.WriteLine($"Document saved successfully to '{outputPath}'.");
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine("Save operation was cancelled.");
+            // Clean up partially written file if it exists.
+            if (File.Exists(outputPath))
+                File.Delete(outputPath);
         }
 
-        // Clean up the temporary file.
-        if (File.Exists(outputPath))
-            File.Delete(outputPath);
+        // Ensure the cancellation task completes.
+        await cancelTask;
     }
 }

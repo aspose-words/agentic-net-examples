@@ -3,84 +3,62 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Aspose.Words;
-using Aspose.Words.Loading;      // Needed for LoadOptions
 using Aspose.Words.Saving;
 
 public class Program
 {
+    // Entry point
     public static async Task Main()
     {
-        // Paths for source and output documents.
-        string sourcePath = "source.docx";
-        string protectedPath = "protected.docx";
+        // Prepare sample source document
+        const string sourcePath = "source.docx";
+        const string protectedPath = "protected.docx";
+        const string protectionPassword = "Secret123";
 
-        // Create a simple source document.
-        Document sourceDoc = new Document();
-        Paragraph para = new Paragraph(sourceDoc);
-        para.AppendChild(new Run(sourceDoc, "Sample text for protection demo."));
-        sourceDoc.FirstSection.Body.AppendChild(para);
-        sourceDoc.Save(sourcePath);
+        CreateSampleDocument(sourcePath);
 
-        // Set up cancellation.
+        // Set up cancellation token (not cancelled in this example)
         using var cts = new CancellationTokenSource();
+        CancellationToken token = cts.Token;
 
-        // Start background processing.
-        Task processingTask = ProcessDocumentAsync(sourcePath, protectedPath, cts.Token);
+        // Run document processing in background
+        await Task.Run(() => ProcessDocument(sourcePath, protectedPath, protectionPassword, token), token);
 
-        // Simulate a short wait before cancelling.
-        await Task.Delay(500);
-        cts.Cancel();
+        // Verify output exists
+        if (!File.Exists(protectedPath))
+            throw new InvalidOperationException($"Failed to create protected document at '{protectedPath}'.");
 
-        try
-        {
-            await processingTask;
-        }
-        catch (OperationCanceledException)
-        {
-            Console.WriteLine("Document processing was cancelled.");
-        }
-
-        // Verify result.
-        if (File.Exists(protectedPath))
-        {
-            // Load the saved document to confirm it is protected.
-            LoadOptions loadOptions = new LoadOptions { Password = "pwd123" };
-            Document protectedDoc = new Document(protectedPath, loadOptions);
-            if (protectedDoc.ProtectionType != ProtectionType.NoProtection)
-                Console.WriteLine("Protected document saved successfully.");
-            else
-                throw new InvalidOperationException("Document was saved but not protected.");
-        }
-        else
-        {
-            Console.WriteLine("Protected document was not created due to cancellation.");
-        }
-
-        // Clean up sample files.
-        if (File.Exists(sourcePath)) File.Delete(sourcePath);
-        if (File.Exists(protectedPath)) File.Delete(protectedPath);
+        // Clean up sample files (optional)
+        File.Delete(sourcePath);
+        File.Delete(protectedPath);
     }
 
-    private static async Task ProcessDocumentAsync(string inputPath, string outputPath, CancellationToken token)
+    // Creates a simple DOCX file with some text
+    private static void CreateSampleDocument(string path)
     {
-        // Load the document.
-        Document doc = new Document(inputPath);
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a sample document for protection demonstration.");
+        doc.Save(path);
+    }
 
-        // Simulate lengthy processing with periodic cancellation checks.
-        for (int i = 0; i < 5; i++)
-        {
-            token.ThrowIfCancellationRequested();
-            await Task.Delay(300, token); // Simulated work.
-        }
+    // Loads a document, applies read‑only protection with a password, and saves it
+    private static void ProcessDocument(string inputPath, string outputPath, string password, CancellationToken token)
+    {
+        // Throw if cancellation requested before starting
+        token.ThrowIfCancellationRequested();
 
-        // Apply protection with a password.
-        doc.Protect(ProtectionType.ReadOnly, "pwd123");
+        // Load the source document (no password needed for the source)
+        var doc = new Document(inputPath);
 
-        // Save with encryption (password protection) using OoxmlSaveOptions.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions
-        {
-            Password = "pwd123"
-        };
+        // Apply read‑only protection with the provided password
+        doc.Protect(ProtectionType.ReadOnly, password);
+
+        // Save the protected document
+        var saveOptions = new OoxmlSaveOptions(SaveFormat.Docx);
         doc.Save(outputPath, saveOptions);
+
+        // Throw if cancellation requested after processing
+        token.ThrowIfCancellationRequested();
     }
 }

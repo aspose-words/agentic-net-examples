@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Threading;
 using Aspose.Words;
 
@@ -7,29 +6,27 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare a temporary folder.
-        string tempFolder = Path.Combine(Path.GetTempPath(), "AsposeDemo");
-        Directory.CreateDirectory(tempFolder);
-
-        // Create a simple document and save it.
-        string docPath = Path.Combine(tempFolder, "sample.docx");
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a simple document and save it locally.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
         builder.Writeln("Hello, Aspose.Words!");
-        doc.Save(docPath);
+        const string fileName = "sample.docx";
+        doc.Save(fileName);
 
-        // Set up a cancelled token.
-        CancellationTokenSource cts = new CancellationTokenSource();
-        cts.Cancel(); // Simulate cancellation before loading.
+        // Prepare a cancelled token to simulate a cancellation request.
+        var cts = new CancellationTokenSource();
+        cts.Cancel(); // The token is now in the cancelled state.
 
         try
         {
-            // Manually check for cancellation before loading the document.
+            // Check for cancellation before attempting to load the document.
+            // This mimics the behaviour of a loading callback that would call
+            // DocumentLoadingArgs.ThrowIfCancellationRequested().
             if (cts.Token.IsCancellationRequested)
-                throw new OperationCanceledException(cts.Token);
+                throw new OperationCanceledException();
 
-            // Load the document (no special load options needed for this demo).
-            Document loadedDoc = new Document(docPath);
+            // Load the document (this line will not be reached because of the cancellation above).
+            var loadedDoc = new Document(fileName);
             Console.WriteLine("Document loaded successfully (unexpected).");
         }
         catch (OperationCanceledException)
@@ -38,15 +35,7 @@ public class Program
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Unexpected exception: {ex.GetType().Name} - {ex.Message}");
-        }
-        finally
-        {
-            // Clean up temporary files.
-            if (File.Exists(docPath))
-                File.Delete(docPath);
-            if (Directory.Exists(tempFolder))
-                Directory.Delete(tempFolder, true);
+            Console.WriteLine($"An unexpected exception occurred: {ex.Message}");
         }
     }
 }
