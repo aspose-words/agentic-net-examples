@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
@@ -8,33 +7,22 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with the text "(c)" that we want to replace.
+        // Create a new document and add a paragraph containing the text "(c)".
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document. (c) 2026 Company.");
-        // Save the original document (optional, just for demonstration).
-        const string inputPath = "input.docx";
-        doc.Save(inputPath);
+        builder.Writeln("This is a sample document containing the copyright placeholder (c).");
 
-        // Load the document to perform the replacement.
-        Document loaded = new Document(inputPath);
+        // Define a regular expression that matches the literal "(c)".
+        Regex copyrightRegex = new Regex(@"\(c\)", RegexOptions.Compiled);
 
-        // Define a regular expression that matches the literal "(c)" (case‑insensitive).
-        Regex regex = new Regex(@"\(c\)", RegexOptions.IgnoreCase);
+        // Replace all occurrences of the pattern with the Unicode © character.
+        int replacedCount = doc.Range.Replace(copyrightRegex, "©", new FindReplaceOptions());
 
-        // Replace each match with the Unicode copyright character.
-        int replacedCount = loaded.Range.Replace(regex, "©", new FindReplaceOptions());
-
-        // Ensure that at least one replacement occurred.
+        // Ensure that at least one replacement was performed.
         if (replacedCount == 0)
-            throw new InvalidOperationException("No occurrences of the pattern were replaced.");
+            throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
         // Save the modified document.
-        const string outputPath = "output.docx";
-        loaded.Save(outputPath);
-
-        // Indicate success (optional, not required for non‑interactive execution).
-        Console.WriteLine($"Replacements performed: {replacedCount}");
-        Console.WriteLine($"Modified document saved to '{outputPath}'.");
+        doc.Save("output.docx");
     }
 }

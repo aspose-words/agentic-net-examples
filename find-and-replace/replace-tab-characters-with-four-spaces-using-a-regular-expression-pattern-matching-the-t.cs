@@ -11,9 +11,9 @@ public class Program
         // Create a sample document containing tab characters.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Column1\tColumn2\tColumn3");
-        builder.Writeln("Value1\tValue2\tValue3");
-        const string inputPath = "input.docx";
+        builder.Writeln("First line with\ttab.");
+        builder.Writeln("Second line with\ttwo tabs:\t\tend.");
+        string inputPath = "input.docx";
         doc.Save(inputPath);
 
         // Load the document for processing.
@@ -28,10 +28,13 @@ public class Program
 
         // Ensure that at least one replacement occurred.
         if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one tab replacement.");
+            throw new InvalidOperationException("No tab characters were replaced.");
 
         // Save the modified document.
-        const string outputPath = "output.docx";
+        string outputPath = "output.docx";
         loaded.Save(outputPath);
+
+        // Optional: indicate success.
+        Console.WriteLine($"Replaced {replacedCount} tab character(s). Output saved to '{outputPath}'.");
     }
 }

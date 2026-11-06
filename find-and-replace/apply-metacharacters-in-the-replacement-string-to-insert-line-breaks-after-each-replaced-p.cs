@@ -6,36 +6,37 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with paragraphs containing the word "old".
+        // Create a sample document with placeholder text in several paragraphs.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is the first paragraph with old value.");
-        builder.Writeln("Second paragraph also contains old.");
-        builder.Writeln("Third paragraph without the keyword.");
-
-        // Save the initial document (optional, just for reference).
+        builder.Writeln("First paragraph contains [PLACE].");
+        builder.Writeln("Second paragraph also has [PLACE] here.");
+        builder.Writeln("Third paragraph does not have the token.");
+        builder.Writeln("[PLACE] at the start of this paragraph.");
+        // Save the source document.
         const string inputPath = "input.docx";
         doc.Save(inputPath);
 
-        // Load the document to perform find-and-replace.
+        // Load the document for processing.
         Document loaded = new Document(inputPath);
 
-        // Define the text to find and the replacement string.
-        // The replacement string uses the metacharacter "\r" to insert a paragraph break
-        // after the replaced text, effectively adding a line break.
-        const string findText = "old";
-        const string replaceText = "new\r";
-
-        // Perform the replacement.
+        // Replace the placeholder with a string that includes a paragraph break metacharacter (\r).
+        // The \r inserts a new paragraph (line break) after the replacement text.
+        const string findText = "[PLACE]";
+        const string replaceText = "Inserted text\r";
         FindReplaceOptions options = new FindReplaceOptions();
         int replacedCount = loaded.Range.Replace(findText, replaceText, options);
 
         // Validate that at least one replacement occurred.
         if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one replacement.");
+            throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
         // Save the modified document.
         const string outputPath = "output.docx";
         loaded.Save(outputPath);
+
+        // Optional: indicate success.
+        Console.WriteLine($"Replacements performed: {replacedCount}");
+        Console.WriteLine($"Modified document saved to '{outputPath}'.");
     }
 }

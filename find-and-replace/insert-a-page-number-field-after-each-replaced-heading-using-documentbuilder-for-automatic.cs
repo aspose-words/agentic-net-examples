@@ -1,69 +1,59 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
-using Aspose.Words.Replacing;
+using Aspose.Words.Replacing;   // Needed for FindReplaceOptions
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with two headings.
+        // Create a sample document with headings.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
+        // Add three headings.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Writeln("Heading One");
-        builder.Writeln("Content under first heading.");
+        builder.Writeln("Some content under heading one.");
 
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Writeln("Heading Two");
-        builder.Writeln("Content under second heading.");
+        builder.Writeln("Some content under heading two.");
 
-        // Set up the replacement callback.
-        var callback = new HeadingReplaceCallback();
+        builder.Writeln("Heading Three");
+        builder.Writeln("Some content under heading three.");
 
-        FindReplaceOptions options = new FindReplaceOptions
-        {
-            ReplacingCallback = callback
-        };
+        // Save the sample input document.
+        const string inputPath = "input.docx";
+        doc.Save(inputPath);
 
-        // Perform the replacement.
-        int replacedCount = doc.Range.Replace("Heading", "Section", options);
+        // Load the document for processing.
+        Document loaded = new Document(inputPath);
 
+        // Replace the heading text.
+        int replacedCount = loaded.Range.Replace("Heading", "New Heading", new FindReplaceOptions());
         if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one replacement.");
+            throw new InvalidOperationException("Expected at least one heading replacement.");
+
+        // Insert a page number field after each replaced heading.
+        foreach (Paragraph paragraph in loaded.GetChildNodes(NodeType.Paragraph, true))
+        {
+            // Trim to ignore trailing paragraph marks.
+            string text = paragraph.GetText().TrimEnd('\r', '\a');
+            if (text.StartsWith("New Heading", StringComparison.Ordinal))
+            {
+                // Position the builder at the current heading paragraph.
+                DocumentBuilder paraBuilder = new DocumentBuilder(loaded);
+                paraBuilder.MoveTo(paragraph);
+                // Insert a new paragraph after the heading.
+                paraBuilder.InsertParagraph();
+                // Insert a PAGE field for automatic page numbering.
+                paraBuilder.InsertField(FieldType.FieldPage, true);
+            }
+        }
 
         // Save the modified document.
-        doc.Save("output.docx");
-    }
-
-    private class HeadingReplaceCallback : IReplacingCallback
-    {
-        // Track paragraphs that have already received a page number field.
-        private readonly HashSet<Paragraph> _processedParagraphs = new HashSet<Paragraph>();
-
-        public ReplaceAction Replacing(ReplacingArgs args)
-        {
-            // Replace the matched text.
-            args.Replacement = "Section";
-
-            // Get the paragraph that contains the match.
-            Node matchNode = args.MatchNode;
-            if (matchNode?.ParentNode is Paragraph paragraph && !_processedParagraphs.Contains(paragraph))
-            {
-                // Insert a new paragraph after the heading.
-                DocumentBuilder builder = new DocumentBuilder((Document)paragraph.Document, new DocumentBuilderOptions());
-                builder.MoveTo(paragraph);
-                builder.InsertParagraph();
-
-                // Insert a PAGE field for automatic numbering.
-                builder.InsertField(FieldType.FieldPage, true);
-
-                _processedParagraphs.Add(paragraph);
-            }
-
-            return ReplaceAction.Replace;
-        }
+        const string outputPath = "output.docx";
+        loaded.Save(outputPath);
     }
 }

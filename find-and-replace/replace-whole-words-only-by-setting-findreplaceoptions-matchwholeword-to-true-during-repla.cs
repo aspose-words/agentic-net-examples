@@ -1,4 +1,5 @@
 using System;
+using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -6,37 +7,33 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document containing both whole‑word and partial matches.
-        Document inputDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(inputDoc);
-        builder.Writeln("The quick brown fox jumps over the lazy dog. The foxes are clever.");
+        // Create a sample document with text containing the target word.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("The quick brown fox jumps over the lazy dog.");
+        builder.Writeln("A foxes are clever.");
+        builder.Writeln("fox");
 
-        // Save the sample document locally.
+        // Save the source document locally.
         const string inputPath = "input.docx";
-        inputDoc.Save(inputPath);
+        doc.Save(inputPath);
 
-        // Load the document from the file we just created.
-        Document doc = new Document(inputPath);
+        // Load the document for processing.
+        Document loaded = new Document(inputPath);
 
-        // Configure find‑and‑replace options to match whole words only.
-        FindReplaceOptions options = new FindReplaceOptions
-        {
-            // In Aspose.Words the property is FindWholeWordsOnly, not MatchWholeWord.
-            FindWholeWordsOnly = true
-        };
+        // Use a regular expression with word boundaries to match whole words only.
+        Regex wholeWordFox = new Regex(@"\bfox\b", RegexOptions.IgnoreCase);
+        FindReplaceOptions options = new FindReplaceOptions();
 
-        // Replace the whole‑word occurrence of "fox" with "cat".
-        int replacedCount = doc.Range.Replace("fox", "cat", options);
+        // Replace the whole word "fox" with "cat".
+        int replaced = loaded.Range.Replace(wholeWordFox, "cat", options);
 
-        // Ensure that at least one replacement was performed.
-        if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one whole‑word replacement, but none occurred.");
+        // Verify that at least one replacement occurred.
+        if (replaced == 0)
+            throw new InvalidOperationException("Expected at least one whole‑word replacement.");
 
         // Save the modified document.
         const string outputPath = "output.docx";
-        doc.Save(outputPath);
-
-        // Output the number of replacements performed.
-        Console.WriteLine($"Replacements performed: {replacedCount}");
+        loaded.Save(outputPath);
     }
 }

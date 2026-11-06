@@ -1,5 +1,5 @@
 using System;
-using System.IO;
+using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -10,37 +10,30 @@ public class Program
         // Create a sample document with product names.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Our productA is great.");
-        builder.Writeln("producta is affordable.");
-        builder.Writeln("productB is also good.");
-        builder.Writeln("The productA's features are unmatched."); // This should not be replaced because of whole word match.
+        builder.Writeln("Our product SuperWidget is great.");
+        builder.Writeln("We also have superwidget in stock.");
+        builder.Writeln("The SuperWidgetPro version is premium.");
 
-        // Save the source document.
+        // Save the source document locally.
         const string inputPath = "input.docx";
         doc.Save(inputPath);
 
-        // Load the document for find-and-replace.
+        // Load the document for processing.
         Document loaded = new Document(inputPath);
 
-        // Configure find-and-replace options: ignore case and match whole words only.
-        FindReplaceOptions options = new FindReplaceOptions
-        {
-            MatchCase = false,          // Ignore case.
-            FindWholeWordsOnly = true   // Match whole words only.
-        };
+        // Configure a regular expression to match the whole word "SuperWidget"
+        // ignoring case. \b ensures whole‑word matching.
+        Regex regex = new Regex(@"\bSuperWidget\b", RegexOptions.IgnoreCase);
 
         // Perform the replacement.
-        int replacedCount = loaded.Range.Replace("productA", "SuperProduct", options);
+        int replacedCount = loaded.Range.Replace(regex, "MegaWidget", new FindReplaceOptions());
 
-        // Validate that at least one replacement occurred.
+        // Ensure that at least one replacement occurred.
         if (replacedCount == 0)
             throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
-        // Save the modified document.
+        // Save the updated document.
         const string outputPath = "output.docx";
         loaded.Save(outputPath);
-
-        // Output the result count (optional, not required for interaction).
-        Console.WriteLine($"Replacements performed: {replacedCount}");
     }
 }

@@ -1,22 +1,22 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Newtonsoft.Json; // Required package, not used directly in this example.
+using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document containing the word "color" in different cases.
+        // Create a sample document containing various case variations of the word "color".
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("The color of the sky is blue.");
-        builder.Writeln("She likes the Color red.");
-        builder.Writeln("COLOR is often used in design.");
+        builder.Writeln("Color is important in design.");
+        builder.Writeln("COLOR can be bright.");
+        builder.Writeln("A colorful world.");
 
-        // Save the source document.
-        const string inputPath = "input.docx";
+        // Save the sample document to a local file.
+        string inputPath = "input.docx";
         doc.Save(inputPath);
 
         // Load the document from the file system.
@@ -25,18 +25,18 @@ public class Program
         // Configure find‑replace options for a case‑insensitive search.
         FindReplaceOptions options = new FindReplaceOptions
         {
-            MatchCase = false // Ignore case when searching.
+            MatchCase = false // Ignore case when matching.
         };
 
-        // Perform the replacement of "color" with "colour".
+        // Perform the replacement: "color" → "colour".
         int replacedCount = loaded.Range.Replace("color", "colour", options);
 
-        // Ensure that at least one replacement occurred.
+        // Ensure that at least one replacement was made.
         if (replacedCount == 0)
             throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
         // Save the modified document.
-        const string outputPath = "output.docx";
+        string outputPath = "output.docx";
         loaded.Save(outputPath);
     }
 }

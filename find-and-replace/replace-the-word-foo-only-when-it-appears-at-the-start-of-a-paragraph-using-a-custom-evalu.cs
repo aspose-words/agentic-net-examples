@@ -1,68 +1,82 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using Newtonsoft.Json;
 
-namespace FindReplaceStartOfParagraph
+public class Program
 {
-    // Callback that replaces only when the match is at the start of a paragraph.
-    public class StartOfParagraphCallback : IReplacingCallback
+    public static void Main()
     {
+        // Create a sample document with several paragraphs.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("foo is at the start of this paragraph.");
+        builder.Writeln("This paragraph contains foo in the middle.");
+        builder.Writeln("foo appears again at the beginning.");
+        builder.Writeln("No keyword here.");
+        builder.Writeln("   foo with leading spaces should not be replaced.");
+
+        // Set up the custom callback that replaces only when 'foo' is at the start of a paragraph.
+        var callback = new StartOfParagraphCallback();
+        FindReplaceOptions options = new FindReplaceOptions
+        {
+            ReplacingCallback = callback
+        };
+
+        // Perform the replacement.
+        int replacedCount = doc.Range.Replace("foo", "bar", options);
+
+        if (replacedCount == 0)
+        {
+            throw new InvalidOperationException("Expected at least one replacement, but none occurred.");
+        }
+
+        // Save the modified document.
+        const string outputPath = "output.docx";
+        doc.Save(outputPath);
+
+        // Create a simple JSON report of the replacements.
+        var report = new
+        {
+            Replacements = replacedCount,
+            ParagraphsModified = callback.ModifiedParagraphTexts
+        };
+        string json = JsonConvert.SerializeObject(report, Formatting.Indented);
+        File.WriteAllText("report.json", json);
+    }
+
+    private class StartOfParagraphCallback : IReplacingCallback
+    {
+        public List<string> ModifiedParagraphTexts { get; } = new List<string>();
+
         public ReplaceAction Replacing(ReplacingArgs args)
         {
-            // We are only interested in matches that are inside a Run node.
-            if (args.MatchNode.NodeType != NodeType.Run)
+            // The match node is expected to be a Run.
+            if (args.MatchNode is not Run run)
                 return ReplaceAction.Skip;
 
-            // Get the paragraph that contains the match.
-            Paragraph paragraph = (Paragraph)args.MatchNode.GetAncestor(NodeType.Paragraph);
+            // Get the paragraph that contains this run.
+            Paragraph paragraph = run.ParentParagraph;
             if (paragraph == null)
                 return ReplaceAction.Skip;
 
-            // Get the paragraph text without the paragraph mark (character 0x07).
-            string paragraphText = paragraph.GetText();
-            if (paragraphText.EndsWith("\a"))
-                paragraphText = paragraphText.Substring(0, paragraphText.Length - 1);
+            // Verify that the run is the first node in the paragraph.
+            if (paragraph.FirstChild != run)
+                return ReplaceAction.Skip;
 
-            // If the paragraph starts with the exact match value, allow replacement.
-            if (paragraphText.StartsWith(args.Match.Value, StringComparison.Ordinal))
-                return ReplaceAction.Replace;
+            // Ensure the run's text actually starts with the matched word.
+            if (!run.Text.StartsWith(args.Match.Value, StringComparison.Ordinal))
+                return ReplaceAction.Skip;
 
-            return ReplaceAction.Skip;
-        }
-    }
+            // Perform the replacement.
+            args.Replacement = "bar";
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // Create a sample document in memory.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            // Record the paragraph's text for reporting.
+            ModifiedParagraphTexts.Add(paragraph.GetText());
 
-            builder.Writeln("foo is at the start of this paragraph.");
-            builder.Writeln("This paragraph contains foo inside.");
-            builder.Writeln("foo appears again at the beginning.");
-            builder.Writeln("No occurrence here.");
-            builder.Writeln("foo"); // Paragraph that contains only the word.
-
-            // Save the original document for inspection (optional).
-            doc.Save("input.docx");
-
-            // Set up find‑replace options with the custom callback.
-            FindReplaceOptions options = new FindReplaceOptions
-            {
-                ReplacingCallback = new StartOfParagraphCallback()
-            };
-
-            // Replace "foo" with "bar" only when it appears at the start of a paragraph.
-            int replacedCount = doc.Range.Replace("foo", "bar", options);
-
-            // Ensure that at least one replacement was performed.
-            if (replacedCount == 0)
-                throw new InvalidOperationException("Expected at least one replacement, but none were made.");
-
-            // Save the modified document.
-            doc.Save("output.docx");
+            return ReplaceAction.Replace;
         }
     }
 }

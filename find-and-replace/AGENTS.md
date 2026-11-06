@@ -10,34 +10,29 @@ product: Aspose.Words
 
 ## Purpose
 
-This folder is a live, curated example set for Find and Replace scenarios. Treat every `.cs` file as a standalone console application. The goal is correct, warning-free examples that use documented Aspose APIs and match the original task intent.
+Provide an AI coding assistant with clear, reproducible patterns for implementing robust find-and-replace operations in Aspose.Words, ensuring that all required namespaces are imported, documents are created or loaded locally, and only supported APIs are used.
 
 ## Non-negotiable conventions
 
-- Use native `Range.Replace` APIs directly.
-- Bootstrap local source documents, files, streams, or folders whenever the task implies an existing source.
-- Use `FindReplaceOptions` and `IReplacingCallback` only through documented Aspose.Words APIs.
-- Use `Newtonsoft.Json` for JSON reporting tasks and `Aspose.Drawing` instead of `System.Drawing` when drawing-related types are needed.
-- For metacharacter tasks, create real document control structures rather than plain literal backslash sequences.
-- Guard maybe-null values to avoid nullable-reference warnings such as `CS8600`, `CS8602`, and `CS8604`.
+- Do not reference System.Drawing; use Aspose.Drawing for any drawing-related types.
+- Do not assume that source files, streams, or folders exist; generate minimal sample inputs within the example code.
+- Do not call undocumented helpers such as Document.ReplaceAll or Paragraph.Replace.
+- Bootstrap local sample inputs for existing-file, folder, stream, image, and data workflows.
+- Prefer simple, verifiable workflows over speculative formatting shortcuts.
 
 ## Recommended workflow selection
 
-- Plain Replace workflow: 41 examples
-- Formatting Aware Replace workflow: 7 examples
-- Regex Replace workflow: 7 examples
-- Callback Reporting workflow: 6 examples
-- Input Bootstrap workflow: 2 examples
+- **Plain Replace workflow**: 41 examples
+- **Formatting Aware Replace workflow**: 7 examples
+- **Regex Replace workflow**: 7 examples
+- **Callback Reporting workflow**: 6 examples
+- **Input Bootstrap workflow**: 2 examples
 
 Use the simplest workflow that satisfies the task.
 
 ## Validation priorities
 
-1. The code must compile and run without manual input.
-2. API usage must be supported by the configured package versions.
-3. Exported outputs must actually be written by the example.
-4. Validation scenarios must inspect only the behavior requested by the task.
-5. Examples that depend on files, folders, streams, images, or data should bootstrap those inputs locally during the example run.
+1. Verify that the replacement count returned by Document.Range.Replace is greater than zero; otherwise throw an informative exception.
 
 ## File-to-task reference
 
@@ -85,7 +80,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Implement a custom ReplaceEvaluator delegate to replace only words longer than ten characters.
   - Workflow: plain-replace
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `count-the-number-of-replacements-performed-by-storing-the-integer-result-returned-from-the.cs`
   - Task: Count the number of replacements performed by storing the integer result returned from the Replace method.
   - Workflow: plain-replace
@@ -117,12 +112,12 @@ Use the simplest workflow that satisfies the task.
   - Outputs: docx
   - Selected engine: mcp
 - `execute-a-case-insensitive-replace-that-changes-all-instances-of-color-to-colour-throughou.cs`
-  - Task: Execute a case-insensitive replace that changes all instances of ‘color' to ‘colour' throughout the document.
+  - Task: Execute a case-insensitive replace that changes all instances of 'color' to 'colour' throughout the document.
   - Workflow: formatting-aware-replace
   - Outputs: docx
   - Selected engine: mcp
 - `apply-whole-word-matching-to-avoid-partial-replacements-inside-longer-words-such-as-catalo.cs`
-  - Task: Apply whole-word matching to avoid partial replacements inside longer words such as ‘catalogue'.
+  - Task: Apply whole-word matching to avoid partial replacements inside longer words such as 'catalogue'.
   - Workflow: callback-reporting
   - Outputs: docx
   - Selected engine: mcp
@@ -130,7 +125,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Replace multiple line break sequences with a single paragraph break using the metacharacter \n in the replacement.
   - Workflow: regex-replace
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `perform-find-and-replace-on-a-document-loaded-from-a-memory-stream-without-writing-to-disk.cs`
   - Task: Perform find and replace on a document loaded from a memory stream without writing to disk.
   - Workflow: input-bootstrap
@@ -212,10 +207,10 @@ Use the simplest workflow that satisfies the task.
   - Outputs: docx
   - Selected engine: mcp
 - `replace-the-word-foo-only-when-it-appears-at-the-start-of-a-paragraph-using-a-custom-evalu.cs`
-  - Task: Replace the word ‘foo' only when it appears at the start of a paragraph using a custom evaluator.
+  - Task: Replace the word 'foo' only when it appears at the start of a paragraph using a custom evaluator.
   - Workflow: plain-replace
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `replace-the-first-page-header-differently-from-other-headers-by-checking-section-propertie.cs`
   - Task: Replace the first page header differently from other headers by checking section properties during replacement.
   - Workflow: plain-replace
@@ -252,7 +247,7 @@ Use the simplest workflow that satisfies the task.
   - Outputs: docx
   - Selected engine: mcp
 - `convert-date-strings-from-january-1-2020-to-01-01-2020-using-a-regular-expression.cs`
-  - Task: Convert date strings from ‘January 1, 2020' to ‘01/01/2020' using a regular expression.
+  - Task: Convert date strings from 'January 1, 2020' to '01/01/2020' using a regular expression.
   - Workflow: plain-replace
   - Outputs: docx
   - Selected engine: mcp
@@ -315,7 +310,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Add a hyperlink to each replaced email address using DocumentBuilder during the replacement operation.
   - Workflow: plain-replace
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `ignore-case-and-match-whole-words-when-updating-product-names-across-the-document-using-fi.cs`
   - Task: Ignore case and match whole words when updating product names across the document using FindReplaceOptions.
   - Workflow: plain-replace
@@ -355,61 +350,58 @@ Use the simplest workflow that satisfies the task.
   - Task: Replace a placeholder with a generated QR code image using DocumentBuilder during the replacement.
   - Workflow: plain-replace
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: llm
 
 ## Common failure patterns and preferred agent fixes
 
-- **Invented find-replace APIs**
-  - Symptom: Code tries to use unsupported helpers such as Document.ReplaceAll or Paragraph.Replace.
-  - Preferred fix: Use Document.Range.Replace with supported FindReplaceOptions and callback APIs only.
+- **Missing FindReplaceOptions property**
+  - Symptom: The compiler reports that FindReplaceOptions does not contain definitions such as MatchWholeWord, UseRegularExpressions, or FindWholeWords.
+  - Root cause: The code references property names that were renamed or never existed in the Aspose.Words API version 26.10.0.
+  - Preferred fix: Use the correct property names: MatchCase for case sensitivity, FindWholeWordsOnly for whole-word matching, and rely on the Regex overload to enable regular-expression mode.
+  - Prevention: Consult the official Aspose.Words API reference for the exact property names and avoid hard-coding undocumented members.
 
-- **Callback misuse**
-  - Symptom: Custom replacement logic fails because IReplacingCallback or ReplacingArgs are used incorrectly.
-  - Preferred fix: Implement IReplacingCallback with the documented Replacing method and assign it through FindReplaceOptions.ReplacingCallback.
+- **Undefined ReplaceEvaluator type**
+  - Symptom: Compilation fails with CS0246 because the type ReplaceEvaluator cannot be found.
+  - Root cause: The example attempts to use a non-existent delegate type instead of the documented IReplacingCallback interface.
+  - Preferred fix: Implement a class that inherits from IReplacingCallback and assign an instance to FindReplaceOptions.ReplacingCallback.
+  - Prevention: Always use IReplacingCallback for custom replacement logic and verify its namespace (Aspose.Words.Replacing).
 
-- **Metacharacter source content mismatch**
-  - Symptom: Line-break or metacharacter replacement finds no matches because the source document was built with plain literal text instead of real control structures.
-  - Preferred fix: Create real line breaks or control characters in the source document and validate that Range.Replace returns a replacement count greater than zero.
+- **Incorrect overload arguments**
+  - Symptom: The compiler reports CS1503 errors when a Regex and a FindReplaceOptions object are passed to an overload expecting string arguments.
+  - Root cause: The code calls the string-based Replace overload instead of the Regex overload that accepts a Regex, a replacement string, and FindReplaceOptions.
+  - Preferred fix: Call Document.Range.Replace with the Regex overload: Replace(Regex pattern, string replacement, FindReplaceOptions options).
+  - Prevention: Match the argument types exactly to the overload signature; use IntelliSense or the API docs to select the correct method.
 
-- **Invalid formatting insertion**
-  - Symptom: Replacement logic inserts formatted content into invalid node parents or assumes every match belongs to a single Run.
-  - Preferred fix: Use supported run, font, paragraph, or builder logic and preserve valid parent-child insertion structure.
+- **Metacharacter replacement without real line breaks**
+  - Symptom: Runtime throws an InvalidOperationException because no replacements were made when attempting to replace multiple line-break sequences with "\n" or "&p".
+  - Root cause: The source document contains plain text literals instead of actual ControlChar.LineBreak characters, so the regex never matches.
+  - Preferred fix: Insert real line-break characters using ControlChar.LineBreak when building the sample document, and match them with a regex such as "(\v){2,}".
+  - Prevention: Bootstrap the input document with the exact control characters that the replacement logic expects.
 
-- **Drawing ambiguity**
-  - Symptom: Compile errors caused by System.Drawing usage or ambiguous Font references.
-  - Preferred fix: Use Aspose.Drawing only and prefer explicit Aspose.Drawing type names when ambiguity is possible.
+- **Callback misuse leading to null parent**
+  - Symptom: Runtime throws an InvalidOperationException or ArgumentException when the callback attempts to move the DocumentBuilder to a node with a null parent.
+  - Root cause: The IReplacingCallback implementation accesses args.MatchNode without verifying that it belongs to the main story or attempts to insert breaks outside a valid paragraph.
+  - Preferred fix: Validate that args.MatchNode is not null and that its parent story is the main document before performing insertions; use DocumentBuilder.MoveTo(args.MatchNode) only on nodes within the main story.
+  - Prevention: Add defensive null checks and story-type checks inside the Replacing method to ensure safe node manipulation.
 
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.9.0`
-- Package: `Aspose.Drawing.Common` `26.8.0`
-- Package: `Newtonsoft.Json`
+- Primary package: `Aspose.Words` `26.10.0`
 
 ## Command reference
-
-### Create a temporary console project
 
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-```
-
-### Add required packages
-
-```bash
-dotnet add package Aspose.Words --version 26.9.0
-dotnet add package Aspose.Drawing.Common --version 26.8.0
+dotnet add package Aspose.Words --version 26.10.0
+dotnet add package Aspose.Drawing.Common --version 26.10.0
 dotnet add package Newtonsoft.Json
 ```
-
-### Copy a category example into the temp project
 
 ```powershell
 Copy-Item ..\find-and-replace\<example-file>.cs .\Program.cs
 ```
-
-### Build and run
 
 ```bash
 dotnet build --configuration Release --verbosity minimal
@@ -418,6 +410,4 @@ dotnet run --configuration Release --no-build
 
 ## Category update guidance
 
-- Preserve file-to-task traceability. Any future update should keep the original task text associated with the file in metadata.
-- When replacing a file, prefer the latest verified publish-ready version rather than a merely compiling draft.
-- Keep examples standalone, bootstrap missing inputs locally, and prefer documented Aspose APIs over speculative shortcuts.
+- Update the example code whenever a new Aspose.Words version changes property names or overload signatures, and run the verification suite after each upgrade.

@@ -1,96 +1,65 @@
 using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using Aspose.Drawing;
 using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with paragraphs containing the target text.
+        // Create a new document and add sample paragraphs.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("First paragraph with placeholder.");
-        builder.Writeln("Second paragraph with placeholder.");
-        builder.Writeln("Third paragraph without the keyword.");
+        builder.Writeln("This is a target paragraph one.");
+        builder.Writeln("Another line without the keyword.");
+        builder.Writeln("Second target paragraph is here.");
+        builder.Writeln("target appears multiple times in this target paragraph.");
 
-        // Save the initial document (optional, just to demonstrate file creation).
-        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
-        doc.Save(inputPath);
-
-        // Define a custom paragraph style to apply after replacement.
-        Style customStyle = doc.Styles.Add(StyleType.Paragraph, "CustomReplacedStyle");
-        customStyle.Font.Color = Color.Red; // Use System.Drawing.Color directly
-        customStyle.Font.Bold = true;
+        // Define a custom paragraph style.
+        Style customStyle = doc.Styles.Add(StyleType.Paragraph, "MyCustomStyle");
+        customStyle.Font.Color = System.Drawing.Color.Blue; // Use fully qualified System.Drawing type without importing the namespace.
         customStyle.Font.Size = 14;
+        customStyle.Font.Bold = true;
 
-        // Prepare the callback that will replace the text and apply the style.
-        var callback = new ParagraphStyleReplacingCallback(customStyle);
-        FindReplaceOptions options = new FindReplaceOptions
-        {
-            ReplacingCallback = callback
-        };
+        // Set up find‑replace with a callback that applies the custom style.
+        FindReplaceOptions options = new FindReplaceOptions();
+        options.ReplacingCallback = new StyleApplyingCallback(doc, customStyle);
 
-        // Perform the find-and-replace operation.
-        int replacedCount = doc.Range.Replace("placeholder", "UPDATED", options);
-
-        // Validate that at least one replacement occurred.
+        // Perform the replacement.
+        int replacedCount = doc.Range.Replace("target", "replaced", options);
         if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one replacement, but none were made.");
+            throw new InvalidOperationException("No replacements were made.");
 
         // Save the modified document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
-        doc.Save(outputPath);
+        doc.Save("styled-output.docx");
+    }
+}
 
-        // Create a simple JSON report of the operation.
-        var report = new
-        {
-            ReplacementsMade = replacedCount,
-            ReplacedParagraphIndices = callback.ReplacedParagraphIndices
-        };
-        string jsonReport = JsonConvert.SerializeObject(report, Formatting.Indented);
-        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "report.json");
-        File.WriteAllText(reportPath, jsonReport);
+// Callback that applies the custom style to each paragraph containing a replacement.
+class StyleApplyingCallback : IReplacingCallback
+{
+    private readonly Document _document;
+    private readonly Style _style;
+
+    public StyleApplyingCallback(Document document, Style style)
+    {
+        _document = document;
+        _style = style;
     }
 
-    // Callback that replaces matched text and applies a custom style to the containing paragraph.
-    private class ParagraphStyleReplacingCallback : IReplacingCallback
+    public ReplaceAction Replacing(ReplacingArgs args)
     {
-        private readonly Style _style;
-        public List<int> ReplacedParagraphIndices { get; } = new List<int>();
-
-        public ParagraphStyleReplacingCallback(Style style)
+        Node matchNode = args.MatchNode;
+        if (matchNode != null)
         {
-            _style = style ?? throw new ArgumentNullException(nameof(style));
-        }
-
-        public ReplaceAction Replacing(ReplacingArgs args)
-        {
-            // Replace the matched text with the desired new text.
-            args.Replacement = "UPDATED";
-
-            // Find the paragraph that contains the match.
-            Node paragraphNode = args.MatchNode.GetAncestor(NodeType.Paragraph);
-            if (paragraphNode is Paragraph paragraph)
+            Paragraph paragraph = matchNode.GetAncestor(NodeType.Paragraph) as Paragraph;
+            if (paragraph != null)
             {
-                // Apply the custom style.
+                // Apply the custom style to the whole paragraph.
                 paragraph.ParagraphFormat.Style = _style;
-
-                // Record the paragraph index for reporting.
-                Body body = paragraph.GetAncestor(NodeType.Body) as Body;
-                if (body != null)
-                {
-                    NodeCollection paragraphs = body.GetChildNodes(NodeType.Paragraph, true);
-                    int index = paragraphs.IndexOf(paragraph);
-                    if (index >= 0)
-                        ReplacedParagraphIndices.Add(index);
-                }
             }
-
-            return ReplaceAction.Replace;
         }
+        return ReplaceAction.Replace;
     }
 }

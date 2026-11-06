@@ -10,87 +10,78 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with email addresses.
+        // Create a sample document containing email addresses.
+        const string inputPath = "input.docx";
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Please contact us at support@example.com for assistance.");
-        builder.Writeln("You can also reach sales@example.org or info@example.net.");
-        const string inputPath = "input.docx";
+        builder.Writeln(
+            "Please contact us at support@example.com or sales@example.com for more information.");
         doc.Save(inputPath);
 
         // Load the document for processing.
         Document loadedDoc = new Document(inputPath);
 
-        // Define email regex pattern.
+        // Define a regular expression that matches e‑mail addresses.
         Regex emailRegex = new Regex(@"\b[\w\.-]+@[\w\.-]+\.\w{2,}\b", RegexOptions.Compiled);
 
-        // Set up the replacing callback that only records matches.
-        EmailCollectorCallback collector = new EmailCollectorCallback();
+        // Set up a callback that replaces each e‑mail with a hyperlink.
+        EmailHyperlinkCallback callback = new EmailHyperlinkCallback();
+
         FindReplaceOptions options = new FindReplaceOptions
         {
-            ReplacingCallback = collector,
-            MatchCase = false
+            ReplacingCallback = callback
         };
 
-        // Perform the replacement (no actual text change, just counting matches).
-        int replacedCount = loadedDoc.Range.Replace(emailRegex, "$0", options);
-        if (replacedCount == 0)
-        {
-            throw new InvalidOperationException("No email addresses were found for replacement.");
-        }
+        // Perform the replacement.
+        int replacedCount = loadedDoc.Range.Replace(emailRegex, string.Empty, options);
 
-        // Insert hyperlinks for each recorded email address.
-        InsertHyperlinks(loadedDoc, collector.ReplacedEmails);
+        // Validate that at least one replacement occurred.
+        if (callback.ReplacedEmails.Count == 0)
+            throw new InvalidOperationException("No email addresses were replaced.");
 
         // Save the modified document.
         const string outputPath = "output.docx";
         loadedDoc.Save(outputPath);
 
-        // Write a JSON report of replaced emails.
-        string jsonReport = JsonConvert.SerializeObject(collector.ReplacedEmails, Formatting.Indented);
-        File.WriteAllText("replacements.json", jsonReport);
+        // Write a JSON report of the replaced e‑mail addresses.
+        const string reportPath = "report.json";
+        string json = JsonConvert.SerializeObject(callback.ReplacedEmails, Formatting.Indented);
+        File.WriteAllText(reportPath, json);
     }
 
-    private static void InsertHyperlinks(Document doc, List<string> emails)
-    {
-        // Build a hash set for quick lookup.
-        HashSet<string> emailSet = new HashSet<string>(emails);
-
-        // Collect runs that exactly match an email address.
-        List<Run> runsToReplace = new List<Run>();
-        NodeCollection runs = doc.GetChildNodes(NodeType.Run, true);
-        foreach (Run run in runs)
-        {
-            if (emailSet.Contains(run.Text))
-            {
-                runsToReplace.Add(run);
-            }
-        }
-
-        // Replace each run with a hyperlink.
-        foreach (Run run in runsToReplace)
-        {
-            string email = run.Text;
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.MoveTo(run);
-            builder.InsertHyperlink(email, "mailto:" + email, false);
-            run.Remove();
-        }
-    }
-
-    private class EmailCollectorCallback : IReplacingCallback
+    private class EmailHyperlinkCallback : IReplacingCallback
     {
         public List<string> ReplacedEmails { get; } = new List<string>();
 
         public ReplaceAction Replacing(ReplacingArgs args)
         {
-            // Record the matched email address.
+            // Get the matched e‑mail address.
             string email = args.Match.Value;
             ReplacedEmails.Add(email);
 
-            // Keep the original text unchanged.
-            args.Replacement = email;
-            return ReplaceAction.Replace;
+            // The node that contains the match is a Run.
+            // Insert a hyperlink into the same paragraph and then remove the original run.
+            Document doc = (Document)args.MatchNode.Document;
+            Run runNode = args.MatchNode as Run;
+            if (runNode == null)
+                return ReplaceAction.Skip; // Safety check.
+
+            Paragraph paragraph = runNode.ParentNode as Paragraph;
+            if (paragraph == null)
+                return ReplaceAction.Skip; // Safety check.
+
+            // Insert the hyperlink just before the original run.
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.MoveTo(paragraph);
+            // Move the cursor to the position of the original run.
+            builder.MoveTo(runNode);
+            builder.InsertHyperlink(email, "mailto:" + email, false);
+
+            // Remove the original plain e‑mail text run.
+            runNode.Remove();
+
+            // Skip the default replacement because we already inserted the hyperlink.
+            return ReplaceAction.Skip;
         }
     }
 }

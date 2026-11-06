@@ -6,33 +6,26 @@ using Aspose.Words;
 using Aspose.Words.Replacing;
 using Newtonsoft.Json;
 
-public class ReplacementLog
+public class ReplacementRecord
 {
-    public string Culture { get; set; } = string.Empty;
+    public string Language { get; set; } = string.Empty;
     public string OldValue { get; set; } = string.Empty;
     public string NewValue { get; set; } = string.Empty;
 }
 
-public class ReplacementCallback : IReplacingCallback
+public class ReplacementLogger : IReplacingCallback
 {
-    private readonly string _culture;
-    private readonly string _newValue;
-    private readonly List<ReplacementLog> _logs;
+    public List<ReplacementRecord> Records { get; } = new List<ReplacementRecord>();
+    public string CurrentLanguage { get; set; } = string.Empty;
+    public string NewValue { get; set; } = string.Empty;
 
-    public ReplacementCallback(string culture, string newValue, List<ReplacementLog> logs)
+    ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
     {
-        _culture = culture;
-        _newValue = newValue;
-        _logs = logs;
-    }
-
-    public ReplaceAction Replacing(ReplacingArgs args)
-    {
-        _logs.Add(new ReplacementLog
+        Records.Add(new ReplacementRecord
         {
-            Culture = _culture,
+            Language = CurrentLanguage,
             OldValue = args.Match.Value,
-            NewValue = _newValue
+            NewValue = NewValue
         });
         return ReplaceAction.Replace;
     }
@@ -45,50 +38,55 @@ public class Program
         // Create a sample document with deprecated terms in different languages.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("The old term is 'foo' in English.");
-        builder.Writeln("Le terme ancien est 'ancien' en français.");
-        builder.Writeln("Das alte Wort ist 'alt' auf Deutsch.");
-        const string inputPath = "input.docx";
-        doc.Save(inputPath);
+        builder.Writeln("The old term foo is deprecated.");
+        builder.Writeln("Le terme ancien est obsolète."); // French: "ancien"
+        builder.Writeln("Der alte Begriff veraltet ist veraltet."); // German: "veraltet"
+        builder.Writeln("El término viejo foo está obsoleto."); // Spanish: "foo"
+        doc.Save("input.docx");
 
         // Load the document for processing.
-        Document loadedDoc = new Document(inputPath);
+        Document loadedDoc = new Document("input.docx");
 
-        // Define culture‑specific replacement rules.
-        var rules = new List<(string Culture, Regex Pattern, string Replacement)>
+        // Define language‑specific patterns and replacements.
+        var replacements = new List<(string Language, Regex Pattern, string NewTerm)>
         {
-            ("en", new Regex(@"\bfoo\b", RegexOptions.IgnoreCase), "bar"),
-            ("fr", new Regex(@"\bancien\b", RegexOptions.IgnoreCase), "nouveau"),
-            ("de", new Regex(@"\balt\b", RegexOptions.IgnoreCase), "neu")
+            ("English", new Regex(@"\bfoo\b", RegexOptions.IgnoreCase), "bar"),
+            ("French", new Regex(@"\ban(ancien|cien)\b", RegexOptions.IgnoreCase), "nouveau"),
+            ("German", new Regex(@"\bveraltet\b", RegexOptions.IgnoreCase), "aktuell"),
+            ("Spanish", new Regex(@"\bfoo\b", RegexOptions.IgnoreCase), "bar")
         };
 
-        // Collect logs of all replacements.
-        var allLogs = new List<ReplacementLog>();
+        var logger = new ReplacementLogger();
+        int totalReplacements = 0;
 
-        // Apply each rule using a callback to record matches.
-        foreach (var rule in rules)
+        foreach (var (language, pattern, newTerm) in replacements)
         {
-            var callback = new ReplacementCallback(rule.Culture, rule.Replacement, allLogs);
-            var options = new FindReplaceOptions { ReplacingCallback = callback };
-            int replacedCount = loadedDoc.Range.Replace(rule.Pattern, rule.Replacement, options);
-            // Optional: you could validate per‑rule replacement count here.
+            logger.CurrentLanguage = language;
+            logger.NewValue = newTerm;
+
+            FindReplaceOptions options = new FindReplaceOptions
+            {
+                ReplacingCallback = logger,
+                MatchCase = false,
+                FindWholeWordsOnly = true
+            };
+
+            int replaced = loadedDoc.Range.Replace(pattern, newTerm, options);
+            totalReplacements += replaced;
         }
 
-        // Ensure at least one replacement occurred.
-        if (allLogs.Count == 0)
-            throw new InvalidOperationException("No replacements were performed.");
+        if (totalReplacements == 0)
+            throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
         // Save the modified document.
-        const string outputPath = "output.docx";
-        loadedDoc.Save(outputPath);
+        loadedDoc.Save("output.docx");
 
-        // Serialize the replacement log to JSON.
-        string jsonReport = JsonConvert.SerializeObject(allLogs, Formatting.Indented);
-        const string reportPath = "replacements.json";
-        File.WriteAllText(reportPath, jsonReport);
+        // Serialize replacement log to JSON.
+        string jsonReport = JsonConvert.SerializeObject(logger.Records, Formatting.Indented);
+        File.WriteAllText("report.json", jsonReport);
 
         // Validate that the report file was created.
-        if (!File.Exists(reportPath))
-            throw new InvalidOperationException("The replacement report was not created.");
+        if (!File.Exists("report.json"))
+            throw new InvalidOperationException("Report file was not created.");
     }
 }
