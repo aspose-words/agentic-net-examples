@@ -9,12 +9,12 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Define the items for the combo box.
-        string[] comboItems = { "Option A", "Option B", "Option C" };
+        // Define the items that will appear in the combo box.
+        string[] comboItems = new string[] { "Option A", "Option B", "Option C" };
 
-        // Insert a combo box form field with a default selected index (e.g., 1 -> "Option B").
-        int defaultSelectedIndex = 1;
-        builder.InsertComboBox("SampleComboBox", comboItems, defaultSelectedIndex);
+        // Insert a combo box form field named "SampleComboBox" with the items above.
+        // The third parameter sets the default selected index (0‑based). Here we select "Option B".
+        builder.InsertComboBox("SampleComboBox", comboItems, 1);
 
         // Save the document to disk.
         doc.Save("ComboBoxFormField.docx");

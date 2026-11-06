@@ -10,14 +10,24 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Define the name, custom date format, and default value (current date).
+        // Define the form field name and custom date format.
         string fieldName = "DateField";
         string dateFormat = "MM/dd/yyyy";
-        string defaultValue = DateTime.Now.ToString(dateFormat);
 
-        // Insert a text input form field with the custom date format and default value.
-        // Use the overload that requires TextFormFieldType and maxLength.
-        builder.InsertTextInput(fieldName, TextFormFieldType.Regular, dateFormat, defaultValue, 0);
+        // Use the current date as the default value, formatted according to the custom format.
+        string defaultDate = DateTime.Now.ToString(dateFormat);
+
+        // Insert a text input form field of type Date with the custom format and default value.
+        // The maxLength parameter is set to 0, which means no length restriction.
+        builder.InsertTextInput(fieldName, TextFormFieldType.Date, dateFormat, defaultDate, 0);
+
+        // Validate that the form field was created and has the expected default value.
+        FormField field = doc.Range.FormFields[fieldName];
+        if (field == null)
+            throw new InvalidOperationException($"Form field '{fieldName}' was not found.");
+
+        if (field.Result != defaultDate)
+            throw new InvalidOperationException($"Form field default value mismatch. Expected '{defaultDate}', got '{field.Result}'.");
 
         // Save the document to disk.
         doc.Save("Output.docx");

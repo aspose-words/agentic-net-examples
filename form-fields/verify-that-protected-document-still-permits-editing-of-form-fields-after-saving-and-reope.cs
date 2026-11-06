@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
@@ -7,87 +6,49 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the temporary documents.
-        string originalPath = Path.Combine(Directory.GetCurrentDirectory(), "ProtectedForm.docx");
-        string reopenedPath = Path.Combine(Directory.GetCurrentDirectory(), "ReopenedForm.docx");
+        const string filePath = "FormFields.docx";
+        const string updatedFilePath = "FormFields_Updated.docx";
 
-        // 1. Create a new document and add form fields.
+        // Create a new document and add form fields.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Text input field.
-        FormField textField = builder.InsertTextInput(
-            "TextField",
-            TextFormFieldType.Regular,
-            "",
-            "Enter text",
-            50);
-        textField.Enabled = true;
+        builder.InsertParagraph();
+        builder.InsertTextInput("TextField", TextFormFieldType.Regular, "", "Default Text", 0);
+        builder.Writeln();
 
-        // Check box field.
-        FormField checkBox = builder.InsertCheckBox(
-            "CheckBox",
-            false,
-            50);
-        checkBox.Enabled = true;
+        builder.InsertCheckBox("CheckBoxField", false, 0);
+        builder.Writeln();
 
-        // Combo box (drop‑down) field.
-        FormField comboBox = builder.InsertComboBox(
-            "ComboBox",
-            new[] { "Option1", "Option2", "Option3" },
-            0);
-        comboBox.Enabled = true;
+        builder.InsertComboBox("ComboBoxField", new[] { "Option1", "Option2", "Option3" }, 0);
+        builder.Writeln();
 
-        // 2. Protect the document so that only form fields can be edited.
-        doc.Protect(ProtectionType.AllowOnlyFormFields);
+        doc.Save(filePath);
 
-        // 3. Save the protected document.
-        doc.Save(originalPath);
-
-        // 4. Load the saved document.
-        Document loadedDoc = new Document(originalPath);
-
-        // 5. Verify that form fields exist and are still editable.
+        // Reopen the saved document.
+        Document loadedDoc = new Document(filePath);
         FormFieldCollection fields = loadedDoc.Range.FormFields;
-        if (fields == null || fields.Count == 0)
-        {
-            throw new InvalidOperationException("No form fields were found in the loaded document.");
-        }
 
-        // Iterate through each form field and perform a simple edit.
-        foreach (FormField field in fields)
-        {
-            if (!field.Enabled)
-                throw new InvalidOperationException($"Form field '{field.Name}' is not enabled.");
+        // Validate that each expected form field exists.
+        FormField textField = fields["TextField"];
+        FormField checkBoxField = fields["CheckBoxField"];
+        FormField comboBoxField = fields["ComboBoxField"];
 
-            switch (field.Type)
-            {
-                case FieldType.FieldFormTextInput:
-                    // Update the text field's result.
-                    field.Result = "NewValue";
-                    break;
+        if (textField == null) throw new InvalidOperationException("TextField not found.");
+        if (checkBoxField == null) throw new InvalidOperationException("CheckBoxField not found.");
+        if (comboBoxField == null) throw new InvalidOperationException("ComboBoxField not found.");
 
-                case FieldType.FieldFormCheckBox:
-                    // Check the checkbox.
-                    field.Checked = true;
-                    break;
+        // Update the form fields.
+        textField.Result = "Updated Text";
+        checkBoxField.Checked = true;
+        comboBoxField.Result = "Option2";
 
-                case FieldType.FieldFormDropDown:
-                    // Select the second item if it exists.
-                    if (field.DropDownItems.Count > 1)
-                        field.DropDownSelectedIndex = 1;
-                    break;
+        // Verify that updates were applied.
+        if (textField.Result != "Updated Text") throw new InvalidOperationException("TextField update failed.");
+        if (!checkBoxField.Checked) throw new InvalidOperationException("CheckBoxField update failed.");
+        if (comboBoxField.Result != "Option2") throw new InvalidOperationException("ComboBoxField update failed.");
 
-                default:
-                    // Other field types are not expected in this example.
-                    break;
-            }
-        }
-
-        // 6. Save the document after modifications.
-        loadedDoc.Save(reopenedPath);
-
-        // 7. Output verification result.
-        Console.WriteLine("Protected document was saved, reopened, and form fields remain editable.");
+        // Save the modified document.
+        loadedDoc.Save(updatedFilePath);
     }
 }

@@ -1,9 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.BuildingBlocks;
-using Aspose.Words.Fields;
+using Aspose.Words.Fields;   // Required for TextFormFieldType
 
 public class Program
 {
@@ -11,97 +9,82 @@ public class Program
     {
         // Paths for the template, CSV data, and output document.
         const string templatePath = "Template.docx";
-        const string csvPath = "Data.csv";
+        const string csvPath = "data.csv";
         const string outputPath = "Output.docx";
 
-        // Step 1: Create a template document with text input form fields.
-        CreateTemplateDocument(templatePath);
-
-        // Step 2: Create a sample CSV file that matches the form field names.
-        CreateSampleCsv(csvPath);
-
-        // Step 3: Load the template document.
-        Document doc = new Document(templatePath);
-
-        // Step 4: Read CSV data.
-        Dictionary<string, string> fieldValues = ReadCsvIntoDictionary(csvPath);
-
-        // Step 5: Populate form fields with CSV values.
-        foreach (KeyValuePair<string, string> kvp in fieldValues)
+        // Create a template document with text input form fields if it does not exist.
+        if (!File.Exists(templatePath))
         {
-            // Validate that the form field exists.
-            FormField? formField = doc.Range.FormFields[kvp.Key];
-            if (formField == null)
-                throw new InvalidOperationException($"Form field '{kvp.Key}' not found in the document.");
-
-            // Assign the CSV value to the text input field.
-            formField.Result = kvp.Value ?? string.Empty;
-
-            // Optional validation: ensure the value was set.
-            if (formField.Result != kvp.Value)
-                throw new InvalidOperationException($"Failed to set value for field '{kvp.Key}'.");
+            CreateTemplateDocument(templatePath);
         }
 
-        // Step 6: Save the populated document.
+        // Create a sample CSV file with headers matching the form field names if it does not exist.
+        if (!File.Exists(csvPath))
+        {
+            CreateSampleCsv(csvPath);
+        }
+
+        // Load the template document.
+        Document doc = new Document(templatePath);
+        FormFieldCollection formFields = doc.Range.FormFields;
+
+        // Read CSV content.
+        string[] csvLines = File.ReadAllLines(csvPath);
+        if (csvLines.Length < 2)
+        {
+            throw new Exception("CSV file must contain a header line and at least one data line.");
+        }
+
+        // Parse header and first data row.
+        string[] headers = csvLines[0].Split(',');
+        string[] values = csvLines[1].Split(',');
+
+        // Populate each form field with the corresponding CSV value.
+        for (int i = 0; i < headers.Length; i++)
+        {
+            string fieldName = headers[i].Trim();
+            string fieldValue = i < values.Length ? values[i].Trim() : string.Empty;
+
+            // Retrieve the form field by name.
+            FormField field = formFields[fieldName];
+            if (field == null)
+            {
+                throw new Exception($"Form field '{fieldName}' not found in the document.");
+            }
+
+            // Update the text input field's result.
+            field.Result = fieldValue;
+        }
+
+        // Save the populated document.
         doc.Save(outputPath);
     }
 
-    // Creates a DOCX file with three text input form fields: FirstName, LastName, Email.
+    // Creates a simple template document with three text input form fields.
     private static void CreateTemplateDocument(string path)
     {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a text input field for FirstName.
+        builder.Writeln("Please fill in the following information:");
         builder.InsertTextInput("FirstName", TextFormFieldType.Regular, "", "John", 0);
         builder.Writeln();
-
-        // Insert a text input field for LastName.
         builder.InsertTextInput("LastName", TextFormFieldType.Regular, "", "Doe", 0);
         builder.Writeln();
-
-        // Insert a text input field for Email.
-        builder.InsertTextInput("Email", TextFormFieldType.Regular, "", "example@example.com", 0);
+        builder.InsertTextInput("Email", TextFormFieldType.Regular, "", "john.doe@example.com", 0);
         builder.Writeln();
 
         doc.Save(path);
     }
 
-    // Writes a simple CSV file with a header matching the form field names and one data row.
+    // Creates a sample CSV file with headers matching the form field names.
     private static void CreateSampleCsv(string path)
     {
         string[] lines =
         {
             "FirstName,LastName,Email",
-            "Jane,Smith,jane.smith@example.com"
+            "Alice,Smith,alice.smith@example.com"
         };
         File.WriteAllLines(path, lines);
-    }
-
-    // Reads the CSV file and returns a dictionary mapping column names to their values.
-    private static Dictionary<string, string> ReadCsvIntoDictionary(string path)
-    {
-        string[] allLines = File.ReadAllLines(path);
-        if (allLines.Length < 2)
-            throw new InvalidOperationException("CSV file must contain at least a header and one data row.");
-
-        // Parse header.
-        string[] headers = allLines[0].Split(',');
-
-        // Parse first data row.
-        string[] values = allLines[1].Split(',');
-
-        if (headers.Length != values.Length)
-            throw new InvalidOperationException("CSV header and data column counts do not match.");
-
-        var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        for (int i = 0; i < headers.Length; i++)
-        {
-            string key = headers[i].Trim();
-            string value = values[i].Trim();
-            dict[key] = value;
-        }
-
-        return dict;
     }
 }

@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
@@ -7,60 +6,41 @@ public class Program
 {
     public static void Main()
     {
-        // Define file name for the temporary document.
-        string filePath = Path.Combine(Environment.CurrentDirectory, "FormFieldExample.docx");
+        const string fileName = "FormFields.docx";
+        const string updatedFileName = "FormFieldsUpdated.docx";
+        const string fieldName = "CustomerName";
 
-        // -----------------------------------------------------------------
-        // 1. Create a new document and insert a text input form field.
-        // -----------------------------------------------------------------
+        // Create a new document and insert a text input form field
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert some introductory text.
         builder.Writeln("Please enter your name:");
+        builder.InsertTextInput(fieldName, TextFormFieldType.Regular, "", "John Doe", 0);
+        doc.Save(fileName);
 
-        // Insert a text input form field named "MyTextField" with a placeholder.
-        FormField textField = builder.InsertTextInput(
-            "MyTextField",                     // field name
-            TextFormFieldType.Regular,         // field type
-            "",                                // default text (empty)
-            "John Doe",                        // placeholder text
-            50);                               // maximum length
-
-        // Optionally set an initial result value.
-        textField.Result = "John Doe";
-
-        // Save the document so it can be loaded later.
-        doc.Save(filePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the document from disk.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(filePath);
-
-        // -----------------------------------------------------------------
-        // 3. Retrieve the form field by its name.
-        // -----------------------------------------------------------------
-        FormField retrievedField = loadedDoc.Range.FormFields["MyTextField"];
-
-        // Validate that the field exists.
-        if (retrievedField == null)
+        // Load the document
+        Document loadedDoc = new Document(fileName);
+        FormFieldCollection fields = loadedDoc.Range.FormFields;
+        FormField field = fields[fieldName];
+        if (field == null)
         {
-            throw new InvalidOperationException("Form field 'MyTextField' was not found in the document.");
+            throw new InvalidOperationException($"Form field '{fieldName}' not found.");
         }
 
-        // -----------------------------------------------------------------
-        // 4. Read the Result property of the retrieved field.
-        // -----------------------------------------------------------------
-        string fieldResult = retrievedField.Result;
+        // Read the Result property
+        string originalResult = field.Result;
+        Console.WriteLine($"Original value of '{fieldName}': {originalResult}");
 
-        // Output the result to the console.
-        Console.WriteLine($"The value of the form field '{retrievedField.Name}' is: {fieldResult}");
+        // Update the field value
+        field.Result = "Jane Smith";
 
-        // -----------------------------------------------------------------
-        // 5. Save the document again (even though we didn't modify it,
-        //    this satisfies the rule that output documents are saved).
-        // -----------------------------------------------------------------
-        loadedDoc.Save(filePath);
+        // Validate the update
+        if (field.Result != "Jane Smith")
+        {
+            throw new InvalidOperationException("Failed to update the form field value.");
+        }
+
+        // Save the updated document
+        loadedDoc.Save(updatedFileName);
+        Console.WriteLine($"Updated document saved as '{updatedFileName}'.");
     }
 }

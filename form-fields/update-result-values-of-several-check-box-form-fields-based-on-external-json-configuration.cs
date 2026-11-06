@@ -8,53 +8,60 @@ public class Program
 {
     public static void Main()
     {
-        // Create a document with three checkbox form fields.
-        const string initialDocPath = "FormFields.docx";
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        builder.InsertCheckBox("CheckBox1", false, 0);
-        builder.Writeln(" CheckBox1 label");
-        builder.InsertCheckBox("CheckBox2", true, 0);
-        builder.Writeln(" CheckBox2 label");
-        builder.InsertCheckBox("CheckBox3", false, 0);
-        builder.Writeln(" CheckBox3 label");
+        // Insert a paragraph with several checkbox form fields.
+        builder.Writeln("Please review the following options:");
+        InsertCheckBox(builder, "OptionA", false);
+        InsertCheckBox(builder, "OptionB", true);
+        InsertCheckBox(builder, "OptionC", false);
 
-        doc.Save(initialDocPath);
+        // Save the initial document (optional, can be omitted).
+        doc.Save("FormFieldsTemplate.docx");
 
-        // External JSON configuration that defines the desired checked state.
+        // External JSON configuration that determines which checkboxes should be checked.
         string jsonConfig = @"{
-            ""CheckBox1"": true,
-            ""CheckBox2"": false,
-            ""CheckBox3"": true
+            ""OptionA"": true,
+            ""OptionB"": false,
+            ""OptionC"": true
         }";
 
-        // Parse JSON into a dictionary.
-        Dictionary<string, bool> config = JsonSerializer.Deserialize<Dictionary<string, bool>>(jsonConfig) 
-                                          ?? new Dictionary<string, bool>();
+        // Parse the JSON into a dictionary.
+        Dictionary<string, bool> config = JsonSerializer.Deserialize<Dictionary<string, bool>>(jsonConfig)
+                                            ?? throw new InvalidOperationException("Failed to parse JSON configuration.");
 
-        // Load the document and update checkbox results according to the configuration.
-        Document loadedDoc = new Document(initialDocPath);
-        foreach (KeyValuePair<string, bool> kvp in config)
+        // Update checkbox form fields based on the configuration.
+        foreach (KeyValuePair<string, bool> entry in config)
         {
-            FormField field = loadedDoc.Range.FormFields[kvp.Key];
+            // Retrieve the form field by name.
+            FormField field = doc.Range.FormFields[entry.Key];
             if (field == null)
-                throw new InvalidOperationException($"Form field '{kvp.Key}' not found.");
+                throw new InvalidOperationException($"Form field '{entry.Key}' was not found in the document.");
 
+            // Ensure the field is a checkbox.
             if (field.Type != FieldType.FieldFormCheckBox)
-                throw new InvalidOperationException($"Form field '{kvp.Key}' is not a checkbox.");
+                throw new InvalidOperationException($"Form field '{entry.Key}' is not a checkbox.");
 
-            field.Checked = kvp.Value;
+            // Update the checked state.
+            field.Checked = entry.Value;
 
             // Validate the update.
-            if (field.Checked != kvp.Value)
-                throw new InvalidOperationException($"Failed to set checkbox '{kvp.Key}' to '{kvp.Value}'.");
+            if (field.Checked != entry.Value)
+                throw new InvalidOperationException($"Failed to set the checked state for field '{entry.Key}'.");
         }
 
         // Save the updated document.
-        const string updatedDocPath = "FormFieldsUpdated.docx";
-        loadedDoc.Save(updatedDocPath);
+        doc.Save("FormFieldsUpdated.docx");
+    }
 
-        Console.WriteLine($"Checkbox form fields have been updated and saved to '{updatedDocPath}'.");
+    // Helper method to insert a checkbox with a given name and default state.
+    private static void InsertCheckBox(DocumentBuilder builder, string name, bool isChecked)
+    {
+        // Insert the checkbox form field.
+        builder.InsertCheckBox(name, isChecked, 20);
+        // Add a space after the checkbox for readability.
+        builder.Writeln($" {name}");
     }
 }
