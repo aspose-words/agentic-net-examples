@@ -1,87 +1,77 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Math;
 
-public class OfficeMathEnumerationExample
+public class Program
 {
     public static void Main()
     {
-        // Create a sample DOCX with a few OfficeMath equations using the EQ-field bootstrap workflow.
+        // Path for the sample document (saved in the program's working directory).
+        string samplePath = Path.Combine(Directory.GetCurrentDirectory(), "SampleEquations.docx");
+
+        // -----------------------------------------------------------------
+        // Create a sample DOCX containing a few OfficeMath equations.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample equations:");
 
-        string[] equations = new string[]
-        {
-            @"\f(1,2)",               // Simple fraction
-            @"\r(2,x)",               // Square root of x
-            @"\f(\r(2,x),\r(3,y))"    // Fraction with nested roots
-        };
+        // First equation: a simple fraction.
+        builder.Writeln("First equation:");
+        InsertEquation(builder, @"\f(1,2)");
 
-        foreach (string eq in equations)
-        {
-            // Insert a new paragraph for the equation.
-            builder.Writeln();
-
-            // Insert an EQ field.
-            Field field = builder.InsertField(FieldType.FieldEquation, true);
-            if (field is FieldEQ fieldEq)
-            {
-                // Write the EQ argument string into the field separator.
-                builder.MoveTo(fieldEq.Separator);
-                builder.Write(eq);
-
-                // Convert the field to a real OfficeMath node.
-                OfficeMath officeMath = fieldEq.AsOfficeMath();
-                if (officeMath != null)
-                {
-                    // Insert the OfficeMath node before the field start.
-                    Node fieldStart = fieldEq.Start;
-                    if (fieldStart?.ParentNode is CompositeNode parent)
-                    {
-                        parent.InsertBefore(officeMath, fieldStart);
-                    }
-
-                    // Remove the original field.
-                    fieldEq.Remove();
-                }
-            }
-        }
+        // Second equation: a simple root.
+        builder.Writeln();
+        builder.Writeln("Second equation:");
+        InsertEquation(builder, @"\r(3,x)");
 
         // Save the sample document.
-        const string samplePath = "SampleEquations.docx";
         doc.Save(samplePath, SaveFormat.Docx);
 
-        // Load the document and enumerate OfficeMath nodes.
+        // -----------------------------------------------------------------
+        // Load the document and enumerate each OfficeMath node.
+        // -----------------------------------------------------------------
         Document loadedDoc = new Document(samplePath);
-        NodeCollection mathNodes = loadedDoc.GetChildNodes(NodeType.OfficeMath, true);
+        NodeCollection equations = loadedDoc.GetChildNodes(NodeType.OfficeMath, true);
 
-        StringBuilder reportBuilder = new StringBuilder();
-        reportBuilder.AppendLine($"Total OfficeMath nodes: {mathNodes.Count}");
-        int index = 0;
-        foreach (OfficeMath om in mathNodes)
+        Console.WriteLine($"Total OfficeMath nodes found: {equations.Count}");
+        for (int i = 0; i < equations.Count; i++)
         {
-            index++;
-            reportBuilder.AppendLine($"Equation {index}:");
-            reportBuilder.AppendLine($"  MathObjectType: {om.MathObjectType}");
-            reportBuilder.AppendLine($"  DisplayType: {om.DisplayType}");
-            reportBuilder.AppendLine($"  Justification: {om.Justification}");
-            reportBuilder.AppendLine($"  Text: {om.GetText()}");
+            OfficeMath om = (OfficeMath)equations[i];
+            Console.WriteLine($"Equation {i + 1}:");
+            Console.WriteLine($"  MathObjectType : {om.MathObjectType}");
+            Console.WriteLine($"  DisplayType    : {om.DisplayType}");
+            Console.WriteLine($"  Justification  : {om.Justification}");
+            Console.WriteLine($"  Text (for display) : {om.GetText()}");
         }
+    }
 
-        const string reportPath = "EquationReport.txt";
-        File.WriteAllText(reportPath, reportBuilder.ToString());
+    // Helper method that creates an OfficeMath node using the deterministic EQ-field bootstrap workflow.
+    private static void InsertEquation(DocumentBuilder builder, string eqArgument)
+    {
+        // Insert an empty Equation field.
+        Field field = builder.InsertField(FieldType.FieldEquation, true);
+        FieldEQ fieldEQ = (FieldEQ)field;
 
-        // Validate that the report file was created.
-        if (!File.Exists(reportPath))
+        // Move to the field separator and write the EQ argument.
+        builder.MoveTo(fieldEQ.Separator);
+        builder.Write(eqArgument);
+
+        // Update the field so that Aspose.Words can convert it to OfficeMath.
+        field.Update();
+
+        // Convert the field to a real OfficeMath node.
+        OfficeMath? officeMath = fieldEQ.AsOfficeMath();
+        if (officeMath != null)
         {
-            throw new Exception("Failed to create the equation report file.");
+            // Insert the OfficeMath node before the field start and remove the original field.
+            field.Start.ParentNode.InsertBefore(officeMath, field.Start);
+            field.Remove();
         }
-
-        // Non‑interactive confirmation.
-        Console.WriteLine("Enumeration completed. Report saved to " + reportPath);
+        else
+        {
+            throw new InvalidOperationException("Failed to convert EQ field to OfficeMath.");
+        }
     }
 }

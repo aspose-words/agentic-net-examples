@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
@@ -9,68 +8,99 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Paths for the sample document and the output text file.
+        string docPath = Path.Combine(Directory.GetCurrentDirectory(), "Sample.docx");
+        string txtPath = Path.Combine(Directory.GetCurrentDirectory(), "Equations.txt");
 
-        // Insert sample equations using the deterministic EQ‑field bootstrap workflow.
-        InsertEquation(builder, @"\f(1,2)"); // Simple fraction.
-        InsertEquation(builder, @"\r(3,x)"); // Simple root.
+        // 1. Create a sample DOCX with a few OfficeMath equations using the deterministic EQ-field bootstrap workflow.
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
 
-        // Save the sample document (optional, demonstrates that the document contains the equations).
-        string docPath = "Sample.docx";
-        doc.Save(docPath);
+        // First equation.
+        builder.Writeln("First paragraph before equation.");
+        InsertEquation(builder, @"\f(1,2)");
+        builder.Writeln();
 
-        // Extract all top‑level OfficeMath equations.
-        NodeCollection officeMathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
-        List<string> reportLines = new List<string>();
-        int equationIndex = 1;
+        // Second equation.
+        builder.Writeln("Second paragraph before equation.");
+        InsertEquation(builder, @"\f(3,4)");
+        builder.Writeln();
 
-        foreach (OfficeMath om in officeMathNodes)
+        // Third equation.
+        builder.Writeln("Third paragraph before equation.");
+        InsertEquation(builder, @"\f(5,6)");
+        builder.Writeln();
+
+        // Save the sample document.
+        sampleDoc.Save(docPath, SaveFormat.Docx);
+
+        // Verify the sample document was created.
+        if (!File.Exists(docPath))
+            throw new FileNotFoundException("Failed to create the sample DOCX file.", docPath);
+
+        // 2. Load the document and extract all top‑level OfficeMath equations.
+        Document loadDoc = new Document(docPath);
+        NodeCollection mathNodes = loadDoc.GetChildNodes(NodeType.OfficeMath, true);
+
+        using (StreamWriter writer = new StreamWriter(txtPath, false))
         {
-            // Consider only top‑level equations (OMathPara).
-            if (om.MathObjectType == MathObjectType.OMathPara)
+            int equationIndex = 1;
+            foreach (OfficeMath math in mathNodes)
             {
-                string equationText = om.GetText().Trim();
-                reportLines.Add($"Equation {equationIndex}: {equationText}");
-                equationIndex++;
+                if (math.MathObjectType == MathObjectType.OMathPara)
+                {
+                    string equationText = math.GetText().Trim();
+                    writer.WriteLine($"Equation {equationIndex}: {equationText}");
+                    equationIndex++;
+                }
             }
         }
 
-        // Write the extracted equations to a text file.
-        string reportPath = "EquationsReport.txt";
-        File.WriteAllLines(reportPath, reportLines);
+        // Validate that the text file was created and contains at least one equation.
+        if (!File.Exists(txtPath))
+            throw new FileNotFoundException("Failed to create the equations text file.", txtPath);
 
-        // Validate that the report file was created.
-        if (!File.Exists(reportPath))
+        string[] lines = File.ReadAllLines(txtPath);
+        if (lines.Length == 0)
+            throw new InvalidOperationException("No equations were written to the text file.");
+
+        // Output the extracted equations to the console for verification (non‑interactive).
+        foreach (string line in lines)
         {
-            throw new Exception("The equations report file was not created.");
+            Console.WriteLine(line);
         }
-
-        Console.WriteLine($"Extraction complete. Report saved to '{reportPath}'.");
     }
 
+    // Helper method that creates a real OfficeMath node from an EQ field and inserts it into the document.
     private static void InsertEquation(DocumentBuilder builder, string eqArgument)
     {
-        // Insert an EQ field.
-        FieldEQ field = builder.InsertField(FieldType.FieldEquation, true) as FieldEQ;
-        if (field == null)
-            return;
+        // Insert an empty Equation field.
+        Field field = builder.InsertField(FieldType.FieldEquation, true);
+        FieldEQ eqField = field as FieldEQ;
+        if (eqField == null)
+            throw new InvalidOperationException("Failed to create a FieldEQ.");
 
-        // Write the EQ argument into the field separator.
-        builder.MoveTo(field.Separator);
+        // Move to the field separator and write the EQ argument.
+        builder.MoveTo(eqField.Separator);
         builder.Write(eqArgument);
 
-        // Convert the field to a real OfficeMath object.
-        OfficeMath officeMath = field.AsOfficeMath();
-        if (officeMath != null)
-        {
-            // Insert the OfficeMath node before the field start.
-            Node startNode = field.Start;
-            startNode.ParentNode.InsertBefore(officeMath, startNode);
+        // Update the field so that Aspose.Words converts it to OfficeMath.
+        eqField.Update();
 
-            // Remove the original field.
-            field.Remove();
-        }
+        // Convert the field to a real OfficeMath node.
+        OfficeMath officeMath = eqField.AsOfficeMath();
+        if (officeMath == null)
+            throw new InvalidOperationException("EQ field could not be converted to OfficeMath.");
+
+        // Insert the OfficeMath node before the field start.
+        Node fieldStart = eqField.Start;
+        CompositeNode parent = fieldStart.ParentNode as CompositeNode;
+        if (parent == null)
+            throw new InvalidOperationException("Field start does not have a composite parent.");
+
+        parent.InsertBefore(officeMath, fieldStart);
+
+        // Remove the original field.
+        eqField.Remove();
     }
 }

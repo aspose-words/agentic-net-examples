@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
-using Aspose.Words.Math;
+using Aspose.Words.Math;   // Required for OfficeMath
 
 public class OfficeMathInlineExample
 {
@@ -12,49 +12,30 @@ public class OfficeMathInlineExample
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a paragraph that will contain the inline equation.
-        builder.Writeln("Inline equation example:");
-
-        // Insert an empty paragraph where the equation will be placed.
-        builder.Writeln();
-
-        // Insert an EQ field (field type Equation) with a placeholder for the equation argument.
+        // Insert an EQ field that will later be converted to a real OfficeMath object.
         Field field = builder.InsertField(FieldType.FieldEquation, true);
-        FieldEQ eqField = (FieldEQ)field;
+        FieldEQ eqField = field as FieldEQ;
+        if (eqField == null)
+            throw new InvalidOperationException("Inserted field is not a FieldEQ.");
 
-        // Write a simple EQ argument (fraction) into the field separator.
+        // Move to the field separator and write a simple EQ argument (fraction).
         builder.MoveTo(eqField.Separator);
-        builder.Write(@"\f(1,2)"); // renders as 1⁄2
+        builder.Write(@"\f(1,2)"); // Simple fraction equation.
 
-        // Update the field so that Aspose.Words can parse the EQ argument.
+        // Update the field so that Aspose.Words parses the EQ argument.
         eqField.Update();
 
-        // Convert the EQ field to a real OfficeMath object.
+        // Convert the EQ field to an OfficeMath node.
         OfficeMath officeMath = eqField.AsOfficeMath();
+        if (officeMath == null)
+            throw new InvalidOperationException("EQ field could not be converted to OfficeMath.");
 
-        if (officeMath != null)
-        {
-            // Insert the OfficeMath node before the field start node.
-            Node fieldStart = eqField.Start;
-            Node parent = fieldStart.ParentNode;
+        // Insert the OfficeMath node before the field start node.
+        Node fieldStart = eqField.Start;
+        fieldStart.ParentNode.InsertBefore(officeMath, fieldStart);
 
-            // The parent of a field start is a Paragraph, which derives from CompositeNode.
-            if (parent is CompositeNode compositeParent)
-            {
-                compositeParent.InsertBefore(officeMath, fieldStart);
-            }
-            else
-            {
-                throw new InvalidOperationException("Unexpected parent node type for the field start.");
-            }
-
-            // Remove the original EQ field, leaving only the OfficeMath node.
-            eqField.Remove();
-        }
-        else
-        {
-            throw new InvalidOperationException("Failed to convert EQ field to OfficeMath.");
-        }
+        // Remove the original EQ field, leaving only the real OfficeMath node.
+        eqField.Remove();
 
         // Save the document.
         string outputPath = "OfficeMathInline.docx";
@@ -62,10 +43,14 @@ public class OfficeMathInlineExample
 
         // Validate that the file was created.
         if (!File.Exists(outputPath))
-        {
-            throw new FileNotFoundException("The output document was not created.", outputPath);
-        }
+            throw new FileNotFoundException("The output document was not saved.", outputPath);
 
-        Console.WriteLine($"Document saved successfully to '{outputPath}'.");
+        // Validate that the document contains at least one OfficeMath node.
+        NodeCollection mathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
+        if (mathNodes.Count == 0)
+            throw new InvalidOperationException("No OfficeMath nodes were found in the saved document.");
+
+        // Example completed successfully.
+        Console.WriteLine($"Document saved to '{outputPath}' with {mathNodes.Count} OfficeMath node(s).");
     }
 }
