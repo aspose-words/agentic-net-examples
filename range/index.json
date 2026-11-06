@@ -4,20 +4,20 @@
     "slug": "range",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Use Document.Range and node-scoped Range APIs for search, replace, extraction, bookmarks, and fields. Keep validation narrow and task-specific. Bootstrap all inputs locally.",
+    "preferred_workflow": "Create a local Document instance, optionally add sections or form fields, then operate on doc.Range or a node's Range using documented methods such as Replace, FindReplaceOptions, Bookmarks, FormFields, and node insertion via DocumentBuilder or InsertBefore/InsertAfter on parent nodes. Validate only the requested output and persist the result.",
     "required_packages": [
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.9.0"
+      "Aspose.Words": "26.10.0"
     },
     "required_namespaces": [
       "System",
       "Aspose.Words",
+      "Aspose.Words.Tables",
       "System.IO",
-      "Aspose.Words.Saving",
-      "System.Text",
       "Aspose.Words.Fields",
+      "Aspose.Words.Markup",
       "Aspose.Words.Replacing",
       "System.Collections.Generic",
       "System.Data"
@@ -26,14 +26,13 @@
       "Document",
       "DocumentBuilder",
       "Range",
-      "Directory",
-      "Path",
-      "SaveFormat",
-      "NodeType",
       "Paragraph",
-      "FindReplaceOptions",
       "Run",
-      "File"
+      "Directory",
+      "File",
+      "Path",
+      "FindReplaceOptions",
+      "NodeType"
     ]
   },
   "stats": {
@@ -44,39 +43,62 @@
     }
   },
   "rules_summary": {
-    "core_rules": [
-      "Use native Aspose.Words APIs directly.",
-      "Create local sample source documents when a task refers to an existing file, folder, stream, or template.",
-      "Do not assume external files or folders already exist.",
-      "Always save requested outputs.",
-      "Keep validation narrow and task-specific."
+    "strict_api_bans": [
+      "Do not reference members that are read-only or absent in Aspose.Words 26.10.0.",
+      "Never use System.Range in place of Aspose.Words.Range."
     ],
-    "range_rules": [
-      "Use Document.Range for whole-document operations and node-specific Range for scoped tasks.",
-      "Use Range.Replace for search/replace; use callbacks only when required.",
-      "Use Range.Text for plain text extraction when formatting is not required.",
-      "Use Document.Range.Bookmarks and Document.Range.Fields for bookmark/field tasks."
+    "canonical_patterns": [
+      "Use DocumentBuilder for inserting bookmarks, form fields, or new paragraphs.",
+      "Use Range.Text for read-only extraction; use Range.Replace with FindReplaceOptions for modifications.",
+      "Iterate over range.Bookmarks or range.FormFields to enumerate names and types."
     ],
-    "api_safety_rules": [
-      "Do not invent unsupported APIs or fake namespaces.",
-      "Use documented Range, Bookmark, Field, and FindReplaceOptions APIs only."
+    "nullable_warning_prevention": [
+      "Always ensure a node (e.g., first paragraph) exists before accessing its ParentNode or inserting before it.",
+      "Create required sections, bodies, and paragraphs locally before processing."
     ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "Unsupported API invention",
-      "symptom": "Generated code references members that do not exist in the selected package version.",
-      "fix": "Replace invented members with documented Aspose.Words APIs already proven in this category."
+      "pattern": "Read-only member assignment",
+      "symptom": "Compilation fails with CS0200 because Section.Body or Range.Text is assigned a value.",
+      "cause": "Attempting to set properties that are defined as read-only in the Aspose.Words API.",
+      "fix": "Use the appropriate insertion methods (e.g., DocumentBuilder, InsertBefore) instead of assigning to read-only members.",
+      "prevention": "Consult the API reference to verify mutability before writing to a property."
     },
     {
-      "pattern": "Missing local bootstrap inputs",
-      "symptom": "The example assumes source files, folders, images, or data already exist.",
-      "fix": "Create deterministic local inputs before loading, processing, or validating them."
+      "pattern": "Ambiguous Range reference",
+      "symptom": "Compilation fails with CS0104 due to a conflict between System.Range and Aspose.Words.Range.",
+      "cause": "The code imports both namespaces without aliasing, causing the compiler to treat Range as ambiguous.",
+      "fix": "Alias Aspose.Words.Range (e.g., using AsposeRange = Aspose.Words.Range) or fully qualify the type.",
+      "prevention": "Avoid importing System.Range or always qualify the Aspose.Words.Range type."
+    },
+    {
+      "pattern": "Non-existent member usage",
+      "symptom": "CS1061 errors appear for methods such as BookmarkCollection.Add, Range.InsertBefore, Range.Search, or FormField.StartNode.",
+      "cause": "The code calls members that do not exist in the selected Aspose.Words version.",
+      "fix": "Replace the call with the documented alternative (e.g., DocumentBuilder.StartBookmark, parentNode.InsertBefore, doc.Range.Replace).",
+      "prevention": "Reference the official Aspose.Words documentation for the exact method signatures."
+    },
+    {
+      "pattern": "Missing overload arguments",
+      "symptom": "CS7036 errors indicate required parameters (e.g., maxLength for InsertTextInput) are omitted.",
+      "cause": "The code supplies an overload that does not match any available signature.",
+      "fix": "Provide all required arguments as defined in the API, using named parameters when helpful.",
+      "prevention": "Review method overloads in the API reference before coding."
+    },
+    {
+      "pattern": "Assumed external resources",
+      "symptom": "Runtime NullReferenceException occurs because a source file or document node was never created.",
+      "cause": "The example expects an existing file or document structure that was not bootstrapped locally.",
+      "fix": "Create deterministic sample documents, sections, and files within the code before processing them.",
+      "prevention": "Always include local input creation steps as part of the workflow."
     },
     {
       "pattern": "Over-broad validation",
-      "symptom": "The example fails at runtime while checking unrelated document internals.",
-      "fix": "Validate only the requested behavior and the existence of expected outputs."
+      "symptom": "Runtime checks examine unrelated document internals, causing failures unrelated to the task.",
+      "cause": "Validation logic is too generic and touches nodes that are not part of the requested operation.",
+      "fix": "Validate only the existence of the output file and the specific range result required by the task.",
+      "prevention": "Scope assertions to the exact behavior being demonstrated."
     }
   ],
   "examples": [
@@ -99,8 +121,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 3,
@@ -116,13 +138,13 @@
     {
       "id": 4,
       "file_name": "generate-a-plain-text-version-of-a-document-by-extracting-each-section-s-range-text.cs",
-      "task": "Generate a plain‑text version of a document by extracting each section's Range.Text.",
+      "task": "Generate a plain-text version of a document by extracting each section's Range.Text.",
       "workflow": "range-workflow",
       "outputs": [
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 5,
@@ -143,8 +165,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 7,
@@ -226,7 +248,7 @@
     {
       "id": 14,
       "file_name": "perform-a-case-insensitive-search-within-a-range-and-collect-matching-paragraph-indices.cs",
-      "task": "Perform a case‑insensitive search within a range and collect matching paragraph indices.",
+      "task": "Perform a case-insensitive search within a range and collect matching paragraph indices.",
       "workflow": "range-workflow",
       "outputs": [
         "docx"
@@ -242,8 +264,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 16,
@@ -308,8 +330,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 22,
@@ -385,8 +407,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 29,
@@ -410,5 +432,15 @@
       "selected_engine": "mcp",
       "winner": "mcp"
     }
-  ]
+  ],
+  "narrative": {
+    "overview": "The Range category focuses on using Aspose.Words.Range and node-scoped Range objects for text extraction, search-replace, bookmark, and form-field operations. Verified examples demonstrate correct document bootstrapping, section-level text retrieval, form-field counting, bookmark enumeration, and safe insertion of text.",
+    "purpose": "Provide an AI coding agent with clear guidance to generate reliable Aspose.Words snippets that manipulate document ranges without invoking unsupported members, ambiguous types, or external resources.",
+    "validation_priorities": [
+      "Confirm that the generated code compiles against Aspose.Words 26.10.0 and that the expected output file is created."
+    ],
+    "maintenance_notes": [
+      "Periodically verify that all referenced Aspose.Words members remain unchanged in future package releases."
+    ]
+  }
 }

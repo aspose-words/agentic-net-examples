@@ -10,25 +10,22 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert sample form fields.
-        // Use TextFormFieldType enum for the text input field type.
-        builder.InsertTextInput("TextField", TextFormFieldType.Regular, "", "Sample text", 0);
-        builder.Writeln();
-        builder.InsertCheckBox("CheckBox", true, 0);
-        builder.Writeln();
+        // Insert a couple of form fields for demonstration.
+        builder.InsertTextInput("TextField1", TextFormFieldType.Regular, "", "Default1", 0);
+        builder.Writeln(); // Add a line break.
+        builder.InsertCheckBox("CheckBox1", true, 0);
 
-        // Save the original document (optional, demonstrates creation).
+        // Save the original document (optional, shows before removal).
         doc.Save("Original.docx");
 
-        // Delete all form fields by iterating over the collection and removing each.
-        FormFieldCollection formFields = doc.Range.FormFields;
-        while (formFields.Count > 0)
+        // Delete all form fields by iterating over the FormFields collection.
+        // Iterate backwards because removing a field changes the collection indices.
+        for (int i = doc.Range.FormFields.Count - 1; i >= 0; i--)
         {
-            // Remove the first form field; the collection updates automatically.
-            formFields[0].Remove();
+            doc.Range.FormFields[i].Remove();
         }
 
-        // Save the document after removal of form fields.
-        doc.Save("Cleaned.docx");
+        // Save the document after all form fields have been removed.
+        doc.Save("NoFormFields.docx");
     }
 }
