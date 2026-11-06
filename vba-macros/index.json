@@ -4,12 +4,12 @@
     "slug": "vba-macros",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Use simple documented VBA project workflows. Load or create macro-enabled documents, access or create VbaProject, modify modules if required, then save the document. Keep validation narrow and task-specific.",
+    "preferred_workflow": "Load an existing DOCX/DOCM file or create a new Document, ensure doc.VbaProject is instantiated (new VbaProject()), manipulate modules through doc.VbaProject.Modules (add, edit, or remove VbaModule objects), optionally adjust doc.VbaProject.References, and finally save the document with SaveFormat.Docm. Perform null checks and module-count validation before any modification.",
     "required_packages": [
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.9.0"
+      "Aspose.Words": "26.10.0"
     },
     "required_namespaces": [
       "System",
@@ -18,20 +18,19 @@
       "Aspose.Words.Vba",
       "System.Collections.Generic",
       "System.Text.RegularExpressions",
+      "Aspose.Words.Saving",
       "System.Text.Json",
-      "System.IO.Compression"
+      "System.IO.Compression",
+      "System.Text"
     ],
     "key_apis": [
       "Document",
-      "Directory",
-      "Path",
       "SaveFormat",
+      "MemoryStream",
       "File",
-      "DocumentBuilder",
-      "Range",
-      "Font",
-      "Table",
-      "Cell"
+      "Path",
+      "Directory",
+      "Table"
     ]
   },
   "stats": {
@@ -42,41 +41,70 @@
     }
   },
   "rules_summary": {
-    "core_rules": [
-      "Use native Aspose.Words APIs directly.",
-      "Create local sample macro-enabled documents when a task refers to an existing file or template.",
-      "Do not assume external files already exist.",
-      "Always save VBA content in a macro-enabled format.",
-      "Keep validation narrow and task-specific."
+    "strict_api_bans": [
+      "Do not call any member that is not present in Aspose.Words 26.10.0.",
+      "Do not instantiate VbaReference or VbaModule with arguments; only use the parameterless constructors."
     ],
-    "vba_rules": [
-      "Use Document.VbaProject to access the VBA project.",
-      "Create a new VbaProject when needed before adding modules.",
-      "Guard against null or empty module source code before performing text operations.",
-      "Prefer clone or template-preserving workflows for reference-sensitive VBA tasks when direct reference construction APIs are not available."
+    "canonical_patterns": [
+      "Create a VbaProject with the default constructor and assign it to Document.VbaProject.",
+      "Add VbaModule objects to VbaProject.Modules after setting Name, Type, and SourceCode properties.",
+      "Save the document using SaveFormat.Docm to retain macros."
     ],
-    "api_safety_rules": [
-      "Do not invent unsupported VBA APIs.",
-      "Do not instantiate VbaReference directly.",
-      "Do not assume unsupported VbaModule constructors.",
-      "Use documented VbaProject, VbaModule, and related APIs only."
+    "nullable_warning_prevention": [
+      "Always verify that Document.VbaProject is not null before accessing Modules or References.",
+      "Check that VbaModule.SourceCode is not null before performing string operations.",
+      "Confirm that Modules.Count > 0 when a task requires at least one macro."
     ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "Unsupported API invention",
-      "symptom": "Generated code references members that do not exist in the selected package version.",
-      "fix": "Replace invented members with documented Aspose.Words APIs already proven in this category."
+      "pattern": "Invented API members",
+      "symptom": "Compilation fails with CS1501 or CS1061 because the code references constructors, properties, or enum values that do not exist in the selected Aspose.Words version.",
+      "cause": "The generator created calls to non-existent members such as VbaModule(string, string) or VbaReferenceType.COM.",
+      "fix": "Replace invented members with documented APIs: use the parameterless VbaModule constructor, set properties explicitly, and reference only enum members defined in the library.",
+      "prevention": "Consult the official Aspose.Words VBA API reference for the exact member list before writing code."
     },
     {
-      "pattern": "Missing local bootstrap inputs",
-      "symptom": "The example assumes source files, folders, images, or data already exist.",
-      "fix": "Create deterministic local inputs before loading, processing, or validating them."
+      "pattern": "Incorrect VbaModule construction",
+      "symptom": "CS1729 errors indicate that VbaModule does not have a constructor accepting arguments.",
+      "cause": "VbaModule provides only a parameterless constructor in version 26.10.0.",
+      "fix": "Instantiate VbaModule with new VbaModule() and then assign Name, Type, and SourceCode properties.",
+      "prevention": "Always use the default constructor and configure the object via its properties."
+    },
+    {
+      "pattern": "Invalid Add overload usage",
+      "symptom": "CS1501 errors occur when collection.Add is called with two arguments instead of a single VbaModule instance.",
+      "cause": "VbaModuleCollection.Add expects exactly one VbaModule parameter.",
+      "fix": "Pass only the VbaModule object to Modules.Add.",
+      "prevention": "Review method signatures and supply the correct number of arguments."
+    },
+    {
+      "pattern": "Incorrect enum/value usage",
+      "symptom": "CS0117 errors appear when referencing VbaReferenceType.COM or VbaReferenceType.Library, which are not defined.",
+      "cause": "The enum does not contain those members in the current library version.",
+      "fix": "Use only the enum values that exist, such as VbaReferenceType.Standard, or filter references by their Type property without relying on missing members.",
+      "prevention": "Verify enum definitions in the documentation before using them."
+    },
+    {
+      "pattern": "Wrong member access on VbaReference",
+      "symptom": "CS1061 errors are raised when code attempts to read VbaReference.Name, a property that does not exist.",
+      "cause": "VbaReference exposes LibId and Type, not Name.",
+      "fix": "Replace reference.Name with reference.LibId for identification.",
+      "prevention": "Use property names exactly as defined in the API spec."
+    },
+    {
+      "pattern": "Missing namespace imports",
+      "symptom": "CS0246 errors indicate that types like VbaProject or VbaModule cannot be found.",
+      "cause": "The required Aspose.Words.Vba namespace is not imported or the assembly reference is missing.",
+      "fix": "Add using Aspose.Words.Vba; and ensure the Aspose.Words DLL is referenced by the project.",
+      "prevention": "Include all namespaces listed in the category metadata at the top of the source file."
     },
     {
       "pattern": "Over-broad validation",
-      "symptom": "The example fails at runtime while checking unrelated document internals.",
-      "fix": "Validate only the requested behavior and the existence of expected outputs."
+      "symptom": "Runtime failures occur because validation logic inspects unrelated document parts instead of the VBA project.",
+      "cause": "Validation code is not scoped to the specific macro task.",
+      "fix": "Validate only the presence of a VBA project and the required modules or references.",
+      "prevention": "Keep validation narrow and task-specific as described in the workflow rules."
     }
   ],
   "examples": [
@@ -100,8 +128,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 3,
@@ -111,8 +139,8 @@
       "outputs": [
         "docm"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 4,
@@ -139,24 +167,24 @@
     {
       "id": 6,
       "file_name": "perform-a-case-insensitive-search-across-all-vba-modules-for-deprecated-function-names-and.cs",
-      "task": "Perform a case‑insensitive search across all VBA modules for deprecated function names and replace them.",
-      "workflow": "vba-workflow",
-      "outputs": [
-        "docm"
-      ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
-    },
-    {
-      "id": 7,
-      "file_name": "replace-hard-coded-file-paths-in-macro-source-code-with-relative-paths-using-string-manipu.cs",
-      "task": "Replace hard‑coded file paths in macro source code with relative paths using string manipulation functions.",
+      "task": "Perform a case-insensitive search across all VBA modules for deprecated function names and replace them.",
       "workflow": "vba-workflow",
       "outputs": [
         "docm"
       ],
       "selected_engine": "mcp",
       "winner": "mcp"
+    },
+    {
+      "id": 7,
+      "file_name": "replace-hard-coded-file-paths-in-macro-source-code-with-relative-paths-using-string-manipu.cs",
+      "task": "Replace hard-coded file paths in macro source code with relative paths using string manipulation functions.",
+      "workflow": "vba-workflow",
+      "outputs": [
+        "docm"
+      ],
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 8,
@@ -177,8 +205,8 @@
       "outputs": [
         "docm"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 10,
@@ -210,8 +238,8 @@
       "outputs": [
         "docm"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 13,
@@ -232,8 +260,8 @@
       "outputs": [
         "docm"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 15,
@@ -304,7 +332,7 @@
     {
       "id": 21,
       "file_name": "clone-a-vba-project-then-remove-all-references-to-external-libraries-to-create-a-self-cont.cs",
-      "task": "Clone a VBA project, then remove all references to external libraries to create a self‑contained macro set.",
+      "task": "Clone a VBA project, then remove all references to external libraries to create a self-contained macro set.",
       "workflow": "vba-workflow",
       "outputs": [
         "docm"
@@ -320,8 +348,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 23,
@@ -365,8 +393,8 @@
       "outputs": [
         "json"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 27,
@@ -377,8 +405,8 @@
         "doc",
         "zip"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 28,
@@ -388,8 +416,8 @@
       "outputs": [
         "json"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 29,
@@ -400,8 +428,8 @@
         "docm",
         "doc"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 30,
@@ -453,7 +481,7 @@
     {
       "id": 34,
       "file_name": "use-the-document-vbaproject-property-to-replace-an-existing-vba-project-with-a-pre-configu.cs",
-      "task": "Use the Document.VbaProject property to replace an existing VBA project with a pre‑configured project template.",
+      "task": "Use the Document.VbaProject property to replace an existing VBA project with a pre-configured project template.",
       "workflow": "vba-workflow",
       "outputs": [
         "doc"
@@ -461,5 +489,15 @@
       "selected_engine": "existing_repo",
       "winner": "existing_repo"
     }
-  ]
+  ],
+  "narrative": {
+    "overview": "The VBA Macros category demonstrates how to manipulate VBA projects embedded in Word documents using Aspose.Words 26.10.0. Verified examples illustrate creating, enumerating, modifying, and exporting VBA modules and references while preserving the macro-enabled file format.",
+    "purpose": "An AI coding agent should generate C# code that accesses Document.VbaProject, works with VbaModuleCollection and VbaReferenceCollection, and saves the result as a DOCM file. The agent must rely exclusively on documented Aspose.Words APIs, guard against null objects, and keep validation scoped to the specific macro task.",
+    "validation_priorities": [
+      "Validate that the loaded document contains a non-null VbaProject and that the Modules collection has the expected number of items before any modification."
+    ],
+    "maintenance_notes": [
+      "Review the Aspose.Words release notes periodically and update examples when new constructors, properties, or enum members are added."
+    ]
+  }
 }

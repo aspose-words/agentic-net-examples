@@ -7,65 +7,57 @@ public class Program
 {
     public static void Main()
     {
-        // Define file paths for the original and modified documents.
-        string artifactsDir = Path.Combine(Environment.CurrentDirectory, "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-        string originalPath = Path.Combine(artifactsDir, "Sample.docm");
-        string modifiedPath = Path.Combine(artifactsDir, "Sample_Modified.docm");
+        // Prepare paths for the sample and modified documents.
+        string samplePath = Path.Combine(Path.GetTempPath(), "Sample.docm");
+        string modifiedPath = Path.Combine(Path.GetTempPath(), "Modified.docm");
 
-        // -----------------------------------------------------------------
-        // Create a new macro‑enabled document with a single VBA module.
-        // -----------------------------------------------------------------
+        // Create a new blank document.
         Document doc = new Document();
 
-        // Create and assign a new VBA project.
-        VbaProject project = new VbaProject();
-        project.Name = "MyVbaProject";
-        doc.VbaProject = project;
-
-        // Create a procedural VBA module with simple macro code.
-        VbaModule module = new VbaModule();
-        module.Name = "Module1";
-        module.Type = VbaModuleType.ProceduralModule;
-        module.SourceCode = "Sub HelloWorld()\n    MsgBox \"Hello, World!\"\nEnd Sub";
-
-        // Add the module to the project and save the document.
-        doc.VbaProject.Modules.Add(module);
-        doc.Save(originalPath);
-
-        // -----------------------------------------------------------------
-        // Load the saved document and validate the presence of at least one module.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(originalPath);
-
-        bool hasValidModule = loadedDoc.HasMacros &&
-                              loadedDoc.VbaProject != null &&
-                              loadedDoc.VbaProject.Modules != null &&
-                              loadedDoc.VbaProject.Modules.Count > 0;
-
-        Console.WriteLine($"Document has macros: {loadedDoc.HasMacros}");
-        Console.WriteLine($"VBA project present: {loadedDoc.VbaProject != null}");
-        Console.WriteLine($"Modules count: {(loadedDoc.VbaProject?.Modules?.Count ?? 0)}");
-        Console.WriteLine($"Ready for modification: {hasValidModule}");
-
-        if (hasValidModule)
+        // Ensure the document has a VBA project.
+        if (doc.VbaProject == null)
         {
-            // Retrieve the first module safely.
+            doc.VbaProject = new VbaProject();
+        }
+
+        // Add a simple VBA module if none exist.
+        if (doc.VbaProject.Modules.Count == 0)
+        {
+            VbaModule module = new VbaModule();
+            module.Name = "Module1";
+            module.SourceCode =
+                "Sub Hello()\n" +
+                "    MsgBox \"Hello from VBA!\"\n" +
+                "End Sub";
+            doc.VbaProject.Modules.Add(module);
+        }
+
+        // Save the document as a macro‑enabled file.
+        doc.Save(samplePath, SaveFormat.Docm);
+
+        // Load the document back.
+        Document loadedDoc = new Document(samplePath);
+
+        // Validate that the loaded document contains a VBA project with at least one module.
+        if (loadedDoc.VbaProject != null && loadedDoc.VbaProject.Modules.Count > 0)
+        {
+            // Perform a simple modification: append a comment to the first module's source code.
             VbaModule firstModule = loadedDoc.VbaProject.Modules[0];
-
-            // Guard against null source code.
-            string currentSource = firstModule.SourceCode ?? string.Empty;
-
-            // Append a comment to indicate the macro was modified.
-            firstModule.SourceCode = currentSource + "\n' Modified by Aspose.Words";
+            string originalSource = firstModule.SourceCode ?? string.Empty;
+            string modifiedSource = originalSource + "\n' Added by C# automation";
+            firstModule.SourceCode = modifiedSource;
 
             // Save the modified document.
-            loadedDoc.Save(modifiedPath);
-            Console.WriteLine($"Modified document saved to: {modifiedPath}");
+            loadedDoc.Save(modifiedPath, SaveFormat.Docm);
+            Console.WriteLine($"Document validated and modified. Saved to: {modifiedPath}");
         }
         else
         {
-            Console.WriteLine("No VBA modules found; modification skipped.");
+            Console.WriteLine("The loaded document does not contain a VBA project with any modules. No modifications were made.");
         }
+
+        // Clean up temporary files (optional).
+        // File.Delete(samplePath);
+        // File.Delete(modifiedPath);
     }
 }
