@@ -13,20 +13,24 @@ public class Program
         builder.Writeln("This is a sample document used to demonstrate TIFF compression with Aspose.Words.");
         builder.Writeln("The quick brown fox jumps over the lazy dog.");
         builder.Writeln("Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
-        builder.Writeln("Another line to increase the file size for compression testing.");
 
-        // Define output file paths.
+        // Define file names for the two TIFF outputs.
         string uncompressedPath = "output_uncompressed.tiff";
         string compressedPath = "output_ccitt3.tiff";
 
         // Save the document as an uncompressed TIFF.
-        ImageSaveOptions uncompressedOptions = new ImageSaveOptions(SaveFormat.Tiff);
-        uncompressedOptions.TiffCompression = TiffCompression.None; // Explicitly no compression.
+        ImageSaveOptions uncompressedOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        {
+            // Explicitly set no compression.
+            TiffCompression = TiffCompression.None
+        };
         doc.Save(uncompressedPath, uncompressedOptions);
 
         // Save the document as a TIFF using CCITT3 compression.
-        ImageSaveOptions compressedOptions = new ImageSaveOptions(SaveFormat.Tiff);
-        compressedOptions.TiffCompression = TiffCompression.Ccitt3;
+        ImageSaveOptions compressedOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        {
+            TiffCompression = TiffCompression.Ccitt3
+        };
         doc.Save(compressedPath, compressedOptions);
 
         // Verify that both files were created.
@@ -42,10 +46,11 @@ public class Program
         Console.WriteLine($"Uncompressed TIFF size: {uncompressedSize} bytes");
         Console.WriteLine($"CCITT3 compressed TIFF size: {compressedSize} bytes");
 
-        // Verify that compression reduced the file size significantly.
+        // Ensure that compression resulted in a smaller file.
         if (compressedSize >= uncompressedSize)
-            throw new InvalidOperationException("Compressed TIFF is not smaller than the uncompressed TIFF.");
+            throw new InvalidOperationException("Compressed TIFF is not smaller than the uncompressed version.");
 
-        Console.WriteLine("Compression successful: the CCITT3 TIFF is smaller than the uncompressed TIFF.");
+        // Indicate successful verification.
+        Console.WriteLine("Compression successful: file size reduced as expected.");
     }
 }

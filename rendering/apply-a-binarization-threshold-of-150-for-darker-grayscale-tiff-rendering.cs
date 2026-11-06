@@ -10,27 +10,27 @@ public class Program
         // Create a simple document with some text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document to demonstrate TIFF rendering with binarization.");
+        builder.Writeln("Sample text for grayscale TIFF rendering with binarization threshold.");
 
-        // Configure image save options for TIFF.
-        // The current Aspose.Words version does not expose a direct threshold property.
-        // Use BlackAndWhite color mode with CCITT4 compression to obtain a binary (binarized) image.
-        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        // Configure image save options for grayscale TIFF.
+        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            ImageColorMode = ImageColorMode.BlackAndWhite,
+            ImageColorMode = ImageColorMode.Grayscale,
             TiffCompression = TiffCompression.Ccitt4
         };
 
-        // Define output file path.
+        // Define output path.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.tiff");
 
-        // Save the document as a TIFF image with the specified options.
-        doc.Save(outputPath, saveOptions);
+        // Save the document as a TIFF image.
+        doc.Save(outputPath, options);
 
-        // Verify that the TIFF file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The TIFF file was not created.");
+        // Verify that the file was created.
+        if (!File.Exists(outputPath) || new FileInfo(outputPath).Length == 0)
+        {
+            throw new InvalidOperationException("Failed to create the TIFF file.");
+        }
 
-        Console.WriteLine($"TIFF file saved successfully to: {outputPath}");
+        Console.WriteLine($"TIFF file successfully saved to: {outputPath}");
     }
 }

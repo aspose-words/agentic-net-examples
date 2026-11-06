@@ -3,56 +3,54 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+public class DocxToTiffBatch
 {
     public static void Main()
     {
-        // Define a working folder for the demo.
+        // Define a temporary working folder.
         string workFolder = Path.Combine(Path.GetTempPath(), "DocxToTiffDemo");
         Directory.CreateDirectory(workFolder);
 
         // Create sample DOCX files in the folder.
-        for (int i = 1; i <= 3; i++)
-        {
-            string docxPath = Path.Combine(workFolder, $"Sample{i}.docx");
-            Document sampleDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-            builder.Writeln($"This is sample document {i}.");
-            // Add a second page to demonstrate multi‑page TIFF.
-            builder.InsertBreak(BreakType.PageBreak);
-            builder.Writeln($"Second page of sample document {i}.");
-            sampleDoc.Save(docxPath);
-        }
+        CreateSampleDocx(Path.Combine(workFolder, "Sample1.docx"),
+            "First sample document.\nLine two.");
+        CreateSampleDocx(Path.Combine(workFolder, "Sample2.docx"),
+            "Second sample document.\nAnother line.");
 
-        // Convert each DOCX file in the folder to a TIFF image with LZW compression.
-        foreach (string docxFile in Directory.GetFiles(workFolder, "*.docx"))
+        // Convert each DOCX file in the folder to a TIFF image using predefined compression.
+        foreach (string docxPath in Directory.GetFiles(workFolder, "*.docx"))
         {
-            // Load the source document.
-            Document doc = new Document(docxFile);
+            // Load the DOCX document.
+            Document doc = new Document(docxPath);
 
-            // Configure TIFF save options.
-            ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
+            // Prepare TIFF save options with a specific compression (CCITT4).
+            ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
             {
-                // Use LZW compression for the TIFF output.
-                TiffCompression = TiffCompression.Lzw
+                // Use the correct property name for TIFF compression.
+                TiffCompression = TiffCompression.Ccitt4
             };
 
             // Determine the output TIFF file path.
-            string tiffFile = Path.ChangeExtension(docxFile, ".tiff");
+            string tiffPath = Path.ChangeExtension(docxPath, ".tiff");
 
             // Save the document as a TIFF image.
-            doc.Save(tiffFile, saveOptions);
+            doc.Save(tiffPath, tiffOptions);
 
             // Validate that the TIFF file was created.
-            if (!File.Exists(tiffFile))
-                throw new InvalidOperationException($"Failed to create TIFF file: {tiffFile}");
-
-            // Optional: ensure the file is not empty.
-            if (new FileInfo(tiffFile).Length == 0)
-                throw new InvalidOperationException($"TIFF file is empty: {tiffFile}");
+            if (!File.Exists(tiffPath))
+                throw new InvalidOperationException($"Failed to create TIFF file: {tiffPath}");
         }
 
-        // Indicate successful completion.
-        Console.WriteLine("All DOCX files have been converted to TIFF successfully.");
+        // Indicate completion (no user interaction required).
+        Console.WriteLine("DOCX to TIFF conversion completed successfully.");
+    }
+
+    // Helper method to create a simple DOCX file with given content.
+    private static void CreateSampleDocx(string filePath, string content)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln(content);
+        doc.Save(filePath);
     }
 }

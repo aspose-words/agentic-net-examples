@@ -1,44 +1,52 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 using Aspose.Words.Fonts;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Use a font that supports ligatures (e.g., Calibri).
-        builder.Font.Name = "Calibri";
+        // Use a font that supports ligatures (e.g., Times New Roman).
+        builder.Font.Name = "Times New Roman";
 
-        // Add a line containing ligature characters.
-        builder.Writeln("Office: fi fl ffi ffl");
+        // Add text that contains ligatures such as "ff" and "fl".
+        builder.Writeln("Office");   // contains "ff"
+        builder.Writeln("flavor");   // contains "fl"
 
         // Configure FontSettings to point to the system fonts folder.
+        // This ensures the required font can be found during rendering.
         FontSettings fontSettings = new FontSettings();
-        string fontsFolder = Environment.GetFolderPath(Environment.SpecialFolder.Fonts);
-        if (Directory.Exists(fontsFolder))
+        string systemFontsPath = Environment.GetFolderPath(Environment.SpecialFolder.Fonts);
+        if (Directory.Exists(systemFontsPath))
         {
-            fontSettings.SetFontsFolder(fontsFolder, false);
+            fontSettings.SetFontsFolder(systemFontsPath, false);
         }
         doc.FontSettings = fontSettings;
 
-        // Render the document to a TIFF image.
-        string outputPath = "output.tiff";
+        // Define the output TIFF file path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "RenderedDocument.tiff");
+
+        // Set up image save options for TIFF format.
         ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff);
+        // Render all pages of the document.
+        saveOptions.PageSet = new PageSet(0, doc.PageCount - 1);
+
+        // Save the document as a multipage TIFF.
         doc.Save(outputPath, saveOptions);
 
         // Verify that the TIFF file was created.
         if (!File.Exists(outputPath))
         {
-            throw new InvalidOperationException("TIFF file was not created.");
+            throw new InvalidOperationException("TIFF rendering failed: output file was not created.");
         }
 
-        // Output the file size for confirmation.
-        Console.WriteLine($"TIFF saved successfully. Size: {new FileInfo(outputPath).Length} bytes");
+        // Report success.
+        Console.WriteLine("Document rendered to TIFF successfully: " + outputPath);
     }
 }

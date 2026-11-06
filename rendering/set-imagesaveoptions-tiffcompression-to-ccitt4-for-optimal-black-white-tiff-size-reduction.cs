@@ -7,26 +7,30 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple document.
+        // Create a simple document with one paragraph.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Sample text for TIFF rendering.");
 
-        // Configure TIFF save options to use CCITT4 compression.
-        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff);
-        tiffOptions.TiffCompression = TiffCompression.Ccitt4;
+        // Configure image save options for TIFF with CCITT4 compression.
+        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        {
+            TiffCompression = TiffCompression.Ccitt4
+        };
 
-        string outputFile = "output.tiff";
+        // Define output file path.
+        string outputPath = "output.tiff";
 
-        // Save the document as a TIFF image with the specified compression.
-        doc.Save(outputFile, tiffOptions);
+        // Save the document as a TIFF image using the specified options.
+        doc.Save(outputPath, saveOptions);
 
         // Verify that the TIFF file was created.
-        if (!File.Exists(outputFile))
-            throw new InvalidOperationException("Failed to create the TIFF file.");
+        if (!File.Exists(outputPath))
+        {
+            throw new FileNotFoundException("The TIFF file was not created.", outputPath);
+        }
 
-        // Report the result.
-        long fileSize = new FileInfo(outputFile).Length;
-        Console.WriteLine($"TIFF saved to '{outputFile}' ({fileSize} bytes).");
+        // Optional: indicate success (no user interaction required).
+        Console.WriteLine("TIFF file saved successfully with CCITT4 compression.");
     }
 }

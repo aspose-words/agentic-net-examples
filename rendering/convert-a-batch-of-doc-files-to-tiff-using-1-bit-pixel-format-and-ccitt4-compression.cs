@@ -7,50 +7,56 @@ public class Program
 {
     public static void Main()
     {
-        // Create a temporary folder for the sample documents and output TIFF files.
-        string workFolder = Path.Combine(Path.GetTempPath(), "AsposeWordsTiffBatch");
-        Directory.CreateDirectory(workFolder);
+        // Create a temporary folder for sample DOCX files.
+        string sourceFolder = Path.Combine(Directory.GetCurrentDirectory(), "BatchDocs");
+        Directory.CreateDirectory(sourceFolder);
 
-        // Create a few sample DOCX files.
-        CreateSampleDocument(Path.Combine(workFolder, "Sample1.docx"), "This is the first sample document.");
-        CreateSampleDocument(Path.Combine(workFolder, "Sample2.docx"), "This is the second sample document.");
+        // Generate a few sample DOCX documents.
+        for (int i = 1; i <= 3; i++)
+        {
+            string docPath = Path.Combine(sourceFolder, $"Sample{i}.docx");
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln($"This is sample document {i}.");
+            doc.Save(docPath);
+        }
 
-        // Find all DOC and DOCX files in the folder.
-        string[] docFiles = Directory.GetFiles(workFolder, "*.doc*");
+        // Create an output folder for the generated TIFF files.
+        string outputFolder = Path.Combine(sourceFolder, "Output");
+        Directory.CreateDirectory(outputFolder);
 
-        foreach (string docPath in docFiles)
+        // Process each DOCX file in the source folder.
+        string[] docFiles = Directory.GetFiles(sourceFolder, "*.docx");
+        foreach (string docFile in docFiles)
         {
             // Load the source document.
-            Document doc = new Document(docPath);
+            Document document = new Document(docFile);
 
-            // Configure TIFF save options: 1‑bit (black‑and‑white) and CCITT4 compression.
-            ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
+            // Configure TIFF rendering options: 1‑bit (black‑and‑white) and CCITT4 compression.
+            ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
             {
                 ImageColorMode = ImageColorMode.BlackAndWhite,
-                TiffCompression = TiffCompression.Ccitt4
+                TiffCompression = TiffCompression.Ccitt4,
+                PageSet = PageSet.All // Render all pages.
             };
 
             // Determine the output TIFF file path.
-            string tiffPath = Path.ChangeExtension(docPath, ".tiff");
+            string tiffPath = Path.Combine(outputFolder, Path.GetFileNameWithoutExtension(docFile) + ".tiff");
 
             // Save the document as a multipage TIFF.
-            doc.Save(tiffPath, tiffOptions);
+            document.Save(tiffPath, saveOptions);
 
             // Verify that the TIFF file was created.
             if (!File.Exists(tiffPath))
-                throw new InvalidOperationException($"Failed to create TIFF file: {tiffPath}");
+                throw new Exception($"Failed to create TIFF file: {tiffPath}");
         }
 
-        // Optional: indicate successful completion (no interactive prompts).
-        Console.WriteLine("Batch conversion completed successfully.");
-    }
+        // Optional: confirm that the number of generated TIFF files matches the source count.
+        int expectedCount = docFiles.Length;
+        int actualCount = Directory.GetFiles(outputFolder, "*.tiff").Length;
+        if (actualCount != expectedCount)
+            throw new Exception($"Expected {expectedCount} TIFF files, but found {actualCount}.");
 
-    // Helper method to create a simple DOCX document with supplied text.
-    private static void CreateSampleDocument(string filePath, string text)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln(text);
-        doc.Save(filePath);
+        // Program completed successfully.
     }
 }

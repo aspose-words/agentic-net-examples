@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Fonts;   // Required for FontSettings
 using Aspose.Words.Saving;
 
 public class Program
@@ -11,27 +12,26 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Choose a font that does not contain OpenType features (e.g., Arial).
-        // This effectively disables ligatures and other OpenType behaviors for the rendered text.
-        builder.Font.Name = "Arial";
-        builder.Font.Size = 24;
+        // Add a paragraph containing characters that normally form OpenType ligatures.
+        builder.Writeln("Office and file have ligatures like fi and fl.");
 
-        // Add text that would normally display ligatures if OpenType features were enabled.
-        builder.Writeln("Office");
-        builder.Writeln("affinity");
-        builder.Writeln("fluff");
+        // Configure FontSettings (no OpenType disabling API is available in the current version).
+        FontSettings fontSettings = new FontSettings();
+        doc.FontSettings = fontSettings;
+
+        // Define the output PDF path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.pdf");
 
         // Render the document to PDF.
-        string pdfPath = "output.pdf";
-        doc.Save(pdfPath, SaveFormat.Pdf);
+        PdfSaveOptions saveOptions = new PdfSaveOptions();
+        doc.Save(outputPath, saveOptions);
 
-        // Verify that the PDF file was created successfully.
-        if (!File.Exists(pdfPath))
-        {
-            throw new InvalidOperationException("Failed to create the PDF file.");
-        }
+        // Verify that the PDF file was created.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The PDF file was not created.", outputPath);
 
-        // Indicate successful completion (no user interaction required).
-        Console.WriteLine($"PDF generated at: {Path.GetFullPath(pdfPath)}");
+        // Output the file size for confirmation.
+        long fileSize = new FileInfo(outputPath).Length;
+        Console.WriteLine($"PDF generated successfully. File size: {fileSize} bytes.");
     }
 }

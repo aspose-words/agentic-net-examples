@@ -10,26 +10,22 @@ public class Program
         // Create a simple document with some content.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document rendered to TIFF with maximum compression.");
+        builder.Writeln("Sample text for TIFF rendering with maximum compression.");
 
-        // Configure image save options for TIFF format.
+        // Configure ImageSaveOptions for TIFF.
         ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff);
-        // Use the highest loss‑less compression available for TIFF.
+        // Use LZW compression (lossless) to achieve maximum compression for TIFF.
         saveOptions.TiffCompression = TiffCompression.Lzw;
 
-        // Define output file path.
+        // Save the document as a TIFF file.
         string outputPath = "output.tiff";
-
-        // Save the document as a TIFF image using the configured options.
         doc.Save(outputPath, saveOptions);
 
-        // Verify that the file was created.
+        // Verify that the TIFF file was created.
         if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException($"Failed to create the TIFF file at '{outputPath}'.");
-        }
+            throw new Exception("Failed to create the TIFF file.");
 
-        // Report the file size to demonstrate compression effect.
+        // Output the size of the generated TIFF file.
         long fileSize = new FileInfo(outputPath).Length;
         Console.WriteLine($"TIFF file saved successfully. Size: {fileSize} bytes.");
     }

@@ -7,27 +7,28 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple document with one paragraph.
+        // Create a simple document in memory.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample text for black‑and‑white TIFF conversion.");
+        builder.Writeln("Hello World!");
 
-        // Define the output file path.
-        string outputPath = "output.tiff";
+        // Save the source document (optional, just to demonstrate file creation).
+        string sourcePath = "Sample.docx";
+        doc.Save(sourcePath);
 
-        // Configure ImageSaveOptions for TIFF with black‑and‑white (1‑bit per pixel) output.
-        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff);
-        // Use ImageColorMode.BlackAndWhite to produce a 1‑bpp indexed image.
-        saveOptions.ImageColorMode = ImageColorMode.BlackAndWhite;
+        // Configure ImageSaveOptions for black‑and‑white TIFF output.
+        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff);
+        tiffOptions.PixelFormat = ImagePixelFormat.Format1bppIndexed;
 
-        // Save the document as a TIFF image using the configured options.
-        doc.Save(outputPath, saveOptions);
+        // Render the document to a TIFF file using the configured options.
+        string tiffPath = "Output.tiff";
+        doc.Save(tiffPath, tiffOptions);
 
         // Verify that the TIFF file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The TIFF file was not created.");
+        if (!File.Exists(tiffPath))
+            throw new FileNotFoundException("TIFF output was not created.", tiffPath);
 
-        // Indicate success.
-        Console.WriteLine("TIFF file saved successfully: " + Path.GetFullPath(outputPath));
+        // Indicate successful completion.
+        Console.WriteLine("Document successfully saved as black‑and‑white TIFF.");
     }
 }

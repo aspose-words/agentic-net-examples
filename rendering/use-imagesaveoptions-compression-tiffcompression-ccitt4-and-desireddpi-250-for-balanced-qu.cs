@@ -7,31 +7,33 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple document with some text.
+        // Create a simple document in memory.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample black‑and‑white TIFF rendered with CCITT4 compression at 250 DPI.");
+        builder.Writeln("Hello, this is a sample document for TIFF rendering.");
 
-        // Configure TIFF save options.
-        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        // Configure TIFF save options for black‑and‑white output.
+        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
+            // Use CCITT Group 4 compression for monochrome TIFF.
             TiffCompression = TiffCompression.Ccitt4,
+            // Set DPI for balanced quality.
             Resolution = 250
         };
 
         // Define output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "sample.tiff");
+        string outputPath = "SampleOutput.tiff";
 
-        // Save the document as a TIFF image.
-        doc.Save(outputPath, saveOptions);
+        // Save the document as a TIFF image using the configured options.
+        doc.Save(outputPath, tiffOptions);
 
-        // Verify that the file was created.
+        // Verify that the TIFF file was created.
         if (!File.Exists(outputPath))
         {
-            throw new InvalidOperationException($"Failed to create the TIFF file at '{outputPath}'.");
+            throw new InvalidOperationException($"Failed to create TIFF file at '{outputPath}'.");
         }
 
-        // Output a confirmation (non‑interactive).
-        Console.WriteLine($"TIFF file successfully saved to: {outputPath}");
+        // Indicate success.
+        Console.WriteLine($"TIFF file successfully created at '{Path.GetFullPath(outputPath)}'.");
     }
 }
