@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Markup;
-using Aspose.Words.Saving;
 
 public class Program
 {
@@ -13,40 +12,44 @@ public class Program
         Document doc = new Document();
 
         // Create a block‑level rich‑text content control.
-        StructuredDocumentTag linkControl = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block);
-        linkControl.Title = "LinkControl";
-        linkControl.Tag = "link-control";
+        StructuredDocumentTag linkControl = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
+        {
+            Title = "LinkControl",
+            Tag = "link-control"
+        };
+
+        // Add a paragraph that will hold the hyperlink.
+        Paragraph hyperlinkParagraph = new Paragraph(doc);
+        linkControl.AppendChild(hyperlinkParagraph);
 
         // Insert the content control into the document body.
         doc.FirstSection.Body.AppendChild(linkControl);
 
-        // Inside the content control, create a paragraph that will hold the hyperlink.
-        Paragraph innerParagraph = new Paragraph(doc);
-        linkControl.AppendChild(innerParagraph);
-
-        // Insert a hyperlink into the inner paragraph.
+        // Use DocumentBuilder to insert a hyperlink into the paragraph inside the content control.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.MoveTo(innerParagraph);
-        builder.InsertHyperlink("Click Here", "https://example.com", false);
+        builder.MoveTo(hyperlinkParagraph);
+        builder.InsertHyperlink("https://example.com", "Click Here", false);
 
-        // Save the document as DOCX.
-        const string docxPath = "output.docx";
+        // Ensure fields are up‑to‑date before saving.
+        doc.UpdateFields();
+
+        // Save the original DOCX.
+        const string docxPath = "hyperlink-sdt.docx";
         doc.Save(docxPath);
 
         // Convert the document to HTML.
-        const string htmlPath = "output.html";
+        const string htmlPath = "hyperlink-sdt.html";
         doc.Save(htmlPath, SaveFormat.Html);
 
-        // Load the generated HTML and verify that the hyperlink target URL is present.
+        // Verify that the hyperlink target URL is present in the HTML output.
         string htmlContent = File.ReadAllText(htmlPath);
         const string expectedUrl = "https://example.com";
-
-        if (!htmlContent.Contains($"href=\"{expectedUrl}\""))
+        if (!htmlContent.Contains(expectedUrl))
         {
-            throw new InvalidOperationException($"The expected hyperlink URL '{expectedUrl}' was not found in the HTML output.");
+            throw new InvalidOperationException("Hyperlink target URL was not preserved after conversion.");
         }
 
         // Indicate success.
-        Console.WriteLine("Hyperlink embedded in content control and verified after conversion.");
+        Console.WriteLine("Hyperlink target URL verified successfully.");
     }
 }

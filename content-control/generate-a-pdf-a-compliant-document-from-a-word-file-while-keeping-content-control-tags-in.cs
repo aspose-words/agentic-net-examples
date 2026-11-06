@@ -1,6 +1,4 @@
 using System;
-using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Markup;
 using Aspose.Words.Saving;
@@ -10,76 +8,45 @@ public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create a sample DOCX containing two content controls.
-        // -----------------------------------------------------------------
+        // Create a new Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Introductory paragraph.
-        builder.Writeln("Document with content controls:");
-
-        // ----- Inline plain‑text content control -----
-        StructuredDocumentTag plainSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
-        {
-            Title = "CustomerName",
-            Tag = "customer-name"
-        };
+        // Add a paragraph with a plain‑text inline content control.
+        builder.Writeln("Customer:");
+        StructuredDocumentTag plainSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline);
+        plainSdt.Title = "CustomerName";
+        plainSdt.Tag = "customer-name";
         plainSdt.RemoveAllChildren();
         plainSdt.AppendChild(new Run(doc, "Contoso"));
-        Paragraph currentParagraph = builder.CurrentParagraph;
-        if (currentParagraph != null)
-        {
-            currentParagraph.AppendChild(plainSdt);
-        }
-        builder.Writeln(); // Move to a new paragraph.
+        // Append the content control to the current paragraph.
+        builder.CurrentParagraph?.AppendChild(plainSdt);
 
-        // ----- Block‑level rich‑text content control -----
+        // Add a block‑level rich‑text content control.
+        builder.Writeln(); // start a new paragraph.
         StructuredDocumentTag richSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block);
-        Paragraph richParagraph = new Paragraph(doc);
-        richParagraph.AppendChild(new Run(doc, "Rich text block content control."));
-        richSdt.AppendChild(richParagraph);
+        richSdt.Title = "SectionContent";
+        Paragraph innerParagraph = new Paragraph(doc);
+        innerParagraph.AppendChild(new Run(doc, "This is a block content control."));
+        richSdt.AppendChild(innerParagraph);
+        // Insert the block content control into the document body.
         doc.FirstSection.Body.AppendChild(richSdt);
 
-        // Save the source DOCX locally.
-        const string inputPath = "input.docx";
-        doc.Save(inputPath);
+        // Save the source DOCX file.
+        const string sourceDocx = "sample.docx";
+        doc.Save(sourceDocx);
 
-        // -----------------------------------------------------------------
-        // 2. Load the DOCX for further processing.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(inputPath);
+        // Load the DOCX file (simulating an existing file).
+        Document loadedDoc = new Document(sourceDocx);
 
-        // Export information about the content controls to JSON.
-        var sdtInfo = loadedDoc.GetChildNodes(NodeType.StructuredDocumentTag, true)
-            .OfType<StructuredDocumentTag>()
-            .Select(s => new
-            {
-                Title = s.Title,
-                Tag = s.Tag,
-                Type = s.SdtType.ToString(),
-                Text = s.GetText().Trim()
-            })
-            .ToList();
-
-        File.WriteAllText("content-controls.json",
-            JsonConvert.SerializeObject(sdtInfo, Formatting.Indented));
-
-        // -----------------------------------------------------------------
-        // 3. Configure PDF/A‑1b save options.
-        //    Use the 'Compliance' property (available in all supported versions)
-        //    to request PDF/A conformance.
-        // -----------------------------------------------------------------
+        // Configure PDF/A‑1b compliance options.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            // Request PDF/A‑1b compliance.
-            Compliance = PdfCompliance.PdfA1b,
-            // Preserve the document structure so that content controls become PDF tags.
-            ExportDocumentStructure = true
+            Compliance = PdfCompliance.PdfA1b
         };
 
-        // Save the document as PDF/A.
-        const string outputPdf = "output.pdf";
+        // Save the document as a PDF/A compliant file.
+        const string outputPdf = "output-pdfa.pdf";
         loadedDoc.Save(outputPdf, pdfOptions);
     }
 }

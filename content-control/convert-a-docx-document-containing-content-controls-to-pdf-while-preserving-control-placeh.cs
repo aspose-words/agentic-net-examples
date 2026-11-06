@@ -7,46 +7,43 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the sample DOCX and the resulting PDF.
-        string docPath = "sample.docx";
-        string pdfPath = "output.pdf";
-
-        // -----------------------------------------------------------------
-        // Step 1: Create a DOCX document that contains a plain‑text content
-        // control with a placeholder.
-        // -----------------------------------------------------------------
+        // Create a new blank document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a heading paragraph.
-        builder.Writeln("Document with a content control placeholder:");
+        // Ensure the document has at least one paragraph to host inline content controls.
+        Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
 
-        // Create an inline plain‑text StructuredDocumentTag (content control).
-        StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
-        {
-            Title = "CustomerName",
-            Tag = "customer-name"
-            // PlaceholderName is not set because it requires a building block in the glossary.
-        };
+        // Plain‑text content control with placeholder text.
+        StructuredDocumentTag plainTextSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline);
+        plainTextSdt.Title = "CustomerName";
+        plainTextSdt.Tag = "customer-name";
+        // Add placeholder text directly inside the SDT.
+        plainTextSdt.AppendChild(new Run(doc, "Enter customer name"));
+        // Insert the inline SDT into the paragraph.
+        paragraph.AppendChild(plainTextSdt);
 
-        // Add placeholder text as the child run of the content control.
-        sdt.RemoveAllChildren(); // Ensure the SDT is empty before adding content.
-        sdt.AppendChild(new Run(doc, "Enter name"));
+        // Rich‑text (block‑level) content control with placeholder text.
+        StructuredDocumentTag richTextSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block);
+        richTextSdt.Title = "Comments";
+        richTextSdt.Tag = "comments";
 
-        // Append the content control to the current paragraph.
-        builder.CurrentParagraph?.AppendChild(sdt);
+        // Add a paragraph inside the block‑level content control containing placeholder text.
+        Paragraph innerParagraph = new Paragraph(doc);
+        innerParagraph.AppendChild(new Run(doc, "Enter comments here"));
+        richTextSdt.AppendChild(innerParagraph);
 
-        // Save the DOCX file.
-        doc.Save(docPath);
+        // Append the block‑level content control to the document body.
+        doc.FirstSection.Body.AppendChild(richTextSdt);
 
-        // -----------------------------------------------------------------
-        // Step 2: Load the DOCX document and convert it to PDF.
-        // The placeholder text is part of the content control's child nodes,
-        // so it will appear in the PDF output.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(docPath);
+        // Save the source DOCX file.
+        const string inputPath = "input.docx";
+        doc.Save(inputPath);
 
-        // Save as PDF using default options.
-        loadedDoc.Save(pdfPath, SaveFormat.Pdf);
+        // Load the DOCX document that contains the content controls.
+        Document loadedDoc = new Document(inputPath);
+
+        // Convert the document to PDF while preserving placeholders.
+        const string outputPath = "output.pdf";
+        loadedDoc.Save(outputPath, SaveFormat.Pdf);
     }
 }

@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Markup;
@@ -11,46 +10,37 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Insert a paragraph with some introductory text.
-        Paragraph intro = new Paragraph(doc);
-        intro.AppendChild(new Run(doc, "Document with a content control:"));
-        doc.FirstSection.Body.AppendChild(intro);
+        // Create an inline plain‑text content control with a title and tag.
+        StructuredDocumentTag contentControl = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        {
+            Title = "SampleControl",
+            Tag = "sample"
+        };
+        // Add some initial text inside the control.
+        contentControl.AppendChild(new Run(doc, "Initial content"));
 
-        // Create a plain‑text content control (inline) with a title and tag.
-        StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline);
-        sdt.Title = "SampleControl";
-        sdt.Tag = "sample-control";
-
-        // Add initial content to the control.
-        sdt.RemoveAllChildren(); // Ensure it is empty before adding content.
-        sdt.AppendChild(new Run(doc, "Initial content"));
-
-        // Append the content control to a new paragraph.
-        Paragraph para = new Paragraph(doc);
-        para.AppendChild(sdt);
-        doc.FirstSection.Body.AppendChild(para);
+        // Insert the content control into the first paragraph of the document.
+        Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
+        firstParagraph.AppendChild(contentControl);
 
         // Save the document that contains the populated content control.
         doc.Save("original.docx");
 
-        // Load the document again (simulating a separate operation).
-        Document loadedDoc = new Document("original.docx");
-
-        // Find the content control by its title.
-        StructuredDocumentTag targetSdt = loadedDoc.GetChildNodes(NodeType.StructuredDocumentTag, true)
+        // Locate the content control by its title.
+        StructuredDocumentTag? targetControl = doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
             .OfType<StructuredDocumentTag>()
-            .FirstOrDefault(tag => tag.Title == "SampleControl");
+            .FirstOrDefault(sdt => sdt.Title == "SampleControl");
 
-        if (targetSdt == null)
-            throw new InvalidOperationException("Content control not found.");
+        if (targetControl != null)
+        {
+            // Clear all child nodes of the content control without removing the control itself.
+            targetControl.RemoveAllChildren();
 
-        // Clear the contents of the content control without removing the control itself.
-        targetSdt.RemoveAllChildren();
+            // Optionally, you could add placeholder text here if desired.
+            // targetControl.AppendChild(new Run(doc, "Placeholder"));
+        }
 
-        // Optionally, you could add placeholder text or leave it empty.
-        // Here we leave it empty to demonstrate a cleared control.
-
-        // Save the resulting document.
-        loadedDoc.Save("cleared.docx");
+        // Save the document after clearing the content control's contents.
+        doc.Save("cleared.docx");
     }
 }

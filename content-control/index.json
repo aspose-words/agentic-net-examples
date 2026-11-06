@@ -4,57 +4,64 @@
     "slug": "content-control",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Use native Aspose.Words structured document tag APIs directly. Create realistic local sample DOCX inputs inside the example whenever the task references an existing file, stream, folder, XML part, or batch of documents. Insert or locate real StructuredDocumentTag nodes and configure supported properties and child content through documented Aspose.Words APIs only.",
+    "preferred_workflow": "Generate a minimal in-memory DOCX sample (or folder of samples), locate or create the appropriate parent node, instantiate a StructuredDocumentTag with a valid SdtType and MarkupLevel, populate its child nodes, insert it using InsertNode or AppendChild, apply any required XML mapping or styling, and finally save the document in the desired format.",
     "required_packages": [
       "Aspose.Words",
       "Aspose.Drawing.Common",
       "Newtonsoft.Json"
     ],
     "package_versions": {
-      "Aspose.Words": "26.9.0",
-      "Aspose.Drawing.Common": "26.8.0"
+      "Aspose.Words": "26.10.0",
+      "Aspose.Drawing.Common": "26.10.0",
+      "Newtonsoft.Json": ""
     },
     "required_namespaces": [
       "System",
+      "System.IO",
       "Aspose.Words",
       "Aspose.Words.Markup",
-      "System.IO",
-      "System.Collections.Generic",
       "Aspose.Words.Drawing",
-      "Newtonsoft.Json",
-      "System.Globalization",
-      "Aspose.Words.Saving",
+      "Aspose.Drawing",
+      "Aspose.Drawing.Imaging",
+      "Aspose.Drawing.Drawing2D",
       "System.Linq",
-      "Aspose.Words.Fields",
+      "Newtonsoft.Json",
+      "System.Collections.Generic",
       "Aspose.Words.Tables",
-      "System.Xml.Linq",
+      "System.Xml",
+      "System.Text.RegularExpressions",
+      "System.Drawing",
+      "Aspose.Words.BuildingBlocks",
       "Aspose.Words.Themes",
       "System.Net.Http",
-      "System.Threading.Tasks",
-      "System.Xml",
+      "System.Text",
+      "Aspose.Words.Loading",
       "System.Xml.Xsl",
-      "System.Text"
+      "System.Xml.Linq",
+      "Aspose.Words.Saving"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
       "Range",
       "Run",
-      "File",
-      "Directory",
-      "Path",
       "Paragraph",
-      "MemoryStream",
+      "Font",
       "Shape",
-      "PdfSaveOptions",
+      "ImageData",
+      "Directory",
+      "File",
+      "Path",
+      "SaveFormat",
       "NodeType",
       "Table",
       "Row",
       "Cell",
       "Style",
-      "Font",
-      "FieldType",
-      "SaveFormat",
+      "Node",
+      "MemoryStream",
+      "LoadOptions",
+      "PdfSaveOptions",
       "HtmlSaveOptions"
     ]
   },
@@ -69,47 +76,67 @@
   },
   "rules_summary": {
     "strict_api_bans": [
-      "Do not invent content control APIs, XML mapping members, placeholder helpers, or locking members that are not part of Aspose.Words.",
-      "Do not modify a node as if it were a StructuredDocumentTag unless it actually is one.",
-      "Do not assume source DOCX, images, XML parts, or batch folders already exist; create local sample inputs when needed."
+      "Do not reference helper methods, properties, or overloads that are not part of the Aspose.Words SDK.",
+      "Do not treat a generic Node as a StructuredDocumentTag unless it was created as such."
     ],
     "canonical_patterns": [
-      "Create StructuredDocumentTag nodes directly with valid SdtType and MarkupLevel combinations.",
-      "Insert inline SDTs into valid paragraph/run contexts and block SDTs into valid block containers.",
-      "Use Newtonsoft.Json for JSON tasks and Aspose.Drawing instead of System.Drawing when drawing-related types are needed.",
-      "Create local custom XML parts before applying XML mappings."
+      "Create StructuredDocumentTag instances directly with the constructor (doc, SdtType, MarkupLevel) and add child runs, paragraphs, tables, or shapes as needed.",
+      "Use Aspose.Drawing for image generation and Newtonsoft.Json for JSON handling; avoid System.Drawing and undocumented JSON utilities."
     ],
     "nullable_warning_prevention": [
-      "Initialize all non-nullable reference type properties to avoid CS8618 warnings.",
-      "Avoid CS8600, CS8602, and CS8604 by guarding maybe-null values before dereference or assignment.",
-      "Declare nullable locals when a value may legitimately be null and check them before use."
+      "Initialize all non-nullable reference-type members (e.g., Title, Tag) when constructing a control.",
+      "Declare variables as nullable when a lookup may return null and guard them with explicit null checks before dereferencing."
     ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "Invented SDT builder helpers",
-      "symptom": "Code uses unsupported helpers such as StartStructuredDocumentTag or unsupported InsertStructuredDocumentTag overloads.",
-      "fix": "Create StructuredDocumentTag nodes directly and insert them into valid parent nodes."
+      "pattern": "Invented SDT helper methods",
+      "symptom": "Compilation fails because methods such as StartStructuredDocumentTag or InsertStructuredDocumentTag do not exist.",
+      "cause": "The code assumes convenience APIs that are not provided by Aspose.Words.",
+      "fix": "Instantiate StructuredDocumentTag directly and insert it with DocumentBuilder.InsertNode or Node.AppendChild.",
+      "prevention": "Consult the official API reference for StructuredDocumentTag constructors and insertion methods before writing helper wrappers."
     },
     {
-      "pattern": "Invalid SDT insertion location",
-      "symptom": "Runtime error such as 'Cannot insert a node of this type at this location'.",
-      "fix": "Use valid SdtType and MarkupLevel combinations and insert SDTs into supported block or inline containers."
+      "pattern": "Invalid insertion location",
+      "symptom": "Runtime error \"Cannot insert a node of this type at this location\" is thrown when adding a control.",
+      "cause": "The control's MarkupLevel does not match the target container (e.g., inserting an inline SDT into a HeaderFooter collection).",
+      "fix": "Select a parent node that matches the control's MarkupLevel: use Paragraph or Run for Inline, and Header/Footer or Body for Block.",
+      "prevention": "Validate the parent node type with Node.NodeType before calling InsertNode or AppendChild."
     },
     {
-      "pattern": "Wrong drawing or JSON library",
-      "symptom": "Examples use System.Drawing or unsupported JSON serialization assumptions.",
-      "fix": "Use Aspose.Drawing when needed and Newtonsoft.Json for JSON tasks."
+      "pattern": "Ambiguous type references",
+      "symptom": "Compiler reports ambiguous references between Aspose.Drawing.Font and Aspose.Words.Font, or between Color types.",
+      "cause": "Both Aspose.Drawing and Aspose.Words define types with identical names and the code does not qualify them.",
+      "fix": "Fully qualify the type (e.g., Aspose.Drawing.Font) or add an alias using directive.",
+      "prevention": "Prefer explicit namespace prefixes for types that exist in multiple Aspose assemblies."
     },
     {
-      "pattern": "Invented repeating-section members",
-      "symptom": "Code assumes convenience members such as SdtContent or unsupported repeating-section helpers.",
-      "fix": "Enumerate actual StructuredDocumentTag nodes and inspect their child nodes through the normal document tree."
+      "pattern": "Unsupported SdtType members",
+      "symptom": "CS0117 errors indicate that SdtType.DateTime or similar members are missing.",
+      "cause": "The version of Aspose.Words used does not expose dedicated date-time SDT types.",
+      "fix": "Use a plain-text StructuredDocumentTag and populate it with a formatted date string.",
+      "prevention": "Check the SDK release notes for available SdtType values and avoid hard-coding members that may be removed."
     },
     {
-      "pattern": "Nullable warnings",
-      "symptom": "CS8600, CS8602, or CS8604 around maybe-null nodes, paragraphs, or lookups.",
-      "fix": "Use nullable locals and guard maybe-null values before dereference or assignment."
+      "pattern": "Incorrect InsertOleObject overload",
+      "symptom": "CS1501 errors show that no InsertOleObject overload matches the supplied argument list.",
+      "cause": "The code passes a file path string where a Stream is required, and includes parameters that do not exist.",
+      "fix": "Open the OLE file as a FileStream and call InsertOleObject(stream, displayName, isIcon, iconStream) with the correct signatures.",
+      "prevention": "Reference the method signature in the Aspose.Words documentation and pass only the supported parameters."
+    },
+    {
+      "pattern": "Missing SaveFormat constants",
+      "symptom": "CS0117 errors occur because SaveFormat.Xml or SaveFormat.OpenXml are not defined.",
+      "cause": "The SDK provides SaveFormat.Docx, Html, Pdf, etc., but not an XML constant.",
+      "fix": "Save the document using SaveFormat.Docx or Html and, if raw XML is needed, use doc.Save(stream, SaveOptions.CreateSaveOptions(SaveFormat.OpenXml)).",
+      "prevention": "Use only the SaveFormat members listed in the official API reference."
+    },
+    {
+      "pattern": "Incorrect CustomXmlPart construction",
+      "symptom": "CS1503 errors indicate that a string is being passed where a CustomXmlPart instance is required.",
+      "cause": "The code attempts to assign raw XML text directly to a property expecting a CustomXmlPart object.",
+      "fix": "Create the part with doc.CustomXmlParts.Add(id, xmlString) and then use the returned CustomXmlPart for mapping.",
+      "prevention": "Always obtain a CustomXmlPart via the Add method before using it in XmlMapping.SetMapping."
     }
   ],
   "examples": [
@@ -132,8 +159,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 3,
@@ -166,8 +193,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 6,
@@ -188,8 +215,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 8,
@@ -265,13 +292,13 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 15,
       "file_name": "validate-that-required-content-controls-contain-non-empty-text-before-saving-the-document.cs",
-      "task": "Validate that required content controls contain non‑empty text before saving the document.",
+      "task": "Validate that required content controls contain non-empty text before saving the document.",
       "workflow": "native-sdt-api",
       "outputs": [
         "docx"
@@ -282,7 +309,7 @@
     {
       "id": 16,
       "file_name": "lock-a-content-control-to-prevent-user-editing-and-enforce-read-only-behavior-in-the-final.cs",
-      "task": "Lock a content control to prevent user editing and enforce read‑only behavior in the final document.",
+      "task": "Lock a content control to prevent user editing and enforce read-only behavior in the final document.",
       "workflow": "native-sdt-api",
       "outputs": [
         "docx"
@@ -397,8 +424,8 @@
       "outputs": [
         "xml"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 27,
@@ -448,7 +475,7 @@
     {
       "id": 31,
       "file_name": "convert-a-document-with-content-controls-to-html-while-maintaining-control-attributes-as-d.cs",
-      "task": "Convert a document with content controls to HTML while maintaining control attributes as data‑attributes.",
+      "task": "Convert a document with content controls to HTML while maintaining control attributes as data-attributes.",
       "workflow": "native-sdt-api",
       "outputs": [
         "html"
@@ -464,8 +491,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 33,
@@ -486,8 +513,8 @@
       "outputs": [
         "xml"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 35,
@@ -500,5 +527,17 @@
       "selected_engine": "llm",
       "winner": "llm"
     }
-  ]
+  ],
+  "narrative": {
+    "overview": "The Content Control category demonstrates how to manipulate Aspose.Words StructuredDocumentTag objects for a variety of scenarios, including plain-text, picture, date, OLE, hyperlink, repeating-section, dropdown, and custom XML-mapped controls. The verified examples show end-to-end implementations that create sample inputs, configure supported properties, and persist the results without relying on nonexistent APIs.",
+    "purpose": "Provide an AI coding assistant with clear guidance and reusable patterns for creating, configuring, and validating content controls in Word documents using only the official Aspose.Words API surface.",
+    "validation_priorities": [
+      "Verify that every StructuredDocumentTag uses a supported SdtType enum value.",
+      "Confirm that insertion points are compatible with the control's MarkupLevel (inline vs. block).",
+      "Ensure that any XML mapping references a valid CustomXmlPart and XPath expression."
+    ],
+    "maintenance_notes": [
+      "Review the Aspose.Words release notes quarterly and update example code whenever new SdtType values or insertion APIs are added or deprecated."
+    ]
+  }
 }
