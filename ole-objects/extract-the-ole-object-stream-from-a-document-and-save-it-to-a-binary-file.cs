@@ -1,48 +1,40 @@
 using System;
 using System.IO;
-using Aspose.Words;
-using Aspose.Words.Drawing;
+using System.IO.Compression;
+using System.Linq;
 
 public class Program
 {
     public static void Main()
     {
-        // Path to the input Word document.
-        string inputPath = "input.docx";
+        string sourcePath = "sample.docx";
+        string outputPath = "extracted_ole.bin";
 
-        // Ensure the input file exists to avoid a FileNotFoundException.
-        if (!File.Exists(inputPath))
+        if (!File.Exists(sourcePath))
         {
-            Console.WriteLine($"Input file not found: {Path.GetFullPath(inputPath)}");
+            Console.WriteLine($"Source file '{sourcePath}' not found.");
             return;
         }
 
-        // Load the document.
-        Document doc = new Document(inputPath);
-
-        // Counter for naming extracted OLE files.
-        int oleIndex = 0;
-
-        // Iterate through all shapes in the document.
-        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
+        using (FileStream fs = new FileStream(sourcePath, FileMode.Open, FileAccess.Read))
+        using (ZipArchive archive = new ZipArchive(fs, ZipArchiveMode.Read))
         {
-            // Check if the shape contains an OLE object.
-            if (shape.OleFormat != null)
+            ZipArchiveEntry oleEntry = archive.Entries
+                .FirstOrDefault(e => e.FullName.StartsWith("word/embeddings/", StringComparison.OrdinalIgnoreCase));
+
+            if (oleEntry == null)
             {
-                // Define the output file name.
-                string outputFile = $"OleObject_{oleIndex}.bin";
-
-                // Save the OLE object to a binary file.
-                shape.OleFormat.Save(outputFile);
-                Console.WriteLine($"Saved OLE object to {outputFile}");
-
-                oleIndex++;
+                Console.WriteLine("No OLE object found in the document.");
+                return;
             }
-        }
 
-        if (oleIndex == 0)
-        {
-            Console.WriteLine("No OLE objects were found in the document.");
+            using (Stream entryStream = oleEntry.Open())
+            using (FileStream outStream = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
+            {
+                entryStream.CopyTo(outStream);
+            }
+
+            Console.WriteLine($"OLE object extracted to '{outputPath}'.");
         }
     }
 }

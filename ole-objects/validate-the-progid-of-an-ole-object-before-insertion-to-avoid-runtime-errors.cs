@@ -5,27 +5,35 @@ public class Program
 {
     public static void Main()
     {
-        string[] progIds = { "Excel.Application", "Word.Application", "Invalid.ProgID" };
+        string[] progIds = { "Word.Application", "Excel.Application", "NonExistent.ProgID" };
 
         foreach (var progId in progIds)
         {
-            Type comType = Type.GetTypeFromProgID(progId);
-            if (comType == null)
-            {
-                Console.WriteLine($"ProgID '{progId}' is not registered.");
-                continue;
-            }
+            bool isValid = IsProgIdRegistered(progId);
+            Console.WriteLine($"{progId}: {(isValid ? "Valid" : "Invalid")}");
 
-            try
+            if (isValid)
             {
-                object comObject = Activator.CreateInstance(comType);
-                Console.WriteLine($"ProgID '{progId}' is valid and instance created.");
-                Marshal.ReleaseComObject(comObject);
+                // Simulate safe insertion of the OLE object
+                Console.WriteLine($"Simulating insertion of OLE object with ProgID '{progId}'.");
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"ProgID '{progId}' is registered but failed to instantiate: {ex.Message}");
-            }
+        }
+    }
+
+    private static bool IsProgIdRegistered(string progId)
+    {
+        try
+        {
+            Type comType = Type.GetTypeFromProgID(progId);
+            return comType != null;
+        }
+        catch (COMException)
+        {
+            return false;
+        }
+        catch (Exception)
+        {
+            return false;
         }
     }
 }

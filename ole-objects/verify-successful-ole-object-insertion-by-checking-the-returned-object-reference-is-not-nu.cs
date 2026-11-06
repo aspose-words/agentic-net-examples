@@ -3,38 +3,30 @@ using System.Runtime.InteropServices;
 
 public class Program
 {
+    [STAThread]
     public static void Main()
     {
-        object oleObject = null;
+        // Attempt to create a COM (OLE Automation) object
+        Type comType = Type.GetTypeFromProgID("WScript.Shell");
+        object comObject = null;
+
         try
         {
-            Type progId = Type.GetTypeFromProgID("WScript.Shell");
-            if (progId != null)
-            {
-                oleObject = Activator.CreateInstance(progId);
-            }
-        }
-        catch (COMException ex)
-        {
-            Console.WriteLine($"COMException: {ex.Message}");
+            comObject = Activator.CreateInstance(comType);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Exception: {ex.Message}");
+            Console.WriteLine($"Failed to create COM object: {ex.Message}");
         }
 
-        if (oleObject != null)
+        if (comObject != null)
         {
             Console.WriteLine("OLE object insertion successful: reference is not null.");
+            Marshal.ReleaseComObject(comObject);
         }
         else
         {
-            Console.WriteLine("Failed to insert OLE object: reference is null.");
-        }
-
-        if (oleObject != null && Marshal.IsComObject(oleObject))
-        {
-            Marshal.ReleaseComObject(oleObject);
+            Console.WriteLine("OLE object insertion failed: reference is null.");
         }
     }
 }

@@ -1,92 +1,58 @@
 using System;
 using System.IO;
 using System.IO.Compression;
-using System.Xml.Linq;
-using System.Collections.Generic;
-using System.Linq;
 
-public class Program
+public class OleObjectExporter
 {
-    public static void Main()
+    public static void Main(string[] args)
     {
-        // Path to the .docx file (adjust as needed)
-        string docxPath = "sample.docx";
-
-        if (!File.Exists(docxPath))
+        // Expect the first argument to be the path to a .docx (or .xlsx) file.
+        if (args.Length == 0)
         {
-            // No input file; nothing to do.
+            // No input file provided; nothing to do.
             return;
         }
 
-        // Output directory
-        string outputDir = Path.Combine(Path.GetDirectoryName(docxPath) ?? "", "ExportedOleObjects");
-        Directory.CreateDirectory(outputDir);
+        string documentPath = args[0];
 
-        // Mapping of ProgID to file extension
-        var progIdToExt = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        if (!File.Exists(documentPath))
         {
-            { "Excel.Sheet.8", ".xls" },
-            { "Excel.Sheet.12", ".xlsx" },
-            { "Word.Document.8", ".doc" },
-            { "Word.Document.12", ".docx" },
-            { "PowerPoint.Show.8", ".ppt" },
-            { "PowerPoint.Show.12", ".pptx" },
-            { "Package", ".bin" } // generic package
-        };
+            // Input file does not exist; exit silently.
+            return;
+        }
 
-        // Load document.xml to extract ProgIDs
-        List<string> progIds = new List<string>();
-        using (var zip = ZipFile.OpenRead(docxPath))
+        // Create an output directory next to the source file.
+        string outputDirectory = Path.Combine(Path.GetDirectoryName(documentPath) ?? "", "ExtractedOleObjects");
+        Directory.CreateDirectory(outputDirectory);
+
+        // Open the Office Open XML package (ZIP archive) and extract OLE object parts.
+        using (ZipArchive archive = ZipFile.OpenRead(documentPath))
         {
-            var docEntry = zip.GetEntry("word/document.xml");
-            if (docEntry != null)
+            foreach (ZipArchiveEntry entry in archive.Entries)
             {
-                using (var stream = docEntry.Open())
+                // OLE objects are typically stored under the "embeddings" folder.
+                // For Word documents: "word/embeddings/", for Excel: "xl/embeddings/", etc.
+                if (IsOleObjectEntry(entry.FullName))
                 {
-                    XDocument doc = XDocument.Load(stream);
-                    XNamespace oNs = "urn:schemas-microsoft-com:office:office";
-                    foreach (var oleObj in doc.Descendants(oNs + "OLEObject"))
-                    {
-                        var progIdAttr = oleObj.Attribute("ProgID");
-                        if (progIdAttr != null)
-                        {
-                            progIds.Add(progIdAttr.Value);
-                        }
-                        else
-                        {
-                            progIds.Add(string.Empty);
-                        }
-                    }
-                }
-            }
+                    string fileName = Path.GetFileName(entry.FullName);
+                    if (string.IsNullOrEmpty(fileName))
+                        continue;
 
-            // Get all embedding entries (usually .bin files)
-            var embeddingEntries = zip.Entries
-                .Where(e => e.FullName.StartsWith("word/embeddings/", StringComparison.OrdinalIgnoreCase) && e.Name.EndsWith(".bin", StringComparison.OrdinalIgnoreCase))
-                .OrderBy(e => e.Name)
-                .ToList();
-
-            int count = Math.Min(embeddingEntries.Count, progIds.Count);
-            for (int i = 0; i < embeddingEntries.Count; i++)
-            {
-                var entry = embeddingEntries[i];
-                string progId = i < progIds.Count ? progIds[i] : string.Empty;
-                string ext = ".bin";
-
-                if (!string.IsNullOrEmpty(progId) && progIdToExt.TryGetValue(progId, out string mappedExt))
-                {
-                    ext = mappedExt;
-                }
-
-                string outputFileName = $"OleObject{i + 1}{ext}";
-                string outputPath = Path.Combine(outputDir, outputFileName);
-
-                using (var entryStream = entry.Open())
-                using (var outStream = File.Create(outputPath))
-                {
-                    entryStream.CopyTo(outStream);
+                    string destinationPath = Path.Combine(outputDirectory, fileName);
+                    entry.ExtractToFile(destinationPath, overwrite: true);
                 }
             }
         }
+    }
+
+    private static bool IsOleObjectEntry(string entryPath)
+    {
+        // Normalize to forward slashes for consistency.
+        string normalized = entryPath.Replace('\\', '/').ToLowerInvariant();
+
+        // Check common embedding folders.
+        return normalized.StartsWith("word/embeddings/") ||
+               normalized.StartsWith("xl/embeddings/") ||
+               normalized.StartsWith("ppt/embeddings/");
     }
 }

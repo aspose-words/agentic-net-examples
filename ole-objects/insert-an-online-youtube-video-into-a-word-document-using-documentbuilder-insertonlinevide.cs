@@ -5,18 +5,17 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document.
+        // Create a new empty document.
         Document doc = new Document();
+
+        // Initialize DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert an online YouTube video.
-        // The InsertOnlineVideo method requires the video URL and the desired width and height.
-        string videoUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
-        double width = 400;   // Width of the video placeholder in points.
-        double height = 300;  // Height of the video placeholder in points.
-        builder.InsertOnlineVideo(videoUrl, width, height);
+        // Parameters: video URL, width (points), height (points).
+        builder.InsertOnlineVideo("https://www.youtube.com/watch?v=dQw4w9WgXcQ", 400, 300);
 
-        // Save the document.
+        // Save the document to disk.
         doc.Save("OnlineVideo.docx");
     }
 }
