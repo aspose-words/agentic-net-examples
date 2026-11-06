@@ -10,37 +10,44 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table.
+        // Start a table with two columns.
         builder.StartTable();
+
+        // Insert first cell.
         builder.InsertCell();
-        builder.Writeln("Cell 1");
+        builder.Write("Cell 1");
+
+        // Insert second cell.
         builder.InsertCell();
-        builder.Writeln("Cell 2");
+        builder.Write("Cell 2");
+
+        // End the row.
         builder.EndRow();
-        builder.InsertCell();
-        builder.Writeln("Cell 3");
-        builder.InsertCell();
-        builder.Writeln("Cell 4");
-        builder.EndTable();
 
-        // Get the table.
-        Table table = doc.FirstSection.Body.Tables[0];
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // Merge the two cells in the first row horizontally.
+        // Merge the two cells horizontally.
         Cell firstCell = table.Rows[0].Cells[0];
         Cell secondCell = table.Rows[0].Cells[1];
         firstCell.CellFormat.HorizontalMerge = CellMerge.First;
         secondCell.CellFormat.HorizontalMerge = CellMerge.Previous;
 
-        // Split the merged cell back into two separate cells.
+        // ---- Split the merged cell back into two separate cells ----
+        // Aspose.Words does not provide a SplitCell method in older versions.
+        // To "split" the merged cells, simply reset the merge flags.
         firstCell.CellFormat.HorizontalMerge = CellMerge.None;
         secondCell.CellFormat.HorizontalMerge = CellMerge.None;
 
-        // Save the document.
-        string outputPath = "SplitCellExample.docx";
-        doc.Save(outputPath);
+        // Write distinct text into each cell after splitting.
+        firstCell.FirstParagraph.Runs.Clear();
+        firstCell.FirstParagraph.AppendChild(new Run(doc, "Split Cell A"));
 
-        // Verify that the file can be reloaded.
-        Document loadedDoc = new Document(outputPath);
+        secondCell.FirstParagraph.Runs.Clear();
+        secondCell.FirstParagraph.AppendChild(new Run(doc, "Split Cell B"));
+
+        // Save the document.
+        string outputPath = "SplitCell.docx";
+        doc.Save(outputPath);
     }
 }

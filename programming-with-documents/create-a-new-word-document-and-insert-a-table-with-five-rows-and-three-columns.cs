@@ -6,30 +6,27 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
+
+        // Initialize DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
-        builder.StartTable();
+        // Start a new table.
+        Table table = builder.StartTable();
 
         // Insert 5 rows and 3 columns.
         for (int row = 0; row < 5; row++)
         {
             for (int col = 0; col < 3; col++)
             {
-                // Insert a new cell.
+                // Insert a cell with sample text.
                 builder.InsertCell();
-
-                // Add some sample text to the cell.
                 builder.Writeln($"Row {row + 1}, Col {col + 1}");
-
-                // End the row after the last column.
-                if (col == 2)
-                {
-                    builder.EndRow();
-                }
             }
+
+            // End the current row and start a new one.
+            builder.EndRow();
         }
 
         // End the table.

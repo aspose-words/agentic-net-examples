@@ -8,56 +8,52 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the source and output documents.
-        string sourcePath = "Sample.docx";
-        string outputPath = "Modified.docx";
-
-        // -----------------------------------------------------------------
-        // Create a sample DOCX file with a simple table if it does not exist.
-        // -----------------------------------------------------------------
-        if (!File.Exists(sourcePath))
-        {
-            Document sampleDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-
-            builder.Writeln("Sample document with a table:");
-            builder.StartTable();
-            builder.InsertCell();
-            builder.Writeln("Cell 1");
-            builder.InsertCell();
-            builder.Writeln("Cell 2");
-            builder.EndRow();
-            builder.EndTable();
-
-            sampleDoc.Save(sourcePath);
-        }
+        // Define file paths in the current directory.
+        string sourcePath = Path.Combine(Directory.GetCurrentDirectory(), "source.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
 
         // -------------------------------------------------
-        // Load the existing document.
+        // Step 1: Create a sample DOCX file containing a table.
         // -------------------------------------------------
-        Document doc = new Document(sourcePath);
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert a simple 2x2 table.
+        Table table = builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Cell 1");
+        builder.InsertCell();
+        builder.Write("Cell 2");
+        builder.EndRow();
+        builder.InsertCell();
+        builder.Write("Cell 3");
+        builder.InsertCell();
+        builder.Write("Cell 4");
+        builder.EndTable();
+
+        // Save the source document.
+        doc.Save(sourcePath);
 
         // -------------------------------------------------
+        // Step 2: Load the existing DOCX file.
+        // -------------------------------------------------
+        Document loadedDoc = new Document(sourcePath);
+
         // Locate the first table in the document.
-        // -------------------------------------------------
-        Table firstTable = null;
-        if (doc.FirstSection?.Body?.Tables?.Count > 0)
-        {
-            firstTable = doc.FirstSection.Body.Tables[0];
-        }
-
-        // -------------------------------------------------
-        // Change the border thickness of the table (2 points).
-        // -------------------------------------------------
+        Table firstTable = loadedDoc.GetChild(NodeType.Table, 0, true) as Table;
         if (firstTable != null)
         {
-            // Apply a single line style with a thickness of 2 points and black color to all borders.
-            firstTable.SetBorders(LineStyle.Single, 2.0, Color.Black);
+            // Change each border to a single line with a thickness of 2 points.
+            // The last parameter (isOverrideCellBorders) is set to true to apply the border to the whole table.
+            firstTable.SetBorder(BorderType.Left,   LineStyle.Single, 2.0, Color.Black, true);
+            firstTable.SetBorder(BorderType.Right,  LineStyle.Single, 2.0, Color.Black, true);
+            firstTable.SetBorder(BorderType.Top,    LineStyle.Single, 2.0, Color.Black, true);
+            firstTable.SetBorder(BorderType.Bottom, LineStyle.Single, 2.0, Color.Black, true);
         }
 
         // -------------------------------------------------
-        // Save the modified document.
+        // Step 3: Save the modified document.
         // -------------------------------------------------
-        doc.Save(outputPath);
+        loadedDoc.Save(outputPath);
     }
 }

@@ -1,7 +1,6 @@
 using System;
-using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
+using Aspose.Words.BuildingBlocks;
 
 public class Program
 {
@@ -9,34 +8,26 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Set the document title property that will be displayed in the footer.
-        doc.BuiltInDocumentProperties.Title = "My Document Title";
-
-        // Enable different even and odd page footers.
-        // In Aspose.Words the property is OddAndEvenPagesHeaderFooter.
-        doc.Sections[0].PageSetup.OddAndEvenPagesHeaderFooter = true;
-
-        // Use DocumentBuilder to edit the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Move the builder cursor to the even-page footer.
+        // Set the document title property.
+        doc.BuiltInDocumentProperties.Title = "Sample Document Title";
+
+        // Enable different odd and even page footers.
+        // Note: In some older Aspose.Words versions the property may not be available.
+        // If the property exists, uncomment the following line:
+        // builder.PageSetup.DifferentOddAndEvenPages = true;
+
+        // Move to the even page footer.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterEven);
 
-        // Align the paragraph to the left.
+        // Align the paragraph to the left (default, but set explicitly).
         builder.ParagraphFormat.Alignment = ParagraphAlignment.Left;
 
         // Insert a field that displays the document title.
         builder.InsertField("DOCPROPERTY Title \\* MERGEFORMAT");
 
-        // Save the document to disk.
-        string outputPath = "EvenFooter.docx";
-        doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (File.Exists(outputPath))
-        {
-            Console.WriteLine($"Document saved successfully to '{outputPath}'.");
-        }
+        // Save the document.
+        doc.Save("EvenPageFooter.docx");
     }
 }

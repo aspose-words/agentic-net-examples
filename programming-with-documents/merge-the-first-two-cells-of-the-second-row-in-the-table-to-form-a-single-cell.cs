@@ -6,46 +6,43 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
+        // Build a table with two rows and two columns.
         builder.StartTable();
 
-        // First row (header) with three cells.
+        // First row.
         builder.InsertCell();
-        builder.Writeln("Header 1");
+        builder.Write("R1C1");
         builder.InsertCell();
-        builder.Writeln("Header 2");
-        builder.InsertCell();
-        builder.Writeln("Header 3");
+        builder.Write("R1C2");
         builder.EndRow();
 
-        // Second row with three cells – we will merge the first two cells.
+        // Second row.
         builder.InsertCell();
-        builder.Writeln("Cell 1");
+        builder.Write("R2C1");
         builder.InsertCell();
-        builder.Writeln("Cell 2");
-        builder.InsertCell();
-        builder.Writeln("Cell 3");
+        builder.Write("R2C2");
         builder.EndRow();
 
         // End the table.
         builder.EndTable();
 
-        // Retrieve the table we just created (first table in the document).
+        // Retrieve the first table in the document.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // Get the second row (index 1) and merge its first two cells.
-        Row secondRow = table.Rows[1];
-        // Set the first cell to start a horizontal merge.
-        secondRow.Cells[0].CellFormat.HorizontalMerge = CellMerge.First;
-        // Set the second cell to continue the merge.
-        secondRow.Cells[1].CellFormat.HorizontalMerge = CellMerge.Previous;
+        // Merge the first two cells of the second row.
+        Cell firstCell = table.Rows[1].Cells[0];
+        Cell secondCell = table.Rows[1].Cells[1];
+
+        // Set horizontal merge flags.
+        firstCell.CellFormat.HorizontalMerge = CellMerge.First;
+        secondCell.CellFormat.HorizontalMerge = CellMerge.Previous;
 
         // Save the document.
-        string outputPath = "MergedTable.docx";
-        doc.Save(outputPath);
+        string outputFile = "MergedTable.docx";
+        doc.Save(outputFile);
     }
 }

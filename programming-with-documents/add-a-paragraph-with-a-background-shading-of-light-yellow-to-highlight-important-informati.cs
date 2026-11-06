@@ -1,6 +1,5 @@
 using System;
 using System.Drawing;
-using System.IO;
 using Aspose.Words;
 
 public class Program
@@ -10,26 +9,21 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to add content.
+        // Initialize DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set paragraph shading to light yellow.
-        builder.ParagraphFormat.Shading.BackgroundPatternColor = Color.LightYellow;
+        // Write the paragraph that will be highlighted.
+        builder.Writeln("Important information that needs to be highlighted.");
 
-        // Add the highlighted paragraph.
-        builder.Writeln("Important information highlighted with light yellow background.");
+        // Apply light yellow background shading to the newly added paragraph.
+        Paragraph paragraph = builder.CurrentParagraph;
+        paragraph.ParagraphFormat.Shading.BackgroundPatternColor = Color.LightYellow;
 
-        // Define output path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "HighlightedParagraph.docx");
-
-        // Save the document.
+        // Save the document to disk.
+        string outputPath = "HighlightedParagraph.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
-        if (File.Exists(outputPath))
-        {
-            // Optionally reopen to ensure it loads without error.
-            Document loadedDoc = new Document(outputPath);
-        }
+        // Optional: confirm the file was created (no interactive output required).
+        Console.WriteLine($"Document saved to {outputPath}");
     }
 }

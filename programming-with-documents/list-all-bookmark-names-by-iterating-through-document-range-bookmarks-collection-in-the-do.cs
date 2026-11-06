@@ -5,27 +5,23 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add first bookmark.
+        // Insert sample bookmarks into the document.
         builder.StartBookmark("FirstBookmark");
-        builder.Writeln("This is the first bookmarked paragraph.");
+        builder.Writeln("Hello");
         builder.EndBookmark("FirstBookmark");
 
-        // Add second bookmark.
         builder.StartBookmark("SecondBookmark");
-        builder.Writeln("This is the second bookmarked paragraph.");
+        builder.Writeln("World");
         builder.EndBookmark("SecondBookmark");
 
-        // List all bookmark names.
+        // Iterate through all bookmarks and output their names.
         foreach (Bookmark bookmark in doc.Range.Bookmarks)
         {
-            Console.WriteLine($"Bookmark name: {bookmark.Name}");
+            Console.WriteLine(bookmark.Name);
         }
-
-        // Save the document (optional, demonstrates lifecycle).
-        doc.Save("BookmarksDocument.docx");
     }
 }

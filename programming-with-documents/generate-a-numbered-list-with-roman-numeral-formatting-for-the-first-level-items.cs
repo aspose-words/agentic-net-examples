@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
@@ -9,16 +8,19 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a numbered list based on the default template.
+        // Create a new list based on the default numbered list template.
         List list = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // Set the first level to use uppercase Roman numerals.
-        ListLevel level0 = list.ListLevels[0];
-        level0.NumberStyle = NumberStyle.UppercaseRoman;
+        // Configure the first level of the list to use upper‑case Roman numerals.
+        ListLevel level = list.ListLevels[0];
+        level.NumberStyle = NumberStyle.UppercaseRoman;   // Correct enum value for Roman numerals
+        level.NumberFormat = "%1.";                       // Append a period after the number
+        level.Alignment = ListLevelAlignment.Left;        // Align left using ListLevelAlignment
+        level.StartAt = 1;                                // Start numbering at I
 
-        // Use DocumentBuilder to insert list items.
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Apply the list to the builder.
         builder.ListFormat.List = list;
 
         // Add first‑level items.
@@ -29,12 +31,8 @@ public class Program
         // End the list formatting.
         builder.ListFormat.RemoveNumbers();
 
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Save the document.
-        string outputPath = Path.Combine(outputDir, "RomanNumberedList.docx");
+        // Save the document to the output file.
+        string outputPath = "RomanNumberedList.docx";
         doc.Save(outputPath);
     }
 }

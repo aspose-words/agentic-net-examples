@@ -1,68 +1,72 @@
 using System;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
+using Aspose.Words.Drawing;
 
-public class Program
+namespace ConditionalFormattingExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new document and a DocumentBuilder.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Define table dimensions.
-        int rows = 5;
-        int columns = 5;
-        int threshold = 50;
-
-        // Insert a table.
-        Table table = builder.StartTable();
-
-        // Populate the table with numeric values.
-        Random rnd = new Random();
-        for (int i = 0; i < rows; i++)
+        public static void Main()
         {
-            for (int j = 0; j < columns; j++)
+            // Define output file path.
+            string outputPath = "ConditionalFormatting.docx";
+
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Insert a table with 5 rows and 3 columns.
+            Table table = builder.StartTable();
+
+            // Header row.
+            for (int col = 0; col < 3; col++)
             {
-                // Insert a cell with a random integer between 1 and 100.
                 builder.InsertCell();
-                int value = rnd.Next(1, 101);
-                builder.Writeln(value.ToString());
+                builder.Writeln($"Header {col + 1}");
+                builder.CellFormat.Shading.BackgroundPatternColor = System.Drawing.Color.LightGray;
             }
-            // End the current row.
             builder.EndRow();
-        }
 
-        // End the table.
-        builder.EndTable();
-
-        // Apply conditional formatting: highlight cells with values above the threshold.
-        foreach (Row row in table.Rows)
-        {
-            foreach (Cell cell in row.Cells)
+            // Data rows with numeric values.
+            Random rnd = new Random();
+            for (int row = 0; row < 5; row++)
             {
-                // Try to parse the cell text to an integer.
-                if (int.TryParse(cell.GetText().Trim('\r', '\a'), out int cellValue))
+                for (int col = 0; col < 3; col++)
                 {
-                    if (cellValue > threshold)
+                    builder.InsertCell();
+                    // Generate a random integer between 10 and 100.
+                    int value = rnd.Next(10, 101);
+                    builder.Writeln(value.ToString());
+                }
+                builder.EndRow();
+            }
+
+            builder.EndTable();
+
+            // Define the threshold for highlighting.
+            double threshold = 50.0;
+
+            // Apply conditional formatting: highlight cells with values above the threshold.
+            foreach (Row row in table.Rows)
+            {
+                // Skip header row (optional, based on content).
+                foreach (Cell cell in row.Cells)
+                {
+                    // Try to parse the cell text as a double.
+                    if (double.TryParse(cell.GetText().Trim('\a', '\r', '\n'), out double numericValue))
                     {
-                        // Set background shading to yellow.
-                        cell.CellFormat.Shading.BackgroundPatternColor = Color.Yellow;
+                        if (numericValue > threshold)
+                        {
+                            // Apply a light yellow background to highlight the cell.
+                            cell.CellFormat.Shading.BackgroundPatternColor = System.Drawing.Color.LightYellow;
+                        }
                     }
                 }
             }
-        }
 
-        // Save the document.
-        string outputPath = "ConditionalFormatting.docx";
-        doc.Save(outputPath);
-
-        // Verify that the file was saved successfully.
-        if (System.IO.File.Exists(outputPath))
-        {
-            // Optionally, reopen the document to ensure it loads without error.
-            Document loadedDoc = new Document(outputPath);
+            // Save the document to disk.
+            doc.Save(outputPath);
         }
     }
 }

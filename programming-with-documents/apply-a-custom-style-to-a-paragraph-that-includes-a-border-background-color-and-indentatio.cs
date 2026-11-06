@@ -13,30 +13,28 @@ public class Program
 
         // Add a custom paragraph style.
         Style customStyle = doc.Styles.Add(StyleType.Paragraph, "MyCustomStyle");
-        // Set font properties (optional).
-        customStyle.Font.Name = "Arial";
-        customStyle.Font.Size = 12;
-        // Configure paragraph formatting: border, background color, indentation.
-        ParagraphFormat fmt = customStyle.ParagraphFormat;
 
-        // Border settings.
-        fmt.Borders.LineStyle = LineStyle.Single;
-        fmt.Borders.Color = Color.DarkBlue;
-        fmt.Borders.LineWidth = 2.0; // points
+        // Set border for the style (single line, black, 1 point).
+        foreach (Border border in customStyle.ParagraphFormat.Borders)
+        {
+            border.LineStyle = LineStyle.Single;
+            border.Color = Color.Black;
+            border.LineWidth = 1.0;
+        }
 
-        // Background shading.
-        fmt.Shading.BackgroundPatternColor = Color.LightYellow;
+        // Set background color for the style.
+        customStyle.ParagraphFormat.Shading.BackgroundPatternColor = Color.LightYellow;
 
-        // Indentation settings.
-        fmt.LeftIndent = 20.0;          // points
-        fmt.FirstLineIndent = 15.0;    // points
+        // Set indentation (left indent 20 points, first line indent 10 points).
+        customStyle.ParagraphFormat.LeftIndent = 20.0;
+        customStyle.ParagraphFormat.FirstLineIndent = 10.0;
 
         // Apply the custom style to a new paragraph.
         builder.ParagraphFormat.Style = customStyle;
-        builder.Writeln("This paragraph uses a custom style with a border, background color, and indentation.");
+        builder.Writeln("This paragraph uses a custom style with border, background color, and indentation.");
 
         // Save the document.
-        string outputPath = "CustomStyleParagraph.docx";
+        string outputPath = "CustomStyle.docx";
         doc.Save(outputPath);
     }
 }

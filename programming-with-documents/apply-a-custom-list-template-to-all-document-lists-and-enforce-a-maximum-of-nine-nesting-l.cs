@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
@@ -11,72 +12,58 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a title.
-        builder.Writeln("Sample Document with Lists");
-        builder.Writeln();
-
-        // Create a list with 10 items, but enforce a maximum of nine nesting levels.
+        // Build a list with more than nine nesting levels.
+        builder.Writeln("Start of document");
         builder.ListFormat.ApplyNumberDefault();
-        for (int level = 0; level < 10; level++)
+        for (int i = 1; i <= 12; i++)
         {
-            builder.Writeln($"Level {level + 1}");
-            // Indent only while we are below the ninth nesting level (index 8).
-            if (level < 8)
+            builder.Writeln($"Level {i}");
+            if (i < 12)
                 builder.ListFormat.ListIndent();
         }
-
-        // Reset list formatting.
+        // Close the list.
         builder.ListFormat.RemoveNumbers();
 
-        // --------------------------------------------------------------------
-        // Create a custom list template (Arabic numbers with a period) and
-        // customize its first nine levels.
-        // --------------------------------------------------------------------
-        List customList = doc.Lists.Add(ListTemplate.NumberArabicDot);
-        for (int i = 0; i < 9; i++)
+        // Apply a custom list template to all lists in the document.
+        foreach (List list in doc.Lists)
         {
-            ListLevel level = customList.ListLevels[i];
+            // Define a simple custom bullet for the first level.
+            ListLevel level = list.ListLevels[0];
+            // Set bullet style via NumberFormat; omit NumberStyle to avoid missing enum.
             level.Font.Name = "Arial";
             level.Font.Size = 10;
-            level.NumberStyle = NumberStyle.Arabic;
-            level.NumberFormat = $"{i + 1}.";
-            level.Alignment = ListLevelAlignment.Left;
-            level.NumberPosition = 0;
-            level.TextPosition = 20;
-            level.TabPosition = 20;
+            level.Font.Color = Color.Blue;
+            level.NumberFormat = "•";
+
+            // Ensure remaining levels inherit the same style.
+            for (int lvl = 1; lvl < list.ListLevels.Count; lvl++)
+            {
+                ListLevel src = list.ListLevels[0];
+                ListLevel dst = list.ListLevels[lvl];
+                dst.Font.Name = src.Font.Name;
+                dst.Font.Size = src.Font.Size;
+                dst.Font.Color = src.Font.Color;
+                dst.NumberFormat = src.NumberFormat;
+            }
         }
 
-        // --------------------------------------------------------------------
-        // Apply the custom list template to all existing lists in the document.
-        // --------------------------------------------------------------------
-        foreach (List existingList in doc.Lists)
+        // Enforce a maximum of nine nesting levels.
+        foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
         {
-            // Copy the first nine ListLevel definitions from the custom list.
-            int levelsToCopy = Math.Min(9, Math.Min(customList.ListLevels.Count, existingList.ListLevels.Count));
-            for (int i = 0; i < levelsToCopy; i++)
+            if (para.IsListItem && para.ListFormat.ListLevelNumber > 9)
             {
-                ListLevel source = customList.ListLevels[i];
-                ListLevel target = existingList.ListLevels[i];
-
-                target.Font.Name = source.Font.Name;
-                target.Font.Size = source.Font.Size;
-                target.NumberStyle = source.NumberStyle;
-                target.NumberFormat = source.NumberFormat;
-                target.Alignment = source.Alignment;
-                target.NumberPosition = source.NumberPosition;
-                target.TextPosition = source.TextPosition;
-                target.TabPosition = source.TabPosition;
+                para.ListFormat.ListLevelNumber = 9;
             }
         }
 
         // Save the document.
-        string outputPath = "Output.docx";
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.docx");
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify the file was saved.
         if (File.Exists(outputPath))
         {
-            Console.WriteLine($"Document saved successfully to '{Path.GetFullPath(outputPath)}'.");
+            Console.WriteLine($"Document saved successfully to '{outputPath}'.");
         }
         else
         {

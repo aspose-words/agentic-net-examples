@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Fields;
+using Aspose.Words.Tables;
 
 public class Program
 {
@@ -11,46 +11,39 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a title using the built‑in Title style.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Title;
-        builder.Writeln("Document Title");
+        // Insert a Table of Contents that includes only "Heading 1" and a custom style "MyCustomStyle".
+        // \t switch takes a comma‑separated list of style names.
+        builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\t \"Heading 1,MyCustomStyle\"");
 
-        // Add headings with different built‑in heading styles.
+        // Add a page break after the TOC so headings start on a new page.
+        builder.InsertBreak(BreakType.PageBreak);
+
+        // Add a Heading 1 paragraph (will appear in the TOC).
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 1 – Heading 1");
+        builder.Writeln("Chapter 1: Introduction");
 
+        // Add a Heading 2 paragraph (will NOT appear because it's not listed in \t).
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Section 1.1 – Heading 2");
+        builder.Writeln("Section 1.1: Background");
 
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading3;
-        builder.Writeln("Subsection 1.1.1 – Heading 3");
+        // Define a custom paragraph style named "MyCustomStyle".
+        Style customStyle = doc.Styles.Add(StyleType.Paragraph, "MyCustomStyle");
+        customStyle.Font.Size = 16;
+        customStyle.Font.Bold = true;
 
-        // Add a normal paragraph (not a heading).
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Regular paragraph, not a heading.");
+        // Add a paragraph using the custom style (will appear in the TOC).
+        builder.ParagraphFormat.Style = customStyle;
+        builder.Writeln("Custom Chapter: Special Topic");
 
-        // Insert a Table of Contents that includes only Heading 1 and Heading 3.
-        // Use the \\t switch with a comma‑separated list of style names.
-        // The InsertField overload that takes a field code string is used to avoid overload ambiguity.
-        builder.InsertField("TOC \\o \"1-3\" \\h \\z \\t \"Heading 1,Heading 3\"");
-
-        // Update fields so the TOC is generated.
-        doc.UpdateFields();
-
-        // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TOC_Styles.docx");
-
-        // Save the document.
+        // Save the document to disk.
+        string outputPath = "TOC_Styles.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify that the file was saved and can be reopened.
         if (File.Exists(outputPath))
         {
-            Console.WriteLine($"Document saved successfully to: {outputPath}");
-        }
-        else
-        {
-            Console.WriteLine("Failed to save the document.");
+            Document loaded = new Document(outputPath);
+            // No further action needed; just confirming successful load.
         }
     }
 }

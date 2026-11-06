@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
 public class Program
@@ -9,33 +8,21 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize DocumentBuilder for the document.
+        // Use DocumentBuilder to add content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Apply the built‑in "Heading 2" style to the paragraph.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+        // Insert a paragraph with some text.
+        builder.Writeln("This is a Heading 2 paragraph.");
 
-        // Adjust spacing before and after the paragraph (in points).
-        builder.ParagraphFormat.SpaceBefore = 12f; // 12 points before
-        builder.ParagraphFormat.SpaceAfter = 12f;  // 12 points after
+        // Apply the built‑in "Heading 2" style to the current paragraph.
+        builder.CurrentParagraph.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
 
-        // Write a sample paragraph that will use the above formatting.
-        builder.Writeln("This paragraph uses the built‑in Heading 2 style with custom spacing.");
-
-        // Define output file path.
-        string outputPath = "Result.docx";
+        // Adjust spacing before and after the paragraph (points).
+        builder.CurrentParagraph.ParagraphFormat.SpaceBefore = 12; // 12 points before
+        builder.CurrentParagraph.ParagraphFormat.SpaceAfter = 6;   // 6 points after
 
         // Save the document to disk.
+        string outputPath = "Output.docx";
         doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (File.Exists(outputPath))
-        {
-            Console.WriteLine($"Document saved successfully to '{Path.GetFullPath(outputPath)}'.");
-        }
-        else
-        {
-            Console.WriteLine("Failed to save the document.");
-        }
     }
 }

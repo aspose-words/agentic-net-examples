@@ -7,21 +7,23 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Use DocumentBuilder to edit the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Move the builder to the primary footer of the first section.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
 
-        // Insert the "Page X of Y" text using fields with switches.
-        // PAGE field with MERGEFORMAT switch.
-        builder.InsertField("PAGE  \\* MERGEFORMAT", "1");
-        // Static separator text.
+        // Insert the "Page X of Y" field.
+        // Current page number.
+        builder.InsertField("PAGE \\* MERGEFORMAT", "1");
+        // Static text separator.
         builder.Write(" of ");
-        // NUMPAGES field with MERGEFORMAT switch.
-        builder.InsertField("NUMPAGES  \\* MERGEFORMAT", "1");
+        // Total number of pages.
+        builder.InsertField("NUMPAGES \\* MERGEFORMAT", "1");
 
         // Save the document to a file.
-        const string outputPath = "Output.docx";
+        string outputPath = "Output.docx";
         doc.Save(outputPath);
     }
 }

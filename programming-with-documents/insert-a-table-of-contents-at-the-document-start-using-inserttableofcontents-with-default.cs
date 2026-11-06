@@ -9,30 +9,32 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a Table of Contents at the beginning using default switches.
-        // Default switches: include heading levels 1‑3, hyperlink entries, hide page numbers in web view, and use outline levels.
+        // Insert a Table of Contents at the beginning with default switches.
         builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
 
-        // Add headings that will be captured by the TOC.
-        builder.MoveToDocumentEnd();
+        // Add a line break after the TOC placeholder.
+        builder.Writeln();
 
+        // Add sample headings to populate the TOC.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Writeln("Chapter 1");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
         builder.Writeln("Content of chapter 1.");
 
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
         builder.Writeln("Section 1.1");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
         builder.Writeln("Details of section 1.1.");
 
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Writeln("Chapter 2");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
         builder.Writeln("Content of chapter 2.");
 
-        // Update all fields (including the TOC) before saving.
+        // Update fields (including the TOC) to reflect the added headings.
         doc.UpdateFields();
 
-        // Save the document.
-        const string outputPath = "Output.docx";
-        doc.Save(outputPath);
+        // Save the document to a file.
+        doc.Save("Output.docx");
     }
 }
