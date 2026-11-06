@@ -7,60 +7,46 @@ public class Program
 {
     public static void Main()
     {
-        // Create a temporary working folder.
-        string workFolder = Path.Combine(Path.GetTempPath(), "AsposeJoinExample");
-        Directory.CreateDirectory(workFolder);
+        // Paths for temporary files
+        string destPath = "dest.docx";
+        string sourcePath = "source.docx";
+        string outputPdfPath = "output.pdf";
 
-        // Paths for the documents.
-        string destPath = Path.Combine(workFolder, "Destination.docx");
-        string srcPath = Path.Combine(workFolder, "Source.docx");
-        string pdfPath = Path.Combine(workFolder, "Result.pdf");
-
-        // -----------------------------------------------------------------
-        // Create the destination DOCX and protect it with read‑only restriction.
-        // -----------------------------------------------------------------
+        // Create destination document with sample content
         Document destDoc = new Document();
         DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
-        destBuilder.Writeln("This is the original content of the destination document.");
+        destBuilder.Writeln("This is the destination document.");
         destDoc.Save(destPath, SaveFormat.Docx);
 
-        // Apply read‑only protection with a password.
-        const string protectionPassword = "myPassword";
-        destDoc.Protect(ProtectionType.ReadOnly, protectionPassword);
-        destDoc.Save(destPath, SaveFormat.Docx);
+        // Protect the destination document with read‑only restriction
+        destDoc.Protect(ProtectionType.ReadOnly, "pwd");
 
-        // -----------------------------------------------------------------
-        // Create the source DOCX that will be appended.
-        // -----------------------------------------------------------------
-        Document srcDoc = new Document();
-        DocumentBuilder srcBuilder = new DocumentBuilder(srcDoc);
-        srcBuilder.Writeln("This is the content of the source document to be appended.");
-        srcDoc.Save(srcPath, SaveFormat.Docx);
+        // Create source document with sample content
+        Document sourceDoc = new Document();
+        DocumentBuilder sourceBuilder = new DocumentBuilder(sourceDoc);
+        sourceBuilder.Writeln("This is the source document.");
+        sourceDoc.Save(sourcePath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // Load the protected destination document and the source document.
-        // -----------------------------------------------------------------
-        Document destination = new Document(destPath);
-        Document source = new Document(srcPath);
+        // Load the source document (already in memory, but demonstrate loading)
+        Document srcToAppend = new Document(sourcePath);
 
-        // Append the source document to the destination.
-        destination.AppendDocument(source, ImportFormatMode.KeepSourceFormatting);
+        // Append source document to the protected destination document
+        destDoc.AppendDocument(srcToAppend, ImportFormatMode.KeepSourceFormatting);
 
-        // Remove the read‑only protection.
-        destination.Unprotect(protectionPassword);
+        // Remove protection before saving as PDF
+        destDoc.Unprotect();
 
-        // Save the combined document as PDF.
-        destination.Save(pdfPath, SaveFormat.Pdf);
+        // Save the combined document as PDF
+        destDoc.Save(outputPdfPath, SaveFormat.Pdf);
 
-        // Verify that the PDF was created.
-        if (!File.Exists(pdfPath))
+        // Validate that the PDF was created
+        if (!File.Exists(outputPdfPath))
         {
-            throw new InvalidOperationException("The PDF output was not created.");
+            throw new InvalidOperationException("Failed to create the output PDF.");
         }
 
-        // Optional: clean up temporary files (comment out if inspection is needed).
-        // File.Delete(destPath);
-        // File.Delete(srcPath);
-        // Directory.Delete(workFolder, true);
+        // Clean up temporary files (optional)
+        File.Delete(destPath);
+        File.Delete(sourcePath);
     }
 }

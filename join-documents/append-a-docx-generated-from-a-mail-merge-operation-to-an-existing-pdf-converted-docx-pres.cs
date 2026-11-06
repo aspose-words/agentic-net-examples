@@ -1,98 +1,77 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Define file paths in the current directory.
-        string templatePath = "MailMergeTemplate.docx";
-        string mailMergeResultPath = "MailMergeResult.docx";
-        string pdfConvertedDocPath = "PdfConverted.docx";
-        string mergedOutputPath = "MergedDocument.docx";
+        // Paths for temporary files
+        string templatePath = "Template.docx";
+        string mergedPath = "Merged.docx";
+        string pdfConvertedPath = "PdfConverted.docx";
+        string resultPath = "Result.docx";
 
-        // --------------------------------------------------------------------
-        // 1. Create a DOCX template with proper MERGEFIELD fields.
-        // --------------------------------------------------------------------
+        // 1. Create a DOCX template with merge fields.
         var templateDoc = new Document();
         var builder = new DocumentBuilder(templateDoc);
-        builder.Write("Report for: ");
+        builder.Writeln("Report for: ");
         builder.InsertField("MERGEFIELD Name \\* MERGEFORMAT");
         builder.Writeln();
-        builder.Write("Date: ");
-        builder.InsertField("MERGEFIELD Date \\* MERGEFORMAT");
+        builder.Writeln("Date: ");
+        builder.InsertField("MERGEFIELD ReportDate \\* MERGEFORMAT");
         builder.Writeln();
+        builder.Writeln("This is the body of the mail‑merged document.");
         templateDoc.Save(templatePath, SaveFormat.Docx);
 
-        // --------------------------------------------------------------------
         // 2. Perform mail merge to generate a DOCX.
-        // --------------------------------------------------------------------
-        var mailMergeDoc = new Document(templatePath);
-        var mergeData = new
-        {
-            Name = "John Doe",
-            Date = DateTime.Today.ToString("d")
-        };
-        mailMergeDoc.MailMerge.Execute(
-            new[] { "Name", "Date" },
-            new object[] { mergeData.Name, mergeData.Date });
-        mailMergeDoc.Save(mailMergeResultPath, SaveFormat.Docx);
+        var mergedDoc = new Document(templatePath);
+        string[] fieldNames = { "Name", "ReportDate" };
+        object[] fieldValues = { "John Doe", DateTime.Today.ToString("d") };
+        mergedDoc.MailMerge.Execute(fieldNames, fieldValues);
+        mergedDoc.Save(mergedPath, SaveFormat.Docx);
 
-        // --------------------------------------------------------------------
         // 3. Create a DOCX that simulates a PDF‑converted document.
-        // --------------------------------------------------------------------
         var pdfConvertedDoc = new Document();
         var pdfBuilder = new DocumentBuilder(pdfConvertedDoc);
-        pdfBuilder.Font.Name = "Arial";
-        pdfBuilder.Font.Size = 14;
-        pdfBuilder.Writeln("PDF Converted Content");
-        pdfBuilder.Writeln("This text represents a document originally created from a PDF.");
-        pdfConvertedDoc.Save(pdfConvertedDocPath, SaveFormat.Docx);
+        // Create a custom style in the destination document.
+        Style destStyle = pdfConvertedDoc.Styles.Add(StyleType.Paragraph, "DestCustomStyle");
+        destStyle.Font.Name = "Arial";
+        destStyle.Font.Size = 14;
+        destStyle.Font.Color = System.Drawing.Color.Blue;
 
-        // --------------------------------------------------------------------
-        // 4. Load the destination (PDF‑converted) document.
-        // --------------------------------------------------------------------
-        var destinationDoc = new Document(pdfConvertedDocPath);
+        // Apply the custom style to some content.
+        pdfBuilder.ParagraphFormat.Style = destStyle;
+        pdfBuilder.Writeln("Original PDF‑converted content with custom style.");
+        pdfBuilder.Writeln("Another paragraph in the destination document.");
+        pdfConvertedDoc.Save(pdfConvertedPath, SaveFormat.Docx);
 
-        // --------------------------------------------------------------------
-        // 5. Load the mail‑merged source document.
-        // --------------------------------------------------------------------
-        var sourceDoc = new Document(mailMergeResultPath);
+        // 4. Load both documents for joining.
+        var destinationDoc = new Document(pdfConvertedPath);
+        var sourceDoc = new Document(mergedPath);
 
-        // --------------------------------------------------------------------
-        // 6. Append the source document to the destination,
-        //    preserving the destination's styles.
-        // --------------------------------------------------------------------
+        // 5. Append the mail‑merged document to the destination,
+        // preserving destination styles.
         destinationDoc.AppendDocument(sourceDoc, ImportFormatMode.UseDestinationStyles);
 
-        // --------------------------------------------------------------------
-        // 7. Save the merged document.
-        // --------------------------------------------------------------------
-        destinationDoc.Save(mergedOutputPath, SaveFormat.Docx);
+        // 6. Save the combined document.
+        destinationDoc.Save(resultPath, SaveFormat.Docx);
 
-        // --------------------------------------------------------------------
-        // 8. Validation: ensure the file exists and contains content from both sources.
-        // --------------------------------------------------------------------
-        if (!File.Exists(mergedOutputPath))
-        {
-            throw new InvalidOperationException($"Merged file was not created at '{mergedOutputPath}'.");
-        }
+        // 7. Validation: ensure the result file exists.
+        if (!File.Exists(resultPath))
+            throw new InvalidOperationException($"Result file '{resultPath}' was not created.");
 
-        var mergedDoc = new Document(mergedOutputPath);
-        string mergedText = mergedDoc.GetText();
+        // 8. Validation: ensure content from both source documents is present.
+        var resultDoc = new Document(resultPath);
+        bool hasPdfContent = resultDoc.GetText().Contains("Original PDF‑converted content");
+        bool hasMergedContent = resultDoc.GetText().Contains("Report for:");
+        if (!hasPdfContent || !hasMergedContent)
+            throw new InvalidOperationException("The merged document does not contain expected content from both source files.");
 
-        if (!mergedText.Contains("PDF Converted Content"))
-        {
-            throw new InvalidOperationException("Merged document is missing content from the PDF‑converted source.");
-        }
-
-        if (!mergedText.Contains("John Doe"))
-        {
-            throw new InvalidOperationException("Merged document is missing content from the mail‑merged source.");
-        }
-
-        // Program completed successfully.
+        // Optional cleanup of intermediate files (can be omitted if inspection is needed).
+        File.Delete(templatePath);
+        File.Delete(mergedPath);
+        File.Delete(pdfConvertedPath);
     }
 }

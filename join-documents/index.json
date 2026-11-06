@@ -4,12 +4,12 @@
     "slug": "join-documents",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Use native Aspose.Words document append and insert APIs directly with local sample documents, explicit ImportFormatMode, and documented mail-merge insertion workflows when needed.",
+    "preferred_workflow": "Create every source document in the sample code, load them with the appropriate LoadOptions when needed, move a DocumentBuilder to a valid bookmark or cursor, call InsertDocument or AppendDocument with an explicit ImportFormatMode, then save the result and verify that the output file exists and includes markers from each source.",
     "required_packages": [
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.9.0"
+      "Aspose.Words": "26.10.0"
     },
     "required_namespaces": [
       "System",
@@ -17,46 +17,38 @@
       "Aspose.Words",
       "Aspose.Words.Saving",
       "Aspose.Words.Loading",
-      "System.Drawing",
-      "System.Text",
-      "System.Text.RegularExpressions",
-      "Aspose.Words.Replacing",
-      "System.Data",
-      "Aspose.Words.MailMerging",
       "Aspose.Words.Drawing",
-      "System.Globalization",
       "Aspose.Words.Tables",
-      "Aspose.Words.Notes",
-      "Aspose.Words.Fields",
-      "System.Collections.Generic",
       "System.Linq",
-      "Aspose.Words.Layout",
-      "System.Net.Http"
+      "Aspose.Words.Replacing",
+      "Aspose.Words.BuildingBlocks",
+      "System.Data",
+      "System.Globalization",
+      "Aspose.Words.MailMerging",
+      "Aspose.Words.Notes",
+      "Aspose.Words.Layout"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
       "SaveFormat",
-      "Directory",
       "File",
-      "Path",
-      "ProtectionType",
-      "LoadOptions",
-      "HtmlSaveOptions",
-      "Paragraph",
-      "Style",
-      "Font",
-      "Node",
-      "CompositeNode",
-      "NodeType",
       "Range",
-      "FindReplaceOptions",
-      "Table",
+      "Directory",
+      "Path",
+      "LoadOptions",
+      "ProtectionType",
+      "Node",
+      "Paragraph",
       "Run",
-      "Row",
-      "PdfSaveOptions",
-      "FieldType",
-      "MemoryStream"
+      "Table",
+      "Font",
+      "StyleIdentifier",
+      "FindReplaceOptions",
+      "NodeType",
+      "Style",
+      "MemoryStream",
+      "PdfSaveOptions"
     ]
   },
   "stats": {
@@ -72,48 +64,55 @@
   },
   "rules_summary": {
     "strict_api_bans": [
-      "Do not assume source documents or folders already exist.",
-      "Do not invent unsupported document-join APIs.",
-      "Do not append or insert a node into an invalid location.",
-      "Do not skip saving the requested merged output."
+      "Never reference members that are not part of the Aspose.Words public API, such as BookmarkCollection.Exists or non-existent InsertDocument overloads.",
+      "Do not attempt to append or insert a node into a parent that cannot accept that node type."
     ],
     "canonical_patterns": [
-      "Create all required local source documents before joining them.",
-      "Use AppendDocument for whole-document joins and specify ImportFormatMode explicitly.",
-      "Use InsertDocument or InsertDocumentInline only when inserting at a specific cursor position or inside a documented mail-merge workflow.",
-      "Validate that the merged output contains content from all expected source documents."
+      "Generate all required DOCX or ODT files before any join operation.",
+      "Use Document.AppendDocument for whole-document concatenation and DocumentBuilder.InsertDocument for bookmark-based insertion, always specifying ImportFormatMode.",
+      "After merging, check that the output file exists and that its text contains known strings from each source document."
     ],
     "nullable_warning_prevention": [
-      "Initialize all non-nullable reference type properties to avoid CS8618 warnings.",
-      "Avoid CS8600, CS8602, and CS8604 by guarding maybe-null values before dereference or assignment.",
-      "Declare nullable locals when a value may legitimately be null and null-check before use."
+      "Initialize all reference-type variables before use to satisfy the compiler's non-nullable analysis.",
+      "Guard any potentially null objects (e.g., bookmarks, runs) with explicit null checks before dereferencing.",
+      "Declare locals as nullable when a null value is a legitimate outcome and handle the case accordingly."
     ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "Missing source document bootstrap",
-      "symptom": "Examples assume source DOC or DOCX files already exist.",
-      "fix": "Create all source documents locally inside the example before joining them."
+      "pattern": "Nonexistent API member",
+      "symptom": "Compilation fails with CS1061, CS0246, or CS0234 because a referenced type or member cannot be found.",
+      "cause": "The code references classes, namespaces, or members that are not part of the Aspose.Words 26.10.0 API (e.g., BookmarkCollection.Exists, Aspose.Words.Protection, Import namespace, FindReplaceOptions.ReplacementDocument).",
+      "fix": "Replace the invalid reference with the correct API member (e.g., use mainDoc.Range.Bookmarks[\"name\"] to test existence, use Document.Protect for protection, and use InsertDocument on DocumentBuilder).",
+      "prevention": "Consult the official Aspose.Words documentation for the exact class and member names before coding and rely on IntelliSense to verify availability."
     },
     {
-      "pattern": "Wrong join API choice",
-      "symptom": "Code invents unsupported APIs or uses append logic where insertion is required.",
-      "fix": "Use AppendDocument for whole-document appends and InsertDocument or InsertDocumentInline only for real insertion scenarios."
+      "pattern": "Invalid node insertion location",
+      "symptom": "Runtime throws System.ArgumentException stating that a node cannot be inserted at the current location.",
+      "cause": "InsertDocument is called on a node that cannot accept the imported content, such as inserting a whole section into a Run or inserting into a bookmark that has been removed.",
+      "fix": "Move the DocumentBuilder to a valid container (e.g., a Paragraph or the bookmark itself) before calling InsertDocument, and ensure the bookmark remains in the document.",
+      "prevention": "Always verify the target node type with Node.NodeType and use DocumentBuilder.MoveToBookmark or MoveTo(Run) to position the builder correctly."
     },
     {
-      "pattern": "Invalid node insertion",
-      "symptom": "Runtime failures due to inserting imported sections or nodes into an invalid parent location.",
-      "fix": "Import content into valid containers only and never append a node to itself."
+      "pattern": "Improper FindReplaceOptions usage",
+      "symptom": "Compilation or runtime errors occur when attempting to replace a placeholder with a document using FindReplaceOptions.",
+      "cause": "The code tries to assign a Document to FindReplaceOptions.ReplacementDocument or passes a Document to Range.Replace, which expects a string.",
+      "fix": "Implement a custom IReplacingCallback that inserts the document at the match location, and pass that callback via FindReplaceOptions.ReplacingCallback.",
+      "prevention": "Use the documented pattern for document insertion during find-replace: create a callback class that receives the match node and calls DocumentBuilder.InsertDocument."
     },
     {
-      "pattern": "Mail merge insertion misuse",
-      "symptom": "Document insertion during mail merge is treated like a plain append or uses invented merge helpers.",
-      "fix": "Use the documented mail-merge event-handler insertion workflow with InsertDocument or InsertDocumentInline."
+      "pattern": "Incorrect protection API reference",
+      "symptom": "Compilation fails because Protection or InsertDocument members are missing on the MailMerge or Document classes.",
+      "cause": "The sample uses outdated or non-existent protection APIs (e.g., Aspose.Words.Protection namespace) and assumes a MailMerge.InsertDocument event that does not exist.",
+      "fix": "Apply protection with Document.Protect(ProtectionType, password) and remove it with Document.Unprotect(password); handle mail-merge insertion via MailMerge.FieldMergingCallback and DocumentBuilder.InsertDocument.",
+      "prevention": "Reference the current protection methods in the Document class and follow the official mail-merge insertion workflow."
     },
     {
-      "pattern": "Weak merged-output validation",
-      "symptom": "The example saves output but does not prove the result contains content from all expected sources.",
-      "fix": "Validate using actual markers, paragraph text, section counts, or output file existence."
+      "pattern": "Missing source document creation",
+      "symptom": "The example assumes that source DOCX files already exist, leading to FileNotFoundException or empty merges.",
+      "cause": "No code is provided to generate the prerequisite documents before the join operation.",
+      "fix": "Add code that creates each source document with DocumentBuilder, saves it to a temporary path, and then loads it for insertion or appending.",
+      "prevention": "Always bootstrap required source files at the start of the sample, using clearly named temporary directories."
     }
   ],
   "examples": [
@@ -132,7 +131,7 @@
     {
       "id": 2,
       "file_name": "load-a-docx-insert-a-pdf-converted-docx-at-a-bookmark-and-save-the-merged-document-as-odt.cs",
-      "task": "Load a DOCX, insert a PDF‑converted DOCX at a bookmark, and save the merged document as ODT.",
+      "task": "Load a DOCX, insert a PDF-converted DOCX at a bookmark, and save the merged document as ODT.",
       "workflow": "insert-document",
       "outputs": [
         "docx",
@@ -144,7 +143,7 @@
     {
       "id": 3,
       "file_name": "load-a-password-protected-docx-insert-a-source-docx-at-a-bookmark-then-remove-protection-a.cs",
-      "task": "Load a password‑protected DOCX, insert a source DOCX at a bookmark, then remove protection and save as DOCX.",
+      "task": "Load a password-protected DOCX, insert a source DOCX at a bookmark, then remove protection and save as DOCX.",
       "workflow": "insert-document",
       "outputs": [
         "docx",
@@ -168,7 +167,7 @@
     {
       "id": 5,
       "file_name": "protect-a-destination-docx-with-read-only-restriction-before-appending-source-docx-then-re.cs",
-      "task": "Protect a destination DOCX with read‑only restriction before appending source DOCX, then remove restriction and save as PDF.",
+      "task": "Protect a destination DOCX with read-only restriction before appending source DOCX, then remove restriction and save as PDF.",
       "workflow": "append-document",
       "outputs": [
         "docx",
@@ -180,7 +179,7 @@
     {
       "id": 6,
       "file_name": "use-documentbuilder-movetobookmark-to-navigate-to-a-bookmark-named-content-then-insert-a-s.cs",
-      "task": "Use DocumentBuilder.MoveToBookmark to navigate to a bookmark named “Content”, then insert a source DOCX with KeepSourceFormatting.",
+      "task": "Use DocumentBuilder.MoveToBookmark to navigate to a bookmark named \"Content\", then insert a source DOCX with KeepSourceFormatting.",
       "workflow": "insert-document",
       "outputs": [
         "docx"
@@ -250,30 +249,30 @@
     {
       "id": 12,
       "file_name": "insert-a-docx-during-a-find-replace-operation-that-matches-the-word-insertme-then-save-as.cs",
-      "task": "Insert a DOCX during a find‑replace operation that matches the word “INSERTME”, then save as DOCX.",
+      "task": "Insert a DOCX during a find-replace operation that matches the word \"INSERTME\", then save as DOCX.",
       "workflow": "insert-document",
       "outputs": [
         "docx",
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 13,
       "file_name": "use-findreplaceoptions-to-replace-the-phrase-placeholder-with-a-docx-document-then-save-as.cs",
-      "task": "Use FindReplaceOptions to replace the phrase “PLACEHOLDER” with a DOCX document, then save as ODT.",
+      "task": "Use FindReplaceOptions to replace the phrase \"PLACEHOLDER\" with a DOCX document, then save as ODT.",
       "workflow": "general-join-workflow",
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 14,
       "file_name": "use-findreplaceoptions-with-a-replacingcallback-to-insert-a-docx-whenever-phrase-insert-he.cs",
-      "task": "Use FindReplaceOptions with a ReplacingCallback to insert a DOCX whenever phrase “INSERT_HERE” is found, then save as DOCX.",
+      "task": "Use FindReplaceOptions with a ReplacingCallback to insert a DOCX whenever phrase \"INSERT_HERE\" is found, then save as DOCX.",
       "workflow": "insert-document",
       "outputs": [
         "docx",
@@ -285,15 +284,15 @@
     {
       "id": 15,
       "file_name": "insert-a-docx-during-a-find-replace-operation-that-replaces-an-xml-tag-then-save-the-docum.cs",
-      "task": "Insert a DOCX during a find‑replace operation that replaces an XML tag, then save the document as DOCX.",
+      "task": "Insert a DOCX during a find-replace operation that replaces an XML tag, then save the document as DOCX.",
       "workflow": "insert-document",
       "outputs": [
         "docx",
         "doc",
         "xml"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 16,
@@ -304,8 +303,8 @@
         "docx",
         "pdf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 17,
@@ -379,7 +378,7 @@
     {
       "id": 23,
       "file_name": "append-a-docx-generated-from-a-mail-merge-operation-to-an-existing-pdf-converted-docx-pres.cs",
-      "task": "Append a DOCX generated from a mail merge operation to an existing PDF‑converted DOCX, preserving destination styles.",
+      "task": "Append a DOCX generated from a mail merge operation to an existing PDF-converted DOCX, preserving destination styles.",
       "workflow": "mail-merge-insert",
       "outputs": [
         "docx",
@@ -540,8 +539,18 @@
         "docx",
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     }
-  ]
+  ],
+  "narrative": {
+    "overview": "The Join Documents category demonstrates how to combine, insert, and append Word processing files using Aspose.Words 26.10.0. Verified examples show correct creation of source files, use of DocumentBuilder.MoveToBookmark, InsertDocument, AppendDocument, and proper saving to formats such as ODT, PDF, and HTML.",
+    "purpose": "Provide an AI coding assistant with clear, reproducible patterns for joining documents that avoid common API misuse, ensure all source artifacts are generated locally, and validate that the merged output contains the expected content.",
+    "validation_priorities": [
+      "Validate the merged document by confirming file existence and by searching for unique text fragments from every source document."
+    ],
+    "maintenance_notes": [
+      "Keep the sample code in sync with the Aspose.Words version used for verification and update any API changes in future releases."
+    ]
+  }
 }
