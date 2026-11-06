@@ -1,44 +1,35 @@
 using System;
-using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
 
-namespace AsposeWordsCommentExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new document and a builder.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Add a paragraph with some text.
+        builder.Writeln("This is a sample paragraph.");
+
+        // Retrieve the paragraph we just added.
+        Paragraph paragraph = (Paragraph)doc.GetChild(NodeType.Paragraph, 0, true);
+
+        // Create a comment and add it to the paragraph.
+        Comment comment = new Comment(doc, "John Doe", "JD", DateTime.Now);
+        Paragraph commentParagraph = new Paragraph(doc);
+        commentParagraph.Runs.Add(new Run(doc, "This is a comment on the paragraph."));
+        comment.AppendChild(commentParagraph);
+        paragraph.AppendChild(comment);
+
+        // Save the document.
+        string outputPath = "CommentedDocument.docx";
+        doc.Save(outputPath);
+
+        // Retrieve and display the comment text.
+        foreach (Comment c in doc.GetChildNodes(NodeType.Comment, true))
         {
-            // Create a new blank document.
-            Document doc = new Document();
-
-            // Use DocumentBuilder to add a paragraph.
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln("This is a paragraph that will have a comment attached.");
-
-            // Create a comment, set its author and text.
-            Comment comment = new Comment(doc, "John Doe", "JD", DateTime.Now);
-            comment.SetText("This is the comment text.");
-
-            // Attach the comment to the current paragraph.
-            builder.CurrentParagraph.AppendChild(comment);
-
-            // Ensure the output directory exists.
-            string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
-            Directory.CreateDirectory(outputDir);
-
-            // Save the document.
-            string docPath = Path.Combine(outputDir, "CommentExample.docx");
-            doc.Save(docPath);
-
-            // Retrieve the first (and only) comment from the document.
-            Comment retrievedComment = (Comment)doc.GetChildNodes(NodeType.Comment, true)[0];
-
-            // Get the comment's text.
-            string commentText = retrievedComment.GetText().Trim();
-
-            // Output the retrieved comment text.
-            Console.WriteLine($"Retrieved comment text: \"{commentText}\"");
+            Console.WriteLine($"Comment by {c.Author}: {c.GetText().Trim()}");
         }
     }
 }

@@ -10,29 +10,24 @@ product: Aspose.Words
 
 ## Purpose
 
-This folder is a live, curated example set for Programming with Documents scenarios. Treat every `.cs` file as a standalone console application. The goal is correct, warning-free examples that use documented Aspose APIs and match the original task intent.
+An AI coding agent should generate concise, self-contained C# snippets that create or modify Word documents using only the documented Aspose.Words APIs, instantiate any required input assets locally, and verify that the expected output file can be opened.
 
 ## Non-negotiable conventions
 
-- Always use documented Aspose.Words APIs directly.
-- Always create local sample source documents when a task refers to an existing file, folder, stream, or template.
-- Never assume external files or folders already exist.
-- Keep validation narrow and task-specific.
-- Save the requested output document or report whenever the task expects one.
+- Do not reference types that are not part of the Aspose.Words package version.
+- Do not import System.Drawing classes for image handling.
+- Bootstrap local sample inputs for existing-file, folder, stream, image, and data workflows.
+- Prefer simple, verifiable workflows over speculative formatting shortcuts.
 
 ## Recommended workflow selection
 
-- Document Workflow workflow: 110 examples
+- **Document Workflow workflow**: 110 examples
 
 Use the simplest workflow that satisfies the task.
 
 ## Validation priorities
 
-1. The code must compile and run without manual input.
-2. API usage must be supported by the configured package versions.
-3. Exported outputs must actually be written by the example.
-4. Validation scenarios must inspect only the behavior requested by the task.
-5. Examples that depend on files, folders, streams, images, or data should bootstrap those inputs locally during the example run.
+1. Verify that the output file exists on disk and can be reopened without errors.
 
 ## File-to-task reference
 
@@ -40,7 +35,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Create a first-page header with a centered logo image using DocumentBuilder.
   - Workflow: document-workflow
   - Outputs: doc
-  - Selected engine: mcp
+  - Selected engine: llm
 - `add-an-odd-page-header-containing-a-right-aligned-chapter-title-in-a-custom-font.cs`
   - Task: Add an odd-page header containing a right-aligned chapter title in a custom font.
   - Workflow: document-workflow
@@ -85,7 +80,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Insert a footnote at the current cursor position with custom text via InsertFootnote.
   - Workflow: document-workflow
   - Outputs: rtf
-  - Selected engine: mcp
+  - Selected engine: llm
 - `add-an-endnote-with-reference-text-using-insertfootnote-and-specify-endnote-type.cs`
   - Task: Add an endnote with reference text using InsertFootnote and specify Endnote type.
   - Workflow: document-workflow
@@ -95,22 +90,22 @@ Use the simplest workflow that satisfies the task.
   - Task: Change footnote numbering style to lower-case Roman numerals by setting Document.FootnoteOptions.NumberStyle.
   - Workflow: document-workflow
   - Outputs: doc
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `configure-footnote-layout-to-use-three-columns-by-assigning-document-footnoteoptions-colum.cs`
   - Task: Configure footnote layout to use three columns by assigning Document.FootnoteOptions.Columns.
   - Workflow: document-workflow
   - Outputs: doc
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `position-footnotes-at-the-bottom-of-the-page-by-adjusting-footnoteoptions-position.cs`
   - Task: Position footnotes at the bottom of the page by adjusting FootnoteOptions.Position.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `update-all-footnote-and-endnote-references-after-modifications-by-calling-document-updatef.cs`
   - Task: Update all footnote and endnote references after modifications by calling Document.UpdateFields.
   - Workflow: document-workflow
   - Outputs: doc
-  - Selected engine: mcp
+  - Selected engine: llm
 - `insert-a-table-of-contents-at-the-document-start-using-inserttableofcontents-with-default.cs`
   - Task: Insert a table of contents at the document start using InsertTableOfContents with default switches.
   - Workflow: document-workflow
@@ -150,7 +145,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply a custom paragraph style to TOC entries by modifying the TOC field's style property.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `insert-a-bookmark-named-chapterstart-at-the-beginning-of-each-chapter-using-documentbuilde.cs`
   - Task: Insert a bookmark named "ChapterStart" at the beginning of each chapter using DocumentBuilder.
   - Workflow: document-workflow
@@ -210,7 +205,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Remove all footnotes while preserving endnotes by clearing Document.Footnotes collection.
   - Workflow: document-workflow
   - Outputs: doc
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `create-a-new-word-document-and-insert-a-table-with-five-rows-and-three-columns.cs`
   - Task: Create a new Word document and insert a table with five rows and three columns.
   - Workflow: document-workflow
@@ -285,7 +280,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Add a caption below the table using a paragraph styled as 'Caption' and reference it.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `create-a-bulleted-list-with-three-items-and-customize-the-bullet-character-to-a-dash.cs`
   - Task: Create a bulleted list with three items and customize the bullet character to a dash.
   - Workflow: document-workflow
@@ -300,7 +295,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Define a second list level with alphabetic lower-case numbering and increased indentation.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `restart-list-numbering-at-1-for-a-new-section-after-a-heading-paragraph.cs`
   - Task: Restart list numbering at 1 for a new section after a heading paragraph.
   - Workflow: document-workflow
@@ -320,7 +315,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Insert a multi-level list where each level uses a different list style defined in the document.
   - Workflow: document-workflow
   - Outputs: doc
-  - Selected engine: mcp
+  - Selected engine: llm
 - `set-the-document-s-ooxmlcompliance-property-to-ooxmlcompliance-strict-to-preserve-advanced.cs`
   - Task: Set the document's OoxmlCompliance property to OoxmlCompliance.Strict to preserve advanced list settings.
   - Workflow: document-workflow
@@ -330,7 +325,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Create a paragraph, write a long sentence, and count the number of lines it occupies.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `apply-the-built-in-heading-2-style-to-a-paragraph-and-adjust-its-spacing-before-and-after.cs`
   - Task: Apply the built-in 'Heading 2' style to a paragraph and adjust its spacing before and after.
   - Workflow: document-workflow
@@ -355,7 +350,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Add a paragraph with a drop cap character and specify the number of lines it spans.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `apply-a-custom-style-to-a-paragraph-that-includes-a-border-background-color-and-indentatio.cs`
   - Task: Apply a custom style to a paragraph that includes a border, background color, and indentation.
   - Workflow: document-workflow
@@ -385,7 +380,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Insert a paragraph that contains a field for page number and format it as Roman numerals.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `apply-a-built-in-quote-style-to-a-paragraph-and-increase-its-left-indent-for-emphasis.cs`
   - Task: Apply a built-in 'Quote' style to a paragraph and increase its left indent for emphasis.
   - Workflow: document-workflow
@@ -410,22 +405,22 @@ Use the simplest workflow that satisfies the task.
   - Task: Create a text box, set its internal margins, and insert a paragraph with bold text inside.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `link-two-text-boxes-sequentially-so-that-text-flows-from-the-first-to-the-second-automatic.cs`
   - Task: Link two text boxes sequentially so that text flows from the first to the second automatically.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `check-whether-a-given-text-box-is-the-head-of-a-linked-sequence-using-its-ishead-property.cs`
   - Task: Check whether a given text box is the head of a linked sequence using its IsHead property.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `break-the-forward-link-of-a-middle-text-box-to-stop-text-flow-to-the-subsequent-box.cs`
   - Task: Break the forward link of a middle text box to stop text flow to the subsequent box.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `retrieve-the-parent-shape-of-a-text-box-and-change-its-rotation-angle-to-45-degrees.cs`
   - Task: Retrieve the parent Shape of a text box and change its rotation angle to 45 degrees.
   - Workflow: document-workflow
@@ -445,17 +440,17 @@ Use the simplest workflow that satisfies the task.
   - Task: Programmatically duplicate a text box and place the copy at a specified absolute position.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `apply-a-shadow-effect-to-a-text-box-shape-and-export-the-document-as-a-pdf.cs`
   - Task: Apply a shadow effect to a text box shape and export the document as a PDF.
   - Workflow: document-workflow
   - Outputs: doc, pdf
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `link-a-text-box-to-a-paragraph-so-that-overflow-text-automatically-continues-in-the-box.cs`
   - Task: Link a text box to a paragraph so that overflow text automatically continues in the box.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `insert-a-text-box-inside-a-header-shape-and-ensure-it-appears-only-on-the-first-page.cs`
   - Task: Insert a text box inside a header shape and ensure it appears only on the first page.
   - Workflow: document-workflow
@@ -470,7 +465,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply a gradient fill to a text box and ensure the gradient renders correctly in PDF.
   - Workflow: document-workflow
   - Outputs: pdf
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `insert-a-text-box-then-set-its-anchor-position-to-be-relative-to-the-page-margin.cs`
   - Task: Insert a text box, then set its anchor position to be relative to the page margin.
   - Workflow: document-workflow
@@ -500,7 +495,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply a custom list template to all document lists and enforce a maximum of nine nesting levels.
   - Workflow: document-workflow
   - Outputs: doc
-  - Selected engine: mcp
+  - Selected engine: llm
 - `export-a-document-containing-tables-and-text-boxes-to-an-xps-file-while-preserving-layout.cs`
   - Task: Export a document containing tables and text boxes to an XPS file while preserving layout.
   - Workflow: document-workflow
@@ -515,12 +510,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Set the document's compatibility mode to Word2010 before adding complex list structures.
   - Workflow: document-workflow
   - Outputs: doc
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `set-the-document-s-compatibility-level-to-word2016-before-adding-complex-table-structures.cs`
   - Task: Set the document's compatibility level to Word2016 before adding complex table structures.
   - Workflow: document-workflow
   - Outputs: doc
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `set-the-document-s-default-font-to-calibri-size-11-and-apply-it-to-all-new-paragraphs.cs`
   - Task: Set the document's default font to Calibri, size 11, and apply it to all new paragraphs.
   - Workflow: document-workflow
@@ -530,7 +525,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Set the document's language property to French and adjust paragraph direction for right-to-left scripts.
   - Workflow: document-workflow
   - Outputs: doc
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `apply-a-built-in-title-style-to-the-first-paragraph-and-ensure-it-appears-in-the-document.cs`
   - Task: Apply a built-in 'Title' style to the first paragraph and ensure it appears in the document outline.
   - Workflow: document-workflow
@@ -540,7 +535,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Add a comment to a paragraph and programmatically retrieve the comment text for review.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `insert-a-paragraph-with-a-custom-field-that-calculates-the-sum-of-numbers-in-a-table-colum.cs`
   - Task: Insert a paragraph with a custom field that calculates the sum of numbers in a table column.
   - Workflow: document-workflow
@@ -555,7 +550,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Iterate through all shapes in a document and change any text box fill color to light gray.
   - Workflow: document-workflow
   - Outputs: doc
-  - Selected engine: mcp
+  - Selected engine: llm
 - `add-a-page-break-before-each-new-heading-paragraph-and-ensure-the-heading-style-remains-ap.cs`
   - Task: Add a page break before each new heading paragraph and ensure the heading style remains applied.
   - Workflow: document-workflow
@@ -565,12 +560,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Create a table with alternating row shading using a custom table style defined programmatically.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `apply-a-table-style-that-includes-a-top-border-bottom-border-and-no-side-borders.cs`
   - Task: Apply a table style that includes a top border, bottom border, and no side borders.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `apply-a-table-style-that-includes-alternating-column-shading-for-better-readability.cs`
   - Task: Apply a table style that includes alternating column shading for better readability.
   - Workflow: document-workflow
@@ -589,45 +584,40 @@ Use the simplest workflow that satisfies the task.
 
 ## Common failure patterns and preferred agent fixes
 
-- **Unsupported API invention**
-  - Symptom: Generated code references members that do not exist in the selected package version.
-  - Preferred fix: Replace invented members with documented Aspose.Words APIs already proven in this category.
+- **Missing System.Drawing dependency**
+  - Symptom: The compiler reports that Bitmap or Graphics types cannot be found in the System.Drawing namespace.
+  - Root cause: The code attempts to create images using System.Drawing classes, which are not referenced in the project and are unnecessary for Aspose.Words image insertion.
+  - Preferred fix: Replace System.Drawing usage with a Base64-encoded image stream and call DocumentBuilder.InsertImage using the stream.
+  - Prevention: Always load images from a MemoryStream or file path and avoid any System.Drawing types in examples.
 
-- **Missing local bootstrap inputs**
-  - Symptom: The example assumes source files, folders, images, or data already exist.
-  - Preferred fix: Create deterministic local inputs before loading, processing, or validating them.
+- **Incorrect or outdated Aspose.Words API usage**
+  - Symptom: Compilation fails because enums, properties, or methods such as HeaderFooter.Type, DifferentOddAndEvenPages, FootnoteType, or Document.Footnotes are not defined.
+  - Root cause: The snippet references API members that were renamed, moved, or removed in version 26.10.0.
+  - Preferred fix: Use the current enum names HeaderFooterType.HeaderFirst, HeaderFooterType.HeaderPrimary, HeaderFooterType.HeaderEven, and include Aspose.Words.Notes for FootnoteType and NumberStyle. Set odd/even header flags via Section.PageSetup.OddAndEvenPagesHeaderFooter or reflectively set DifferentOddAndEvenPages when unavailable.
+  - Prevention: Consult the official Aspose.Words 26.10.0 documentation for the exact member names before coding.
 
-- **Over-broad validation**
-  - Symptom: The example fails at runtime while checking unrelated document internals.
-  - Preferred fix: Validate only the requested behavior and the existence of expected outputs.
+- **Invalid method signatures or collection handling**
+  - Symptom: The compiler reports that methods like HeaderFooterCollection.Add overloads or Shape.Position do not exist, and that collections such as Section.Footers are missing.
+  - Root cause: The code calls non-existent overloads or accesses properties that were never part of the API.
+  - Preferred fix: Clone a HeaderFooter node and add it with HeadersFooters.Add, set shape positioning using WrapType, RelativeHorizontalPosition, and RelativeVerticalPosition, and remove footers by enumerating HeadersFooters and deleting items that match footer types.
+  - Prevention: Use only the overloads and properties listed in the Aspose.Words API reference and manipulate collections through supported LINQ queries.
 
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.9.0`
+- Primary package: `Aspose.Words` `26.10.0`
 
 ## Command reference
-
-### Create a temporary console project
 
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
+dotnet add package Aspose.Words --version 26.10.0
 ```
-
-### Add required packages
-
-```bash
-dotnet add package Aspose.Words --version 26.9.0
-```
-
-### Copy a category example into the temp project
 
 ```powershell
 Copy-Item ..\programming-with-documents\<example-file>.cs .\Program.cs
 ```
-
-### Build and run
 
 ```bash
 dotnet build --configuration Release --verbosity minimal
@@ -636,6 +626,4 @@ dotnet run --configuration Release --no-build
 
 ## Category update guidance
 
-- Preserve file-to-task traceability. Any future update should keep the original task text associated with the file in metadata.
-- When replacing a file, prefer the latest verified publish-ready version rather than a merely compiling draft.
-- Keep examples standalone, bootstrap missing inputs locally, and prefer documented Aspose APIs over speculative shortcuts.
+- Update examples promptly when a new Aspose.Words version changes enum names or adds new properties.

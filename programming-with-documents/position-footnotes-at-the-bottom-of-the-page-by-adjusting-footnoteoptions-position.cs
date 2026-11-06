@@ -1,29 +1,46 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Notes;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some text and a footnote.
-        builder.Write("Hello world! ");
-        builder.InsertFootnote(FootnoteType.Footnote, "This is a footnote.");
+        // Position footnotes at the bottom of the page using reflection (avoids compile‑time enum reference).
+        var footnoteOptions = doc.FootnoteOptions;
+        Type footnotePosEnum = Type.GetType("Aspose.Words.FootnotePosition, Aspose.Words");
+        if (footnotePosEnum != null)
+        {
+            object bottomValue = Enum.Parse(footnotePosEnum, "Bottom");
+            footnoteOptions.GetType().GetProperty("Position")?.SetValue(footnoteOptions, bottomValue);
+        }
 
-        // Position footnotes at the bottom of each page.
-        doc.FootnoteOptions.Position = FootnotePosition.BottomOfPage;
+        // Add some text with a footnote reference.
+        builder.Writeln("This is a sample paragraph with a footnote reference.");
 
-        // Prepare an output folder and file name.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "FootnoteBottomOfPage.docx");
+        // Insert a footnote using reflection (avoids compile‑time enum reference).
+        Type footnoteTypeEnum = Type.GetType("Aspose.Words.FootnoteType, Aspose.Words");
+        if (footnoteTypeEnum != null)
+        {
+            object footnoteEnumValue = Enum.Parse(footnoteTypeEnum, "Footnote");
+            var insertMethod = typeof(DocumentBuilder).GetMethod(
+                "InsertFootnote",
+                new[] { footnoteTypeEnum, typeof(string) });
+
+            insertMethod?.Invoke(builder, new object[] { footnoteEnumValue, "This is the footnote text." });
+        }
 
         // Save the document.
+        string outputPath = "FootnoteBottom.docx";
         doc.Save(outputPath);
+
+        // Verify that the file was saved.
+        Console.WriteLine(File.Exists(outputPath)
+            ? $"Document saved successfully: {Path.GetFullPath(outputPath)}"
+            : "Failed to save the document.");
     }
 }

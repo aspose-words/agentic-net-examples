@@ -2,69 +2,56 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Tables;   // Needed for Table class
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document and a DocumentBuilder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a table with two rows and two columns.
-        Table table = builder.StartTable();
-
-        // First row.
+        // Insert a simple 2‑cell table.
+        builder.StartTable();
         builder.InsertCell();
-        builder.Write("Cell 1");
+        builder.Writeln("Cell 1");
         builder.InsertCell();
-        builder.Write("Cell 2");
+        builder.Writeln("Cell 2");
         builder.EndRow();
-
-        // Second row.
-        builder.InsertCell();
-        builder.Write("Cell 3");
-        builder.InsertCell();
-        builder.Write("Cell 4");
-        builder.EndRow();
-
         builder.EndTable();
 
-        // Add a line break after the table.
+        // Add some space before the text box.
         builder.Writeln();
 
-        // Create a text box (shape of type TextBox).
-        Shape textBox = new Shape(doc, ShapeType.TextBox)
-        {
-            Width = 200,
-            Height = 100,
-            WrapType = WrapType.Inline
-        };
+        // Create a text box shape.
+        Shape textBox = new Shape(doc, ShapeType.TextBox);
+        textBox.Width = 200;
+        textBox.Height = 100;
+        textBox.WrapType = WrapType.Inline;
 
-        // Add text inside the text box.
+        // Add a paragraph with text inside the text box.
         Paragraph tbParagraph = new Paragraph(doc);
-        Run tbRun = new Run(doc, "This is a text box.");
+        Run tbRun = new Run(doc, "This is inside a text box.");
         tbParagraph.AppendChild(tbRun);
         textBox.AppendChild(tbParagraph);
 
         // Insert the text box into the document.
         builder.InsertNode(textBox);
 
-        // Define output path for the XPS file.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OutputDocument.xps");
+        // Define output XPS file path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.xps");
 
-        // Save the document as XPS.
+        // Save the document as XPS, preserving layout.
         doc.Save(outputPath, SaveFormat.Xps);
 
         // Verify that the XPS file was created.
         if (File.Exists(outputPath))
         {
-            Console.WriteLine("XPS file saved successfully: " + outputPath);
+            Console.WriteLine($"XPS file successfully created at: {outputPath}");
         }
         else
         {
-            Console.WriteLine("Failed to save XPS file.");
+            Console.WriteLine("Failed to create the XPS file.");
         }
     }
 }

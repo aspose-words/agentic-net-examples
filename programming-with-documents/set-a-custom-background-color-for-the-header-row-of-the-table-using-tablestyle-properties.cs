@@ -2,49 +2,55 @@ using System;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Drawing;   // Required for TextureIndex and Shading
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document and a DocumentBuilder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a table with a header row.
-        Table table = builder.StartTable();
+        // Start a table.
+        builder.StartTable();
 
-        // Header row cells.
+        // Header row.
         builder.InsertCell();
-        builder.Write("Header 1");
+        builder.Writeln("Header 1");
         builder.InsertCell();
-        builder.Write("Header 2");
+        builder.Writeln("Header 2");
         builder.EndRow();
 
-        // Data row cells.
+        // Data row.
         builder.InsertCell();
-        builder.Write("Data 1");
+        builder.Writeln("Data 1");
         builder.InsertCell();
-        builder.Write("Data 2");
+        builder.Writeln("Data 2");
         builder.EndRow();
 
+        // End the table.
         builder.EndTable();
 
-        // Create a custom table style.
-        Style customStyle = doc.Styles.Add(StyleType.Table, "MyCustomTableStyle");
+        // Retrieve the created table (the first table in the document).
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // The Style object for a table can be cast to TableStyle to access shading properties.
-        TableStyle tableStyle = (TableStyle)customStyle;
-        tableStyle.Shading.BackgroundPatternColor = Color.LightBlue;
-        tableStyle.Shading.Texture = TextureIndex.TextureNone;
-
-        // Apply the style to the table and specify that only the first row (header) uses it.
-        table.Style = customStyle;
-        table.StyleOptions = TableStyleOptions.FirstRow;
+        // Set a custom background color for the header row using CellFormat.Shading.
+        Row headerRow = table.FirstRow;
+        foreach (Cell cell in headerRow.Cells)
+        {
+            // Apply background color to each header cell.
+            cell.CellFormat.Shading.BackgroundPatternColor = Color.LightBlue;
+        }
 
         // Save the document.
-        string outputPath = "TableWithHeaderStyle.docx";
+        string outputPath = "Output.docx";
         doc.Save(outputPath);
+
+        // Verify that the file was saved and can be re-opened.
+        if (System.IO.File.Exists(outputPath))
+        {
+            Document loadedDoc = new Document(outputPath);
+            // No further action required.
+        }
     }
 }

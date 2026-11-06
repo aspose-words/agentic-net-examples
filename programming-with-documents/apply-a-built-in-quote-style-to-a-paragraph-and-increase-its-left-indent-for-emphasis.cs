@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 
 public class Program
@@ -7,22 +8,31 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to add a paragraph.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a quoted paragraph.");
 
-        // Get the paragraph that was just added.
-        Paragraph paragraph = builder.CurrentParagraph;
+        // Add a regular paragraph.
+        builder.Writeln("This is a normal paragraph.");
 
-        // Apply the built‑in "Quote" style.
-        paragraph.ParagraphFormat.StyleIdentifier = StyleIdentifier.Quote;
+        // Apply the built‑in 'Quote' style.
+        builder.ParagraphFormat.StyleName = "Quote";
 
-        // Increase left indent for emphasis (value is in points).
-        paragraph.ParagraphFormat.LeftIndent = 20;
+        // Increase left indent for emphasis (value in points).
+        builder.ParagraphFormat.LeftIndent = 30;
 
-        // Save the document.
+        // Add a paragraph that uses the Quote style with increased indent.
+        builder.Writeln("This paragraph is styled as a Quote with increased left indent.");
+
+        // Reset formatting for any subsequent content (optional).
+        builder.ParagraphFormat.ClearFormatting();
+
+        // Save the document to disk.
         string outputPath = "QuoteParagraph.docx";
         doc.Save(outputPath);
+
+        // Verify that the file was saved.
+        if (File.Exists(outputPath))
+        {
+            Console.WriteLine($"Document saved successfully to {outputPath}");
+        }
     }
 }

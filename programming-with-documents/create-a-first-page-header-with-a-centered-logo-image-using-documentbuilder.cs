@@ -7,34 +7,39 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Enable a different header/footer for the first page.
         builder.PageSetup.DifferentFirstPageHeaderFooter = true;
 
-        // Move to the first page header.
+        // Move the builder to the first page header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderFirst);
 
-        // Center the content in the header.
+        // Center the paragraph that will contain the logo.
         builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
 
-        // Base64-encoded PNG (1x1 red pixel) to use as a logo.
-        string base64Image = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
-        byte[] imageBytes = Convert.FromBase64String(base64Image);
+        // A tiny placeholder PNG (1x1 transparent pixel) encoded in Base64.
+        const string base64Png =
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XcZcAAAAASUVORK5CYII=";
 
-        // Insert the image into the header.
+        byte[] imageBytes = Convert.FromBase64String(base64Png);
         using (MemoryStream imageStream = new MemoryStream(imageBytes))
         {
+            // Insert the image into the header.
             builder.InsertImage(imageStream);
         }
 
-        // Save the document.
-        string outputPath = "FirstPageHeaderWithLogo.docx";
-        doc.Save(outputPath);
+        // Return to the main document body.
+        builder.MoveToDocumentEnd();
 
-        // Indicate completion (optional).
-        Console.WriteLine($"Document saved to: {Path.GetFullPath(outputPath)}");
+        // Add some sample body text.
+        builder.Writeln("This is the document body.");
+
+        // Save the document to disk.
+        string outputPath = "FirstPageHeader.docx";
+        doc.Save(outputPath);
+        Console.WriteLine($"Document saved to {Path.GetFullPath(outputPath)}");
     }
 }

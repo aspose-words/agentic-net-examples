@@ -1,50 +1,67 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Lists;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a Table of Contents that includes heading levels 1‑3.
+        // Insert a Table of Contents field at the beginning of the document.
+        // \\o "1-3" – include outline levels 1 to 3.
+        // \\h – use hyperlinks.
+        // \\z – hide page numbers in web layout.
+        // \\u – use paragraph outline levels.
         builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
-        builder.Writeln(); // Add a blank line after TOC.
 
-        // Separate TOC from the main content.
+        // Add a page break after the TOC so content starts on a new page.
         builder.InsertBreak(BreakType.PageBreak);
 
-        // ----- Headings -----
+        // ----- Sample content with headings and list items -----
+
+        // Heading 1
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Writeln("Chapter 1: Introduction");
 
+        // Normal paragraph under heading
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("This paragraph introduces the topic.");
+
+        // Heading 2
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
         builder.Writeln("Section 1.1: Overview");
 
-        // ----- List items (included in TOC as level 3) -----
-        builder.ListFormat.ApplyBulletDefault();
-
-        // List item A with TC field for TOC.
-        builder.InsertField("TC \"Item A\" \\l 3", null);
-        builder.Writeln("Item A");
-
-        // List item B with TC field for TOC.
-        builder.InsertField("TC \"Item B\" \\l 3", null);
-        builder.Writeln("Item B");
-
-        // End the list.
+        // Numbered list
+        builder.ListFormat.ApplyNumberDefault();
+        builder.Writeln("First numbered item");
+        builder.Writeln("Second numbered item");
         builder.ListFormat.RemoveNumbers();
 
-        // Reset style to normal for any following text.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        // Heading 1 again
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Chapter 2: Details");
 
-        // Update all fields (including the TOC) to reflect the inserted entries.
+        // Bulleted list
+        builder.ListFormat.ApplyBulletDefault();
+        builder.Writeln("First bullet item");
+        builder.Writeln("Second bullet item");
+        builder.ListFormat.RemoveNumbers();
+
+        // Update all fields (including the TOC) so they reflect the current document structure.
         doc.UpdateFields();
 
-        // Save the document.
-        const string outputPath = "TableOfContents.docx";
+        // Save the document to disk.
+        string outputPath = "Output.docx";
         doc.Save(outputPath);
+
+        // Optional verification that the file was saved correctly.
+        if (System.IO.File.Exists(outputPath))
+        {
+            Document reopened = new Document(outputPath);
+        }
     }
 }

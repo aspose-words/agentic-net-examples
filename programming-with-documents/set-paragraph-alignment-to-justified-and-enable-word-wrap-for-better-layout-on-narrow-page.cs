@@ -9,26 +9,22 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Sample long text to illustrate justification and word wrap.
-        string sampleText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
-                            "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. " +
-                            "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
-
-        // Insert a new paragraph with the sample text.
-        Paragraph paragraph = new Paragraph(doc);
-        paragraph.AppendChild(new Run(doc, sampleText));
-
         // Set paragraph alignment to justified.
-        paragraph.ParagraphFormat.Alignment = ParagraphAlignment.Justify;
+        builder.ParagraphFormat.Alignment = ParagraphAlignment.Justify;
 
-        // Enable word wrap for the paragraph (useful on narrow pages).
-        paragraph.ParagraphFormat.WordWrap = true;
+        // Enable word wrap for the paragraph (helps layout on narrow pages).
+        builder.ParagraphFormat.WordWrap = true;
 
-        // Add the paragraph to the document body.
-        doc.FirstSection.Body.AppendChild(paragraph);
+        // Add a long paragraph to demonstrate the formatting.
+        builder.Writeln(
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. " +
+            "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. " +
+            "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. " +
+            "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+        );
 
         // Save the document to a file.
-        string outputPath = "JustifiedParagraph.docx";
+        const string outputPath = "JustifiedParagraph.docx";
         doc.Save(outputPath);
     }
 }

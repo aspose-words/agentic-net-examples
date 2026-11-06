@@ -2,114 +2,88 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
 
 public class Program
 {
-    // Simple data model for report rows
-    public class ReportItem
-    {
-        public string Product { get; set; }
-        public int Quantity { get; set; }
-        public decimal UnitPrice { get; set; }
-
-        public decimal Total => Quantity * UnitPrice;
-    }
-
     public static void Main()
     {
-        // Sample data to merge into the report
-        List<ReportItem> items = new List<ReportItem>
+        // Sample data to merge into the table.
+        var employees = new List<Employee>
         {
-            new ReportItem { Product = "Apple",  Quantity = 10, UnitPrice = 0.5m },
-            new ReportItem { Product = "Banana", Quantity = 5,  UnitPrice = 0.3m },
-            new ReportItem { Product = "Orange", Quantity = 8,  UnitPrice = 0.4m }
+            new Employee { Name = "Alice Johnson", Age = 30, Salary = 75000 },
+            new Employee { Name = "Bob Smith", Age = 45, Salary = 88000 },
+            new Employee { Name = "Carol Davis", Age = 28, Salary = 62000 },
+            new Employee { Name = "David Brown", Age = 35, Salary = 71000 }
         };
 
-        // Create a new blank document
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a title
-        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-        builder.Font.Size = 16;
-        builder.Font.Bold = true;
-        builder.Writeln("Sales Report");
-        builder.Font.ClearFormatting();
-        builder.Writeln(); // empty line
+        // Insert a table with a header row.
+        builder.StartTable();
 
-        // Insert a table with 4 columns: Product, Quantity, Unit Price, Total
-        Table table = builder.StartTable();
-
-        // Define column widths (optional)
+        // Header cells.
         builder.InsertCell();
-        builder.CellFormat.Width = 150;
-        builder.Font.Bold = true;
-        builder.Writeln("Product");
-
+        builder.Write("Name");
         builder.InsertCell();
-        builder.CellFormat.Width = 80;
-        builder.Writeln("Quantity");
-
+        builder.Write("Age");
         builder.InsertCell();
-        builder.CellFormat.Width = 80;
-        builder.Writeln("Unit Price");
-
-        builder.InsertCell();
-        builder.CellFormat.Width = 80;
-        builder.Writeln("Total");
-
-        // End header row
+        builder.Write("Salary");
         builder.EndRow();
 
-        // Populate table rows with data
-        builder.Font.Bold = false;
-        foreach (var item in items)
+        // Populate table rows with employee data.
+        foreach (var emp in employees)
         {
             builder.InsertCell();
-            builder.Writeln(item.Product);
-
+            builder.Write(emp.Name);
             builder.InsertCell();
-            builder.Writeln(item.Quantity.ToString());
-
+            builder.Write(emp.Age.ToString());
             builder.InsertCell();
-            builder.Writeln(item.UnitPrice.ToString("C"));
-
-            builder.InsertCell();
-            builder.Writeln(item.Total.ToString("C"));
-
+            builder.Write(emp.Salary.ToString("C"));
             builder.EndRow();
         }
 
-        // End the table
+        // End the table.
         builder.EndTable();
 
-        // Add a summary paragraph below the table
-        builder.Writeln(); // empty line
-        builder.ParagraphFormat.Alignment = ParagraphAlignment.Right;
-        builder.Font.Size = 12;
-        builder.Font.Bold = true;
+        // Add a blank line before the summary.
+        builder.Writeln();
 
-        int totalQuantity = 0;
-        decimal grandTotal = 0m;
-        foreach (var item in items)
+        // Compute summary values.
+        int totalEmployees = employees.Count;
+        double averageAge = 0;
+        decimal totalSalary = 0;
+        if (totalEmployees > 0)
         {
-            totalQuantity += item.Quantity;
-            grandTotal += item.Total;
+            averageAge = (double)employees.Sum(e => e.Age) / totalEmployees;
+            totalSalary = employees.Sum(e => e.Salary);
         }
 
-        builder.Writeln($"Total Items: {totalQuantity}");
-        builder.Writeln($"Grand Total: {grandTotal:C}");
+        // Insert a summary paragraph.
+        builder.Writeln($"Total Employees: {totalEmployees}");
+        builder.Writeln($"Average Age: {averageAge:F1}");
+        builder.Writeln($"Total Salary: {totalSalary:C}");
 
-        // Save the document
+        // Define output file path.
         string outputPath = "Report.docx";
+
+        // Save the document.
         doc.Save(outputPath);
 
-        // Verify that the file was created and can be reopened
+        // Verify that the file was created.
         if (File.Exists(outputPath))
         {
-            Document loadedDoc = new Document(outputPath);
-            // Optionally, you could perform further checks here.
+            // Optionally, reopen to ensure it is a valid document.
+            Document verifyDoc = new Document(outputPath);
         }
+    }
+
+    // Simple data model for demonstration.
+    private class Employee
+    {
+        public string Name { get; set; }
+        public int Age { get; set; }
+        public decimal Salary { get; set; }
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
@@ -7,67 +8,61 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a DocumentBuilder.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Define a custom table style programmatically.
-        Style customTableStyle = doc.Styles.Add(StyleType.Table, "MyCustomTableStyle");
-        customTableStyle.Font.Name = "Arial";
-        customTableStyle.Font.Size = 10;
+        // Build a table.
+        Table table = builder.StartTable();
 
-        // Start building the table.
-        builder.StartTable();
-
-        // Header row.
-        builder.InsertCell();
-        builder.Write("Header 1");
-        builder.InsertCell();
-        builder.Write("Header 2");
-        builder.EndRow();
-
-        // Add several data rows.
-        for (int i = 1; i <= 5; i++)
+        // Add header row.
+        for (int col = 1; col <= 3; col++)
         {
             builder.InsertCell();
-            builder.Write($"Row {i} Col 1");
-            builder.InsertCell();
-            builder.Write($"Row {i} Col 2");
+            builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+            builder.Writeln($"Header {col}");
+        }
+        builder.EndRow();
+
+        // Add data rows.
+        for (int row = 1; row <= 5; row++)
+        {
+            for (int col = 1; col <= 3; col++)
+            {
+                builder.InsertCell();
+                builder.Writeln($"Row {row}, Col {col}");
+            }
             builder.EndRow();
         }
 
         // End the table.
         builder.EndTable();
 
-        // Retrieve the created table.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-
-        // Apply the custom style to the table.
-        table.Style = customTableStyle;
-
-        // Apply a simple border to the whole table.
-        table.SetBorders(LineStyle.Single, 0.5, Color.Black);
-
-        // Apply alternating row shading (skip header row).
-        for (int rowIndex = 1; rowIndex < table.Rows.Count; rowIndex++)
+        // Apply alternating row shading.
+        // Row 0 is the header; start shading from the first data row (index 1).
+        for (int i = 1; i < table.Rows.Count; i++)
         {
-            Row row = table.Rows[rowIndex];
-            Color shadeColor = (rowIndex % 2 == 0) ? Color.LightGray : Color.White;
+            Row currentRow = table.Rows[i];
+            Color shade = (i % 2 == 0) ? Color.LightGray : Color.White;
 
-            foreach (Cell cell in row.Cells)
+            foreach (Cell cell in currentRow.Cells)
             {
-                cell.CellFormat.Shading.BackgroundPatternColor = shadeColor;
+                cell.CellFormat.Shading.BackgroundPatternColor = shade;
             }
         }
 
         // Save the document.
-        string outputPath = "AlternatingRows.docx";
+        string outputPath = "TableWithAlternatingShading.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created (non‑interactive).
-        if (System.IO.File.Exists(outputPath))
+        // Verify the file was created.
+        if (File.Exists(outputPath))
         {
-            Console.WriteLine($"Document saved successfully to '{outputPath}'.");
+            Console.WriteLine($"Document saved successfully to '{Path.GetFullPath(outputPath)}'.");
+        }
+        else
+        {
+            Console.WriteLine("Failed to save the document.");
         }
     }
 }

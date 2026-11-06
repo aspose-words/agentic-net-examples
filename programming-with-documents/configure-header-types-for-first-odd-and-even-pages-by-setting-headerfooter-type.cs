@@ -1,7 +1,6 @@
 using System;
-using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
+using Aspose.Words.Drawing;
 
 public class Program
 {
@@ -9,32 +8,41 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+        Section section = doc.FirstSection;
+
+        // Enable different headers for first page and for odd/even pages.
+        section.PageSetup.DifferentFirstPageHeaderFooter = true;
+        section.PageSetup.OddAndEvenPagesHeaderFooter = true;
+
+        // Create and add a header for the first page.
+        HeaderFooter firstPageHeader = new HeaderFooter(doc, HeaderFooterType.HeaderFirst);
+        section.HeadersFooters.Add(firstPageHeader);
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Enable different headers for the first page and for odd/even pages.
-        builder.PageSetup.DifferentFirstPageHeaderFooter = true;
-        builder.PageSetup.OddAndEvenPagesHeaderFooter = true;
-
-        // ----- First page header -----
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderFirst);
         builder.Writeln("First Page Header");
 
-        // ----- Odd pages header (primary) -----
+        // Create and add a header for odd pages (primary header).
+        HeaderFooter oddHeader = new HeaderFooter(doc, HeaderFooterType.HeaderPrimary);
+        section.HeadersFooters.Add(oddHeader);
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
         builder.Writeln("Odd Page Header");
 
-        // ----- Even pages header -----
+        // Create and add a header for even pages.
+        HeaderFooter evenHeader = new HeaderFooter(doc, HeaderFooterType.HeaderEven);
+        section.HeadersFooters.Add(evenHeader);
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderEven);
         builder.Writeln("Even Page Header");
 
-        // Save the document to a file.
+        // Add body content to generate multiple pages.
+        builder.MoveToDocumentEnd();
+        for (int i = 1; i <= 5; i++)
+        {
+            builder.Writeln($"Paragraph {i}");
+            builder.InsertBreak(BreakType.PageBreak);
+        }
+
+        // Save the document.
         string outputPath = "HeaderTypes.docx";
         doc.Save(outputPath);
-
-        // Simple verification that the file was created.
-        if (File.Exists(outputPath))
-        {
-            Console.WriteLine($"Document saved successfully to {Path.GetFullPath(outputPath)}");
-        }
     }
 }

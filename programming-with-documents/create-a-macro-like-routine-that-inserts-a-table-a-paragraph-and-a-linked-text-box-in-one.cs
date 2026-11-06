@@ -1,7 +1,7 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Tables;
 
 public class Program
 {
@@ -10,57 +10,55 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Perform the macro‑like operation.
+        // Perform the macro‑like operation: insert a table, a paragraph, and a linked text box.
         InsertTableParagraphAndLinkedTextBox(doc);
 
-        // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MacroOutput.docx");
+        // Save the resulting document.
+        string outputPath = "MacroLikeOutput.docx";
         doc.Save(outputPath);
-
-        // Verify that the file was created (non‑interactive).
-        if (File.Exists(outputPath))
-        {
-            // Reopen to ensure it can be loaded without error.
-            Document loaded = new Document(outputPath);
-        }
     }
 
     private static void InsertTableParagraphAndLinkedTextBox(Document doc)
     {
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a simple 2x2 table.
-        builder.StartTable();
+        // ----- Insert a 2x2 table -----
+        Table table = builder.StartTable();
 
+        // First row
         builder.InsertCell();
-        builder.Writeln("Cell 1,1");
+        builder.Write("Cell 1,1");
         builder.InsertCell();
-        builder.Writeln("Cell 1,2");
+        builder.Write("Cell 1,2");
         builder.EndRow();
 
+        // Second row
         builder.InsertCell();
-        builder.Writeln("Cell 2,1");
+        builder.Write("Cell 2,1");
         builder.InsertCell();
-        builder.Writeln("Cell 2,2");
+        builder.Write("Cell 2,2");
         builder.EndRow();
 
         builder.EndTable();
 
-        // Insert a paragraph after the table.
-        builder.Writeln("This paragraph follows the table.");
+        // ----- Insert a paragraph after the table -----
+        builder.Writeln(); // Ensure a line break after the table.
+        builder.Writeln("This is a paragraph inserted after the table.");
 
-        // Insert a linked text box.
-        Shape textBox = new Shape(doc, ShapeType.TextBox);
-        textBox.Width = 200;
-        textBox.Height = 100;
-        textBox.WrapType = WrapType.Inline;
-        textBox.HRef = "https://www.example.com";
+        // ----- Insert a linked text box -----
+        // Create a shape of type TextBox.
+        Shape textBox = new Shape(doc, ShapeType.TextBox)
+        {
+            Width = 200,
+            Height = 100,
+            WrapType = WrapType.Inline
+        };
 
-        // Add text to the text box.
-        Paragraph para = new Paragraph(doc);
-        Run run = new Run(doc, "Click to visit example.com");
-        para.AppendChild(run);
-        textBox.AppendChild(para);
+        // Add text inside the text box.
+        Paragraph tbParagraph = new Paragraph(doc);
+        Run tbRun = new Run(doc, "Linked Text Box Content");
+        tbParagraph.AppendChild(tbRun);
+        textBox.AppendChild(tbParagraph);
 
         // Insert the text box into the document.
         builder.InsertNode(textBox);
