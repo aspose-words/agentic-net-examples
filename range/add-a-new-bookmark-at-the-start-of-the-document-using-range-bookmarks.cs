@@ -5,34 +5,23 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
+
+        // Add a paragraph with some text to the document body.
+        Paragraph paragraph = new Paragraph(doc);
+        paragraph.AppendChild(new Run(doc, "Hello Aspose.Words!"));
+        doc.FirstSection.Body.AppendChild(paragraph);
+
+        // Insert a bookmark at the start of the document using DocumentBuilder.
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add some initial text so the document has content.
-        builder.Writeln("This is the first paragraph.");
-
-        // Move the cursor to the very beginning of the document.
-        builder.MoveToDocumentStart();
-
-        // Insert a zero‑length bookmark named "StartBookmark" at the start.
+        // Move the cursor to the beginning of the first paragraph.
+        builder.MoveTo(paragraph.FirstChild);
+        // Start and end the bookmark at the same position.
         builder.StartBookmark("StartBookmark");
         builder.EndBookmark("StartBookmark");
 
-        // Verify that the bookmark was added.
-        if (doc.Range.Bookmarks["StartBookmark"] != null)
-        {
-            Console.WriteLine("Bookmark 'StartBookmark' successfully added.");
-        }
-        else
-        {
-            Console.WriteLine("Failed to add bookmark 'StartBookmark'.");
-        }
-
-        // Save the document to verify the bookmark was added.
-        string outputPath = "Output.docx";
-        doc.Save(outputPath);
-
-        Console.WriteLine($"Document saved to '{outputPath}'.");
+        // Save the document to a file.
+        doc.Save("Output.docx");
     }
 }

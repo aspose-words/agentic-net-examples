@@ -6,7 +6,7 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and add sample content.
+        // Create a new document and add some paragraphs.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("First line of text.");
@@ -14,15 +14,16 @@ public class Program
         builder.Writeln("Third line of text.");
 
         // Extract plain text from the whole document range.
-        string extractedText = doc.Range.Text; // Preserves paragraph breaks as line breaks.
+        string extractedText = doc.Range.Text;
 
-        // Define output file path.
+        // Save the extracted text to a .txt file, preserving line breaks.
         string outputPath = "ExtractedText.txt";
-
-        // Write the extracted text to a .txt file.
         File.WriteAllText(outputPath, extractedText);
 
-        // Optional: confirm that the file was created (no console output required).
-        // The program ends here.
+        // Optional: confirm the file was created (no console output required).
+        if (!File.Exists(outputPath))
+        {
+            throw new InvalidOperationException("Failed to create the output text file.");
+        }
     }
 }

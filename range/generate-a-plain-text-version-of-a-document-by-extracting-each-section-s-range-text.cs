@@ -1,49 +1,47 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with multiple sections.
+        // Create a new document with multiple sections.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        doc.Sections.Clear();
 
-        // Section 1
-        builder.Writeln("This is the first section.");
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
-
-        // Section 2
-        builder.Writeln("This is the second section.");
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
-
-        // Section 3
-        builder.Writeln("This is the third section.");
-
-        // Save the source document locally.
-        string sourcePath = "Sample.docx";
-        doc.Save(sourcePath);
-
-        // Load the document from the saved file.
-        Document loadedDoc = new Document(sourcePath);
-
-        // Extract plain text from each section's Range.Text.
-        StringBuilder plainTextBuilder = new StringBuilder();
-
-        foreach (Section section in loadedDoc.Sections)
+        for (int i = 1; i <= 3; i++)
         {
-            // Trim to remove leading/trailing whitespace that may be added by Aspose.Words.
-            string sectionText = section.Range.Text.Trim();
-            plainTextBuilder.AppendLine(sectionText);
+            // Create a new section.
+            Section section = new Section(doc);
+            // Add a body to the section.
+            Body body = new Body(doc);
+            section.AppendChild(body);
+            // Add a paragraph with some text.
+            Paragraph para = new Paragraph(doc);
+            Run run = new Run(doc, $"This is the text of section {i}.");
+            para.AppendChild(run);
+            body.AppendChild(para);
+            // Add the section to the document.
+            doc.Sections.Add(section);
         }
 
-        // Write the combined plain‑text output to a .txt file.
-        string outputPath = "PlainTextOutput.txt";
-        File.WriteAllText(outputPath, plainTextBuilder.ToString());
+        // Extract plain text from each section's Range.
+        StringWriter plainTextWriter = new StringWriter();
+        foreach (Section sec in doc.Sections)
+        {
+            plainTextWriter.WriteLine(sec.Range.Text.Trim());
+        }
 
-        // Optionally, write to console to show completion.
-        Console.WriteLine("Plain‑text extraction completed. Output saved to: " + Path.GetFullPath(outputPath));
+        string plainText = plainTextWriter.ToString();
+
+        // Write the extracted text to a file.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "PlainTextOutput.txt");
+        File.WriteAllText(outputPath, plainText);
+
+        // Also output to console for verification.
+        Console.WriteLine("Extracted plain‑text content:");
+        Console.WriteLine(plainText);
+        Console.WriteLine($"Plain‑text file saved to: {outputPath}");
     }
 }

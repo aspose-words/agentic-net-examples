@@ -5,12 +5,14 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and add a bookmark with some text.
+        // Create a sample document with a bookmark.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Document start.");
         builder.StartBookmark("MyBookmark");
-        builder.Writeln("This is the text inside the bookmark.");
+        builder.Writeln("This text will be cleared.");
         builder.EndBookmark("MyBookmark");
+        builder.Writeln("Document end.");
 
         // Save the original document.
         string originalPath = "Original.docx";
@@ -19,15 +21,15 @@ public class Program
         // Load the document from the saved file.
         Document loadedDoc = new Document(originalPath);
 
-        // Retrieve the bookmark and clear its text without deleting the bookmark.
+        // Clear the text of the specific bookmark without deleting the bookmark itself.
         Bookmark bookmark = loadedDoc.Range.Bookmarks["MyBookmark"];
         if (bookmark != null)
         {
-            bookmark.Text = string.Empty; // Clears the bookmark's content.
+            bookmark.Text = string.Empty;
         }
 
         // Save the modified document.
-        string resultPath = "ClearedBookmark.docx";
-        loadedDoc.Save(resultPath);
+        string outputPath = "ClearedBookmark.docx";
+        loadedDoc.Save(outputPath);
     }
 }

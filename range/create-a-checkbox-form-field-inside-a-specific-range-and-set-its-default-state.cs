@@ -1,38 +1,33 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.BuildingBlocks;
 
-namespace AsposeWordsRangeCheckboxExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Add some initial content.
-            builder.Writeln("First paragraph.");
-            builder.Writeln("Second paragraph where the checkbox will be placed:");
+        // Add introductory text.
+        builder.Writeln("Please accept the terms:");
 
-            // Locate the second paragraph (index 1) to define the target range.
-            Paragraph targetParagraph = (Paragraph)doc.GetChild(NodeType.Paragraph, 1, true);
+        // Insert an empty paragraph that will contain the checkbox.
+        builder.Writeln();
+        Paragraph checkboxParagraph = (Paragraph)builder.CurrentParagraph;
 
-            // Move the builder to the start of the target paragraph's range.
-            builder.MoveTo(targetParagraph);
-            // Write preceding text inside the same range.
-            builder.Write("Accept terms: ");
+        // Move the builder to the start of the paragraph.
+        builder.MoveTo(checkboxParagraph);
 
-            // Insert a checkbox form field with a default checked state.
-            // Parameters: field name, default state (true = checked), size in points.
-            builder.InsertCheckBox("TermsCheckBox", true, 10);
+        // Insert a checkbox form field named "AcceptTerms" with default checked state.
+        // The third parameter is the size of the checkbox (in points).
+        builder.InsertCheckBox("AcceptTerms", true, 50);
 
-            // Optionally add a line break after the checkbox.
-            builder.Writeln();
+        // Add text after the checkbox in the same paragraph.
+        builder.Write(" I agree.");
+        builder.Writeln(); // End the paragraph.
 
-            // Save the document to disk.
-            doc.Save("Output.docx");
-        }
+        // Save the document.
+        doc.Save("CheckboxFormField.docx");
     }
 }

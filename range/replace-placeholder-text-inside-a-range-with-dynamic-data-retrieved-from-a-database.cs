@@ -1,6 +1,5 @@
 using System;
 using System.Data;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -8,46 +7,42 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // -----------------------------------------------------------------
+        // 1. Create a sample template document that contains a placeholder.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Dear {{Name}},");
+        builder.Writeln("Thank you for your business.");
+        templateDoc.Save("Template.docx");
 
-        // Insert a paragraph with a placeholder that will be replaced.
-        builder.Writeln("Hello {{Name}}! Welcome to Aspose.Words.");
+        // ---------------------------------------------------------------
+        // 2. Simulate retrieving data from a database.
+        //    Here we use an in‑memory DataTable to avoid external dependencies.
+        // ---------------------------------------------------------------
+        string nameFromDb;
+        DataTable users = new DataTable();
+        users.Columns.Add("Id", typeof(int));
+        users.Columns.Add("Name", typeof(string));
+        users.Rows.Add(1, "Alice");
 
-        // ---------- Simulate database retrieval ----------
-        // Use an in‑memory DataTable to mimic a simple database table.
-        string retrievedName;
-        DataTable usersTable = new DataTable();
-        usersTable.Columns.Add("Id", typeof(int));
-        usersTable.Columns.Add("Name", typeof(string));
+        // Retrieve the name where Id = 1.
+        DataRow row = users.Select("Id = 1")[0];
+        nameFromDb = row["Name"].ToString();
 
-        // Insert a sample record.
-        usersTable.Rows.Add(1, "John Doe");
+        // ---------------------------------------------------------------
+        // 3. Load the template document.
+        // ---------------------------------------------------------------
+        Document doc = new Document("Template.docx");
 
-        // Retrieve the name value where Id = 1.
-        DataRow[] foundRows = usersTable.Select("Id = 1");
-        if (foundRows.Length > 0)
-        {
-            retrievedName = foundRows[0]["Name"].ToString();
-        }
-        else
-        {
-            retrievedName = string.Empty;
-        }
+        // ---------------------------------------------------------------
+        // 4. Replace the placeholder with the value retrieved from the "database".
+        // ---------------------------------------------------------------
+        doc.Range.Replace("{{Name}}", nameFromDb, new FindReplaceOptions());
 
-        // ---------- Replace placeholder text using Range ----------
-        // Use Document.Range.Replace for a simple find‑and‑replace operation.
-        FindReplaceOptions options = new FindReplaceOptions(FindReplaceDirection.Forward);
-        doc.Range.Replace("{{Name}}", retrievedName, options);
-
-        // Save the modified document.
-        string outputPath = "Output.docx";
-        doc.Save(outputPath);
-
-        // Optional: output the final text to the console for verification.
-        Console.WriteLine("Document saved to " + Path.GetFullPath(outputPath));
-        Console.WriteLine("Final document text:");
-        Console.WriteLine(doc.Range.Text);
+        // ---------------------------------------------------------------
+        // 5. Save the resulting document.
+        // ---------------------------------------------------------------
+        doc.Save("Result.docx");
     }
 }
