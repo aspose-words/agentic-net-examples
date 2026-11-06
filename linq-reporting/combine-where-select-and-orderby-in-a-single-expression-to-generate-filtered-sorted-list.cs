@@ -5,57 +5,80 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Person
+public class Product
 {
     public string Name { get; set; } = "";
-    public int Age { get; set; }
+    public decimal Price { get; set; }
+}
+
+public class ProductDto
+{
+    public string Name { get; set; } = "";
+    public decimal Price { get; set; }
 }
 
 public class ReportModel
 {
-    public List<Person> Persons { get; set; } = new();
+    public List<ProductDto> Items { get; set; } = new();
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for template and output documents.
-        string templatePath = "Template.docx";
-        string outputPath = "Report.docx";
+        // Ensure output directory exists
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Create the template document with LINQ Reporting tags.
+        // Create a Word template with LINQ Reporting tags
+        string templatePath = Path.Combine(outputDir, "Template.docx");
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("Filtered and Sorted Persons:");
-        builder.Writeln("<<foreach [person in Persons.Where(p => p.Age > 30).Select(p => p).OrderBy(p => p.Name)]>>");
-        builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
+        builder.Writeln("Product Report");
+        builder.Writeln("==============");
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("<<[item.Name]>> - $<<[item.Price]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
         templateDoc.Save(templatePath);
 
-        // Load the template for report generation.
+        // Load the template (demonstrates load rule)
         Document doc = new Document(templatePath);
 
-        // Prepare sample data.
-        var model = new ReportModel
+        // Sample data source
+        List<Product> products = new()
         {
-            Persons = new List<Person>
-            {
-                new Person { Name = "Alice", Age = 28 },
-                new Person { Name = "Bob", Age = 35 },
-                new Person { Name = "Charlie", Age = 40 },
-                new Person { Name = "David", Age = 25 }
-            }
+            new Product { Name = "Apple", Price = 5m },
+            new Product { Name = "Banana", Price = 12m },
+            new Product { Name = "Cherry", Price = 15m },
+            new Product { Name = "Date", Price = 8m },
+            new Product { Name = "Elderberry", Price = 20m }
         };
 
-        // Build the report using the LINQ Reporting engine.
+        // Combine Where, Select, and OrderBy in a single LINQ expression
+        List<ProductDto> filteredSorted = products
+            .Where(p => p.Price > 10)                     // Filter
+            .Select(p => new ProductDto                    // Project
+            {
+                Name = p.Name,
+                Price = p.Price
+            })
+            .OrderBy(p => p.Name)                         // Sort
+            .ToList();
+
+        // Prepare the root model for the report
+        ReportModel model = new()
+        {
+            Items = filteredSorted
+        };
+
+        // Build the report using Aspose.Words ReportingEngine
         ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
-        // Save the generated report.
-        doc.Save(outputPath);
+        // Save the generated report
+        string reportPath = Path.Combine(outputDir, "Report.docx");
+        doc.Save(reportPath);
     }
 }

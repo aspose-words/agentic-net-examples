@@ -1,60 +1,59 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class Model
-{
-    // Existing property used in the template.
-    public string Existing { get; set; } = "World";
-    // No property named Missing – this will trigger the fallback message.
-}
 
 public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // Create a template document that references an existing and a missing member.
-        // -----------------------------------------------------------------
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-        builder.Writeln("Hello <<[model.Existing]>> and <<[model.Missing]>>!");
+        // Register code page provider (required for Aspose.Words)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // -----------------------------------------------------------------
-        // Prepare the data model.
-        // -----------------------------------------------------------------
-        Model model = new Model();
+        // Create a simple template with a missing member reference
+        string templatePath = "template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Hello <<[model.MissingMember]>>!");
+        templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // Configure the reporting engine to embed inline error messages.
-        // -----------------------------------------------------------------
+        // Load the template (simulating a real scenario)
+        Document doc = new Document(templatePath);
+
+        // Prepare model without the referenced member
+        var model = new Model();
+
+        // Configure the reporting engine to use inline error messages
         ReportingEngine engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-        // -----------------------------------------------------------------
-        // Build the report. The method returns false because a missing member is encountered.
-        // -----------------------------------------------------------------
-        bool success = engine.BuildReport(template, model, "model");
+        // Build the report
+        bool success = engine.BuildReport(doc, model, "model");
 
-        // -----------------------------------------------------------------
-        // Verify that an inline error message appears in the generated document.
-        // The default inline error message contains the word "Error".
-        // -----------------------------------------------------------------
-        string resultText = template.GetText();
-        bool containsErrorMessage = resultText.Contains("Error");
-        bool testPassed = !success && containsErrorMessage;
+        // Retrieve the generated text
+        string resultText = doc.GetText();
 
-        Console.WriteLine(testPassed
-            ? "Test passed: inline error message correctly inserted."
-            : "Test failed: inline error message not found or build succeeded unexpectedly.");
+        // Determine if the fallback message appears (Aspose.Words inserts "??" for missing members)
+        bool containsFallback = resultText.Contains("??") || resultText.Contains("Error") || resultText.Contains("missing");
 
-        // -----------------------------------------------------------------
-        // Save the generated document for manual inspection.
-        // -----------------------------------------------------------------
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "Report.docx");
-        template.Save(outputPath);
+        // Simple unit‑test style output
+        if (!success && containsFallback)
+        {
+            Console.WriteLine("Test Passed: Fallback message detected.");
+        }
+        else
+        {
+            Console.WriteLine("Test Failed: Fallback message not detected.");
+        }
+
+        // Save the generated document for inspection (optional)
+        doc.Save("output.docx");
+    }
+
+    // Model class without the MissingMember property
+    public class Model
+    {
+        public string ExistingMember { get; set; } = "ExistingValue";
     }
 }

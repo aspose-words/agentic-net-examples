@@ -1,76 +1,85 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using System.Text;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some Aspose.Words features)
+        // Register code page provider for Aspose.Words.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare folders
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
-
-        // Paths for template, result and log files
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        string resultPath = Path.Combine(outputDir, "result.docx");
-        string logPath = Path.Combine(outputDir, "errors.log");
-
-        // -------------------------------------------------
-        // Create a template document with an invalid expression
-        // -------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("Report Header");
-        // Invalid expression: property 'MissingProperty' does not exist in the model
-        builder.Writeln("<<[model.MissingProperty]>>");
-
-        // Save the template to disk
-        templateDoc.Save(templatePath);
-
-        // -------------------------------------------------
-        // Load the template for report generation
-        // -------------------------------------------------
-        Document reportDoc = new Document(templatePath);
-
-        // Sample data model (does NOT contain MissingProperty)
-        ReportModel model = new ReportModel
+        // Prepare sample data model.
+        var model = new SampleModel
         {
-            Title = "Sample Report"
+            Name = "John Doe"
         };
 
-        // -------------------------------------------------
-        // Build the report without InlineErrorMessages option
-        // -------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
+        // Create a template document with a valid and an invalid expression.
+        var templatePath = "template.docx";
+        CreateTemplate(templatePath);
 
+        // Load the template.
+        var doc = new Document(templatePath);
+
+        // Configure the reporting engine without InlineErrorMessages.
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None; // InlineErrorMessages disabled.
+
+        bool success;
         try
         {
-            // InlineErrorMessages flag is NOT set, so syntax errors will raise an exception
-            engine.BuildReport(reportDoc, model, "model");
-
-            // If no exception, save the generated document
-            reportDoc.Save(resultPath);
+            // Build the report.
+            success = engine.BuildReport(doc, model, "model");
         }
         catch (Exception ex)
         {
-            // Log the syntax error details to a file
-            File.WriteAllText(logPath, ex.ToString());
+            // When InlineErrorMessages is disabled, errors are thrown as exceptions.
+            success = false;
+            LogError(ex);
+        }
 
-            // Optionally, still save the partially generated document
-            reportDoc.Save(resultPath);
+        // If the build failed, log syntax errors to a file.
+        if (!success)
+        {
+            var logPath = "error.log";
+            var logMessage = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Report generation failed due to syntax errors in the template.";
+            File.WriteAllText(logPath, logMessage);
+        }
+        else
+        {
+            // Save the generated report when successful.
+            doc.Save("output.docx");
         }
     }
 
-    // Simple public data model used by the template
-    public class ReportModel
+    private static void CreateTemplate(string path)
     {
-        // Property that exists (used for demonstration)
-        public string Title { get; set; } = string.Empty;
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        // Valid expression.
+        builder.Writeln("Customer Name: <<[model.Name]>>");
+
+        // Invalid expression (syntax error – property does not exist).
+        builder.Writeln("Invalid Field: <<[model.NonExistent]>>");
+
+        doc.Save(path);
     }
+
+    private static void LogError(Exception ex)
+    {
+        var errorLogPath = "exception.log";
+        var sb = new StringBuilder();
+        sb.AppendLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Exception during report generation:");
+        sb.AppendLine(ex.ToString());
+        File.WriteAllText(errorLogPath, sb.ToString());
+    }
+}
+
+public class SampleModel
+{
+    public string Name { get; set; } = string.Empty;
 }

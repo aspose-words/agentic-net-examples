@@ -1,67 +1,78 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingFirstCharStyling
+public class Program
 {
-    // Sample data model.
-    public class ReportModel
+    public static void Main()
     {
-        public List<Person> Persons { get; set; } = new();
-    }
+        // Ensure the output directory exists.
+        string outputDir = "Output";
+        Directory.CreateDirectory(outputDir);
 
-    public class Person
-    {
-        public string Name { get; set; } = "";
-        public int Age { get; set; }
-    }
+        // Create the template document.
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        CreateTemplate(templatePath);
 
-    public class Program
-    {
-        public static void Main()
+        // Load the template.
+        Document doc = new Document(templatePath);
+
+        // Prepare sample data.
+        ReportModel model = new()
         {
-            // Prepare sample data.
-            var model = new ReportModel
+            Items = new()
             {
-                Persons = new()
-                {
-                    new Person { Name = "Alice", Age = 30 },
-                    new Person { Name = "Bob", Age = 25 },
-                    new Person { Name = "Charlie", Age = 35 }
-                }
-            };
+                new Item { Name = "Alpha" },
+                new Item { Name = "Beta" },
+                new Item { Name = "Gamma" },
+                new Item { Name = "Delta" }
+            }
+        };
 
-            // Create the template document programmatically.
-            var templatePath = "Template.docx";
-            var builder = new DocumentBuilder();
-            builder.Writeln("People Report");
-            builder.Writeln();
+        // Build the report.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-            // Begin foreach loop over Persons.
-            builder.Writeln("<<foreach [p in Persons]>>");
-
-            // Write each person's name with the first character in red.
-            // First character styled with textColor, rest normal.
-            builder.Writeln(
-                "<<textColor [\"Red\"]>><<[p.Name.Substring(0,1)]>><</textColor>><<[p.Name.Substring(1)]>> (Age: <<[p.Age]>>)");
-
-            // End foreach loop.
-            builder.Writeln("<</foreach>>");
-
-            // Save the template.
-            builder.Document.Save(templatePath);
-
-            // Load the template for report generation.
-            var templateDoc = new Document(templatePath);
-
-            // Build the report.
-            var engine = new ReportingEngine();
-            engine.BuildReport(templateDoc, model, "model");
-
-            // Save the final report.
-            var outputPath = "Report.docx";
-            templateDoc.Save(outputPath);
-        }
+        // Save the generated report.
+        string reportPath = Path.Combine(outputDir, "Report.docx");
+        doc.Save(reportPath);
     }
+
+    private static void CreateTemplate(string path)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Title
+        builder.Writeln("Custom Font Styling Example");
+        builder.Writeln();
+
+        // Begin foreach over Items
+        builder.Writeln("<<foreach [item in Items]>>");
+
+        // If the Name is not empty, apply first‑character formatting.
+        builder.Writeln("<<if [item.Name.Length > 0]>>");
+        // First character in red color.
+        builder.Writeln("<<textColor [\"Red\"]>><<[item.Name.Substring(0,1)]>><</textColor>><<[item.Name.Substring(1)]>>");
+        builder.Writeln("<</if>>");
+
+        // New line after each item.
+        builder.Writeln("<</foreach>>");
+
+        // Save the template.
+        doc.Save(path);
+    }
+}
+
+// Data model classes.
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    public string Name { get; set; } = "";
 }

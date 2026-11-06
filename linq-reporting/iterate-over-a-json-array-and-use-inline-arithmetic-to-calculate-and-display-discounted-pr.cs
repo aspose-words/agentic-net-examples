@@ -4,99 +4,100 @@ using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;          // Needed for Table type
+using Aspose.Words.Tables;
 using Newtonsoft.Json;
 
-public class Item
+namespace LinqReportingJsonDiscount
 {
-    public string Name { get; set; } = "";
-    public decimal Price { get; set; }
-    public decimal Discount { get; set; } // percentage
-}
-
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main()
+    // Model representing a product.
+    public class Product
     {
-        // Register code page provider for Aspose.Words.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        public string Name { get; set; } = "";
+        public decimal Price { get; set; }
+        public decimal Discount { get; set; } // e.g., 0.15 for 15% discount
+    }
 
-        // Prepare sample JSON data.
-        string jsonPath = "data.json";
-        var sampleData = new[]
+    // Wrapper model for the report.
+    public class ReportModel
+    {
+        public List<Product> Items { get; set; } = new();
+    }
+
+    public class Program
+    {
+        public static void Main()
         {
-            new Item { Name = "Laptop", Price = 1200m, Discount = 10m },
-            new Item { Name = "Smartphone", Price = 800m, Discount = 5m },
-            new Item { Name = "Headphones", Price = 150m, Discount = 20m }
-        };
-        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(sampleData, Formatting.Indented));
+            // Register code page provider (required by Aspose.Words on some platforms).
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Deserialize JSON into the model.
-        var model = new ReportModel
-        {
-            Items = JsonConvert.DeserializeObject<List<Item>>(File.ReadAllText(jsonPath)) ?? new()
-        };
+            // 1. Create sample JSON data.
+            string json = @"
+            {
+                ""Items"": [
+                    { ""Name"": ""Laptop"", ""Price"": 1200.00, ""Discount"": 0.10 },
+                    { ""Name"": ""Smartphone"", ""Price"": 800.00, ""Discount"": 0.15 },
+                    { ""Name"": ""Headphones"", ""Price"": 150.00, ""Discount"": 0.05 }
+                ]
+            }";
 
-        // Create the LINQ Reporting template.
-        string templatePath = "template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+            // 2. Deserialize JSON into the report model.
+            ReportModel model = JsonConvert.DeserializeObject<ReportModel>(json) ?? new ReportModel();
 
-        builder.Writeln("Product Discount Report");
-        builder.Writeln();
+            // 3. Create the LINQ Reporting template programmatically.
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Begin foreach loop.
-        builder.Writeln("<<foreach [item in Items]>>");
+            builder.Writeln("Product Price Report");
+            builder.Writeln("Generated on: " + DateTime.Now);
+            builder.Writeln();
 
-        // Start table inside the loop.
-        Table table = builder.StartTable();
+            // Start foreach loop over Items.
+            builder.Writeln("<<foreach [p in Items]>>");
 
-        // Table header (only once, before data rows).
-        builder.InsertCell();
-        builder.Writeln("Product");
-        builder.InsertCell();
-        builder.Writeln("Price");
-        builder.InsertCell();
-        builder.Writeln("Discount (%)");
-        builder.InsertCell();
-        builder.Writeln("Discounted Price");
-        builder.EndRow();
+            // Create a table for each product.
+            Table table = builder.StartTable();
 
-        // Data row template.
-        builder.InsertCell();
-        builder.Writeln("<<[item.Name]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[item.Price]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[item.Discount]>>");
-        builder.InsertCell();
-        // Inline calculation: Price * (1 - Discount/100)
-        builder.Writeln("<<[item.Price * (1 - item.Discount / 100)]>>");
-        builder.EndRow();
+            // Header row (repeated for simplicity).
+            builder.InsertCell();
+            builder.Writeln("Product");
+            builder.InsertCell();
+            builder.Writeln("Original Price");
+            builder.InsertCell();
+            builder.Writeln("Discounted Price");
+            builder.EndRow();
 
-        // End table and foreach.
-        builder.EndTable();
-        builder.Writeln("<</foreach>>");
+            // Data row.
+            builder.InsertCell();
+            builder.Writeln("<<[p.Name]>>");
+            builder.InsertCell();
+            builder.Writeln("<<[p.Price]>>");
+            builder.InsertCell();
+            // Inline arithmetic to calculate discounted price.
+            builder.Writeln("<<[p.Price * (1 - p.Discount)]>>");
+            builder.EndRow();
 
-        // Save the template.
-        doc.Save(templatePath);
+            builder.EndTable();
 
-        // Load the template for reporting.
-        var reportDoc = new Document(templatePath);
-        var engine = new ReportingEngine();
+            // End foreach loop.
+            builder.Writeln("<</foreach>>");
 
-        // Build the report.
-        engine.BuildReport(reportDoc, model, "model");
+            // Save the template to disk.
+            string templatePath = "Template.docx";
+            template.Save(templatePath);
 
-        // Save the final report.
-        string outputPath = "report.docx";
-        reportDoc.Save(outputPath);
+            // 4. Load the template.
+            Document doc = new Document(templatePath);
 
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+            // 5. Build the report using the LINQ Reporting engine.
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
+
+            // 6. Save the generated report.
+            string outputPath = "Report.docx";
+            doc.Save(outputPath);
+
+            // Indicate completion.
+            Console.WriteLine("Report generated: " + Path.GetFullPath(outputPath));
+        }
     }
 }

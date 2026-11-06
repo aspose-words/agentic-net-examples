@@ -8,52 +8,55 @@ public class Program
     public static void Main()
     {
         // Prepare sample data.
-        ReportModel model = new()
+        var model = new ReportModel
         {
-            Groups = new()
+            Groups = new List<Group>
             {
                 new Group
                 {
-                    Name = "Fruits",
-                    Items = new() { "Apple", "Banana", "Cherry" }
+                    Name = "Group A",
+                    Items = new List<string> { "Item A1", "Item A2", "Item A3" }
                 },
                 new Group
                 {
-                    Name = "Vegetables",
-                    Items = new() { "Carrot", "Lettuce", "Pepper" }
+                    Name = "Group B",
+                    Items = new List<string> { "Item B1", "Item B2" }
                 }
             }
         };
 
         // Create the template document.
-        Document template = new();
-        DocumentBuilder builder = new(template);
+        var templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Outer foreach over groups.
-        builder.Writeln("<<foreach [group in model.Groups]>>");
-        // Group name.
+        // Begin outer foreach over groups.
+        builder.Writeln("<<foreach [group in Model.Groups]>>");
+        // Write group name.
         builder.Writeln("<<[group.Name]>>");
-        // Numbered list of items with restartNum before inner foreach.
+
+        // Start a numbered list for items within the group.
         builder.ListFormat.ApplyNumberDefault();
+        // Restart numbering for each group and iterate over items.
         builder.Writeln("<<restartNum>><<foreach [item in group.Items]>> <<[item]>> <</foreach>>");
+        // End the numbered list.
         builder.ListFormat.RemoveNumbers();
+
         // End outer foreach.
         builder.Writeln("<</foreach>>");
 
         // Save the template.
-        const string templatePath = "template.docx";
-        template.Save(templatePath);
+        doc.Save(templatePath);
 
         // Load the template for reporting.
-        Document doc = new(templatePath);
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
 
         // Build the report.
-        ReportingEngine engine = new();
-        engine.BuildReport(doc, model, "model");
+        engine.BuildReport(reportDoc, model, "Model");
 
-        // Save the final document.
-        const string outputPath = "output.docx";
-        doc.Save(outputPath);
+        // Save the final report.
+        reportDoc.Save("Report.docx");
     }
 }
 

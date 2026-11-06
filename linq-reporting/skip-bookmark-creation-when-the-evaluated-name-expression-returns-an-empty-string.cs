@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -8,70 +7,64 @@ public class Program
 {
     public static void Main()
     {
-        // Ensure code page provider is available (required for some data sources).
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Create the template document with LINQ Reporting tags.
+        var templatePath = "Template.docx";
+        var outputPath = "Report.docx";
 
-        // Paths for the template and the generated report.
-        string templatePath = "template.docx";
-        string reportPath = "report.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // -------------------------------------------------
-        // 1. Create the LINQ Reporting template programmatically.
-        // -------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Write the LINQ Reporting tags.
+        // Begin foreach over Items collection.
         builder.Writeln("<<foreach [item in Items]>>");
-        // If the bookmark name is not empty, create a bookmark around the title.
+
+        // If BookmarkName is not empty, create a bookmark around the title.
         builder.Writeln("<<if [item.BookmarkName != \"\"]>>");
         builder.Writeln("<<bookmark [item.BookmarkName]>>");
         builder.Writeln("<<[item.Title]>>");
         builder.Writeln("<</bookmark>>");
         builder.Writeln("<</if>>");
-        // If the bookmark name is empty, just write the title without a bookmark.
+
+        // If BookmarkName is empty, just write the title without a bookmark.
         builder.Writeln("<<if [item.BookmarkName == \"\"]>>");
         builder.Writeln("<<[item.Title]>>");
         builder.Writeln("<</if>>");
+
+        // End foreach.
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
+        // Save the template.
+        doc.Save(templatePath);
 
-        // -------------------------------------------------
-        // 2. Prepare the data model.
-        // -------------------------------------------------
-        ReportModel model = new ReportModel
+        // Load the template for report generation.
+        var template = new Document(templatePath);
+
+        // Prepare sample data.
+        var model = new ReportModel
         {
-            Items = new List<Item>
+            Items = new()
             {
-                new Item { Title = "First Section", BookmarkName = "FirstBookmark" },
-                new Item { Title = "Second Section", BookmarkName = "" } // Empty bookmark name – should be skipped.
+                new Item { Title = "First Item", BookmarkName = "FirstBookmark" },
+                new Item { Title = "Second Item", BookmarkName = "" },
+                new Item { Title = "Third Item", BookmarkName = "ThirdBookmark" }
             }
         };
 
-        // -------------------------------------------------
-        // 3. Load the template and build the report.
-        // -------------------------------------------------
-        Document doc = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine();
-
-        // Build the report using the model as the root object named "model".
-        engine.BuildReport(doc, model, "model");
+        // Build the report.
+        var engine = new ReportingEngine();
+        engine.BuildReport(template, model, "model");
 
         // Save the generated report.
-        doc.Save(reportPath);
+        template.Save(outputPath);
     }
 }
 
-// -------------------------------------------------
-// Data model classes.
-// -------------------------------------------------
+// Root data model.
 public class ReportModel
 {
     public List<Item> Items { get; set; } = new();
 }
 
+// Item model used in the foreach loop.
 public class Item
 {
     public string Title { get; set; } = "";

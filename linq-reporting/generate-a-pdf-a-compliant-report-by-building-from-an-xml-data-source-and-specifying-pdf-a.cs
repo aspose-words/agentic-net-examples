@@ -1,92 +1,72 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Saving;
-using Aspose.Words.Tables;
+using Newtonsoft.Json; // Included as required by category
 
 public class Program
 {
     public static void Main()
     {
-        // Working directory.
-        string workDir = Directory.GetCurrentDirectory();
+        // Register code page provider for any required encodings.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // File paths.
-        string dataFile = Path.Combine(workDir, "data.xml");
-        string templateFile = Path.Combine(workDir, "template.docx");
-        string outputPdf = Path.Combine(workDir, "Report.pdf");
+        // Prepare output directory.
+        string outputDir = "output";
+        Directory.CreateDirectory(outputDir);
 
         // Create sample XML data source.
-        File.WriteAllText(dataFile,
-@"<Orders>
-    <Order>
-        <CustomerName>John Doe</CustomerName>
-        <OrderDate>2023-01-15</OrderDate>
-        <Total>199.99</Total>
-    </Order>
-    <Order>
-        <CustomerName>Jane Smith</CustomerName>
-        <OrderDate>2023-02-03</OrderDate>
-        <Total>349.50</Total>
-    </Order>
-</Orders>");
+        string xmlPath = Path.Combine(outputDir, "data.xml");
+        string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<Report>
+  <Title>Sample Report</Title>
+  <Date>2023-01-01</Date>
+  <Items>
+    <Item>
+      <Name>Item 1</Name>
+      <Quantity>2</Quantity>
+      <Price>10.5</Price>
+    </Item>
+    <Item>
+      <Name>Item 2</Name>
+      <Quantity>5</Quantity>
+      <Price>7.25</Price>
+    </Item>
+  </Items>
+</Report>";
+        File.WriteAllText(xmlPath, xmlContent, Encoding.UTF8);
 
-        // Build the template document with LINQ Reporting tags.
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("Orders Report");
-        builder.Writeln();
-
-        // Begin foreach loop over Orders.
-        builder.Writeln("<<foreach [order in Orders]>>");
-
-        // Create a table for each iteration (header + data row).
-        Table table = builder.StartTable();
-
-        // Header row.
-        builder.InsertCell();
-        builder.Writeln("Customer");
-        builder.InsertCell();
-        builder.Writeln("Date");
-        builder.InsertCell();
-        builder.Writeln("Total");
-        builder.EndRow();
-
-        // Data row bound to the current order.
-        builder.InsertCell();
-        builder.Writeln("<<[order.CustomerName]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[order.OrderDate]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[order.Total]>>");
-        builder.EndRow();
-
-        // End the table for this iteration.
-        builder.EndTable();
-
-        // End foreach loop.
+        // Create the Word template with LINQ Reporting tags.
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Report Title: <<[Report.Title]>>");
+        builder.Writeln("Date: <<[Report.Date]>>");
+        builder.Writeln("");
+        builder.Writeln("Items:");
+        builder.Writeln("<<foreach [item in Report.Items.Item]>>");
+        builder.Writeln("- <<[item.Name]>>: <<[item.Quantity]>> x $<<[item.Price]>>");
         builder.Writeln("<</foreach>>");
+        templateDoc.Save(templatePath);
 
-        // Save the template.
-        templateDoc.Save(templateFile);
-
-        // Load the template for reporting.
-        var reportDoc = new Document(templateFile);
+        // Load the template for processing.
+        Document doc = new Document(templatePath);
 
         // Load XML data source.
-        var xmlData = new XmlDataSource(dataFile);
+        XmlDataSource dataSource = new XmlDataSource(xmlPath);
 
-        // Build the report.
-        var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, xmlData, "Orders");
+        // Build the report using the LINQ Reporting engine.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, dataSource, "Report");
 
-        // Save as PDF/A-1b.
-        var pdfOptions = new PdfSaveOptions
+        // Save the generated document as PDF/A-1b.
+        PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
             Compliance = PdfCompliance.PdfA1b
         };
-        reportDoc.Save(outputPdf, pdfOptions);
+        string pdfPath = Path.Combine(outputDir, "report.pdf");
+        doc.Save(pdfPath, pdfOptions);
     }
 }

@@ -5,53 +5,72 @@ using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Order
+namespace LinqReportingInlineErrorExample
 {
-    public string CustomerName { get; set; } = "John Doe";
-    // Additional properties can be added here.
-}
-
-public class Program
-{
-    public static void Main()
+    // Sample data model
+    public class ReportModel
     {
-        // Register code page provider for potential encoding needs.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        public string Name { get; set; } = "John Doe";
 
-        // Prepare paths.
-        string workDir = Directory.GetCurrentDirectory();
-        string templatePath = Path.Combine(workDir, "template.docx");
-        string outputPath = Path.Combine(workDir, "output.docx");
+        // This property does NOT exist intentionally to trigger an inline error.
+        // public string MissingProperty { get; set; }
 
-        // Create a template document with LINQ Reporting tags.
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        public List<Item> Items { get; set; } = new();
 
-        // Write tags: a valid tag and an intentionally invalid tag to trigger an inline error.
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("Missing property: <<[order.NonExisting]>>");
+        public ReportModel()
+        {
+            Items.Add(new Item { Index = 1, Description = "First item" });
+            Items.Add(new Item { Index = 2, Description = "Second item" });
+        }
+    }
 
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
+    public class Item
+    {
+        public int Index { get; set; }
+        public string Description { get; set; } = string.Empty;
+    }
 
-        // Load the template for reporting.
-        Document doc = new Document(templatePath);
+    public class Program
+    {
+        public static void Main()
+        {
+            // Register code page provider for Aspose.Words if needed.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare the data model.
-        Order order = new Order();
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Configure the reporting engine to inline error messages.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.InlineErrorMessages;
+            // Build the LINQ Reporting template with tags.
+            builder.Writeln("Customer: <<[model.Name]>>");
+            // This tag references a non‑existent property and will produce an inline error.
+            builder.Writeln("Missing: <<[model.MissingProperty]>>");
+            builder.Writeln("<<foreach [item in model.Items]>>");
+            builder.Writeln("- <<[item.Index]>>: <<[item.Description]>>");
+            builder.Writeln("<</foreach>>");
 
-        // Build the report. The returned flag indicates overall success.
-        bool success = engine.BuildReport(doc, order, "order");
+            // Save the template (optional, just for inspection).
+            string templatePath = "template.docx";
+            doc.Save(templatePath);
 
-        // Save the generated report.
-        doc.Save(outputPath);
+            // Prepare the data model.
+            ReportModel model = new ReportModel();
 
-        // Optionally, write the result status to the console.
-        Console.WriteLine($"Report generation success: {success}");
-        Console.WriteLine($"Output saved to: {outputPath}");
+            // Configure the reporting engine to inline error messages.
+            ReportingEngine engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.InlineErrorMessages;
+
+            // Build the report.
+            bool success = engine.BuildReport(doc, model, "model");
+
+            // Save the generated report.
+            string outputPath = Path.Combine("output", "report.docx");
+            Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
+            doc.Save(outputPath);
+
+            // Output the result status.
+            Console.WriteLine($"Report generation success: {success}");
+            Console.WriteLine($"Report saved to: {outputPath}");
+        }
     }
 }

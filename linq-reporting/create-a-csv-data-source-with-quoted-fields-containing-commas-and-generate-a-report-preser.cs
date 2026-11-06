@@ -11,45 +11,47 @@ public class Program
         // Register code page provider for CSV encoding support.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare sample CSV file with quoted fields containing commas.
-        string csvPath = Path.Combine(Directory.GetCurrentDirectory(), "sample.csv");
-        File.WriteAllText(csvPath,
-            "Name,Description\r\n" +
-            "\"John Doe\",\"Developer, C#\"\r\n" +
-            "\"Jane Smith\",\"Manager, Sales\"\r\n");
+        // Create a CSV file with quoted fields that contain commas.
+        string csvPath = "sample.csv";
+        string[] csvLines =
+        {
+            "\"Name\",\"Address\",\"Notes\"",
+            "\"John Doe\",\"123 Main St, Apt 4\",\"Loves, commas\"",
+            "\"Jane Smith\",\"456 Oak Ave\",\"No commas\""
+        };
+        File.WriteAllLines(csvPath, csvLines, Encoding.UTF8);
 
-        // Create a template Word document programmatically.
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        // Build a Word template that uses LINQ Reporting tags.
+        string templatePath = "template.docx";
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Write LINQ Reporting tags.
-        builder.Writeln("<<foreach [row in data]>>");
+        builder.Writeln("CSV Report");
+        builder.Writeln("<<foreach [row in Data]>>");
         builder.Writeln("Name: <<[row.Name]>>");
-        builder.Writeln("Description: <<[row.Description]>>");
+        builder.Writeln("Address: <<[row.Address]>>");
+        builder.Writeln("Notes: <<[row.Notes]>>");
         builder.Writeln("<</foreach>>");
-
-        // Save the template.
         templateDoc.Save(templatePath);
 
-        // Load the template for reporting.
+        // Load the template document.
         Document reportDoc = new Document(templatePath);
 
-        // Configure CSV data source options (default separator ',' and quote char '"').
+        // Configure CSV loading options to respect quoted fields.
         CsvDataLoadOptions csvOptions = new CsvDataLoadOptions
         {
+            QuoteChar = '"',
             HasHeaders = true
         };
 
-        // Create CSV data source.
-        CsvDataSource csvData = new CsvDataSource(csvPath, csvOptions);
+        // Load the CSV data source.
+        CsvDataSource csvDataSource = new CsvDataSource(csvPath, csvOptions);
 
-        // Build the report.
+        // Generate the report using the LINQ Reporting engine.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, csvData, "data");
+        engine.BuildReport(reportDoc, csvDataSource, "Data");
 
         // Save the generated report.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        string outputPath = "report.docx";
         reportDoc.Save(outputPath);
     }
 }

@@ -1,19 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Item
+public class Order
 {
-    public string Title { get; set; } = "";
-    public string Description { get; set; } = "";
+    public string Id { get; set; } = "";
+    public string Customer { get; set; } = "";
 }
 
-public class ReportModel
+public class OrdersRoot
 {
-    public List<Item> Items { get; set; } = new();
+    public List<Order> Order { get; set; } = new();
 }
 
 public class Program
@@ -21,62 +20,74 @@ public class Program
     public static void Main()
     {
         // Prepare sample XML data.
-        const string xmlFileName = "items.xml";
-        var xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<Items>
-    <Item>
-        <Title>First Item</Title>
-        <Description>This is the first item.</Description>
-    </Item>
-    <Item>
-        <Title>Second Item</Title>
-        <Description>This is the second item.</Description>
-    </Item>
-    <Item>
-        <Title>Third Item</Title>
-        <Description>This is the third item.</Description>
-    </Item>
-</Items>";
-        File.WriteAllText(xmlFileName, xmlContent);
+        string xmlPath = "orders.xml";
+        string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<Orders>
+    <Order>
+        <Id>1</Id>
+        <Customer>John Doe</Customer>
+    </Order>
+    <Order>
+        <Id>2</Id>
+        <Customer>Jane Smith</Customer>
+    </Order>
+    <Order>
+        <Id>3</Id>
+        <Customer>Bob Johnson</Customer>
+    </Order>
+</Orders>";
+        File.WriteAllText(xmlPath, xmlContent);
 
-        // Load XML into the data model.
-        var model = new ReportModel();
-        var xdoc = XDocument.Load(xmlFileName);
-        foreach (var elem in xdoc.Root?.Elements("Item") ?? [])
+        // Load XML into the strongly‑typed model.
+        OrdersRoot data = new()
         {
-            var item = new Item
+            Order = new List<Order>()
+        };
+        var xmlDoc = new System.Xml.XmlDocument();
+        xmlDoc.Load(xmlPath);
+        var orderNodes = xmlDoc.SelectNodes("/Orders/Order");
+        if (orderNodes != null)
+        {
+            foreach (System.Xml.XmlNode node in orderNodes)
             {
-                Title = (string?)elem.Element("Title") ?? "",
-                Description = (string?)elem.Element("Description") ?? ""
-            };
-            model.Items.Add(item);
+                data.Order.Add(new Order
+                {
+                    Id = node.SelectSingleNode("Id")?.InnerText ?? "",
+                    Customer = node.SelectSingleNode("Customer")?.InnerText ?? ""
+                });
+            }
         }
 
-        // Create the template document programmatically.
-        const string templateFileName = "template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Create the LINQ Reporting template.
+        string templatePath = "template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("Report generated from XML data");
-        builder.Writeln(); // empty line
+        // Title.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Title;
+        builder.Writeln("Orders Report");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
 
-        // Single‑row template applied to each XML node.
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("Title: <<[item.Title]>>");
-        builder.Writeln("Description: <<[item.Description]>>");
+        // Foreach block over the Order collection.
+        builder.Writeln("<<foreach [order in Order]>>");
+        builder.Writeln("Order ID: <<[order.Id]>>");
+        builder.Writeln("Customer: <<[order.Customer]>>");
+        // Separate each order with a new section.
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
         builder.Writeln("<</foreach>>");
 
-        doc.Save(templateFileName);
+        // Save the template.
+        templateDoc.Save(templatePath);
 
-        // Load the template for reporting.
-        var templateDoc = new Document(templateFileName);
+        // Load the template for report generation.
+        Document reportDoc = new Document(templatePath);
 
-        // Build the report.
-        var engine = new ReportingEngine();
-        engine.BuildReport(templateDoc, model, "model");
+        // Build the report using the strongly‑typed data source.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, data, "orders");
 
-        // Save the final report.
-        const string outputFileName = "output.docx";
-        templateDoc.Save(outputFileName);
+        // Save the generated report.
+        string outputPath = "report.docx";
+        reportDoc.Save(outputPath);
     }
 }

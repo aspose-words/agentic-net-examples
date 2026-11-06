@@ -1,79 +1,86 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class Section
-{
-    public string Title { get; set; } = "";
-    public string Content { get; set; } = "";
-    public string BackgroundColor { get; set; } = "";
-}
-
-public class ReportModel
-{
-    public List<Section> Sections { get; set; } = new();
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Create template document programmatically.
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Prepare the template document with LINQ Reporting tags.
         var templatePath = "template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // Begin foreach over Sections.
+        // Begin foreach over Sections collection.
         builder.Writeln("<<foreach [sec in Sections]>>");
-
-        // Apply background color to the whole section (title and content).
-        builder.Writeln("<<backColor [sec.BackgroundColor]>>");
+        // Apply background color to the whole section using backColor tag.
+        builder.Writeln("<<backColor [sec.BgColor]>>");
+        // Section title.
         builder.Writeln("<<[sec.Title]>>");
-        builder.Writeln("<<[sec.Content]>>");
+        // Section body.
+        builder.Writeln("<<[sec.Body]>>");
+        // Close backColor tag.
         builder.Writeln("<</backColor>>");
-
         // End foreach.
         builder.Writeln("<</foreach>>");
 
-        // Save the template.
-        doc.Save(templatePath);
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
 
-        // Load the template for reporting.
-        var template = new Document(templatePath);
+        // Load the template for report generation.
+        var doc = new Document(templatePath);
 
-        // Prepare sample data.
+        // Create sample data model.
         var model = new ReportModel
         {
-            Sections = new List<Section>
+            Sections = new()
             {
                 new Section
                 {
-                    Title = "Introduction",
-                    Content = "This is the introduction section.",
-                    BackgroundColor = "LightYellow"
+                    Title = "Section 1",
+                    Body = "Content of section 1.",
+                    BgColor = "LightYellow"
                 },
                 new Section
                 {
-                    Title = "Details",
-                    Content = "Detailed information goes here.",
-                    BackgroundColor = "#D3E4CD"
+                    Title = "Section 2",
+                    Body = "Content of section 2.",
+                    BgColor = "#FFCCCC"
                 },
                 new Section
                 {
-                    Title = "Conclusion",
-                    Content = "Final remarks and summary.",
-                    BackgroundColor = "LightBlue"
+                    Title = "Section 3",
+                    Body = "Content of section 3.",
+                    BgColor = "LightGreen"
                 }
             }
         };
 
-        // Build the report.
+        // Build the report using LINQ Reporting engine.
         var engine = new ReportingEngine();
-        engine.BuildReport(template, model, "model");
+        engine.BuildReport(doc, model, "model");
 
         // Save the generated report.
-        var outputPath = "report.docx";
-        template.Save(outputPath);
+        var outputPath = "output.docx";
+        doc.Save(outputPath);
     }
+}
+
+// Data model classes.
+public class ReportModel
+{
+    public List<Section> Sections { get; set; } = new();
+}
+
+public class Section
+{
+    public string Title { get; set; } = string.Empty;
+    public string Body { get; set; } = string.Empty;
+    public string BgColor { get; set; } = string.Empty;
 }

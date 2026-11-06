@@ -5,7 +5,7 @@ using Aspose.Words.Reporting;
 
 namespace LinqReportingEnumExtension
 {
-    // Sample enum representing order status.
+    // Enum representing order status.
     public enum OrderStatus
     {
         Pending,
@@ -14,33 +14,36 @@ namespace LinqReportingEnumExtension
         Cancelled
     }
 
-    // Extension method that converts enum values to user‑friendly strings.
-    public static class OrderStatusExtensions
+    // Extension/helper class that provides a user‑friendly string for the enum.
+    public static class EnumExtensions
     {
-        public static string ToFriendlyString(this OrderStatus status) => status switch
+        public static string ToFriendlyString(OrderStatus status) => status switch
         {
             OrderStatus.Pending => "Pending Approval",
             OrderStatus.Shipped => "Shipped to Customer",
             OrderStatus.Delivered => "Delivered Successfully",
             OrderStatus.Cancelled => "Order Cancelled",
-            _ => "Unknown"
+            _ => status.ToString()
         };
     }
 
-    // Model class used as a data source for the report.
-    public class ReportModel
+    // Data model for an order.
+    public class Order
     {
-        public List<OrderItem> Items { get; set; } = new();
+        public int Id { get; set; } = 0;
+        public string CustomerName { get; set; } = "";
+        public OrderStatus Status { get; set; } = OrderStatus.Pending;
+        public List<Item> Items { get; set; } = new();
+
+        // Computed property used by the LINQ Reporting template.
+        public string StatusFriendly => EnumExtensions.ToFriendlyString(Status);
     }
 
-    // Individual item containing an enum property.
-    public class OrderItem
+    // Data model for an order item.
+    public class Item
     {
-        public string ProductName { get; set; } = "";
-        public OrderStatus Status { get; set; }
-
-        // Friendly string representation of the status for the template.
-        public string StatusFriendly => Status.ToFriendlyString();
+        public string Name { get; set; } = "";
+        public int Quantity { get; set; } = 0;
     }
 
     public class Program
@@ -48,26 +51,32 @@ namespace LinqReportingEnumExtension
         public static void Main()
         {
             // Prepare sample data.
-            var model = new ReportModel
+            var order = new Order
             {
-                Items = new List<OrderItem>
+                Id = 1001,
+                CustomerName = "Acme Corp",
+                Status = OrderStatus.Shipped,
+                Items = new List<Item>
                 {
-                    new OrderItem { ProductName = "Laptop", Status = OrderStatus.Pending },
-                    new OrderItem { ProductName = "Smartphone", Status = OrderStatus.Shipped },
-                    new OrderItem { ProductName = "Headphones", Status = OrderStatus.Delivered },
-                    new OrderItem { ProductName = "Monitor", Status = OrderStatus.Cancelled }
+                    new Item { Name = "Widget", Quantity = 5 },
+                    new Item { Name = "Gadget", Quantity = 2 }
                 }
             };
 
             // Create a template document programmatically.
             var templatePath = "Template.docx";
             var builder = new DocumentBuilder();
+
             builder.Writeln("Order Report");
-            builder.Writeln("==============");
-            builder.Writeln("<<foreach [item in Items]>>");
-            builder.Writeln("Product: <<[item.ProductName]>>");
-            builder.Writeln("Status: <<[item.StatusFriendly]>>");
+            builder.Writeln("Order ID: <<[order.Id]>>");
+            builder.Writeln("Customer: <<[order.CustomerName]>>");
+            builder.Writeln("Status: <<[order.StatusFriendly]>>");
+            builder.Writeln();
+            builder.Writeln("Items:");
+            builder.Writeln("<<foreach [item in order.Items]>>");
+            builder.Writeln("- <<[item.Name]>> (Qty: <<[item.Quantity]>>)");
             builder.Writeln("<</foreach>>");
+
             builder.Document.Save(templatePath);
 
             // Load the template.
@@ -75,14 +84,11 @@ namespace LinqReportingEnumExtension
 
             // Build the report using LINQ Reporting Engine.
             var engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
+            engine.BuildReport(doc, order, "order");
 
             // Save the generated report.
             var outputPath = "Report.docx";
             doc.Save(outputPath);
-
-            // Indicate completion.
-            Console.WriteLine($"Report generated: {outputPath}");
         }
     }
 }

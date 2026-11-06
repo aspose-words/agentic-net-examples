@@ -1,61 +1,52 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingFirstOrDefaultExample
+public class Employee
 {
-    // Simple employee data model.
-    public class Employee
-    {
-        public string Name { get; set; } = "";
-        public int Age { get; set; }
-    }
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
+}
 
-    // Wrapper model that will be passed as the root object to the reporting engine.
-    public class Model
-    {
-        public List<Employee> Employees { get; set; } = new();
-    }
+public class ReportModel
+{
+    public List<Employee> Employees { get; set; } = new();
+}
 
-    public class Program
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
+        // Prepare sample data.
+        var model = new ReportModel
         {
-            // Step 1: Create a template document with a LINQ Reporting tag that uses FirstOrDefault.
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
-
-            builder.Writeln("First employee over 30 years old:");
-            // The expression retrieves the first employee whose Age > 30 and outputs the Name.
-            builder.Writeln("<<[model.Employees.FirstOrDefault(e => e.Age > 30).Name]>>");
-
-            // Save the template to disk.
-            const string templatePath = "Template.docx";
-            templateDoc.Save(templatePath);
-
-            // Step 2: Load the template (simulating a real-world scenario where the template is read from storage).
-            var doc = new Document(templatePath);
-
-            // Step 3: Prepare sample data.
-            var model = new Model
+            Employees = new List<Employee>
             {
-                Employees = new List<Employee>
-                {
-                    new Employee { Name = "Alice", Age = 28 },
-                    new Employee { Name = "Bob", Age = 35 },
-                    new Employee { Name = "Charlie", Age = 42 }
-                }
-            };
+                new Employee { Name = "Alice", Age = 28 },
+                new Employee { Name = "Bob", Age = 35 },
+                new Employee { Name = "Charlie", Age = 42 }
+            }
+        };
 
-            // Step 4: Build the report using Aspose.Words ReportingEngine.
-            var engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
+        // Create a template document with a LINQ Reporting tag that uses FirstOrDefault.
+        string templatePath = "Template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("First employee over 30: <<[Employees.FirstOrDefault(e => e.Age > 30).Name]>>");
+        templateDoc.Save(templatePath);
 
-            // Step 5: Save the generated report.
-            const string outputPath = "Report.docx";
-            doc.Save(outputPath);
-        }
+        // Load the template for report generation.
+        var doc = new Document(templatePath);
+
+        // Build the report using the model as the root object named "model".
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
+
+        // Save the generated report.
+        string outputPath = "Report.docx";
+        doc.Save(outputPath);
     }
 }

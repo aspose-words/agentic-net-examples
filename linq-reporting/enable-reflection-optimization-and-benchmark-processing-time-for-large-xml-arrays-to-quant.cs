@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using System.Xml.Linq;
+using System.Xml.Serialization;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -11,87 +11,101 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words.
+        // Register code page provider (required for some encodings)
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare directories.
+        // Prepare output directory
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
         Directory.CreateDirectory(outputDir);
 
-        // 1. Create a large XML data file.
+        // Generate large XML data
         string xmlPath = Path.Combine(outputDir, "data.xml");
-        GenerateLargeXml(xmlPath, 5000); // 5,000 items.
+        ReportModel model = GenerateLargeModel(20000);
+        SerializeToXml(model, xmlPath);
 
-        // 2. Create a LINQ Reporting template.
+        // Load data back from XML
+        ReportModel data = DeserializeFromXml(xmlPath);
+
+        // Create template document
         string templatePath = Path.Combine(outputDir, "template.docx");
         CreateTemplate(templatePath);
 
-        // 3. Benchmark without reflection optimization.
+        // Benchmark without reflection optimization
         ReportingEngine.UseReflectionOptimization = false;
-        var (timeNoOpt, outputNoOpt) = BuildReport(templatePath, xmlPath, false, outputDir);
+        var docNoOpt = new Document(templatePath);
+        var engineNoOpt = new ReportingEngine();
+        var swNoOpt = Stopwatch.StartNew();
+        engineNoOpt.BuildReport(docNoOpt, data, "model");
+        swNoOpt.Stop();
+        string reportNoOptPath = Path.Combine(outputDir, "report_no_opt.docx");
+        docNoOpt.Save(reportNoOptPath);
 
-        // 4. Benchmark with reflection optimization.
+        // Benchmark with reflection optimization
         ReportingEngine.UseReflectionOptimization = true;
-        var (timeOpt, outputOpt) = BuildReport(templatePath, xmlPath, true, outputDir);
+        var docOpt = new Document(templatePath);
+        var engineOpt = new ReportingEngine();
+        var swOpt = Stopwatch.StartNew();
+        engineOpt.BuildReport(docOpt, data, "model");
+        swOpt.Stop();
+        string reportOptPath = Path.Combine(outputDir, "report_opt.docx");
+        docOpt.Save(reportOptPath);
 
-        // 5. Show results.
-        Console.WriteLine($"Build time without reflection optimization: {timeNoOpt.TotalMilliseconds} ms");
-        Console.WriteLine($"Build time with reflection optimization:    {timeOpt.TotalMilliseconds} ms");
-        Console.WriteLine($"Outputs saved to: {outputNoOpt} and {outputOpt}");
+        // Output results
+        Console.WriteLine($"Report without reflection optimization: {swNoOpt.ElapsedMilliseconds} ms");
+        Console.WriteLine($"Report with reflection optimization:    {swOpt.ElapsedMilliseconds} ms");
+        Console.WriteLine($"Outputs saved to: {outputDir}");
     }
 
-    // Generates an XML file with the specified number of <Order> elements.
-    private static void GenerateLargeXml(string filePath, int count)
+    private static ReportModel GenerateLargeModel(int itemCount)
     {
-        var root = new XElement("Orders");
-        for (int i = 1; i <= count; i++)
+        var items = new List<Item>(itemCount);
+        for (int i = 1; i <= itemCount; i++)
         {
-            var order = new XElement("Order",
-                new XElement("Id", i),
-                new XElement("CustomerName", $"Customer {i}")
-            );
-            root.Add(order);
+            items.Add(new Item
+            {
+                Id = i,
+                Name = $"Item {i}"
+            });
         }
-        var doc = new XDocument(root);
-        doc.Save(filePath);
+
+        return new ReportModel { Items = items };
     }
 
-    // Creates a simple Word template containing a foreach loop over Orders.
+    private static void SerializeToXml(ReportModel model, string filePath)
+    {
+        var serializer = new XmlSerializer(typeof(ReportModel));
+        using var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
+        serializer.Serialize(stream, model);
+    }
+
+    private static ReportModel DeserializeFromXml(string filePath)
+    {
+        var serializer = new XmlSerializer(typeof(ReportModel));
+        using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+        return (ReportModel?)serializer.Deserialize(stream) ?? new ReportModel();
+    }
+
     private static void CreateTemplate(string filePath)
     {
         var doc = new Document();
         var builder = new DocumentBuilder(doc);
 
-        builder.Writeln("Order Report");
-        builder.Writeln("==============");
-        builder.Writeln("<<foreach [order in Orders]>>");
-        builder.Writeln("Order ID: <<[order.Id]>>");
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Report generated from large XML data:");
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("Id: <<[item.Id]>>, Name: <<[item.Name]>>");
         builder.Writeln("<</foreach>>");
 
         doc.Save(filePath);
     }
+}
 
-    // Builds the report, measures execution time, and saves the result.
-    private static (TimeSpan elapsed, string outputPath) BuildReport(string templatePath, string xmlPath, bool useOpt, string outputDir)
-    {
-        // Load fresh template for each run.
-        var doc = new Document(templatePath);
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
 
-        // Load XML data source.
-        var xmlDataSource = new XmlDataSource(xmlPath);
-
-        var engine = new ReportingEngine();
-
-        var stopwatch = Stopwatch.StartNew();
-        // Root name matches the root element in the XML file.
-        engine.BuildReport(doc, xmlDataSource, "Orders");
-        stopwatch.Stop();
-
-        string suffix = useOpt ? "opt" : "no_opt";
-        string outputPath = Path.Combine(outputDir, $"report_{suffix}.docx");
-        doc.Save(outputPath);
-
-        return (stopwatch.Elapsed, outputPath);
-    }
+public class Item
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
 }

@@ -4,117 +4,127 @@ using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
 
-namespace LinqReportingRetryExample
+public class Program
 {
-    // Sample data model for the report.
-    public class ReportModel
+    public static void Main()
     {
-        public string CustomerName { get; set; } = "Acme Corp";
-        public List<Item> Items { get; set; } = new()
+        // Register code page provider (required for some Aspose.Words features)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Paths for template and output
+        string templatePath = "Template.docx";
+        string outputPath = "Report.docx";
+
+        // Create the template document programmatically
+        CreateTemplate(templatePath);
+
+        // Load the template
+        Document templateDoc = new Document(templatePath);
+
+        // Prepare sample data
+        Order order = new Order
         {
-            new Item { Index = 1, Name = "Widget" },
-            new Item { Index = 2, Name = "Gadget" },
-            new Item { Index = 3, Name = "Doohickey" }
+            CustomerName = "John Doe",
+            Items = new List<Item>
+            {
+                new Item { Index = 1, Name = "Apple" },
+                new Item { Index = 2, Name = "Banana" }
+            }
         };
-    }
 
-    public class Item
-    {
-        public int Index { get; set; }
-        public string Name { get; set; } = string.Empty;
-    }
+        // Initialize the reporting engine
+        ReportingEngine engine = new ReportingEngine();
 
-    public class Program
-    {
-        public static void Main()
+        bool success = false;
+        const int maxAttempts = 3;
+
+        for (int attempt = 1; attempt <= maxAttempts && !success; attempt++)
         {
-            // Register code page provider required by Aspose.Words.
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            // Prepare file paths.
-            string templatePath = "template.docx";
-            string outputPath = "report.docx";
-
-            // -----------------------------------------------------------------
-            // 1. Create the LINQ Reporting template programmatically.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-            // Simple header with a placeholder for the customer name.
-            builder.Writeln("Customer: <<[model.CustomerName]>>");
-            builder.Writeln("Items:");
-
-            // Foreach block to list items.
-            builder.Writeln("<<foreach [item in Items]>>");
-            builder.Writeln("- <<[item.Index]>>: <<[item.Name]>>");
-            builder.Writeln("<</foreach>>");
-
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template and prepare the data model.
-            // -----------------------------------------------------------------
-            Document doc = new Document(templatePath);
-            ReportModel model = new();
-
-            // -----------------------------------------------------------------
-            // 3. Build the report with retry logic (up to 3 attempts).
-            // -----------------------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
-            const int maxAttempts = 3;
-            bool success = false;
-
-            for (int attempt = 1; attempt <= maxAttempts; attempt++)
+            try
             {
-                try
-                {
-                    // BuildReport returns true if the report was generated without errors.
-                    success = engine.BuildReport(doc, model, "model");
-                    if (success)
-                    {
-                        Console.WriteLine($"Report generated successfully on attempt {attempt}.");
-                        break;
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Report generation failed on attempt {attempt} (engine returned false).");
-                    }
-                }
-                catch (Exception ex) when (IsTransient(ex))
-                {
-                    // Transient error – log and retry.
-                    Console.WriteLine($"Transient error on attempt {attempt}: {ex.Message}");
-                }
-                catch (Exception ex)
-                {
-                    // Non‑transient error – abort retries.
-                    Console.WriteLine($"Non‑transient error on attempt {attempt}: {ex.Message}");
-                    break;
-                }
+                // Build the report
+                engine.BuildReport(templateDoc, order, "order");
+                success = true;
             }
-
-            // -----------------------------------------------------------------
-            // 4. Save the final report if generation succeeded.
-            // -----------------------------------------------------------------
-            if (success)
+            catch (Exception ex) when (IsTransient(ex))
             {
-                doc.Save(outputPath);
-                Console.WriteLine($"Report saved to '{outputPath}'.");
-            }
-            else
-            {
-                Console.WriteLine("Report generation failed after maximum retry attempts.");
+                // Transient error encountered; log and retry
+                Console.WriteLine($"Attempt {attempt} failed with a transient error: {ex.Message}");
+                if (attempt == maxAttempts)
+                {
+                    Console.WriteLine("Maximum retry attempts reached. Report generation failed.");
+                }
             }
         }
 
-        // Simple heuristic to decide whether an exception is transient.
-        private static bool IsTransient(Exception ex)
+        if (success)
         {
-            // For demonstration, treat IO and network‑related exceptions as transient.
-            return ex is IOException || ex is System.Net.WebException;
+            // Save the generated report
+            templateDoc.Save(outputPath);
+            Console.WriteLine($"Report generated successfully: {outputPath}");
         }
     }
+
+    // Determines whether an exception is considered transient.
+    private static bool IsTransient(Exception ex)
+    {
+        // For demonstration, treat all IOExceptions as transient.
+        // Extend this method to include other transient scenarios as needed.
+        return ex is IOException;
+    }
+
+    // Creates a simple Word template with LINQ Reporting tags.
+    private static void CreateTemplate(string path)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Write a heading
+        builder.Writeln("Order Report");
+        builder.Writeln();
+
+        // Insert a tag for the customer's name
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln();
+
+        // Begin foreach loop for items
+        builder.Writeln("<<foreach [item in Items]>>");
+
+        // Create a table header
+        Table table = builder.StartTable();
+        builder.InsertCell();
+        builder.Writeln("Index");
+        builder.InsertCell();
+        builder.Writeln("Product");
+        builder.EndRow();
+
+        // Table row for each item
+        builder.InsertCell();
+        builder.Writeln("<<[item.Index]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[item.Name]>>");
+        builder.EndRow();
+
+        // End table and foreach
+        builder.EndTable();
+        builder.Writeln("<</foreach>>");
+
+        // Save the template
+        doc.Save(path);
+    }
+}
+
+// Data model classes
+public class Order
+{
+    public string CustomerName { get; set; } = string.Empty;
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    public int Index { get; set; }
+    public string Name { get; set; } = string.Empty;
 }

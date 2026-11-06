@@ -1,48 +1,41 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 using Aspose.Words.Reporting;
+using Aspose.Words.Drawing;
+
+public class ReportModel
+{
+    // URL of the image to be inserted into the report.
+    public string ImageUrl { get; set; } = "https://via.placeholder.com/150";
+}
 
 public class Program
 {
     public static void Main()
     {
-        // ---------- Create template ----------
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Step 1: Create the LINQ Reporting template.
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
 
-        // Insert a textbox that will hold the image.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 200);
+        // Insert a textbox that will hold the image tag.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
         builder.MoveTo(textBox.FirstParagraph);
-        // Image tag that will receive a byte[] with the image data.
-        builder.Write("<<image [model.ImageData] -fitSize>>");
+        // LINQ Reporting image tag referencing the model's ImageUrl property.
+        builder.Write("<<image [model.ImageUrl] -fitSize>>");
 
-        // Save the template.
-        const string templatePath = "Template.docx";
-        templateDoc.Save(templatePath);
+        // Save the template to disk.
+        const string templatePath = "template.docx";
+        template.Save(templatePath);
 
-        // ---------- Prepare data ----------
-        var model = new ReportModel
-        {
-            // Use a small embedded PNG image (1x1 transparent pixel) to avoid network calls.
-            ImageData = Convert.FromBase64String(
-                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK9cAAAAASUVORK5CYII=")
-        };
-
-        // ---------- Build report ----------
+        // Step 2: Load the template and build the report.
         var reportDoc = new Document(templatePath);
+        var model = new ReportModel();
+
         var engine = new ReportingEngine();
         engine.BuildReport(reportDoc, model, "model");
 
-        // Save the generated report.
-        const string outputPath = "Report.docx";
+        // Step 3: Save the generated report.
+        const string outputPath = "output.docx";
         reportDoc.Save(outputPath);
     }
-}
-
-// Public data model used by the template.
-public class ReportModel
-{
-    // Image data as a byte array; the image tag can consume this type.
-    public byte[] ImageData { get; set; } = Array.Empty<byte>();
 }

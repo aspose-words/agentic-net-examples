@@ -5,24 +5,50 @@ using Aspose.Words.Reporting;
 
 namespace LinqReportingRestrictedTypesExample
 {
-    // Simple data model used as the root object for the report.
-    public class ReportModel
-    {
-        public List<Person> Persons { get; set; } = new();
-    }
-
+    // Sample data model.
     public class Person
     {
         public string Name { get; set; } = "";
         public int Age { get; set; }
     }
 
+    public class ReportModel
+    {
+        public List<Person> Persons { get; set; } = new();
+    }
+
     public class Program
     {
         public static void Main()
         {
+            // Define prohibited .NET types.
+            Type[] prohibitedTypes = new Type[]
+            {
+                typeof(System.IO.FileInfo),
+                typeof(System.Diagnostics.Process)
+            };
+
+            // Apply the restriction before any report generation.
+            ReportingEngine.SetRestrictedTypes(prohibitedTypes);
+
+            // Create a template document with LINQ Reporting tags.
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
+
+            builder.Writeln("Persons Report");
+            builder.Writeln("<<foreach [p in Persons]>>");
+            builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk.
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
+
+            // Load the template for report generation.
+            Document doc = new Document(templatePath);
+
             // Prepare sample data.
-            var model = new ReportModel
+            ReportModel model = new()
             {
                 Persons = new List<Person>
                 {
@@ -32,30 +58,12 @@ namespace LinqReportingRestrictedTypesExample
                 }
             };
 
-            // Create a template document programmatically.
-            var templatePath = "Template.docx";
-            var builder = new DocumentBuilder();
-            builder.Writeln("<<foreach [p in Persons]>>");
-            builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
-            builder.Writeln("<</foreach>>");
-            builder.Document.Save(templatePath);
-
-            // Load the template document.
-            var doc = new Document(templatePath);
-
-            // Restrict prohibited .NET types before building the report.
-            ReportingEngine.SetRestrictedTypes(new[]
-            {
-                typeof(System.IO.FileInfo),
-                typeof(System.Diagnostics.Process)
-            });
-
             // Build the report.
-            var engine = new ReportingEngine();
+            ReportingEngine engine = new ReportingEngine();
             engine.BuildReport(doc, model, "model");
 
             // Save the generated report.
-            var outputPath = "Report.docx";
+            const string outputPath = "Report.docx";
             doc.Save(outputPath);
         }
     }

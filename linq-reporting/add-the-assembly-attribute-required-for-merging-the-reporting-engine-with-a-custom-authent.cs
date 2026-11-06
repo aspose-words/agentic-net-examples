@@ -1,56 +1,78 @@
 using System;
-using System.Text;
+using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-[assembly: ReportingEngineAuthenticationAttribute(typeof(MyAuthModule))]
+[assembly: Aspose.Words.Reporting.CustomAuthenticationModule(typeof(MyAuthModule))]
 
-[AttributeUsage(AttributeTargets.Assembly)]
-public sealed class ReportingEngineAuthenticationAttribute : Attribute
+namespace Aspose.Words.Reporting
 {
-    public Type AuthModuleType { get; }
+    [AttributeUsage(AttributeTargets.Assembly)]
+    public sealed class CustomAuthenticationModuleAttribute : Attribute
+    {
+        public Type ModuleType { get; }
 
-    public ReportingEngineAuthenticationAttribute(Type authModuleType) => AuthModuleType = authModuleType;
+        public CustomAuthenticationModuleAttribute(Type moduleType) => ModuleType = moduleType;
+    }
 }
 
 public class MyAuthModule
 {
-    // Dummy authentication logic for illustration.
-    public bool Authenticate(string user) => user == "admin";
+    // Placeholder for custom authentication logic.
+    // The real implementation would depend on the Aspose.Words.Reporting API.
 }
 
-public class Model
+public class Person
 {
-    public string Name { get; set; } = "World";
+    public string Name { get; set; } = string.Empty;
+    public int Age { get; set; }
+}
+
+public class ReportModel
+{
+    public List<Person> Persons { get; set; } = new();
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Register code pages provider required by Aspose.Words.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Register code page provider (required for some Aspose.Words features).
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        // Create a simple template document with a LINQ Reporting tag.
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Hello, <<[model.Name]>>!");
+        // Prepare sample data.
+        var persons = new List<Person>
+        {
+            new() { Name = "Alice", Age = 30 },
+            new() { Name = "Bob", Age = 25 },
+            new() { Name = "Charlie", Age = 35 }
+        };
 
-        // Save the template to disk (optional, demonstrates file handling).
-        const string templatePath = "template.docx";
-        templateDoc.Save(templatePath);
+        // Create a template document programmatically.
+        var templatePath = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Load the template for report generation.
-        var doc = new Document(templatePath);
+        builder.Writeln("Persons Report");
+        builder.Writeln("<<foreach [p in Persons]>>");
+        builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
+        builder.Writeln("<</foreach>>");
+
+        doc.Save(templatePath);
+
+        // Load the template and build the report.
+        var template = new Document(templatePath);
         var engine = new ReportingEngine();
 
-        var model = new Model();
-
-        // Build the report using the model as the root object named "model".
-        engine.BuildReport(doc, model, "model");
+        var model = new ReportModel { Persons = persons };
+        engine.BuildReport(template, model, "model");
 
         // Save the generated report.
-        const string outputPath = "report.docx";
-        doc.Save(outputPath);
+        var outputPath = "report.docx";
+        template.Save(outputPath);
+
+        // Indicate completion.
+        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
     }
 }

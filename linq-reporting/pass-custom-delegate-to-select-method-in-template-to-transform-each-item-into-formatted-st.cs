@@ -6,77 +6,66 @@ using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingSelectDelegateExample
+public class Person
 {
-    // Simple data class.
-    public class Person
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
+}
+
+public class ReportModel
+{
+    public List<string> FormattedPersons { get; set; } = new();
+}
+
+public class Program
+{
+    public static void Main()
     {
-        public string Name { get; set; } = "";
-        public int Age { get; set; }
-    }
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    // Root model for the report.
-    public class ReportModel
-    {
-        // Collection of persons.
-        public List<Person> Persons { get; set; } = new();
-
-        // Delegate that formats a Person.
-        public Func<Person, string> FormatPerson => p => $"{p.Name} ({p.Age})";
-
-        // Exposes the formatted strings using the delegate.
-        public IEnumerable<string> FormattedPersons => Persons.Select(FormatPerson);
-    }
-
-    public class Program
-    {
-        public static void Main()
+        // Sample data.
+        List<Person> persons = new()
         {
-            // Register code page provider (required for some encodings).
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            new Person { Name = "Alice", Age = 30 },
+            new Person { Name = "Bob", Age = 25 },
+            new Person { Name = "Charlie", Age = 35 }
+        };
 
-            // Prepare output folder.
-            string outputDir = "output";
-            Directory.CreateDirectory(outputDir);
+        // Transform each person into a formatted string using a custom delegate.
+        ReportModel model = new()
+        {
+            FormattedPersons = persons
+                .Select(p => $"{p.Name} ({p.Age} years old)")
+                .ToList()
+        };
 
-            // -----------------------------------------------------------------
-            // Create the template document.
-            // -----------------------------------------------------------------
-            string templatePath = Path.Combine(outputDir, "template.docx");
-            Document templateDoc = new();
-            DocumentBuilder builder = new(templateDoc);
+        // Create the LINQ Reporting template.
+        string templatePath = "Template.docx";
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
 
-            builder.Writeln("Persons List:");
-            // Use the property that already returns the formatted strings.
-            builder.Writeln("<<foreach [formatted in FormattedPersons]>>");
-            builder.Writeln("<<[formatted]>>");
-            builder.Writeln("<</foreach>>");
+        // Write heading.
+        builder.Writeln("Person List:");
+        // Begin foreach over formatted strings.
+        builder.Writeln("<<foreach [p in FormattedPersons]>>");
+        // Output each formatted string.
+        builder.Writeln("<<[p]>>");
+        // End foreach.
+        builder.Writeln("<</foreach>>");
 
-            templateDoc.Save(templatePath);
+        // Save the template.
+        templateDoc.Save(templatePath);
 
-            // -----------------------------------------------------------------
-            // Load the template and build the report.
-            // -----------------------------------------------------------------
-            Document doc = new(templatePath);
+        // Load the template for reporting.
+        Document doc = new(templatePath);
 
-            // Sample data.
-            ReportModel model = new()
-            {
-                Persons = new List<Person>
-                {
-                    new Person { Name = "Alice",   Age = 30 },
-                    new Person { Name = "Bob",     Age = 25 },
-                    new Person { Name = "Charlie", Age = 35 }
-                }
-            };
+        // Build the report.
+        ReportingEngine engine = new();
+        engine.BuildReport(doc, model, "model");
 
-            // Build the report.
-            ReportingEngine engine = new();
-            engine.BuildReport(doc, model, "model");
-
-            // Save the generated report.
-            string resultPath = Path.Combine(outputDir, "report.docx");
-            doc.Save(resultPath);
-        }
+        // Save the final report.
+        string outputPath = "Report.docx";
+        doc.Save(outputPath);
     }
 }

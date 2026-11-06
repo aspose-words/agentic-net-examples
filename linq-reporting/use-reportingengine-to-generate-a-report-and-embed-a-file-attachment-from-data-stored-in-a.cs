@@ -7,75 +7,65 @@ using Newtonsoft.Json;
 
 public class ReportModel
 {
-    public string CustomerName { get; set; } = "John Doe";
-    public string ReportDate { get; set; } = DateTime.Now.ToString("yyyy-MM-dd");
-    public string AttachmentFileName { get; set; } = "SampleAttachment.txt";
+    public string Title { get; set; } = "";
+    public string HtmlSnippet { get; set; } = "";
+    public string AttachmentName { get; set; } = "";
     public string AttachmentBase64 { get; set; } = "";
-    public byte[] AttachmentContent => Convert.FromBase64String(AttachmentBase64);
+    public string AttachmentPath { get; set; } = "";
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample attachment content and encode it as Base64.
-        string attachmentText = "This is a sample attachment file.";
-        byte[] attachmentBytes = Encoding.UTF8.GetBytes(attachmentText);
-        string attachmentBase64 = Convert.ToBase64String(attachmentBytes);
+        // Register code page provider for Aspose.Words if needed.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create the data model and fill the Base64 field.
-        ReportModel model = new()
+        // Prepare output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // Create sample attachment content and encode it to Base64.
+        string attachmentContent = "This is the content of the attachment file.";
+        string attachmentBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(attachmentContent));
+
+        // Build a model instance and serialize it to JSON (simulating external JSON source).
+        var initialModel = new ReportModel
         {
+            Title = "Sample Report",
+            HtmlSnippet = "<b>Bold Text</b> and <i>Italic Text</i>",
+            AttachmentName = "SampleAttachment.txt",
             AttachmentBase64 = attachmentBase64
         };
+        string json = JsonConvert.SerializeObject(initialModel);
 
-        // Serialize the model to a JSON file (simulating an external source).
-        string jsonPath = "data.json";
-        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(model, Formatting.Indented));
+        // Deserialize JSON back to model.
+        ReportModel model = JsonConvert.DeserializeObject<ReportModel>(json)!;
 
-        // Load the JSON back into a model instance.
-        string jsonContent = File.ReadAllText(jsonPath);
-        ReportModel data = JsonConvert.DeserializeObject<ReportModel>(jsonContent)!;
+        // Decode attachment and write it to a file.
+        byte[] attachmentBytes = Convert.FromBase64String(model.AttachmentBase64);
+        string attachmentPath = Path.Combine(outputDir, model.AttachmentName);
+        File.WriteAllBytes(attachmentPath, attachmentBytes);
+        model.AttachmentPath = attachmentPath; // Update model for linking.
 
-        // -----------------------------------------------------------------
-        // Create the template document programmatically.
-        // -----------------------------------------------------------------
-        Document template = new();
-        DocumentBuilder builder = new(template);
+        // Create a Word template with LINQ Reporting tags.
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Insert LINQ Reporting tags.
-        builder.Writeln("Report for: <<[model.CustomerName]>>");
-        builder.Writeln("Date: <<[model.ReportDate]>>");
-        builder.Writeln("Attachment:");
-        // Bookmark where the attachment will be inserted.
-        builder.StartBookmark("Attachment");
-        builder.Writeln("[Attachment will be inserted here]");
-        builder.EndBookmark("Attachment");
+        builder.Writeln("<<[model.Title]>>");
+        builder.Writeln("<<[model.HtmlSnippet] -html>>");
+        builder.Writeln("Attachment: <<link [model.AttachmentPath] [model.AttachmentName]>>");
 
-        // Save the template to disk.
-        string templatePath = "template.docx";
-        template.Save(templatePath);
+        templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // Load the template and build the report.
-        // -----------------------------------------------------------------
-        Document reportDoc = new(templatePath);
-        ReportingEngine engine = new();
-        engine.BuildReport(reportDoc, data, "model");
-
-        // -----------------------------------------------------------------
-        // Embed the attachment as an OLE object at the bookmark location.
-        // -----------------------------------------------------------------
-        using (MemoryStream attachmentStream = new(data.AttachmentContent))
-        {
-            DocumentBuilder reportBuilder = new(reportDoc);
-            reportBuilder.MoveToBookmark("Attachment");
-            // Provide a valid ProgID for the OLE object (e.g., "Package" for generic files).
-            reportBuilder.InsertOleObject(attachmentStream, "Package", false, null);
-        }
+        // Load the template and generate the report.
+        Document reportDoc = new Document(templatePath);
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
 
         // Save the final report.
-        string outputPath = "output.docx";
-        reportDoc.Save(outputPath);
+        string reportPath = Path.Combine(outputDir, "Report.docx");
+        reportDoc.Save(reportPath);
     }
 }

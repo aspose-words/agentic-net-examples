@@ -1,20 +1,20 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
 
-public class QuarterResult
+public class QuarterlyResult
 {
     public string Quarter { get; set; } = "";
-    public double Result { get; set; }
+    public double Value { get; set; }
 }
 
 public class ReportModel
 {
-    public List<QuarterResult> Results { get; set; } = new();
+    public List<QuarterlyResult> Results { get; set; } = new();
     public string ChartHtml { get; set; } = "";
 }
 
@@ -22,70 +22,68 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required by Aspose.Words)
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Sample JSON data representing quarterly results.
+        string json = @"[
+            {""Quarter"":""Q1"",""Value"":1200},
+            {""Quarter"":""Q2"",""Value"":1500},
+            {""Quarter"":""Q3"",""Value"":1100},
+            {""Quarter"":""Q4"",""Value"":1700}
+        ]";
 
-        // 1. Create sample JSON data
-        var sampleData = new List<QuarterResult>
+        // Deserialize JSON into model objects.
+        List<QuarterlyResult> results = JsonConvert.DeserializeObject<List<QuarterlyResult>>(json) ?? new();
+
+        // Prepare the report model.
+        ReportModel model = new ReportModel
         {
-            new() { Quarter = "Q1", Result = 120 },
-            new() { Quarter = "Q2", Result = 150 },
-            new() { Quarter = "Q3", Result = 90 },
-            new() { Quarter = "Q4", Result = 180 }
+            Results = results,
+            ChartHtml = GenerateChartHtml(results)
         };
-        string jsonPath = "data.json";
-        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(sampleData, Formatting.Indented));
 
-        // 2. Load JSON data into model
-        var results = JsonConvert.DeserializeObject<List<QuarterResult>>(File.ReadAllText(jsonPath)) ?? new();
-        var model = new ReportModel { Results = results };
-        model.ChartHtml = BuildChartHtml(model.Results);
+        // Create the template document programmatically.
+        string templatePath = "template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // 3. Create template document with LINQ Reporting tag
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
         builder.Writeln("Quarterly Results Report");
-        builder.Writeln("<<html [model.ChartHtml]>>");
+        builder.Writeln();
 
-        // Save template (optional, for inspection)
-        string templatePath = "Template.docx";
+        // Table of raw data.
+        builder.Writeln("<<foreach [r in Results]>>");
+        builder.Writeln("<<[r.Quarter]>>: <<[r.Value]>>");
+        builder.Writeln("<</foreach>>");
+        builder.Writeln();
+
+        // Insert the HTML chart.
+        builder.Writeln("Chart:");
+        builder.Writeln("<<html [ChartHtml]>>");
+
+        // Save the template.
         templateDoc.Save(templatePath);
 
-        // 4. Build the report using ReportingEngine
-        var engine = new ReportingEngine();
-        bool success = engine.BuildReport(templateDoc, model, "model");
+        // Load the template (optional, can reuse the same document).
+        Document doc = new Document(templatePath);
 
-        // 5. Save the generated report
-        string reportPath = "Report.docx";
-        templateDoc.Save(reportPath);
+        // Build the report using LINQ Reporting Engine.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-        // Output simple status (no interactive input)
-        Console.WriteLine(success
-            ? $"Report generated successfully: {reportPath}"
-            : "Report generation failed.");
+        // Save the generated report.
+        string reportPath = "report.docx";
+        doc.Save(reportPath);
     }
 
-    private static string BuildChartHtml(List<QuarterResult> results)
+    private static string GenerateChartHtml(List<QuarterlyResult> results)
     {
-        var sb = new StringBuilder();
-        sb.Append("<div style='font-family:Arial;'><h2>Quarterly Results</h2>");
-        double max = 0;
-        foreach (var r in results)
+        // Simple horizontal bar chart using inline CSS.
+        const double scaleFactor = 0.1; // Adjust to fit the bar width.
+        var rows = results.Select(r =>
         {
-            if (r.Result > max) max = r.Result;
-        }
-        // Scale factor to keep bars within reasonable width
-        double scale = max > 0 ? 300 / max : 1;
+            int barWidth = (int)(r.Value * scaleFactor);
+            string bar = $"<span style='display:inline-block;background-color:steelblue;height:20px;width:{barWidth}px'></span>";
+            return $"<div>{r.Quarter}: {bar} {r.Value}</div>";
+        });
 
-        foreach (var r in results)
-        {
-            double width = r.Result * scale;
-            sb.Append($"<div style='margin:5px 0;'>{r.Quarter}: ");
-            sb.Append($"<span style='display:inline-block;background:#4CAF50;height:20px;width:{width}px;'></span> ");
-            sb.Append($"{r.Result}</div>");
-        }
-
-        sb.Append("</div>");
-        return sb.ToString();
+        return $"<div style='font-family:Arial;'>{string.Join("", rows)}</div>";
     }
 }

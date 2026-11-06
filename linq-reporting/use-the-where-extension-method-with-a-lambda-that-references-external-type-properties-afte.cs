@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -15,12 +14,6 @@ public class ReportModel
     public List<Person> Persons { get; set; } = new();
 }
 
-public static class FilterHelper
-{
-    // External static property used in the LINQ Where clause.
-    public static int MinAge => 30;
-}
-
 public class Program
 {
     public static void Main()
@@ -30,39 +23,31 @@ public class Program
         {
             Persons = new List<Person>
             {
-                new Person { Name = "Alice", Age = 25 },
-                new Person { Name = "Bob", Age = 35 },
-                new Person { Name = "Charlie", Age = 40 }
+                new() { Name = "Alice", Age = 28 },
+                new() { Name = "Bob", Age = 35 },
+                new() { Name = "Charlie", Age = 42 },
+                new() { Name = "Diana", Age = 23 }
             }
         };
 
-        // Create the template document programmatically.
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        // Create a template document programmatically.
         var doc = new Document();
         var builder = new DocumentBuilder(doc);
 
-        // LINQ Reporting tag using Where with a lambda that references an external static property.
-        // Since ReportingEngine does not expose RegisterReference in this version, we use the constant value directly.
+        builder.Writeln("Filtered Persons (Age > 30):");
         builder.Writeln("<<foreach [p in Persons.Where(p => p.Age > 30)]>>");
-        builder.Writeln("<<[p.Name]>> - <<[p.Age]>>");
+        builder.Writeln("- <<[p.Name]>> (<<[p.Age]>> years)");
         builder.Writeln("<</foreach>>");
 
-        doc.Save(templatePath);
-
-        // Load the template for report generation.
-        var reportDoc = new Document(templatePath);
-
-        // Configure the reporting engine.
+        // Build the report.
         var engine = new ReportingEngine
         {
             Options = ReportBuildOptions.None
         };
+        // No explicit RegisterType call is required for this example.
+        engine.BuildReport(doc, model, "model");
 
-        // Build the report.
-        engine.BuildReport(reportDoc, model, "model");
-
-        // Save the generated report.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        reportDoc.Save(outputPath);
+        // Save the result.
+        doc.Save("Report.docx");
     }
 }

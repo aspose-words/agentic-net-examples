@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,61 +8,46 @@ public class Program
 {
     public static void Main()
     {
-        // Create sample XML data representing tasks.
-        const string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
+        // Register code page provider for XML handling.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Prepare sample XML data.
+        string xmlPath = "tasks.xml";
+        File.WriteAllText(xmlPath, @"<?xml version=""1.0"" encoding=""utf-8""?>
 <Tasks>
-    <Task>
-        <Title>Prepare project proposal</Title>
-    </Task>
-    <Task>
-        <Title>Review design specifications</Title>
-    </Task>
-    <Task>
-        <Title>Implement core modules</Title>
-    </Task>
-    <Task>
-        <Title>Test and validate features</Title>
-    </Task>
-</Tasks>";
-        const string xmlPath = "tasks.xml";
-        File.WriteAllText(xmlPath, xmlContent);
+    <Task><Title>Review project proposal</Title></Task>
+    <Task><Title>Design architecture diagram</Title></Task>
+    <Task><Title>Implement core module</Title></Task>
+    <Task><Title>Write unit tests</Title></Task>
+    <Task><Title>Prepare release notes</Title></Task>
+</Tasks>");
 
-        // Create the LINQ Reporting template programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Create the template document programmatically.
+        string templatePath = "template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Optional title.
-        builder.Writeln("Task List:");
-        builder.Writeln();
+        // Insert a paragraph that will become a bulleted list via LINQ Reporting.
+        builder.Writeln("<<foreach [task in Tasks]>>• <<[task.Title]>> <</foreach>>");
 
-        // Begin foreach loop over XML nodes.
-        builder.Writeln("<<foreach [task in Tasks]>>");
+        // Save the template.
+        templateDoc.Save(templatePath);
 
-        // Apply bullet list formatting for each task.
-        builder.ListFormat.ApplyBulletDefault();
-        builder.Writeln("<<[task.Title]>>");
-        // Clear list formatting so it does not affect following paragraphs.
-        builder.ListFormat.RemoveNumbers();
+        // Load the template for reporting.
+        Document reportDoc = new Document(templatePath);
 
-        // End foreach loop.
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        const string templatePath = "template.docx";
-        template.Save(templatePath);
-
-        // Load the template for report generation.
-        Document report = new Document(templatePath);
-
-        // Load XML data source.
+        // Create XML data source.
         XmlDataSource xmlData = new XmlDataSource(xmlPath);
 
-        // Build the report using the LINQ Reporting engine.
+        // Build the report.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(report, xmlData, "Tasks");
+        bool success = engine.BuildReport(reportDoc, xmlData, "Tasks");
 
         // Save the generated report.
-        const string outputPath = "output.docx";
-        report.Save(outputPath);
+        string outputPath = "output.docx";
+        reportDoc.Save(outputPath);
+
+        // Indicate completion.
+        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to '{outputPath}'.");
     }
 }

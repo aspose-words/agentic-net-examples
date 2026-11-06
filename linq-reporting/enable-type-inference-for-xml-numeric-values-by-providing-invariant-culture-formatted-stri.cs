@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -8,59 +7,51 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some data sources)
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Prepare output folder
-        string outputDir = "Output";
-        Directory.CreateDirectory(outputDir);
-
-        // Create XML data source with invariant‑culture formatted numeric strings
-        string xmlPath = Path.Combine(outputDir, "Data.xml");
-        File.WriteAllText(xmlPath,
+        // Prepare sample XML data with numeric values formatted using invariant culture (dot as decimal separator).
+        const string xmlFileName = "data.xml";
+        string xmlContent =
             @"<?xml version=""1.0"" encoding=""utf-8""?>
-<Orders>
-    <Order>
+<orders>
+    <order>
         <Id>1</Id>
         <Amount>1234.56</Amount>
-    </Order>
-    <Order>
+        <Quantity>10</Quantity>
+    </order>
+    <order>
         <Id>2</Id>
         <Amount>7890.12</Amount>
-    </Order>
-    <Order>
-        <Id>3</Id>
-        <Amount>345.67</Amount>
-    </Order>
-</Orders>", Encoding.UTF8);
+        <Quantity>5</Quantity>
+    </order>
+</orders>";
+        File.WriteAllText(xmlFileName, xmlContent);
 
-        // Create a template document programmatically
-        string templatePath = Path.Combine(outputDir, "Template.docx");
+        // Create a Word template programmatically.
+        const string templateFileName = "template.docx";
         var templateDoc = new Document();
         var builder = new DocumentBuilder(templateDoc);
 
-        // Insert LINQ Reporting tags
-        builder.Writeln("<<foreach [order in Orders]>>");
-        builder.Writeln("Order ID: <<[order.Id]>>   Amount: <<[order.Amount]>>");
+        builder.Writeln("Orders Report");
+        // Iterate directly over the collection represented by the root element "orders".
+        builder.Writeln("<<foreach [order in orders]>>");
+        builder.Writeln("Order ID: <<[order.Id]>>");
+        builder.Writeln("Amount: <<[order.Amount]>>");
+        builder.Writeln("Quantity: <<[order.Quantity]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template
-        templateDoc.Save(templatePath);
+        templateDoc.Save(templateFileName);
 
-        // Load the template for reporting
-        var doc = new Document(templatePath);
+        // Load the template for reporting.
+        var doc = new Document(templateFileName);
 
-        // Create XmlDataSource (no schema file needed)
-        var xmlDataSource = new XmlDataSource(xmlPath);
+        // Load XML data source.
+        var xmlDataSource = new XmlDataSource(xmlFileName);
 
-        // Build the report
+        // Build the report.
         var engine = new ReportingEngine();
-        engine.BuildReport(doc, xmlDataSource, "Orders");
+        engine.BuildReport(doc, xmlDataSource, "orders");
 
-        // Save the generated report
-        string reportPath = Path.Combine(outputDir, "Report.docx");
-        doc.Save(reportPath);
-
-        Console.WriteLine($"Report generated: {reportPath}");
+        // Save the generated report.
+        const string outputFileName = "report.docx";
+        doc.Save(outputFileName);
     }
 }

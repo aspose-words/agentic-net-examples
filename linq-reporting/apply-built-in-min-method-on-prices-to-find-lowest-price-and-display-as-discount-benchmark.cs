@@ -1,53 +1,46 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingMinExample
+public class Program
 {
-    // Data model for the report.
-    public class ReportModel
+    public static void Main()
     {
-        // Collection of prices.
-        public List<decimal> Prices { get; set; } = new();
+        // 1. Create a template document with a LINQ Reporting tag that references the minimum price.
+        var templatePath = "Template.docx";
+        var builder = new DocumentBuilder();
+        builder.Writeln("Discount benchmark: <<[MinPrice]>>");
+        builder.Document.Save(templatePath);
 
-        // Lowest price calculated from the collection.
-        public decimal LowestPrice => Prices.Min();
-    }
+        // 2. Load the template for reporting.
+        var doc = new Document(templatePath);
 
-    public class Program
-    {
-        public static void Main()
+        // 3. Prepare the data model.
+        var model = new ReportModel
         {
-            // Register code page provider for Aspose.Words.
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            Prices = new List<decimal> { 19.99m, 24.50m, 15.75m, 30.00m }
+        };
 
-            // Prepare sample data.
-            var model = new ReportModel
-            {
-                Prices = new List<decimal> { 199.99m, 149.50m, 179.75m, 129.99m, 159.00m }
-            };
+        // 4. Build the report using the LINQ Reporting engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-            // Create a template document programmatically.
-            string templatePath = "template.docx";
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
-            builder.Writeln("Discount benchmark price: <<[model.LowestPrice]>>");
-            doc.Save(templatePath);
+        // 5. Save the generated report.
+        var outputPath = "Report.docx";
+        doc.Save(outputPath);
 
-            // Load the template for reporting.
-            var template = new Document(templatePath);
-
-            // Build the report using LINQ Reporting engine.
-            var engine = new ReportingEngine();
-            engine.BuildReport(template, model, "model");
-
-            // Save the generated report.
-            string outputPath = "report.docx";
-            template.Save(outputPath);
-        }
+        Console.WriteLine($"Report generated: {outputPath}");
     }
+}
+
+// Data model used by the LINQ Reporting engine.
+public class ReportModel
+{
+    // Collection of prices.
+    public List<decimal> Prices { get; set; } = new();
+
+    // Minimum price exposed for the template.
+    public decimal MinPrice => Prices?.Min() ?? 0m;
 }

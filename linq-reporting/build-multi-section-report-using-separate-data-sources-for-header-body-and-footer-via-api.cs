@@ -2,98 +2,142 @@ using System;
 using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
 
-namespace LinqReportingExample
+public class Program
 {
-    public class HeaderInfo
+    public static void Main()
     {
-        public string Title { get; set; } = "";
-        public string Date { get; set; } = "";
-    }
+        // -------------------------------------------------
+        // 1. Create the template document with three sections
+        // -------------------------------------------------
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-    public class Product
-    {
-        public string Name { get; set; } = "";
-        public int Quantity { get; set; }
-    }
+        // ---------- Header Section ----------
+        builder.Writeln("<<[model.Header.Title]>>");
+        builder.Writeln("Date: <<[model.Header.Date]>>");
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
 
-    public class BodyInfo
-    {
-        public List<Product> Items { get; set; } = new();
-    }
+        // ---------- Body Section ----------
+        builder.Writeln("Products:");
 
-    public class FooterInfo
-    {
-        public string Note { get; set; } = "";
-    }
+        // Begin foreach loop for body items
+        builder.Writeln("<<foreach [item in model.Body.Items]>>");
 
-    public class ReportModel
-    {
-        public HeaderInfo Header { get; set; } = new();
-        public BodyInfo Body { get; set; } = new();
-        public FooterInfo Footer { get; set; } = new();
-    }
+        // Table that will be repeated for each item
+        Table table = builder.StartTable();
 
-    public class Program
-    {
-        public static void Main()
+        // Table header (once per item, but harmless to repeat)
+        builder.InsertCell();
+        builder.Writeln("Index");
+        builder.InsertCell();
+        builder.Writeln("Name");
+        builder.InsertCell();
+        builder.Writeln("Price");
+        builder.EndRow();
+
+        // Data row for the current item
+        builder.InsertCell();
+        builder.Writeln("<<[item.Index]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[item.Name]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[item.Price]>>");
+        builder.EndRow();
+
+        // Close the table for this iteration
+        builder.EndTable();
+
+        // End foreach loop
+        builder.Writeln("<</foreach>>");
+
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
+
+        // ---------- Footer Section ----------
+        builder.Writeln("<<[model.Footer.Note]>>");
+
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
+
+        // -------------------------------------------------
+        // 2. Load the template and prepare sample data
+        // -------------------------------------------------
+        Document reportDoc = new Document(templatePath);
+
+        var header = new HeaderModel
         {
-            // Create the template document.
-            var templatePath = "Template.docx";
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
+            Title = "Sales Report",
+            Date = DateTime.Today
+        };
 
-            // Header section.
-            builder.Writeln("<<[Header.Title]>>");
-            builder.Writeln("Date: <<[Header.Date]>>");
-            builder.Writeln("");
-
-            // Body section with a product list.
-            builder.Writeln("Products:");
-            builder.Writeln("<<foreach [p in Body.Items]>>");
-            builder.Writeln("- <<[p.Name]>>: <<[p.Quantity]>>");
-            builder.Writeln("<</foreach>>");
-            builder.Writeln("");
-
-            // Footer section.
-            builder.Writeln("<<[Footer.Note]>>");
-
-            // Save the template.
-            templateDoc.Save(templatePath);
-
-            // Load the template for report generation.
-            var reportDoc = new Document(templatePath);
-
-            // Prepare sample data.
-            var model = new ReportModel
+        var body = new BodyModel
+        {
+            Items = new List<Item>
             {
-                Header = new HeaderInfo
-                {
-                    Title = "Monthly Sales Report",
-                    Date = DateTime.Now.ToString("MMMM yyyy")
-                },
-                Body = new BodyInfo
-                {
-                    Items = new List<Product>
-                    {
-                        new Product { Name = "Widget A", Quantity = 120 },
-                        new Product { Name = "Widget B", Quantity = 85 },
-                        new Product { Name = "Widget C", Quantity = 47 }
-                    }
-                },
-                Footer = new FooterInfo
-                {
-                    Note = "Generated by Aspose.Words LINQ Reporting Engine"
-                }
-            };
+                new Item { Index = 1, Name = "Laptop", Price = 999.99m },
+                new Item { Index = 2, Name = "Smartphone", Price = 499.50m },
+                new Item { Index = 3, Name = "Tablet", Price = 299.00m }
+            }
+        };
 
-            // Build the report.
-            var engine = new ReportingEngine();
-            engine.BuildReport(reportDoc, model, "model");
+        var footer = new FooterModel
+        {
+            Note = "Report generated by Aspose.Words LINQ Reporting Engine"
+        };
 
-            // Save the final report.
-            var outputPath = "Report.docx";
-            reportDoc.Save(outputPath);
-        }
+        var model = new ReportModel
+        {
+            Header = header,
+            Body = body,
+            Footer = footer
+        };
+
+        // -------------------------------------------------
+        // 3. Build the report using LINQ Reporting Engine
+        // -------------------------------------------------
+        ReportingEngine engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.None
+        };
+        engine.BuildReport(reportDoc, model, "model");
+
+        // Save the final report.
+        const string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
+}
+
+// -----------------------------------------------------------------
+// Data model definitions (public, with initialized properties)
+// -----------------------------------------------------------------
+public class ReportModel
+{
+    public HeaderModel Header { get; set; } = new();
+    public BodyModel Body { get; set; } = new();
+    public FooterModel Footer { get; set; } = new();
+}
+
+public class HeaderModel
+{
+    public string Title { get; set; } = string.Empty;
+    public DateTime Date { get; set; }
+}
+
+public class BodyModel
+{
+    public List<Item> Items { get; set; } = new();
+}
+
+public class FooterModel
+{
+    public string Note { get; set; } = string.Empty;
+}
+
+public class Item
+{
+    public int Index { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public decimal Price { get; set; }
 }

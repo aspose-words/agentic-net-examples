@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -9,79 +7,74 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some encodings)
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Create template document programmatically.
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // Create a temporary folder for the example files
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(workDir);
-
-        // Paths for template and result documents
-        string templatePath = Path.Combine(workDir, "Template.docx");
-        string resultPath = Path.Combine(workDir, "Report.docx");
-
-        // -------------------------------------------------
-        // Step 1: Build the LINQ Reporting template document
-        // -------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("LINQ Reporting Example with Inline Error Messages");
-        builder.Writeln();
-        // Optional loop over Items collection
+        builder.Writeln("Report");
         builder.Writeln("<<foreach [item in Items]>>");
-        // Normal field
-        builder.Writeln("Name: <<[item.Name]>> <<error>>");
-        // Intentional missing field to trigger an error
-        builder.Writeln("Missing: <<[item.NonExisting]>> <<error>>");
-        builder.Writeln("<</foreach>>");
-        builder.Writeln();
+        builder.Writeln("Name: <<[item.Name]>>");
+        builder.Writeln("Age: <<[item.Age]>>");
 
-        // Save the template to disk
+        // Optional loop for item details.
+        builder.Writeln("<<if [item.Details != null]>>");
+        builder.Writeln("Details:");
+        builder.Writeln("<<foreach [detail in item.Details]>>");
+        builder.Writeln(" - Description: <<[detail.Description]>>");
+        // This property does not exist and will cause an evaluation error.
+        builder.Writeln(" - Missing: <<[detail.Missing]>>");
+        // Capture any errors that occurred in this block.
+        builder.Writeln("<<error>>");
+        builder.Writeln("<</foreach>>");
+        builder.Writeln("<</if>>");
+
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
         templateDoc.Save(templatePath);
 
-        // -------------------------------------------------
-        // Step 2: Load the template document for reporting
-        // -------------------------------------------------
-        Document doc = new Document(templatePath);
+        // Load the template for report generation.
+        var doc = new Document(templatePath);
 
-        // -------------------------------------------------
-        // Step 3: Prepare sample data model
-        // -------------------------------------------------
-        ReportModel model = new ReportModel
+        // Prepare sample data.
+        var model = new ReportModel
         {
-            Items = new List<Item>
+            Items = new()
             {
-                new Item { Name = "Alice" },
-                new Item { Name = "Bob" },
-                // This item will have a null Name to demonstrate handling of null values
-                new Item { Name = null }
+                new Item
+                {
+                    Name = "Alice",
+                    Age = 30,
+                    Details = new()
+                    {
+                        new Detail { Description = "Detail A1" },
+                        new Detail { Description = "Detail A2" }
+                    }
+                },
+                new Item
+                {
+                    Name = "Bob",
+                    Age = null, // Age missing.
+                    Details = null // No details.
+                }
             }
         };
 
-        // -------------------------------------------------
-        // Step 4: Build the report with InlineErrorMessages option
-        // -------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
+        // Build the report with inline error messages.
+        var engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.InlineErrorMessages;
-
         bool success = engine.BuildReport(doc, model, "model");
 
-        // -------------------------------------------------
-        // Step 5: Save the generated report
-        // -------------------------------------------------
-        doc.Save(resultPath);
+        // Save the generated report.
+        const string outputPath = "Report.docx";
+        doc.Save(outputPath);
 
-        // Output simple status (no interactive prompts)
-        Console.WriteLine($"Report generation success: {success}");
-        Console.WriteLine($"Template saved to: {templatePath}");
-        Console.WriteLine($"Report saved to: {resultPath}");
+        Console.WriteLine($"Report generated. Success: {success}");
     }
 }
 
-// -------------------------------------------------
-// Data model classes
-// -------------------------------------------------
+// Data model classes.
 public class ReportModel
 {
     public List<Item> Items { get; set; } = new();
@@ -89,6 +82,12 @@ public class ReportModel
 
 public class Item
 {
-    // Name may be null to illustrate missing data handling
-    public string? Name { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public int? Age { get; set; }
+    public List<Detail>? Details { get; set; }
+}
+
+public class Detail
+{
+    public string Description { get; set; } = string.Empty;
 }

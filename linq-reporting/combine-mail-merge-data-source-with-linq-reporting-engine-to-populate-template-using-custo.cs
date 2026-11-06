@@ -1,69 +1,50 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Newtonsoft.Json;
 
-namespace LinqReportingMailMergeExample
+public class Program
 {
-    // Public data model classes
-    public class Customer
+    public static void Main()
     {
-        public string Name { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
-        public string Address { get; set; } = string.Empty;
-    }
+        // Create a simple template with a mail‑merge field and a LINQ Reporting tag.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-    public class ReportModel
-    {
-        public List<Customer> Customers { get; set; } = new();
-    }
+        // Mail‑merge field $customer$
+        builder.Writeln("Mail‑Merge Customer: $customer$");
+        // LINQ Reporting tag that will be filled from the same data source.
+        builder.Writeln("LINQ Reporting Customer: <<[model.Customer]>>");
 
-    public class Program
-    {
-        public static void Main()
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
+
+        // Load the template back for processing.
+        Document doc = new Document(templatePath);
+
+        // Prepare the data model.
+        ReportModel model = new()
         {
-            // Register code page provider (required for some encodings)
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            Customer = "John Doe"
+        };
 
-            // Create a template document programmatically
-            var templatePath = "template.docx";
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
+        // Execute mail‑merge to replace $customer$ fields.
+        doc.MailMerge.Execute(new[] { "customer" }, new object[] { model.Customer });
 
-            builder.Writeln("Customer Report");
-            builder.Writeln("<<foreach [c in Customers]>>");
-            builder.Writeln("Name: <<[c.Name]>>");
-            builder.Writeln("Email: <<[c.Email]>>");
-            builder.Writeln("Address: <<[c.Address]>>");
-            builder.Writeln("<</foreach>>");
+        // Build the LINQ Reporting part.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-            // Save the template to disk
-            doc.Save(templatePath);
-
-            // Load the template for reporting
-            var reportDoc = new Document(templatePath);
-
-            // Prepare sample data
-            var model = new ReportModel
-            {
-                Customers = new List<Customer>
-                {
-                    new() { Name = "John Doe", Email = "john@example.com", Address = "123 Main St" },
-                    new() { Name = "Jane Smith", Email = "jane@example.com", Address = "456 Oak Ave" }
-                }
-            };
-
-            // Build the report using LINQ Reporting engine
-            var engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.None;
-            engine.BuildReport(reportDoc, model, "model");
-
-            // Save the generated report
-            var outputPath = "output.docx";
-            reportDoc.Save(outputPath);
-        }
+        // Save the final report.
+        const string outputPath = "Report.docx";
+        doc.Save(outputPath);
     }
+}
+
+// Public data model used by both mail‑merge and LINQ Reporting.
+public class ReportModel
+{
+    public string Customer { get; set; } = string.Empty;
 }

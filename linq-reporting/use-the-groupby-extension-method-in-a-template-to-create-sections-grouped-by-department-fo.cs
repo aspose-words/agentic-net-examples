@@ -1,79 +1,67 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace LinqReportingGroupByExample
 {
-    public static void Main()
+    public class Employee
     {
-        // Prepare output directory
-        string outputDir = "Output";
-        Directory.CreateDirectory(outputDir);
-
-        // Paths for template and final report
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        string reportPath = Path.Combine(outputDir, "Report.docx");
-
-        // Create the template document programmatically
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Title
-        builder.Writeln("Employee Directory");
-        builder.Writeln();
-
-        // Begin grouping by Department using GroupBy in the foreach tag
-        builder.Writeln("<<foreach [dept in Employees.GroupBy(e => e.Department)]>>");
-        builder.Writeln("Department: <<[dept.Key]>>");
-        builder.Writeln();
-
-        // List employees within each department
-        builder.Writeln("<<foreach [emp in dept]>>");
-        builder.Writeln("- <<[emp.Name]>> (<<[emp.Title]>>)");
-        builder.Writeln("<</foreach>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template
-        templateDoc.Save(templatePath);
-
-        // Load the template for reporting
-        Document doc = new Document(templatePath);
-
-        // Sample data model
-        ReportModel model = new()
-        {
-            Employees = new()
-            {
-                new Employee { Name = "Alice Johnson", Title = "Software Engineer", Department = "R&D" },
-                new Employee { Name = "Bob Smith", Title = "Senior Engineer", Department = "R&D" },
-                new Employee { Name = "Carol White", Title = "HR Manager", Department = "Human Resources" },
-                new Employee { Name = "David Brown", Title = "Recruiter", Department = "Human Resources" },
-                new Employee { Name = "Eve Davis", Title = "Accountant", Department = "Finance" }
-            }
-        };
-
-        // Build the report
-        ReportingEngine engine = new ReportingEngine();
-        bool success = engine.BuildReport(doc, model, "model");
-
-        // Save the generated report
-        doc.Save(reportPath);
+        public string Name { get; set; } = "";
+        public string Department { get; set; } = "";
     }
-}
 
-// Root data model
-public class ReportModel
-{
-    public List<Employee> Employees { get; set; } = new();
-}
+    public class ReportModel
+    {
+        public List<Employee> Employees { get; set; } = new();
+    }
 
-// Employee data class
-public class Employee
-{
-    public string Name { get; set; } = "";
-    public string Title { get; set; } = "";
-    public string Department { get; set; } = "";
+    public class Program
+    {
+        public static void Main()
+        {
+            // Register code page provider (required for some data sources)
+            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
+            // Create the template document with LINQ Reporting tags
+            var templatePath = "Template.docx";
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
+
+            builder.Writeln("Employee Report");
+            builder.Writeln("<<foreach [dept in Employees.GroupBy(e => e.Department)]>>");
+            builder.Writeln("Department: <<[dept.Key]>>");
+            builder.Writeln("<<foreach [emp in dept]>>");
+            builder.Writeln("- <<[emp.Name]>>");
+            builder.Writeln("<</foreach>>");
+            builder.Writeln("<</foreach>>");
+
+            templateDoc.Save(templatePath);
+
+            // Load the template for report generation
+            var reportDoc = new Document(templatePath);
+
+            // Sample data
+            var model = new ReportModel
+            {
+                Employees = new List<Employee>
+                {
+                    new Employee { Name = "Alice", Department = "HR" },
+                    new Employee { Name = "Bob", Department = "IT" },
+                    new Employee { Name = "Charlie", Department = "HR" },
+                    new Employee { Name = "David", Department = "Finance" },
+                    new Employee { Name = "Eve", Department = "IT" }
+                }
+            };
+
+            // Build the report
+            var engine = new ReportingEngine();
+            engine.BuildReport(reportDoc, model, "model");
+
+            // Save the final report
+            var outputPath = "Report.docx";
+            reportDoc.Save(outputPath);
+        }
+    }
 }

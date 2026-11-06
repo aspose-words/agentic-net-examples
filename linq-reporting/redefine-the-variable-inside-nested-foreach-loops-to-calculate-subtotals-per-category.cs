@@ -4,117 +4,96 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Newtonsoft.Json;
-using System.Text;
 
-namespace LinqReportingNestedForeach
+public class Program
 {
-    // Data model classes
-    public class ReportModel
+    public static void Main()
     {
-        public List<Category> Categories { get; set; } = new();
-    }
-
-    public class Category
-    {
-        public string Name { get; set; } = string.Empty;
-        public List<Item> Items { get; set; } = new();
-
-        // Subtotal calculated from Items
-        public decimal Subtotal => Items.Sum(i => i.Amount);
-    }
-
-    public class Item
-    {
-        public string Name { get; set; } = string.Empty;
-        public decimal Amount { get; set; }
-    }
-
-    public class Program
-    {
-        public static void Main()
+        // Prepare sample data.
+        ReportModel model = new()
         {
-            // Register code page provider for Aspose.Words
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            // Paths for template and output
-            string templatePath = "Template.docx";
-            string outputPath = "Report.docx";
-
-            // Create template document programmatically
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
-
-            builder.Writeln("LINQ Reporting Example - Subtotals per Category");
-            builder.Writeln();
-
-            // Outer foreach over categories
-            builder.Writeln("<<foreach [cat in Categories]>>");
-            builder.Writeln("Category: <<[cat.Name]>>");
-            builder.Writeln();
-
-            // Inner foreach over items of the current category
-            builder.Writeln("<<foreach [item in cat.Items]>>");
-            // Start a table for each item (simple layout)
-            var table = builder.StartTable();
-            builder.InsertCell();
-            builder.Writeln("Item");
-            builder.InsertCell();
-            builder.Writeln("Amount");
-            builder.EndRow();
-
-            builder.InsertCell();
-            builder.Writeln("<<[item.Name]>>");
-            builder.InsertCell();
-            builder.Writeln("<<[item.Amount]>>");
-            builder.EndRow();
-            builder.EndTable();
-            builder.Writeln("<</foreach>>");
-
-            // Subtotal for the current category
-            builder.Writeln("Subtotal: <<[cat.Subtotal]>>");
-            builder.Writeln();
-            builder.Writeln("<</foreach>>");
-
-            // Save the template
-            doc.Save(templatePath);
-
-            // Load the template for reporting
-            var reportDoc = new Document(templatePath);
-
-            // Prepare sample data
-            var model = new ReportModel
+            Categories = new()
             {
-                Categories = new List<Category>
+                new Category
                 {
-                    new Category
+                    Name = "Beverages",
+                    Items = new()
                     {
-                        Name = "Beverages",
-                        Items = new List<Item>
-                        {
-                            new Item { Name = "Coffee", Amount = 3.50m },
-                            new Item { Name = "Tea", Amount = 2.75m }
-                        }
-                    },
-                    new Category
+                        new Item { Name = "Coffee", Amount = 3.50m },
+                        new Item { Name = "Tea", Amount = 2.75m },
+                        new Item { Name = "Juice", Amount = 4.20m }
+                    }
+                },
+                new Category
+                {
+                    Name = "Snacks",
+                    Items = new()
                     {
-                        Name = "Snacks",
-                        Items = new List<Item>
-                        {
-                            new Item { Name = "Chips", Amount = 1.20m },
-                            new Item { Name = "Cookies", Amount = 2.10m },
-                            new Item { Name = "Nuts", Amount = 3.00m }
-                        }
+                        new Item { Name = "Chips", Amount = 1.99m },
+                        new Item { Name = "Cookies", Amount = 2.49m }
                     }
                 }
-            };
+            }
+        };
 
-            // Build the report
-            var engine = new ReportingEngine();
-            engine.BuildReport(reportDoc, model, "model");
+        // Create a template document programmatically.
+        string templatePath = "Template.docx";
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
 
-            // Save the generated report
-            reportDoc.Save(outputPath);
-        }
+        builder.Writeln("LINQ Reporting – Subtotals per Category");
+        builder.Writeln();
+
+        // Outer foreach over categories.
+        builder.Writeln("<<foreach [cat in Categories]>>");
+        builder.Writeln("Category: <<[cat.Name]>>");
+        builder.Writeln();
+
+        // Inner foreach over items.
+        builder.Writeln("<<foreach [itm in cat.Items]>>");
+        builder.Writeln("- <<[itm.Name]>>: $<<[itm.Amount]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Subtotal for the current category.
+        builder.Writeln("Subtotal: $<<[cat.Subtotal]>>");
+        builder.Writeln();
+        builder.Writeln("<</foreach>>");
+
+        // Save the template.
+        templateDoc.Save(templatePath);
+
+        // Load the template for report generation.
+        Document reportDoc = new(templatePath);
+
+        // Build the report.
+        ReportingEngine engine = new();
+        engine.BuildReport(reportDoc, model, "model");
+
+        // Save the generated report.
+        string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
+}
+
+// Root model.
+public class ReportModel
+{
+    public List<Category> Categories { get; set; } = new();
+}
+
+// Category with a computed subtotal.
+public class Category
+{
+    public string Name { get; set; } = string.Empty;
+    public List<Item> Items { get; set; } = new();
+
+    // Subtotal calculated from the items.
+    public decimal Subtotal => Items.Sum(i => i.Amount);
+}
+
+// Individual item.
+public class Item
+{
+    public string Name { get; set; } = string.Empty;
+    public decimal Amount { get; set; }
 }

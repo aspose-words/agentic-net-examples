@@ -1,71 +1,64 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class Order
+{
+    // Public properties that will be accessed from the template.
+    public string CustomerName { get; set; } = "John Doe";
+    public int OrderId { get; set; } = 12345;
+
+    // Private member – not exposed to the reporting engine.
+    private string SecretCode { get; set; } = "XYZ";
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some encodings)
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // -----------------------------------------------------------------
+        // 1. Create a template document containing LINQ Reporting tags.
+        // -----------------------------------------------------------------
+        const string templatePath = "Template.docx";
 
-        // Define file paths
-        string templatePath = "ReportTemplate.docx";
-        string outputPath = "ReportResult.docx";
-
-        // -------------------------------------------------
-        // Create the template document with LINQ tags
-        // -------------------------------------------------
         var templateDoc = new Document();
         var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Customer Report");
-        builder.Writeln("Name: <<[model.Name]>>");
-        builder.Writeln("Age: <<[model.Age]>>");
-        // Save the template to disk
+
+        // Insert tags that reference the public properties of the Order class.
+        builder.Writeln("Customer: <<[model.CustomerName]>>");
+        builder.Writeln("Order ID: <<[model.OrderId]>>");
+
+        // Save the template to disk.
         templateDoc.Save(templatePath);
 
-        // -------------------------------------------------
-        // Load the template for reporting
-        // -------------------------------------------------
-        var doc = new Document(templatePath);
+        // -----------------------------------------------------------------
+        // 2. Load the template for report generation.
+        // -----------------------------------------------------------------
+        var reportDoc = new Document(templatePath);
 
-        // -------------------------------------------------
-        // Prepare the data model
-        // -------------------------------------------------
-        var model = new Customer
-        {
-            Name = "John Doe",
-            Age = 30
-        };
+        // -----------------------------------------------------------------
+        // 3. Prepare the data source.
+        // -----------------------------------------------------------------
+        var order = new Order();
 
-        // -------------------------------------------------
-        // Configure the reporting engine
-        // -------------------------------------------------
+        // -----------------------------------------------------------------
+        // 4. Configure the reporting engine.
+        // -----------------------------------------------------------------
         var engine = new ReportingEngine();
 
-        // Aspose.Words ReportingEngine accesses only public members by default.
-        // If a version supports a RestrictedMembers collection, you could add:
-        // engine.RestrictedMembers.Add(nameof(Customer.Name));
-        // engine.RestrictedMembers.Add(nameof(Customer.Age));
-        // The above lines are omitted because the property is not available in this version.
+        // No need to add any restricted members – the engine already
+        // limits access to public members only. Removing the invalid
+        // RestrictedMembers calls fixes the compilation error.
 
-        // Build the report
-        engine.BuildReport(doc, model, "model");
+        // -----------------------------------------------------------------
+        // 5. Build the report.
+        // -----------------------------------------------------------------
+        engine.BuildReport(reportDoc, order, "model");
 
-        // -------------------------------------------------
-        // Save the generated report
-        // -------------------------------------------------
-        doc.Save(outputPath);
+        // -----------------------------------------------------------------
+        // 6. Save the generated report.
+        // -----------------------------------------------------------------
+        const string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
-}
-
-// Public data model with public properties
-public class Customer
-{
-    public string Name { get; set; } = string.Empty;
-    public int Age { get; set; }
-
-    // Private member (not accessible from the template)
-    private string PrivateInfo { get; set; } = "Secret";
 }

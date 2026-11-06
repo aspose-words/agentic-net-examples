@@ -1,59 +1,57 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class FeatureModel
 {
-    // Nullable booleans to demonstrate lifted logical operations.
-    public bool? IsActive { get; set; } = true;
-    public bool? HasLicense { get; set; } = true;
+    // Nullable booleans to demonstrate lifted logical AND.
+    public bool? IsActive { get; set; } = false;
+    public bool? HasLicense { get; set; } = false;
 }
 
 public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create the template document with LINQ Reporting tags.
-        // -----------------------------------------------------------------
-        const string templatePath = "Template.docx";
+        // Prepare a temporary folder for files.
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "LinQReportingExample");
+        Directory.CreateDirectory(workDir);
 
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Paths for the template and the generated report.
+        string templatePath = Path.Combine(workDir, "template.docx");
+        string outputPath = Path.Combine(workDir, "report.docx");
+
+        // ---------- Create the template document ----------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
         builder.Writeln("Feature Availability Report");
+        builder.Writeln();
 
-        // Use null‑coalescing to safely evaluate nullable booleans.
-        builder.Writeln("<<if [(model.IsActive ?? false) && (model.HasLicense ?? false)]>>Feature is AVAILABLE<</if>>");
-        builder.Writeln("<<if [!((model.IsActive ?? false) && (model.HasLicense ?? false))]>>Feature is NOT AVAILABLE<</if>>");
+        // Conditional block using lifted logical AND on nullable booleans.
+        // Use explicit comparison to true because the reporting engine cannot apply && to nullable booleans.
+        builder.Writeln("<<if [model.IsActive == true && model.HasLicense == true]>>Feature is AVAILABLE.<</if>>");
+        builder.Writeln("<<if [!(model.IsActive == true && model.HasLicense == true)]>>Feature is NOT available.<</if>>");
 
-        // Save the template so it can be loaded for reporting.
+        // Save the template to disk.
         templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the template for report generation.
-        // -----------------------------------------------------------------
-        var reportDoc = new Document(templatePath);
+        // ---------- Load the template for reporting ----------
+        Document doc = new Document(templatePath);
 
-        // -----------------------------------------------------------------
-        // 3. Prepare sample data.
-        // -----------------------------------------------------------------
-        var model = new FeatureModel
+        // Prepare sample data.
+        FeatureModel model = new FeatureModel
         {
             IsActive = true,
-            HasLicense = false   // Change values to see different outcomes.
+            HasLicense = true
         };
 
-        // -----------------------------------------------------------------
-        // 4. Build the report.
-        // -----------------------------------------------------------------
-        var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+        // Build the report.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-        // -----------------------------------------------------------------
-        // 5. Save the generated report.
-        // -----------------------------------------------------------------
-        const string outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+        // Save the generated report.
+        doc.Save(outputPath);
     }
 }

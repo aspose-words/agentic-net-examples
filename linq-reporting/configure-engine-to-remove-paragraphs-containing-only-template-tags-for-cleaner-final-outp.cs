@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,47 +8,51 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some encodings)
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        string templatePath = "Template.docx";
-        string outputPath = "Report.docx";
+        // Prepare template file.
+        const string templatePath = "Template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // Create the template document
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Normal paragraph with a tag.
+        builder.Writeln("Hello, <<[person.Name]>>!");
 
-        // Static paragraph
-        builder.Writeln("Customer Report");
+        // Paragraph that contains only a conditional tag.
+        builder.Writeln("<<if [person.Age > 30]>>Senior<</if>>");
 
-        // Paragraph that contains only a LINQ Reporting tag (will be removed)
-        builder.Writeln("<<[model.Name]>>");
-
-        // Paragraph with tag inside text (will remain)
-        builder.Writeln("Name: <<[model.Name]>>");
-
-        // Save the template to disk
+        // Save the template.
         templateDoc.Save(templatePath);
 
-        // Load the template for reporting
-        Document doc = new Document(templatePath);
+        // Load the template for reporting.
+        var doc = new Document(templatePath);
 
-        // Sample data model
-        ReportModel model = new ReportModel { Name = "John Doe" };
+        // Sample data model.
+        var person = new Person
+        {
+            Name = "John",
+            Age = 25
+        };
 
-        // Configure the reporting engine to remove empty paragraphs
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
+        // Configure the reporting engine to remove empty paragraphs.
+        var engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.RemoveEmptyParagraphs
+        };
 
-        // Build the report
-        engine.BuildReport(doc, model, "model");
+        // Build the report.
+        engine.BuildReport(doc, person, "person");
 
-        // Save the final report
+        // Save the final document.
+        const string outputPath = "Output.docx";
         doc.Save(outputPath);
     }
+}
 
-    public class ReportModel
-    {
-        public string Name { get; set; } = "";
-    }
+// Data model class.
+public class Person
+{
+    public string Name { get; set; } = string.Empty;
+    public int Age { get; set; }
 }

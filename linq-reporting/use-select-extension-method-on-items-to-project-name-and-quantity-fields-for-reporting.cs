@@ -7,67 +7,69 @@ using Aspose.Words.Reporting;
 
 namespace LinqReportingSelectExample
 {
-    // Sample data class with extra fields.
+    // Original data item.
     public class Item
     {
         public string Name { get; set; } = "";
         public int Quantity { get; set; }
-        public decimal Price { get; set; }
     }
 
-    // Projection class containing only the fields needed for the report.
-    public class ItemProjection
+    // Model that holds the original collection.
+    public class ReportModel
+    {
+        public List<Item> Items { get; set; } = new();
+    }
+
+    // Projected item used for reporting.
+    public class ProjectedItem
     {
         public string Name { get; set; } = "";
         public int Quantity { get; set; }
     }
 
-    // Root model passed to the reporting engine.
-    public class ReportModel
+    // Wrapper passed as the root object to the reporting engine.
+    public class ReportWrapper
     {
-        public List<ItemProjection> ProjectedItems { get; set; } = new();
+        public List<ProjectedItem> Items { get; set; } = new();
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Prepare sample data.
-            List<Item> items = new()
-            {
-                new Item { Name = "Apple", Quantity = 10, Price = 0.5m },
-                new Item { Name = "Banana", Quantity = 20, Price = 0.3m },
-                new Item { Name = "Cherry", Quantity = 15, Price = 1.2m }
-            };
+            // Create sample data.
+            var model = new ReportModel();
+            model.Items.Add(new Item { Name = "Apple", Quantity = 10 });
+            model.Items.Add(new Item { Name = "Banana", Quantity = 20 });
+            model.Items.Add(new Item { Name = "Cherry", Quantity = 15 });
 
-            // Project Name and Quantity using LINQ Select.
-            ReportModel model = new()
-            {
-                ProjectedItems = items
-                    .Select(i => new ItemProjection { Name = i.Name, Quantity = i.Quantity })
-                    .ToList()
-            };
+            // Project the original items to a collection containing only Name and Quantity.
+            var projected = model.Items
+                .Select(i => new ProjectedItem { Name = i.Name, Quantity = i.Quantity })
+                .ToList();
 
-            // Create the template document.
-            string templatePath = "Template.docx";
-            Document templateDoc = new();
-            DocumentBuilder builder = new(templateDoc);
+            // Prepare the wrapper that will be used as the root object.
+            var wrapper = new ReportWrapper { Items = projected };
 
+            // Create a template document with LINQ Reporting tags.
+            const string templatePath = "Template.docx";
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
             builder.Writeln("Items Report");
-            builder.Writeln("==============");
-            builder.Writeln("<<foreach [p in ProjectedItems]>>");
-            builder.Writeln("- <<[p.Name]>>: <<[p.Quantity]>>");
+            builder.Writeln("<<foreach [item in Items]>>");
+            builder.Writeln("Name: <<[item.Name]>>, Quantity: <<[item.Quantity]>>");
             builder.Writeln("<</foreach>>");
-
             templateDoc.Save(templatePath);
 
-            // Load the template and build the report.
-            Document reportDoc = new(templatePath);
-            ReportingEngine engine = new();
-            engine.BuildReport(reportDoc, model, "model");
+            // Load the template for report generation.
+            var reportDoc = new Document(templatePath);
 
-            // Save the final report.
-            string outputPath = "Report.docx";
+            // Build the report using the wrapper as the data source.
+            var engine = new ReportingEngine();
+            engine.BuildReport(reportDoc, wrapper, "model");
+
+            // Save the generated report.
+            const string outputPath = "Report.docx";
             reportDoc.Save(outputPath);
         }
     }

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -9,78 +8,62 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Create the template document programmatically.
-        const string templatePath = "template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-
-        // Declare a variable for grand total.
-        builder.Writeln("<<[var grandTotal = 0]>>");
-
-        // Begin foreach over Items.
-        builder.Writeln("<<foreach [item in Items]>>");
-
-        // Calculate line total and add to grand total.
-        builder.Writeln("<<[var lineTotal = item.Price * item.Quantity]>>");
-        builder.Writeln("<<[grandTotal = grandTotal + lineTotal]>>");
-
-        // Output item details.
-        builder.Writeln(
-            "Item: <<[item.Name]>>  Qty: <<[item.Quantity]>>  Price: <<[item.Price]>>  Total: <<[lineTotal]>>");
-
-        // End foreach.
-        builder.Writeln("<</foreach>>");
-
-        // Output grand total after the loop.
-        builder.Writeln("Grand Total: <<[grandTotal]>>");
-
-        // Save the template.
-        templateDoc.Save(templatePath);
-
-        // Load the template for reporting.
-        var doc = new Document(templatePath);
-
-        // Prepare sample data.
+        // Sample data.
         var model = new ReportModel
         {
             Items = new List<Item>
             {
-                new Item { Name = "Apple", Quantity = 3, Price = 0.5m },
-                new Item { Name = "Banana", Quantity = 5, Price = 0.3m },
-                new Item { Name = "Cherry", Quantity = 10, Price = 0.2m }
+                new Item { Name = "Apple", Quantity = 3, UnitPrice = 0.5m },
+                new Item { Name = "Banana", Quantity = 5, UnitPrice = 0.3m },
+                new Item { Name = "Cherry", Quantity = 10, UnitPrice = 0.2m }
             }
         };
 
+        // Create the template document.
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        // Header.
+        builder.Writeln("Item Report");
+        builder.Writeln();
+
+        // Begin foreach over Items.
+        builder.Writeln("<<foreach [item in Items]>>");
+        // Use the computed property LineTotal.
+        builder.Writeln(
+            "Item: <<[item.Name]>> | Qty: <<[item.Quantity]>> | Unit: <<[item.UnitPrice]>> | Total: <<[item.LineTotal]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template.
+        doc.Save(templatePath);
+
+        // Load the template for reporting.
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
+
         // Build the report.
-        var engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.InlineErrorMessages
-        };
-        bool success = engine.BuildReport(doc, model, "model");
+        engine.BuildReport(reportDoc, model, "model");
 
         // Save the generated report.
-        const string outputPath = "report.docx";
-        doc.Save(outputPath);
-
-        // Indicate completion.
-        Console.WriteLine(success
-            ? $"Report generated successfully: {Path.GetFullPath(outputPath)}"
-            : "Report generation failed.");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        reportDoc.Save(outputPath);
     }
 }
 
-// Data model classes.
+// Root model class.
 public class ReportModel
 {
     public List<Item> Items { get; set; } = new();
 }
 
+// Item class used in the report.
 public class Item
 {
-    public string Name { get; set; } = "";
+    public string Name { get; set; } = string.Empty;
     public int Quantity { get; set; }
-    public decimal Price { get; set; }
+    public decimal UnitPrice { get; set; }
+
+    // Computed property for line total.
+    public decimal LineTotal => Quantity * UnitPrice;
 }

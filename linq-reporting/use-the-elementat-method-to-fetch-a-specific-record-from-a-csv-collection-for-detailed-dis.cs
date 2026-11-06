@@ -1,68 +1,66 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class Person
-{
-    public int Id { get; set; }
-    public string Name { get; set; } = "";
-    public int Age { get; set; }
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Ensure code page provider for possible CSV encoding.
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Prepare output directory
+        string outputDir = "output";
+        Directory.CreateDirectory(outputDir);
 
-        // 1. Create sample CSV file.
-        string csvPath = "people.csv";
+        // Create a sample CSV file
+        string csvPath = Path.Combine(outputDir, "people.csv");
         File.WriteAllText(csvPath,
-@"Id,Name,Age
-1,John Doe,30
-2,Jane Smith,25
-3,Bob Johnson,40
-4,Alice Brown,22");
+            "Id,Name,Age\n" +
+            "1,John Doe,30\n" +
+            "2,Jane Smith,25\n" +
+            "3,Bob Johnson,40");
 
-        // 2. Load CSV data into a list of Person objects.
-        List<Person> people = new List<Person>();
-        foreach (var line in File.ReadAllLines(csvPath).Skip(1)) // Skip header
-        {
-            var parts = line.Split(',');
-            if (parts.Length != 3) continue;
-            if (!int.TryParse(parts[0], out int id)) continue;
-            var name = parts[1];
-            if (!int.TryParse(parts[2], out int age)) continue;
-            people.Add(new Person { Id = id, Name = name, Age = age });
-        }
+        // Load CSV data into a strongly‑typed list
+        List<Person> persons = File.ReadAllLines(csvPath)
+            .Skip(1) // Skip header
+            .Select(line =>
+            {
+                var parts = line.Split(',');
+                return new Person
+                {
+                    Id = int.Parse(parts[0]),
+                    Name = parts[1],
+                    Age = int.Parse(parts[2])
+                };
+            })
+            .ToList();
 
-        // 3. Use ElementAt to fetch the third record (index 2).
-        Person selectedPerson = people.ElementAt(2); // Bob Johnson
+        // Fetch the third record (index 2) using ElementAt
+        Person specificRecord = persons.ElementAt(2);
 
-        // 4. Create a Word template with LINQ Reporting tags.
-        string templatePath = "template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Detailed Person Report");
-        builder.Writeln("<<[person.Id]>>");
-        builder.Writeln("<<[person.Name]>>");
-        builder.Writeln("<<[person.Age]>>");
-        templateDoc.Save(templatePath);
+        // Create a template document programmatically
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Detailed Record:");
+        builder.Writeln("Id: <<[record.Id]>>");
+        builder.Writeln("Name: <<[record.Name]>>");
+        builder.Writeln("Age: <<[record.Age]>>");
 
-        // 5. Load the template and build the report.
-        Document reportDoc = new Document(templatePath);
+        // Build the report using the specific record as the root object
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, selectedPerson, "person");
+        engine.BuildReport(doc, specificRecord, "record");
 
-        // 6. Save the generated report.
-        string outputPath = "PersonReport.docx";
-        reportDoc.Save(outputPath);
-
-        // Optional: indicate completion (no interactive wait).
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+        // Save the generated report
+        string outPath = Path.Combine(outputDir, "Report.docx");
+        doc.Save(outPath);
     }
+}
+
+// Public data model for CSV rows
+public class Person
+{
+    public int Id { get; set; } = 0;
+    public string Name { get; set; } = string.Empty;
+    public int Age { get; set; } = 0;
 }

@@ -9,63 +9,70 @@ public class Person
 {
     public string FirstName { get; set; } = "";
     public string LastName { get; set; } = "";
-}
-
-public class PersonBookmark
-{
-    public string FullName { get; set; } = "";
     public string BookmarkName { get; set; } = "";
 }
 
-public class ReportModel
+public class Model
 {
-    public List<PersonBookmark> Bookmarks { get; set; } = new();
+    public List<Person> Persons { get; set; } = new();
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Sample data
-        List<Person> persons = new()
+        // Paths for template and output documents.
+        string templatePath = "Template.docx";
+        string outputPath = "Report.docx";
+
+        // Create the template document with LINQ Reporting tags.
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Begin a foreach loop over the collection "Persons".
+        builder.Writeln("<<foreach [person in Persons]>>");
+
+        // Define a bookmark whose name is the concatenated fields.
+        builder.Writeln("<<bookmark [person.BookmarkName]>>");
+        // Bookmark content: display the person's full name.
+        builder.Writeln("<<[person.FirstName]>> <<[person.LastName]>>");
+        builder.Writeln("<</bookmark>>");
+
+        // End the foreach loop.
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // Load the template for report generation.
+        Document reportDoc = new Document(templatePath);
+
+        // Sample data source.
+        var rawPersons = new List<Person>
         {
             new Person { FirstName = "John", LastName = "Doe" },
             new Person { FirstName = "Jane", LastName = "Smith" },
-            new Person { FirstName = "Bob", LastName = "Johnson" }
+            new Person { FirstName = "Alice", LastName = "Johnson" }
         };
 
-        // Use LINQ to create a collection with concatenated bookmark names
-        List<PersonBookmark> bookmarks = persons
-            .Select(p => new PersonBookmark
+        // Use LINQ to create bookmark names by concatenating first and last names.
+        var personsWithBookmarks = rawPersons
+            .Select(p => new Person
             {
-                FullName = $"{p.FirstName} {p.LastName}",
+                FirstName = p.FirstName,
+                LastName = p.LastName,
                 BookmarkName = $"{p.FirstName}{p.LastName}"
             })
             .ToList();
 
-        ReportModel model = new() { Bookmarks = bookmarks };
+        // Wrap the collection in a root model object.
+        var model = new Model { Persons = personsWithBookmarks };
 
-        // Create template document programmatically
-        string templatePath = "template.docx";
-        Document templateDoc = new();
-        DocumentBuilder builder = new(templateDoc);
-
-        builder.Writeln("People List:");
-        builder.Writeln("<<foreach [b in Bookmarks]>>");
-        builder.Writeln("<<bookmark [b.BookmarkName]>>");
-        builder.Writeln("<<[b.FullName]>>");
-        builder.Writeln("<</bookmark>>");
-        builder.Writeln("<</foreach>>");
-
-        templateDoc.Save(templatePath);
-
-        // Load template and build report
-        Document doc = new(templatePath);
+        // Build the report using the LINQ Reporting engine.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Save the generated report
-        string outputPath = "output.docx";
-        doc.Save(outputPath);
+        // Save the generated report.
+        reportDoc.Save(outputPath);
     }
 }

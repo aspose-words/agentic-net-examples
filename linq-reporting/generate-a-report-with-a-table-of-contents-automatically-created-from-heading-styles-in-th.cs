@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Tables;
@@ -8,113 +9,69 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare sample data model
+        // Prepare folders
+        string outputDir = "Output";
+        Directory.CreateDirectory(outputDir);
+
+        // Create template document
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        CreateTemplate(templatePath);
+
+        // Load template
+        Document doc = new Document(templatePath);
+
+        // Prepare sample data
         ReportModel model = new()
         {
-            Sections = new List<Section>
+            Sections = new()
             {
-                new()
-                {
-                    Title = "Introduction",
-                    Content = "This is the introduction section.",
-                    SubSections = new List<SubSection>
-                    {
-                        new()
-                        {
-                            Title = "Background",
-                            Content = "Background information goes here."
-                        },
-                        new()
-                        {
-                            Title = "Purpose",
-                            Content = "Purpose of the document."
-                        }
-                    }
-                },
-                new()
-                {
-                    Title = "Main Content",
-                    Content = "Details of the main content.",
-                    SubSections = new List<SubSection>
-                    {
-                        new()
-                        {
-                            Title = "Topic A",
-                            Content = "Discussion of topic A."
-                        },
-                        new()
-                        {
-                            Title = "Topic B",
-                            Content = "Discussion of topic B."
-                        }
-                    }
-                },
-                new()
-                {
-                    Title = "Conclusion",
-                    Content = "Final remarks and summary.",
-                    SubSections = new List<SubSection>()
-                }
+                new Section { Title = "Introduction", Content = "This is the introduction section." },
+                new Section { Title = "Chapter 1", Content = "Details of chapter 1 go here." },
+                new Section { Title = "Conclusion", Content = "Final thoughts are presented in this section." }
             }
         };
 
-        // Create template document programmatically
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Build report using LINQ Reporting Engine
+        ReportingEngine engine = new();
+        engine.BuildReport(doc, model, "model");
+
+        // Update fields to generate the Table of Contents
+        doc.UpdateFields();
+
+        // Save the final report
+        string reportPath = Path.Combine(outputDir, "report.docx");
+        doc.Save(reportPath);
+    }
+
+    private static void CreateTemplate(string path)
+    {
+        Document doc = new();
+        DocumentBuilder builder = new(doc);
 
         // Insert Table of Contents field
         builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
-        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln(); // Add a blank line after TOC
 
         // Begin foreach over Sections
-        builder.Writeln("<<foreach [sec in Sections]>>");
+        builder.Writeln("<<foreach [section in Sections]>>");
 
-        // Heading 1 for each section title
+        // Heading for each section (Heading 1 style)
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("<<[sec.Title]>>");
+        builder.Writeln("<<[section.Title]>>");
 
         // Normal paragraph for section content
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("<<[sec.Content]>>");
+        builder.Writeln("<<[section.Content]>>");
 
-        // Begin foreach over SubSections
-        builder.Writeln("<<foreach [sub in sec.SubSections]>>");
-
-        // Heading 2 for each subsection title
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("<<[sub.Title]>>");
-
-        // Normal paragraph for subsection content
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("<<[sub.Content]>>");
-
-        // End inner foreach
+        // End foreach
         builder.Writeln("<</foreach>>");
 
-        // End outer foreach
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk
-        const string templatePath = "template.docx";
-        template.Save(templatePath);
-
-        // Load the template for report generation
-        Document report = new Document(templatePath);
-
-        // Build the report using LINQ Reporting Engine
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(report, model, "model");
-
-        // Update fields to generate the Table of Contents
-        report.UpdateFields();
-
-        // Save the final report
-        const string outputPath = "output.docx";
-        report.Save(outputPath);
+        // Save template
+        doc.Save(path);
     }
 }
 
-// Data model classes
+// Data model for the report
 public class ReportModel
 {
     public List<Section> Sections { get; set; } = new();
@@ -122,13 +79,6 @@ public class ReportModel
 
 public class Section
 {
-    public string Title { get; set; } = "";
-    public string Content { get; set; } = "";
-    public List<SubSection> SubSections { get; set; } = new();
-}
-
-public class SubSection
-{
-    public string Title { get; set; } = "";
-    public string Content { get; set; } = "";
+    public string Title { get; set; } = string.Empty;
+    public string Content { get; set; } = string.Empty;
 }

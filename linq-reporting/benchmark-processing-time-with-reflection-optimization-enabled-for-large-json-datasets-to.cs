@@ -11,79 +11,115 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words.
+        // Register code page provider (required for some encodings)
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare folders.
-        string outputDir = "output";
-        Directory.CreateDirectory(outputDir);
+        // Paths for template, data and output
+        const string templatePath = "template.docx";
+        const string jsonPath = "data.json";
+        const string outputPath = "Report.docx";
 
-        // 1. Create the LINQ Reporting template.
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        CreateTemplate(templatePath);
-
-        // 2. Generate a large JSON dataset.
-        string jsonPath = Path.Combine(outputDir, "data.json");
-        GenerateLargeJson(jsonPath, 20000); // 20,000 records
-
-        // 3. Load the template document.
-        Document doc = new Document(templatePath);
-
-        // 4. Load JSON data source.
-        JsonDataSource jsonDataSource = new JsonDataSource(jsonPath);
-
-        // 5. Enable reflection optimization.
-        ReportingEngine.UseReflectionOptimization = true;
-
-        // 6. Build the report and benchmark the time.
-        ReportingEngine engine = new ReportingEngine();
-
-        Stopwatch sw = Stopwatch.StartNew();
-        engine.BuildReport(doc, jsonDataSource, "data");
-        sw.Stop();
-
-        // 7. Save the generated report.
-        string reportPath = Path.Combine(outputDir, "report.docx");
-        doc.Save(reportPath);
-
-        // 8. Output the elapsed time.
-        Console.WriteLine($"Report generated in {sw.ElapsedMilliseconds} ms with reflection optimization enabled.");
-    }
-
-    private static void CreateTemplate(string path)
-    {
+        // -----------------------------------------------------------------
+        // 1. Create the LINQ Reporting template programmatically
+        // -----------------------------------------------------------------
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Write LINQ Reporting tags.
-        builder.Writeln("<<foreach [item in data]>>");
-        builder.Writeln("<<[item.Name]>> - <<[item.Age]>>");
+        // Use a property on the root object to display the current date/time.
+        builder.Writeln("Report generated at: <<[Now]>>");
+        builder.Writeln();
+        builder.Writeln("<<foreach [order in Orders]>>");
+        builder.Writeln("Order ID: <<[order.Id]>>   Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Items:");
+        builder.Writeln("<<foreach [item in order.Items]>>");
+        builder.Writeln("- <<[item.Index]>>: <<[item.Name]>>   Price: $<<[item.Price]>>");
+        builder.Writeln("<</foreach>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template.
-        templateDoc.Save(path);
-    }
+        // Save the template to disk
+        templateDoc.Save(templatePath);
 
-    private static void GenerateLargeJson(string path, int count)
-    {
-        List<Person> persons = new List<Person>(count);
-        for (int i = 0; i < count; i++)
+        // -----------------------------------------------------------------
+        // 2. Generate a large JSON dataset and save it
+        // -----------------------------------------------------------------
+        const int orderCount = 1000;   // number of orders
+        const int itemsPerOrder = 100; // items per order
+
+        var root = new RootModel();
+
+        for (int o = 1; o <= orderCount; o++)
         {
-            persons.Add(new Person
+            var order = new Order
             {
-                Name = $"Person_{i + 1}",
-                Age = 20 + (i % 50)
-            });
+                Id = o,
+                CustomerName = $"Customer {o}"
+            };
+
+            for (int i = 1; i <= itemsPerOrder; i++)
+            {
+                order.Items.Add(new Item
+                {
+                    Index = i,
+                    Name = $"Product {i}",
+                    Price = Math.Round((decimal)(i * 1.23), 2)
+                });
+            }
+
+            root.Orders.Add(order);
         }
 
-        string json = JsonConvert.SerializeObject(persons);
-        File.WriteAllText(path, json, Encoding.UTF8);
+        // Serialize to JSON and write to file
+        string json = JsonConvert.SerializeObject(root, Formatting.Indented);
+        File.WriteAllText(jsonPath, json, Encoding.UTF8);
+
+        // -----------------------------------------------------------------
+        // 3. Load the template and JSON data, then benchmark report generation
+        // -----------------------------------------------------------------
+        Document doc = new Document(templatePath);
+
+        // Deserialize JSON back to object model (simulating a large JSON load)
+        string jsonFromFile = File.ReadAllText(jsonPath, Encoding.UTF8);
+        var dataRoot = JsonConvert.DeserializeObject<RootModel>(jsonFromFile)!;
+
+        // Enable reflection optimization
+        ReportingEngine.UseReflectionOptimization = true;
+
+        ReportingEngine engine = new ReportingEngine();
+
+        Stopwatch sw = Stopwatch.StartNew();
+        bool success = engine.BuildReport(doc, dataRoot, "root");
+        sw.Stop();
+
+        // Save the generated report
+        doc.Save(outputPath);
+
+        // Output benchmark result
+        Console.WriteLine($"Report generation success: {success}");
+        Console.WriteLine($"Elapsed time with reflection optimization: {sw.ElapsedMilliseconds} ms");
     }
 }
 
-// Public data model for JSON serialization.
-public class Person
+// ---------------------------------------------------------------------
+// Data model classes (must be public with public properties)
+// ---------------------------------------------------------------------
+public class RootModel
 {
+    // Property used in the template to display the current date/time.
+    public DateTime Now => DateTime.Now;
+
+    public List<Order> Orders { get; set; } = new();
+}
+
+public class Order
+{
+    public int Id { get; set; }
+    public string CustomerName { get; set; } = "";
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    public int Index { get; set; }
     public string Name { get; set; } = "";
-    public int Age { get; set; }
+    public decimal Price { get; set; }
 }

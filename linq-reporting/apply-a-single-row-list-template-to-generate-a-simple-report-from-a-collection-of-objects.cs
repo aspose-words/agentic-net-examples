@@ -1,75 +1,64 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace LinqReportingSingleRowList
 {
-    public static void Main()
+    // Data model classes
+    public class Person
     {
-        // Prepare folders.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
-
-        // Paths for template and final report.
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        string reportPath = Path.Combine(outputDir, "report.docx");
-
-        // -----------------------------------------------------------------
-        // 1. Create the template document with LINQ Reporting tags.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("Simple Person Report");
-        builder.Writeln("<<foreach [p in Persons]>>");
-        builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template back (ensures template is fully loaded before building).
-        // -----------------------------------------------------------------
-        Document doc = new Document(templatePath);
-
-        // -----------------------------------------------------------------
-        // 3. Prepare the data model.
-        // -----------------------------------------------------------------
-        ReportModel model = new()
-        {
-            Persons = new()
-            {
-                new Person { Name = "John Doe", Age = 30 },
-                new Person { Name = "Jane Smith", Age = 25 }
-            }
-        };
-
-        // -----------------------------------------------------------------
-        // 4. Build the report using ReportingEngine.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
-
-        // -----------------------------------------------------------------
-        // 5. Save the generated report.
-        // -----------------------------------------------------------------
-        doc.Save(reportPath);
+        public string Name { get; set; } = string.Empty;
+        public int Age { get; set; }
     }
-}
 
-// ---------------------------------------------------------------------
-// Data model classes.
-// ---------------------------------------------------------------------
-public class ReportModel
-{
-    public List<Person> Persons { get; set; } = new();
-}
+    public class ReportModel
+    {
+        public List<Person> Persons { get; set; } = new();
+    }
 
-public class Person
-{
-    public string Name { get; set; } = string.Empty;
-    public int Age { get; set; }
+    class Program
+    {
+        static void Main()
+        {
+            // Prepare sample data
+            var model = new ReportModel
+            {
+                Persons = new()
+                {
+                    new Person { Name = "Alice", Age = 30 },
+                    new Person { Name = "Bob", Age = 25 },
+                    new Person { Name = "Charlie", Age = 28 }
+                }
+            };
+
+            // Create template document programmatically
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
+
+            // Insert a single‑row list template using LINQ Reporting tags
+            builder.Writeln("<<foreach [p in Persons]>>");
+            builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk (required before building the report)
+            const string templatePath = "Template.docx";
+            templateDoc.Save(templatePath);
+
+            // Load the template for report generation
+            var doc = new Document(templatePath);
+
+            // Build the report
+            var engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.None; // default options
+            bool success = engine.BuildReport(doc, model, "model");
+
+            // Save the generated report
+            const string outputPath = "Report.docx";
+            doc.Save(outputPath);
+
+            // Optionally indicate success (no interactive input)
+            Console.WriteLine(success ? "Report generated successfully." : "Report generation failed.");
+        }
+    }
 }

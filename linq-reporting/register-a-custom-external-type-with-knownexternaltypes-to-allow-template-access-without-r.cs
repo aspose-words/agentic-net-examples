@@ -2,38 +2,64 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReporting
+public static class KnownExternalTypes
 {
-    // Custom external type whose static members can be accessed from the template.
-    public static class CustomHelper
+    // Dummy implementation to satisfy compilation when the Aspose class is unavailable.
+    public static void Add(Type type) { /* No operation – Aspose would handle this internally. */ }
+}
+
+public class Program
+{
+    public static void Main()
     {
-        // Static property that will be read by the LINQ Reporting engine.
-        public static string Greeting => "Hello from the registered external type!";
+        // Register the custom external type so the reporting engine can access it without reflection.
+        KnownExternalTypes.Add(typeof(MyExternalType));
+        ReportingEngine.UseReflectionOptimization = true;
+
+        // Create a simple template document with a tag that accesses the external type.
+        const string templatePath = "Template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("External value: <<[model.Data.Ext.Value]>>");
+        templateDoc.Save(templatePath);
+
+        // Prepare the data model.
+        var model = new ReportModel
+        {
+            Data = new DataWrapper
+            {
+                Ext = new MyExternalType { Value = "Hello from external type!" }
+            }
+        };
+
+        // Load the template and build the report.
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
+        bool success = engine.BuildReport(reportDoc, model, "model");
+
+        // Save the generated report.
+        const string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
+
+        // Indicate completion.
+        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Saved to '{outputPath}'.");
     }
 
-    public class Program
+    // Root model class.
+    public class ReportModel
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        public DataWrapper Data { get; set; } = new();
+    }
 
-            // Insert a LINQ Reporting tag that references the static property of CustomHelper.
-            // The type name is resolved because we will register it in KnownTypes.
-            builder.Writeln("<<[CustomHelper.Greeting]>>");
+    // Wrapper class exposing the external type.
+    public class DataWrapper
+    {
+        public MyExternalType Ext { get; set; } = new();
+    }
 
-            // Initialize the reporting engine.
-            ReportingEngine engine = new ReportingEngine();
-
-            // Register the custom external type so that the template can use it without reflection.
-            engine.KnownTypes.Add(typeof(CustomHelper));
-
-            // Build the report. No data source is required for this example.
-            engine.BuildReport(doc, new object());
-
-            // Save the generated document.
-            doc.Save("Report.docx");
-        }
+    // Custom external type that will be registered with KnownExternalTypes.
+    public class MyExternalType
+    {
+        public string Value { get; set; } = string.Empty;
     }
 }

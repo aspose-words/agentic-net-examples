@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -13,42 +14,42 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some encodings)
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create the template document
-        var templatePath = "template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Prepare sample data.
+        var model = new ReportModel
+        {
+            Title = "Monthly Report",
+            Signatory = "John Doe" // Set to null to omit the signature block.
+        };
 
-        // Title placeholder
+        // Create a template document programmatically.
+        var templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        // Title.
         builder.Writeln("<<[model.Title]>>");
         builder.Writeln();
 
-        // Conditional signature block (included only when Signatory is not null)
+        // Conditional signature block – included only when Signatory is not null.
         builder.Writeln("<<if [model.Signatory != null]>>");
-        builder.Writeln("Signed by: <<[model.Signatory]>>");
+        builder.Writeln("Signature: <<[model.Signatory]>>");
         builder.Writeln("<</if>>");
 
-        // Save the template
-        templateDoc.Save(templatePath);
+        // Save the template.
+        doc.Save(templatePath);
 
-        // Load the template for report generation
+        // Load the template for reporting.
         var reportDoc = new Document(templatePath);
 
-        // Prepare sample data
-        var model = new ReportModel
-        {
-            Title = "Sample Report",
-            Signatory = "John Doe" // Change to null to omit the signature block
-        };
-
-        // Build the report
+        // Build the report using LINQ Reporting Engine.
         var engine = new ReportingEngine();
         engine.BuildReport(reportDoc, model, "model");
 
-        // Save the generated report
-        var outputPath = "output.docx";
+        // Save the generated report.
+        var outputPath = "Report.docx";
         reportDoc.Save(outputPath);
     }
 }

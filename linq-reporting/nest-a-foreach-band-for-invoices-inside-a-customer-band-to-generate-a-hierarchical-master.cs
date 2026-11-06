@@ -8,10 +8,43 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for potential encoding needs.
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Prepare paths.
+        string templatePath = "Template.docx";
+        string reportPath = "Report.docx";
 
-        // Prepare sample data.
+        // -----------------------------------------------------------------
+        // 1. Create the LINQ Reporting template programmatically.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Title.
+        builder.Writeln("Master‑Detail Report");
+        builder.Writeln();
+
+        // Outer foreach band for customers.
+        builder.Writeln("<<foreach [customer in Customers]>>");
+        builder.Writeln("Customer: <<[customer.Name]>>");
+        builder.Writeln();
+
+        // Inner foreach band for invoices of the current customer.
+        builder.Writeln("<<foreach [invoice in customer.Invoices]>>");
+        builder.Writeln("Invoice #: <<[invoice.Number]>> | Date: <<[invoice.Date]>> | Amount: $<<[invoice.Amount]>>");
+        builder.Writeln("<</foreach>>"); // End inner foreach.
+
+        builder.Writeln("<</foreach>>"); // End outer foreach.
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template for report generation.
+        // -----------------------------------------------------------------
+        Document reportDoc = new Document(templatePath);
+
+        // -----------------------------------------------------------------
+        // 3. Create sample data model.
+        // -----------------------------------------------------------------
         ReportModel model = new()
         {
             Customers = new()
@@ -27,46 +60,33 @@ public class Program
                 },
                 new Customer
                 {
-                    Name = "Globex Inc",
+                    Name = "Globex Ltd",
                     Invoices = new()
                     {
-                        new Invoice { Number = "INV-101", Date = new DateTime(2023, 3, 5), Amount = 2500.00m }
+                        new Invoice { Number = "INV-101", Date = new DateTime(2023, 3, 5), Amount = 2500.00m },
+                        new Invoice { Number = "INV-102", Date = new DateTime(2023, 4, 12), Amount = 1750.75m },
+                        new Invoice { Number = "INV-103", Date = new DateTime(2023, 5, 30), Amount = 320.40m }
                     }
                 }
             }
         };
 
-        // Create the LINQ Reporting template programmatically.
-        string templatePath = "Template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("Customer Report");
-        builder.Writeln("<<foreach [customer in Customers]>>");
-        builder.Writeln("Customer: <<[customer.Name]>>");
-        builder.Writeln("Invoices:");
-        builder.Writeln("<<foreach [invoice in customer.Invoices]>>");
-        builder.Writeln("- Invoice #: <<[invoice.Number]>>, Date: <<[invoice.Date]>>, Amount: <<[invoice.Amount]>>");
-        builder.Writeln("<</foreach>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // Load the template for report generation.
-        Document reportDoc = new Document(templatePath);
-
-        // Build the report using the LINQ Reporting engine.
+        // -----------------------------------------------------------------
+        // 4. Build the report using LINQ Reporting Engine.
+        // -----------------------------------------------------------------
         ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(reportDoc, model, "model");
 
-        // Save the generated report.
-        string outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+        // -----------------------------------------------------------------
+        // 5. Save the generated report.
+        // -----------------------------------------------------------------
+        reportDoc.Save(reportPath);
     }
 }
 
+// ---------------------------------------------------------------------
 // Data model classes.
+// ---------------------------------------------------------------------
 public class ReportModel
 {
     public List<Customer> Customers { get; set; } = new();

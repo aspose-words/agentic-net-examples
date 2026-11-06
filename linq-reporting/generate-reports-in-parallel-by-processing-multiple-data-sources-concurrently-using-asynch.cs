@@ -1,106 +1,137 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
 
-namespace ParallelLinqReporting
+namespace AsposeWordsLinqReportingParallel
 {
-    // Sample data model
-    public class ReportModel
+    // Data model for an order.
+    public class Order
     {
-        public string Title { get; set; } = string.Empty;
-        public List<Person> Persons { get; set; } = new();
+        public string CustomerName { get; set; } = "";
+        public List<Item> Items { get; set; } = new();
     }
 
-    public class Person
+    // Data model for an item within an order.
+    public class Item
     {
-        public string Name { get; set; } = string.Empty;
-        public int Age { get; set; }
+        public int Index { get; set; }
+        public string Name { get; set; } = "";
     }
 
     public class Program
     {
-        private const string TemplateFileName = "template.docx";
-        private const string OutputFolder = "output";
-
-        public static async Task Main()
+        // Entry point.
+        public static async Task Main(string[] args)
         {
-            // Ensure output directory exists
-            Directory.CreateDirectory(OutputFolder);
+            // Register code page provider required by Aspose.Words.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            // Create and save the template document
-            CreateTemplate(TemplateFileName);
+            // Create the template document programmatically.
+            string templatePath = "ReportTemplate.docx";
+            CreateTemplate(templatePath);
 
-            // Prepare multiple data sources
-            var models = new List<ReportModel>
+            // Prepare sample data sources.
+            List<Order> orders = GetSampleOrders();
+
+            // Generate reports in parallel.
+            List<Task> tasks = new();
+            for (int i = 0; i < orders.Count; i++)
             {
-                new()
-                {
-                    Title = "Team Alpha Report",
-                    Persons = new()
-                    {
-                        new() { Name = "Alice", Age = 30 },
-                        new() { Name = "Bob", Age = 25 }
-                    }
-                },
-                new()
-                {
-                    Title = "Team Beta Report",
-                    Persons = new()
-                    {
-                        new() { Name = "Charlie", Age = 28 },
-                        new() { Name = "Diana", Age = 32 },
-                        new() { Name = "Eve", Age = 27 }
-                    }
-                }
-            };
-
-            // Generate reports in parallel
-            var tasks = new List<Task>();
-            for (int i = 0; i < models.Count; i++)
-            {
-                int index = i; // Capture loop variable
-                string outputPath = Path.Combine(OutputFolder, $"Report_{index + 1}.docx");
-                tasks.Add(GenerateReportAsync(TemplateFileName, models[index], outputPath));
+                int index = i; // Capture loop variable.
+                tasks.Add(GenerateReportAsync(orders[index], index, templatePath));
             }
 
             await Task.WhenAll(tasks);
         }
 
-        // Creates the LINQ Reporting template programmatically
-        private static void CreateTemplate(string filePath)
+        // Creates a simple LINQ Reporting template and saves it to disk.
+        private static void CreateTemplate(string path)
         {
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
+            Document doc = new();
+            DocumentBuilder builder = new(doc);
 
-            builder.Writeln("<<[model.Title]>>");
-            builder.Writeln("<<foreach [p in model.Persons]>>");
-            builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
+            // Customer name.
+            builder.Writeln("Customer: <<[order.CustomerName]>>");
+            builder.Writeln();
+
+            // Table header inside foreach.
+            builder.Writeln("<<foreach [item in order.Items]>>");
+            Table table = builder.StartTable();
+            builder.InsertCell();
+            builder.Writeln("Index");
+            builder.InsertCell();
+            builder.Writeln("Name");
+            builder.EndRow();
+
+            // Table rows.
+            builder.InsertCell();
+            builder.Writeln("<<[item.Index]>>");
+            builder.InsertCell();
+            builder.Writeln("<<[item.Name]>>");
+            builder.EndRow();
+            builder.EndTable();
             builder.Writeln("<</foreach>>");
 
-            doc.Save(filePath);
+            doc.Save(path);
         }
 
-        // Generates a single report based on the provided model
-        private static Task GenerateReportAsync(string templatePath, ReportModel model, string outputPath)
+        // Generates a report for a single order asynchronously.
+        private static async Task GenerateReportAsync(Order order, int orderIndex, string templatePath)
         {
-            return Task.Run(() =>
+            await Task.Run(() =>
             {
-                // Load the template
-                var doc = new Document(templatePath);
+                // Load the template.
+                Document doc = new(templatePath);
 
-                // Build the report
-                var engine = new ReportingEngine();
-                bool success = engine.BuildReport(doc, model, "model");
+                // Build the report.
+                ReportingEngine engine = new();
+                engine.BuildReport(doc, order, "order");
 
-                // Save the generated document
-                if (success)
-                {
-                    doc.Save(outputPath);
-                }
+                // Save the generated report.
+                string outputPath = $"Report_{orderIndex + 1}.docx";
+                doc.Save(outputPath);
+                Console.WriteLine($"Report generated: {outputPath}");
             });
+        }
+
+        // Returns a list of sample orders.
+        private static List<Order> GetSampleOrders()
+        {
+            return new()
+            {
+                new Order
+                {
+                    CustomerName = "Alice Johnson",
+                    Items = new()
+                    {
+                        new Item { Index = 1, Name = "Widget A" },
+                        new Item { Index = 2, Name = "Widget B" }
+                    }
+                },
+                new Order
+                {
+                    CustomerName = "Bob Smith",
+                    Items = new()
+                    {
+                        new Item { Index = 1, Name = "Gadget X" },
+                        new Item { Index = 2, Name = "Gadget Y" },
+                        new Item { Index = 3, Name = "Gadget Z" }
+                    }
+                },
+                new Order
+                {
+                    CustomerName = "Carol Davis",
+                    Items = new()
+                    {
+                        new Item { Index = 1, Name = "Thingamajig" }
+                    }
+                }
+            };
         }
     }
 }

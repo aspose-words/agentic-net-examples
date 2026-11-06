@@ -1,86 +1,69 @@
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingDateFormatting
+public class Order
 {
-    // Extension method to format DateTime according to a locale string.
-    public static class DateTimeExtensions
+    public DateTime OrderDate { get; set; } = DateTime.Now;
+}
+
+// Helper class exposing the date‑formatting method as an instance member.
+public class ExtensionsHelper
+{
+    public string FormatDate(DateTime date, string locale)
     {
-        public static string FormatDate(this DateTime date, string locale)
+        var culture = new CultureInfo(locale);
+        return date.ToString(culture);
+    }
+}
+
+public class Program
+{
+    public static void Main()
+    {
+        // Paths for the temporary template and the final report.
+        const string templatePath = "Template.docx";
+        const string outputPath = "Report.docx";
+
+        // -----------------------------------------------------------------
+        // 1. Create the template document with a LINQ Reporting expression.
+        // -----------------------------------------------------------------
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        // The expression calls the helper instance (named "ext") to format the date.
+        builder.Writeln("Order date (en-US): <<[ext.FormatDate(order.OrderDate, \"en-US\")]>>");
+
+        // Save the template to disk.
+        doc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template for reporting.
+        // -----------------------------------------------------------------
+        var template = new Document(templatePath);
+
+        // -----------------------------------------------------------------
+        // 3. Prepare sample data.
+        // -----------------------------------------------------------------
+        var order = new Order
         {
-            try
-            {
-                var culture = new CultureInfo(locale);
-                return date.ToString(culture);
-            }
-            catch
-            {
-                // Fallback to invariant culture if the locale is invalid.
-                return date.ToString(CultureInfo.InvariantCulture);
-            }
-        }
-    }
+            OrderDate = new DateTime(2023, 12, 31, 15, 45, 0)
+        };
 
-    // Sample data model.
-    public class Order
-    {
-        public DateTime OrderDate { get; set; } = DateTime.Now;
-        public string CustomerName { get; set; } = "John Doe";
-        public List<OrderItem> Items { get; set; } = new();
+        var ext = new ExtensionsHelper();
 
-        // Wrapper method that can be called from LINQ Reporting expressions.
-        public string FormatDate(string locale) => OrderDate.FormatDate(locale);
-    }
+        // -----------------------------------------------------------------
+        // 4. Build the report using the LINQ Reporting engine.
+        // -----------------------------------------------------------------
+        var engine = new ReportingEngine();
 
-    public class OrderItem
-    {
-        public int Index { get; set; }
-        public string ProductName { get; set; } = string.Empty;
-        public decimal Price { get; set; }
-    }
+        // Pass both the data source ("order") and the helper ("ext").
+        engine.BuildReport(template, new object[] { order, ext }, new[] { "order", "ext" });
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // Prepare sample data.
-            var order = new Order
-            {
-                OrderDate = new DateTime(2023, 12, 25, 14, 30, 0),
-                CustomerName = "Alice Smith",
-                Items = new List<OrderItem>
-                {
-                    new OrderItem { Index = 1, ProductName = "Widget", Price = 19.99m },
-                    new OrderItem { Index = 2, ProductName = "Gadget", Price = 29.99m }
-                }
-            };
-
-            // Create a template document with LINQ Reporting tags.
-            var templatePath = "Template.docx";
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
-
-            builder.Writeln("Customer: <<[order.CustomerName]>>");
-            builder.Writeln("Order Date (en-US): <<[order.FormatDate(\"en-US\")]>>");
-            builder.Writeln("Order Date (fr-FR): <<[order.FormatDate(\"fr-FR\")]>>");
-            builder.Writeln("");
-            builder.Writeln("<<foreach [item in order.Items]>>");
-            builder.Writeln("Item <<[item.Index]>>: <<[item.ProductName]>> - $<<[item.Price]>>");
-            builder.Writeln("<</foreach>>");
-
-            doc.Save(templatePath);
-
-            // Load the template and build the report.
-            var reportDoc = new Document(templatePath);
-            var engine = new ReportingEngine();
-            engine.BuildReport(reportDoc, order, "order");
-
-            // Save the generated report.
-            var outputPath = "Report.docx";
-            reportDoc.Save(outputPath);
-        }
+        // -----------------------------------------------------------------
+        // 5. Save the generated report.
+        // -----------------------------------------------------------------
+        template.Save(outputPath);
     }
 }

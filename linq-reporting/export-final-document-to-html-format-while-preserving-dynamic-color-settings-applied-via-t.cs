@@ -1,72 +1,68 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Saving;
+using Newtonsoft.Json;
+
+public class Item
+{
+    public string Name { get; set; } = "";
+    public string ColorName { get; set; } = "";
+}
+
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare working directories.
-        string workDir = Directory.GetCurrentDirectory();
-        string templatePath = Path.Combine(workDir, "Template.docx");
-        string outputPath = Path.Combine(workDir, "Report.html");
+        // Register code page provider for any required encodings.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // -----------------------------------------------------------------
-        // 1. Create the LINQ Reporting template programmatically.
-        // -----------------------------------------------------------------
+        // Prepare output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
+
+        // Create the LINQ Reporting template.
+        string templatePath = Path.Combine(outputDir, "template.docx");
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Insert a paragraph with dynamic text color and background color.
-        // The colors are taken from the model properties.
-        builder.Writeln("<<textColor [model.Color]>>");
-        builder.Writeln("<<backColor [model.BackColor]>>Dynamic Colored Text<</backColor>>");
-        builder.Writeln("<</textColor>>");
-
-        // Insert an HTML snippet to demonstrate HTML export.
-        builder.Writeln("<<[model.HtmlSnippet] -html>>");
+        builder.Writeln("Report of Items with Dynamic Colors:");
+        builder.Writeln("<<foreach [item in Items]>>");
+        // Apply dynamic text color using the textColor tag.
+        builder.Writeln("<<textColor [item.ColorName]>><<[item.Name]>> <</textColor>>");
+        builder.Writeln("<</foreach>>");
 
         // Save the template to disk.
         templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the template and build the report.
-        // -----------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
+        // Load the template for report generation.
+        Document doc = new Document(templatePath);
 
-        // Sample data model with color properties.
-        ReportModel model = new ReportModel
+        // Sample data.
+        ReportModel model = new()
         {
-            Color = "Blue",
-            BackColor = "LightGray",
-            HtmlSnippet = "<b>Bold HTML content</b>"
+            Items = new List<Item>
+            {
+                new Item { Name = "Apple", ColorName = "Red" },
+                new Item { Name = "Banana", ColorName = "Gold" },
+                new Item { Name = "Grapes", ColorName = "Purple" }
+            }
         };
 
-        // Build the report using the LINQ Reporting engine.
+        // Build the report.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+        engine.BuildReport(doc, model, "model");
 
-        // -----------------------------------------------------------------
-        // 3. Export the final document to HTML, preserving colors.
-        // -----------------------------------------------------------------
-        HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html);
-        reportDoc.Save(outputPath, htmlOptions);
+        // Export to HTML preserving colors.
+        string htmlPath = Path.Combine(outputDir, "report.html");
+        doc.Save(htmlPath, SaveFormat.Html);
     }
-}
-
-// ---------------------------------------------------------------------
-// Data model used by the template.
-// ---------------------------------------------------------------------
-public class ReportModel
-{
-    // Text color name or HTML color code.
-    public string Color { get; set; } = "Black";
-
-    // Background color name or HTML color code.
-    public string BackColor { get; set; } = "White";
-
-    // HTML snippet to be inserted as raw HTML.
-    public string HtmlSnippet { get; set; } = string.Empty;
 }

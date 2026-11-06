@@ -1,61 +1,52 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using System.Text;
 
-public class ReportModel
+namespace AsposeWordsLinqReportingHtmlInsert
 {
-    // HTML snippet that will be inserted into the document.
-    public string HtmlSnippet { get; set; } = string.Empty;
-}
-
-public class Program
-{
-    public static void Main()
+    // Model class exposing the HTML snippet.
+    public class ReportModel
     {
-        // Register code page provider (required for some Aspose.Words features).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        public string HtmlSnippet { get; set; } = "<p style=\"color:blue;\">This is <strong>HTML</strong> inserted at runtime.</p>";
+    }
 
-        // Paths for the template and the generated report.
-        const string templatePath = "Template.docx";
-        const string outputPath = "Report.docx";
-
-        // -----------------------------------------------------------------
-        // Step 1: Create the template document with an <<html>> tag placeholder.
-        // -----------------------------------------------------------------
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("Report generated with an external HTML snippet:");
-        // The placeholder uses the <<html>> tag and references the model property.
-        builder.Writeln("<<html [model.HtmlSnippet]>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // Step 2: Load the template for reporting.
-        // -----------------------------------------------------------------
-        var doc = new Document(templatePath);
-
-        // -----------------------------------------------------------------
-        // Step 3: Prepare the data model containing the HTML snippet.
-        // -----------------------------------------------------------------
-        var model = new ReportModel
+    public class Program
+    {
+        public static void Main()
         {
-            HtmlSnippet = "<p style='color:blue;'>Hello <b>World</b>!</p>"
-        };
+            // Register code page provider for any encoding needs.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // -----------------------------------------------------------------
-        // Step 4: Build the report using Aspose.Words LINQ Reporting Engine.
-        // -----------------------------------------------------------------
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+            // Paths for the template and the generated report.
+            string templatePath = "template.docx";
+            string outputPath = "output.docx";
 
-        // -----------------------------------------------------------------
-        // Step 5: Save the generated report.
-        // -----------------------------------------------------------------
-        doc.Save(outputPath);
+            // -------------------------------------------------
+            // Create the template document with an HTML placeholder.
+            // -------------------------------------------------
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
+
+            // Insert a simple paragraph with the LINQ Reporting HTML tag.
+            builder.Writeln("<<html [model.HtmlSnippet]>>");
+
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
+
+            // -------------------------------------------------
+            // Load the template and build the report.
+            // -------------------------------------------------
+            var doc = new Document(templatePath);
+            var model = new ReportModel();
+
+            var engine = new ReportingEngine();
+            // Build the report using the model as the root object named "model".
+            engine.BuildReport(doc, model, "model");
+
+            // Save the generated document.
+            doc.Save(outputPath);
+        }
     }
 }

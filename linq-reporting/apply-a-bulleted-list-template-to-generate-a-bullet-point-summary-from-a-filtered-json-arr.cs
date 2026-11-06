@@ -11,68 +11,62 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for possible legacy encodings.
+        // Register code page provider for Aspose.Words if needed.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // ---------- Step 1: Prepare sample JSON data ----------
-        string jsonPath = "sample.json";
-        var sampleItems = new List<Item>
+        // 1. Create sample JSON data.
+        string jsonPath = "data.json";
+        var sampleData = new List<Item>
         {
-            new() { Title = "Breaking News: Market Rally", Category = "News" },
-            new() { Title = "Weekly Sports Recap", Category = "Sports" },
-            new() { Title = "Tech Insights: AI Trends", Category = "News" },
-            new() { Title = "Cooking Tips: Summer Salads", Category = "Lifestyle" }
+            new Item { Title = "Review project plan", Category = "Important" },
+            new Item { Title = "Buy office supplies", Category = "Routine" },
+            new Item { Title = "Prepare presentation", Category = "Important" },
+            new Item { Title = "Team lunch", Category = "Social" }
         };
-        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(sampleItems, Formatting.Indented));
+        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(sampleData, Formatting.Indented));
 
-        // Load JSON and filter for the "News" category.
-        var allItems = JsonConvert.DeserializeObject<List<Item>>(File.ReadAllText(jsonPath)) ?? new();
-        var filteredItems = allItems.Where(i => i.Category == "News").ToList();
+        // 2. Load JSON and filter.
+        var allItems = JsonConvert.DeserializeObject<List<Item>>(File.ReadAllText(jsonPath)) ?? new List<Item>();
+        var filteredItems = allItems.Where(i => i.Category == "Important").ToList();
 
-        // ---------- Step 2: Create the LINQ Reporting template ----------
+        // 3. Prepare the model for reporting.
+        var model = new ReportModel
+        {
+            Items = filteredItems
+        };
+
+        // 4. Create the LINQ Reporting template programmatically.
         string templatePath = "template.docx";
         var templateDoc = new Document();
         var builder = new DocumentBuilder(templateDoc);
-
-        // Title paragraph.
-        builder.Writeln("News Summary");
-        builder.Writeln();
-
-        // Apply bullet list formatting for the upcoming list.
-        builder.ListFormat.ApplyBulletDefault();
-
-        // Insert foreach tag that iterates over the filtered items.
+        builder.Writeln("Bullet‑point Summary:");
         builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("<<[item.Title]>>");
+        builder.Writeln("• <<[item.Title]>>");
         builder.Writeln("<</foreach>>");
-
-        // Remove bullet formatting after the list.
-        builder.ListFormat.RemoveNumbers();
-
-        // Save the template.
         templateDoc.Save(templatePath);
 
-        // ---------- Step 3: Load the template and build the report ----------
+        // 5. Load the template and build the report.
         var reportDoc = new Document(templatePath);
-        var model = new ReportModel { Items = filteredItems };
-
         var engine = new ReportingEngine();
         engine.BuildReport(reportDoc, model, "model");
 
-        // ---------- Step 4: Save the generated report ----------
+        // 6. Save the generated report.
         string outputPath = "output.docx";
         reportDoc.Save(outputPath);
+
+        // Indicate completion (no interactive input).
+        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
     }
 }
 
-// Public data model representing each item.
+// Data model for individual items.
 public class Item
 {
     public string Title { get; set; } = string.Empty;
     public string Category { get; set; } = string.Empty;
 }
 
-// Wrapper model passed as the root object to the reporting engine.
+// Wrapper model used as the root object for the report.
 public class ReportModel
 {
     public List<Item> Items { get; set; } = new();

@@ -1,70 +1,69 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
 
 public class Order
 {
-    public int OrderId { get; set; } = 0;
+    public int Id { get; set; } = 0;
     public string CustomerName { get; set; } = "";
     public List<OrderItem> Items { get; set; } = new();
+    // Holds JSON representation for debugging.
+    public string OrderJson { get; set; } = "";
 }
 
 public class OrderItem
 {
-    public string Product { get; set; } = "";
+    public string ProductName { get; set; } = "";
     public int Quantity { get; set; } = 0;
-    public decimal Price { get; set; } = 0;
-}
-
-public class ReportModel
-{
-    public Order Order { get; set; } = new();
-    public string JsonDebug { get; set; } = "";
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Sample order data
+        // Register code page provider for Aspose.Words if needed.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Prepare sample data.
         var order = new Order
         {
-            OrderId = 123,
+            Id = 123,
             CustomerName = "John Doe",
-            Items = new List<OrderItem>
+            Items = new()
             {
-                new OrderItem { Product = "Apple", Quantity = 3, Price = 0.5m },
-                new OrderItem { Product = "Banana", Quantity = 5, Price = 0.3m }
+                new OrderItem { ProductName = "Widget", Quantity = 5 },
+                new OrderItem { ProductName = "Gadget", Quantity = 2 }
             }
         };
 
-        // Serialize order to JSON for debugging
-        string json = JsonConvert.SerializeObject(order, Formatting.Indented);
+        // Serialize the order object to JSON for debugging.
+        order.OrderJson = JsonConvert.SerializeObject(order, Formatting.Indented);
 
-        // Wrap data in a model for LINQ Reporting
-        var model = new ReportModel
-        {
-            Order = order,
-            JsonDebug = json
-        };
+        // Create a template document programmatically.
+        string templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("Order Debug JSON:");
+        // Use the correct LINQ Reporting tag referencing the root object name "order".
+        builder.Writeln("<<[order.OrderJson]>>");
+        doc.Save(templatePath);
 
-        // Create template document with a placeholder for JSON
-        const string templatePath = "Template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Order JSON Debug:");
-        builder.Writeln("<<[model.JsonDebug]>>");
-        templateDoc.Save(templatePath);
-
-        // Load template and build the report
+        // Load the template for reporting.
         var reportDoc = new Document(templatePath);
-        var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
 
-        // Save the final report
-        const string outputPath = "Report.docx";
+        // Build the report using LINQ Reporting Engine.
+        var engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.None
+        };
+        engine.BuildReport(reportDoc, order, "order");
+
+        // Save the generated document.
+        string outputPath = "Output.docx";
         reportDoc.Save(outputPath);
     }
 }

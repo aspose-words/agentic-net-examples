@@ -1,104 +1,113 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Newtonsoft.Json;
+using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Prepare sample data.
-        ReportModel model = new()
+        // Sample data
+        var model = new ReportModel
         {
-            Orders = new()
+            Orders = new List<Order>
             {
                 new Order
                 {
-                    CustomerName = "Alice",
-                    Items = new()
+                    OrderId = 1001,
+                    Items = new List<OrderItem>
                     {
-                        new OrderItem { Name = "Apple", Quantity = 3, UnitPrice = 0.5m },
-                        new OrderItem { Name = "Banana", Quantity = 2, UnitPrice = 0.3m }
+                        new OrderItem { Name = "Apple", Quantity = 3, Price = 0.5m },
+                        new OrderItem { Name = "Banana", Quantity = 2, Price = 0.3m }
                     }
                 },
                 new Order
                 {
-                    CustomerName = "Bob",
-                    Items = new()
+                    OrderId = 1002,
+                    Items = new List<OrderItem>
                     {
-                        new OrderItem { Name = "Orange", Quantity = 5, UnitPrice = 0.4m },
-                        new OrderItem { Name = "Grapes", Quantity = 1, UnitPrice = 2.0m }
+                        new OrderItem { Name = "Orange", Quantity = 5, Price = 0.4m },
+                        new OrderItem { Name = "Grapes", Quantity = 1, Price = 2.0m }
                     }
                 }
             }
         };
 
-        // Create a template document programmatically.
-        string templatePath = "Template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Create template document
+        const string templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        builder.Writeln("Orders Report");
+        // Begin orders loop
         builder.Writeln("<<foreach [order in Orders]>>");
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Order ID: <<[order.OrderId]>>");
+        builder.Writeln();
+
+        // Items – each item gets its own small table (header + one data row)
         builder.Writeln("<<foreach [item in order.Items]>>");
-        builder.Writeln("Item: <<[item.Name]>> | Qty: <<[item.Quantity]>> | Unit: <<[item.UnitPrice]>> | Total: <<[item.Total]>>");
-        builder.Writeln("<</foreach>>");
-        // Use the computed OrderTotal property.
-        builder.Writeln("Order Total: <<[order.OrderTotal]>>");
-        builder.Writeln("<</foreach>>");
-        // Grand total across all orders using a pre‑computed property.
-        builder.Writeln("Grand Total: <<[model.GrandTotal]>>");
 
-        // Save the template.
-        templateDoc.Save(templatePath);
+        // Start table for a single item
+        var table = builder.StartTable();
 
-        // Load the template for reporting.
-        Document doc = new Document(templatePath);
+        // Header row
+        builder.InsertCell(); builder.Writeln("Item");
+        builder.InsertCell(); builder.Writeln("Qty");
+        builder.InsertCell(); builder.Writeln("Price");
+        builder.InsertCell(); builder.Writeln("Line Total");
+        builder.EndRow();
 
-        // Build the report.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        // Data row
+        builder.InsertCell(); builder.Writeln("<<[item.Name]>>");
+        builder.InsertCell(); builder.Writeln("<<[item.Quantity]>>");
+        builder.InsertCell(); builder.Writeln("<<[item.Price]>>");
+        builder.InsertCell(); builder.Writeln("<<[item.Quantity * item.Price]>>");
+        builder.EndRow();
 
-        // Save the generated report.
-        string outputPath = "Report.docx";
-        doc.Save(outputPath);
+        // End table for this item
+        builder.EndTable();
+
+        builder.Writeln("<</foreach>>"); // end items loop
+
+        // Order total using sum expression
+        builder.Writeln("Order Total: <<[order.Items.Sum(i => i.Quantity * i.Price)]>>");
+        builder.Writeln("<</foreach>>"); // end orders loop
+
+        // Grand total across all orders
+        builder.Writeln("Grand Total: <<[Orders.Sum(o => o.Items.Sum(i => i.Quantity * i.Price))]>>");
+
+        // Save template
+        doc.Save(templatePath);
+
+        // Load template for reporting
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
+
+        // Build report
+        engine.BuildReport(reportDoc, model, "model");
+
+        // Save final report
+        const string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
 }
 
-// Root model.
+// Data models
 public class ReportModel
 {
     public List<Order> Orders { get; set; } = new();
-
-    // Computed grand total for all orders.
-    public decimal GrandTotal => Orders.Sum(o => o.OrderTotal);
 }
 
-// Order model with a computed total.
 public class Order
 {
-    public string CustomerName { get; set; } = string.Empty;
+    public int OrderId { get; set; }
     public List<OrderItem> Items { get; set; } = new();
-
-    // Computed order total for aggregation.
-    public decimal OrderTotal => Items.Sum(i => i.Total);
 }
 
-// Order item model.
 public class OrderItem
 {
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; set; } = "";
     public int Quantity { get; set; }
-    public decimal UnitPrice { get; set; }
-
-    // Computed line total.
-    public decimal Total => Quantity * UnitPrice;
+    public decimal Price { get; set; }
 }

@@ -1,65 +1,60 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Text;
-using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class Person
+{
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "";
+    public string Age { get; set; } = "";
+}
+
+public class ReportModel
+{
+    public List<Person> Persons { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some encodings)
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Prepare sample data.
+        ReportModel model = new()
+        {
+            Persons =
+            {
+                new Person { Id = "1", Name = "Alice", Age = "30" },
+                new Person { Id = "2", Name = "Bob",   Age = "25" }
+            }
+        };
 
-        // Prepare sample XML data with attributes
-        XDocument xdoc = new XDocument(
-            new XElement("Orders",
-                new XElement("Order",
-                    new XAttribute("Id", "1"),
-                    new XAttribute("Customer", "Alice"),
-                    new XAttribute("Amount", "100.5")),
-                new XElement("Order",
-                    new XAttribute("Id", "2"),
-                    new XAttribute("Customer", "Bob"),
-                    new XAttribute("Amount", "200.0"))
-            )
-        );
-
-        // Save XML to a file (optional, just for demonstration)
-        string xmlPath = "data.xml";
-        xdoc.Save(xmlPath);
-
-        // Create a Word template programmatically
+        // Create the LINQ Reporting template.
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
         Document template = new Document();
         DocumentBuilder builder = new DocumentBuilder(template);
 
-        builder.Writeln("Orders Report");
-        builder.Writeln("==============");
-        builder.Writeln();
-        builder.Writeln("<<foreach [order in Orders]>>");
-        builder.Writeln("Order Id: <<[order.Id]>>, Customer: <<[order.Customer]>>, Amount: <<[order.Amount]>>");
+        // Insert a foreach loop that iterates over the Persons collection.
+        builder.Writeln("<<foreach [p in Persons]>>");
+        builder.Writeln("ID: <<[p.Id]>>, Name: <<[p.Name]>>, Age: <<[p.Age]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template
-        string templatePath = "template.docx";
+        // Save the template.
         template.Save(templatePath);
 
-        // Load the template (simulating a separate load step)
-        Document doc = new Document(templatePath);
+        // Load the template for report generation.
+        Document reportDoc = new Document(templatePath);
 
-        // Load XML data source
-        XmlDataSource xmlDataSource = new XmlDataSource(xmlPath);
+        // Build the report using the model as the data source.
+        ReportingEngine engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.None
+        };
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Build the report
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, xmlDataSource, "Orders");
-
-        // Save the generated report
-        string outputPath = "report.docx";
-        doc.Save(outputPath);
-
-        // Indicate completion (no interactive input)
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+        // Save the generated report.
+        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        reportDoc.Save(reportPath);
     }
 }

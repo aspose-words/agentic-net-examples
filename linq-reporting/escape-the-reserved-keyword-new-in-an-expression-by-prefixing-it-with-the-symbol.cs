@@ -1,57 +1,45 @@
 using System;
-using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingEscapeKeyword
+public class Program
 {
-    // Data model with a property named "new". The @ prefix escapes the C# keyword.
-    public class Model
+    public static void Main()
     {
-        public string @new { get; set; } = "EscapedKeywordValue";
-    }
+        // Create a template document with a LINQ Reporting tag that references a property named "new".
+        Document template = new();
+        DocumentBuilder builder = new(template);
+        // The property name is "new". In C# the identifier is written as @new, but the runtime name is "new",
+        // so the expression must use the plain name without the @ prefix.
+        builder.Writeln("Escaped keyword example: <<[model.new]>>");
 
-    public class Program
-    {
-        public static void Main()
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
+
+        // Load the template for reporting.
+        Document doc = new(templatePath);
+
+        // Prepare the data model. The property name is the reserved keyword "new",
+        // escaped with the @ symbol in C# source code.
+        var model = new SampleModel
         {
-            // Register code page provider (required for some Aspose.Words operations).
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            @new = "Reserved keyword value"
+        };
 
-            // Create a temporary folder for the example files.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-            Directory.CreateDirectory(outputDir);
+        // Build the report.
+        ReportingEngine engine = new();
+        engine.BuildReport(doc, model, "model");
 
-            // -----------------------------------------------------------------
-            // Step 1: Create the template document programmatically.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-            // Insert a simple paragraph that contains a LINQ Reporting tag.
-            // The property name "new" is referenced without the @ prefix inside the expression.
-            builder.Writeln("Value: <<[model.new]>>");
-
-            // Save the template to disk.
-            string templatePath = Path.Combine(outputDir, "template.docx");
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // Step 2: Load the template and build the report.
-            // -----------------------------------------------------------------
-            Document reportDoc = new Document(templatePath);
-
-            // Prepare the root data object.
-            Model model = new Model();
-
-            // Create the reporting engine and generate the report.
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(reportDoc, model, "model");
-
-            // Save the generated report.
-            string resultPath = Path.Combine(outputDir, "result.docx");
-            reportDoc.Save(resultPath);
-        }
+        // Save the generated report.
+        const string outputPath = "Report.docx";
+        doc.Save(outputPath);
     }
+}
+
+// Data model with a property named "new" escaped using @.
+public class SampleModel
+{
+    // The identifier is written as @new, but the actual property name is "new".
+    public string @new { get; set; } = string.Empty;
 }

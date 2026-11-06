@@ -1,51 +1,63 @@
 using System;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingReflectionOptimization
+namespace AsposeWordsLinqReportingExample
 {
     // Simple data model used by the template.
-    public class Person
+    public class Model
     {
-        public string Name { get; set; } = "World";
+        // Initialize to avoid nullable warnings.
+        public string Name { get; set; } = "John Doe";
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Paths for the template and the generated report.
-            string templatePath = "Template.docx";
-            string outputPath = "Output.docx";
+            // Register code page provider required by Aspose.Words.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Prepare file paths.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
+            string templatePath = Path.Combine(outputDir, "Template.docx");
+            string resultPath = Path.Combine(outputDir, "Result.docx");
 
             // -----------------------------------------------------------------
-            // Create a template document programmatically.
+            // Create the template document programmatically.
             // -----------------------------------------------------------------
             Document templateDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(templateDoc);
-            // LINQ Reporting tag.
-            builder.Writeln("Hello <<[person.Name]>>!");
+            // Insert a simple LINQ Reporting tag that references the model.
+            builder.Writeln("Hello, <<[model.Name]>>!");
+            // Save the template to disk.
             templateDoc.Save(templatePath);
 
-            // Load the template back from disk (required by the workflow).
+            // -----------------------------------------------------------------
+            // Load the template for report generation.
+            // -----------------------------------------------------------------
             Document doc = new Document(templatePath);
 
-            // Sample data to bind to the template.
-            Person person = new Person { Name = "Aspose.Words" };
+            // Create sample data.
+            Model model = new Model();
 
             // -----------------------------------------------------------------
-            // Build the report with reflection optimization disabled.
+            // Configure the reporting engine.
             // -----------------------------------------------------------------
-            // The static property controls whether the engine uses reflection
-            // optimization. It must be set before creating the engine instance.
+            // Disable reflection optimization for this template.
             ReportingEngine.UseReflectionOptimization = false;
 
+            // Create the engine (ReportingEngine does not implement IDisposable, so no using block).
             ReportingEngine engine = new ReportingEngine();
-            // BuildReport returns void; no need for explicit disposal.
-            engine.BuildReport(doc, person, "person");
+
+            // Build the report.
+            engine.BuildReport(doc, model, "model");
 
             // Save the generated report.
-            doc.Save(outputPath);
+            doc.Save(resultPath);
         }
     }
 }
