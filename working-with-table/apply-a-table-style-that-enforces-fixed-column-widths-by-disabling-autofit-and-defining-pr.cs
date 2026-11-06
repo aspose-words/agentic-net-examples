@@ -16,58 +16,47 @@ public class Program
 
         // Header row.
         builder.InsertCell();
-        builder.Writeln("Column 1");
+        builder.Writeln("Header 1");
         builder.InsertCell();
-        builder.Writeln("Column 2");
+        builder.Writeln("Header 2");
         builder.InsertCell();
-        builder.Writeln("Column 3");
+        builder.Writeln("Header 3");
         builder.EndRow();
 
         // Data row.
         builder.InsertCell();
-        builder.Writeln("Data 1");
+        builder.Writeln("Data A");
         builder.InsertCell();
-        builder.Writeln("Data 2");
+        builder.Writeln("Data B");
         builder.InsertCell();
-        builder.Writeln("Data 3");
+        builder.Writeln("Data C");
         builder.EndRow();
 
         // End the table.
         builder.EndTable();
 
-        // Retrieve the created table.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        // Retrieve the created table safely.
+        Table table = doc.GetChild(NodeType.Table, 0, true) as Table;
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
 
-        // Disable AutoFit to enforce fixed column widths.
+        // Disable AutoFit and enforce fixed column widths.
         table.AutoFit(AutoFitBehavior.FixedColumnWidths);
 
-        // Define preferred widths for each column (using points; 1 inch = 72 points).
-        if (table.Rows.Count > 0 && table.Rows[0].Cells.Count >= 3)
+        // Set a preferred width of 100 points for each column.
+        foreach (Cell cell in table.Rows[0].Cells)
         {
-            // First column – 2 inches.
-            table.Rows[0].Cells[0].CellFormat.PreferredWidth =
-                PreferredWidth.FromPoints(2 * 72);
-
-            // Second column – 1.5 inches.
-            table.Rows[0].Cells[1].CellFormat.PreferredWidth =
-                PreferredWidth.FromPoints(1.5 * 72);
-
-            // Third column – 2.5 inches.
-            table.Rows[0].Cells[2].CellFormat.PreferredWidth =
-                PreferredWidth.FromPoints(2.5 * 72);
+            cell.CellFormat.PreferredWidth = PreferredWidth.FromPoints(100);
         }
 
         // Save the document.
-        string outputPath = "FixedWidthTable.docx";
-        doc.Save(outputPath);
+        string fileName = "FixedWidthTable.docx";
+        doc.Save(fileName);
 
         // Verify that the file was created.
-        if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
-        }
+        if (!File.Exists(fileName))
+            throw new Exception("The output document was not created.");
 
-        // Confirmation (no user interaction required).
-        Console.WriteLine($"Document saved successfully to '{Path.GetFullPath(outputPath)}'.");
+        Console.WriteLine($"Document saved successfully as '{fileName}'.");
     }
 }

@@ -12,69 +12,62 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
+        // Build an initial table with a single header row.
         builder.StartTable();
 
-        // Add a simple header row.
         builder.InsertCell();
-        builder.Writeln("Header 1");
+        builder.Write("Header 1");
+
         builder.InsertCell();
-        builder.Writeln("Header 2");
-        builder.EndRow();
+        builder.Write("Header 2");
 
-        // Add a new row where each cell contains rich‑text formatting.
-
-        // First cell.
-        builder.InsertCell();
-
-        // Bold text.
-        builder.Font.Bold = true;
-        builder.Write("Bold ");
-        builder.Font.Bold = false;
-
-        // Italic text.
-        builder.Font.Italic = true;
-        builder.Write("Italic ");
-        builder.Font.Italic = false;
-
-        // Red colored text.
-        builder.Font.Color = Color.Red;
-        builder.Write("Red");
-        builder.Font.Color = Color.Empty; // Reset to default.
-
-        // Move to the next cell.
-        builder.InsertCell();
-
-        // Underlined text.
-        builder.Font.Underline = Underline.Single;
-        builder.Write("Underline ");
-        builder.Font.Underline = Underline.None;
-
-        // Blue colored text.
-        builder.Font.Color = Color.Blue;
-        builder.Write("Blue");
-        builder.Font.Color = Color.Empty;
-
-        // Large text (16 points).
-        builder.Font.Size = 16;
-        builder.Write(" Large");
-        builder.Font.Size = 12; // Reset to default size (12 points).
-
-        // End the row and the table.
         builder.EndRow();
         builder.EndTable();
 
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
+
+        // Create a new row to add to the table.
+        Row newRow = new Row(doc);
+        table.Rows.Add(newRow);
+
+        // Define the number of cells (columns) in the new row.
+        int columnCount = 2;
+
+        for (int col = 0; col < columnCount; col++)
+        {
+            // Create a new cell and add it to the row.
+            Cell cell = new Cell(doc);
+            newRow.Cells.Add(cell);
+
+            // Create a paragraph inside the cell.
+            Paragraph para = new Paragraph(doc);
+            cell.AppendChild(para);
+
+            // Add a bold run.
+            Run boldRun = new Run(doc, "Bold");
+            boldRun.Font.Bold = true;
+            para.AppendChild(boldRun);
+
+            // Add an italic run (preceded by a space for separation).
+            Run italicRun = new Run(doc, " Italic");
+            italicRun.Font.Italic = true;
+            para.AppendChild(italicRun);
+
+            // Add a colored run (preceded by a space for separation).
+            Run colorRun = new Run(doc, " Red");
+            colorRun.Font.Color = Color.Red;
+            para.AppendChild(colorRun);
+        }
+
         // Save the document to a file.
-        string outputPath = "FormattedTable.docx";
+        string outputPath = "Output.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
-        }
-
-        // Inform that the process completed.
-        Console.WriteLine($"Document saved successfully to '{outputPath}'.");
+            throw new FileNotFoundException("The output document was not saved.", outputPath);
     }
 }

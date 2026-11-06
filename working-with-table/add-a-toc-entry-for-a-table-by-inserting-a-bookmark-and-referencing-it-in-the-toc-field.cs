@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
 using Aspose.Words.Fields;
 
 public class Program
@@ -12,44 +11,46 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a TOC field at the beginning of the document.
-        // The \b switch tells the TOC to include entries from the specified bookmark.
-        builder.InsertField(@"TOC \b Table1");
-        builder.Writeln(); // Add a paragraph break after the TOC.
+        // Insert a Table of Contents field at the beginning of the document.
+        builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
+        builder.Writeln(); // Add a blank line after TOC.
 
-        // Insert a bookmark that will be referenced by the TOC.
-        builder.StartBookmark("Table1");
-        builder.Writeln("Table 1: Sample Table");
-        builder.EndBookmark("Table1");
+        // Insert a bookmark that will be referenced by the TOC entry.
+        string bookmarkName = "Table1";
+        builder.StartBookmark(bookmarkName);
 
-        // Build a simple 2x2 table after the bookmark.
+        // Insert a TC (Table of Contents entry) field that points to the bookmark.
+        // This field will be picked up by the TOC when fields are updated.
+        builder.InsertField($"TC \"Table 1\" \\f {bookmarkName}");
+        builder.Writeln(); // Ensure the TC field is on its own paragraph.
+
+        // Build a simple table.
         builder.StartTable();
 
-        // First row – header cells.
+        // First row – header.
         builder.InsertCell();
-        builder.Write("Header 1");
-        builder.InsertCell();
-        builder.Write("Header 2");
+        builder.Write("Header");
         builder.EndRow();
 
-        // Second row – data cells.
+        // Second row – data.
         builder.InsertCell();
-        builder.Write("Cell 1");
-        builder.InsertCell();
-        builder.Write("Cell 2");
+        builder.Write("Data");
         builder.EndRow();
 
         builder.EndTable();
 
-        // Update fields so the TOC reflects the bookmark entry.
+        // End the bookmark after the table.
+        builder.EndBookmark(bookmarkName);
+
+        // Update all fields (including TOC) to reflect the new entry.
         doc.UpdateFields();
 
-        // Save the document to the output file.
-        string outputPath = "Output.docx";
+        // Save the document.
+        string outputPath = "TableOfContents.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not created.");
+            throw new Exception($"Failed to create the output file: {outputPath}");
     }
 }

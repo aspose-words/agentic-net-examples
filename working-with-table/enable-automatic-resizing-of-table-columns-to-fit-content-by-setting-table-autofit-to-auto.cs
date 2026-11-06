@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -10,38 +12,47 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple table with two rows and two columns.
+        // Build a simple table with two rows and three columns.
         builder.StartTable();
 
-        // First row.
+        // First row (header).
+        builder.InsertCell();
+        builder.Writeln("Header 1");
+        builder.InsertCell();
+        builder.Writeln("Header 2");
+        builder.InsertCell();
+        builder.Writeln("Header 3");
+        builder.EndRow();
+
+        // Second row (data).
         builder.InsertCell();
         builder.Writeln("Short");
         builder.InsertCell();
-        builder.Writeln("This is a longer piece of text that should cause the column to expand.");
-        builder.EndRow();
-
-        // Second row.
+        builder.Writeln("A bit longer text");
         builder.InsertCell();
-        builder.Writeln("Another");
-        builder.InsertCell();
-        builder.Writeln("More content");
+        builder.Writeln("This is a considerably longer piece of text to demonstrate auto‑fit.");
         builder.EndRow();
 
         // Finish the table.
         builder.EndTable();
 
-        // Retrieve the created table.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        // Retrieve the created table (the last table in the document).
+        Table table = doc.GetChildNodes(NodeType.Table, true)
+                         .Cast<Table>()
+                         .LastOrDefault();
 
-        // Enable automatic column width fitting to the cell contents.
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
+
+        // Enable automatic column resizing to fit the content.
         table.AutoFit(AutoFitBehavior.AutoFitToContents);
 
         // Save the document to disk.
-        string outputPath = "TableAutoFit.docx";
+        string outputPath = "AutoFitTable.docx";
         doc.Save(outputPath);
 
-        // Simple validation that the file was created.
-        if (!System.IO.File.Exists(outputPath))
-            throw new Exception("The output file was not created.");
+        // Verify that the file was saved.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The output document was not created.", outputPath);
     }
 }

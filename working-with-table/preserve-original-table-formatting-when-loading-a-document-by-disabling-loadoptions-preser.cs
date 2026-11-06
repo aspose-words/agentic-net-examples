@@ -1,9 +1,8 @@
 using System;
-using System.Drawing;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Loading; // Required for LoadOptions
 
 public class Program
 {
@@ -16,50 +15,53 @@ public class Program
         // Start the table.
         builder.StartTable();
 
-        // First cell with shading and border.
+        // First cell with shading.
         builder.InsertCell();
         builder.CellFormat.Shading.BackgroundPatternColor = Color.Yellow;
-        builder.CellFormat.Borders.LineStyle = LineStyle.Single;
         builder.Writeln("Cell 1");
 
-        // Second cell with different shading.
+        // Second cell without special formatting.
         builder.InsertCell();
-        builder.CellFormat.Shading.BackgroundPatternColor = Color.LightBlue;
         builder.Writeln("Cell 2");
 
-        // End the row and the table.
+        // End the first row.
         builder.EndRow();
+
+        // Second row.
+        builder.InsertCell();
+        builder.Writeln("Cell 3");
+        builder.InsertCell();
+        builder.Writeln("Cell 4");
+        builder.EndRow();
+
+        // End the table.
         builder.EndTable();
 
         // Save the original document.
-        const string originalPath = "Original.docx";
+        string originalPath = "Original.docx";
         originalDoc.Save(originalPath);
 
-        // Load the document without any special LoadOptions (default preserves formatting).
-        LoadOptions loadOptions = new LoadOptions(); // No PreserveFormatting property in this version.
-        Document loadedDoc = new Document(originalPath, loadOptions);
+        // Load the document without any special LoadOptions.
+        // The default loading behavior preserves the original formatting.
+        Document loadedDoc = new Document(originalPath);
 
-        // Verify that the table formatting (shading) is still present.
-        Table table = (Table)loadedDoc.GetChild(NodeType.Table, 0, true);
+        // Verify that the shading of the first cell is still present.
+        Table table = loadedDoc.GetChild(NodeType.Table, 0, true) as Table;
+        if (table == null)
+            throw new Exception("Table was not loaded.");
+
         Cell firstCell = table.Rows[0].Cells[0];
         Color shadingColor = firstCell.CellFormat.Shading.BackgroundPatternColor;
 
         if (shadingColor.ToArgb() != Color.Yellow.ToArgb())
-        {
-            throw new InvalidOperationException("Table cell shading was not preserved after loading.");
-        }
+            throw new Exception("Table formatting was not preserved after loading.");
 
         // Save the loaded document.
-        const string loadedPath = "LoadedPreserved.docx";
+        string loadedPath = "Loaded.docx";
         loadedDoc.Save(loadedPath);
 
-        // Validate that both files exist.
+        // Validate that the output files exist.
         if (!File.Exists(originalPath) || !File.Exists(loadedPath))
-        {
-            throw new FileNotFoundException("One of the output files was not created.");
-        }
-
-        // Indicate successful completion (no interactive output required).
-        Console.WriteLine("Document processing completed successfully.");
+            throw new Exception("Output files were not created successfully.");
     }
 }

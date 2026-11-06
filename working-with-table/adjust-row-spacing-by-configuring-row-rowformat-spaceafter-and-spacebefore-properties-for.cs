@@ -11,63 +11,67 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 3‑row, 2‑column table.
+        // Start a table.
         builder.StartTable();
 
         // Row 1
         builder.InsertCell();
-        builder.Writeln("Row 1, Cell 1");
+        builder.Writeln("R1C1");
         builder.InsertCell();
-        builder.Writeln("Row 1, Cell 2");
+        builder.Writeln("R1C2");
         builder.EndRow();
 
         // Row 2
         builder.InsertCell();
-        builder.Writeln("Row 2, Cell 1");
+        builder.Writeln("R2C1");
         builder.InsertCell();
-        builder.Writeln("Row 2, Cell 2");
+        builder.Writeln("R2C2");
         builder.EndRow();
 
         // Row 3
         builder.InsertCell();
-        builder.Writeln("Row 3, Cell 1");
+        builder.Writeln("R3C1");
         builder.InsertCell();
-        builder.Writeln("Row 3, Cell 2");
+        builder.Writeln("R3C2");
         builder.EndRow();
 
-        // Finish the table.
+        // End the table.
         builder.EndTable();
 
         // Retrieve the created table.
-        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
         // Adjust spacing for each row.
-        // The current Aspose.Words version does not expose RowFormat.SpaceBefore/SpaceAfter.
-        // As an alternative, we can control the row height to simulate spacing.
-        for (int i = 0; i < table.Rows.Count; i++)
-        {
-            Row row = table.Rows[i];
+        // Aspose.Words does not expose SpaceBefore/SpaceAfter on RowFormat.
+        // Instead, we can control the row height to simulate spacing.
+        // Height is measured in points; HeightRule.Exactly forces the row to that height.
 
-            // First row gets a larger height to simulate extra space before it.
-            if (i == 0)
-            {
-                row.RowFormat.Height = 24.0; // points
-            }
-            else
-            {
-                row.RowFormat.Height = 12.0; // points
-            }
+        // Row 1: simulate larger spacing by setting a taller row height.
+        Row row1 = table.Rows[0];
+        row1.RowFormat.Height = 12.0;               // points
+        row1.RowFormat.HeightRule = HeightRule.Exactly;
 
-            // Ensure the height is treated as an exact value.
-            row.RowFormat.HeightRule = HeightRule.Exactly;
-        }
+        // Row 2: medium spacing.
+        Row row2 = table.Rows[1];
+        row2.RowFormat.Height = 8.0;                // points
+        row2.RowFormat.HeightRule = HeightRule.Exactly;
+
+        // Row 3: smaller spacing.
+        Row row3 = table.Rows[2];
+        row3.RowFormat.Height = 6.0;                // points
+        row3.RowFormat.HeightRule = HeightRule.Exactly;
 
         // Save the document.
-        string outputPath = "RowSpacing.docx";
+        string outputPath = "RowSpacingExample.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was saved.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("Document was not saved successfully.");
+        {
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+        }
+
+        // Inform that the process completed.
+        Console.WriteLine($"Document saved successfully to '{outputPath}'.");
     }
 }

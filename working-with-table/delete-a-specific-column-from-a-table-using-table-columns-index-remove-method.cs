@@ -14,7 +14,7 @@ public class Program
         // Build a sample table with 3 columns and 3 rows.
         builder.StartTable();
 
-        // First row (header)
+        // Header row
         builder.InsertCell();
         builder.Writeln("Header 1");
         builder.InsertCell();
@@ -23,52 +23,58 @@ public class Program
         builder.Writeln("Header 3");
         builder.EndRow();
 
-        // Second row
+        // First data row
         builder.InsertCell();
-        builder.Writeln("Row 1, Col 1");
+        builder.Writeln("R1C1");
         builder.InsertCell();
-        builder.Writeln("Row 1, Col 2");
+        builder.Writeln("R1C2");
         builder.InsertCell();
-        builder.Writeln("Row 1, Col 3");
+        builder.Writeln("R1C3");
         builder.EndRow();
 
-        // Third row
+        // Second data row
         builder.InsertCell();
-        builder.Writeln("Row 2, Col 1");
+        builder.Writeln("R2C1");
         builder.InsertCell();
-        builder.Writeln("Row 2, Col 2");
+        builder.Writeln("R2C2");
         builder.InsertCell();
-        builder.Writeln("Row 2, Col 3");
+        builder.Writeln("R2C3");
         builder.EndRow();
 
         // End the table.
         builder.EndTable();
 
         // Retrieve the first table in the document.
-        Table table = doc.FirstSection.Body.Tables[0];
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // Index of the column to delete (second column, zero‑based index 1).
-        int columnIndexToRemove = 1;
+        // Delete the second column (index 1) by removing the cell at that index from each row.
+        int columnIndexToRemove = 1; // zero‑based index for the second column
 
-        // Remove the cell at the specified column index from each row.
-        foreach (Row row in table.Rows)
+        // Ensure the table has enough columns to remove.
+        if (table.Rows.Count > 0 && table.Rows[0].Cells.Count > columnIndexToRemove)
         {
-            // Ensure the row has enough cells.
-            if (row.Cells.Count > columnIndexToRemove)
+            foreach (Row row in table.Rows)
             {
-                // Remove the cell; this effectively deletes the column.
-                row.Cells[columnIndexToRemove].Remove();
+                // Guard against rows that might have fewer cells (unlikely in a regular table).
+                if (row.Cells.Count > columnIndexToRemove)
+                {
+                    row.Cells.RemoveAt(columnIndexToRemove);
+                }
             }
+        }
+        else
+        {
+            throw new InvalidOperationException("The table does not have enough columns to remove.");
         }
 
         // Save the modified document.
-        string outputPath = "DeletedColumn.docx";
+        string outputPath = "Output.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
         {
-            throw new Exception($"Failed to create the output file: {outputPath}");
+            throw new FileNotFoundException("The output document was not saved correctly.", outputPath);
         }
     }
 }

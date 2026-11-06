@@ -1,56 +1,62 @@
 using System;
-using System.Drawing;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class TableStyleExample
+namespace TableStyleExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table.
-        builder.StartTable();
+            // Build a simple 2x2 table.
+            builder.StartTable();
 
-        // First row
-        builder.InsertCell();
-        builder.Writeln("Cell 1");
-        builder.InsertCell();
-        builder.Writeln("Cell 2");
-        builder.EndRow();
+            // First row.
+            builder.InsertCell();
+            builder.Write("Cell 1");
+            builder.InsertCell();
+            builder.Write("Cell 2");
+            builder.EndRow();
 
-        // Second row
-        builder.InsertCell();
-        builder.Writeln("Cell 3");
-        builder.InsertCell();
-        builder.Writeln("Cell 4");
-        builder.EndRow();
+            // Second row.
+            builder.InsertCell();
+            builder.Write("Cell 3");
+            builder.InsertCell();
+            builder.Write("Cell 4");
+            builder.EndRow();
 
-        builder.EndTable();
+            // End the table.
+            builder.EndTable();
 
-        // Retrieve the created table.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+            // Create a new table style (optional – can be used for other formatting).
+            Style tableStyle = doc.Styles.Add(StyleType.Table, "LightGrayTableStyle");
+            // Note: The Style object does not expose a Table property in the current API version,
+            // so we apply shading directly to the cells instead of via the style.
 
-        // Create a new table style.
-        Style style = doc.Styles.Add(StyleType.Table, "LightGrayTableStyle");
-        TableStyle tableStyle = (TableStyle)style;
+            // Retrieve the created table.
+            Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
+            table.Style = tableStyle; // Apply the style (even though it has no shading defined).
 
-        // Set the shading of the style to light gray.
-        tableStyle.Shading.BackgroundPatternColor = Color.LightGray;
-        tableStyle.Shading.Texture = TextureIndex.TextureNone;
+            // Apply light gray shading to all cells in the table.
+            foreach (Cell cell in table.GetChildNodes(NodeType.Cell, true))
+            {
+                cell.CellFormat.Shading.Texture = TextureIndex.TextureNone;
+                cell.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
+            }
 
-        // Apply the custom style to the table.
-        table.Style = style;
+            // Save the document.
+            string outputPath = "TableStyleExample.docx";
+            doc.Save(outputPath);
 
-        // Save the document.
-        string outputPath = "TableStyleExample.docx";
-        doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("The output document was not created.");
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new Exception("Failed to create the output document.");
+        }
     }
 }

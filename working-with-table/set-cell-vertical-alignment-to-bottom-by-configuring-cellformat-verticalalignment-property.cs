@@ -3,53 +3,66 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace TableVerticalAlignmentExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new document and a DocumentBuilder.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Start a table.
+        builder.StartTable();
+
+        // Insert three cells with some text.
+        for (int i = 0; i < 3; i++)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Start a table.
-            builder.StartTable();
-
-            // Define number of rows and columns.
-            int rows = 3;
-            int columns = 3;
-
-            // Build the table and set vertical alignment for each cell.
-            for (int row = 1; row <= rows; row++)
-            {
-                for (int col = 1; col <= columns; col++)
-                {
-                    // Insert a new cell.
-                    builder.InsertCell();
-
-                    // Add some text to the cell.
-                    builder.Writeln($"Cell {row},{col}");
-
-                    // Retrieve the current cell and set its vertical alignment to Bottom.
-                    Cell currentCell = (Cell)builder.CurrentParagraph.ParentNode;
-                    currentCell.CellFormat.VerticalAlignment = CellVerticalAlignment.Bottom;
-                }
-
-                // End the current row.
-                builder.EndRow();
-            }
-
-            // End the table.
-            builder.EndTable();
-
-            // Save the document to a file.
-            string outputPath = "VerticalAlignmentTable.docx";
-            doc.Save(outputPath);
-
-            // Verify that the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+            builder.InsertCell();
+            builder.Writeln($"Cell {i + 1}");
         }
+
+        // End the first row.
+        builder.EndRow();
+
+        // Insert a second row with the same number of cells.
+        for (int i = 0; i < 3; i++)
+        {
+            builder.InsertCell();
+            builder.Writeln($"Second row, cell {i + 1}");
+        }
+
+        // End the second row and the table.
+        builder.EndRow();
+        builder.EndTable();
+
+        // Retrieve the table we just created.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+
+        // Set vertical alignment of every cell to Bottom.
+        foreach (Row row in table.Rows)
+        {
+            foreach (Cell cell in row.Cells)
+            {
+                cell.CellFormat.VerticalAlignment = CellVerticalAlignment.Bottom;
+            }
+        }
+
+        // Save the document.
+        string outputPath = Path.Combine(Path.GetTempPath(), "VerticalAlignmentBottom.docx");
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The document was not saved correctly.");
+
+        // Reload the document and verify one cell's vertical alignment.
+        Document loadedDoc = new Document(outputPath);
+        Table loadedTable = (Table)loadedDoc.GetChild(NodeType.Table, 0, true);
+        Cell firstCell = loadedTable.Rows[0].Cells[0];
+        if (firstCell.CellFormat.VerticalAlignment != CellVerticalAlignment.Bottom)
+            throw new InvalidOperationException("Cell vertical alignment was not set to Bottom.");
+
+        // Clean up (optional): delete the file after verification.
+        // File.Delete(outputPath);
     }
 }

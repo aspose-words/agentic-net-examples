@@ -7,14 +7,14 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 1x1 table with Arabic text.
+        // Build a simple table with one cell containing Arabic text.
         builder.StartTable();
         builder.InsertCell();
-        builder.Writeln("مرحبا بالعالم"); // Arabic greeting.
+        builder.Write("مرحبا بالعالم"); // Arabic greeting.
         builder.EndRow();
         builder.EndTable();
 
@@ -23,14 +23,14 @@ public class Program
         if (table == null)
             throw new InvalidOperationException("Table was not created.");
 
-        // Enable right‑to‑left direction for the table by setting Bidi on all paragraphs.
+        // Enable right‑to‑left direction for the table by setting Bidi on each paragraph.
         foreach (Row row in table.Rows)
         {
             foreach (Cell cell in row.Cells)
             {
-                foreach (Paragraph para in cell.Paragraphs)
+                foreach (Paragraph paragraph in cell.Paragraphs)
                 {
-                    para.ParagraphFormat.Bidi = true;
+                    paragraph.ParagraphFormat.Bidi = true;
                 }
             }
         }
@@ -41,6 +41,6 @@ public class Program
 
         // Verify that the file was saved.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output file was not created.", outputPath);
+            throw new FileNotFoundException("The output document was not saved.", outputPath);
     }
 }

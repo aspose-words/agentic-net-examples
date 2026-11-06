@@ -3,56 +3,61 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace TableInsertRowExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Build a simple table with two rows and two columns.
+        builder.StartTable();
+
+        // First row.
+        builder.InsertCell();
+        builder.Write("R1C1");
+        builder.InsertCell();
+        builder.Write("R1C2");
+        builder.EndRow();
+
+        // Second row.
+        builder.InsertCell();
+        builder.Write("R2C1");
+        builder.InsertCell();
+        builder.Write("R2C2");
+        builder.EndRow();
+
+        // End the table.
+        builder.EndTable();
+
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
+
+        // Clone the first row to use as a template for the new row.
+        Row newRow = (Row)table.Rows[0].Clone(true);
+
+        // Change the text in each cell of the new row.
+        foreach (Cell cell in newRow.Cells)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Build a simple table with two rows and one cell each.
-            builder.StartTable();
-
-            // First row.
-            builder.InsertCell();
-            builder.Write("Row 1, Cell 1");
-            builder.EndRow();
-
-            // Second row.
-            builder.InsertCell();
-            builder.Write("Row 2, Cell 1");
-            builder.EndRow();
-
-            builder.EndTable();
-
-            // Retrieve the created table.
-            Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-            if (table == null)
-                throw new InvalidOperationException("Table was not created.");
-
-            // Clone the first row to preserve formatting.
-            Row newRow = (Row)table.Rows[0].Clone(true);
-
-            // Change the text of the new row's cell.
-            Cell newCell = newRow.Cells[0];
-            // Clear existing runs.
-            newCell.Paragraphs[0].Runs.Clear();
-            // Add new text.
-            newCell.Paragraphs[0].AppendChild(new Run(doc, "Inserted Row, Cell 1"));
-
-            // Insert the new row at index 1 (between the original rows).
-            table.Rows.Insert(1, newRow);
-
-            // Save the document.
-            string outputPath = "InsertedRow.docx";
-            doc.Save(outputPath);
-
-            // Verify that the file was saved.
-            if (!File.Exists(outputPath))
-                throw new FileNotFoundException("The output document was not created.", outputPath);
+            // Ensure the cell has at least one run to modify.
+            if (cell.FirstParagraph?.Runs.Count > 0)
+                cell.FirstParagraph.Runs[0].Text = "Inserted";
+            else
+                cell.FirstParagraph?.AppendChild(new Run(doc, "Inserted"));
         }
+
+        // Insert the new row at index 1 (between the original rows).
+        table.Rows.Insert(1, newRow);
+
+        // Save the document.
+        string outputPath = "Output.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was saved.
+        if (!File.Exists(outputPath))
+            throw new Exception("The document was not saved correctly.");
     }
 }

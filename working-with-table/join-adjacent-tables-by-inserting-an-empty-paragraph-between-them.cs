@@ -14,42 +14,34 @@ public class Program
         // Build the first table.
         builder.StartTable();
         builder.InsertCell();
-        builder.Writeln("Table 1 - Cell 1");
+        builder.Write("First table, cell 1");
         builder.EndRow();
         builder.EndTable();
 
-        // Build the second table directly after the first one (adjacent tables).
+        // Build the second table directly after the first (no paragraph between them).
         builder.StartTable();
         builder.InsertCell();
-        builder.Writeln("Table 2 - Cell 1");
+        builder.Write("Second table, cell 1");
         builder.EndRow();
         builder.EndTable();
 
-        // Insert an empty paragraph between any adjacent tables.
+        // Locate the second table in the document.
         NodeCollection tables = doc.GetChildNodes(NodeType.Table, true);
-        for (int i = 0; i < tables.Count - 1; i++)
-        {
-            Table firstTable = (Table)tables[i];
-            Table secondTable = (Table)tables[i + 1];
+        if (tables.Count < 2)
+            throw new InvalidOperationException("The document does not contain two adjacent tables.");
 
-            // Ensure the tables are consecutive siblings.
-            if (firstTable.NextSibling == secondTable)
-            {
-                // Create an empty paragraph.
-                Paragraph emptyParagraph = new Paragraph(doc);
-                // Insert the empty paragraph after the first table.
-                firstTable.ParentNode.InsertAfter(emptyParagraph, firstTable);
-            }
-        }
+        Table secondTable = (Table)tables[1];
 
-        // Save the document.
+        // Insert an empty paragraph before the second table to separate the tables.
+        Paragraph emptyParagraph = new Paragraph(doc);
+        secondTable.ParentNode.InsertBefore(emptyParagraph, secondTable);
+
+        // Save the resulting document.
         string outputPath = "JoinedTables.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not created.");
-
-        // The program finishes automatically.
+            throw new FileNotFoundException("The output document was not saved.", outputPath);
     }
 }

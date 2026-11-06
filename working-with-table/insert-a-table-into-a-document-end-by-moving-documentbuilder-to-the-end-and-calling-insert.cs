@@ -9,44 +9,39 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Create a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Move the builder to the end of the document.
         builder.MoveToDocumentEnd();
 
-        // Build a simple 2x2 table.
+        // Build a 2x2 table at the document end.
         builder.StartTable();
 
         // First row.
         builder.InsertCell();
-        builder.Write("Cell 1");
+        builder.Writeln("Cell 1,1");
         builder.InsertCell();
-        builder.Write("Cell 2");
+        builder.Writeln("Cell 1,2");
         builder.EndRow();
 
         // Second row.
         builder.InsertCell();
-        builder.Write("Cell 3");
+        builder.Writeln("Cell 2,1");
         builder.InsertCell();
-        builder.Write("Cell 4");
+        builder.Writeln("Cell 2,2");
         builder.EndRow();
 
-        // End the table.
+        // Finish the table.
         builder.EndTable();
 
-        // Save the document to a file.
+        // Save the document.
         string outputPath = "TableExample.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
         {
-            throw new Exception($"Failed to create the output file: {outputPath}");
+            throw new InvalidOperationException($"Failed to create output file: {outputPath}");
         }
-
-        // Optionally, inform that the process completed.
-        Console.WriteLine($"Document saved successfully to '{outputPath}'.");
     }
 }

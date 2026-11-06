@@ -7,56 +7,51 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a heading.
-        builder.Writeln("Table with pagination (AllowBreakAcrossPages = true)");
-
-        // Start the table.
+        // Start building a table.
         builder.StartTable();
 
-        // Create 50 rows with two cells each.
-        for (int i = 0; i < 50; i++)
+        // Define the number of rows and columns for the large table.
+        int rowCount = 50;
+        int columnCount = 5;
+
+        // Populate the table with sample data.
+        for (int i = 0; i < rowCount; i++)
         {
-            // First cell.
-            builder.InsertCell();
-            builder.Write($"Row {i + 1} - Cell 1");
-
-            // Second cell.
-            builder.InsertCell();
-            builder.Write($"Row {i + 1} - Cell 2");
-
-            // End the row.
+            for (int j = 0; j < columnCount; j++)
+            {
+                builder.InsertCell();
+                builder.Writeln($"Row {i + 1}, Cell {j + 1}");
+            }
+            // End the current row.
             builder.EndRow();
         }
 
-        // End the table.
+        // Finish the table construction.
         builder.EndTable();
 
-        // Retrieve the created table.
-        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
+        // Retrieve the created table from the document.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // Enable breaking across pages for each row and set a fixed height.
+        // Enable pagination for each row so the table can break across pages.
         foreach (Row row in table.Rows)
         {
             row.RowFormat.AllowBreakAcrossPages = true;
+
+            // Adjust the height of each row to a fixed value.
             row.RowFormat.Height = 20; // Height in points.
             row.RowFormat.HeightRule = HeightRule.Exactly;
         }
 
-        // Save the document.
-        string outputPath = "PaginationTable.docx";
+        // Save the document to a file.
+        string outputPath = "TablePagination.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify that the file was created successfully.
         if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
-        }
-
-        // Indicate success (no interactive input required).
-        Console.WriteLine($"Document saved successfully to '{Path.GetFullPath(outputPath)}'.");
+            throw new Exception("The output document was not created.");
     }
 }

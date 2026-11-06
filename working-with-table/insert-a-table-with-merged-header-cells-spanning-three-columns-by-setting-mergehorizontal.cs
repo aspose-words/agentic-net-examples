@@ -7,49 +7,55 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building a table.
+        // Start building the table.
         builder.StartTable();
 
-        // ---- First row: merged header spanning three columns ----
-        // First cell - start of the merge.
+        // ---------- Header row with merged cells ----------
+        // First cell – start of the horizontal merge.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.First;
         builder.Writeln("Header");
 
-        // Second cell - continues the merge.
+        // Second cell – continues the merge.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-        builder.Writeln(string.Empty);
+        // No text needed for merged cells.
 
-        // Third cell - continues the merge.
+        // Third cell – continues the merge.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-        builder.Writeln(string.Empty);
+        // No text needed for merged cells.
 
-        // End the first row.
+        // End the header row.
         builder.EndRow();
 
-        // ---- Second row: regular three columns ----
+        // ---------- Data row ----------
+        // Reset merge setting for normal cells.
+        builder.CellFormat.HorizontalMerge = CellMerge.None;
+
+        // First data cell.
         builder.InsertCell();
         builder.Writeln("Column 1");
 
+        // Second data cell.
         builder.InsertCell();
         builder.Writeln("Column 2");
 
+        // Third data cell.
         builder.InsertCell();
         builder.Writeln("Column 3");
 
-        // End the second row.
+        // End the data row.
         builder.EndRow();
 
         // Finish the table.
         builder.EndTable();
 
-        // Save the document to a file.
+        // Save the document to disk.
         string outputPath = "MergedHeaderTable.docx";
         doc.Save(outputPath);
 
@@ -58,8 +64,5 @@ public class Program
         {
             throw new Exception($"Failed to create the output file: {outputPath}");
         }
-
-        // Optionally, inform that the process completed successfully.
-        Console.WriteLine($"Document saved successfully to '{outputPath}'.");
     }
 }

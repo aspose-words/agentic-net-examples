@@ -7,36 +7,40 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a DocumentBuilder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple table with one cell.
+        // Start a new table.
         builder.StartTable();
+
+        // Insert a cell and add some text.
         builder.InsertCell();
         builder.Writeln("Centered Text");
+
+        // End the row and the table.
         builder.EndRow();
         builder.EndTable();
 
-        // Access the created table and its first cell.
+        // Retrieve the first table, row, and cell.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
         Cell cell = table.Rows[0].Cells[0];
 
-        // Set vertical alignment to center.
+        // Set vertical alignment to center using CellFormat.
         cell.CellFormat.VerticalAlignment = CellVerticalAlignment.Center;
 
-        // Center the paragraph(s) inside the cell horizontally.
-        foreach (Paragraph para in cell.Paragraphs)
-        {
-            para.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-        }
+        // Set horizontal alignment to center by aligning the paragraph inside the cell.
+        Paragraph para = cell.FirstParagraph;
+        para.ParagraphFormat.Alignment = ParagraphAlignment.Center;
 
-        // Save the document.
+        // Save the document to a file.
         string outputPath = "Output.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("Failed to create the output document.");
+        {
+            throw new Exception("The output file was not created.");
+        }
     }
 }

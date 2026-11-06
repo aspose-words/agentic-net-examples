@@ -3,47 +3,50 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace TableStyleExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Build a simple 2x2 table.
-            Table table = builder.StartTable();
+        // Build a 2x2 table.
+        builder.StartTable();
 
-            // First row.
-            builder.InsertCell();
-            builder.Write("Cell 1, Row 1");
-            builder.InsertCell();
-            builder.Write("Cell 2, Row 1");
-            builder.EndRow();
+        builder.InsertCell();
+        builder.Writeln("Cell 1");
 
-            // Second row.
-            builder.InsertCell();
-            builder.Write("Cell 1, Row 2");
-            builder.InsertCell();
-            builder.Write("Cell 2, Row 2");
-            builder.EndTable(); // Ends the table and returns the Table node.
+        builder.InsertCell();
+        builder.Writeln("Cell 2");
 
-            // Apply the built‑in "TableGrid" style to the table.
-            // The style can be obtained from the document's style collection.
-            Style tableGridStyle = doc.Styles[StyleIdentifier.TableGrid];
-            table.Style = tableGridStyle;
+        builder.EndRow();
 
-            // Save the document to a local file.
-            string outputPath = "TableStyleExample.docx";
-            doc.Save(outputPath);
+        builder.InsertCell();
+        builder.Writeln("Cell 3");
 
-            // Simple validation to ensure the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+        builder.InsertCell();
+        builder.Writeln("Cell 4");
 
-            // The program finishes without waiting for user input.
-        }
+        builder.EndRow();
+        builder.EndTable();
+
+        // Retrieve the created table (the first table in the document).
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+
+        // Apply the built‑in "Table Grid" style to the table by name.
+        // The TableStyleIdentifier enum may not be available in all versions,
+        // so we set the style using its exact name.
+        table.StyleName = "Table Grid";
+
+        // Save the document to a file.
+        string outputPath = "TableStyleExample.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+
+        Console.WriteLine($"Document saved successfully to '{outputPath}'.");
     }
 }

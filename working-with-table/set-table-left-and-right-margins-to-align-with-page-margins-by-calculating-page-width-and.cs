@@ -11,43 +11,45 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table.
+        // Build a simple 3x3 table.
         builder.StartTable();
-        builder.InsertCell();
-        builder.Write("Cell 1");
-        builder.InsertCell();
-        builder.Write("Cell 2");
-        builder.EndRow();
-
-        builder.InsertCell();
-        builder.Write("Cell 3");
-        builder.InsertCell();
-        builder.Write("Cell 4");
-        builder.EndRow();
+        for (int row = 0; row < 3; row++)
+        {
+            for (int col = 0; col < 3; col++)
+            {
+                builder.InsertCell();
+                builder.Writeln($"R{row + 1}C{col + 1}");
+            }
+            builder.EndRow();
+        }
         builder.EndTable();
 
         // Retrieve the created table.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // Calculate page usable width based on page size and margins.
+        // Get page setup information from the first section.
         PageSetup pageSetup = doc.FirstSection.PageSetup;
-        double pageWidth = pageSetup.PageWidth;          // Total page width (points).
-        double leftMargin = pageSetup.LeftMargin;       // Left margin (points).
-        double rightMargin = pageSetup.RightMargin;     // Right margin (points).
+        // Cast to float because PageWidth, LeftMargin and RightMargin are double in this version.
+        float pageWidth = (float)pageSetup.PageWidth;          // Total page width in points.
+        float leftMargin = (float)pageSetup.LeftMargin;        // Left margin in points.
+        float rightMargin = (float)pageSetup.RightMargin;      // Right margin in points.
 
-        // Align table left edge with the left page margin.
-        table.LeftIndent = leftMargin;
+        // Calculate the width that fits exactly between the margins.
+        float availableWidth = pageWidth - leftMargin - rightMargin;
 
-        // Set table width so its right edge aligns with the right page margin.
-        double usableWidth = pageWidth - leftMargin - rightMargin;
-        table.PreferredWidth = PreferredWidth.FromPoints(usableWidth);
+        // Align the table with page margins.
+        table.LeftIndent = leftMargin;                                   // Align left side.
+        table.PreferredWidth = PreferredWidth.FromPoints(availableWidth); // Set width to fill the space.
 
         // Save the document.
         string outputPath = "TableMargins.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was saved.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("Document was not saved correctly.");
+            throw new Exception("Failed to create the output document.");
+
+        // Inform that the process completed.
+        Console.WriteLine($"Document saved to '{Path.GetFullPath(outputPath)}'.");
     }
 }

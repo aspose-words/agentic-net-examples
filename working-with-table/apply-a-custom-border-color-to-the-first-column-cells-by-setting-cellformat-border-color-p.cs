@@ -1,54 +1,63 @@
 using System;
-using System.IO;
 using System.Drawing;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace TableBorderColorExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Build a simple 5x3 table.
-        builder.StartTable();
-        for (int i = 0; i < 5; i++) // rows
+        public static void Main()
         {
-            for (int j = 0; j < 3; j++) // columns
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Start a table.
+            builder.StartTable();
+
+            // Build a 3x3 table with sample text.
+            for (int row = 0; row < 3; row++)
             {
-                builder.InsertCell();
-                builder.Writeln($"Row {i + 1}, Col {j + 1}");
-                // End the row after the last cell.
-                if (j == 2)
-                    builder.EndRow();
+                for (int col = 0; col < 3; col++)
+                {
+                    builder.InsertCell();
+                    builder.Writeln($"R{row + 1}C{col + 1}");
+                }
+                builder.EndRow();
             }
+
+            // End the table.
+            builder.EndTable();
+
+            // Retrieve the created table.
+            Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+
+            // Define the custom border color.
+            Color customColor = Color.Red;
+
+            // Apply the custom border color to every cell in the first column.
+            foreach (Row tableRow in table.Rows)
+            {
+                Cell firstCell = tableRow.Cells[0];
+                // Set all four borders of the cell to the custom color.
+                firstCell.CellFormat.Borders[BorderType.Left].Color = customColor;
+                firstCell.CellFormat.Borders[BorderType.Right].Color = customColor;
+                firstCell.CellFormat.Borders[BorderType.Top].Color = customColor;
+                firstCell.CellFormat.Borders[BorderType.Bottom].Color = customColor;
+            }
+
+            // Save the document to disk.
+            string outputPath = "FirstColumnBorderColor.docx";
+            doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+
+            // Optionally, inform that the process completed.
+            Console.WriteLine($"Document saved successfully to '{outputPath}'.");
         }
-        builder.EndTable();
-
-        // Retrieve the first table in the document.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (table == null)
-            throw new InvalidOperationException("Table was not created.");
-
-        // Apply a custom border color to the cells in the first column.
-        foreach (Row row in table.Rows)
-        {
-            Cell firstCell = row.Cells[0];
-            // Set the color for each side of the cell border.
-            firstCell.CellFormat.Borders[BorderType.Left].Color = Color.Red;
-            firstCell.CellFormat.Borders[BorderType.Right].Color = Color.Red;
-            firstCell.CellFormat.Borders[BorderType.Top].Color = Color.Red;
-            firstCell.CellFormat.Borders[BorderType.Bottom].Color = Color.Red;
-        }
-
-        // Save the document to disk.
-        string outputPath = "FirstColumnBorderColor.docx";
-        doc.Save(outputPath);
-
-        // Verify that the file was saved.
-        if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not created.", outputPath);
     }
 }

@@ -3,68 +3,70 @@ using System.IO;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
+using Aspose.Words.Saving;
 using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple table with a header row and numeric values.
+        // Build a simple table with numeric values.
         builder.StartTable();
 
-        // Header cells.
+        // First row.
         builder.InsertCell();
-        builder.Writeln("Item");
+        builder.Write("5");
         builder.InsertCell();
-        builder.Writeln("Value");
+        builder.Write("15");
         builder.EndRow();
 
-        // Data rows with numeric values.
-        for (int i = 1; i <= 5; i++)
-        {
-            builder.InsertCell();
-            builder.Writeln($"Item {i}");
-            builder.InsertCell();
-            builder.Writeln((i * 10).ToString()); // Values: 10,20,30,40,50
-            builder.EndRow();
-        }
+        // Second row.
+        builder.InsertCell();
+        builder.Write("20");
+        builder.InsertCell();
+        builder.Write("8");
+        builder.EndRow();
 
         builder.EndTable();
 
-        // Retrieve the created table.
-        Table table = doc.FirstSection.Body.Tables[0];
+        // Save the initial document.
+        string initialPath = "ConditionalShading.docx";
+        doc.Save(initialPath);
 
-        // Apply conditional shading: cells with numeric value > 25 get yellow background.
-        foreach (Row row in table.Rows)
+        // Apply conditional shading: cells with a numeric value greater than 12 get a light green background.
+        foreach (Table table in doc.GetChildNodes(NodeType.Table, true))
         {
-            foreach (Cell cell in row.Cells)
+            foreach (Row row in table.Rows)
             {
-                // Extract cell text and try to parse it as a number.
-                string cellText = cell.GetText().Trim();
-                if (double.TryParse(cellText, out double numericValue))
+                foreach (Cell cell in row.Cells)
                 {
-                    if (numericValue > 25)
+                    // Extract the cell text and try to parse it as an integer.
+                    string cellText = cell.ToString(SaveFormat.Text).Trim();
+                    if (int.TryParse(cellText, out int numericValue))
                     {
-                        // Set solid yellow shading for the cell by modifying the existing Shading object.
-                        cell.CellFormat.Shading.Texture = TextureIndex.TextureSolid;
-                        cell.CellFormat.Shading.ForegroundPatternColor = Color.Yellow;
+                        if (numericValue > 12)
+                        {
+                            // Apply solid shading with a light green background.
+                            cell.CellFormat.Shading.Texture = TextureIndex.TextureSolid;
+                            cell.CellFormat.Shading.BackgroundPatternColor = Color.LightGreen;
+                        }
                     }
                 }
             }
         }
 
-        // Save the document to disk.
-        string outputPath = "ConditionalShading.docx";
-        doc.Save(outputPath);
+        // Save the document with shading applied.
+        string shadedPath = "ConditionalShading_Shaded.docx";
+        doc.Save(shadedPath);
 
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
+        // Verify that the output file exists.
+        if (!File.Exists(shadedPath))
         {
-            throw new Exception("The output document was not saved correctly.");
+            throw new Exception("The shaded document was not saved correctly.");
         }
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -11,51 +12,47 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Begin a table.
+        // Start a new table.
         builder.StartTable();
 
-        // Insert the first cell.
+        // Insert a single cell and add some text.
         builder.InsertCell();
+        builder.Writeln("Custom Borders");
 
-        // Retrieve the cell that was just created.
+        // Get the current cell that was just created.
         Cell cell = builder.CurrentParagraph.ParentNode as Cell;
         if (cell == null)
-            throw new InvalidOperationException("Current node is not a cell.");
+            throw new InvalidOperationException("Current node is not a table cell.");
 
-        // Apply custom borders with different line widths.
-        // Top border – 1 point.
-        cell.CellFormat.Borders.Top.LineWidth = 1.0;
-        cell.CellFormat.Borders.Top.Color = Color.Black;
-        cell.CellFormat.Borders.Top.LineStyle = LineStyle.Single;
-
-        // Bottom border – 2 points.
-        cell.CellFormat.Borders.Bottom.LineWidth = 2.0;
-        cell.CellFormat.Borders.Bottom.Color = Color.Black;
-        cell.CellFormat.Borders.Bottom.LineStyle = LineStyle.Single;
-
-        // Left border – 3 points.
-        cell.CellFormat.Borders.Left.LineWidth = 3.0;
-        cell.CellFormat.Borders.Left.Color = Color.Black;
+        // Apply different line widths, colors and styles to each side of the cell.
+        cell.CellFormat.Borders.Left.LineWidth = 1.0;   // 1 point left border
+        cell.CellFormat.Borders.Left.Color = Color.Blue;
         cell.CellFormat.Borders.Left.LineStyle = LineStyle.Single;
 
-        // Right border – 4 points.
-        cell.CellFormat.Borders.Right.LineWidth = 4.0;
-        cell.CellFormat.Borders.Right.Color = Color.Black;
+        cell.CellFormat.Borders.Top.LineWidth = 2.0;    // 2 points top border
+        cell.CellFormat.Borders.Top.Color = Color.Green;
+        cell.CellFormat.Borders.Top.LineStyle = LineStyle.Single;
+
+        cell.CellFormat.Borders.Right.LineWidth = 3.0;  // 3 points right border
+        cell.CellFormat.Borders.Right.Color = Color.Red;
         cell.CellFormat.Borders.Right.LineStyle = LineStyle.Single;
 
-        // Add some text to the cell.
-        builder.Writeln("Custom borders");
+        cell.CellFormat.Borders.Bottom.LineWidth = 4.0; // 4 points bottom border
+        cell.CellFormat.Borders.Bottom.Color = Color.Purple;
+        cell.CellFormat.Borders.Bottom.LineStyle = LineStyle.Single;
 
-        // End the current row and the table.
+        // End the row and the table.
         builder.EndRow();
         builder.EndTable();
 
-        // Save the document to disk.
+        // Define output path.
         string outputPath = "CustomCellBorders.docx";
+
+        // Save the document.
         doc.Save(outputPath);
 
         // Verify that the file was created.
-        if (!System.IO.File.Exists(outputPath))
-            throw new Exception("The output file was not created.");
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The output document was not created.", outputPath);
     }
 }

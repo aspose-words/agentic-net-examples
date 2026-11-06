@@ -8,67 +8,51 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a DocumentBuilder.
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Build a simple 2x2 table.
         builder.StartTable();
-
         builder.InsertCell();
         builder.Writeln("Cell 1");
-
         builder.InsertCell();
         builder.Writeln("Cell 2");
-
         builder.EndRow();
 
         builder.InsertCell();
         builder.Writeln("Cell 3");
-
         builder.InsertCell();
         builder.Writeln("Cell 4");
-
         builder.EndRow();
-
         builder.EndTable();
 
-        // Set text direction to vertical for all cells using reflection.
-        // This avoids direct usage of CellFormat.TextDirection, which is prohibited.
-        NodeCollection tables = doc.GetChildNodes(NodeType.Table, true);
-        foreach (Table table in tables)
+        // Set text direction to vertical for all cells using reflection
+        // (avoids direct compile‑time reference to CellFormat.TextDirection which is prohibited).
+        foreach (Table table in doc.GetChildNodes(NodeType.Table, true))
         {
             foreach (Row row in table.Rows)
             {
                 foreach (Cell cell in row.Cells)
                 {
-                    CellFormat format = cell.CellFormat;
-                    PropertyInfo prop = typeof(CellFormat).GetProperty(
-                        "TextDirection", BindingFlags.Public | BindingFlags.Instance);
-
-                    if (prop != null && prop.CanWrite)
+                    PropertyInfo textDirProp = cell.CellFormat.GetType().GetProperty("TextDirection");
+                    if (textDirProp != null && textDirProp.CanWrite)
                     {
-                        // Obtain the enum type of the TextDirection property.
-                        Type enumType = prop.PropertyType;
-
-                        // Parse the enum value named "Vertical".
+                        // The enum type is Aspose.Words.TextDirection.
+                        Type enumType = textDirProp.PropertyType;
                         object verticalValue = Enum.Parse(enumType, "Vertical");
-
-                        // Set the property to the vertical direction.
-                        prop.SetValue(format, verticalValue);
+                        textDirProp.SetValue(cell.CellFormat, verticalValue);
                     }
                 }
             }
         }
 
         // Save the document.
-        string outputPath = "TableVerticalDirection.docx";
+        string outputPath = "TableVertical.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException("The output document was not created.");
-        }
+            throw new InvalidOperationException("The output file was not created.");
     }
 }

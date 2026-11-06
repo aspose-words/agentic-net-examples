@@ -2,41 +2,50 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and build a simple 2‑cell table.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Build a simple 2x1 table.
         builder.StartTable();
         builder.InsertCell();
-        builder.Writeln("Cell 1");
+        builder.Write("Cell 1");
         builder.InsertCell();
-        builder.Writeln("Cell 2");
+        builder.Write("Cell 2");
         builder.EndRow();
         builder.EndTable();
 
-        // Define the output image path.
-        string imagePath = "Table.png";
+        // Retrieve the first table in the document.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new Exception("No table found in the document.");
 
-        // Render only the first page (which contains the table) to a PNG image.
+        // Clone the table into a separate document.
+        Document tableDoc = new Document();               // New empty document.
+        Section section = tableDoc.Sections[0];           // Existing section to host the table.
+
+        // Import the table into the new document before appending.
+        NodeImporter importer = new NodeImporter(table.Document, tableDoc, ImportFormatMode.KeepSourceFormatting);
+        Node importedTable = importer.ImportNode(table, true);
+        section.Body.AppendChild(importedTable);
+
+        // Configure image save options to produce a PNG of the first page (where the table resides).
         ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png)
         {
-            // Use PageSet to specify which pages to render.
-            PageSet = new PageSet(0) // Render page index 0 only.
+            PageSet = new PageSet(0)   // Render only the first page.
         };
 
-        // Save the document as an image.
-        doc.Save(imagePath, options);
+        string outputPath = "TableImage.png";
+        tableDoc.Save(outputPath, options);
 
         // Verify that the image file was created.
-        if (!File.Exists(imagePath))
-        {
-            throw new InvalidOperationException($"Failed to create image file: {imagePath}");
-        }
+        if (!File.Exists(outputPath))
+            throw new Exception("Failed to create the PNG image of the table.");
+
+        Console.WriteLine($"Table exported successfully as image: {Path.GetFullPath(outputPath)}");
     }
 }

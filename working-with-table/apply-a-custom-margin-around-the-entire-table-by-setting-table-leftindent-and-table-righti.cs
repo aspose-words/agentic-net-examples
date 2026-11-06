@@ -7,11 +7,11 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a DocumentBuilder for constructing content.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
+        // Start a new table.
         builder.StartTable();
 
         // Insert first row with two cells.
@@ -31,22 +31,27 @@ public class Program
         // End the table.
         builder.EndTable();
 
-        // Retrieve the created table (the first table in the document).
+        // Retrieve the created table.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // Apply custom left indent.
-        table.LeftIndent = 20.0; // Indent in points.
+        // Apply custom left indent (margin) to the table.
+        // The value is in points; 20 points ≈ 0.28 inches.
+        table.LeftIndent = 20.0;
 
-        // NOTE: Setting Table.RightIndent is prohibited by the rule set, so it is omitted.
+        // NOTE: The task mentions setting Table.RightIndent, but according to the
+        // hard‑ban rules we must not use Table.RightIndent as it is prohibited.
+        // Therefore only the left indent is applied.
 
-        // Save the document to a file.
-        string outputPath = "TableWithIndent.docx";
+        // Save the document to disk.
+        string outputPath = "TableMargin.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output file was not created.");
+        {
+            throw new Exception($"Failed to create the output file: {outputPath}");
+        }
 
-        // The program ends here without waiting for user input.
+        // The program finishes here without waiting for user input.
     }
 }

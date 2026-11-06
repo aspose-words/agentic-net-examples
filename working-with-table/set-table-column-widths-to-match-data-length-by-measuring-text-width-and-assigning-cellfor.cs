@@ -1,109 +1,95 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace TableColumnWidthExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new document and a DocumentBuilder.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Sample data for the table.
-        string[] headers = { "ID", "Name", "Description" };
-        string[,] rows = {
-            { "1", "Alice", "Software engineer with 5 years experience" },
-            { "2", "Bob", "Data analyst" },
-            { "3", "Charlie", "Project manager overseeing multiple teams" }
-        };
-
-        // Build the table.
-        builder.StartTable();
-
-        // Insert header row.
-        foreach (string header in headers)
+        // Simple text width estimator: character count * font size * factor.
+        private static double EstimateTextWidth(string text, double fontSize)
         {
-            builder.InsertCell();
-            builder.Font.Bold = true;
-            builder.Writeln(header);
+            const double factor = 1.2; // Approximate width per point size.
+            return text.Length * fontSize * factor;
         }
-        builder.EndRow();
 
-        // Insert data rows.
-        for (int r = 0; r < rows.GetLength(0); r++)
+        public static void Main()
         {
-            for (int c = 0; c < rows.GetLength(1); c++)
+            // Sample data for the table.
+            string[,] data = new string[,]
             {
-                builder.InsertCell();
-                builder.Font.Bold = false;
-                builder.Writeln(rows[r, c]);
-            }
-            builder.EndRow();
-        }
+                { "ID", "Name", "Occupation" },
+                { "1", "Alice", "Software Engineer" },
+                { "2", "Bob", "Graphic Designer" },
+                { "3", "Charlie", "Data Scientist" }
+            };
 
-        builder.EndTable();
+            // Create a new document and a builder.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Retrieve the created table.
-        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
+            // Build the table using the builder.
+            builder.StartTable();
 
-        // Simple heuristic to estimate text width (points) based on character count and font size.
-        double MeasureTextWidth(string text, double fontSize)
-        {
-            // Approximate each character as 0.5 * fontSize points.
-            return text.Length * fontSize * 0.5;
-        }
+            // Use a consistent font size for measurement.
+            builder.Font.Size = 12; // points
 
-        // Determine maximum required width for each column.
-        int columnCount = table.Rows[0].Cells.Count;
-        double[] maxColumnWidths = new double[columnCount];
+            int rows = data.GetLength(0);
+            int cols = data.GetLength(1);
 
-        // Include header row in measurement.
-        for (int col = 0; col < columnCount; col++)
-        {
-            Cell headerCell = table.Rows[0].Cells[col];
-            string headerText = headerCell.GetText().TrimEnd('\a'); // Remove cell end marker.
-            double headerWidth = MeasureTextWidth(headerText, builder.Font.Size);
-            maxColumnWidths[col] = headerWidth;
-        }
-
-        // Measure data rows.
-        for (int rowIdx = 1; rowIdx < table.Rows.Count; rowIdx++)
-        {
-            Row row = table.Rows[rowIdx];
-            for (int col = 0; col < columnCount; col++)
+            for (int r = 0; r < rows; r++)
             {
-                Cell cell = row.Cells[col];
-                string cellText = cell.GetText().TrimEnd('\a');
-                double cellWidth = MeasureTextWidth(cellText, builder.Font.Size);
-                if (cellWidth > maxColumnWidths[col])
-                    maxColumnWidths[col] = cellWidth;
+                for (int c = 0; c < cols; c++)
+                {
+                    builder.InsertCell();
+                    builder.Write(data[r, c]);
+                }
+                builder.EndRow();
             }
-        }
 
-        // Apply calculated widths to each column (add a small margin).
-        const double marginPoints = 5.0;
-        for (int col = 0; col < columnCount; col++)
-        {
-            double finalWidth = maxColumnWidths[col] + marginPoints;
-            // Set the width for every cell in this column.
+            builder.EndTable();
+
+            // Retrieve the created table.
+            Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
+
+            // Determine the maximum required width for each column.
+            double[] maxColumnWidths = new double[cols];
+
+            for (int c = 0; c < cols; c++)
+            {
+                double maxWidth = 0;
+                for (int r = 0; r < rows; r++)
+                {
+                    string cellText = data[r, c];
+                    double width = EstimateTextWidth(cellText, builder.Font.Size);
+                    if (width > maxWidth)
+                        maxWidth = width;
+                }
+                // Add a small padding to avoid clipping.
+                maxColumnWidths[c] = maxWidth + 5; // points
+            }
+
+            // Apply the calculated widths to each cell in the corresponding column.
             foreach (Row row in table.Rows)
             {
-                Cell cell = row.Cells[col];
-                cell.CellFormat.Width = finalWidth;
+                for (int c = 0; c < cols; c++)
+                {
+                    Cell cell = row.Cells[c];
+                    cell.CellFormat.Width = maxColumnWidths[c];
+                }
             }
+
+            // Save the document.
+            string outputPath = "TableColumnWidths.docx";
+            doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException("The output document was not created.");
+
+            // The program ends here without waiting for user input.
         }
-
-        // Fix column widths by using FixedColumnWidths behavior.
-        table.AutoFit(AutoFitBehavior.FixedColumnWidths);
-
-        // Save the document.
-        string outputPath = "TableColumnWidths.docx";
-        doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
     }
 }

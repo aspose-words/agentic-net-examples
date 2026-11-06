@@ -8,42 +8,48 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder to construct content.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 3x3 table.
+        // Build a simple 2x2 table.
         builder.StartTable();
-        for (int row = 0; row < 3; row++)
-        {
-            for (int col = 0; col < 3; col++)
-            {
-                builder.InsertCell();
-                builder.Writeln($"R{row + 1}C{col + 1}");
-            }
-            builder.EndRow();
-        }
+
+        // First row.
+        builder.InsertCell();
+        builder.Writeln("Cell 1,1");
+        builder.InsertCell();
+        builder.Writeln("Cell 1,2");
+        builder.EndRow();
+
+        // Second row.
+        builder.InsertCell();
+        builder.Writeln("Cell 2,1");
+        builder.InsertCell();
+        builder.Writeln("Cell 2,2");
+        builder.EndRow();
+
         builder.EndTable();
 
-        // Retrieve the created table from the document.
-        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // Apply a custom outer border (single line, 2 points, black).
-        table.SetBorder(BorderType.Left, LineStyle.Single, 2.0, Color.Black, true);
-        table.SetBorder(BorderType.Right, LineStyle.Single, 2.0, Color.Black, true);
-        table.SetBorder(BorderType.Top, LineStyle.Single, 2.0, Color.Black, true);
+        // Apply a custom outer border (single line, 2 pt, black).
+        table.SetBorder(BorderType.Left,   LineStyle.Single, 2.0, Color.Black, true);
+        table.SetBorder(BorderType.Top,    LineStyle.Single, 2.0, Color.Black, true);
+        table.SetBorder(BorderType.Right,  LineStyle.Single, 2.0, Color.Black, true);
         table.SetBorder(BorderType.Bottom, LineStyle.Single, 2.0, Color.Black, true);
 
-        // Disable inner borders (horizontal and vertical).
+        // Disable inner (horizontal and vertical) borders.
         table.SetBorder(BorderType.Horizontal, LineStyle.None, 0, Color.Empty, false);
-        table.SetBorder(BorderType.Vertical, LineStyle.None, 0, Color.Empty, false);
+        table.SetBorder(BorderType.Vertical,   LineStyle.None, 0, Color.Empty, false);
 
-        // Save the document to a file.
+        // Save the document.
         string outputPath = "TableOuterBorder.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output file was not created.");
+            throw new Exception("The output document was not saved correctly.");
     }
 }

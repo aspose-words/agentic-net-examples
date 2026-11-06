@@ -2,13 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Sample data source: a list of objects.
+        // Sample data source.
         var people = new List<Person>
         {
             new Person { Name = "Alice", Age = 30 },
@@ -16,11 +15,11 @@ public class Program
             new Person { Name = "Charlie", Age = 35 }
         };
 
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new document.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Start a table with a fixed number of columns (2 columns: Name and Age).
+        // Start a table with a fixed number of columns (2).
         builder.StartTable();
 
         // Header row.
@@ -30,7 +29,7 @@ public class Program
         builder.Writeln("Age");
         builder.EndRow();
 
-        // Add a row for each item in the data source.
+        // Dynamically add rows from the data source.
         foreach (var person in people)
         {
             builder.InsertCell();
@@ -43,18 +42,19 @@ public class Program
         // End the table.
         builder.EndTable();
 
-        // Save the document to a file.
-        string outputPath = "TableOutput.docx";
+        // Save the document.
+        string outputPath = "OutputTable.docx";
         doc.Save(outputPath);
 
-        // Validate that the file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-        {
-            throw new Exception($"Failed to create the output file: {outputPath}");
-        }
+            throw new InvalidOperationException("The output document was not created.");
+
+        // Indicate success.
+        Console.WriteLine($"Document saved to {Path.GetFullPath(outputPath)}");
     }
 
-    // Simple data class representing a row in the table.
+    // Simple data class representing a row.
     private class Person
     {
         public string Name { get; set; }

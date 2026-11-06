@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Tables;
 
 public class Program
 {
@@ -12,29 +13,27 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a floating textbox shape.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 200);
-        // Ensure the shape is positioned relative to the page (optional).
-        textBox.WrapType = WrapType.Inline;
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 100);
 
-        // Move the builder into the textbox's first paragraph.
-        // The textbox contains its own paragraph collection.
+        // Move the builder inside the textbox's first paragraph.
+        // The Shape object provides a FirstParagraph property that points to the paragraph inside the textbox.
         builder.MoveTo(textBox.FirstParagraph);
 
         // Build a simple 2x2 table inside the textbox.
         builder.StartTable();
 
-        // First row
+        // First row.
         builder.InsertCell();
-        builder.Writeln("Cell 1,1");
+        builder.Write("Cell 1");
         builder.InsertCell();
-        builder.Writeln("Cell 1,2");
+        builder.Write("Cell 2");
         builder.EndRow();
 
-        // Second row
+        // Second row.
         builder.InsertCell();
-        builder.Writeln("Cell 2,1");
+        builder.Write("Cell 3");
         builder.InsertCell();
-        builder.Writeln("Cell 2,2");
+        builder.Write("Cell 4");
         builder.EndRow();
 
         // End the table.
@@ -46,8 +45,6 @@ public class Program
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
-        }
+            throw new Exception("The output document was not created.");
     }
 }

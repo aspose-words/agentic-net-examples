@@ -11,29 +11,33 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 1x1 table.
+        // Build a simple 2‑column table.
         builder.StartTable();
+
         builder.InsertCell();
-        builder.Write("Sample cell");
+        builder.Writeln("Cell 1");
+
+        builder.InsertCell();
+        builder.Writeln("Cell 2");
+
         builder.EndRow();
         builder.EndTable();
 
         // Retrieve the created table.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (table == null)
-            throw new InvalidOperationException("Table was not created.");
 
-        // Set the table's preferred width to 15 centimeters.
-        // 1 inch = 2.54 cm, 1 inch = 72 points.
-        double widthPoints = 15.0 * 72.0 / 2.54; // Convert centimeters to points.
-        table.PreferredWidth = PreferredWidth.FromPoints(widthPoints);
+        // Set the table width to a fixed 15 centimeters.
+        // 1 inch = 72 points, 1 cm = 72 / 2.54 points.
+        double centimeters = 15;
+        double points = centimeters * 72.0 / 2.54;
+        table.PreferredWidth = PreferredWidth.FromPoints(points);
 
         // Save the document.
-        string outputPath = "TablePreferredWidth.docx";
-        doc.Save(outputPath);
+        string fileName = "TableFixedWidth.docx";
+        doc.Save(fileName);
 
-        // Verify that the file was saved.
-        if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The document was not saved.", outputPath);
+        // Verify that the file was created.
+        if (!File.Exists(fileName))
+            throw new Exception("The output file was not created.");
     }
 }

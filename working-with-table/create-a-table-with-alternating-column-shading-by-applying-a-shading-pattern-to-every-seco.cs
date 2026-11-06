@@ -12,38 +12,35 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        int rowCount = 5;
-        int columnCount = 4;
-
-        // Start the table.
+        // Build a table with 5 rows and 3 columns.
         builder.StartTable();
-
-        for (int row = 0; row < rowCount; row++)
+        for (int row = 0; row < 5; row++)
         {
-            for (int col = 0; col < columnCount; col++)
+            for (int col = 0; col < 3; col++)
             {
-                // Insert a new cell.
                 builder.InsertCell();
+                builder.Writeln($"R{row + 1}C{col + 1}");
+            }
+            builder.EndRow();
+        }
+        builder.EndTable();
 
-                // Apply shading to every second column (1‑based even columns).
-                if (col % 2 == 1)
+        // Apply shading to every second column (index 1, 3, ...).
+        Table table = doc.FirstSection.Body.Tables[0];
+        int columnCount = table.Rows[0].Cells.Count;
+
+        for (int colIndex = 0; colIndex < columnCount; colIndex++)
+        {
+            if (colIndex % 2 == 1) // every second column
+            {
+                foreach (Row row in table.Rows)
                 {
-                    // The current cell is the parent of the paragraph the builder is in.
-                    Cell cell = (Cell)builder.CurrentParagraph.ParentNode;
+                    Cell cell = row.Cells[colIndex];
                     cell.CellFormat.Shading.Texture = TextureIndex.TextureSolid;
                     cell.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
                 }
-
-                // Write some sample text into the cell.
-                builder.Writeln($"R{row + 1}C{col + 1}");
             }
-
-            // End the current row.
-            builder.EndRow();
         }
-
-        // End the table.
-        builder.EndTable();
 
         // Save the document.
         string outputPath = "AlternatingColumnShading.docx";
@@ -51,8 +48,8 @@ public class Program
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not created.");
+            throw new Exception("The output document was not created.");
 
-        // The program finishes here.
+        // Program ends automatically.
     }
 }

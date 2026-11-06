@@ -1,9 +1,8 @@
 using System;
-using System.IO;
 using System.Drawing;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Drawing;
 
 public class Program
 {
@@ -13,60 +12,64 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start the table.
+        // Begin the table.
         builder.StartTable();
 
-        // ---------- Header row ----------
-        // Apply shading to the header cells.
-        builder.CellFormat.Shading.Texture = TextureIndex.TextureSolid;
-        builder.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
-
-        // Insert header cells.
+        // Header row.
         builder.InsertCell();
-        builder.Write("Header 1");
+        builder.Writeln("Header 1");
         builder.InsertCell();
-        builder.Write("Header 2");
-        builder.InsertCell();
-        builder.Write("Header 3");
+        builder.Writeln("Header 2");
         builder.EndRow();
 
-        // Reset cell shading to default after the header row.
-        builder.CellFormat.Shading.Texture = TextureIndex.TextureNone;
-        builder.CellFormat.Shading.BackgroundPatternColor = Color.White;
-
-        // ---------- Data rows ----------
-        int dataRowCount = 6; // Number of data rows to create.
-
+        // Add several data rows.
+        int dataRowCount = 6;
         for (int i = 0; i < dataRowCount; i++)
         {
-            // Apply alternating shading based on row index parity.
-            if (i % 2 == 0) // Even index rows get a light blue background.
-            {
-                builder.CellFormat.Shading.Texture = TextureIndex.TextureSolid;
-                builder.CellFormat.Shading.BackgroundPatternColor = Color.LightBlue;
-            }
-            else // Odd index rows have no shading (default background).
-            {
-                builder.CellFormat.Shading.Texture = TextureIndex.TextureNone;
-                builder.CellFormat.Shading.BackgroundPatternColor = Color.White;
-            }
-
-            // Insert cells for the current data row.
             builder.InsertCell();
-            builder.Write($"Row {i + 1} - Col 1");
+            builder.Writeln($"Row {i + 1} - Col 1");
             builder.InsertCell();
-            builder.Write($"Row {i + 1} - Col 2");
-            builder.InsertCell();
-            builder.Write($"Row {i + 1} - Col 3");
+            builder.Writeln($"Row {i + 1} - Col 2");
             builder.EndRow();
-
-            // Reset shading for the next row (optional, will be set again in the loop).
-            builder.CellFormat.Shading.Texture = TextureIndex.TextureNone;
-            builder.CellFormat.Shading.BackgroundPatternColor = Color.White;
         }
 
         // End the table.
         builder.EndTable();
+
+        // Retrieve the created table from the document.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+
+        // Apply shading to the header row cells.
+        Row headerRow = table.Rows[0];
+        foreach (Cell cell in headerRow.Cells)
+        {
+            // Set solid gray background.
+            cell.CellFormat.Shading.Texture = TextureIndex.TextureSolid;
+            cell.CellFormat.Shading.BackgroundPatternColor = Color.Gray;
+        }
+
+        // Apply alternating shading to data rows based on row index parity.
+        for (int i = 1; i < table.Rows.Count; i++)
+        {
+            Row row = table.Rows[i];
+            bool isEvenDataRow = ((i - 1) % 2 == 0); // (i-1) because first data row is index 1.
+
+            foreach (Cell cell in row.Cells)
+            {
+                if (isEvenDataRow)
+                {
+                    // Light gray background for even rows.
+                    cell.CellFormat.Shading.Texture = TextureIndex.TextureSolid;
+                    cell.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
+                }
+                else
+                {
+                    // Clear shading for odd rows.
+                    cell.CellFormat.Shading.Texture = TextureIndex.TextureNone;
+                    cell.CellFormat.Shading.BackgroundPatternColor = Color.Empty;
+                }
+            }
+        }
 
         // Save the document to a file.
         string outputPath = "AlternatingRows.docx";
@@ -75,7 +78,7 @@ public class Program
         // Verify that the file was created.
         if (!File.Exists(outputPath))
         {
-            throw new Exception($"Failed to create the output file: {outputPath}");
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
         }
     }
 }

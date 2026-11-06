@@ -1,51 +1,50 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Ensure the builder is positioned at the end of the document.
         builder.MoveToDocumentEnd();
 
-        // Start a table with 3 columns.
+        // Start a table with three columns.
         builder.StartTable();
 
-        // First row.
+        // First row – three cells.
         builder.InsertCell();
-        builder.Writeln("Cell 1,1");
+        builder.Writeln("Row 1, Cell 1");
         builder.InsertCell();
-        builder.Writeln("Cell 1,2");
+        builder.Writeln("Row 1, Cell 2");
         builder.InsertCell();
-        builder.Writeln("Cell 1,3");
+        builder.Writeln("Row 1, Cell 3");
         builder.EndRow();
 
-        // Second row.
+        // Second row – three cells.
         builder.InsertCell();
-        builder.Writeln("Cell 2,1");
+        builder.Writeln("Row 2, Cell 1");
         builder.InsertCell();
-        builder.Writeln("Cell 2,2");
+        builder.Writeln("Row 2, Cell 2");
         builder.InsertCell();
-        builder.Writeln("Cell 2,3");
+        builder.Writeln("Row 2, Cell 3");
         builder.EndRow();
 
-        // End the table.
+        // Finish the table.
         builder.EndTable();
 
         // Save the document to a file.
         string outputPath = "TableExample.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify that the file was created successfully.
         if (!File.Exists(outputPath))
         {
-            throw new Exception($"Failed to create the output file: {outputPath}");
+            throw new InvalidOperationException($"Failed to create output file: {outputPath}");
         }
     }
 }

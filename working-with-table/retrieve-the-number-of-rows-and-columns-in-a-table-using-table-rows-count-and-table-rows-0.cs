@@ -6,34 +6,43 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder to construct a table.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a table with 2 rows and 3 columns.
+        // Build a 3‑row, 2‑column table.
         builder.StartTable();
 
-        // First row.
-        for (int col = 0; col < 3; col++)
-        {
-            builder.InsertCell();
-            builder.Writeln($"R1C{col + 1}");
-        }
+        // Row 1
+        builder.InsertCell();
+        builder.Writeln("R1C1");
+        builder.InsertCell();
+        builder.Writeln("R1C2");
         builder.EndRow();
 
-        // Second row.
-        for (int col = 0; col < 3; col++)
-        {
-            builder.InsertCell();
-            builder.Writeln($"R2C{col + 1}");
-        }
+        // Row 2
+        builder.InsertCell();
+        builder.Writeln("R2C1");
+        builder.InsertCell();
+        builder.Writeln("R2C2");
         builder.EndRow();
 
-        // End the table.
+        // Row 3
+        builder.InsertCell();
+        builder.Writeln("R3C1");
+        builder.InsertCell();
+        builder.Writeln("R3C2");
+        builder.EndRow();
+
         builder.EndTable();
 
+        // Save the document (required by the workflow rules).
+        doc.Save("TableSample.docx");
+
         // Retrieve the first table in the document.
-        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new InvalidOperationException("No table found in the document.");
 
         // Get row and column counts.
         int rowCount = table.Rows.Count;
@@ -42,8 +51,5 @@ public class Program
         // Output the counts.
         Console.WriteLine($"Rows: {rowCount}");
         Console.WriteLine($"Columns: {columnCount}");
-
-        // Save the document.
-        doc.Save("SampleTable.docx");
     }
 }

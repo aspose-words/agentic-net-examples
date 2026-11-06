@@ -7,62 +7,55 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
+        // Build a simple 2x2 table.
         builder.StartTable();
 
-        // First row, first cell with Arabic text.
+        // First cell.
         builder.InsertCell();
-        builder.Writeln("مرحبا بالعالم");
-        // Set paragraph direction to right‑to‑left.
-        builder.CurrentParagraph.ParagraphFormat.Bidi = true;
+        builder.Writeln("English text (LTR)");
 
-        // First row, second cell with Hebrew text.
+        // Second cell.
         builder.InsertCell();
-        builder.Writeln("שלום עולם");
-        builder.CurrentParagraph.ParagraphFormat.Bidi = true;
+        builder.Writeln("עברית (RTL)");
 
         // End the first row.
         builder.EndRow();
 
-        // Second row, first cell.
+        // Second row (optional, just to have more cells).
         builder.InsertCell();
-        builder.Writeln("نص إضافي");
-        builder.CurrentParagraph.ParagraphFormat.Bidi = true;
-
-        // Second row, second cell.
+        builder.Writeln("More LTR text");
         builder.InsertCell();
-        builder.Writeln("טקסט נוסף");
-        builder.CurrentParagraph.ParagraphFormat.Bidi = true;
-
-        // End the second row and the table.
+        builder.Writeln("עוד טקסט RTL");
         builder.EndRow();
+
+        // Finish the table.
         builder.EndTable();
 
-        // Ensure every paragraph inside the table is set to right‑to‑left.
-        foreach (Table table in doc.GetChildNodes(NodeType.Table, true))
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+
+        // Set the text direction of every paragraph inside the table to right‑to‑left.
+        foreach (Row row in table.Rows)
         {
-            foreach (Row row in table.Rows)
+            foreach (Cell cell in row.Cells)
             {
-                foreach (Cell cell in row.Cells)
+                foreach (Paragraph paragraph in cell.Paragraphs)
                 {
-                    foreach (Paragraph para in cell.Paragraphs)
-                    {
-                        para.ParagraphFormat.Bidi = true;
-                    }
+                    paragraph.ParagraphFormat.Bidi = true; // Enable RTL layout.
                 }
             }
         }
 
         // Save the document.
-        string outputPath = "TableRightToLeft.docx";
+        string outputPath = "TableRtl.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not created.");
+            throw new InvalidOperationException("The output document was not saved correctly.");
     }
 }

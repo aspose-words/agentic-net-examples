@@ -3,53 +3,64 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace TableAutoFitExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Build a simple 2‑column table.
-        builder.StartTable();
-
-        // First cell.
-        builder.InsertCell();
-        builder.Writeln("Short");
-
-        // Second cell with long initial text.
-        builder.InsertCell();
-        builder.Writeln("This is a long piece of text that would normally cause the column to expand.");
-
-        // End the row and the table.
-        builder.EndRow();
-        builder.EndTable();
-
-        // Retrieve the created table.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (table == null)
-            throw new InvalidOperationException("Table was not created.");
-
-        // Disable automatic resizing (AutoFit) and fix column widths.
-        // Set a fixed width for each column (e.g., 100 points).
-        foreach (Cell cell in table.FirstRow.Cells)
+        public static void Main()
         {
-            cell.CellFormat.PreferredWidth = PreferredWidth.FromPoints(100);
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Build a simple 2x2 table.
+            builder.StartTable();
+
+            // First row.
+            builder.InsertCell();
+            builder.Write("Cell 1");
+            builder.InsertCell();
+            builder.Write("Cell 2");
+            builder.EndRow();
+
+            // Second row.
+            builder.InsertCell();
+            builder.Write("Cell 3");
+            builder.InsertCell();
+            builder.Write("Cell 4");
+            builder.EndRow();
+
+            builder.EndTable();
+
+            // Retrieve the created table.
+            Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+
+            // Disable automatic resizing and fix column widths.
+            table.AutoFit(AutoFitBehavior.FixedColumnWidths);
+
+            // Set a fixed width for each cell (e.g., 100 points).
+            foreach (Row row in table.Rows)
+            {
+                foreach (Cell cell in row.Cells)
+                {
+                    cell.CellFormat.PreferredWidth = PreferredWidth.FromPoints(100);
+                }
+            }
+
+            // Add long text to the first cell to demonstrate that the column width does not change.
+            Cell targetCell = table.Rows[0].Cells[0];
+            builder.MoveTo(targetCell.FirstParagraph);
+            builder.Write(
+                "This is a very long piece of text that would normally cause the column to expand if AutoFit were enabled. " +
+                "Because AutoFit is disabled, the text will wrap within the fixed column width.");
+
+            // Save the document.
+            string outputPath = "TableAutoFit.docx";
+            doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new Exception("The output document was not saved correctly.");
         }
-        // Apply the fixed‑column‑width behavior.
-        table.AutoFit(AutoFitBehavior.FixedColumnWidths);
-
-        // Add more text to the second cell after AutoFit has been disabled.
-        Cell secondCell = table.Rows[0].Cells[1];
-        secondCell.FirstParagraph.AppendChild(new Run(doc, " Additional long text that would normally expand the column if AutoFit were enabled."));
-
-        // Save the document.
-        string outputPath = "TableAutoFitDisabled.docx";
-        doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not saved.", outputPath);
     }
 }

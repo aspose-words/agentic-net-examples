@@ -11,16 +11,31 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2‑cell table.
+        // Start building a table.
         builder.StartTable();
+
+        // First row, first cell.
         builder.InsertCell();
-        builder.Writeln("Cell 1");
+        builder.Write("Cell 1");
+        // First row, second cell.
         builder.InsertCell();
-        builder.Writeln("Cell 2");
+        builder.Write("Cell 2");
+        // End the first row.
         builder.EndRow();
+
+        // Second row, first cell.
+        builder.InsertCell();
+        builder.Write("Cell 3");
+        // Second row, second cell.
+        builder.InsertCell();
+        builder.Write("Cell 4");
+        // End the second row.
+        builder.EndRow();
+
+        // End the table construction.
         builder.EndTable();
 
-        // Retrieve the created table.
+        // Retrieve the created table from the document.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
         if (table == null)
             throw new InvalidOperationException("Table was not created.");
@@ -28,8 +43,10 @@ public class Program
         // Align the table to the center of the page.
         table.Alignment = TableAlignment.Center;
 
-        // Save the document.
+        // Define output file path.
         string outputPath = "CenteredTable.docx";
+
+        // Save the document.
         doc.Save(outputPath);
 
         // Verify that the file was saved.

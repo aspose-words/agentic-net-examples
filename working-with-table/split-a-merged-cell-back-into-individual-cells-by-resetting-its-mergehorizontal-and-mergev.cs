@@ -3,7 +3,7 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class SplitMergedCellExample
+public class Program
 {
     public static void Main()
     {
@@ -14,76 +14,53 @@ public class SplitMergedCellExample
         // Build a 2x2 table.
         builder.StartTable();
 
-        // First row.
+        // ---- First row ----
+        // Cell (0,0) will be merged horizontally and vertically.
         builder.InsertCell();
-        builder.Writeln("Cell 1");
+        builder.CellFormat.HorizontalMerge = CellMerge.First;   // Start horizontal merge.
+        builder.CellFormat.VerticalMerge = CellMerge.First;     // Start vertical merge.
+        builder.Writeln("Merged Cell");
+
+        // Cell (0,1) continues the horizontal merge.
         builder.InsertCell();
-        builder.Writeln("Cell 2");
+        builder.CellFormat.HorizontalMerge = CellMerge.Previous; // Continue horizontal merge.
+        // No text needed for the merged part.
         builder.EndRow();
 
-        // Second row.
+        // ---- Second row ----
+        // Cell (1,0) continues the vertical merge.
         builder.InsertCell();
-        builder.Writeln("Cell 3");
+        builder.CellFormat.HorizontalMerge = CellMerge.None;    // No horizontal merge here.
+        builder.CellFormat.VerticalMerge = CellMerge.Previous; // Continue vertical merge.
+        // No text needed for the merged part.
+
+        // Cell (1,1) is a normal cell.
         builder.InsertCell();
-        builder.Writeln("Cell 4");
+        builder.Writeln("Normal Cell");
         builder.EndRow();
 
         builder.EndTable();
 
         // Retrieve the created table.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (table == null)
-            throw new InvalidOperationException("Table was not created.");
 
-        // Reference cells for merging.
-        Cell topLeft = table.Rows[0].Cells[0];
-        Cell topRight = table.Rows[0].Cells[1];
-        Cell bottomLeft = table.Rows[1].Cells[0];
-        Cell bottomRight = table.Rows[1].Cells[1];
-
-        // Merge top-left and top-right horizontally.
-        topLeft.CellFormat.HorizontalMerge = CellMerge.First;
-        topRight.CellFormat.HorizontalMerge = CellMerge.Previous;
-
-        // Merge top-left and bottom-left vertically.
-        topLeft.CellFormat.VerticalMerge = CellMerge.First;
-        bottomLeft.CellFormat.VerticalMerge = CellMerge.Previous;
-
-        // At this point the top-left cell spans two columns and two rows.
-
-        // ----- Split the merged cell back into individual cells -----
-        // Reset horizontal and vertical merge properties for all cells that were part of the merge.
-        topLeft.CellFormat.HorizontalMerge = CellMerge.None;
-        topLeft.CellFormat.VerticalMerge = CellMerge.None;
-
-        topRight.CellFormat.HorizontalMerge = CellMerge.None;
-        topRight.CellFormat.VerticalMerge = CellMerge.None;
-
-        bottomLeft.CellFormat.HorizontalMerge = CellMerge.None;
-        bottomLeft.CellFormat.VerticalMerge = CellMerge.None;
-
-        bottomRight.CellFormat.HorizontalMerge = CellMerge.None;
-        bottomRight.CellFormat.VerticalMerge = CellMerge.None;
-
-        // Validate that all cells are now unmerged.
+        // Split the previously merged cells by resetting merge properties.
+        // Reset horizontal and vertical merge for each cell in the table.
         foreach (Row row in table.Rows)
         {
             foreach (Cell cell in row.Cells)
             {
-                if (cell.CellFormat.HorizontalMerge != CellMerge.None ||
-                    cell.CellFormat.VerticalMerge != CellMerge.None)
-                {
-                    throw new InvalidOperationException("Cell merge properties were not reset correctly.");
-                }
+                cell.CellFormat.HorizontalMerge = CellMerge.None;
+                cell.CellFormat.VerticalMerge = CellMerge.None;
             }
         }
 
-        // Save the document.
+        // Save the resulting document.
         string outputPath = "SplitMergedCell.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was saved.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not created.", outputPath);
+            throw new Exception("The output file was not created.");
     }
 }

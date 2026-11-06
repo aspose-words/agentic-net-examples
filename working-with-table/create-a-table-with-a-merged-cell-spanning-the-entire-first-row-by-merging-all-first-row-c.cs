@@ -7,57 +7,58 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Define the number of columns for the table.
-        int columnCount = 4;
-
-        // Start the table.
+        // Begin the table.
         builder.StartTable();
 
-        // ----- First row: merged cell spanning all columns -----
-        // Insert the first cell and mark it as the start of a horizontal merge.
+        // ---------- First row (merged cell) ----------
+        // Insert first cell and mark it as the start of a horizontal merge.
         builder.InsertCell();
         Cell firstCell = (Cell)builder.CurrentParagraph.ParentNode;
         firstCell.CellFormat.HorizontalMerge = CellMerge.First;
         builder.Write("Merged Header");
 
-        // Insert the remaining cells of the first row and mark them as continuation of the merge.
-        for (int i = 1; i < columnCount; i++)
-        {
-            builder.InsertCell();
-            Cell mergedCell = (Cell)builder.CurrentParagraph.ParentNode;
-            mergedCell.CellFormat.HorizontalMerge = CellMerge.Previous;
-            // Content inside merged cells is optional; leaving it empty.
-        }
+        // Insert second cell and mark it as a continuation of the merge.
+        builder.InsertCell();
+        Cell secondCell = (Cell)builder.CurrentParagraph.ParentNode;
+        secondCell.CellFormat.HorizontalMerge = CellMerge.Previous;
+        // No text needed for merged continuation cells.
+
+        // Insert third cell and also mark it as a continuation of the merge.
+        builder.InsertCell();
+        Cell thirdCell = (Cell)builder.CurrentParagraph.ParentNode;
+        thirdCell.CellFormat.HorizontalMerge = CellMerge.Previous;
 
         // End the first row.
         builder.EndRow();
 
-        // ----- Second row: normal cells (optional, just to show table structure) -----
-        for (int i = 0; i < columnCount; i++)
-        {
-            builder.InsertCell();
-            builder.Write($"Row 2, Col {i + 1}");
-        }
+        // ---------- Second row (regular cells) ----------
+        builder.InsertCell();
+        builder.Write("Cell 1");
+
+        builder.InsertCell();
+        builder.Write("Cell 2");
+
+        builder.InsertCell();
+        builder.Write("Cell 3");
+
+        // End the second row.
         builder.EndRow();
 
-        // End the table.
+        // Finish the table.
         builder.EndTable();
 
-        // Save the document to a file.
-        string outputPath = "MergedTable.docx";
+        // Save the document to disk.
+        string outputPath = "MergedCellTable.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
         {
-            throw new Exception($"Failed to create the output file: {outputPath}");
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
         }
-
-        // Optionally, inform that the process completed successfully.
-        Console.WriteLine($"Document saved successfully to '{outputPath}'.");
     }
 }

@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -7,33 +6,35 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple table with one cell.
+        // Build a simple one‑cell table.
         builder.StartTable();
         builder.InsertCell();
-        builder.Writeln("مرحبا بالعالم"); // Arabic text.
+
+        // Insert Arabic text into the cell.
+        builder.Writeln("مرحبا بالعالم"); // "Hello World" in Arabic
+
+        // Retrieve the cell that the builder is currently inside.
+        Cell cell = builder.CurrentParagraph?.ParentNode as Cell;
+        if (cell == null)
+            throw new InvalidOperationException("Unable to locate the current cell.");
+
+        // Set right‑to‑left (RTL) direction for all paragraphs in the cell.
+        foreach (Paragraph para in cell.Paragraphs)
+        {
+            para.ParagraphFormat.Bidi = true; // Enables RTL layout.
+        }
+
+        // Finish the row and the table.
         builder.EndRow();
         builder.EndTable();
 
-        // Locate the created cell.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        Cell cell = table.Rows[0].Cells[0];
-
-        // Set the paragraph direction inside the cell to right‑to‑left.
-        foreach (Paragraph para in cell.Paragraphs)
-        {
-            para.ParagraphFormat.Bidi = true;
-        }
-
-        // Save the document.
-        string outputPath = "CellDirection.docx";
-        doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("The output file was not created.");
+        // Save the document to disk.
+        const string outputFile = "CellTextDirection.docx";
+        doc.Save(outputFile);
+        Console.WriteLine($"Document saved to '{outputFile}'.");
     }
 }
