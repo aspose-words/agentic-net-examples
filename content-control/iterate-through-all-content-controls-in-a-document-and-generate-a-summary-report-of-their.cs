@@ -6,100 +6,108 @@ using Aspose.Words;
 using Aspose.Words.Markup;
 using Newtonsoft.Json;
 
-public class ContentControlSummary
+public class Program
 {
-    // Simple DTO for JSON serialization.
-    private class SummaryItem
-    {
-        public string Title { get; set; } = string.Empty;
-        public string Tag { get; set; } = string.Empty;
-        public string Type { get; set; } = string.Empty;
-        public string Text { get; set; } = string.Empty;
-    }
-
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create a sample document that contains a variety of content controls.
-        // -----------------------------------------------------------------
+        // Create a sample document with various content controls.
         Document doc = new Document();
-        Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Plain text inline content control.
-        StructuredDocumentTag plainTextSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline);
-        plainTextSdt.Title = "PlainText";
-        plainTextSdt.Tag = "plain";
+        StructuredDocumentTag plainTextSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        {
+            Title = "CustomerName",
+            Tag = "customer-name"
+        };
         plainTextSdt.RemoveAllChildren();
-        plainTextSdt.AppendChild(new Run(doc, "Sample plain text"));
-        firstParagraph.AppendChild(plainTextSdt);
+        plainTextSdt.AppendChild(new Run(doc, "Contoso"));
+        builder.CurrentParagraph.AppendChild(plainTextSdt);
+        builder.Writeln();
 
-        // Rich text block‑level content control.
-        StructuredDocumentTag richTextSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block);
-        richTextSdt.Title = "RichText";
-        richTextSdt.Tag = "rich";
+        // Rich text block content control.
+        StructuredDocumentTag richTextSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
+        {
+            Title = "SectionContent",
+            Tag = "section-content"
+        };
         Paragraph richParagraph = new Paragraph(doc);
-        richParagraph.AppendChild(new Run(doc, "Sample rich text block"));
+        richParagraph.AppendChild(new Run(doc, "This is a rich text block content control."));
         richTextSdt.AppendChild(richParagraph);
         doc.FirstSection.Body.AppendChild(richTextSdt);
+        builder.Writeln();
 
         // Drop‑down list inline content control.
-        StructuredDocumentTag dropDownSdt = new StructuredDocumentTag(doc, SdtType.DropDownList, MarkupLevel.Inline);
-        dropDownSdt.Title = "DropDown";
-        dropDownSdt.Tag = "dropdown";
-        dropDownSdt.ListItems.Add(new SdtListItem("Option 1", "1"));
-        dropDownSdt.ListItems.Add(new SdtListItem("Option 2", "2"));
-        firstParagraph.AppendChild(dropDownSdt);
+        StructuredDocumentTag dropDownSdt = new StructuredDocumentTag(doc, SdtType.DropDownList, MarkupLevel.Inline)
+        {
+            Title = "Country",
+            Tag = "country"
+        };
+        dropDownSdt.ListItems.Add(new SdtListItem("USA", "US"));
+        dropDownSdt.ListItems.Add(new SdtListItem("Canada", "CA"));
+        dropDownSdt.ListItems.Add(new SdtListItem("Mexico", "MX"));
+        builder.CurrentParagraph.AppendChild(dropDownSdt);
+        builder.Writeln();
 
         // Checkbox inline content control.
-        StructuredDocumentTag checkBoxSdt = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Inline);
-        checkBoxSdt.Title = "CheckBox";
-        checkBoxSdt.Tag = "checkbox";
-        checkBoxSdt.Checked = true;
-        firstParagraph.AppendChild(checkBoxSdt);
+        StructuredDocumentTag checkBoxSdt = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Inline)
+        {
+            Title = "Subscribe",
+            Tag = "subscribe",
+            Checked = true
+        };
+        builder.CurrentParagraph.AppendChild(checkBoxSdt);
+        builder.Writeln();
 
-        // Date placeholder – using a plain‑text SDT because the DateTime type is not available in this version.
-        StructuredDocumentTag dateSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline);
-        dateSdt.Title = "DateControl";
-        dateSdt.Tag = "date";
-        dateSdt.RemoveAllChildren();
-        dateSdt.AppendChild(new Run(doc, DateTime.Now.ToShortDateString()));
-        firstParagraph.AppendChild(dateSdt);
+        // Date inline content control (using default settings).
+        StructuredDocumentTag dateSdt = new StructuredDocumentTag(doc, SdtType.Date, MarkupLevel.Inline)
+        {
+            Title = "BirthDate",
+            Tag = "birth-date"
+        };
+        builder.CurrentParagraph.AppendChild(dateSdt);
+        builder.Writeln();
+
+        // Repeating section block content control.
+        StructuredDocumentTag repeatingSdt = new StructuredDocumentTag(doc, SdtType.RepeatingSection, MarkupLevel.Block)
+        {
+            Title = "Items",
+            Tag = "items"
+        };
+        Paragraph itemParagraph = new Paragraph(doc);
+        itemParagraph.AppendChild(new Run(doc, "Item 1"));
+        repeatingSdt.AppendChild(itemParagraph);
+        doc.FirstSection.Body.AppendChild(repeatingSdt);
+        builder.Writeln();
 
         // Save the sample document.
         const string samplePath = "sample.docx";
         doc.Save(samplePath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the document and build a summary of all content controls.
-        // -----------------------------------------------------------------
+        // Load the document for processing.
         Document loadedDoc = new Document(samplePath);
-        List<SummaryItem> summary = loadedDoc
+
+        // Enumerate all StructuredDocumentTag nodes and collect summary information.
+        List<object> summary = loadedDoc
             .GetChildNodes(NodeType.StructuredDocumentTag, true)
             .OfType<StructuredDocumentTag>()
-            .Select(sdt => new SummaryItem
+            .Select(sdt => new
             {
-                Title = sdt.Title ?? string.Empty,
-                Tag = sdt.Tag ?? string.Empty,
+                Title = sdt.Title,
+                Tag = sdt.Tag,
                 Type = sdt.SdtType.ToString(),
-                Text = sdt.GetText().Trim()
+                Appearance = sdt.Appearance.ToString()
             })
+            .Cast<object>()
             .ToList();
 
-        // -----------------------------------------------------------------
-        // 3. Serialize the summary to JSON and write to a file.
-        // -----------------------------------------------------------------
+        // Serialize the summary to JSON.
         string json = JsonConvert.SerializeObject(summary, Formatting.Indented);
         const string jsonPath = "content-controls-summary.json";
         File.WriteAllText(jsonPath, json);
 
-        // -----------------------------------------------------------------
-        // 4. Write a simple console report.
-        // -----------------------------------------------------------------
+        // Output the summary to the console.
         Console.WriteLine("Content Control Summary:");
-        foreach (var item in summary)
-        {
-            Console.WriteLine($"Title: {item.Title}, Tag: {item.Tag}, Type: {item.Type}, Text: {item.Text}");
-        }
-        Console.WriteLine($"Summary written to {jsonPath}");
+        Console.WriteLine(json);
     }
 }

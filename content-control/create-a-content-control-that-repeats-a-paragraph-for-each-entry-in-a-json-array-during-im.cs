@@ -10,7 +10,7 @@ public class Program
     public static void Main()
     {
         // Sample JSON array to import.
-        string json = "[\"First item\",\"Second item\",\"Third item\"]";
+        string json = "[\"First item\", \"Second item\", \"Third item\"]";
 
         // Deserialize JSON into a list of strings.
         List<string> items = JsonConvert.DeserializeObject<List<string>>(json) ?? new List<string>();
@@ -18,12 +18,14 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Create a repeating section content control (block level).
-        StructuredDocumentTag repeatingSection = new StructuredDocumentTag(doc, SdtType.RepeatingSection, MarkupLevel.Block);
-        repeatingSection.Title = "ItemsRepeatingSection";
-        repeatingSection.Tag = "items-section";
+        // Create a block-level repeating section content control.
+        StructuredDocumentTag repeatingSection = new StructuredDocumentTag(doc, SdtType.RepeatingSection, MarkupLevel.Block)
+        {
+            Title = "RepeatingItems",
+            Tag = "repeating-items"
+        };
 
-        // Add a paragraph for each entry in the JSON array.
+        // For each entry in the JSON array, add a paragraph inside the repeating section.
         foreach (string item in items)
         {
             Paragraph paragraph = new Paragraph(doc);

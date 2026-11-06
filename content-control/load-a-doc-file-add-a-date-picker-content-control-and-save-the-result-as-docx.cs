@@ -6,32 +6,33 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample DOC (Word 97‑2003) file.
-        const string docPath = "sample.doc";
-        Document seedDoc = new Document();
-        seedDoc.FirstSection.Body.FirstParagraph.AppendChild(new Run(seedDoc, "This is a sample DOC file."));
-        seedDoc.Save(docPath, SaveFormat.Doc);
+        // Create a simple DOC (legacy Word 97-2003) document as the source file.
+        var sourceDoc = new Document();
+        var builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("This is a sample document.");
+        sourceDoc.Save("input.doc", SaveFormat.Doc);
 
         // Load the DOC file.
-        Document doc = new Document(docPath);
+        var doc = new Document("input.doc");
 
-        // Create a block‑level rich‑text content control that will act as a date picker placeholder.
-        StructuredDocumentTag dateSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
+        // Create an inline content control that will hold a date string.
+        // The older Aspose.Words versions do not expose a dedicated DateTime SDT type,
+        // so we use a plain text (inline) content control and populate it with the current date.
+        var dateSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
         {
-            Title = "DatePicker",
-            Tag = "date-picker"
+            Title = "SampleDate",
+            Tag = "sample-date"
         };
 
-        // Add a placeholder paragraph inside the content control.
-        Paragraph placeholder = new Paragraph(doc);
-        placeholder.AppendChild(new Run(doc, "Select a date"));
-        dateSdt.AppendChild(placeholder);
+        // Remove any default children and add a Run with the formatted date.
+        dateSdt.RemoveAllChildren();
+        dateSdt.AppendChild(new Run(doc, DateTime.Now.ToString("yyyy-MM-dd")));
 
-        // Insert the content control into the document body.
-        doc.FirstSection.Body.AppendChild(dateSdt);
+        // Insert the content control into the first paragraph.
+        var firstParagraph = doc.FirstSection.Body.FirstParagraph;
+        firstParagraph.AppendChild(dateSdt);
 
         // Save the result as DOCX.
-        const string outputPath = "output.docx";
-        doc.Save(outputPath, SaveFormat.Docx);
+        doc.Save("output.docx", SaveFormat.Docx);
     }
 }

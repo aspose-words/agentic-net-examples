@@ -9,23 +9,27 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Create a block‑level rich‑text content control.
-        StructuredDocumentTag contentControl = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block);
-        contentControl.Title = "ReadOnlySection";
+        // Get the first paragraph of the document.
+        Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
 
-        // Lock the content control so the user cannot edit its contents or its properties.
-        contentControl.LockContents = true;
-        contentControl.LockContentControl = true;
+        // Create an inline plain‑text content control.
+        StructuredDocumentTag contentControl = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline);
+        contentControl.Title = "ReadOnlyInfo";
+        contentControl.Tag = "readonly-info";
 
-        // Add some sample text inside the locked content control.
-        Paragraph paragraph = new Paragraph(doc);
-        paragraph.AppendChild(new Run(doc, "This content is read‑only."));
-        contentControl.AppendChild(paragraph);
+        // Set the text inside the content control.
+        contentControl.RemoveAllChildren();
+        contentControl.AppendChild(new Run(doc, "This text is read‑only."));
 
-        // Insert the content control into the document body.
-        doc.FirstSection.Body.AppendChild(contentControl);
+        // Lock the content control to make it read‑only.
+        contentControl.LockContents = true;          // Prevent editing of the content.
+        contentControl.LockContentControl = true;    // Prevent deletion or moving of the control.
+
+        // Insert the locked content control into the paragraph.
+        paragraph.AppendChild(contentControl);
 
         // Save the resulting document.
-        doc.Save("LockedContentControl.docx");
+        const string outputFileName = "locked-content-control.docx";
+        doc.Save(outputFileName);
     }
 }

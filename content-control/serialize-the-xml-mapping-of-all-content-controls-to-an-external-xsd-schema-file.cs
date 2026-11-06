@@ -1,7 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Markup;
 
@@ -12,121 +12,100 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // -----------------------------------------------------------------
-        // 1. Create a custom XML part that will hold the data for the SDTs.
-        // -----------------------------------------------------------------
-        string xmlPartId = Guid.NewGuid().ToString("B");
-        string xmlContent =
-            "<root>" +
-                "<person>" +
-                    "<firstName>John</firstName>" +
-                    "<lastName>Doe</lastName>" +
-                "</person>" +
-                "<address>" +
-                    "<city>Seattle</city>" +
-                    "<country>USA</country>" +
-                "</address>" +
-            "</root>";
-        CustomXmlPart xmlPart = doc.CustomXmlParts.Add(xmlPartId, xmlContent);
+        // Define sample custom XML data.
+        string customXml = @"<root>
+    <Customer>
+        <Name>Contoso</Name>
+        <Address>123 Main St</Address>
+    </Customer>
+</root>";
 
-        // -----------------------------------------------------------------
-        // 2. Insert a few content controls and map them to nodes in the XML part.
-        // -----------------------------------------------------------------
-        // Helper to create a plain‑text SDT, map it and add it to the document body.
-        void AddMappedContentControl(string title, string xpath)
+        // Add the custom XML part to the document. Use a GUID as the part ID.
+        CustomXmlPart xmlPart = doc.CustomXmlParts.Add(Guid.NewGuid().ToString(), customXml);
+
+        // Insert a plain‑text content control mapped to the <Name> element.
+        StructuredDocumentTag nameSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
         {
-            StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+            Title = "CustomerName",
+            Tag = "customer-name"
+        };
+        nameSdt.XmlMapping.SetMapping(xmlPart, "/root[1]/Customer[1]/Name[1]", "");
+        nameSdt.RemoveAllChildren();
+        nameSdt.AppendChild(new Run(doc, "Contoso"));
+        doc.FirstSection.Body.FirstParagraph.AppendChild(nameSdt);
+
+        // Insert a plain‑text content control mapped to the <Address> element.
+        StructuredDocumentTag addressSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        {
+            Title = "CustomerAddress",
+            Tag = "customer-address"
+        };
+        addressSdt.XmlMapping.SetMapping(xmlPart, "/root[1]/Customer[1]/Address[1]", "");
+        addressSdt.RemoveAllChildren();
+        addressSdt.AppendChild(new Run(doc, "123 Main St"));
+        doc.FirstSection.Body.FirstParagraph.AppendChild(addressSdt);
+
+        // Save the document with mapped content controls.
+        const string docPath = "MappedContentControls.docx";
+        doc.Save(docPath);
+
+        // Enumerate all content controls and collect their XML mapping information.
+        var mappings = doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
+            .OfType<StructuredDocumentTag>()
+            .Select(sdt => new
             {
-                Title = title,
-                Tag = title.Replace(" ", "_")
-            };
-            // Map the SDT to the specified XPath within the custom XML part.
-            sdt.XmlMapping.SetMapping(xmlPart, xpath, string.Empty);
-            // Insert the SDT into the first paragraph.
-            Paragraph para = doc.FirstSection.Body.FirstParagraph;
-            para.AppendChild(sdt);
-        }
+                Title = sdt.Title,
+                Tag = sdt.Tag,
+                XPath = sdt.XmlMapping?.XPath
+            })
+            .Where(m => !string.IsNullOrEmpty(m.XPath))
+            .ToList();
 
-        // Ensure the document has at least one paragraph.
-        if (doc.FirstSection.Body.FirstParagraph == null)
-            doc.FirstSection.Body.AppendChild(new Paragraph(doc));
+        // Build a simple XSD schema based on the collected mappings.
+        // For this example we create a static schema that matches the sample XML.
+        XNamespace xs = "http://www.w3.org/2001/XMLSchema";
+        XElement schemaElement =
+            new XElement(xs + "schema",
+                new XAttribute("elementFormDefault", "qualified"),
+                new XElement(xs + "element",
+                    new XAttribute("name", "root"),
+                    new XElement(xs + "complexType",
+                        new XElement(xs + "sequence",
+                            new XElement(xs + "element",
+                                new XAttribute("name", "Customer"),
+                                new XElement(xs + "complexType",
+                                    new XElement(xs + "sequence",
+                                        new XElement(xs + "element",
+                                            new XAttribute("name", "Name"),
+                                            new XAttribute("type", "xs:string")),
+                                        new XElement(xs + "element",
+                                            new XAttribute("name", "Address"),
+                                            new XAttribute("type", "xs:string"))
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            );
 
-        AddMappedContentControl("First Name", "/root[1]/person[1]/firstName[1]");
-        AddMappedContentControl("Last Name", "/root[1]/person[1]/lastName[1]");
-        AddMappedContentControl("City", "/root[1]/address[1]/city[1]");
-        AddMappedContentControl("Country", "/root[1]/address[1]/country[1]");
+        // Create an XDocument with XML declaration.
+        XDocument schemaDoc = new XDocument(
+            new XDeclaration("1.0", "utf-8", "yes"),
+            schemaElement
+        );
 
-        // Save the sample document (optional, just to visualize the result).
-        doc.Save("SampleDocument.docx");
+        // Save the XSD schema to a file.
+        const string xsdPath = "CustomSchema.xsd";
+        File.WriteAllText(xsdPath, schemaDoc.ToString());
 
-        // -----------------------------------------------------------------
-        // 3. Gather XML mapping information from all content controls.
-        // -----------------------------------------------------------------
-        List<StructuredDocumentTag> sdtList = doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
-                                                .OfType<StructuredDocumentTag>()
-                                                .ToList();
-
-        // Collect distinct element names used in the mappings.
-        HashSet<string> elementNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (StructuredDocumentTag sdt in sdtList)
+        // Output paths and mapping details for verification.
+        Console.WriteLine($"Document saved to: {Path.GetFullPath(docPath)}");
+        Console.WriteLine($"XSD schema saved to: {Path.GetFullPath(xsdPath)}");
+        Console.WriteLine("Content control mappings:");
+        foreach (var m in mappings)
         {
-            if (sdt.XmlMapping.IsMapped)
-            {
-                // Example XPath: /root[1]/person[1]/firstName[1]
-                // Split the path and take the element names (ignore indexes).
-                string[] parts = sdt.XmlMapping.XPath.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
-                foreach (string part in parts)
-                {
-                    // Remove any index like [1].
-                    string name = part.Split('[')[0];
-                    if (!string.IsNullOrWhiteSpace(name) && name != "root")
-                        elementNames.Add(name);
-                }
-            }
+            Console.WriteLine($"- Title: {m.Title}, Tag: {m.Tag}, XPath: {m.XPath}");
         }
-
-        // -----------------------------------------------------------------
-        // 4. Build a simple XSD schema that defines the collected elements.
-        // -----------------------------------------------------------------
-        // This XSD is minimal and demonstrates the element structure.
-        // For a real‑world scenario you would generate a complete schema
-        // based on the full XML hierarchy and data types.
-        string xsdTemplate = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<xs:schema xmlns:xs=""http://www.w3.org/2001/XMLSchema"">
-  <xs:element name=""root"">
-    <xs:complexType>
-      <xs:sequence>
-{0}
-      </xs:sequence>
-    </xs:complexType>
-  </xs:element>
-</xs:schema>";
-
-        // Build the inner sequence with placeholder complex types for each element.
-        List<string> elementDefinitions = new List<string>();
-        foreach (string elem in elementNames)
-        {
-            string definition =
-$@"        <xs:element name=""{elem}"">
-          <xs:complexType>
-            <xs:simpleContent>
-              <xs:extension base=""xs:string""/>
-            </xs:simpleContent>
-          </xs:complexType>
-        </xs:element>";
-            elementDefinitions.Add(definition);
-        }
-
-        string xsdContent = string.Format(xsdTemplate, string.Join(Environment.NewLine, elementDefinitions));
-
-        // -----------------------------------------------------------------
-        // 5. Write the XSD to an external file.
-        // -----------------------------------------------------------------
-        string xsdPath = "ContentControlsMapping.xsd";
-        File.WriteAllText(xsdPath, xsdContent);
-
-        // Informative console output (no user interaction required).
-        Console.WriteLine($"Generated XSD schema with {elementNames.Count} element definitions.");
-        Console.WriteLine($"Schema saved to: {Path.GetFullPath(xsdPath)}");
     }
 }

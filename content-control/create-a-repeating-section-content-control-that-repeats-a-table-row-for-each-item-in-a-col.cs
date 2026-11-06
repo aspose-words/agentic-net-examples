@@ -11,73 +11,83 @@ public class Program
 {
     public static void Main()
     {
-        // Sample data collection.
-        var items = new List<Item>
-        {
-            new Item { Name = "Apple", Quantity = 5 },
-            new Item { Name = "Banana", Quantity = 12 },
-            new Item { Name = "Cherry", Quantity = 20 }
-        };
-
         // Create a new blank document.
-        var doc = new Document();
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a block‑level repeating section content control.
-        var repeatingSection = new StructuredDocumentTag(doc, SdtType.RepeatingSection, MarkupLevel.Block)
+        // Insert a simple table with a header row.
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Fruit");
+        builder.EndRow();
+        builder.EndTable();
+
+        // Create a repeating section content control (block level).
+        StructuredDocumentTag repeatingSection = new StructuredDocumentTag(doc, SdtType.RepeatingSection, MarkupLevel.Block)
         {
-            Title = "ItemsRepeatingSection",
-            Tag = "items-section"
+            Title = "FruitRepeatingSection",
+            Tag = "fruit-section"
         };
+
+        // Inside the repeating section, create a table with a single placeholder row.
+        Table innerTable = new Table(doc);
+        Row placeholderRow = new Row(doc);
+        Cell cell = new Cell(doc);
+        Paragraph para = new Paragraph(doc);
+        Run placeholderRun = new Run(doc, "<<Item>>");
+        para.AppendChild(placeholderRun);
+        cell.AppendChild(para);
+        placeholderRow.AppendChild(cell);
+        innerTable.AppendChild(placeholderRow);
+        repeatingSection.AppendChild(innerTable);
+
+        // Append the repeating section to the document body after the header table.
         doc.FirstSection.Body.AppendChild(repeatingSection);
 
-        // Inside the repeating section, create a table that will hold the rows.
-        var table = new Table(doc);
-        repeatingSection.AppendChild(table);
+        // Sample collection to repeat the row for.
+        List<string> fruits = new List<string> { "Apple", "Banana", "Cherry" };
 
-        // Create a template row with placeholder text.
-        var templateRow = new Row(doc);
-        var nameCell = new Cell(doc);
-        nameCell.AppendChild(new Paragraph(doc));
-        nameCell.FirstParagraph.AppendChild(new Run(doc, "{Name}"));
-        var qtyCell = new Cell(doc);
-        qtyCell.AppendChild(new Paragraph(doc));
-        qtyCell.FirstParagraph.AppendChild(new Run(doc, "{Quantity}"));
-        templateRow.Cells.Add(nameCell);
-        templateRow.Cells.Add(qtyCell);
-        table.Rows.Add(templateRow);
+        // Locate the repeating section and its inner table.
+        StructuredDocumentTag foundRepeating = doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
+            .OfType<StructuredDocumentTag>()
+            .FirstOrDefault(sdt => sdt.SdtType == SdtType.RepeatingSection);
 
-        // For each item, clone the template row, replace placeholders, and add to the table.
-        foreach (var item in items)
+        if (foundRepeating == null)
         {
-            var newRow = (Row)templateRow.Clone(true);
-            foreach (Cell cell in newRow.Cells)
-            {
-                foreach (Run run in cell.GetChildNodes(NodeType.Run, true).OfType<Run>())
-                {
-                    if (run.Text.Contains("{Name}"))
-                        run.Text = run.Text.Replace("{Name}", item.Name);
-                    if (run.Text.Contains("{Quantity}"))
-                        run.Text = run.Text.Replace("{Quantity}", item.Quantity.ToString());
-                }
-            }
-            table.Rows.Add(newRow);
+            throw new InvalidOperationException("Repeating section not found.");
         }
 
-        // Remove the template row so only real data rows remain.
-        table.Rows.Remove(templateRow);
+        Table tableInSection = (Table)foundRepeating.GetChildNodes(NodeType.Table, true).FirstOrDefault();
+        if (tableInSection == null)
+        {
+            throw new InvalidOperationException("Inner table not found in repeating section.");
+        }
+
+        // The first row is the placeholder row.
+        Row templateRow = tableInSection.Rows[0];
+        // Clear any existing rows (including the placeholder) before adding clones.
+        tableInSection.Rows.Clear();
+
+        // Clone the template row for each item and replace the placeholder text.
+        foreach (string fruit in fruits)
+        {
+            Row newRow = (Row)templateRow.Clone(true);
+            foreach (Run run in newRow.GetChildNodes(NodeType.Run, true).OfType<Run>())
+            {
+                if (run.Text.Contains("<<Item>>"))
+                {
+                    run.Text = fruit;
+                }
+            }
+            tableInSection.Rows.Add(newRow);
+        }
 
         // Save the resulting document.
-        doc.Save("RepeatingSectionTable.docx");
+        string docPath = "RepeatingSectionTable.docx";
+        doc.Save(docPath);
 
-        // Optionally, serialize the collection to JSON for verification.
-        var json = JsonConvert.SerializeObject(items, Formatting.Indented);
-        File.WriteAllText("items.json", json);
-    }
-
-    // Simple data model.
-    private class Item
-    {
-        public string Name { get; set; } = string.Empty;
-        public int Quantity { get; set; }
+        // Serialize the collection to JSON for verification.
+        string jsonPath = "fruits.json";
+        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(fruits, Formatting.Indented));
     }
 }
