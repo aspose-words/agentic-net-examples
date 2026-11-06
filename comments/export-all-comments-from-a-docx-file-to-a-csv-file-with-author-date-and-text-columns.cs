@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Text;
 using Aspose.Words;
 
 public class ExportCommentsToCsv
@@ -26,7 +25,7 @@ public class ExportCommentsToCsv
 
         // Prepare CSV file.
         string csvPath = Path.Combine(outputDir, "comments.csv");
-        using (var writer = new StreamWriter(csvPath, false, Encoding.UTF8))
+        using (var writer = new StreamWriter(csvPath))
         {
             // Write CSV header.
             writer.WriteLine("Author,Date,Text");
@@ -34,23 +33,23 @@ public class ExportCommentsToCsv
             // Write each comment as a CSV line.
             foreach (Comment comment in comments)
             {
-                string author = comment.Author ?? string.Empty;
+                string author = comment.Author?.Replace("\"", "\"\"") ?? string.Empty;
                 string date = comment.DateTime.ToString("o"); // ISO 8601 format.
-                string text = comment.GetText()?.Trim() ?? string.Empty;
+                string text = comment.GetText()?.Trim().Replace("\"", "\"\"") ?? string.Empty;
 
-                // Escape CSV fields.
-                author = EscapeCsvField(author);
-                date = EscapeCsvField(date);
-                text = EscapeCsvField(text);
+                // Enclose fields containing commas or quotes in double quotes.
+                if (author.Contains(',') || author.Contains('\"')) author = $"\"{author}\"";
+                if (text.Contains(',') || text.Contains('\"')) text = $"\"{text}\"";
 
                 writer.WriteLine($"{author},{date},{text}");
             }
         }
 
-        // Example completed. Output files are in the 'output' folder.
+        // Indicate completion.
+        Console.WriteLine($"Exported {comments.Count} comment(s) to \"{csvPath}\".");
     }
 
-    private static void CreateSampleDocument(string filePath)
+    private static void CreateSampleDocument(string path)
     {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
@@ -59,38 +58,27 @@ public class ExportCommentsToCsv
         builder.Writeln("This is the first paragraph.");
         Comment comment1 = new Comment(doc)
         {
-            Author = "John Doe",
-            Initial = "JD",
-            DateTime = DateTime.Now
+            Author = "Alice",
+            Initial = "A",
+            DateTime = DateTime.Now.AddDays(-2)
         };
         comment1.AppendChild(new Paragraph(doc));
-        comment1.FirstParagraph?.AppendChild(new Run(doc, "Review the first paragraph."));
-        // Append the comment to the paragraph that was just created.
-        builder.CurrentParagraph?.AppendChild(comment1);
+        comment1.FirstParagraph?.AppendChild(new Run(doc, "Review the introduction."));
+        doc.FirstSection?.Body?.FirstParagraph?.AppendChild(comment1);
 
-        // Second paragraph with another comment.
+        // Second paragraph with a comment.
         builder.Writeln("This is the second paragraph.");
         Comment comment2 = new Comment(doc)
         {
-            Author = "Jane Smith",
-            Initial = "JS",
-            DateTime = DateTime.Now.AddMinutes(-5)
+            Author = "Bob",
+            Initial = "B",
+            DateTime = DateTime.Now.AddDays(-1)
         };
         comment2.AppendChild(new Paragraph(doc));
-        comment2.FirstParagraph?.AppendChild(new Run(doc, "Check the data in this paragraph."));
-        builder.CurrentParagraph?.AppendChild(comment2);
+        comment2.FirstParagraph?.AppendChild(new Run(doc, "Check the data accuracy."));
+        doc.FirstSection?.Body?.LastParagraph?.AppendChild(comment2);
 
-        // Save the document.
-        doc.Save(filePath);
-    }
-
-    private static string EscapeCsvField(string field)
-    {
-        if (field.Contains('"') || field.Contains(',') || field.Contains('\n') || field.Contains('\r'))
-        {
-            string escaped = field.Replace("\"", "\"\"");
-            return $"\"{escaped}\"";
-        }
-        return field;
+        // Save the sample document.
+        doc.Save(path);
     }
 }

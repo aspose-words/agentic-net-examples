@@ -1,46 +1,42 @@
 using System;
 using Aspose.Words;
 
-public class Program
+public class AddCommentExample
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Add three paragraphs to the document.
         builder.Writeln("First paragraph.");
-        builder.Writeln("Second paragraph to comment.");
+        builder.Writeln("Second paragraph that will receive a comment.");
         builder.Writeln("Third paragraph.");
 
-        // Locate the second paragraph (index 1) safely.
-        Paragraph? targetParagraph = null;
-        if (doc.FirstSection?.Body?.Paragraphs?.Count > 1)
+        // Retrieve the second paragraph (index 1) where the comment will be added.
+        Paragraph targetParagraph = doc.FirstSection?.Body?.Paragraphs[1];
+        if (targetParagraph == null)
         {
-            targetParagraph = doc.FirstSection.Body.Paragraphs[1];
+            throw new InvalidOperationException("Target paragraph not found.");
         }
 
-        if (targetParagraph != null)
+        // Create a new comment with author metadata.
+        Comment comment = new Comment(doc)
         {
-            // Create a new comment and set its metadata.
-            Comment comment = new Comment(doc)
-            {
-                Author = "John Doe",
-                Initial = "JD",
-                DateTime = DateTime.Now
-            };
+            Author = "John Doe",
+            Initial = "JD",
+            DateTime = DateTime.Now
+        };
 
-            // Add a paragraph and run inside the comment so it contains visible text.
-            Paragraph commentParagraph = new Paragraph(doc);
-            comment.AppendChild(commentParagraph);
-            commentParagraph.AppendChild(new Run(doc, "This is a comment on the second paragraph."));
+        // Add visible text to the comment body.
+        comment.AppendChild(new Paragraph(doc));
+        comment.FirstParagraph?.AppendChild(new Run(doc, "Please review this paragraph."));
 
-            // Attach the comment to the selected paragraph.
-            targetParagraph.AppendChild(comment);
-        }
+        // Attach the comment to the target paragraph.
+        targetParagraph.AppendChild(comment);
 
-        // Save the modified document as a DOCX file.
-        doc.Save("output.docx");
+        // Save the modified document as DOCX.
+        doc.Save("DocumentWithComment.docx");
     }
 }

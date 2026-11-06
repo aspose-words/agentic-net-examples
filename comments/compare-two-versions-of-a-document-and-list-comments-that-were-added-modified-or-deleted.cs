@@ -8,180 +8,126 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
-
-        // -------------------------------------------------
         // Create first version of the document with two comments.
-        // -------------------------------------------------
-        Document doc1 = new Document();
-        DocumentBuilder builder1 = new DocumentBuilder(doc1);
+        Document docV1 = new Document();
+        DocumentBuilder builderV1 = new DocumentBuilder(docV1);
 
-        // First paragraph with a comment from Alice.
-        builder1.Writeln("First paragraph.");
-        Comment comment1 = new Comment(doc1)
+        // Paragraph 1 with a comment from Alice.
+        builderV1.Writeln("First paragraph.");
+        Comment comment1V1 = new Comment(docV1)
         {
             Author = "Alice",
             Initial = "A",
             DateTime = DateTime.Now
         };
-        comment1.AppendChild(new Paragraph(doc1));
-        comment1.FirstParagraph?.AppendChild(new Run(doc1, "First comment"));
-        // Attach the comment to the first paragraph.
-        Paragraph? firstPara = doc1.FirstSection?.Body?.FirstParagraph;
-        firstPara?.AppendChild(comment1);
+        comment1V1.AppendChild(new Paragraph(docV1));
+        comment1V1.FirstParagraph?.AppendChild(new Run(docV1, "First comment"));
+        // Anchor the comment to the last paragraph.
+        builderV1.CurrentParagraph?.AppendChild(comment1V1);
 
-        // Second paragraph with a comment from Bob.
-        builder1.Writeln("Second paragraph.");
-        Comment comment2 = new Comment(doc1)
+        // Paragraph 2 with a comment from Bob.
+        builderV1.Writeln("Second paragraph.");
+        Comment comment2V1 = new Comment(docV1)
         {
             Author = "Bob",
             Initial = "B",
             DateTime = DateTime.Now
         };
-        comment2.AppendChild(new Paragraph(doc1));
-        comment2.FirstParagraph?.AppendChild(new Run(doc1, "Second comment"));
-        // Attach the comment to the last paragraph (the one just added).
-        Paragraph? lastPara = doc1.FirstSection?.Body?.LastParagraph;
-        lastPara?.AppendChild(comment2);
+        comment2V1.AppendChild(new Paragraph(docV1));
+        comment2V1.FirstParagraph?.AppendChild(new Run(docV1, "Second comment"));
+        builderV1.CurrentParagraph?.AppendChild(comment2V1);
 
-        string doc1Path = Path.Combine(outputDir, "doc1.docx");
-        doc1.Save(doc1Path);
+        // Save first version (optional, for inspection).
+        docV1.Save("DocumentV1.docx");
 
-        // -------------------------------------------------
-        // Create second version: modify first comment, delete second, add new comment.
-        // -------------------------------------------------
-        Document doc2 = new Document(doc1Path);
-        DocumentBuilder builder2 = new DocumentBuilder(doc2);
+        // Create second version of the document.
+        Document docV2 = new Document();
+        DocumentBuilder builderV2 = new DocumentBuilder(docV2);
 
-        // Modify first comment text (author Alice).
-        Comment? firstComment = doc2.GetChildNodes(NodeType.Comment, true)
-                                   .OfType<Comment>()
-                                   .FirstOrDefault(c => c.Author == "Alice");
-        if (firstComment?.FirstParagraph != null)
+        // Paragraph 1 with a modified comment from Alice.
+        builderV2.Writeln("First paragraph.");
+        Comment comment1V2 = new Comment(docV2)
         {
-            firstComment.FirstParagraph.RemoveAllChildren();
-            firstComment.FirstParagraph.AppendChild(new Run(doc2, "First comment modified"));
-        }
+            Author = "Alice",
+            Initial = "A",
+            DateTime = DateTime.Now
+        };
+        comment1V2.AppendChild(new Paragraph(docV2));
+        comment1V2.FirstParagraph?.AppendChild(new Run(docV2, "First comment modified"));
+        builderV2.CurrentParagraph?.AppendChild(comment1V2);
 
-        // Delete second comment (author Bob).
-        Comment? secondComment = doc2.GetChildNodes(NodeType.Comment, true)
-                                    .OfType<Comment>()
-                                    .FirstOrDefault(c => c.Author == "Bob");
-        secondComment?.Remove();
+        // Paragraph 2 without Bob's comment (deleted).
 
-        // Add a new comment by Charlie after a new paragraph.
-        builder2.Writeln("Third paragraph.");
-        Comment comment3 = new Comment(doc2)
+        builderV2.Writeln("Second paragraph.");
+
+        // Paragraph 3 with a new comment from Charlie (added).
+        builderV2.Writeln("Third paragraph.");
+        Comment comment3V2 = new Comment(docV2)
         {
             Author = "Charlie",
             Initial = "C",
             DateTime = DateTime.Now
         };
-        comment3.AppendChild(new Paragraph(doc2));
-        comment3.FirstParagraph?.AppendChild(new Run(doc2, "Third comment"));
-        Paragraph? newLastPara = doc2.FirstSection?.Body?.LastParagraph;
-        newLastPara?.AppendChild(comment3);
+        comment3V2.AppendChild(new Paragraph(docV2));
+        comment3V2.FirstParagraph?.AppendChild(new Run(docV2, "New comment"));
+        builderV2.CurrentParagraph?.AppendChild(comment3V2);
 
-        string doc2Path = Path.Combine(outputDir, "doc2.docx");
-        doc2.Save(doc2Path);
+        // Save second version (optional, for inspection).
+        docV2.Save("DocumentV2.docx");
 
-        // -------------------------------------------------
-        // Load both documents for comparison.
-        // -------------------------------------------------
-        Document oldDoc = new Document(doc1Path);
-        Document newDoc = new Document(doc2Path);
-
-        List<Comment> oldComments = oldDoc.GetChildNodes(NodeType.Comment, true)
-                                          .OfType<Comment>()
-                                          .ToList();
-
-        List<Comment> newComments = newDoc.GetChildNodes(NodeType.Comment, true)
-                                          .OfType<Comment>()
-                                          .ToList();
-
-        // Determine added comments.
-        var added = newComments
-            .Where(nc => !oldComments.Any(oc => oc.Author == nc.Author && oc.GetText().Trim() == nc.GetText().Trim()))
+        // Enumerate comments in both documents.
+        var commentsV1 = docV1.GetChildNodes(NodeType.Comment, true)
+            .OfType<Comment>()
             .ToList();
 
-        // Determine deleted comments.
-        var deleted = oldComments
-            .Where(oc => !newComments.Any(nc => nc.Author == oc.Author && nc.GetText().Trim() == oc.GetText().Trim()))
+        var commentsV2 = docV2.GetChildNodes(NodeType.Comment, true)
+            .OfType<Comment>()
             .ToList();
 
-        // Determine modified comments (same author, different text, matched by position).
-        var modified = new List<(Comment Old, Comment New)>();
-        int minCount = Math.Min(oldComments.Count, newComments.Count);
-        for (int i = 0; i < minCount; i++)
+        // Build dictionaries keyed by author for simple comparison.
+        var dictV1 = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (Comment c in commentsV1)
         {
-            Comment oc = oldComments[i];
-            Comment nc = newComments[i];
-            if (oc.Author == nc.Author && oc.GetText().Trim() != nc.GetText().Trim())
-            {
-                modified.Add((oc, nc));
-            }
+            string author = c.Author ?? string.Empty;
+            string text = c.GetText().Trim();
+            dictV1[author] = text;
         }
 
-        // -------------------------------------------------
-        // Output results to console.
-        // -------------------------------------------------
-        Console.WriteLine("Added Comments:");
-        foreach (Comment c in added)
+        var dictV2 = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (Comment c in commentsV2)
         {
-            Console.WriteLine($"- Author: {c.Author}, Text: {c.GetText().Trim()}");
+            string author = c.Author ?? string.Empty;
+            string text = c.GetText().Trim();
+            dictV2[author] = text;
+        }
+
+        // Determine added comments.
+        var added = dictV2.Keys.Except(dictV1.Keys, StringComparer.OrdinalIgnoreCase);
+        // Determine deleted comments.
+        var deleted = dictV1.Keys.Except(dictV2.Keys, StringComparer.OrdinalIgnoreCase);
+        // Determine modified comments (same author, different text).
+        var modified = dictV1.Keys.Intersect(dictV2.Keys, StringComparer.OrdinalIgnoreCase)
+            .Where(author => !string.Equals(dictV1[author], dictV2[author], StringComparison.Ordinal));
+
+        // Output results.
+        Console.WriteLine("Added Comments:");
+        foreach (string author in added)
+        {
+            Console.WriteLine($"- Author: {author}, Text: {dictV2[author]}");
         }
 
         Console.WriteLine("\nDeleted Comments:");
-        foreach (Comment c in deleted)
+        foreach (string author in deleted)
         {
-            Console.WriteLine($"- Author: {c.Author}, Text: {c.GetText().Trim()}");
+            Console.WriteLine($"- Author: {author}, Text: {dictV1[author]}");
         }
 
         Console.WriteLine("\nModified Comments:");
-        foreach (var pair in modified)
+        foreach (string author in modified)
         {
-            Console.WriteLine($"- Author: {pair.Old.Author}");
-            Console.WriteLine($"  Old Text: {pair.Old.GetText().Trim()}");
-            Console.WriteLine($"  New Text: {pair.New.GetText().Trim()}");
+            Console.WriteLine($"- Author: {author}");
+            Console.WriteLine($"  Old Text: {dictV1[author]}");
+            Console.WriteLine($"  New Text: {dictV2[author]}");
         }
-
-        // -------------------------------------------------
-        // Save a simple report document summarizing the comparison.
-        // -------------------------------------------------
-        Document report = new Document();
-        DocumentBuilder reportBuilder = new DocumentBuilder(report);
-
-        reportBuilder.Writeln("Comments Comparison Report");
-        reportBuilder.Writeln();
-
-        reportBuilder.Writeln("Added Comments:");
-        foreach (Comment c in added)
-        {
-            reportBuilder.Writeln($"Author: {c.Author}");
-            reportBuilder.Writeln($"Text: {c.GetText().Trim()}");
-            reportBuilder.Writeln();
-        }
-
-        reportBuilder.Writeln("Deleted Comments:");
-        foreach (Comment c in deleted)
-        {
-            reportBuilder.Writeln($"Author: {c.Author}");
-            reportBuilder.Writeln($"Text: {c.GetText().Trim()}");
-            reportBuilder.Writeln();
-        }
-
-        reportBuilder.Writeln("Modified Comments:");
-        foreach (var pair in modified)
-        {
-            reportBuilder.Writeln($"Author: {pair.Old.Author}");
-            reportBuilder.Writeln($"Old Text: {pair.Old.GetText().Trim()}");
-            reportBuilder.Writeln($"New Text: {pair.New.GetText().Trim()}");
-            reportBuilder.Writeln();
-        }
-
-        string reportPath = Path.Combine(outputDir, "CommentsComparisonReport.docx");
-        report.Save(reportPath);
     }
 }

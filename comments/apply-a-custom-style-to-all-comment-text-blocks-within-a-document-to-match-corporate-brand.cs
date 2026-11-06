@@ -3,56 +3,65 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Notes;
 
-public class Program
+public class ApplyCommentStyleExample
 {
     public static void Main()
     {
-        // Create a new document and add some content.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        builder.Writeln("First paragraph of the document.");
-        builder.Writeln("Second paragraph where a comment will be added.");
+        // Add a paragraph without a comment.
+        builder.Writeln("First paragraph without comment.");
 
-        // Create a comment and attach it to the second paragraph.
-        Comment comment = new Comment(doc)
+        // Add a paragraph that will have a comment.
+        builder.Writeln("Second paragraph that will have a comment.");
+        // Create the comment node.
+        Comment comment1 = new Comment(doc)
         {
-            Author = "Jane Doe",
-            Initial = "JD",
+            Author = "Alice Johnson",
+            Initial = "AJ",
             DateTime = DateTime.Now
         };
-        // Add a paragraph and run inside the comment to hold visible text.
-        Paragraph commentParagraph = new Paragraph(doc);
-        commentParagraph.AppendChild(new Run(doc, "Please review this paragraph for accuracy."));
-        comment.AppendChild(commentParagraph);
+        // Add a paragraph and run inside the comment to hold its visible text.
+        comment1.AppendChild(new Paragraph(doc));
+        comment1.FirstParagraph?.AppendChild(new Run(doc, "Please review the data in this paragraph."));
+        // Attach the comment to the paragraph that was just written.
+        Paragraph? targetPara1 = builder.CurrentParagraph;
+        targetPara1?.AppendChild(comment1);
 
-        // Append the comment to the paragraph.
-        Paragraph targetParagraph = doc.FirstSection.Body.Paragraphs[1];
-        targetParagraph.AppendChild(comment);
-
-        // Create another comment for demonstration.
-        Comment secondComment = new Comment(doc)
+        // Add another paragraph that will have a comment.
+        builder.Writeln("Third paragraph with another comment.");
+        // Create the second comment.
+        Comment comment2 = new Comment(doc)
         {
-            Author = "John Smith",
-            Initial = "JS",
+            Author = "Bob Smith",
+            Initial = "BS",
             DateTime = DateTime.Now
         };
-        Paragraph secondCommentParagraph = new Paragraph(doc);
-        secondCommentParagraph.AppendChild(new Run(doc, "Consider rephrasing this sentence."));
-        secondComment.AppendChild(secondCommentParagraph);
-        doc.FirstSection.Body.Paragraphs[0].AppendChild(secondComment);
+        comment2.AppendChild(new Paragraph(doc));
+        comment2.FirstParagraph?.AppendChild(new Run(doc, "Consider rephrasing this sentence."));
+        // Attach the second comment to its paragraph.
+        Paragraph? targetPara2 = builder.CurrentParagraph;
+        targetPara2?.AppendChild(comment2);
 
-        // Save the original document (optional, for reference).
+        // Save the original document for verification (optional).
         string originalPath = "OriginalDocument.docx";
         doc.Save(originalPath);
 
-        // Define a custom style that matches corporate branding.
-        Style corporateStyle = doc.Styles.Add(StyleType.Paragraph, "CorporateComment");
-        corporateStyle.Font.Name = "Arial";
-        corporateStyle.Font.Size = 10;
-        corporateStyle.Font.Color = System.Drawing.Color.DarkBlue;
-        corporateStyle.Font.Italic = true;
+        // Define a custom style for comment text to match corporate branding.
+        const string styleName = "CorporateCommentStyle";
+        Style? existingStyle = doc.Styles[styleName];
+        if (existingStyle == null)
+        {
+            Style newStyle = doc.Styles.Add(StyleType.Paragraph, styleName);
+            newStyle.Font.Name = "Calibri";
+            newStyle.Font.Size = 11;
+            newStyle.Font.Color = System.Drawing.Color.DarkBlue;
+            newStyle.Font.Bold = true;
+        }
 
         // Enumerate all comments in the document.
         var comments = doc.GetChildNodes(NodeType.Comment, true)
@@ -60,13 +69,16 @@ public class Program
                           .ToList();
 
         // Apply the custom style to each paragraph inside each comment.
-        foreach (Comment c in comments)
+        foreach (Comment comment in comments)
         {
-            // Ensure the comment has at least one paragraph.
-            foreach (Paragraph p in c.GetChildNodes(NodeType.Paragraph, true).OfType<Paragraph>())
+            // Ensure the comment contains at least one paragraph.
+            if (comment.FirstParagraph == null)
+                continue;
+
+            // Apply the style to every paragraph within the comment.
+            foreach (Paragraph para in comment.GetChildNodes(NodeType.Paragraph, true).OfType<Paragraph>())
             {
-                // Apply the custom style by name.
-                p.ParagraphFormat.StyleName = corporateStyle.Name;
+                para.ParagraphFormat.Style = doc.Styles[styleName];
             }
         }
 

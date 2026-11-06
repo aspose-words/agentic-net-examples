@@ -1,52 +1,50 @@
 using System;
+using System.IO;
 using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 
-public class CommentEventsDemo
+public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder.
+        // Create output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
+
+        // Create a new blank document.
         Document doc = new Document();
+
+        // Build document content.
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This paragraph will receive a comment.");
 
-        // Write a paragraph that will host a comment.
-        builder.Writeln("This is a paragraph that will have a comment.");
-
-        // Get the paragraph we just added.
-        Paragraph? paragraph = builder.CurrentParagraph;
-        if (paragraph == null)
-        {
-            Console.WriteLine("Failed to obtain the paragraph.");
-            return;
-        }
-
-        // Create a comment node with metadata.
+        // Create a comment node.
         Comment comment = new Comment(doc)
         {
             Author = "John Doe",
             Initial = "JD",
             DateTime = DateTime.Now
         };
+        // Add visible text to the comment.
+        Paragraph commentParagraph = new Paragraph(doc);
+        commentParagraph.AppendChild(new Run(doc, "Please review this paragraph."));
+        comment.AppendChild(commentParagraph);
 
-        // Add a paragraph and run inside the comment so it contains visible text.
-        comment.AppendChild(new Paragraph(doc));
-        Paragraph? commentParagraph = comment.FirstParagraph;
-        if (commentParagraph != null)
+        // Attach the comment to the first paragraph.
+        Paragraph? targetParagraph = doc.FirstSection?.Body?.FirstParagraph;
+        if (targetParagraph != null)
         {
-            commentParagraph.AppendChild(new Run(doc, "Please review this paragraph."));
+            targetParagraph.AppendChild(comment);
+            Console.WriteLine($"[Log] Comment added – Author: {comment.Author}, Text: \"{comment.GetText().Trim()}\"");
         }
 
-        // Append the comment to the paragraph and log the addition.
-        paragraph.AppendChild(comment);
-        Console.WriteLine($"[Log] Comment added by '{comment.Author}'.");
-
-        // Remove the comment and log the removal.
+        // Remove the comment to demonstrate the removal event.
         comment.Remove();
-        Console.WriteLine($"[Log] Comment removed (original author: '{comment.Author}').");
+        Console.WriteLine($"[Log] Comment removed – Author: {comment.Author}, Text: \"{comment.GetText().Trim()}\"");
 
         // Save the document.
-        doc.Save("CommentEventsDemo.docx");
+        string outputPath = Path.Combine(outputDir, "CommentEventsDemo.docx");
+        doc.Save(outputPath);
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }
