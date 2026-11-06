@@ -10,34 +10,32 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a paragraph outside any table.
-        builder.Writeln("Paragraph outside a table.");
+        // Add a paragraph that is NOT inside a table.
+        builder.Writeln("This paragraph is outside any table.");
 
-        // Start a table.
-        Table table = builder.StartTable();
-
-        // Insert first cell with a paragraph.
+        // Start a table and add a single cell with a paragraph inside the table.
+        builder.StartTable();
         builder.InsertCell();
-        builder.Writeln("Paragraph inside first cell.");
-
-        // Insert second cell with a paragraph.
-        builder.InsertCell();
-        builder.Writeln("Paragraph inside second cell.");
-
-        // End the row and the table.
+        builder.Writeln("This paragraph is inside a table cell.");
         builder.EndRow();
         builder.EndTable();
 
-        // Save the document.
-        doc.Save("Output.docx");
+        // Add another paragraph after the table.
+        builder.Writeln("Another paragraph outside the table.");
 
-        // Iterate through all paragraphs and report whether they are inside a table.
+        // Iterate through all paragraphs in the document.
         NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
         foreach (Paragraph para in paragraphs)
         {
-            // A paragraph is inside a table if it has a Table ancestor.
+            // Determine whether the paragraph resides inside a table.
+            // A paragraph inside a table has a Table ancestor.
             bool isInTable = para.GetAncestor(NodeType.Table) != null;
-            Console.WriteLine($"Paragraph text: \"{para.GetText().TrimEnd()}\" - IsInTable: {isInTable}");
+
+            // Output the paragraph text and its IsInTable status.
+            Console.WriteLine($"Paragraph: \"{para.GetText().TrimEnd()}\" - IsInTable: {isInTable}");
         }
+
+        // Save the document to verify the structure.
+        doc.Save("Output.docx");
     }
 }

@@ -5,27 +5,25 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
+
+        // Initialize a DocumentBuilder for inserting content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a new empty paragraph and move the cursor into it.
-        builder.InsertParagraph();
+        // Start a new paragraph.
+        builder.Writeln();
 
-        // Insert a hyperlink run inside the current paragraph.
+        // Apply the built‑in Hyperlink character style to the upcoming text.
+        builder.Font.StyleIdentifier = StyleIdentifier.Hyperlink;
+
+        // Insert a hyperlink run with display text and target URL.
         builder.InsertHyperlink("Visit Aspose", "https://www.aspose.com", false);
 
-        // Retrieve the paragraph that now contains the hyperlink.
-        Paragraph paragraph = (Paragraph)builder.CurrentParagraph;
+        // End the paragraph.
+        builder.Writeln();
 
-        // Apply the built‑in Hyperlink character style to the hyperlink run.
-        if (paragraph.Runs.Count > 0)
-        {
-            Run hyperlinkRun = (Run)paragraph.Runs[0];
-            hyperlinkRun.Font.StyleIdentifier = StyleIdentifier.Hyperlink;
-        }
-
-        // Save the document to disk.
-        doc.Save("Output.docx");
+        // Save the document to a file.
+        doc.Save("HyperlinkParagraph.docx");
     }
 }

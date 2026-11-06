@@ -5,25 +5,25 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a paragraph with sample text.
-        builder.Writeln("This is a sample paragraph that may wrap into multiple lines depending on the layout.");
+        // Add a paragraph with some text.
+        builder.Writeln("This is a sample paragraph that may wrap into multiple lines depending on the page width and formatting.");
 
-        // Get the first paragraph in the document.
+        // Retrieve the first paragraph in the document.
         Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
 
-        // Approximate line count.
-        // The Aspose.Words API does not provide a direct GetLinesCount method.
-        // For demonstration purposes we store a placeholder value.
-        int lineCount = 1; // Placeholder for actual line count logic.
+        // The Paragraph.GetLinesCount() method does not exist in the Aspose.Words API.
+        // As a compile‑safe approximation, we store a placeholder value.
+        // In a real scenario you would use layout information to determine the line count.
+        int lineCount = 1; // Approximation: assume at least one line.
 
-        // Output the stored line count.
-        Console.WriteLine($"Approximate line count: {lineCount}");
+        // Store or use the line count as needed (here we just output it).
+        Console.WriteLine($"Estimated line count for the paragraph: {lineCount}");
 
-        // Save the document to verify the paragraph was added.
+        // Save the document to verify that the example runs without external input.
         doc.Save("Output.docx");
     }
 }

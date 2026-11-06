@@ -3,37 +3,26 @@ using Aspose.Words;
 
 namespace ParagraphInsertionExample
 {
-    class Program
+    public class Program
     {
-        static void Main()
+        public static void Main()
         {
             // Create a new empty document.
             Document doc = new Document();
-
-            // Use DocumentBuilder to add some initial paragraphs.
             DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln("Original Paragraph 1");
-            builder.Writeln("Original Paragraph 2");
-            builder.Writeln("Original Paragraph 3");
 
-            // Loop through the existing paragraphs and insert a new paragraph after each one.
-            // Note: The collection changes as we insert, so we increment the index manually.
-            for (int i = 0; i < doc.FirstSection.Body.Paragraphs.Count; i++)
+            // Sample texts to insert as separate paragraphs.
+            string[] customTexts = { "First custom paragraph.", "Second custom paragraph.", "Third custom paragraph." };
+
+            // Loop through the texts and insert each as a new paragraph using Writeln.
+            foreach (string text in customTexts)
             {
-                Paragraph currentParagraph = doc.FirstSection.Body.Paragraphs[i];
-
-                // Move the builder to the end of the current paragraph.
-                builder.MoveTo(currentParagraph);
-                
-                // Insert a new paragraph with custom text.
-                builder.Writeln($"Inserted after paragraph {i + 1}");
-
-                // Skip the newly inserted paragraph to avoid processing it again.
-                i++;
+                // Writeln writes the text and starts a new paragraph.
+                builder.Writeln(text);
             }
 
             // Save the resulting document.
-            doc.Save("Result.docx");
+            doc.Save("InsertedParagraphs.docx");
         }
     }
 }
