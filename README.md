@@ -1,16 +1,16 @@
 # Aspose.Words for .NET - Agentic Examples
 
-> AI-generated, compiler-validated C# examples for the Aspose.Words for .NET API.
+> Compiler-validated, AI-friendly C# examples covering Aspose.Words for .NET document-processing workflows.
 
 ## Statistics
 
 | Metric | Value |
 |--------|-------|
-| Total Examples | 1795 |
+| Total Examples | 1793 |
 | Categories | 29 |
 | Overall Pass Rate | 100.0% |
-| Source Run | 20260925_194858_2eeab9 |
-| Last Updated | 2026-09-27 |
+| Source Run | 20261102_031946_08fb5b |
+| Last Updated | 2026-11-05 |
 
 ## Repository Structure
 
@@ -61,7 +61,7 @@ llm.txt
 | [Content Control](./content-control/) | 35 | 100.0% | [AGENTS.md](./content-control/AGENTS.md) |
 | [Conversion](./conversion/) | 108 | 100.0% | [AGENTS.md](./conversion/AGENTS.md) |
 | [Extraction](./extraction/) | 30 | 100.0% | [AGENTS.md](./extraction/AGENTS.md) |
-| [Find and Replace](./find-and-replace/) | 63 | 100.0% | [AGENTS.md](./find-and-replace/AGENTS.md) |
+| [Find And Replace](./find-and-replace/) | 63 | 100.0% | [AGENTS.md](./find-and-replace/AGENTS.md) |
 | [Fonts](./fonts/) | 35 | 100.0% | [AGENTS.md](./fonts/AGENTS.md) |
 | [Form Fields](./form-fields/) | 30 | 100.0% | [AGENTS.md](./form-fields/AGENTS.md) |
 | [Hyphenation](./hyphenation/) | 40 | 100.0% | [AGENTS.md](./hyphenation/AGENTS.md) |
@@ -71,27 +71,34 @@ llm.txt
 | [Lists](./lists/) | 30 | 100.0% | [AGENTS.md](./lists/AGENTS.md) |
 | [Mail Merge](./mail-merge/) | 30 | 100.0% | [AGENTS.md](./mail-merge/AGENTS.md) |
 | [OfficeMath](./officemath/) | 30 | 100.0% | [AGENTS.md](./officemath/AGENTS.md) |
-| [OLE Objects](./ole-objects/) | 30 | 100.0% | [AGENTS.md](./ole-objects/AGENTS.md) |
+| [OLE Objects](./ole-objects/) | 29 | 100.0% | [AGENTS.md](./ole-objects/AGENTS.md) |
 | [Paragraphs](./paragraphs/) | 35 | 100.0% | [AGENTS.md](./paragraphs/AGENTS.md) |
 | [Programming With Documents](./programming-with-documents/) | 110 | 100.0% | [AGENTS.md](./programming-with-documents/AGENTS.md) |
 | [Range](./range/) | 30 | 100.0% | [AGENTS.md](./range/AGENTS.md) |
 | [Rendering](./rendering/) | 70 | 100.0% | [AGENTS.md](./rendering/AGENTS.md) |
-| [Security and Protection](./security-and-protection/) | 30 | 100.0% | [AGENTS.md](./security-and-protection/AGENTS.md) |
+| [Security And Protection](./security-and-protection/) | 30 | 100.0% | [AGENTS.md](./security-and-protection/AGENTS.md) |
 | [Shapes](./shapes/) | 35 | 100.0% | [AGENTS.md](./shapes/AGENTS.md) |
 | [Split Document](./split-document/) | 30 | 100.0% | [AGENTS.md](./split-document/AGENTS.md) |
 | [Track Changes](./track-changes/) | 40 | 100.0% | [AGENTS.md](./track-changes/AGENTS.md) |
 | [VBA Macros](./vba-macros/) | 34 | 100.0% | [AGENTS.md](./vba-macros/AGENTS.md) |
-| [Watermark](./watermark/) | 34 | 100.0% | [AGENTS.md](./watermark/AGENTS.md) |
+| [Watermark](./watermark/) | 33 | 100.0% | [AGENTS.md](./watermark/AGENTS.md) |
 | [Working With Table](./working-with-table/) | 198 | 100.0% | [AGENTS.md](./working-with-table/AGENTS.md) |
 
 ## How to Use
 
-Each `.cs` file is a standalone console example. To run one example, create a temporary console project, add the packages listed in that category's `README.md`, copy the selected example as `Program.cs`, then build and run.
+To explore any feature, select the appropriate category, set up a temporary .NET console project, add the required NuGet packages, copy the example code, run it, and verify the produced output.
+
+1. Choose the category that matches the document-processing task.
+2. Read the category README.md, AGENTS.md, and index.json before selecting an example.
+3. Create a temporary console project targeting the repository's configured .NET framework.
+4. Install Aspose.Words and any additional packages listed by the selected category.
+5. Copy the selected standalone .cs file into the temporary project as Program.cs.
+6. Build and run the project, then inspect the expected output files or console result.
 
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.9.0
+dotnet add package Aspose.Words --version 26.10.0
 ```
 
 ```powershell
@@ -151,4 +158,4 @@ All examples use [Aspose.Words for .NET](https://products.aspose.com/words/net/)
 
 ---
 
-*Maintained by an [agentic example generation workflow](https://metrics.aspose.com/agents/sections/examples) | For AI-friendly guidance, see [AGENTS.md](./AGENTS.md) | Last updated: 2026-09-27*
+*Maintained by an [agentic example generation workflow](https://metrics.aspose.com/agents/sections/examples) | For AI-friendly guidance, see [AGENTS.md](./AGENTS.md) | Last updated: 2026-11-05*
