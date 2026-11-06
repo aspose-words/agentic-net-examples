@@ -7,47 +7,41 @@ public class Program
 {
     public static void Main()
     {
-        // Simulate a USB drive folder for fonts.
-        string usbFontsPath = Path.Combine(Path.GetTempPath(), "UsbFonts");
-        Directory.CreateDirectory(usbFontsPath);
+        // Simulate a USB drive folder that contains fonts.
+        string usbFontsFolder = Path.Combine(Path.GetTempPath(), "UsbFonts");
+        Directory.CreateDirectory(usbFontsFolder);
 
-        // Optionally copy a system font to the simulated USB folder if it exists.
-        // This step is not required for the example to run, but demonstrates loading a real font.
-        try
+        // Copy a common system font to the simulated USB folder (if it exists).
+        // This ensures the document can find a font that supports special symbols.
+        string systemFontPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Fonts), "arial.ttf");
+        if (File.Exists(systemFontPath))
         {
-            string systemFontPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Fonts), "arial.ttf");
-            if (File.Exists(systemFontPath))
-            {
-                string destFontPath = Path.Combine(usbFontsPath, "arial.ttf");
-                File.Copy(systemFontPath, destFontPath, true);
-            }
-        }
-        catch
-        {
-            // Ignore any errors copying the font; the example will still demonstrate FontSettings usage.
+            string destFontPath = Path.Combine(usbFontsFolder, "arial.ttf");
+            File.Copy(systemFontPath, destFontPath, true);
         }
 
-        // Configure FontSettings to use the USB fonts folder.
+        // Configure FontSettings to load fonts from the USB folder.
         FontSettings fontSettings = new FontSettings();
-        fontSettings.SetFontsFolder(usbFontsPath, false);
+        fontSettings.SetFontsFolder(usbFontsFolder, false);
 
-        // Create a sample document containing special symbols.
+        // Create a sample document that contains special Unicode symbols.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.Name = "Arial";
-        builder.Writeln("Special symbols: Ω, 漢字, 😀, 𝄞");
+        builder.Font.Name = "Arial"; // Use the font we placed on the USB drive.
+        builder.Writeln("Special symbols: Ω ∑ ∞ 𝄞");
 
-        // Assign the configured FontSettings to the document.
+        // Apply the FontSettings to the document.
         doc.FontSettings = fontSettings;
 
         // Render the document to PDF.
-        string outputPath = Path.Combine(Path.GetTempPath(), "Rendered.pdf");
+        string outputPath = Path.Combine(Path.GetTempPath(), "RenderedDocument.pdf");
         doc.Save(outputPath, SaveFormat.Pdf);
 
-        // Verify that the PDF was created.
+        // Verify that the PDF was created successfully.
         if (!File.Exists(outputPath))
-            throw new Exception("Failed to create the rendered PDF file.");
+            throw new Exception("PDF rendering failed; output file not found.");
 
-        Console.WriteLine($"Document rendered successfully to: {outputPath}");
+        // (Optional) Clean up the simulated USB folder.
+        // Directory.Delete(usbFontsFolder, true);
     }
 }

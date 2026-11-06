@@ -4,25 +4,24 @@
     "slug": "rendering",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Use simple documented Aspose.Words rendering workflows. Prefer Document.Save with the appropriate save options, use layout and renderer APIs only when directly required by the task, prefer Aspose.Drawing over System.Drawing unless an API explicitly requires System.Drawing, and keep validation narrow and task-specific.",
+    "preferred_workflow": "Load the source document, optionally assign a FontSettings instance with required font folders, configure an ImageSaveOptions object using documented properties (Resolution, TiffCompression, ImageColorMode, ThresholdForFloydSteinbergDithering, PageSet, PageSavingCallback), and invoke Document.Save with the options. Validate only the existence of the output file and any task-specific attributes.",
     "required_packages": [
       "Aspose.Words",
       "Aspose.Drawing.Common"
     ],
     "package_versions": {
-      "Aspose.Words": "26.9.0",
-      "Aspose.Drawing.Common": "26.8.0"
+      "Aspose.Words": "26.10.0",
+      "Aspose.Drawing.Common": "26.10.0"
     },
     "required_namespaces": [
       "System",
       "System.IO",
       "Aspose.Words",
       "Aspose.Words.Saving",
-      "Aspose.Drawing",
-      "Aspose.Drawing.Imaging",
       "Aspose.Words.Fonts",
-      "System.Threading.Tasks",
+      "Aspose.Words.Loading",
       "System.Linq",
+      "System.Threading.Tasks",
       "System.Text",
       "System.Text.RegularExpressions",
       "System.Threading"
@@ -30,15 +29,16 @@
     "key_apis": [
       "Document",
       "DocumentBuilder",
-      "Directory",
+      "File",
       "Path",
       "SaveFormat",
-      "File",
       "ImageSaveOptions",
-      "MemoryStream",
+      "Directory",
       "Font",
+      "Paragraph",
+      "Run",
       "PdfSaveOptions",
-      "Run"
+      "LoadOptions"
     ]
   },
   "stats": {
@@ -49,41 +49,48 @@
     }
   },
   "rules_summary": {
-    "core_rules": [
-      "Use native Aspose.Words APIs directly.",
-      "Create local sample source documents when a task refers to an existing file, folder, stream, template, or input asset.",
-      "Do not assume external files or folders already exist.",
-      "Always save the requested rendered output, document, image, or report.",
-      "Keep validation narrow and task-specific."
+    "strict_api_bans": [
+      "Do not reference members that are absent from the Aspose.Words 26.10.0 API surface.",
+      "Avoid using System.Drawing types unless a specific Aspose API requires them."
     ],
-    "rendering_rules": [
-      "Use Document.Save for full-document rendering tasks.",
-      "Use the correct documented SaveOptions type for the target format.",
-      "Use page or node renderers only when the task specifically requires node-level rendering.",
-      "Prefer Aspose.Drawing over System.Drawing unless a documented API explicitly requires System.Drawing."
+    "canonical_patterns": [
+      "Use ImageSaveOptions.Resolution to set DPI for TIFF rendering.",
+      "Set ImageSaveOptions.TiffCompression and ImageSaveOptions.ImageColorMode for binary or color TIFFs.",
+      "Employ FontSettings.SetFontsFolder to point to custom font directories and use FontSettings.FallbackSettings.LoadMsOfficeFallbackSettings for fallback handling."
     ],
-    "api_safety_rules": [
-      "Do not invent unsupported Aspose.Words rendering APIs.",
-      "Do not use fake namespaces.",
-      "Do not use fake OpenType or text shaping APIs.",
-      "Do not use System.Drawing-based TIFF inspection unless explicitly required by a documented API."
+    "nullable_warning_prevention": [
+      "Create all input files, folders, and streams deterministically before loading them.",
+      "Check for null or missing objects only when the task explicitly requires such validation."
     ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "Unsupported API invention",
-      "symptom": "Generated code references members that do not exist in the selected package version.",
-      "fix": "Replace invented members with documented Aspose.Words APIs already proven in this category."
+      "pattern": "Missing API member",
+      "symptom": "The compiler reports CS0117 or CS1061 because a property such as DesiredDpi, Compression, or FontFallbackSettings does not exist on the target type.",
+      "cause": "The code uses property names from older or undocumented versions of Aspose.Words.",
+      "fix": "Replace the nonexistent member with the correct documented property (e.g., use ImageSaveOptions.Resolution instead of DesiredDpi, use ImageSaveOptions.TiffCompression instead of Compression, and access FontSettings.FallbackSettings for fallback configuration).",
+      "prevention": "Consult the official Aspose.Words 26.10.0 API reference before referencing a member and rely on IntelliSense to surface available members."
     },
     {
-      "pattern": "Missing local bootstrap inputs",
-      "symptom": "The example assumes source files, folders, images, or data already exist.",
-      "fix": "Create deterministic local inputs before loading, processing, or validating them."
+      "pattern": "Incorrect namespace or type",
+      "symptom": "CS0246 or CS0234 errors appear because types like LoadOptions, Break, or FontSettings are not found in the imported namespaces.",
+      "cause": "The code omits required using directives or references types that belong to different Aspose namespaces.",
+      "fix": "Add the appropriate using statements (e.g., Aspose.Words.Loading for LoadOptions, Aspose.Words for Break) and reference the correct type names.",
+      "prevention": "Review the required_namespaces list for the category and include them at the top of every snippet."
     },
     {
-      "pattern": "Over-broad validation",
-      "symptom": "The example fails at runtime while checking unrelated document internals.",
-      "fix": "Validate only the requested behavior and the existence of expected outputs."
+      "pattern": "Invalid callback implementation",
+      "symptom": "CS1660 occurs when assigning a lambda to ImageSaveOptions.PageSavingCallback because the property expects an IPageSavingCallback implementation.",
+      "cause": "The code treats the callback interface as a delegate rather than implementing the IPageSavingCallback contract.",
+      "fix": "Create a class that implements IPageSavingCallback.PageSaving and assign an instance of that class to PageSavingCallback.",
+      "prevention": "Always implement the required interface explicitly; never use a lambda unless the API defines a delegate type."
+    },
+    {
+      "pattern": "Runtime argument or file errors",
+      "symptom": "The program throws ArgumentException or FileNotFoundException when required command-line arguments are missing or when expected files are not created.",
+      "cause": "The example assumes external files or arguments exist without providing fallbacks.",
+      "fix": "Generate deterministic sample inputs when they are absent and validate argument count before parsing.",
+      "prevention": "Never rely on pre-existing files; always create minimal test assets in the code path."
     }
   ],
   "examples": [
@@ -102,7 +109,7 @@
     {
       "id": 2,
       "file_name": "set-imagesaveoptions-desireddpi-to-300-to-produce-high-resolution-tiff-images-for-printing.cs",
-      "task": "Set ImageSaveOptions.DesiredDpi to 300 to produce high‑resolution TIFF images for printing.",
+      "task": "Set ImageSaveOptions.DesiredDpi to 300 to produce high-resolution TIFF images for printing.",
       "workflow": "rendering-workflow",
       "outputs": [
         "tiff"
@@ -113,7 +120,7 @@
     {
       "id": 3,
       "file_name": "configure-imagesaveoptions-pixelformat-as-format1bppindexed-for-black-and-white-tiff-outpu.cs",
-      "task": "Configure ImageSaveOptions.PixelFormat as Format1bppIndexed for black‑and‑white TIFF output in the conversion.",
+      "task": "Configure ImageSaveOptions.PixelFormat as Format1bppIndexed for black-and-white TIFF output in the conversion.",
       "workflow": "rendering-workflow",
       "outputs": [
         "tiff"
@@ -173,8 +180,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 9,
@@ -242,8 +249,8 @@
       "outputs": [
         "tiff"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 15,
@@ -265,8 +272,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 17,
@@ -298,8 +305,8 @@
       "outputs": [
         "tiff"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 20,
@@ -311,13 +318,13 @@
         "doc",
         "tiff"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 21,
       "file_name": "generate-a-single-page-tiff-from-the-first-page-of-a-multipage-docx-using-imagesaveoptions.cs",
-      "task": "Generate a single‑page TIFF from the first page of a multipage DOCX using ImageSaveOptions.",
+      "task": "Generate a single-page TIFF from the first page of a multipage DOCX using ImageSaveOptions.",
       "workflow": "rendering-workflow",
       "outputs": [
         "docx",
@@ -330,7 +337,7 @@
     {
       "id": 22,
       "file_name": "set-desireddpi-to-72-for-low-resolution-tiff-suitable-for-email-attachments.cs",
-      "task": "Set DesiredDpi to 72 for low‑resolution TIFF suitable for email attachments.",
+      "task": "Set DesiredDpi to 72 for low-resolution TIFF suitable for email attachments.",
       "workflow": "rendering-workflow",
       "outputs": [
         "tiff"
@@ -346,8 +353,8 @@
       "outputs": [
         "tiff"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 24,
@@ -379,8 +386,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 27,
@@ -420,7 +427,7 @@
     {
       "id": 30,
       "file_name": "use-desireddpi-500-to-generate-archival-quality-tiffs-and-assess-the-impact-on-file-size.cs",
-      "task": "Use DesiredDpi 500 to generate archival‑quality TIFFs and assess the impact on file size.",
+      "task": "Use DesiredDpi 500 to generate archival-quality TIFFs and assess the impact on file size.",
       "workflow": "rendering-workflow",
       "outputs": [
         "tiff"
@@ -479,13 +486,13 @@
     {
       "id": 35,
       "file_name": "use-imagesaveoptions-compression-tiffcompression-ccitt4-and-desireddpi-250-for-balanced-qu.cs",
-      "task": "Use ImageSaveOptions.Compression = TiffCompression.Ccitt4 and DesiredDpi = 250 for balanced quality black‑and‑white TIFFs.",
+      "task": "Use ImageSaveOptions.Compression = TiffCompression.Ccitt4 and DesiredDpi = 250 for balanced quality black-and-white TIFFs.",
       "workflow": "rendering-workflow",
       "outputs": [
         "tiff"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 36,
@@ -541,8 +548,8 @@
         "doc",
         "xml"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 41,
@@ -582,7 +589,7 @@
     {
       "id": 44,
       "file_name": "set-imagesaveoptions-dpix-and-dpiy-to-600-to-produce-high-resolution-tiff-output.cs",
-      "task": "Set ImageSaveOptions.DpiX and DpiY to 600 to produce high‑resolution TIFF output.",
+      "task": "Set ImageSaveOptions.DpiX and DpiY to 600 to produce high-resolution TIFF output.",
       "workflow": "rendering-workflow",
       "outputs": [
         "tiff"
@@ -609,8 +616,8 @@
       "outputs": [
         "tiff"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 47,
@@ -620,19 +627,19 @@
       "outputs": [
         "tiff"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 48,
       "file_name": "configure-imagesaveoptions-pixelformat-to-format1bppindexed-for-1-bit-black-white-tiff-out.cs",
-      "task": "Configure ImageSaveOptions.PixelFormat to Format1bppIndexed for 1‑bit black‑white TIFF output generation.",
+      "task": "Configure ImageSaveOptions.PixelFormat to Format1bppIndexed for 1-bit black-white TIFF output generation.",
       "workflow": "rendering-workflow",
       "outputs": [
         "tiff"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 49,
@@ -648,7 +655,7 @@
     {
       "id": 50,
       "file_name": "set-imagesaveoptions-tiffcompression-to-ccitt4-for-optimal-black-white-tiff-size-reduction.cs",
-      "task": "Set ImageSaveOptions.TiffCompression to CCITT4 for optimal black‑white TIFF size reduction.",
+      "task": "Set ImageSaveOptions.TiffCompression to CCITT4 for optimal black-white TIFF size reduction.",
       "workflow": "rendering-workflow",
       "outputs": [
         "tiff"
@@ -659,7 +666,7 @@
     {
       "id": 51,
       "file_name": "set-imagesaveoptions-tiffcompression-to-ccitt3-for-fax-ready-tiff-output-compliant-with-st.cs",
-      "task": "Set ImageSaveOptions.TiffCompression to CCITT3 for fax‑ready TIFF output compliant with standards.",
+      "task": "Set ImageSaveOptions.TiffCompression to CCITT3 for fax-ready TIFF output compliant with standards.",
       "workflow": "rendering-workflow",
       "outputs": [
         "tiff"
@@ -688,13 +695,13 @@
         "doc",
         "tiff"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 54,
       "file_name": "convert-a-batch-of-doc-files-to-tiff-using-1-bit-pixel-format-and-ccitt4-compression.cs",
-      "task": "Convert a batch of DOC files to TIFF using 1‑bit pixel format and CCITT4 compression.",
+      "task": "Convert a batch of DOC files to TIFF using 1-bit pixel format and CCITT4 compression.",
       "workflow": "rendering-workflow",
       "outputs": [
         "doc",
@@ -809,8 +816,8 @@
       "outputs": [
         "tiff"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 64,
@@ -831,19 +838,19 @@
       "outputs": [
         "tiff"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 66,
       "file_name": "create-a-unit-test-that-ensures-1-bit-tiff-files-contain-exactly-two-colors.cs",
-      "task": "Create a unit test that ensures 1‑bit TIFF files contain exactly two colors.",
+      "task": "Create a unit test that ensures 1-bit TIFF files contain exactly two colors.",
       "workflow": "rendering-workflow",
       "outputs": [
         "tiff"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 67,
@@ -853,8 +860,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 68,
@@ -883,7 +890,7 @@
     {
       "id": 70,
       "file_name": "configure-fontsettings-to-prioritize-fonts-from-a-user-specified-directory-over-system-fon.cs",
-      "task": "Configure FontSettings to prioritize fonts from a user‑specified directory over system fonts during rendering.",
+      "task": "Configure FontSettings to prioritize fonts from a user-specified directory over system fonts during rendering.",
       "workflow": "rendering-workflow",
       "outputs": [
         "pdf"
@@ -891,5 +898,16 @@
       "selected_engine": "mcp",
       "winner": "mcp"
     }
-  ]
+  ],
+  "narrative": {
+    "overview": "The Rendering category for Aspose.Words provides APIs to convert documents to image formats such as TIFF with fine-grained control over resolution, compression, pixel format, and font handling. Verified examples demonstrate correct usage of ImageSaveOptions, FontSettings, and page-level callbacks to produce high-quality TIFF output while avoiding common compilation pitfalls.",
+    "purpose": "Guide an AI coding assistant to generate reliable Aspose.Words rendering snippets that load documents, configure image save options, manage custom fonts, and save the result, ensuring the code compiles against version 26.10.0 and runs without unnecessary side effects.",
+    "validation_priorities": [
+      "Confirm that the output file exists after Document.Save.",
+      "If the task specifies page limits, verify that the generated TIFF contains the expected number of pages."
+    ],
+    "maintenance_notes": [
+      "Periodically verify that all property names used in examples match the current Aspose.Words 26.10.0 documentation to prevent regression after library updates."
+    ]
+  }
 }

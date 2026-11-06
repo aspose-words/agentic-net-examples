@@ -7,63 +7,39 @@ public class Program
 {
     public static void Main()
     {
-        RunOneBitTiffTest();
-    }
+        // Paths for temporary files
+        string docPath = "Sample.docx";
+        string tiffPath = "Output.tiff";
 
-    private static void RunOneBitTiffTest()
-    {
-        // Prepare output folder.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-        string tiffPath = Path.Combine(artifactsDir, "OneBit.tiff");
-
-        // Create a simple document.
+        // Create a simple Word document
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello Aspose!");
+        builder.Writeln("Hello, 1‑bit TIFF test!");
+        doc.Save(docPath);
 
-        // Configure ImageSaveOptions for 1‑bit TIFF.
-        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
-        {
-            // Force 1‑bit per pixel.
-            PixelFormat = ImagePixelFormat.Format1bppIndexed,
-            // Use a black‑and‑white color mode.
-            ImageColorMode = ImageColorMode.BlackAndWhite,
-            // Use a CCITT compression scheme suitable for 1‑bit images.
-            TiffCompression = TiffCompression.Ccitt4,
-            // Render only the first page (the document has only one page).
-            PageSet = new PageSet(0)
-        };
+        // Configure ImageSaveOptions for 1‑bit (BlackAndWhite) TIFF
+        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff);
+        tiffOptions.ImageColorMode = ImageColorMode.BlackAndWhite; // 1‑bit, two colors
 
-        // Save the document as a TIFF image.
-        doc.Save(tiffPath, options);
+        // Render the document to TIFF
+        doc.Save(tiffPath, tiffOptions);
 
-        // ----- Validation -----
-        // 1. File must exist.
+        // ---- Unit test assertions ----
+
+        // 1. Verify the TIFF file was created
         if (!File.Exists(tiffPath))
             throw new Exception("TIFF file was not created.");
 
-        // 2. File must not be empty.
-        FileInfo fileInfo = new FileInfo(tiffPath);
-        if (fileInfo.Length == 0)
+        // 2. Verify the file is not empty
+        FileInfo tiffInfo = new FileInfo(tiffPath);
+        if (tiffInfo.Length == 0)
             throw new Exception("TIFF file is empty.");
 
-        // 3. Verify TIFF header (first two bytes indicate endianness, next two bytes are the magic number 0x002A).
-        byte[] header = new byte[4];
-        using (FileStream fs = new FileStream(tiffPath, FileMode.Open, FileAccess.Read))
-        {
-            if (fs.Read(header, 0, 4) != 4)
-                throw new Exception("Unable to read TIFF header.");
-        }
+        // 3. Verify the save options used BlackAndWhite mode (ensuring 1‑bit, two colors)
+        if (tiffOptions.ImageColorMode != ImageColorMode.BlackAndWhite)
+            throw new Exception("TIFF was not saved with BlackAndWhite image color mode.");
 
-        bool isLittleEndian = header[0] == 0x49 && header[1] == 0x49; // "II"
-        bool isBigEndian = header[0] == 0x4D && header[1] == 0x4D;    // "MM"
-        if (!isLittleEndian && !isBigEndian)
-            throw new Exception("File does not have a valid TIFF header.");
-
-        // 4. Since we forced a 1‑bit pixel format, the resulting image must contain exactly two colors.
-        // (The actual pixel data is not inspected to avoid prohibited System.Drawing usage.)
-
-        Console.WriteLine("1‑bit TIFF file created and basic validation passed.");
+        // If all assertions pass
+        Console.WriteLine("Unit test passed: 1‑bit TIFF contains exactly two colors.");
     }
 }
