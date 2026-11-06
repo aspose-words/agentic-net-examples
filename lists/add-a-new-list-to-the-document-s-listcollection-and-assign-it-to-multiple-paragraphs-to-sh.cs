@@ -1,6 +1,7 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Lists;
+using Aspose.Words.Tables;
 
 public class Program
 {
@@ -8,25 +9,35 @@ public class Program
     {
         // Create a new empty document.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a new list to the document's ListCollection using a bullet list template.
-        List list = doc.Lists.Add(ListTemplate.BulletDefault);
+        // Create a new numbered list and obtain its reference.
+        List sharedList = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // Create first paragraph and assign it to the newly created list.
-        Paragraph para1 = new Paragraph(doc);
-        para1.AppendChild(new Run(doc, "First paragraph belonging to the shared list."));
-        para1.ListFormat.List = list;               // Assign the list.
-        para1.ListFormat.ListLevelNumber = 0;       // Use the first level of the list.
-        doc.FirstSection.Body.AppendChild(para1);
+        // Apply the list to the first paragraph.
+        builder.ListFormat.List = sharedList;
+        builder.Writeln("First item of the shared list.");
 
-        // Create second paragraph and assign it to the same list.
-        Paragraph para2 = new Paragraph(doc);
-        para2.AppendChild(new Run(doc, "Second paragraph belonging to the shared list."));
-        para2.ListFormat.List = list;               // Same list as para1.
-        para2.ListFormat.ListLevelNumber = 0;
-        doc.FirstSection.Body.AppendChild(para2);
+        // Apply the same list to the second paragraph.
+        builder.Writeln("Second item of the shared list.");
+
+        // End the list formatting before adding normal text.
+        builder.ListFormat.RemoveNumbers();
+        builder.Writeln("This paragraph is not part of the list.");
+
+        // Validation: ensure exactly two paragraphs are list items.
+        int listParagraphCount = 0;
+        foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
+        {
+            // Paragraph.ListFormat provides list information.
+            if (para.ListFormat.IsListItem)
+                listParagraphCount++;
+        }
+
+        if (listParagraphCount != 2)
+            throw new InvalidOperationException($"Expected 2 list paragraphs, but found {listParagraphCount}.");
 
         // Save the document to a file.
-        doc.Save("ListExample.docx");
+        doc.Save("SharedListExample.docx");
     }
 }

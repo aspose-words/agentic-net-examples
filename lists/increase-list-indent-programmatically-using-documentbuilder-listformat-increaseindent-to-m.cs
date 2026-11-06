@@ -1,36 +1,52 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Lists;
 
-public class Program
+namespace ListIndentExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new document and a DocumentBuilder.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Apply a default numbered list.
-        builder.ListFormat.ApplyNumberDefault();
+            // Create a numbered list using a built‑in list template.
+            List list = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // First level list item.
-        builder.Writeln("Item 1");
+            // Apply the list to the builder.
+            builder.ListFormat.List = list;
 
-        // Increase indent to create a second‑level item.
-        builder.ListFormat.ListLevelNumber++;
-        builder.Writeln("Item 1.1");
+            // First level items (level 0).
+            builder.ListFormat.ListLevelNumber = 0;
+            builder.Writeln("Item 1");
+            builder.Writeln("Item 2");
 
-        // Increase indent again for a third‑level item.
-        builder.ListFormat.ListLevelNumber++;
-        builder.Writeln("Item 1.1.1");
+            // Sub‑level items (level 1).
+            builder.ListFormat.ListLevelNumber = 1;
+            builder.Writeln("Subitem 2.1");
+            builder.Writeln("Subitem 2.2");
 
-        // Decrease indent back to second level.
-        builder.ListFormat.ListLevelNumber--;
-        builder.Writeln("Item 1.2");
+            // Return to the original level (level 0).
+            builder.ListFormat.ListLevelNumber = 0;
+            builder.Writeln("Item 3");
 
-        // End the list.
-        builder.ListFormat.RemoveNumbers();
+            // End the list formatting.
+            builder.ListFormat.RemoveNumbers();
 
-        // Save the document.
-        doc.Save("ListIndent.docx");
+            // Validate the number of list paragraphs.
+            int listParagraphCount = 0;
+            foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
+            {
+                if (para.ListFormat.IsListItem)
+                    listParagraphCount++;
+            }
+
+            Console.WriteLine($"Document contains {listParagraphCount} list paragraphs.");
+
+            // Save the document to a file.
+            doc.Save("ListIndent.docx");
+        }
     }
 }

@@ -6,44 +6,38 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a new list to the document using a built‑in template.
-        // The Add method returns the created List object.
-        List list = doc.Lists.Add(ListTemplate.BulletDefault);
+        // Create a numbered list using a built‑in list template.
+        List list = doc.Lists.Add(ListTemplate.NumberDefault);
+        builder.ListFormat.List = list; // Apply the list to the builder.
 
-        // Attempt to access more than the allowed nine list levels.
-        // The ListLevels collection supports indices 0‑8; index 9 throws ArgumentOutOfRangeException.
-        for (int i = 0; i < 10; i++)
+        // Attempt to write list items with increasing nesting levels.
+        // Aspose.Words supports a maximum of 9 levels (0‑8). Level 9 will throw.
+        for (int level = 0; level <= 9; level++)
         {
             try
             {
-                // This will throw ArgumentOutOfRangeException when i >= 9.
-                ListLevel level = list.ListLevels[i];
+                // Set the current list level.
+                builder.ListFormat.ListLevelNumber = level;
 
-                // Optional configuration of the level – shown for demonstration.
-                level.NumberStyle = NumberStyle.Arabic;
-                level.NumberPosition = 0;
-                level.Alignment = ListLevelAlignment.Left;
-                level.Font.Name = "Arial";
-                level.Font.Size = 12;
+                // Write a paragraph for this level.
+                builder.Writeln($"List item at level {level}");
             }
             catch (ArgumentOutOfRangeException ex)
             {
-                // Handle the exception for exceeding the maximum number of levels.
-                Console.WriteLine($"Exception caught for level {i}: {ex.Message}");
+                // Catch the exception that occurs when the level exceeds the allowed range.
+                Console.WriteLine($"Caught exception for level {level}: {ex.Message}");
+                break; // Exit the loop after handling the error.
             }
         }
 
-        // Add a paragraph that uses the list to keep the document valid.
-        Paragraph para = new Paragraph(doc);
-        para.ListFormat.List = list;
-        para.ListFormat.ListLevelNumber = 0; // First level (0‑based index).
-        para.AppendChild(new Run(doc, "Sample list item"));
-        doc.FirstSection.Body.AppendChild(para);
+        // Remove list formatting to return the builder to normal paragraph mode.
+        builder.ListFormat.RemoveNumbers();
 
-        // Save the document.
-        doc.Save("Result.docx");
+        // Save the document (optional, demonstrates that the file is created).
+        doc.Save("Output.docx");
     }
 }

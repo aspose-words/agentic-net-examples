@@ -6,28 +6,40 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
-
-        // Initialize DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a new list to the document (using a numbered list template).
-        List list = doc.Lists.Add(ListTemplate.NumberDefault);
-
-        // Apply the list to the builder.
+        // Create a bulleted list and assign it to the builder.
+        List list = doc.Lists.Add(ListTemplate.BulletDefault);
         builder.ListFormat.List = list;
 
-        // Set the list level number to 3 to create a third‑level list item.
+        // First‑level list item.
+        builder.ListFormat.ListLevelNumber = 1;
+        builder.Writeln("First level item");
+
+        // Second‑level list item.
+        builder.ListFormat.ListLevelNumber = 2;
+        builder.Writeln("Second level item");
+
+        // Third‑level list item (required for the task).
         builder.ListFormat.ListLevelNumber = 3;
+        builder.Writeln("Third level item");
 
-        // Insert a paragraph as a third‑level list item.
-        builder.Writeln("Third level list item");
-
-        // Optional: clear list formatting after the item.
+        // End the list formatting.
         builder.ListFormat.RemoveNumbers();
 
         // Save the document to a file.
-        doc.Save("Output.docx");
+        doc.Save("NestedList.docx");
+
+        // Validation: count paragraphs that are part of a list.
+        int listParagraphCount = 0;
+        foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
+        {
+            if (para.ListFormat.IsListItem)
+                listParagraphCount++;
+        }
+
+        Console.WriteLine($"Document contains {listParagraphCount} list items.");
     }
 }
