@@ -7,16 +7,12 @@ public class Program
 {
     public static void Main()
     {
-        // Create a temporary .bas file with simple VBA code
-        string basFilePath = Path.Combine(Path.GetTempPath(), "SampleModule.bas");
-        string vbaCode = @"
-Sub HelloWorld()
-    MsgBox ""Hello from imported module!""
-End Sub
-";
-        File.WriteAllText(basFilePath, vbaCode);
+        // Create a temporary VBA module file with sample code
+        string vbaFilePath = "sample.bas";
+        string vbaCode = "Option Explicit\r\n\r\nSub HelloWorld()\r\n    MsgBox \"Hello from VBA!\"\r\nEnd Sub";
+        File.WriteAllText(vbaFilePath, vbaCode);
 
-        // Create a new blank document
+        // Create a new blank macro‑enabled document
         Document doc = new Document();
 
         // Ensure the document has a VBA project
@@ -25,34 +21,22 @@ End Sub
             doc.VbaProject = new VbaProject();
         }
 
-        // Read the VBA source code from the .bas file
-        string sourceCode = File.ReadAllText(basFilePath) ?? string.Empty;
+        // Read the VBA code from the external .bas file
+        string importedCode = File.ReadAllText(vbaFilePath);
 
-        // Create a new VBA module, set its name and source code
-        VbaModule importedModule = new VbaModule();
-        importedModule.Name = "ImportedModule";
-        importedModule.SourceCode = sourceCode;
+        // Create a new VBA module and set its properties
+        VbaModule importedModule = new VbaModule
+        {
+            Name = "MyMacroModule",   // Desired module name
+            SourceCode = importedCode // VBA source code
+            // The default module type is Standard, so no need to set Type explicitly
+        };
 
-        // Add the module to the document's VBA project
+        // Add the module to the VBA project's module collection
         doc.VbaProject.Modules.Add(importedModule);
 
         // Save the document in a macro‑enabled format
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DocumentWithImportedMacro.docm");
+        string outputPath = "output.docm";
         doc.Save(outputPath, SaveFormat.Docm);
-
-        // Simple validation: check that the module exists and its name is set correctly
-        bool moduleExists = false;
-        foreach (VbaModule module in doc.VbaProject.Modules)
-        {
-            if (module.Name == "ImportedModule")
-            {
-                moduleExists = true;
-                break;
-            }
-        }
-
-        Console.WriteLine(moduleExists
-            ? "VBA module imported successfully."
-            : "Failed to import VBA module.");
     }
 }

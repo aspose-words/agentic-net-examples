@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
@@ -6,9 +7,6 @@ public class Program
 {
     public static void Main()
     {
-        // Path for the temporary macro‑enabled document.
-        const string filePath = "SampleWithMacros.docm";
-
         // Create a new blank document.
         Document doc = new Document();
 
@@ -18,46 +16,43 @@ public class Program
             doc.VbaProject = new VbaProject();
         }
 
-        // Add a VBA module if none exist.
+        // Add a couple of VBA modules with simple code.
         VbaModuleCollection modules = doc.VbaProject.Modules;
-        if (modules.Count == 0)
+
+        // Create first module and set its name and source code.
+        VbaModule moduleOne = new VbaModule();
+        moduleOne.Name = "ModuleOne";
+        moduleOne.SourceCode = "Sub HelloWorld()\n    MsgBox \"Hello from ModuleOne\"\nEnd Sub";
+        modules.Add(moduleOne);
+
+        // Create second module and set its name and source code.
+        VbaModule moduleTwo = new VbaModule();
+        moduleTwo.Name = "ModuleTwo";
+        moduleTwo.SourceCode = "Sub ShowInfo()\n    MsgBox \"Info from ModuleTwo\"\nEnd Sub";
+        modules.Add(moduleTwo);
+
+        // Save the document to a macro‑enabled format in a memory stream.
+        using (MemoryStream stream = new MemoryStream())
         {
-            // Simple macro source code.
-            const string macroCode = "Sub HelloWorld()\n    MsgBox \"Hello, World!\"\nEnd Sub";
+            doc.Save(stream, SaveFormat.Docm);
+            stream.Position = 0; // Reset for reading.
 
-            // Create a module using the parameterless constructor and set its properties.
-            VbaModule module = new VbaModule();
-            module.Name = "SampleModule";
-            module.SourceCode = macroCode;
+            // Load the document back from the stream.
+            Document loadedDoc = new Document(stream);
 
-            modules.Add(module);
-        }
-
-        // Save the document in a macro‑enabled format.
-        doc.Save(filePath, SaveFormat.Docm);
-
-        // Load the document back.
-        Document loadedDoc = new Document(filePath);
-
-        // Access the VBA project.
-        VbaProject vbaProject = loadedDoc.VbaProject;
-        if (vbaProject != null)
-        {
-            VbaModuleCollection loadedModules = vbaProject.Modules;
-
-            // Enumerate all modules and output their names and source code.
-            foreach (VbaModule mod in loadedModules)
+            // Enumerate all VBA modules in the loaded document.
+            VbaProject vbaProject = loadedDoc.VbaProject;
+            if (vbaProject != null)
             {
-                string source = mod.SourceCode ?? string.Empty;
-                Console.WriteLine($"Module Name: {mod.Name}");
-                Console.WriteLine("Source Code:");
-                Console.WriteLine(source);
-                Console.WriteLine(new string('-', 30));
+                VbaModuleCollection loadedModules = vbaProject.Modules;
+                foreach (VbaModule module in loadedModules)
+                {
+                    // Output module name and its source code line count.
+                    string source = module.SourceCode ?? string.Empty;
+                    int lineCount = source.Split('\n').Length;
+                    Console.WriteLine($"Module: {module.Name}, Lines of code: {lineCount}");
+                }
             }
-        }
-        else
-        {
-            Console.WriteLine("No VBA project found in the document.");
         }
     }
 }

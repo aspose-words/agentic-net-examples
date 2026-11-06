@@ -1,65 +1,65 @@
 using System;
-using System.IO;
 using Aspose.Words;
+using Aspose.Words.Saving;
 using Aspose.Words.Vba;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a blank document.
+        // Create a new blank document.
         Document doc = new Document();
 
-        // Create a new VBA project and assign a name.
-        VbaProject vbaProject = new VbaProject
-        {
-            Name = "AsposeDemoProject"
-        };
-        doc.VbaProject = vbaProject;
+        // Ensure the document has a VBA project.
+        if (doc.VbaProject == null)
+            doc.VbaProject = new VbaProject();
 
-        // VBA macro source code that uses the Scripting.Dictionary object.
-        // The Microsoft Scripting Runtime reference must be present for this code to compile in Word.
-        string vbaCode = @"
-Option Explicit
-
+        // Add a VBA module that uses the Dictionary object from the Scripting Runtime.
+        VbaModuleCollection modules = doc.VbaProject.Modules;
+        const string moduleName = "Module1";
+        string vbaCode = @"Option Explicit
 Sub UseDictionary()
-    ' Create a new Dictionary object.
-    Dim dict As New Scripting.Dictionary
+    Dim dict As New Dictionary
+    dict.Add ""Key1"", ""Value1""
+    MsgBox dict(""Key1"")
+End Sub";
 
-    ' Add some key/value pairs.
-    dict.Add ""Apple"", 1
-    dict.Add ""Banana"", 2
-    dict.Add ""Cherry"", 3
-
-    ' Iterate and print the contents.
-    Dim key As Variant
-    For Each key In dict.Keys
-        MsgBox ""Key: "" & key & "", Value: "" & dict(key)
-    Next key
-End Sub
-";
-
-        // Create a new procedural module and set its source code.
-        VbaModule vbaModule = new VbaModule
+        // Add the module if it does not already exist.
+        if (modules[moduleName] == null)
         {
-            Name = "DictionaryModule",
-            Type = VbaModuleType.ProceduralModule,
-            SourceCode = vbaCode
-        };
+            // Create a new module, set its name and source code, then add it to the collection.
+            VbaModule newModule = new VbaModule();
+            newModule.Name = moduleName;
+            newModule.SourceCode = vbaCode;
+            modules.Add(newModule);
+        }
 
-        // Add the module to the VBA project.
-        doc.VbaProject.Modules.Add(vbaModule);
+        // Save the document in a macro‑enabled format.
+        const string fileName = "MacroDocument.docm";
+        doc.Save(fileName, SaveFormat.Docm);
 
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Reload the document to verify that the module was added.
+        Document loadedDoc = new Document(fileName);
+        VbaProject loadedVba = loadedDoc.VbaProject;
 
-        // Save the document as a macro‑enabled .docm file.
-        string outputPath = Path.Combine(outputDir, "DictionaryMacro.docm");
-        doc.Save(outputPath, SaveFormat.Docm);
+        bool moduleFound = loadedVba != null && loadedVba.Modules[moduleName] != null;
 
-        // Simple verification that the document now contains macros.
-        Console.WriteLine($"Document saved to: {outputPath}");
-        Console.WriteLine($"Has macros: {doc.HasMacros}");
+        // The Scripting Runtime reference cannot be added via the current API,
+        // so we only report its presence (expected to be false).
+        bool referenceFound = false;
+        if (loadedVba != null)
+        {
+            foreach (VbaReference reference in loadedVba.References)
+            {
+                if (!string.IsNullOrEmpty(reference.LibId) && reference.LibId.Contains("Scripting"))
+                {
+                    referenceFound = true;
+                    break;
+                }
+            }
+        }
+
+        Console.WriteLine($"Reference added: {referenceFound}");
+        Console.WriteLine($"Module added: {moduleFound}");
     }
 }

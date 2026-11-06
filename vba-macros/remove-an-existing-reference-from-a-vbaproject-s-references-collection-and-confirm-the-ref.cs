@@ -1,6 +1,5 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 using Aspose.Words.Vba;
 
 public class Program
@@ -11,36 +10,42 @@ public class Program
         Document doc = new Document();
 
         // Ensure the document has a VBA project.
-        if (doc.VbaProject == null)
+        doc.VbaProject = new VbaProject();
+
+        // Access the references collection.
+        VbaReferenceCollection references = doc.VbaProject.References;
+
+        // Record the initial reference count.
+        int initialCount = references.Count;
+
+        // Find the first available reference to remove.
+        int indexToRemove = -1;
+        for (int i = 0; i < references.Count; i++)
         {
-            doc.VbaProject = new VbaProject();
+            VbaReference reference = references[i];
+            if (reference != null)
+            {
+                indexToRemove = i;
+                break;
+            }
         }
 
-        // Save the document as a macro‑enabled .docm file.
-        const string originalPath = "SampleWithReference.docm";
-        doc.Save(originalPath, SaveFormat.Docm);
-
-        // Reload the document.
-        Document loadedDoc = new Document(originalPath);
-
-        // Count references before removal.
-        int countBefore = loadedDoc.VbaProject?.References?.Count ?? 0;
-
-        // Remove the first reference if any exist.
-        if (countBefore > 0)
+        // Remove the reference if one was found.
+        if (indexToRemove >= 0)
         {
-            loadedDoc.VbaProject.References.RemoveAt(0);
+            references.RemoveAt(indexToRemove);
         }
 
-        // Count references after removal.
-        int countAfter = loadedDoc.VbaProject?.References?.Count ?? 0;
+        // Record the final reference count.
+        int finalCount = references.Count;
 
-        // Save the modified document.
-        const string modifiedPath = "SampleWithoutReference.docm";
-        loadedDoc.Save(modifiedPath, SaveFormat.Docm);
+        // Validate that the count decreased by one.
+        bool success = finalCount == initialCount - 1;
+        Console.WriteLine(success
+            ? "Reference removed successfully. Count decreased."
+            : "Reference removal failed.");
 
-        // Output the results.
-        Console.WriteLine($"References before removal: {countBefore}");
-        Console.WriteLine($"References after removal: {countAfter}");
+        // Save the document in macro-enabled format.
+        doc.Save("ReferenceTest.docm", SaveFormat.Docm);
     }
 }

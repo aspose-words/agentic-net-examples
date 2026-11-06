@@ -2,63 +2,53 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using Aspose.Words;
+using Aspose.Words.Saving;
 using Aspose.Words.Vba;
 
-public class ExportVbaModules
+public class Program
 {
     public static void Main()
     {
-        // Prepare paths for the temporary macro-enabled document and the output ZIP archive.
-        string docPath = Path.Combine(Directory.GetCurrentDirectory(), "Sample.docm");
-        string zipPath = Path.Combine(Directory.GetCurrentDirectory(), "VbaModules.zip");
-
-        // -----------------------------------------------------------------
-        // 1. Create a sample macro-enabled document with a few VBA modules.
-        // -----------------------------------------------------------------
+        // Create a new blank document.
         Document doc = new Document();
 
         // Ensure the document has a VBA project.
-        VbaProject project = new VbaProject { Name = "SampleProject" };
-        doc.VbaProject = project;
-
-        // Helper to add a module.
-        void AddModule(string name, string code, VbaModuleType type = VbaModuleType.ProceduralModule)
+        if (doc.VbaProject == null)
         {
-            VbaModule module = new VbaModule
-            {
-                Name = name,
-                Type = type,
-                SourceCode = code
-            };
-            doc.VbaProject.Modules.Add(module);
+            doc.VbaProject = new VbaProject();
         }
 
-        AddModule("ModuleOne", "Sub HelloWorld()\n    MsgBox \"Hello from ModuleOne\"\nEnd Sub");
-        AddModule("ModuleTwo", "Function AddNumbers(a As Integer, b As Integer) As Integer\n    AddNumbers = a + b\nEnd Function");
-        AddModule("ClassModule", "Public Sub Greet()\n    MsgBox \"Greetings from ClassModule\"\nEnd Sub", VbaModuleType.ClassModule);
+        // Access the module collection.
+        VbaModuleCollection modules = doc.VbaProject.Modules;
 
-        // Save the document in a macro-enabled format.
+        // Create ModuleOne.
+        VbaModule moduleOne = new VbaModule();
+        moduleOne.Name = "ModuleOne";
+        moduleOne.SourceCode = "Sub HelloWorld()\n    MsgBox \"Hello from ModuleOne\"\nEnd Sub";
+        modules.Add(moduleOne);
+
+        // Create ModuleTwo.
+        VbaModule moduleTwo = new VbaModule();
+        moduleTwo.Name = "ModuleTwo";
+        moduleTwo.SourceCode = "Sub ShowDate()\n    MsgBox \"Today is \" & Date\nEnd Sub";
+        modules.Add(moduleTwo);
+
+        // Save the document as a macro‑enabled file.
+        const string docPath = "Sample.docm";
         doc.Save(docPath, SaveFormat.Docm);
 
-        // ---------------------------------------------------------------
-        // 2. Load the document (demonstrating the load rule) and export modules.
-        // ---------------------------------------------------------------
+        // Reload the document to simulate a fresh load.
         Document loadedDoc = new Document(docPath);
 
-        // Verify that the document actually contains macros.
-        if (!loadedDoc.HasMacros || loadedDoc.VbaProject == null)
-        {
-            Console.WriteLine("The document does not contain any VBA macros.");
-            return;
-        }
-
-        // Create the ZIP archive and add each module as a separate entry.
+        // Prepare the ZIP archive to store VBA modules.
+        const string zipPath = "VbaModules.zip";
         using (FileStream zipToOpen = new FileStream(zipPath, FileMode.Create))
         using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Create))
         {
+            // Iterate through all VBA modules in the project.
             foreach (VbaModule module in loadedDoc.VbaProject.Modules)
             {
-                // Use the module name with .bas extension; adjust for class modules if desired.
+                // Use the module name as the file name, adding .bas extension.
                 string entryName = $"{module.Name}.bas";
 
                 // Guard against null source code.
@@ -75,7 +65,6 @@ public class ExportVbaModules
             }
         }
 
-        // Indicate completion (no interactive input required).
-        Console.WriteLine($"Exported {loadedDoc.VbaProject.Modules.Count} VBA module(s) to \"{zipPath}\".");
+        // Program ends.
     }
 }
