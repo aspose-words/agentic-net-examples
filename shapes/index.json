@@ -4,12 +4,12 @@
     "slug": "shapes",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Use simple documented Shape workflows using DocumentBuilder.InsertShape, InsertImage, and Shape or GroupShape APIs only when directly required. Keep validation narrow and task-specific and bootstrap all input assets locally.",
+    "preferred_workflow": "Use DocumentBuilder for straightforward shape insertion (InsertImage, InsertShape, InsertOleObject) and configure only the properties required for the task (size, wrap type, positioning, fill, stroke). When a shape must reside in a table cell, build the table with Table, Row, and Cell objects, move the builder to the target cell, insert the shape, and set IsLayoutInCell. Create any required input files (images, OLE data) locally before loading them, and always save the resulting document to verify output.",
     "required_packages": [
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.9.0"
+      "Aspose.Words": "26.10.0"
     },
     "required_namespaces": [
       "System",
@@ -18,30 +18,31 @@
       "Aspose.Words.Drawing",
       "System.Drawing",
       "Aspose.Words.Tables",
-      "System.Linq",
-      "Aspose.Words.Saving",
-      "Aspose.Words.Rendering"
+      "System.Text.RegularExpressions",
+      "Aspose.Words.Saving"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
-      "Directory",
       "File",
-      "Path",
       "Shape",
       "Font",
+      "Path",
+      "Directory",
+      "Node",
       "NodeType",
       "Table",
       "Paragraph",
-      "MemoryStream",
       "Run",
-      "Node",
+      "Row",
+      "Cell",
+      "MemoryStream",
+      "ImageData",
       "SaveFormat",
       "ImageSaveOptions",
-      "PdfSaveOptions",
       "Watermark",
-      "TextWatermarkOptions",
-      "CellFormat"
+      "CellFormat",
+      "CompositeNode"
     ]
   },
   "stats": {
@@ -52,40 +53,62 @@
     }
   },
   "rules_summary": {
-    "core_rules": [
-      "Use native Aspose.Words APIs directly.",
-      "Create local sample documents and images when a task needs them.",
-      "Do not assume external files already exist.",
-      "Always save the requested output.",
-      "Keep validation narrow and task-specific."
+    "strict_api_bans": [
+      "Never reference System.Drawing types such as Bitmap, Graphics, or Color unless the System.Drawing.Common package is explicitly added and supported on the target platform.",
+      "Do not use Shape members that are not present in Aspose.Words 26.10.0, such as LockAspectRatio, GetActualBounds, CornerRadius, UpdateGroupShapeBounds, BringToFront, SendToBack, Hyperlink, or TextBoxContent."
     ],
-    "shape_rules": [
-      "Prefer DocumentBuilder.InsertShape for basic shape insertion.",
-      "Use ShapeType, WrapType, positioning, fill, stroke, and size APIs only when relevant to the task.",
-      "Use GroupShape only when the task explicitly requires grouping.",
-      "For image-based tasks, create a local sample image first."
+    "canonical_patterns": [
+      "Insert images by providing a file path or a byte array and then adjust WrapType, RelativeHorizontalPosition, RelativeVerticalPosition, Left, and Top as needed.",
+      "Embed OLE objects using the InsertOleObject overload that accepts a Stream, a progId string, a Boolean for icon display, and an optional icon Stream.",
+      "Create tables with the Table, Row, and Cell classes; populate cells with paragraphs before inserting shapes, and set IsLayoutInCell on the shape to control layout."
     ],
-    "api_safety_rules": [
-      "Do not invent unsupported Aspose.Words.Drawing APIs.",
-      "Do not use fake namespaces.",
-      "Use documented Shape, GroupShape, ImageData, and rendering APIs only."
+    "nullable_warning_prevention": [
+      "Validate that every temporary file or directory exists before it is read, and confirm that the output document file is created after saving.",
+      "Check that a shape was successfully inserted before accessing its properties, throwing a clear exception if the shape reference is null."
     ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "Unsupported API invention",
-      "symptom": "Generated code references members that do not exist in the selected package version.",
-      "fix": "Replace invented members with documented Aspose.Words APIs already proven in this category."
+      "pattern": "Missing System.Drawing reference",
+      "symptom": "Compilation fails with CS1069 errors for Bitmap, Graphics, or Color types.",
+      "cause": "The code imports System.Drawing types that are not available without the System.Drawing.Common package, which is unsupported on non-Windows runtimes.",
+      "fix": "Replace System.Drawing usage with raw image byte arrays or use Aspose.Words image insertion APIs that accept a file path or stream.",
+      "prevention": "Never add System.Drawing namespaces in examples; generate sample images as byte arrays or embed pre-created PNG data."
     },
     {
-      "pattern": "Missing local bootstrap inputs",
-      "symptom": "The example assumes source files, folders, images, or data already exist.",
-      "fix": "Create deterministic local inputs before loading, processing, or validating them."
+      "pattern": "Use of non-existent Shape members",
+      "symptom": "Compilation fails with CS1061 errors for members such as LockAspectRatio, GetActualBounds, CornerRadius, UpdateGroupShapeBounds, BringToFront, SendToBack, Hyperlink, or TextBoxContent.",
+      "cause": "The code references APIs that are not part of Aspose.Words 26.10.0.",
+      "fix": "Replace invented members with documented alternatives (e.g., AspectRatioLocked, Bounds, FillColor, StrokeColor, HyperlinkInfo via Shape.HyperlinkInfo property if needed).",
+      "prevention": "Consult the official Aspose.Words API reference for the exact version before using any Shape property or method."
     },
     {
-      "pattern": "Over-broad validation",
-      "symptom": "The example fails at runtime while checking unrelated document internals.",
-      "fix": "Validate only the requested behavior and the existence of expected outputs."
+      "pattern": "Invalid DocumentBuilder table methods",
+      "symptom": "Compilation fails with CS1061 errors for EndCell, EndRow, or similar methods.",
+      "cause": "Older examples use DocumentBuilder.EndCell/EndRow which were removed in recent versions.",
+      "fix": "Construct tables using the Table, Row, and Cell classes and append them to the document body; use builder.MoveTo(cell.FirstParagraph) to position the cursor.",
+      "prevention": "Follow the current table-building pattern documented for Aspose.Words 26.x."
+    },
+    {
+      "pattern": "Incorrect InsertOleObject overload",
+      "symptom": "Compilation fails with CS1501 or CS1503 errors because the arguments do not match any overload.",
+      "cause": "The code supplies a file path string or mismatched parameter types to InsertOleObject.",
+      "fix": "Use the overload that takes (Stream oleStream, string progId, bool isIconic, Stream? iconStream) and pass a FileStream for the OLE content.",
+      "prevention": "Check the method signature in the API docs and always provide a Stream for the OLE data."
+    },
+    {
+      "pattern": "Unsupported positioning enums",
+      "symptom": "Compilation fails with CS0246 or CS0234 errors for VerticalAnchor, RelativeVerticalPosition, etc.",
+      "cause": "The code references enums that are not defined in Aspose.Words.Drawing for the current version.",
+      "fix": "Use RelativeHorizontalPosition and RelativeVerticalPosition enums together with Left and Top properties to control shape placement.",
+      "prevention": "Reference only the positioning enums listed in the official documentation."
+    },
+    {
+      "pattern": "Invalid node insertion location",
+      "symptom": "Runtime throws System.ArgumentException: Cannot insert a node of this type at this location.",
+      "cause": "The builder attempts to insert a shape when the cursor is not positioned inside a valid paragraph or cell.",
+      "fix": "Move the DocumentBuilder to a paragraph within the target cell (builder.MoveTo(cell.FirstParagraph)) before calling InsertShape or InsertImage.",
+      "prevention": "Always ensure the insertion point is a CompositeNode that accepts Shape children."
     }
   ],
   "examples": [
@@ -130,8 +153,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 5,
@@ -141,8 +164,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 6,
@@ -207,8 +230,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 12,
@@ -295,8 +318,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 20,
@@ -325,14 +348,14 @@
     {
       "id": 22,
       "file_name": "batch-process-a-folder-of-docx-files-inserting-a-semi-transparent-watermark-shape-into-eac.cs",
-      "task": "Batch process a folder of DOCX files, inserting a semi‑transparent watermark shape into each document.",
+      "task": "Batch process a folder of DOCX files, inserting a semi-transparent watermark shape into each document.",
       "workflow": "shape-workflow",
       "outputs": [
         "docx",
         "doc"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 23,
@@ -447,7 +470,7 @@
     {
       "id": 33,
       "file_name": "retrieve-a-shape-s-z-order-index-and-bring-the-shape-to-the-front-of-the-document-layering.cs",
-      "task": "Retrieve a shape's Z‑order index and bring the shape to the front of the document layering.",
+      "task": "Retrieve a shape's Z-order index and bring the shape to the front of the document layering.",
       "workflow": "shape-workflow",
       "outputs": [
         "doc"
@@ -477,5 +500,16 @@
       "selected_engine": "mcp",
       "winner": "mcp"
     }
-  ]
+  ],
+  "narrative": {
+    "overview": "The Shapes category demonstrates how to work with Aspose.Words drawing objects such as images, AutoShapes, OLE objects, and GroupShapes. Verified examples illustrate correct image insertion, OLE embedding with aspect-ratio locking, table-cell layout, custom rectangle creation, shape bounds retrieval, vertical positioning, SmartArt replacement, and horizontal rule insertion.",
+    "purpose": "Provide an AI coding assistant with concise, reliable guidance for creating, configuring, and manipulating shapes in Word documents using Aspose.Words 26.10.0 while avoiding common pitfalls and unsupported APIs.",
+    "validation_priorities": [
+      "After each operation, verify that the document file exists and that any shape-specific property (e.g., IsLayoutInCell, AspectRatioLocked) has the expected value."
+    ],
+    "maintenance_notes": [
+      "Periodically review Aspose.Words release notes to update the list of supported Shape members and adjust examples accordingly.",
+      "Run the verification suite after each library upgrade to catch newly introduced API changes."
+    ]
+  }
 }

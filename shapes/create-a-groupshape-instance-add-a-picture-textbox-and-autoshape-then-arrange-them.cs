@@ -7,84 +7,71 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new document and builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a temporary PNG image (1x1 pixel) from a Base64 string.
-        string imagePath = Path.Combine(Path.GetTempPath(), "sample_image.png");
-        byte[] pngBytes = Convert.FromBase64String(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=");
-        File.WriteAllBytes(imagePath, pngBytes);
-
         // Create a GroupShape.
-        GroupShape group = new GroupShape(doc)
+        GroupShape groupShape = new GroupShape(doc)
         {
-            Width = 300,
+            Width = 400,
             Height = 300,
-            Left = 100,
-            Top = 100,
-            WrapType = WrapType.None
+            WrapType = WrapType.Inline
         };
 
-        // ---- Picture shape ----
-        Shape picture = new Shape(doc, ShapeType.Image)
+        // ---------- Picture ----------
+        // A minimal 1x1 PNG (transparent) encoded in base64.
+        byte[] pngBytes = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X6V8AAAAASUVORK5CYII=");
+        using (MemoryStream imageStream = new MemoryStream(pngBytes))
         {
-            Width = 100,
-            Height = 100,
-            Left = 0,
-            Top = 0
-        };
-        picture.ImageData.SetImage(imagePath);
-        group.AppendChild(picture);
+            Shape pictureShape = new Shape(doc, ShapeType.Image)
+            {
+                Width = 100,
+                Height = 100,
+                Left = 0,
+                Top = 0
+            };
+            pictureShape.ImageData.SetImage(imageStream);
+            groupShape.AppendChild(pictureShape);
+        }
 
-        // ---- TextBox shape ----
-        Shape textBox = new Shape(doc, ShapeType.TextBox)
+        // ---------- TextBox ----------
+        Shape textBoxShape = new Shape(doc, ShapeType.TextBox)
         {
             Width = 150,
             Height = 80,
             Left = 110,
-            Top = 0,
-            FillColor = System.Drawing.Color.LightYellow,
-            StrokeColor = System.Drawing.Color.DarkGray
+            Top = 0
         };
-        // Add text to the textbox.
-        Paragraph tbParagraph = new Paragraph(doc);
-        Run tbRun = new Run(doc, "Sample TextBox");
-        tbParagraph.AppendChild(tbRun);
-        textBox.AppendChild(tbParagraph);
-        group.AppendChild(textBox);
 
-        // ---- AutoShape (Rectangle) ----
+        Paragraph tbParagraph = new Paragraph(doc);
+        Run tbRun = new Run(doc, "Hello TextBox");
+        tbParagraph.AppendChild(tbRun);
+        textBoxShape.AppendChild(tbParagraph);
+        groupShape.AppendChild(textBoxShape);
+
+        // ---------- AutoShape (Rectangle) ----------
         Shape autoShape = new Shape(doc, ShapeType.Rectangle)
         {
             Width = 120,
-            Height = 120,
+            Height = 60,
             Left = 0,
             Top = 110,
-            FillColor = System.Drawing.Color.LightGreen,
-            StrokeColor = System.Drawing.Color.DarkGreen
+            FillColor = System.Drawing.Color.Yellow,
+            StrokeColor = System.Drawing.Color.Black
         };
-        // Add text to the auto shape.
-        Paragraph asParagraph = new Paragraph(doc);
-        Run asRun = new Run(doc, "AutoShape");
-        asParagraph.AppendChild(asRun);
-        autoShape.AppendChild(asParagraph);
-        group.AppendChild(autoShape);
+        groupShape.AppendChild(autoShape);
 
         // Insert the group shape into the document.
-        builder.InsertNode(group);
+        builder.InsertNode(groupShape);
 
         // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "GroupShapeExample.docx");
+        string outputPath = "GroupShapeExample.docx";
         doc.Save(outputPath);
 
         // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("Failed to create the output document.");
-
-        // Clean up temporary image.
-        if (File.Exists(imagePath))
-            File.Delete(imagePath);
+            throw new Exception($"Failed to create the output file: {outputPath}");
     }
 }

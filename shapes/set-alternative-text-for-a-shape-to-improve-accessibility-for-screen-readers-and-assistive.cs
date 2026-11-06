@@ -3,7 +3,7 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class ShapeAlternativeTextExample
+public class SetShapeAlternativeText
 {
     public static void Main()
     {
@@ -12,21 +12,22 @@ public class ShapeAlternativeTextExample
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a rectangle shape.
-        Shape shape = builder.InsertShape(ShapeType.Rectangle, 150, 100);
+        Shape shape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
+
         // Set alternative text for accessibility.
-        shape.AlternativeText = "Blue rectangle used as a decorative element";
+        shape.AlternativeText = "Important notice rectangle";
 
         // Save the document.
-        string outputPath = "ShapeAltText.docx";
+        string outputPath = "ShapeAlternativeText.docx";
         doc.Save(outputPath);
 
         // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception($"Failed to create the output file: {outputPath}");
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
 
         // Optional: Verify that the shape's alternative text was set correctly.
-        Shape savedShape = (Shape)doc.GetChildNodes(NodeType.Shape, true)[0];
-        if (savedShape.AlternativeText != "Blue rectangle used as a decorative element")
-            throw new Exception("Alternative text was not set correctly on the shape.");
+        Shape loadedShape = (Shape)doc.GetChildNodes(NodeType.Shape, true)[0];
+        if (loadedShape.AlternativeText != "Important notice rectangle")
+            throw new InvalidOperationException("Alternative text was not set correctly.");
     }
 }

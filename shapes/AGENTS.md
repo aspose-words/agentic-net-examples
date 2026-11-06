@@ -10,29 +10,24 @@ product: Aspose.Words
 
 ## Purpose
 
-This folder is a live, curated example set for Shapes scenarios. Treat every `.cs` file as a standalone console application. The goal is correct, warning-free examples that use documented Aspose APIs and match the original task intent.
+Provide an AI coding assistant with concise, reliable guidance for creating, configuring, and manipulating shapes in Word documents using Aspose.Words 26.10.0 while avoiding common pitfalls and unsupported APIs.
 
 ## Non-negotiable conventions
 
-- Always use documented Aspose.Words APIs directly.
-- Always create local sample source documents or images when a task refers to an existing file, folder, stream, template, or input asset.
-- Prefer `DocumentBuilder.InsertShape`, `InsertImage`, and documented `Shape` workflows.
-- Keep validation narrow and task-specific.
-- Do not invent shape, grouping, or rendering helper APIs.
+- Never reference System.Drawing types such as Bitmap, Graphics, or Color unless the System.Drawing.Common package is explicitly added and supported on the target platform.
+- Do not use Shape members that are not present in Aspose.Words 26.10.0, such as LockAspectRatio, GetActualBounds, CornerRadius, UpdateGroupShapeBounds, BringToFront, SendToBack, Hyperlink, or TextBoxContent.
+- Bootstrap local sample inputs for existing-file, folder, stream, image, and data workflows.
+- Prefer simple, verifiable workflows over speculative formatting shortcuts.
 
 ## Recommended workflow selection
 
-- Shape Workflow workflow: 35 examples
+- **Shape Workflow workflow**: 35 examples
 
 Use the simplest workflow that satisfies the task.
 
 ## Validation priorities
 
-1. The code must compile and run without manual input.
-2. API usage must be supported by the configured package versions.
-3. Exported outputs must actually be written by the example.
-4. Validation scenarios must inspect only the behavior requested by the task.
-5. Examples that depend on files, folders, streams, images, or data should bootstrap those inputs locally during the example run.
+1. After each operation, verify that the document file exists and that any shape-specific property (e.g., IsLayoutInCell, AspectRatioLocked) has the expected value.
 
 ## File-to-task reference
 
@@ -55,7 +50,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Insert an OLE object shape and lock its aspect ratio to preserve original proportions.
   - Workflow: shape-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `insert-a-picture-shape-into-a-table-cell-and-enable-islayoutincell-for-proper-layout.cs`
   - Task: Insert a picture shape into a table cell and enable IsLayoutInCell for proper layout.
   - Workflow: shape-workflow
@@ -75,12 +70,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Create a custom snip corner rectangle shape with defined corner radius and light gray fill.
   - Workflow: shape-workflow
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `retrieve-actual-bounds-of-a-shape-using-shape-getactualbounds-and-log-coordinate-points.cs`
   - Task: Retrieve actual bounds of a shape using Shape.GetActualBounds and log coordinate points.
   - Workflow: shape-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `set-vertical-anchor-of-a-shape-to-top-middle-or-bottom-based-on-design-requirements.cs`
   - Task: Set vertical anchor of a shape to top, middle, or bottom based on design requirements.
   - Workflow: shape-workflow
@@ -100,12 +95,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Import MathML content as shapes, position them inline, and adjust baseline alignment.
   - Workflow: shape-workflow
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `create-a-groupshape-instance-add-a-picture-textbox-and-autoshape-then-arrange-them.cs`
   - Task: Create a GroupShape instance, add a picture, textbox, and AutoShape, then arrange them.
   - Workflow: shape-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `append-a-new-shape-to-an-existing-groupshape-and-update-group-bounds-accordingly.cs`
   - Task: Append a new shape to an existing GroupShape and update group bounds accordingly.
   - Workflow: shape-workflow
@@ -120,7 +115,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Change a picture shape to an AutoShape programmatically by setting ShapeType while preserving size.
   - Workflow: shape-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `apply-a-uniform-fill-color-to-every-shape-in-a-document-for-consistent-visual-branding.cs`
   - Task: Apply a uniform fill color to every shape in a document for consistent visual branding.
   - Workflow: shape-workflow
@@ -145,7 +140,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Batch process a folder of DOCX files, inserting a semi-transparent watermark shape into each document.
   - Workflow: shape-workflow
   - Outputs: docx, doc
-  - Selected engine: mcp
+  - Selected engine: llm
 - `move-documentbuilder-cursor-to-a-bookmark-before-inserting-a-shape-at-the-bookmarked-locat.cs`
   - Task: Move DocumentBuilder cursor to a bookmark before inserting a shape at the bookmarked location.
   - Workflow: shape-workflow
@@ -185,7 +180,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply a hyperlink to a shape that points to an external website and test navigation functionality.
   - Workflow: shape-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `set-alternative-text-for-a-shape-to-improve-accessibility-for-screen-readers-and-assistive.cs`
   - Task: Set alternative text for a shape to improve accessibility for screen readers and assistive technologies.
   - Workflow: shape-workflow
@@ -214,45 +209,58 @@ Use the simplest workflow that satisfies the task.
 
 ## Common failure patterns and preferred agent fixes
 
-- **Unsupported API invention**
-  - Symptom: Generated code references members that do not exist in the selected package version.
-  - Preferred fix: Replace invented members with documented Aspose.Words APIs already proven in this category.
+- **Missing System.Drawing reference**
+  - Symptom: Compilation fails with CS1069 errors for Bitmap, Graphics, or Color types.
+  - Root cause: The code imports System.Drawing types that are not available without the System.Drawing.Common package, which is unsupported on non-Windows runtimes.
+  - Preferred fix: Replace System.Drawing usage with raw image byte arrays or use Aspose.Words image insertion APIs that accept a file path or stream.
+  - Prevention: Never add System.Drawing namespaces in examples; generate sample images as byte arrays or embed pre-created PNG data.
 
-- **Missing local bootstrap inputs**
-  - Symptom: The example assumes source files, folders, images, or data already exist.
-  - Preferred fix: Create deterministic local inputs before loading, processing, or validating them.
+- **Use of non-existent Shape members**
+  - Symptom: Compilation fails with CS1061 errors for members such as LockAspectRatio, GetActualBounds, CornerRadius, UpdateGroupShapeBounds, BringToFront, SendToBack, Hyperlink, or TextBoxContent.
+  - Root cause: The code references APIs that are not part of Aspose.Words 26.10.0.
+  - Preferred fix: Replace invented members with documented alternatives (e.g., AspectRatioLocked, Bounds, FillColor, StrokeColor, HyperlinkInfo via Shape.HyperlinkInfo property if needed).
+  - Prevention: Consult the official Aspose.Words API reference for the exact version before using any Shape property or method.
 
-- **Over-broad validation**
-  - Symptom: The example fails at runtime while checking unrelated document internals.
-  - Preferred fix: Validate only the requested behavior and the existence of expected outputs.
+- **Invalid DocumentBuilder table methods**
+  - Symptom: Compilation fails with CS1061 errors for EndCell, EndRow, or similar methods.
+  - Root cause: Older examples use DocumentBuilder.EndCell/EndRow which were removed in recent versions.
+  - Preferred fix: Construct tables using the Table, Row, and Cell classes and append them to the document body; use builder.MoveTo(cell.FirstParagraph) to position the cursor.
+  - Prevention: Follow the current table-building pattern documented for Aspose.Words 26.x.
+
+- **Incorrect InsertOleObject overload**
+  - Symptom: Compilation fails with CS1501 or CS1503 errors because the arguments do not match any overload.
+  - Root cause: The code supplies a file path string or mismatched parameter types to InsertOleObject.
+  - Preferred fix: Use the overload that takes (Stream oleStream, string progId, bool isIconic, Stream? iconStream) and pass a FileStream for the OLE content.
+  - Prevention: Check the method signature in the API docs and always provide a Stream for the OLE data.
+
+- **Unsupported positioning enums**
+  - Symptom: Compilation fails with CS0246 or CS0234 errors for VerticalAnchor, RelativeVerticalPosition, etc.
+  - Root cause: The code references enums that are not defined in Aspose.Words.Drawing for the current version.
+  - Preferred fix: Use RelativeHorizontalPosition and RelativeVerticalPosition enums together with Left and Top properties to control shape placement.
+  - Prevention: Reference only the positioning enums listed in the official documentation.
+
+- **Invalid node insertion location**
+  - Symptom: Runtime throws System.ArgumentException: Cannot insert a node of this type at this location.
+  - Root cause: The builder attempts to insert a shape when the cursor is not positioned inside a valid paragraph or cell.
+  - Preferred fix: Move the DocumentBuilder to a paragraph within the target cell (builder.MoveTo(cell.FirstParagraph)) before calling InsertShape or InsertImage.
+  - Prevention: Always ensure the insertion point is a CompositeNode that accepts Shape children.
 
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.9.0`
+- Primary package: `Aspose.Words` `26.10.0`
 
 ## Command reference
-
-### Create a temporary console project
 
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
+dotnet add package Aspose.Words --version 26.10.0
 ```
-
-### Add required packages
-
-```bash
-dotnet add package Aspose.Words --version 26.9.0
-```
-
-### Copy a category example into the temp project
 
 ```powershell
 Copy-Item ..\shapes\<example-file>.cs .\Program.cs
 ```
-
-### Build and run
 
 ```bash
 dotnet build --configuration Release --verbosity minimal
@@ -261,6 +269,5 @@ dotnet run --configuration Release --no-build
 
 ## Category update guidance
 
-- Preserve file-to-task traceability. Any future update should keep the original task text associated with the file in metadata.
-- When replacing a file, prefer the latest verified publish-ready version rather than a merely compiling draft.
-- Keep examples standalone, bootstrap missing inputs locally, and prefer documented Aspose APIs over speculative shortcuts.
+- Periodically review Aspose.Words release notes to update the list of supported Shape members and adjust examples accordingly.
+- Run the verification suite after each library upgrade to catch newly introduced API changes.

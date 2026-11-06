@@ -3,36 +3,36 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class ShapeLayeringExample
+public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some text that will be overlapped by the shape.
-        builder.Writeln("This is some sample text that will be overlapped by a shape.");
+        // Insert a paragraph of text that will be overlapped by a shape.
+        builder.Writeln("This text will be overlapped by a shape, but the shape will be sent to the back.");
 
-        // Insert a rectangle shape.
+        // Insert a floating rectangle shape.
         Shape shape = builder.InsertShape(ShapeType.Rectangle, 200, 100);
+        shape.WrapType = WrapType.None;
+        shape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
+        shape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
+        shape.Left = 0;
+        shape.Top = 0;
+        shape.FillColor = System.Drawing.Color.LightBlue;
+        shape.StrokeColor = System.Drawing.Color.DarkBlue;
 
-        // Configure the shape to be floating so it can overlap the text.
-        shape.WrapType = WrapType.None;                     // No text wrapping.
-        shape.RelativeHorizontalPosition = RelativeHorizontalPosition.Margin;
-        shape.RelativeVerticalPosition = RelativeVerticalPosition.Margin;
-        shape.Left = 0;                                     // Position at the left margin.
-        shape.Top = 0;                                      // Position at the top margin.
-
-        // Send the shape to the back of the layering order.
-        shape.BehindText = true; // Places the shape behind the text and other shapes.
+        // Send the shape to the back of the layering order (behind the text).
+        shape.BehindText = true;
 
         // Save the document.
-        string outputPath = "ShapeBack.docx";
+        string outputPath = "Output.docx";
         doc.Save(outputPath);
 
         // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception($"Failed to create the output file: {outputPath}");
+            throw new Exception("The output document was not saved correctly.");
     }
 }

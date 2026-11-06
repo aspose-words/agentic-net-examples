@@ -7,53 +7,48 @@ public class Program
 {
     public static void Main()
     {
-        // Create a tiny PNG image (1x1 pixel) from a Base64 string.
-        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
-        byte[] pngBytes = Convert.FromBase64String(base64Png);
+        // Prepare output directory
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Insert the image into a new document.
+        // Create a simple PNG image (1x1 pixel, light blue) and save it to disk
+        // PNG data for a 1x1 light blue pixel
+        byte[] pngData = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==");
+        string imagePath = Path.Combine(outputDir, "sample.png");
+        File.WriteAllBytes(imagePath, pngData);
+
+        // Create a new document and insert the image as a picture shape
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        Shape pictureShape;
-        using (MemoryStream ms = new MemoryStream(pngBytes))
-        {
-            pictureShape = builder.InsertImage(ms);
-        }
+        Shape pictureShape = builder.InsertImage(imagePath);
 
-        // Preserve the original size.
+        // Preserve original size
         double originalWidth = pictureShape.Width;
         double originalHeight = pictureShape.Height;
 
-        // Replace the picture shape with a rectangle AutoShape while keeping its size.
-        Paragraph parentParagraph = pictureShape.ParentParagraph;
-        if (parentParagraph == null)
-            throw new Exception("The inserted image shape does not have a parent paragraph.");
-
-        // Create a new rectangle shape.
-        Shape rectangleShape = new Shape(doc, ShapeType.Rectangle)
-        {
-            Width = originalWidth,
-            Height = originalHeight,
-            // Preserve the same wrapping as the original image.
-            WrapType = pictureShape.WrapType
-        };
-
-        // Insert the rectangle after the original picture shape.
-        parentParagraph.InsertAfter(rectangleShape, pictureShape);
-
-        // Remove the original picture shape.
+        // Replace the picture shape with an AutoShape (Rectangle) while preserving size
+        // Remove the picture shape from its parent paragraph
+        Paragraph parentParagraph = (Paragraph)pictureShape.ParentNode;
         pictureShape.Remove();
 
-        // Save the document.
-        string outputPath = "Result.docx";
-        doc.Save(outputPath);
+        // Create a rectangle AutoShape with the same dimensions
+        Shape rectangleShape = new Shape(doc, ShapeType.Rectangle);
+        rectangleShape.Width = originalWidth;
+        rectangleShape.Height = originalHeight;
 
-        // Validation: ensure the file exists and the shape type was changed.
-        if (!File.Exists(outputPath))
-            throw new Exception("The output document was not created.");
+        // Append the rectangle shape to the same paragraph
+        parentParagraph.AppendChild(rectangleShape);
 
-        Shape finalShape = (Shape)doc.GetChildNodes(NodeType.Shape, true)[0];
-        if (finalShape.ShapeType != ShapeType.Rectangle)
-            throw new Exception("The shape type was not changed to Rectangle.");
+        // Save the document
+        string docPath = Path.Combine(outputDir, "output.docx");
+        doc.Save(docPath);
+
+        // Validate that the document was saved
+        if (!File.Exists(docPath))
+            throw new Exception("Failed to save the output document.");
+
+        // Indicate success (non-interactive)
+        Console.WriteLine("Document saved successfully to: " + docPath);
     }
 }

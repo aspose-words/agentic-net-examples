@@ -4,7 +4,7 @@ using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class ApplyUniformFillColor
+public class Program
 {
     public static void Main()
     {
@@ -12,31 +12,34 @@ public class ApplyUniformFillColor
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a few sample shapes.
-        builder.InsertShape(ShapeType.Rectangle, 100, 50);
-        builder.Writeln(); // separate shapes with a paragraph break
-        builder.InsertShape(ShapeType.Ellipse, 80, 80);
-        builder.Writeln();
-        builder.InsertShape(ShapeType.Triangle, 120, 70);
+        // Insert sample shapes.
+        builder.InsertShape(ShapeType.Rectangle, 150, 80);
+        builder.InsertShape(ShapeType.Ellipse, 100, 100);
+        builder.InsertShape(ShapeType.Triangle, 120, 90);
 
-        // Define the uniform fill color.
-        Color uniformColor = Color.FromArgb(0, 112, 192); // Example branding blue.
+        // Define the uniform fill color for branding.
+        Color brandColor = Color.FromArgb(0, 112, 192); // Example brand blue.
 
-        // Traverse all shapes in the document and apply the fill color.
-        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
-        foreach (Shape shape in shapes)
+        // Apply the fill color to every shape in the document.
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+        foreach (Shape shape in shapeNodes)
         {
-            shape.FillColor = uniformColor;
+            shape.Fill.Color = brandColor;
         }
 
         // Save the document.
         string outputPath = "UniformFillShapes.docx";
         doc.Save(outputPath);
 
-        // Validate that the file was created.
+        // Validate that the file was saved.
         if (!File.Exists(outputPath))
+            throw new Exception($"Failed to save the document to '{outputPath}'.");
+
+        // Validate that each shape has the expected fill color.
+        foreach (Shape shape in shapeNodes)
         {
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+            if (shape.Fill.Color.ToArgb() != brandColor.ToArgb())
+                throw new Exception("A shape does not have the expected fill color.");
         }
     }
 }
