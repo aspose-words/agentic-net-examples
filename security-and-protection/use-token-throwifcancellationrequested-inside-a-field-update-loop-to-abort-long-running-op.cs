@@ -2,56 +2,65 @@ using System;
 using System.IO;
 using System.Threading;
 using Aspose.Words;
-using Aspose.Words.Fields;
+using Aspose.Words.Fields;   // Needed for the Field class
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with many PAGE fields.
+        // Create a sample document with many fields.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        for (int i = 0; i < 1000; i++)
+        for (int i = 0; i < 5000; i++)
         {
-            builder.Writeln($"Page {i + 1}: ");
-            builder.InsertField(FieldType.FieldPage, true);
+            builder.Writeln($"Field {i}: ");
+            builder.InsertField("MERGEFIELD FieldName", $"Value{i}");
         }
 
-        // Save the original document.
-        string originalPath = "Original.docx";
-        doc.Save(originalPath);
-        if (!File.Exists(originalPath))
-            throw new InvalidOperationException("Failed to create the original document.");
+        // Save the initial document.
+        string sourcePath = "Source.docx";
+        doc.Save(sourcePath);
 
-        // Prepare a cancellation token that will be triggered shortly.
-        using (CancellationTokenSource cts = new CancellationTokenSource())
+        // Prepare a cancellation token source.
+        CancellationTokenSource cts = new CancellationTokenSource();
+
+        // Simulate cancellation after a certain number of fields have been processed.
+        int cancelAfter = 1000;
+        int processed = 0;
+
+        try
         {
-            // Cancel after 10 milliseconds to simulate a timeout.
-            cts.CancelAfter(10);
-            CancellationToken token = cts.Token;
-
-            try
+            foreach (Field field in doc.Range.Fields)
             {
-                // Loop through all fields and update them, checking for cancellation.
-                foreach (Field field in doc.Range.Fields)
+                // Abort if cancellation has been requested.
+                cts.Token.ThrowIfCancellationRequested();
+
+                // Update the current field.
+                field.Update();
+
+                processed++;
+                if (processed == cancelAfter)
                 {
-                    token.ThrowIfCancellationRequested();
-                    field.Update();
+                    // Trigger cancellation.
+                    cts.Cancel();
                 }
             }
-            catch (OperationCanceledException)
-            {
-                Console.WriteLine("Field update operation was cancelled.");
-            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Handle the cancellation gracefully.
+            Console.WriteLine($"Field update cancelled after processing {processed} fields.");
         }
 
-        // Save the (potentially partially updated) document.
-        string updatedPath = "Updated.docx";
-        doc.Save(updatedPath);
-        if (!File.Exists(updatedPath))
-            throw new InvalidOperationException("Failed to save the updated document.");
+        // Save the (partially) updated document.
+        string outputPath = "Updated.docx";
+        doc.Save(outputPath);
 
-        // Indicate completion.
+        // Verify that the output file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The updated document was not saved.");
+
+        // Program completed.
         Console.WriteLine("Processing completed.");
     }
 }

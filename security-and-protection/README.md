@@ -1,37 +1,36 @@
 # Security and Protection Examples for Aspose.Words for .NET
 
-This folder contains the live, publish-ready C# examples for the Security and Protection category. Each file is a standalone console example selected from the verified 26.9.0 run.
+The Security and Protection category for Aspose.Words demonstrates how to apply document protection, load and save password-protected files, and manage cancellation of long-running operations. Verified examples show correct use of Document.Protect, Document.Unprotect, LoadOptions, and token-aware wrappers that respect the library's current API surface.
 
 ## Snapshot
 
-- Category: Security and Protection
+- Category: Security And Protection
 - Slug: security-and-protection
 - Total examples: 30
 - Publish-ready successful examples: 30 / 30
-- Source run: 20260925_194858_2eeab9
+- Source run: 20261102_031946_08fb5b
 - Security Workflow examples: 30
 
 ## Category rules that shaped these examples
 
-- Use native Aspose.Words APIs directly.
-- Create local sample source documents when a task refers to an existing file, folder, stream, or template.
-- Do not assume external files or folders already exist.
-- Prefer documented protection and password workflows using `Document.Protect`, `Document.Unprotect`, `LoadOptions`, and format-specific save options.
-- Keep validation narrow and task-specific.
+- Do not reference Aspose.Words members that are not present in version 26.10.0.
+- Create deterministic input files, apply protection with Document.Protect, and save using documented SaveOptions.
+- Validate only the existence of the output document and the specific protection state required by the task.
 
 ## Prerequisites
 
 - .NET SDK 8.0 or later
-- Aspose.Words 26.9.0
+- Aspose.Words for .NET `26.10.0`
 
 ## Running Examples
 
-Each file in this folder is a single, standalone `.cs` console example. To run one example:
+Each file in this folder is a **single, standalone `.cs` console example**. To run one example:
 
 ```bash
+# From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.9.0
+dotnet add package Aspose.Words --version 26.10.0
 
 # Copy one example from this folder into the project as Program.cs
 # PowerShell:
@@ -52,7 +51,7 @@ Example:
 # From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.9.0
+dotnet add package Aspose.Words --version 26.10.0
 
 # PowerShell example
 Copy-Item ..\security-and-protection\create-a-cancellationtokensource-and-pass-its-token-to-document-load-to-enable-interruptio.cs .\Program.cs
@@ -66,17 +65,17 @@ dotnet run --configuration Release --no-build
 | # | File | Original task | Workflow | Outputs | Selected engine |
 |---|---|---|---|---|---|
 | 1 | `create-a-cancellationtokensource-and-pass-its-token-to-document-load-to-enable-interruptio.cs` | Create a CancellationTokenSource and pass its token to Document.Load to enable interruption. | security-workflow | doc | mcp |
-| 2 | `attach-a-callback-to-documentloadingargs-throwifcancellationrequested-during-loading-to-en.cs` | Attach a callback to DocumentLoadingArgs.ThrowIfCancellationRequested during loading to ensure proper response. | security-workflow | doc | mcp |
+| 2 | `attach-a-callback-to-documentloadingargs-throwifcancellationrequested-during-loading-to-en.cs` | Attach a callback to DocumentLoadingArgs.ThrowIfCancellationRequested during loading to ensure proper response. | security-workflow | doc | llm |
 | 3 | `use-token-throwifcancellationrequested-inside-a-field-update-loop-to-abort-long-running-op.cs` | Use token.ThrowIfCancellationRequested inside a field update loop to abort long-running operations efficiently. | security-workflow | docx | mcp |
 | 4 | `implement-a-low-code-ui-button-that-calls-cancellationtokensource-cancel-to-stop-processin.cs` | Implement a low-code UI button that calls CancellationTokenSource.Cancel to stop processing immediately. | security-workflow | docx | mcp |
 | 5 | `combine-a-cancellationtoken-with-document-saveasync-to-allow-asynchronous-saving-cancellat.cs` | Combine a CancellationToken with Document.SaveAsync to allow asynchronous saving cancellation by checking token status. | security-workflow | doc | mcp |
 | 6 | `monitor-token-iscancellationrequested-during-layout-building-and-exit-the-layout-routine-p.cs` | Monitor token.IsCancellationRequested during layout building and exit the layout routine promptly if needed. | security-workflow | docx | mcp |
 | 7 | `handle-operationcanceledexception-after-a-cancelled-document-load-to-perform-necessary-cle.cs` | Handle OperationCanceledException after a cancelled Document.Load to perform necessary cleanup properly. | security-workflow | doc | mcp |
 | 8 | `log-cancellation-events-with-timestamps-to-an-audit-file-for-compliance-tracking.cs` | Log cancellation events with timestamps to an audit file for compliance tracking. | security-workflow | docx | mcp |
-| 9 | `pass-the-same-cancellationtoken-to-both-loading-and-saving-methods-for-consistent-interrup.cs` | Pass the same CancellationToken to both loading and saving methods for consistent interruption control. | security-workflow | docx | mcp |
-| 10 | `use-token-iscancellationrequested-in-a-custom-linq-reporting-engine-query-to-abort-large-r.cs` | Use token.IsCancellationRequested in a custom LINQ Reporting Engine query to abort large reports. | security-workflow | docx | mcp |
+| 9 | `pass-the-same-cancellationtoken-to-both-loading-and-saving-methods-for-consistent-interrup.cs` | Pass the same CancellationToken to both loading and saving methods for consistent interruption control. | security-workflow | docx | llm |
+| 10 | `use-token-iscancellationrequested-in-a-custom-linq-reporting-engine-query-to-abort-large-r.cs` | Use token.IsCancellationRequested in a custom LINQ Reporting Engine query to abort large reports. | security-workflow | docx | existing_repo |
 | 11 | `wrap-a-batch-of-document-load-calls-in-a-foreach-loop-that-checks-token-cancellation-befor.cs` | Wrap a batch of Document.Load calls in a foreach loop that checks token cancellation before each load. | security-workflow | doc | mcp |
-| 12 | `configure-documentloadingargs-to-invoke-a-user-defined-method-when-cancellation-is-request.cs` | Configure DocumentLoadingArgs to invoke a user-defined method when cancellation is requested during loading. | security-workflow | doc | mcp |
+| 12 | `configure-documentloadingargs-to-invoke-a-user-defined-method-when-cancellation-is-request.cs` | Configure DocumentLoadingArgs to invoke a user-defined method when cancellation is requested during loading. | security-workflow | doc | existing_repo |
 | 13 | `integrate-cancellationtoken-into-a-background-worker-that-processes-documents-without-bloc.cs` | Integrate CancellationToken into a background worker that processes documents without blocking the UI. | security-workflow | doc | mcp |
 | 14 | `validate-that-long-running-field-updates-respect-the-token-by-inserting-periodic-cancellat.cs` | Validate that long-running field updates respect the token by inserting periodic cancellation checks. | security-workflow | docx | mcp |
 | 15 | `create-a-reusable-helper-method-accepting-a-cancellationtoken-to-perform-safe-document-pro.cs` | Create a reusable helper method accepting a CancellationToken to perform safe document processing. | security-workflow | doc | mcp |
@@ -100,18 +99,24 @@ dotnet run --configuration Release --no-build
 
 ### Unsupported API invention
 
-- Symptom: Generated code references members that do not exist in the selected package version.
-- Fix: Replace invented members with documented Aspose.Words APIs already proven in this category.
+- Symptom: Compilation fails because members such as LoadOptions.LoadingCallback, Document.LoadAsync, or Document.Dispose are not defined.
+- Root cause: The code references APIs that do not exist in the shipped Aspose.Words package.
+- Preferred fix: Replace invented members with the documented Document constructor, LoadOptions, and explicit token-aware wrappers using Task.Run.
+- Prevention: Consult the official Aspose.Words 26.10.0 reference and limit code to APIs listed in the key_apis set.
+
+### Missing CancellationToken support
+
+- Symptom: Build errors occur when passing a CancellationToken directly to Document.Load or Document.Save, and runtime checks cannot locate cancellation callbacks.
+- Root cause: Aspose.Words does not expose overloads that accept a CancellationToken in this version.
+- Preferred fix: Wrap the load or save call inside Task.Run and invoke token.ThrowIfCancellationRequested before and after the operation.
+- Prevention: Design cancellation logic around token checks surrounding synchronous Aspose.Words calls rather than expecting built-in overloads.
 
 ### Missing local bootstrap inputs
 
-- Symptom: The example assumes source files, folders, images, or data already exist.
-- Fix: Create deterministic local inputs before loading, processing, or validating them.
-
-### Over-broad validation
-
-- Symptom: The example fails at runtime while checking unrelated document internals.
-- Fix: Validate only the requested behavior and the existence of expected outputs.
+- Symptom: Code assumes that source documents, templates, or image files already exist, leading to FileNotFound exceptions or invalid test results.
+- Root cause: Samples do not create the required files before processing.
+- Preferred fix: Generate deterministic sample documents, templates, or images at the start of each example and clean them up afterward.
+- Prevention: Always include a self-contained setup block that creates any files the task needs.
 
 ## See Also
 
@@ -124,6 +129,5 @@ dotnet run --configuration Release --no-build
 
 ## Notes for maintainers
 
-- This category is 100% publish-ready for the 26.9.0 run.
-- Preserve file-to-task traceability when updating this folder.
-- Keep examples standalone and bootstrap local inputs inside the example whenever external sources are mentioned.
+- This category is 100% publish-ready for the 26.10.0 run.
+- Update the examples whenever a new Aspose.Words version adds native CancellationToken overloads to simplify the wrappers.

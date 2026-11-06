@@ -1,72 +1,62 @@
 using System;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using Aspose.Words;
 using Aspose.Words.Loading;
 using Aspose.Words.Saving;
 
 public class Program
 {
-    // Helper that saves a document while respecting a CancellationToken.
-    private static void SaveDocument(Document doc, string path, SaveOptions options, CancellationToken token)
-    {
-        // Throw if cancellation was requested before the operation.
-        token.ThrowIfCancellationRequested();
-
-        // Perform the synchronous save.
-        doc.Save(path, options);
-
-        // Throw if cancellation was requested after the operation.
-        token.ThrowIfCancellationRequested();
-    }
-
-    // Helper that loads a document while respecting a CancellationToken.
-    private static Document LoadDocument(string path, LoadOptions options, CancellationToken token)
-    {
-        // Throw if cancellation was requested before the operation.
-        token.ThrowIfCancellationRequested();
-
-        // Perform the synchronous load.
-        var doc = new Document(path, options);
-
-        // Throw if cancellation was requested after the operation.
-        token.ThrowIfCancellationRequested();
-
-        return doc;
-    }
-
-    public static void Main()
+    public static async Task Main(string[] args)
     {
         // Create a cancellation token source and obtain the token.
         using var cts = new CancellationTokenSource();
         CancellationToken token = cts.Token;
 
-        // Create a simple document with one paragraph.
+        // Define temporary file paths.
+        string tempFolder = Path.Combine(Path.GetTempPath(), "AsposeDemo");
+        Directory.CreateDirectory(tempFolder);
+        string sourcePath = Path.Combine(tempFolder, "sample.docx");
+        string outputPath = Path.Combine(tempFolder, "output.docx");
+
+        // Create a simple document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello, Aspose.Words!");
+        builder.Writeln("Hello, Aspose.Words! This document will be loaded and saved using the same CancellationToken.");
 
-        // Path for the temporary file.
-        string filePath = "sample.docx";
-
-        // Save the document using the helper that respects the same token.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions();
-        SaveDocument(doc, filePath, saveOptions, token);
-
-        // Load the document using the helper that respects the same token.
-        LoadOptions loadOptions = new LoadOptions();
-        Document loadedDoc = LoadDocument(filePath, loadOptions, token);
-
-        // Validate that the loaded document contains at least one paragraph.
-        if (loadedDoc.GetChildNodes(NodeType.Paragraph, true).Count == 0)
+        // Save the source document synchronously, wrapped in a Task that observes the token.
+        var saveOptions = new OoxmlSaveOptions(SaveFormat.Docx);
+        await Task.Run(() =>
         {
-            throw new InvalidOperationException("The loaded document does not contain any paragraphs.");
+            token.ThrowIfCancellationRequested();
+            doc.Save(sourcePath, saveOptions);
+        }, token);
+
+        // Load the document synchronously, wrapped in a Task that observes the token.
+        var loadOptions = new LoadOptions();
+        Document loadedDoc = await Task.Run(() =>
+        {
+            token.ThrowIfCancellationRequested();
+            return new Document(sourcePath, loadOptions);
+        }, token);
+
+        // Save the loaded document to a new file, again wrapped in a Task that observes the token.
+        await Task.Run(() =>
+        {
+            token.ThrowIfCancellationRequested();
+            loadedDoc.Save(outputPath, saveOptions);
+        }, token);
+
+        // Validate that the output file was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new InvalidOperationException($"The output file was not created at '{outputPath}'.");
         }
 
-        // Clean up the temporary file.
-        if (File.Exists(filePath))
-        {
-            File.Delete(filePath);
-        }
+        // Optional cleanup (commented out to keep files for inspection).
+        // File.Delete(sourcePath);
+        // File.Delete(outputPath);
+        // Directory.Delete(tempFolder);
     }
 }

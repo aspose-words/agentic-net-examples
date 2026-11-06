@@ -7,42 +7,60 @@ using Aspose.Words.Saving;
 
 public class Program
 {
-    // Configuration setting: enable or disable cancellation support for processing stages.
-    private static readonly bool EnableCancellation = true;
+    // Configuration that controls whether cancellation support is enabled.
+    public class CancellationConfig
+    {
+        public bool EnableCancellationSupport { get; set; }
+    }
 
     public static void Main()
     {
-        // Create a simple source document.
-        const string sourcePath = "source.docx";
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello Aspose.Words!");
-        doc.Save(sourcePath);
+        // Prepare configuration.
+        var config = new CancellationConfig { EnableCancellationSupport = true };
 
-        // Prepare a cancellation token based on the configuration.
-        CancellationToken token = EnableCancellation ? new CancellationTokenSource().Token : CancellationToken.None;
+        // Create a simple document.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello, Aspose.Words!");
 
-        // Load the document. If cancellation is enabled and a cancellation is requested,
-        // the operation will be aborted before the load.
-        token.ThrowIfCancellationRequested();
-        LoadOptions loadOptions = new LoadOptions(); // No CancellationToken property in this version.
-        Document loadedDoc = new Document(sourcePath, loadOptions);
+        // Define file paths.
+        string originalPath = Path.Combine(Path.GetTempPath(), "original.docx");
+        string processedPath = Path.Combine(Path.GetTempPath(), "processed.docx");
 
-        // Apply a simple protection to demonstrate a processing stage.
-        loadedDoc.Protect(ProtectionType.ReadOnly, "pwd");
+        // Save the original document.
+        doc.Save(originalPath);
+        ValidateFileExists(originalPath, "original document");
 
-        // Save the protected document. Again, respect the cancellation token.
-        token.ThrowIfCancellationRequested();
-        const string outputPath = "protected.docx";
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx);
-        loadedDoc.Save(outputPath, saveOptions);
+        // Prepare cancellation token if enabled (currently not used by Aspose.Words APIs).
+        CancellationToken token = CancellationToken.None;
+        CancellationTokenSource cts = null;
+        if (config.EnableCancellationSupport)
+        {
+            cts = new CancellationTokenSource();
+            token = cts.Token;
+        }
 
-        // Validate that the output file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+        // Load the document. Aspose.Words does not expose a CancellationToken on LoadOptions,
+        // so we simply load the document normally.
+        var loadOptions = new LoadOptions();
+        var loadedDoc = new Document(originalPath, loadOptions);
 
-        // Clean up temporary files (optional).
-        File.Delete(sourcePath);
-        File.Delete(outputPath);
+        // Save the document. Aspose.Words does not expose a CancellationToken on OoxmlSaveOptions,
+        // so we save without attaching the token.
+        var saveOptions = new OoxmlSaveOptions(SaveFormat.Docx);
+        loadedDoc.Save(processedPath, saveOptions);
+        ValidateFileExists(processedPath, "processed document");
+
+        // Clean up temporary files.
+        File.Delete(originalPath);
+        File.Delete(processedPath);
+    }
+
+    private static void ValidateFileExists(string path, string description)
+    {
+        if (!File.Exists(path))
+        {
+            throw new FileNotFoundException($"The {description} was not created at '{path}'.");
+        }
     }
 }

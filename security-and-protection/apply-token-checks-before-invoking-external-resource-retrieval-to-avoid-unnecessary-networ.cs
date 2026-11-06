@@ -7,63 +7,70 @@ using Aspose.Words.Saving;
 
 public class Program
 {
-    // Simple token validation: non‑empty and starts with "valid"
-    private static bool IsTokenValid(string token)
+    public static async Task Main()
     {
-        return !string.IsNullOrWhiteSpace(token) && token.StartsWith("valid", StringComparison.OrdinalIgnoreCase);
-    }
+        // Retrieve token (in real scenarios this could come from a secure store)
+        string token = GetToken();
 
-    // Entry point
-    public static async Task Main(string[] args)
-    {
-        // Retrieve token from environment (or use a placeholder)
-        string token = Environment.GetEnvironmentVariable("API_TOKEN") ?? "invalid-token";
-
-        // Decide which workflow to execute based on token validity
-        if (IsTokenValid(token))
+        // Validate token before any network operation
+        if (!IsTokenValid(token))
         {
-            // Token is valid – proceed to retrieve external content
-            string externalUrl = "https://www.w3.org/TR/PNG/iso_8859-1.txt";
+            Console.WriteLine("Invalid or missing token. Skipping external resource retrieval.");
+            return;
+        }
 
-            string content;
-            using (HttpClient client = new HttpClient())
-            {
-                HttpResponseMessage response = await client.GetAsync(externalUrl);
-                response.EnsureSuccessStatusCode();
-                content = await response.Content.ReadAsStringAsync();
-            }
+        // URL of the external document (placeholder)
+        string url = "https://example.com/sample.docx";
 
-            // Create a new document and insert the retrieved content
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln("Content retrieved from external resource:");
-            builder.Writeln(content);
+        // Download the document using the valid token
+        byte[] documentBytes = await DownloadDocumentAsync(url, token);
+
+        // Load the document from the downloaded bytes
+        using (MemoryStream stream = new MemoryStream(documentBytes))
+        {
+            Document doc = new Document(stream);
 
             // Apply read‑only protection with a password
-            doc.Protect(ProtectionType.ReadOnly, "securePassword");
+            doc.Protect(ProtectionType.ReadOnly, "protectPassword");
 
-            // Save the protected document
+            // Save the protected document locally
             string outputPath = "ProtectedDocument.docx";
-            doc.Save(outputPath, SaveFormat.Docx);
+            doc.Save(outputPath);
 
             // Verify that the file was created
             if (!File.Exists(outputPath))
-                throw new InvalidOperationException($"Failed to create '{outputPath}'.");
+                throw new InvalidOperationException("The protected document was not saved correctly.");
+
+            Console.WriteLine($"Document saved and protected at '{outputPath}'.");
         }
-        else
+    }
+
+    // Simulate token retrieval; replace with real implementation as needed
+    private static string GetToken()
+    {
+        // Return empty string to demonstrate token check failure.
+        // Change to a non‑empty value to allow the download to proceed.
+        return "";
+    }
+
+    // Simple token validation logic
+    private static bool IsTokenValid(string token)
+    {
+        return !string.IsNullOrWhiteSpace(token);
+    }
+
+    // Perform the HTTP GET request with the token as a Bearer token
+    private static async Task<byte[]> DownloadDocumentAsync(string url, string token)
+    {
+        using (HttpClient client = new HttpClient())
         {
-            // Token is invalid – skip external call and create a minimal document
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln("Token validation failed. No external content was retrieved.");
+            client.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-            // Save the unprotected document
-            string outputPath = "NoContentDocument.docx";
-            doc.Save(outputPath, SaveFormat.Docx);
+            HttpResponseMessage response = await client.GetAsync(url);
+            response.EnsureSuccessStatusCode();
 
-            // Verify that the file was created
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException($"Failed to create '{outputPath}'.");
+            return await response.Content.ReadAsByteArrayAsync();
         }
     }
 }
