@@ -1,52 +1,60 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
 public class SplitDocumentExample
 {
     public static void Main()
     {
-        // Create a sample document with two sections.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        // Create a sample document with three sections.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Section 1
         builder.Writeln("Section 1 - First paragraph.");
         builder.InsertBreak(BreakType.SectionBreakNewPage);
+
+        // Section 2
         builder.Writeln("Section 2 - First paragraph.");
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
 
-        // Save the source document locally.
-        const string sourcePath = "Source.docx";
-        sourceDoc.Save(sourcePath);
+        // Section 3
+        builder.Writeln("Section 3 - First paragraph.");
 
-        // Load the document that will be split.
-        Document doc = new Document(sourcePath);
-
-        // Split the document by sections.
-        int index = 1;
+        // Manually split the document by sections.
+        List<Document> splitDocs = new List<Document>();
         foreach (Section section in doc.Sections)
         {
-            // Create a new empty document and remove its default empty section.
-            Document splitDoc = new Document();
-            splitDoc.RemoveAllChildren();
+            // Create a new empty document for the split part.
+            Document part = new Document();
 
-            // Import the current section (including headers/footers) into the new document.
-            NodeImporter importer = new NodeImporter(doc, splitDoc, ImportFormatMode.KeepSourceFormatting);
+            // Import the current section into the new document.
+            NodeImporter importer = new NodeImporter(doc, part, ImportFormatMode.KeepSourceFormatting);
             Section importedSection = (Section)importer.ImportNode(section, true);
-            splitDoc.AppendChild(importedSection);
 
-            // Save the split document.
-            string splitPath = $"Split_{index}.docx";
-            splitDoc.Save(splitPath);
-
-            // Verify that the file was saved.
-            if (!File.Exists(splitPath))
-                throw new InvalidOperationException($"Split document was not saved: {splitPath}");
-
-            index++;
+            // Append the imported section to the new document.
+            part.AppendChild(importedSection);
+            splitDocs.Add(part);
         }
 
-        // Verify the expected number of split documents.
-        int expectedCount = doc.Sections.Count;
-        if (index - 1 != expectedCount)
-            throw new InvalidOperationException("The number of split documents does not match the expected count.");
+        // Ensure the split returned the expected number of documents.
+        if (splitDocs == null || splitDocs.Count != 3)
+            throw new InvalidOperationException("Document splitting did not produce the expected number of parts.");
+
+        // Save each split document to a separate file.
+        for (int i = 0; i < splitDocs.Count; i++)
+        {
+            string fileName = $"SplitPart_{i + 1}.docx";
+            splitDocs[i].Save(fileName, SaveFormat.Docx);
+
+            // Verify that the file was created.
+            if (!File.Exists(fileName))
+                throw new FileNotFoundException($"Failed to create split file: {fileName}");
+        }
+
+        // All split documents have been saved successfully.
+        Console.WriteLine("Document split completed successfully.");
     }
 }

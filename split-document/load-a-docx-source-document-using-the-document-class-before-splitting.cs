@@ -6,47 +6,51 @@ public class Program
 {
     public static void Main()
     {
+        // Path for the sample source document.
         const string sourcePath = "Source.docx";
 
-        // Ensure any previous files are removed.
-        if (File.Exists(sourcePath))
-            File.Delete(sourcePath);
-        for (int i = 1; i <= 10; i++)
-        {
-            string partPath = $"Section_{i}.docx";
-            if (File.Exists(partPath))
-                File.Delete(partPath);
-        }
+        // -----------------------------------------------------------------
+        // Step 1: Create a sample DOCX document with two sections.
+        // -----------------------------------------------------------------
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        // Create a sample document with two sections.
-        Document sampleDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        // First section content.
         builder.Writeln("Section 1 - Paragraph 1");
         builder.Writeln("Section 1 - Paragraph 2");
+        // Insert a section break to start a new section.
         builder.InsertBreak(BreakType.SectionBreakNewPage);
+
+        // Second section content.
         builder.Writeln("Section 2 - Paragraph 1");
         builder.Writeln("Section 2 - Paragraph 2");
-        sampleDoc.Save(sourcePath);
 
-        // Load the source document.
-        Document sourceDoc = new Document(sourcePath);
+        // Save the sample source document.
+        sourceDoc.Save(sourcePath);
 
-        // Split the document by sections.
+        // -----------------------------------------------------------------
+        // Step 2: Load the DOCX source document using the Document class.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(sourcePath);
+
+        // -----------------------------------------------------------------
+        // Step 3: Split the loaded document by its sections.
+        // -----------------------------------------------------------------
         int sectionIndex = 1;
-        foreach (Section section in sourceDoc.Sections)
+        foreach (Section section in loadedDoc.Sections)
         {
-            // Create a new empty document.
+            // Create a new empty document for the split part.
             Document splitDoc = new Document();
-            // Remove the default empty section that a new Document contains.
-            splitDoc.RemoveAllChildren();
 
-            // Import the section from the source document.
-            NodeImporter importer = new NodeImporter(sourceDoc, splitDoc, ImportFormatMode.KeepSourceFormatting);
+            // Import the current section into the new document.
+            NodeImporter importer = new NodeImporter(loadedDoc, splitDoc, ImportFormatMode.KeepSourceFormatting);
             Section importedSection = (Section)importer.ImportNode(section, true);
             splitDoc.AppendChild(importedSection);
 
+            // Define the output file name for this section.
+            string splitPath = $"Section{sectionIndex}.docx";
+
             // Save the split document.
-            string splitPath = $"Section_{sectionIndex}.docx";
             splitDoc.Save(splitPath);
 
             // Validate that the file was created.
@@ -56,11 +60,16 @@ public class Program
             sectionIndex++;
         }
 
-        // Final validation: ensure at least one split file exists.
-        if (sectionIndex == 1)
-            throw new InvalidOperationException("No sections were found to split.");
+        // -----------------------------------------------------------------
+        // Step 4: Verify that the expected split files exist.
+        // -----------------------------------------------------------------
+        for (int i = 1; i < sectionIndex; i++)
+        {
+            string expectedPath = $"Section{i}.docx";
+            if (!File.Exists(expectedPath))
+                throw new FileNotFoundException($"Expected split document not found: {expectedPath}");
+        }
 
-        // Confirmation (non-interactive).
-        Console.WriteLine($"Document split into {sectionIndex - 1} section file(s).");
+        // All operations completed successfully.
     }
 }

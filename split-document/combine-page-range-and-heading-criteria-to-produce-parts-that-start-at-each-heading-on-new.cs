@@ -2,107 +2,100 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Layout;
 
 public class Program
 {
-    public static void Main()
+    public static void Main(string[] args)
     {
-        // Create a sample document with headings that span several pages.
-        const string sourcePath = "Source.docx";
+        // Create a sample source document with headings and page breaks.
+        string sourcePath = "Source.docx";
         CreateSampleDocument(sourcePath);
 
         // Load the source document.
         Document sourceDoc = new Document(sourcePath);
 
-        // Collect layout information to map headings to page numbers.
-        LayoutCollector layoutCollector = new LayoutCollector(sourceDoc);
+        // Collect all Heading 1 paragraphs.
+        NodeCollection paragraphs = sourceDoc.GetChildNodes(NodeType.Paragraph, true);
+        List<Paragraph> headingNodes = new List<Paragraph>();
 
-        // Find all Heading 1 paragraphs.
-        List<Paragraph> headingParagraphs = new List<Paragraph>();
-        foreach (Paragraph para in sourceDoc.GetChildNodes(NodeType.Paragraph, true))
+        foreach (Paragraph para in paragraphs)
         {
             if (para.ParagraphFormat.StyleIdentifier == StyleIdentifier.Heading1)
-                headingParagraphs.Add(para);
+                headingNodes.Add(para);
         }
 
-        if (headingParagraphs.Count == 0)
-            throw new InvalidOperationException("No Heading 1 paragraphs were found in the source document.");
+        if (headingNodes.Count == 0)
+            throw new InvalidOperationException("No Heading 1 paragraphs found in the source document.");
 
-        // Determine page ranges for each heading.
-        int totalPages = sourceDoc.PageCount;
-        List<(int startPageZeroBased, int pageCount)> ranges = new List<(int, int)>();
-
-        for (int i = 0; i < headingParagraphs.Count; i++)
+        // Split the document at each heading.
+        for (int i = 0; i < headingNodes.Count; i++)
         {
-            // LayoutCollector returns 1‑based page numbers.
-            int startPage = layoutCollector.GetStartPageIndex(headingParagraphs[i]); // 1‑based
-            int endPage = (i + 1 < headingParagraphs.Count)
-                ? layoutCollector.GetStartPageIndex(headingParagraphs[i + 1]) - 1
-                : totalPages;
+            Paragraph startHeading = headingNodes[i];
+            // Node that marks the end of the current part (the next heading or null for the last part).
+            Node endNode = (i + 1 < headingNodes.Count) ? headingNodes[i + 1] : null;
 
-            // Guard against incorrect ordering.
-            if (endPage < startPage)
-                endPage = startPage;
+            // Create a new empty document for the part.
+            Document partDoc = new Document();
+            Body destBody = partDoc.FirstSection.Body;
 
-            // Convert to zero‑based start index required by ExtractPages.
-            int startZero = startPage - 1;
-            int count = endPage - startPage + 1;
+            // Import nodes from the start heading up to (but not including) the end node.
+            Node currentNode = startHeading;
+            NodeImporter importer = new NodeImporter(sourceDoc, partDoc, ImportFormatMode.KeepSourceFormatting);
 
-            // Ensure we never request pages beyond the document.
-            if (startZero + count > totalPages)
-                count = totalPages - startZero;
+            while (currentNode != null && currentNode != endNode)
+            {
+                Node importedNode = importer.ImportNode(currentNode, true);
+                destBody.AppendChild(importedNode);
+                currentNode = currentNode.NextSibling;
+            }
 
-            ranges.Add((startZero, count));
-        }
-
-        // Extract each range into a separate document.
-        for (int i = 0; i < ranges.Count; i++)
-        {
-            var (startZero, count) = ranges[i];
-            Document part = sourceDoc.ExtractPages(startZero, count);
+            // Save the split part.
             string partPath = $"Part_{i + 1}.docx";
-            part.Save(partPath);
-        }
+            partDoc.Save(partPath);
 
-        // Validate that the expected split files exist.
-        for (int i = 0; i < ranges.Count; i++)
-        {
-            string partPath = $"Part_{i + 1}.docx";
+            // Verify that the file was created.
             if (!File.Exists(partPath))
-                throw new FileNotFoundException($"Expected split file not found: {partPath}");
+                throw new InvalidOperationException($"Failed to create split part file: {partPath}");
         }
 
-        // Optional cleanup.
-        // File.Delete(sourcePath);
+        // All parts created successfully.
     }
 
-    // Creates a sample document with three chapters, each beginning with a Heading 1.
+    // Helper method to create a sample document containing three chapters,
+    // each starting with a Heading 1 paragraph and separated by page breaks.
     private static void CreateSampleDocument(string filePath)
     {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        for (int chapter = 1; chapter <= 3; chapter++)
-        {
-            // Heading 1.
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-            builder.Writeln($"Chapter {chapter}");
+        // Chapter 1
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Chapter 1");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("Content of chapter 1. This paragraph will span multiple lines to increase page count.");
+        builder.Writeln("More content in chapter 1.");
 
-            // Normal paragraphs to generate multiple pages.
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-            for (int p = 0; p < 30; p++)
-            {
-                builder.Writeln(
-                    $"Paragraph {p + 1} of Chapter {chapter}. Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
-                    $"Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
-            }
+        // Page break before Chapter 2
+        builder.InsertBreak(BreakType.PageBreak);
 
-            // Page break before the next chapter (except after the last one).
-            if (chapter < 3)
-                builder.InsertBreak(BreakType.PageBreak);
-        }
+        // Chapter 2
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Chapter 2");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("Content of chapter 2.");
+        builder.Writeln("Additional content for chapter 2.");
 
+        // Page break before Chapter 3
+        builder.InsertBreak(BreakType.PageBreak);
+
+        // Chapter 3
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Chapter 3");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("Content of chapter 3.");
+        builder.Writeln("Final content.");
+
+        // Save the sample document.
         doc.Save(filePath);
     }
 }
