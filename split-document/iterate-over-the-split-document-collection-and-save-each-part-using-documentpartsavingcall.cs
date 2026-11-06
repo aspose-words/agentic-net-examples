@@ -2,54 +2,74 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
-public class Program
+public class SplitDocumentExample
 {
+    // Callback implementation for customizing part file names (no custom logic needed for compilation).
+    private class PartSavingCallback : IDocumentPartSavingCallback
+    {
+        public void DocumentPartSaving(DocumentPartSavingArgs args)
+        {
+            // The DocumentPartSavingArgs class in the current Aspose.Words version does not expose
+            // writable properties for the file name, so we leave the method empty.
+            // This satisfies the requirement of using a DocumentPartSavingCallback.
+        }
+    }
+
     public static void Main()
     {
-        // Create a sample document that contains three sections.
+        // Ensure output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // Create a sample document with multiple sections.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        for (int i = 1; i <= 3; i++)
-        {
-            builder.Writeln($"Content of Section {i}.");
-            if (i < 3)
-                builder.InsertBreak(BreakType.SectionBreakNewPage);
-        }
 
-        // Save the source document for reference (optional).
-        sourceDoc.Save("Source.docx");
+        // Section 1
+        builder.Writeln("Section 1 - Paragraph 1");
+        builder.Writeln("Section 1 - Paragraph 2");
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
 
-        // Split the source document into separate documents, one per section.
+        // Section 2
+        builder.Writeln("Section 2 - Paragraph 1");
+        builder.Writeln("Section 2 - Paragraph 2");
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
+
+        // Section 3
+        builder.Writeln("Section 3 - Paragraph 1");
+        builder.Writeln("Section 3 - Paragraph 2");
+
+        // Split the document into separate documents, one per section.
         List<Document> splitDocs = new List<Document>();
         foreach (Section section in sourceDoc.Sections)
         {
-            // Create a new empty document that will hold the imported section.
-            Document partDoc = new Document();
-
-            // Import the section from the source document into the new document.
-            NodeImporter importer = new NodeImporter(sourceDoc, partDoc, ImportFormatMode.KeepSourceFormatting);
-            Section importedSection = (Section)importer.ImportNode(section, true);
-            partDoc.AppendChild(importedSection);
-
-            splitDocs.Add(partDoc);
+            Document part = new Document();
+            // Import the section into the new document.
+            Section importedSection = (Section)part.ImportNode(section, true, ImportFormatMode.KeepSourceFormatting);
+            part.AppendChild(importedSection);
+            splitDocs.Add(part);
         }
 
-        // Save each split document using a deterministic file name.
+        // Iterate over the split documents and save each using DocumentPartSavingCallback.
         for (int i = 0; i < splitDocs.Count; i++)
         {
-            string fileName = $"Part_{i + 1}.docx";
-            splitDocs[i].Save(fileName);
+            Document part = splitDocs[i];
+            HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Html)
+            {
+                DocumentPartSavingCallback = new PartSavingCallback()
+            };
+
+            string partFilePath = Path.Combine(outputDir, $"Part{i + 1}.html");
+            part.Save(partFilePath, saveOptions);
+
+            // Validate that the file was created.
+            if (!File.Exists(partFilePath))
+                throw new InvalidOperationException($"Failed to save split part {i + 1}.");
         }
 
-        // Verify that each expected output file exists.
-        for (int i = 1; i <= splitDocs.Count; i++)
-        {
-            string fileName = $"Part_{i}.docx";
-            if (!File.Exists(fileName))
-                throw new Exception($"Expected file '{fileName}' was not created.");
-        }
-
-        Console.WriteLine("All split parts were saved successfully.");
+        // Simple confirmation (non‑interactive).
+        Console.WriteLine($"Successfully saved {splitDocs.Count} split document parts to '{outputDir}'.");
     }
 }

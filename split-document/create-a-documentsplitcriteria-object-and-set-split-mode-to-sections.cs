@@ -7,50 +7,63 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with two sections.
+        // Prepare output folder
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "SplitOutput");
+        Directory.CreateDirectory(outputDir);
+
+        // Create a sample document with two sections
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // First section content
         builder.Writeln("Section 1 - Paragraph 1");
         builder.Writeln("Section 1 - Paragraph 2");
+
+        // Insert a section break to start a new section
         builder.InsertBreak(BreakType.SectionBreakNewPage);
+
+        // Second section content
         builder.Writeln("Section 2 - Paragraph 1");
         builder.Writeln("Section 2 - Paragraph 2");
 
-        // Prepare output folder.
-        string outputDir = "SplitOutput";
-        Directory.CreateDirectory(outputDir);
-
-        // Save the original document (optional, just for reference).
-        string originalPath = Path.Combine(outputDir, "OriginalDocument.html");
-        doc.Save(originalPath, SaveFormat.Html);
-
-        // Split the document by sections.
-        for (int i = 0; i < doc.Sections.Count; i++)
+        // Split the document by sections manually
+        int sectionIndex = 1;
+        foreach (Section srcSection in doc.Sections)
         {
-            // Create a new empty document.
+            // Create a new empty document
             Document splitDoc = new Document();
-            // Remove the default empty section that a new Document contains.
+
+            // Remove the default empty section that a new Document contains
             splitDoc.RemoveAllChildren();
 
-            // Import the current section from the source document.
-            Section importedSection = (Section)splitDoc.ImportNode(doc.Sections[i], true);
+            // Import the source section into the new document (deep clone with formatting)
+            Section importedSection = (Section)splitDoc.ImportNode(srcSection, true, ImportFormatMode.KeepSourceFormatting);
+
+            // Append the imported section as the sole section of the split document
             splitDoc.AppendChild(importedSection);
 
-            // Save each split section as a separate HTML file.
-            string splitPath = Path.Combine(outputDir, $"SplitDocument_section{i + 1}.html");
-            splitDoc.Save(splitPath, SaveFormat.Html);
+            // Save each split document as a separate HTML file
+            HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Html);
+            saveOptions.ExportHeadersFootersMode = ExportHeadersFootersMode.PerSection;
+
+            string splitFilePath = Path.Combine(outputDir, $"Document_section{sectionIndex}.html");
+            splitDoc.Save(splitFilePath, saveOptions);
+
+            sectionIndex++;
         }
 
-        // Validate that the original file exists.
-        if (!File.Exists(originalPath))
-            throw new Exception("Original output file was not created.");
+        // Validate that the expected number of HTML files were created
+        string[] htmlFiles = Directory.GetFiles(outputDir, "*.html");
+        if (htmlFiles.Length != doc.Sections.Count)
+        {
+            throw new InvalidOperationException(
+                $"Expected {doc.Sections.Count} HTML files after splitting by sections, but found {htmlFiles.Length}.");
+        }
 
-        // Validate that at least one section split file was generated.
-        string[] splitFiles = Directory.GetFiles(outputDir, "SplitDocument_section*.html");
-        if (splitFiles.Length == 0)
-            throw new Exception("No section split files were created.");
-
-        // Indicate successful execution.
-        Console.WriteLine("Document split into sections successfully.");
+        // Output the names of the generated files (no interactive prompt)
+        foreach (string file in htmlFiles)
+        {
+            Console.WriteLine("Generated file: " + Path.GetFileName(file));
+        }
     }
 }

@@ -1,86 +1,115 @@
 using System;
-using System.IO;
-using System.Linq;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // 1. Create a sample document with Heading 1 paragraphs.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        // Prepare output directory
+        string outputDir = "SplitOutput";
+        if (Directory.Exists(outputDir))
+            Directory.Delete(outputDir, true);
+        Directory.CreateDirectory(outputDir);
 
-        // First chapter
+        // Create a sample document with headings
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Writeln("Chapter One");
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Content of the first chapter.");
+        builder.Writeln("Content of chapter one.");
 
-        // Second chapter
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Writeln("Chapter Two");
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Content of the second chapter.");
+        builder.Writeln("Content of chapter two.");
 
-        // Third chapter
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter Three");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Content of the third chapter.");
-
-        // Save the source document (optional, just to have a file on disk).
-        string sourcePath = "Source.docx";
-        sourceDoc.Save(sourcePath);
-
-        // 2. Load the document (simulating a real scenario where the file already exists).
-        Document doc = new Document(sourcePath);
-
-        // 3. Find all Heading 1 paragraphs.
-        List<Paragraph> headingParagraphs = doc.GetChildNodes(NodeType.Paragraph, true)
-            .Cast<Paragraph>()
-            .Where(p => p.ParagraphFormat.StyleIdentifier == StyleIdentifier.Heading1)
-            .ToList();
-
-        if (!headingParagraphs.Any())
-            throw new InvalidOperationException("No Heading 1 paragraphs found to split the document.");
-
-        // 4. Iterate over each heading and create a separate document containing that heading and its following content.
-        for (int i = 0; i < headingParagraphs.Count; i++)
+        // Save the whole document as a reference file
+        string mainFilePath = Path.Combine(outputDir, "Document.html");
+        HtmlSaveOptions mainSaveOptions = new HtmlSaveOptions
         {
-            Paragraph heading = headingParagraphs[i];
-            string headingText = heading.GetText().Trim();
+            ExportImagesAsBase64 = true
+        };
+        doc.Save(mainFilePath, mainSaveOptions);
 
-            // Determine the node range for this chapter.
-            Node startNode = heading;
-            Node endNode = (i + 1 < headingParagraphs.Count) ? headingParagraphs[i + 1] : null;
+        // Split the document by Heading1 paragraphs and save each part using the heading text as filename
+        SplitByHeading(doc, outputDir);
 
-            // Create a new empty document.
-            Document splitDoc = new Document();
+        // Verify that files were created
+        string[] generatedFiles = Directory.GetFiles(outputDir, "*.html");
+        if (generatedFiles.Length == 0)
+            throw new Exception("No HTML files were generated.");
 
-            // Import nodes belonging to the current chapter.
-            Node currentNode = startNode;
-            while (currentNode != null && currentNode != endNode)
+        Console.WriteLine("Generated HTML files:");
+        foreach (string file in generatedFiles)
+            Console.WriteLine(file);
+    }
+
+    private static void SplitByHeading(Document sourceDoc, string outputDir)
+    {
+        // Collect all paragraphs in the document
+        NodeCollection allParagraphs = sourceDoc.GetChildNodes(NodeType.Paragraph, true);
+
+        int i = 0;
+        while (i < allParagraphs.Count)
+        {
+            Paragraph para = (Paragraph)allParagraphs[i];
+            // Check if this paragraph is a Heading1
+            if (para.ParagraphFormat.StyleIdentifier == StyleIdentifier.Heading1)
             {
-                Node importedNode = splitDoc.ImportNode(currentNode, true);
-                splitDoc.FirstSection.Body.AppendChild(importedNode);
-                currentNode = currentNode.NextSibling;
+                // Determine the range of nodes belonging to this heading
+                int startIndex = i;
+                int endIndex = startIndex + 1; // start after the heading
+                while (endIndex < allParagraphs.Count)
+                {
+                    Paragraph nextPara = (Paragraph)allParagraphs[endIndex];
+                    if (nextPara.ParagraphFormat.StyleIdentifier == StyleIdentifier.Heading1)
+                        break; // next heading starts a new part
+                    endIndex++;
+                }
+
+                // Create a new document for this part
+                Document partDoc = new Document();
+                // Ensure the destination document has a section to receive nodes
+                Section destSection = partDoc.FirstSection;
+
+                // Import and append nodes from startIndex to endIndex - 1
+                for (int j = startIndex; j < endIndex; j++)
+                {
+                    Node importedNode = partDoc.ImportNode(allParagraphs[j], true, ImportFormatMode.KeepSourceFormatting);
+                    destSection.Body.AppendChild(importedNode);
+                }
+
+                // Build a safe filename from the heading text
+                string headingText = para.GetText().Trim();
+                string safeName = MakeSafeFileName(headingText);
+                string partFilePath = Path.Combine(outputDir, safeName + ".html");
+
+                // Save the part as HTML
+                HtmlSaveOptions partSaveOptions = new HtmlSaveOptions
+                {
+                    ExportImagesAsBase64 = true
+                };
+                partDoc.Save(partFilePath, partSaveOptions);
+
+                // Move the index to the next heading (or end)
+                i = endIndex;
             }
-
-            // 5. Build a safe filename from the heading text.
-            string safeFileName = string.Concat(headingText.Split(Path.GetInvalidFileNameChars()))
-                                      .Replace(' ', '_');
-            string outputPath = $"{safeFileName}.docx";
-
-            // 6. Save the split document.
-            splitDoc.Save(outputPath, SaveFormat.Docx);
-
-            // 7. Verify that the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException($"Failed to create split file: {outputPath}");
+            else
+            {
+                i++;
+            }
         }
+    }
 
-        // All split documents have been created successfully.
+    private static string MakeSafeFileName(string name)
+    {
+        foreach (char c in Path.GetInvalidFileNameChars())
+            name = name.Replace(c, '_');
+        return name.Replace(' ', '_');
     }
 }

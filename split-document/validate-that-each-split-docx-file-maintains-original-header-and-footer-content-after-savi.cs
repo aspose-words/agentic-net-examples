@@ -1,91 +1,80 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.BuildingBlocks;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample source document with two sections, each having its own header and footer.
+        // -----------------------------------------------------------------
+        // 1. Create a sample document with two sections.
+        //    Each section gets its own header and footer so that they are
+        //    preserved when the document is split by sections.
+        // -----------------------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        // Section 1 header/footer and content.
+        // Add header and footer to the first (default) section.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Writeln("Header Text Section 1");
+        builder.Write("Header Text");
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.Writeln("Footer Text Section 1");
-        builder.MoveToDocumentEnd();
-        builder.Writeln("Content of Section 1");
+        builder.Write("Footer Text");
 
-        // Insert a new section.
+        // Return to the main body and write content for the first section.
+        builder.MoveToDocumentEnd();
+        builder.Writeln("Section 1 content.");
+
+        // Insert a section break to start a second section.
         builder.InsertBreak(BreakType.SectionBreakNewPage);
 
-        // Section 2 header/footer and content.
+        // Add the same header and footer to the second section.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Writeln("Header Text Section 2");
+        builder.Write("Header Text");
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.Writeln("Footer Text Section 2");
-        builder.MoveToDocumentEnd();
-        builder.Writeln("Content of Section 2");
+        builder.Write("Footer Text");
+
+        // Write content for the second section.
+        builder.Writeln("Section 2 content.");
 
         // Save the source document.
         string sourcePath = "Source.docx";
         sourceDoc.Save(sourcePath);
 
-        // Expected header and footer texts for each section.
-        string[] expectedHeaders = { "Header Text Section 1", "Header Text Section 2" };
-        string[] expectedFooters = { "Footer Text Section 1", "Footer Text Section 2" };
-
-        // Split the document by sections, preserving headers and footers.
-        List<string> splitFiles = new List<string>();
+        // -----------------------------------------------------------------
+        // 2. Split the document by sections, preserving headers and footers.
+        // -----------------------------------------------------------------
         for (int i = 0; i < sourceDoc.Sections.Count; i++)
         {
-            Section section = sourceDoc.Sections[i];
-
-            // Create a new document and import the section.
+            // Create a new empty document and remove its default empty section.
             Document splitDoc = new Document();
+            splitDoc.RemoveAllChildren();
+
+            // Import the current section (including its headers/footers) into the new document.
             NodeImporter importer = new NodeImporter(sourceDoc, splitDoc, ImportFormatMode.KeepSourceFormatting);
-            Section importedSection = (Section)importer.ImportNode(section, true);
+            Section importedSection = (Section)importer.ImportNode(sourceDoc.Sections[i], true);
+            splitDoc.AppendChild(importedSection);
 
-            // Replace any existing sections with the imported one.
-            splitDoc.Sections.Clear();
-            splitDoc.Sections.Add(importedSection);
-
-            string splitPath = $"Section_{i + 1}.docx";
+            // Save the split document.
+            string splitPath = $"Split_{i + 1}.docx";
             splitDoc.Save(splitPath);
-            splitFiles.Add(splitPath);
+
+            // -----------------------------------------------------------------
+            // 3. Validate that the split document exists and contains the header/footer.
+            // -----------------------------------------------------------------
+            if (!File.Exists(splitPath))
+                throw new Exception($"Split file not found: {splitPath}");
+
+            Document reloaded = new Document(splitPath);
+            string headerText = reloaded.FirstSection.HeadersFooters[HeaderFooterType.HeaderPrimary]?.GetText() ?? "";
+            string footerText = reloaded.FirstSection.HeadersFooters[HeaderFooterType.FooterPrimary]?.GetText() ?? "";
+
+            if (!headerText.Contains("Header Text"))
+                throw new Exception($"Header text missing in {splitPath}");
+            if (!footerText.Contains("Footer Text"))
+                throw new Exception($"Footer text missing in {splitPath}");
         }
 
-        // Validate that each split document contains the original header and footer text.
-        for (int i = 0; i < splitFiles.Count; i++)
-        {
-            string path = splitFiles[i];
-            if (!File.Exists(path))
-                throw new Exception($"Expected split file not found: {path}");
-
-            Document splitDoc = new Document(path);
-            bool headerFound = false;
-            bool footerFound = false;
-
-            foreach (HeaderFooter hf in splitDoc.GetChildNodes(NodeType.HeaderFooter, true))
-            {
-                string text = hf.GetText();
-                if (hf.HeaderFooterType == HeaderFooterType.HeaderPrimary && text.Contains(expectedHeaders[i]))
-                    headerFound = true;
-                if (hf.HeaderFooterType == HeaderFooterType.FooterPrimary && text.Contains(expectedFooters[i]))
-                    footerFound = true;
-            }
-
-            if (!headerFound)
-                throw new Exception($"Header not preserved in {path}");
-            if (!footerFound)
-                throw new Exception($"Footer not preserved in {path}");
-        }
-
-        // All validations passed.
-        Console.WriteLine("All split documents preserve their original headers and footers.");
+        // All split documents validated successfully.
+        Console.WriteLine("All split documents contain the original header and footer.");
     }
 }

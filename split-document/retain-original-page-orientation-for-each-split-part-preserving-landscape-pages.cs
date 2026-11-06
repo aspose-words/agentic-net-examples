@@ -1,69 +1,65 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
-using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Folder for output files.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Create a sample document with a portrait page followed by a landscape page.
+        string sourcePath = "Source.docx";
+        CreateSampleDocument(sourcePath);
 
-        // Create a sample document with a portrait section and a landscape section.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        // Load the source document.
+        Document sourceDoc = new Document(sourcePath);
+        int sectionCount = sourceDoc.Sections.Count;
 
-        // First (portrait) section.
-        builder.Writeln("This is the portrait section.");
-        // Insert a section break to start a new section on a new page.
+        // Split each section (each page) into a separate document while preserving its orientation.
+        for (int i = 0; i < sectionCount; i++)
+        {
+            Section srcSection = sourceDoc.Sections[i];
+
+            // Create a new empty document and remove the default empty section.
+            Document splitDoc = new Document();
+            splitDoc.RemoveAllChildren();
+
+            // Import the source section into the new document.
+            NodeImporter importer = new NodeImporter(sourceDoc, splitDoc, ImportFormatMode.KeepSourceFormatting);
+            Section importedSection = (Section)importer.ImportNode(srcSection, true);
+            splitDoc.AppendChild(importedSection);
+
+            // Save the split document.
+            string outPath = $"Page_{i + 1}.docx";
+            splitDoc.Save(outPath);
+
+            // Verify the file was created.
+            if (!File.Exists(outPath))
+                throw new InvalidOperationException($"Failed to save split document for page {i + 1}.");
+
+            // Verify orientation is preserved.
+            Orientation actualOrientation = splitDoc.Sections[0].PageSetup.Orientation;
+            Orientation expectedOrientation = srcSection.PageSetup.Orientation;
+            if (actualOrientation != expectedOrientation)
+                throw new InvalidOperationException(
+                    $"Orientation mismatch on page {i + 1}. Expected {expectedOrientation}, got {actualOrientation}.");
+        }
+    }
+
+    private static void CreateSampleDocument(string path)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // First section – portrait orientation.
+        builder.PageSetup.Orientation = Orientation.Portrait;
+        builder.Writeln("This is a portrait page.");
+        // Force a new section on a new page.
         builder.InsertBreak(BreakType.SectionBreakNewPage);
 
-        // Second (landscape) section.
-        builder.CurrentSection.PageSetup.Orientation = Orientation.Landscape;
-        builder.Writeln("This is the landscape section.");
+        // Second section – landscape orientation.
+        builder.PageSetup.Orientation = Orientation.Landscape;
+        builder.Writeln("This is a landscape page.");
 
-        // Save the source document.
-        string sourcePath = Path.Combine(outputDir, "Source.docx");
-        sourceDoc.Save(sourcePath);
-
-        // Split the document by sections, preserving each section's orientation.
-        for (int i = 0; i < sourceDoc.Sections.Count; i++)
-        {
-            Section section = sourceDoc.Sections[i];
-
-            // Create a new empty document to hold the imported section.
-            Document partDoc = new Document();
-
-            // Import the section from the source document into the new document.
-            NodeImporter importer = new NodeImporter(sourceDoc, partDoc, ImportFormatMode.KeepSourceFormatting);
-            Section importedSection = (Section)importer.ImportNode(section, true);
-
-            // Append the imported section to the new document.
-            partDoc.AppendChild(importedSection);
-
-            // Save the split part.
-            string partPath = Path.Combine(outputDir, $"Part_{i + 1}.docx");
-            partDoc.Save(partPath);
-
-            // Validate that the file was created.
-            if (!File.Exists(partPath))
-                throw new InvalidOperationException($"Failed to create split document: {partPath}");
-        }
-
-        // Validate that the expected number of split files exist.
-        int expectedParts = sourceDoc.Sections.Count;
-        for (int i = 1; i <= expectedParts; i++)
-        {
-            string partPath = Path.Combine(outputDir, $"Part_{i}.docx");
-            if (!File.Exists(partPath))
-                throw new FileNotFoundException($"Expected split file not found: {partPath}");
-        }
-
-        // All done.
-        Console.WriteLine("Document split completed successfully.");
+        doc.Save(path);
     }
 }

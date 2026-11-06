@@ -1,64 +1,76 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.BuildingBlocks;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Create a sample source document with ten pages.
+        // Create a sample document with 7 pages.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        for (int i = 1; i <= 10; i++)
+        for (int i = 1; i <= 7; i++)
         {
             builder.Writeln($"This is the content of page {i}.");
-            if (i < 10)
+            if (i < 7)
                 builder.InsertBreak(BreakType.PageBreak);
         }
 
-        // Save the source document for reference (optional).
-        string sourcePath = Path.Combine(outputDir, "source.docx");
-        sourceDoc.Save(sourcePath);
-
         // Define custom page ranges to split.
-        string[] pageRanges = { "1-3", "5-7" };
+        string rangeSpec = "1-3,5-7";
+        List<(int Start, int End)> ranges = ParseRanges(rangeSpec);
 
-        // Get total page count of the source document.
+        // Verify the source document has enough pages.
         int totalPages = sourceDoc.PageCount;
+        if (totalPages == 0)
+            throw new InvalidOperationException("Source document contains no pages.");
 
         // Process each range.
-        foreach (string range in pageRanges)
+        int rangeIndex = 1;
+        foreach (var (start, end) in ranges)
         {
-            // Parse start and end page numbers.
-            string[] parts = range.Split('-');
-            if (parts.Length != 2 ||
-                !int.TryParse(parts[0], out int startPage) ||
-                !int.TryParse(parts[1], out int endPage))
-            {
-                throw new ArgumentException($"Invalid page range format: {range}");
-            }
+            if (start < 1 || end > totalPages || start > end)
+                throw new ArgumentOutOfRangeException($"Invalid page range: {start}-{end}");
 
-            // Validate page numbers.
-            if (startPage < 1 || endPage > totalPages || startPage > endPage)
-                throw new ArgumentOutOfRangeException($"Page range {range} is out of bounds. Document has {totalPages} pages.");
+            int pageCount = end - start + 1;
+            // Aspose.Words uses zero‑based page indexes for extraction.
+            int startIndexZeroBased = start - 1;
+            Document extracted = sourceDoc.ExtractPages(startIndexZeroBased, pageCount);
 
-            // Extract the specified pages (ExtractPages uses 1‑based page numbers).
-            int pageCount = endPage - startPage + 1;
-            Document extracted = sourceDoc.ExtractPages(startPage, pageCount);
+            string outputFileName = $"output_{rangeIndex}_{start}-{end}.pdf";
+            extracted.Save(outputFileName, SaveFormat.Pdf);
 
-            // Save the extracted range as PDF.
-            string outputPath = Path.Combine(outputDir, $"output_{range}.pdf");
-            extracted.Save(outputPath, SaveFormat.Pdf);
+            // Validate that the file was created.
+            if (!File.Exists(outputFileName))
+                throw new IOException($"Failed to create output file: {outputFileName}");
 
-            // Verify the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException($"Failed to create output file: {outputPath}");
+            rangeIndex++;
         }
+    }
 
-        // Program completed successfully.
+    // Parses a string like "1-3,5-7" into a list of (start, end) tuples.
+    private static List<(int Start, int End)> ParseRanges(string spec)
+    {
+        var result = new List<(int Start, int End)>();
+        if (string.IsNullOrWhiteSpace(spec))
+            return result;
+
+        string[] parts = spec.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+        foreach (string part in parts)
+        {
+            string[] bounds = part.Split(new[] { '-' }, StringSplitOptions.RemoveEmptyEntries);
+            if (bounds.Length != 2)
+                throw new FormatException($"Invalid range format: '{part}'");
+
+            if (!int.TryParse(bounds[0].Trim(), out int start))
+                throw new FormatException($"Invalid start page in range: '{bounds[0]}'");
+            if (!int.TryParse(bounds[1].Trim(), out int end))
+                throw new FormatException($"Invalid end page in range: '{bounds[1]}'");
+
+            result.Add((start, end));
+        }
+        return result;
     }
 }
