@@ -1,49 +1,68 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
 
-namespace ChartFromArrayExample
+public class ChartFromArrayExample
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new document and a DocumentBuilder.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert a column chart with a defined size.
+        Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
+        if (!chartShape.HasChart)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            throw new InvalidOperationException("The inserted shape does not contain a chart.");
+        }
 
-            // Insert a column chart with a defined size.
-            Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
-            Chart chart = chartShape.Chart;
+        Chart chart = chartShape.Chart;
 
-            // Remove any default series that Aspose.Words adds automatically.
-            chart.Series.Clear();
+        // Clear any default series that were added automatically.
+        chart.Series.Clear();
 
-            // Define series names, category names, and the numeric data matrix.
-            string[] seriesNames = { "North", "South" };
-            string[] categories = { "Q1", "Q2", "Q3" };
-            double[,] values = {
-                { 120.5, 135.0, 150.2 }, // North series values
-                { 98.3, 110.7, 130.4 }   // South series values
-            };
+        // Define categories (X‑axis labels).
+        string[] categories = { "Q1", "Q2", "Q3", "Q4" };
 
-            // Populate the chart with series based on the two‑dimensional array.
-            // Use the overload that also accepts category names, so explicit axis handling is unnecessary.
-            for (int i = 0; i < seriesNames.Length; i++)
+        // Define series names.
+        string[] seriesNames = { "North Region", "South Region", "East Region" };
+
+        // Two‑dimensional array holding the values.
+        // Rows correspond to series, columns correspond to categories.
+        double[,] values = new double[,]
+        {
+            { 12000, 15000, 13000, 17000 }, // North Region
+            { 10000, 11000, 11500, 14000 }, // South Region
+            {  9000,  9500, 10500, 12000 }  // East Region
+        };
+
+        // Populate the chart with data from the two‑dimensional array.
+        for (int i = 0; i < seriesNames.Length; i++)
+        {
+            double[] seriesValues = new double[categories.Length];
+            for (int j = 0; j < categories.Length; j++)
             {
-                double[] seriesValues = new double[categories.Length];
-                for (int j = 0; j < categories.Length; j++)
-                {
-                    seriesValues[j] = values[i, j];
-                }
-
-                // Add the series together with the category labels.
-                chart.Series.Add(seriesNames[i], categories, seriesValues);
+                seriesValues[j] = values[i, j];
             }
 
-            // Save the document containing the chart.
-            doc.Save("ChartFromArray.docx");
+            // Add the series to the chart.
+            chart.Series.Add(seriesNames[i], categories, seriesValues);
         }
+
+        // Optional: set chart title and legend position.
+        chart.Title.Text = "Quarterly Sales by Region";
+        chart.Title.Overlay = false;
+        chart.Legend.Position = LegendPosition.Right;
+
+        // Save the document containing the chart.
+        string outputDoc = Path.Combine(Directory.GetCurrentDirectory(), "ChartFromArray.docx");
+        doc.Save(outputDoc);
+
+        // Export the same document to PDF to demonstrate rendering.
+        string outputPdf = Path.Combine(Directory.GetCurrentDirectory(), "ChartFromArray.pdf");
+        doc.Save(outputPdf);
     }
 }

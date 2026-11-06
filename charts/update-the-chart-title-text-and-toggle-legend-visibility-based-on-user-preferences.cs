@@ -2,42 +2,51 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
-using System.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // User preferences (could be loaded from a config file or passed as arguments)
-        string preferredTitle = "Quarterly Sales Overview";
-        bool showLegend = false; // Set to true to display the legend, false to hide it
-
-        // Create a new document and a builder.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a column chart into the document.
         Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
-        // Ensure the shape actually contains a chart.
+
+        // Ensure the inserted shape actually contains a chart.
         if (!chartShape.HasChart)
             throw new InvalidOperationException("The inserted shape does not contain a chart.");
 
         // Access the chart object.
         Chart chart = chartShape.Chart;
 
-        // Update the chart title according to the user preference.
-        ChartTitle title = chart.Title;
-        title.Text = preferredTitle;
-        title.Show = true; // Ensure the title is visible.
+        // Update the chart title.
+        chart.Title.Text = "Quarterly Sales Overview";
 
-        // Toggle legend visibility based on the user preference.
-        ChartLegend legend = chart.Legend;
-        legend.Position = showLegend ? LegendPosition.Right : LegendPosition.None;
+        // User preference for legend visibility (hard‑coded for this example).
+        bool showLegend = false;
 
-        // Optionally, adjust legend overlay to give more space to the chart.
-        legend.Overlay = true;
+        // Toggle legend visibility if the legend object exists.
+        if (chart.Legend != null)
+        {
+            // Aspose.Words does not expose a direct Visible property for the legend.
+            // As a workaround, we change the legend position and overlay setting.
+            // When showLegend is false we move the legend to a position that effectively hides it.
+            if (showLegend)
+            {
+                chart.Legend.Position = LegendPosition.Right;
+                chart.Legend.Overlay = false;
+            }
+            else
+            {
+                // Position the legend at the bottom and overlay it so it does not appear prominently.
+                chart.Legend.Position = LegendPosition.Bottom;
+                chart.Legend.Overlay = true;
+            }
+        }
 
-        // Save the document.
-        doc.Save("UpdatedChart.docx");
+        // Save the updated document.
+        doc.Save("updated-chart.docx");
     }
 }

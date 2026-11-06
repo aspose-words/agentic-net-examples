@@ -12,35 +12,27 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart.
+        // Insert a column chart into the document.
         Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
-        if (!chartShape.HasChart)
-            throw new InvalidOperationException("The inserted shape does not contain a chart.");
-
-        // Access the chart.
         Chart chart = chartShape.Chart;
 
         // Remove any default series.
         chart.Series.Clear();
 
-        // Add a new series with three data points.
-        chart.Series.Add("Series 1", new double[] { 10, 20, 30 });
+        // Define values and corresponding colors for each data point.
+        double[] values = { 10, 20, 30 };
+        Color[] colors = { Color.Red, Color.Green, Color.Blue };
 
-        // Retrieve the series we just added.
-        ChartSeries series = chart.Series[0];
+        // Add a series with the defined values.
+        ChartSeries series = chart.Series.Add("Sample Series", values);
 
-        // Define colors for each data point.
-        Color[] pointColors = new Color[] { Color.Red, Color.Green, Color.Blue };
-
-        // Apply colors to each data point using the Fill property of the point's format.
-        for (int i = 0; i < series.DataPoints.Count && i < pointColors.Length; i++)
+        // Set the fill color for each data point.
+        for (int i = 0; i < series.DataPoints.Count && i < colors.Length; i++)
         {
-            ChartDataPoint point = series.DataPoints[i];
-            point.Format.Fill.Visible = true;
-            point.Format.Fill.ForeColor = pointColors[i];
+            series.DataPoints[i].Format.Fill.ForeColor = colors[i];
         }
 
         // Save the document.
-        doc.Save("ChartDataPointColors.docx");
+        doc.Save("ChartDataPoints.docx");
     }
 }
