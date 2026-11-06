@@ -6,40 +6,42 @@ public class Program
 {
     public static void Main()
     {
-        // Create a dummy external JavaScript file.
-        const string jsFileName = "script.js";
-        File.WriteAllText(jsFileName, "console.log('Hello from external script');");
-
-        // Create an HTML file that references the external JavaScript.
-        const string htmlFileName = "input.html";
+        // Prepare sample HTML with an external JavaScript reference.
         string htmlContent = @"
 <!DOCTYPE html>
 <html>
 <head>
     <title>Sample HTML</title>
-    <script src='script.js'></script>
+    <script src=""script.js""></script>
 </head>
 <body>
-    <h1>Sample Heading</h1>
-    <p>This is a paragraph rendered without executing JavaScript.</p>
+    <h1>Static Heading</h1>
+    <p>This paragraph is rendered without executing JavaScript.</p>
 </body>
 </html>";
-        File.WriteAllText(htmlFileName, htmlContent);
+        // Write the HTML file.
+        const string htmlPath = "input.html";
+        File.WriteAllText(htmlPath, htmlContent);
 
-        // Load the HTML document. Aspose.Words ignores JavaScript during loading.
-        Document doc = new Document(htmlFileName);
+        // Create a dummy external JavaScript file.
+        const string jsPath = "script.js";
+        File.WriteAllText(jsPath, "console.log('This script is ignored by Aspose.Words.');");
 
-        // Convert the loaded document to PDF.
-        const string pdfFileName = "output.pdf";
-        doc.Save(pdfFileName, SaveFormat.Pdf);
+        // Load the HTML document. Aspose.Words ignores JavaScript during rendering.
+        Document doc = new Document(htmlPath);
+
+        // Convert and save to PDF.
+        const string pdfPath = "output.pdf";
+        doc.Save(pdfPath, SaveFormat.Pdf);
 
         // Validate that the PDF was created.
-        if (!File.Exists(pdfFileName))
+        if (!File.Exists(pdfPath))
+        {
             throw new InvalidOperationException("Expected output PDF was not created.");
+        }
 
-        // Optional cleanup (comment out if you want to inspect the files after execution).
-        // File.Delete(jsFileName);
-        // File.Delete(htmlFileName);
-        // File.Delete(pdfFileName);
+        // Optional: Clean up temporary files (comment out if you want to inspect them).
+        // File.Delete(htmlPath);
+        // File.Delete(jsPath);
     }
 }

@@ -7,43 +7,46 @@ public class Program
 {
     public static void Main()
     {
-        // Define input and output directories.
-        string inputDirectory = "InputDocs";
-        string outputDirectory = "OutputHtml";
+        // Prepare input and output directories
+        string inputDir = "InputDocs";
+        string outputDir = "OutputHtml";
 
-        // Ensure directories exist.
-        Directory.CreateDirectory(inputDirectory);
-        Directory.CreateDirectory(outputDirectory);
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(outputDir);
 
-        // Create sample DOCX files in the input directory.
-        for (int i = 1; i <= 2; i++)
+        // Create sample DOCX files if none exist
+        if (Directory.GetFiles(inputDir, "*.docx").Length == 0)
         {
-            string docxPath = Path.Combine(inputDirectory, $"Sample{i}.docx");
-            Document sampleDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-            builder.Writeln($"This is sample document {i}.");
-            sampleDoc.Save(docxPath, SaveFormat.Docx);
+            for (int i = 1; i <= 2; i++)
+            {
+                Document sampleDoc = new Document();
+                DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+                builder.Writeln($"Sample document {i}");
+                string inputPath = Path.Combine(inputDir, $"Sample{i}.docx");
+                sampleDoc.Save(inputPath, SaveFormat.Docx);
+                if (!File.Exists(inputPath))
+                    throw new InvalidOperationException($"Failed to create sample DOCX: {inputPath}");
+            }
         }
 
-        // Batch convert each DOCX file to HTML with round‑trip information enabled.
-        string[] docxFiles = Directory.GetFiles(inputDirectory, "*.docx");
-        foreach (string docxFilePath in docxFiles)
+        // Batch convert each DOCX to HTML with round‑trip information enabled
+        string[] docxFiles = Directory.GetFiles(inputDir, "*.docx");
+        foreach (string docxPath in docxFiles)
         {
-            Document doc = new Document(docxFilePath);
+            Document doc = new Document(docxPath);
 
-            string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(docxFilePath);
-            string htmlFilePath = Path.Combine(outputDirectory, fileNameWithoutExtension + ".html");
+            HtmlSaveOptions saveOptions = new HtmlSaveOptions
+            {
+                ExportRoundtripInformation = true
+            };
 
-            HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html);
-            htmlOptions.ExportRoundtripInformation = true;
+            string htmlFileName = Path.GetFileNameWithoutExtension(docxPath) + ".html";
+            string htmlPath = Path.Combine(outputDir, htmlFileName);
 
-            doc.Save(htmlFilePath, htmlOptions);
+            doc.Save(htmlPath, saveOptions);
 
-            if (!File.Exists(htmlFilePath))
-                throw new InvalidOperationException($"Expected HTML file was not created: {htmlFilePath}");
+            if (!File.Exists(htmlPath))
+                throw new InvalidOperationException($"HTML output was not created: {htmlPath}");
         }
-
-        // Optional: indicate completion.
-        Console.WriteLine("Batch conversion completed successfully.");
     }
 }

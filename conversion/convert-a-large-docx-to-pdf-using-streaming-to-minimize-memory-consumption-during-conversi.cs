@@ -6,20 +6,23 @@ public class Program
 {
     public static void Main()
     {
-        // Create a large DOCX document locally.
+        // Create a sample large DOCX document.
         Document source = new Document();
         DocumentBuilder builder = new DocumentBuilder(source);
+        // Simulate a large document by writing many lines.
         for (int i = 0; i < 5000; i++)
         {
-            builder.Writeln($"Paragraph {i + 1}: This is sample text to increase document size.");
+            builder.Writeln($"This is line {i + 1} of a large document.");
         }
-        string inputPath = "large_input.docx";
+
+        // Save the source document as DOCX.
+        string inputPath = "input.docx";
         source.Save(inputPath, SaveFormat.Docx);
 
         // Load the DOCX document.
         Document doc = new Document(inputPath);
 
-        // Convert to PDF using a file stream to minimize memory usage.
+        // Convert to PDF using a FileStream to stream the output.
         string outputPath = "output.pdf";
         using (FileStream pdfStream = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
         {
@@ -27,15 +30,9 @@ public class Program
         }
 
         // Validate that the PDF was created and contains data.
-        if (!File.Exists(outputPath))
+        if (!File.Exists(outputPath) || new FileInfo(outputPath).Length == 0)
         {
-            throw new InvalidOperationException("Expected output PDF was not created.");
-        }
-
-        FileInfo pdfInfo = new FileInfo(outputPath);
-        if (pdfInfo.Length == 0)
-        {
-            throw new InvalidOperationException("The generated PDF file is empty.");
+            throw new InvalidOperationException("Expected output PDF was not created or is empty.");
         }
     }
 }

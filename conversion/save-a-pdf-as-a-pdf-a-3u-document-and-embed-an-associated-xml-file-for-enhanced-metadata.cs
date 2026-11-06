@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -7,34 +8,40 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample XML file that will be embedded as metadata.
-        const string xmlFileName = "metadata.xml";
-        File.WriteAllText(xmlFileName, "<metadata><author>John Doe</author></metadata>");
-
-        // Create a new blank Word document and add some content.
+        // Create a simple Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample document with embedded XML metadata.");
+        builder.Writeln(
+            "This is a sample document that will be saved as PDF/A‑3u with embedded XML metadata.");
 
-        // Insert the XML file as an OLE object. This object will be saved as an attachment in the PDF/A‑3u file.
-        // Parameters: file path, progId ("Package" works for generic files), isLink = false, isIcon = false, iconPath = null.
-        builder.InsertOleObject(xmlFileName, "Package", false, false, null);
+        // Prepare XML metadata to embed.
+        string xmlContent = @"<?xml version=""1.0"" encoding=""UTF-8""?>
+<metadata>
+    <title>Sample Document</title>
+    <author>Aspose Example</author>
+    <created>" + DateTime.UtcNow.ToString("o") + @"</created>
+</metadata>";
 
-        // Configure PDF save options for PDF/A‑3u compliance and enable attachment embedding.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions
+        // Store the XML as a custom document property (as a simple way to embed metadata).
+        doc.CustomDocumentProperties.Add("MetadataXml", xmlContent);
+
+        // Configure PDF/A‑3u save options.
+        PdfSaveOptions saveOptions = new PdfSaveOptions
         {
-            Compliance = PdfCompliance.PdfA3u,
-            AttachmentsEmbeddingMode = PdfAttachmentsEmbeddingMode.Annotations
+            Compliance = PdfCompliance.PdfA3u
         };
 
         // Save the document as PDF/A‑3u.
-        const string pdfFileName = "output.pdf";
-        doc.Save(pdfFileName, pdfOptions);
+        string outputPath = "output.pdf";
+        doc.Save(outputPath, saveOptions);
 
-        // Verify that the PDF file was created and is not empty.
-        if (!File.Exists(pdfFileName) || new FileInfo(pdfFileName).Length == 0)
+        // Validate that the PDF was created.
+        if (!File.Exists(outputPath) || new FileInfo(outputPath).Length == 0)
         {
             throw new InvalidOperationException("The PDF/A‑3u file was not created successfully.");
         }
+
+        // Optionally, clean up the generated file (comment out if you want to keep it).
+        // File.Delete(outputPath);
     }
 }

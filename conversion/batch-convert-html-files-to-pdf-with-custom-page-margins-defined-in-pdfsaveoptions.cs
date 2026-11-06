@@ -7,61 +7,63 @@ public class Program
 {
     public static void Main()
     {
-        // Define folders for input HTML files and output PDF files.
-        string inputFolder = "input_html";
-        string outputFolder = "output_pdf";
+        // Prepare input and output folders
+        string inputFolder = "HtmlInput";
+        string outputFolder = "PdfOutput";
 
-        // Ensure the folders exist.
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Create sample HTML files.
-        string htmlFile1 = Path.Combine(inputFolder, "sample1.html");
-        string htmlContent1 = "<html><body><h1>Sample 1</h1><p>This is the first sample HTML file.</p></body></html>";
-        File.WriteAllText(htmlFile1, htmlContent1);
+        // Create sample HTML files
+        string html1Path = Path.Combine(inputFolder, "sample1.html");
+        string html2Path = Path.Combine(inputFolder, "sample2.html");
 
-        string htmlFile2 = Path.Combine(inputFolder, "sample2.html");
-        string htmlContent2 = "<html><body><h2>Sample 2</h2><p>This is the second sample HTML file.</p></body></html>";
-        File.WriteAllText(htmlFile2, htmlContent2);
+        File.WriteAllText(html1Path,
+            "<html><body><h1>First Document</h1><p>This is the first sample HTML.</p></body></html>");
+        File.WriteAllText(html2Path,
+            "<html><body><h2>Second Document</h2><p>This is the second sample HTML.</p></body></html>");
 
-        // Define custom margins (in points; 72 points = 1 inch).
-        const double marginTop = 72;    // 1 inch
-        const double marginBottom = 72; // 1 inch
-        const double marginLeft = 72;   // 1 inch
-        const double marginRight = 72;  // 1 inch
+        // Define custom margins (in points; 1 inch = 72 points)
+        const double leftMargin = 72;   // 1 inch
+        const double rightMargin = 72;  // 1 inch
+        const double topMargin = 72;    // 1 inch
+        const double bottomMargin = 72; // 1 inch
 
-        // Process each HTML file in the input folder.
+        // Batch convert each HTML file to PDF with the custom margins
         foreach (string htmlPath in Directory.GetFiles(inputFolder, "*.html"))
         {
-            // Load the HTML document.
+            // Load HTML document
             Document doc = new Document(htmlPath);
 
-            // Apply custom margins to every section in the document.
+            // Apply custom margins to every section in the document
             foreach (Section section in doc.Sections)
             {
-                PageSetup setup = section.PageSetup;
-                setup.TopMargin = marginTop;
-                setup.BottomMargin = marginBottom;
-                setup.LeftMargin = marginLeft;
-                setup.RightMargin = marginRight;
+                section.PageSetup.LeftMargin = leftMargin;
+                section.PageSetup.RightMargin = rightMargin;
+                section.PageSetup.TopMargin = topMargin;
+                section.PageSetup.BottomMargin = bottomMargin;
             }
 
-            // Configure PDF save options (no special page info needed).
+            // Use default PDF save options (no special options required for margins)
             PdfSaveOptions pdfOptions = new PdfSaveOptions();
 
-            // Determine the output PDF file path.
+            // Determine output PDF path
             string pdfFileName = Path.GetFileNameWithoutExtension(htmlPath) + ".pdf";
             string pdfPath = Path.Combine(outputFolder, pdfFileName);
 
-            // Save the document as PDF using the specified options.
+            // Save as PDF
             doc.Save(pdfPath, pdfOptions);
 
-            // Validate that the PDF file was created.
+            // Validate that the PDF was created
             if (!File.Exists(pdfPath))
-                throw new InvalidOperationException($"Expected PDF file was not created: {pdfPath}");
+                throw new InvalidOperationException($"PDF file was not created: {pdfPath}");
         }
 
-        // Indicate successful completion.
-        Console.WriteLine("Batch conversion completed successfully.");
+        // Final validation: ensure at least one PDF exists
+        string[] pdfFiles = Directory.GetFiles(outputFolder, "*.pdf");
+        if (pdfFiles.Length == 0)
+            throw new InvalidOperationException("No PDF files were generated in the output folder.");
+
+        Console.WriteLine("Batch HTML to PDF conversion completed successfully.");
     }
 }

@@ -17,38 +17,35 @@ public class BatchDocToPdfConverter
         // Create sample DOC files in the input folder.
         for (int i = 1; i <= 3; i++)
         {
-            // Create a new empty document.
-            Document source = new Document();
-            DocumentBuilder builder = new DocumentBuilder(source);
-            builder.Writeln($"Sample content for document {i}.");
-
-            // Save the document as DOC.
             string docPath = Path.Combine(inputFolder, $"Sample{i}.doc");
-            source.Save(docPath, SaveFormat.Doc);
+            Document sampleDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+            builder.Writeln($"This is sample document {i}.");
+            sampleDoc.Save(docPath, SaveFormat.Doc);
         }
 
         // Process each DOC file in the input folder.
-        foreach (string docFilePath in Directory.GetFiles(inputFolder, "*.doc"))
+        string[] docFiles = Directory.GetFiles(inputFolder, "*.doc");
+        foreach (string docFilePath in docFiles)
         {
             // Load the DOC file.
             Document doc = new Document(docFilePath);
 
             // Determine the output PDF path.
             string pdfFileName = Path.GetFileNameWithoutExtension(docFilePath) + ".pdf";
-            string pdfFilePath = Path.Combine(outputFolder, pdfFileName);
+            string pdfPath = Path.Combine(outputFolder, pdfFileName);
 
-            // Convert and save as PDF.
-            doc.Save(pdfFilePath, SaveFormat.Pdf);
+            // Save as PDF.
+            doc.Save(pdfPath, SaveFormat.Pdf);
 
             // Verify that the PDF was created.
-            if (!File.Exists(pdfFilePath))
-                throw new InvalidOperationException($"Expected PDF was not created for '{docFilePath}'.");
+            if (!File.Exists(pdfPath))
+                throw new InvalidOperationException($"Failed to create PDF for '{docFilePath}'.");
 
             // Log conversion status.
-            Console.WriteLine($"Converted '{docFilePath}' to '{pdfFilePath}'.");
+            Console.WriteLine($"Converted '{Path.GetFileName(docFilePath)}' to PDF successfully.");
         }
 
-        // Optional: indicate completion.
         Console.WriteLine("Batch conversion completed.");
     }
 }

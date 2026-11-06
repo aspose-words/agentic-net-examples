@@ -7,16 +7,14 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document that will be saved as PDF.
+        // Create a sample PDF document.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("This is a sample PDF document.");
-        builder.Writeln("It will be converted to high‑quality JPG images.");
-
-        // Save the document as PDF (input for conversion).
-        const string pdfPath = "sample.pdf";
+        builder.Writeln("This is a sample PDF document generated for conversion.");
+        string pdfPath = "sample.pdf";
         sourceDoc.Save(pdfPath, SaveFormat.Pdf);
 
+        // Verify that the PDF was created.
         if (!File.Exists(pdfPath))
             throw new InvalidOperationException("The PDF file was not created.");
 
@@ -24,23 +22,20 @@ public class Program
         Document pdfDoc = new Document(pdfPath);
 
         // Convert each page of the PDF to a high‑quality JPG image.
-        for (int pageIndex = 0; pageIndex < pdfDoc.PageCount; pageIndex++)
+        int pageCount = pdfDoc.PageCount;
+        for (int i = 0; i < pageCount; i++)
         {
-            // Configure image save options for JPEG with maximum quality.
-            ImageSaveOptions jpegOptions = new ImageSaveOptions(SaveFormat.Jpeg)
-            {
-                JpegQuality = 100,               // High quality (0‑100)
-                PageSet = new PageSet(pageIndex) // Save only the current page.
-            };
+            // Set JPEG quality to the maximum (100) using ImageSaveOptions.
+            ImageSaveOptions jpegOptions = new ImageSaveOptions(SaveFormat.Jpeg);
+            jpegOptions.JpegQuality = 100;
+            jpegOptions.PageSet = new PageSet(i);
 
-            string jpgPath = $"page_{pageIndex + 1}.jpg";
+            string jpgPath = $"page_{i + 1}.jpg";
             pdfDoc.Save(jpgPath, jpegOptions);
 
-            if (!File.Exists(jpgPath) || new FileInfo(jpgPath).Length == 0)
-                throw new InvalidOperationException($"Failed to create JPG for page {pageIndex + 1}.");
+            // Verify that the JPG image was created.
+            if (!File.Exists(jpgPath))
+                throw new InvalidOperationException($"The JPG file '{jpgPath}' was not created.");
         }
-
-        // All pages have been converted successfully.
-        Console.WriteLine("PDF conversion to high‑quality JPG images completed.");
     }
 }

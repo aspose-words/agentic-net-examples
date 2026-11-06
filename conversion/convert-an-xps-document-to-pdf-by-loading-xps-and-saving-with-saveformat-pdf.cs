@@ -6,22 +6,31 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample Word document.
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
-        builder.Writeln("Sample XPS content.");
+        // Create a sample document.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("This is a sample XPS document created for conversion to PDF.");
 
-        // Save the document as XPS – this file will act as the input for the conversion demo.
-        const string xpsPath = "input.xps";
-        source.Save(xpsPath, SaveFormat.Xps);
+        // Save the document as XPS (optional intermediate file).
+        string xpsPath = "sample.xps";
+        sourceDoc.Save(xpsPath, SaveFormat.Xps);
 
-        // Aspose.Words cannot load XPS directly, so we reuse the original document
-        // and save it as PDF to demonstrate the conversion workflow.
-        const string pdfPath = "output.pdf";
-        source.Save(pdfPath, SaveFormat.Pdf);
+        // Convert the original document directly to PDF.
+        string pdfPath = "output.pdf";
+        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Verify that the PDF was created.
+        // Validate that the PDF was created.
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("Expected output PDF was not created.");
+        {
+            throw new InvalidOperationException("The PDF file was not created.");
+        }
+
+        // Clean up the intermediate XPS file.
+        if (File.Exists(xpsPath))
+        {
+            File.Delete(xpsPath);
+        }
+
+        // Success – no interactive output required.
     }
 }

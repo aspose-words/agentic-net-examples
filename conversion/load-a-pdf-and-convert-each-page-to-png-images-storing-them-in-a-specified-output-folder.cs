@@ -5,48 +5,40 @@ using Aspose.Words.Saving;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static void Main()
     {
-        // Define paths.
-        string inputPdfPath = "sample.pdf";
-        string outputFolder = "output_images";
+        // Prepare a sample PDF file.
+        string inputPdfPath = "input.pdf";
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        builder.Writeln("This is the content of page 1.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("This is the content of page 2.");
+        sampleDoc.Save(inputPdfPath, SaveFormat.Pdf);
 
-        // Ensure the output folder exists.
-        Directory.CreateDirectory(outputFolder);
-
-        // Create a sample PDF if it does not already exist.
         if (!File.Exists(inputPdfPath))
-        {
-            Document sampleDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-            builder.Writeln("This is the content of the first page.");
-            builder.InsertBreak(BreakType.PageBreak);
-            builder.Writeln("This is the content of the second page.");
-            sampleDoc.Save(inputPdfPath, SaveFormat.Pdf);
-        }
+            throw new InvalidOperationException("The sample PDF was not created.");
 
         // Load the PDF document.
         Document pdfDocument = new Document(inputPdfPath);
 
-        // Get the number of pages in the PDF.
-        int pageCount = pdfDocument.PageCount;
+        // Create output folder for PNG images.
+        string outputFolder = "output_images";
+        Directory.CreateDirectory(outputFolder);
 
         // Convert each page to a separate PNG image.
-        for (int pageIndex = 0; pageIndex < pageCount; pageIndex++)
+        int pageCount = pdfDocument.PageCount;
+        for (int i = 0; i < pageCount; i++)
         {
-            string outputImagePath = Path.Combine(outputFolder, $"page_{pageIndex + 1}.png");
-
-            ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Png);
-            // Save only the current page.
-            saveOptions.PageSet = new PageSet(pageIndex);
-
-            pdfDocument.Save(outputImagePath, saveOptions);
-
-            // Validate that the image was created.
-            if (!File.Exists(outputImagePath))
+            string outputPath = Path.Combine(outputFolder, $"page_{i + 1}.png");
+            ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png)
             {
-                throw new InvalidOperationException($"Expected image file was not created: {outputImagePath}");
-            }
+                PageSet = new PageSet(i) // Zero‑based page index.
+            };
+            pdfDocument.Save(outputPath, options);
+
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException($"Failed to create image for page {i + 1}.");
         }
     }
 }

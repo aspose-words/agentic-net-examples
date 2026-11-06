@@ -2,33 +2,47 @@ using System;
 using System.IO;
 using Aspose.Words;
 
-public class PdfToXpsConverter
+public class Program
 {
     public static void Main()
     {
         // Create a sample document with some content.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("This is a sample PDF document that will be converted to XPS.");
+        builder.Writeln("This is a sample document that will be saved as PDF and then converted to XPS.");
 
-        // Save the sample document as PDF (input for conversion).
+        // Define file names for the intermediate PDF and final XPS.
         string pdfPath = "sample.pdf";
+        string xpsPath = "output.xps";
+
+        // Save the document as PDF (this will serve as the input PDF for conversion).
         sourceDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Load the PDF document.
+        // Verify that the PDF was created.
+        if (!File.Exists(pdfPath))
+            throw new InvalidOperationException("The intermediate PDF file was not created.");
+
+        // Load the PDF file.
         Document pdfDoc = new Document(pdfPath);
 
-        // Convert and save the PDF as XPS.
-        string xpsPath = "output.xps";
+        // Convert the loaded PDF to XPS.
         pdfDoc.Save(xpsPath, SaveFormat.Xps);
 
-        // Validate that the XPS file was created.
+        // Verify that the XPS file was created.
         if (!File.Exists(xpsPath))
+            throw new InvalidOperationException("The XPS file was not created.");
+
+        // Optionally, clean up the intermediate PDF file.
+        try
         {
-            throw new InvalidOperationException("Expected output XPS file was not created.");
+            File.Delete(pdfPath);
+        }
+        catch
+        {
+            // Ignore any errors during cleanup.
         }
 
-        // Optionally, clean up the temporary PDF file.
-        // File.Delete(pdfPath);
+        // Indicate successful conversion (no console input required).
+        Console.WriteLine("PDF successfully converted to XPS.");
     }
 }

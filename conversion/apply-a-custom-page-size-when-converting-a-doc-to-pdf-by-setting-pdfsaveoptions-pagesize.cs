@@ -10,25 +10,29 @@ public class Program
         // Create a sample DOC file.
         Document source = new Document();
         DocumentBuilder builder = new DocumentBuilder(source);
-        builder.Writeln("Sample DOC content for custom page size.");
-        source.Save("input.doc", SaveFormat.Doc);
+        builder.Writeln("Sample DOC content with a custom PDF page size.");
+        string inputPath = "input.doc";
+        source.Save(inputPath, SaveFormat.Doc);
 
         // Load the DOC file.
-        Document doc = new Document("input.doc");
+        Document doc = new Document(inputPath);
 
-        // Set a custom page size (420 x 595 points) for the first section.
-        // Page dimensions are specified in points (1 point = 1/72 inch).
-        Section section = doc.FirstSection;
-        section.PageSetup.PageWidth = 420f;
-        section.PageSetup.PageHeight = 595f;
+        // Set a custom page size (e.g., 5" x 7") for the first section.
+        // 1 inch = 72 points, so 5" = 360 points, 7" = 504 points.
+        Section firstSection = doc.FirstSection;
+        firstSection.PageSetup.PageWidth = 360f;
+        firstSection.PageSetup.PageHeight = 504f;
 
-        // Save the document as PDF using the custom page size.
-        doc.Save("output_custom_page.pdf", SaveFormat.Pdf);
+        // Save the document as PDF.
+        string outputPath = "output.pdf";
+        doc.Save(outputPath, SaveFormat.Pdf);
 
         // Verify that the PDF was created.
-        if (!File.Exists("output_custom_page.pdf"))
-        {
+        if (!File.Exists(outputPath))
             throw new InvalidOperationException("Expected output PDF was not created.");
-        }
+
+        // Optional: Clean up generated files (comment out if you want to inspect them).
+        // File.Delete(inputPath);
+        // File.Delete(outputPath);
     }
 }

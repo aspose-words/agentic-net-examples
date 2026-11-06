@@ -7,41 +7,31 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document and save it as PDF.
+        // Create a sample PDF document.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("This is a sample PDF document generated for conversion.");
-        const string pdfPath = "sample.pdf";
+        builder.Writeln("Sample PDF content for conversion.");
+        string pdfPath = "sample.pdf";
         sourceDoc.Save(pdfPath, SaveFormat.Pdf);
-
-        if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("The source PDF file was not created.");
 
         // Load the PDF document.
         Document pdfDoc = new Document(pdfPath);
 
-        // Configure JPEG save options: high resolution and low compression (high quality).
+        // Configure image save options for high‑resolution JPEG with low compression (high quality).
         ImageSaveOptions jpegOptions = new ImageSaveOptions(SaveFormat.Jpeg)
         {
-            // JpegQuality ranges from 0 (worst) to 100 (best). 100 gives lowest compression.
+            // JpegQuality ranges from 0 (lowest) to 100 (highest). Use a high value for low compression.
             JpegQuality = 100,
-            Resolution = 300 // DPI for high‑resolution output.
+            // Set the resolution in DPI.
+            Resolution = 300
         };
 
-        const string jpegPath = "output.jpeg";
+        // Save the PDF as a JPEG image.
+        string jpegPath = "output.jpeg";
         pdfDoc.Save(jpegPath, jpegOptions);
 
+        // Validate that the JPEG file was created.
         if (!File.Exists(jpegPath))
-            throw new InvalidOperationException("The JPEG image was not created.");
-
-        // Optional: clean up temporary PDF file.
-        try
-        {
-            File.Delete(pdfPath);
-        }
-        catch
-        {
-            // Ignore any errors during cleanup.
-        }
+            throw new InvalidOperationException("Expected output JPEG was not created.");
     }
 }

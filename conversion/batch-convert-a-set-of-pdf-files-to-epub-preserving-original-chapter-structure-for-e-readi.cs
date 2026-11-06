@@ -1,59 +1,63 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 public class BatchPdfToEpubConverter
 {
     public static void Main()
     {
-        // Prepare input folder and create sample PDF files with chapter headings.
-        string inputFolder = "InputPdfs";
-        Directory.CreateDirectory(inputFolder);
+        // Define input and output directories.
+        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputPdfs");
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputEpubs");
 
-        for (int i = 1; i <= 3; i++)
+        // Ensure directories exist.
+        Directory.CreateDirectory(inputFolder);
+        Directory.CreateDirectory(outputFolder);
+
+        // Create sample PDF files with chapter headings.
+        for (int i = 1; i <= 2; i++)
         {
             Document sampleDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(sampleDoc);
 
-            // Create a heading to represent a chapter.
+            // Chapter 1
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-            builder.Writeln($"Chapter {i}");
-
-            // Add some content under the heading.
+            builder.Writeln($"Sample PDF {i} - Chapter 1");
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-            builder.Writeln($"This is the content of chapter {i}.");
+            builder.Writeln("This is the first chapter content.");
+
+            // Chapter 2
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+            builder.Writeln($"Sample PDF {i} - Chapter 2");
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+            builder.Writeln("This is the second chapter content.");
 
             string pdfPath = Path.Combine(inputFolder, $"Sample{i}.pdf");
             sampleDoc.Save(pdfPath, SaveFormat.Pdf);
+
+            if (!File.Exists(pdfPath))
+                throw new InvalidOperationException($"Failed to create sample PDF: {pdfPath}");
         }
 
-        // Prepare output folder for EPUB files.
-        string outputFolder = "OutputEpubs";
-        Directory.CreateDirectory(outputFolder);
-
-        // Batch convert each PDF in the input folder to EPUB.
+        // Batch convert each PDF to EPUB.
         string[] pdfFiles = Directory.GetFiles(inputFolder, "*.pdf");
-        foreach (string pdfFilePath in pdfFiles)
+        foreach (string pdfFile in pdfFiles)
         {
             // Load the PDF document.
-            Document pdfDocument = new Document(pdfFilePath);
+            Document pdfDoc = new Document(pdfFile);
 
             // Determine output EPUB path.
-            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(pdfFilePath);
-            string epubPath = Path.Combine(outputFolder, $"{fileNameWithoutExt}.epub");
+            string epubFileName = Path.ChangeExtension(Path.GetFileNameWithoutExtension(pdfFile), ".epub");
+            string epubPath = Path.Combine(outputFolder, epubFileName);
 
-            // Save as EPUB, preserving the document structure.
-            pdfDocument.Save(epubPath, SaveFormat.Epub);
+            // Save as EPUB, preserving headings as chapters.
+            pdfDoc.Save(epubPath, SaveFormat.Epub);
 
-            // Validate that the EPUB file was created.
             if (!File.Exists(epubPath))
-            {
-                throw new InvalidOperationException($"EPUB file was not created: {epubPath}");
-            }
+                throw new InvalidOperationException($"EPUB conversion failed for: {pdfFile}");
         }
 
-        // Optional: indicate successful completion (no interactive input).
-        Console.WriteLine("Batch conversion completed successfully.");
+        // Indicate completion.
+        Console.WriteLine("Batch PDF to EPUB conversion completed successfully.");
     }
 }

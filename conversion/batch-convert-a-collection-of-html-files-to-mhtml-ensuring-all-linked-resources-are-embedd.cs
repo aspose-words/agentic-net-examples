@@ -8,77 +8,72 @@ public class BatchHtmlToMhtmlConverter
 {
     public static void Main()
     {
-        // Define folders for input HTML files and output MHTML files.
-        string baseDirectory = Directory.GetCurrentDirectory();
-        string inputFolder = Path.Combine(baseDirectory, "InputHtml");
-        string resourcesFolder = Path.Combine(inputFolder, "resources");
-        string outputFolder = Path.Combine(baseDirectory, "OutputMhtml");
+        // Define input and output folders
+        string inputFolder = "InputHtml";
+        string outputFolder = "OutputMhtml";
 
-        // Ensure clean environment.
+        // Ensure clean start
         if (Directory.Exists(inputFolder))
             Directory.Delete(inputFolder, true);
         if (Directory.Exists(outputFolder))
             Directory.Delete(outputFolder, true);
 
-        Directory.CreateDirectory(resourcesFolder);
+        Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Create a sample PNG image using Aspose.Drawing and save it to the resources folder.
-        string imagePath = Path.Combine(resourcesFolder, "sample.png");
+        // Create a sample image that will be referenced from HTML files
+        string imagePath = Path.Combine(inputFolder, "sample.png");
         using (Bitmap bitmap = new Bitmap(100, 100))
         {
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                graphics.Clear(Color.LightBlue);
-                graphics.FillEllipse(Brushes.DarkBlue, 10, 10, 80, 80);
+                graphics.Clear(Color.Blue);
             }
             bitmap.Save(imagePath, ImageFormat.Png);
         }
 
-        // Create several HTML files that reference the image.
+        // Create a few sample HTML files referencing the image
         for (int i = 1; i <= 3; i++)
         {
-            string htmlFileName = $"sample{i}.html";
-            string htmlFilePath = Path.Combine(inputFolder, htmlFileName);
+            string htmlFileName = $"page{i}.html";
+            string htmlPath = Path.Combine(inputFolder, htmlFileName);
             string htmlContent = $@"
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Sample {i}</title>
-</head>
+<head><title>Sample Page {i}</title></head>
 <body>
-    <h1>HTML Sample {i}</h1>
-    <p>This is a sample HTML file number {i}.</p>
-    <img src=""resources/sample.png"" alt=""Sample Image"" />
+<h1>Sample Page {i}</h1>
+<p>This is a sample HTML file.</p>
+<img src=""sample.png"" alt=""Sample Image"" />
 </body>
 </html>";
-            File.WriteAllText(htmlFilePath, htmlContent);
+            File.WriteAllText(htmlPath, htmlContent);
         }
 
-        // Batch convert each HTML file to MHTML, embedding linked resources automatically.
+        // Batch convert each HTML file to MHTML
         string[] htmlFiles = Directory.GetFiles(inputFolder, "*.html");
         foreach (string htmlFile in htmlFiles)
         {
-            // Load the HTML document.
+            // Load HTML document
             Document doc = new Document(htmlFile);
 
-            // Determine output MHTML file path.
+            // Determine output MHTML path
             string outputFileName = Path.GetFileNameWithoutExtension(htmlFile) + ".mhtml";
             string outputPath = Path.Combine(outputFolder, outputFileName);
 
-            // Save as MHTML. Resources are embedded by default.
+            // Save as MHTML (resources are embedded automatically)
             doc.Save(outputPath, SaveFormat.Mhtml);
 
-            // Validate that the output file was created and is not empty.
+            // Validate output
             if (!File.Exists(outputPath))
-                throw new InvalidOperationException($"Expected output file '{outputPath}' was not created.");
+                throw new InvalidOperationException($"MHTML file was not created: {outputPath}");
 
             FileInfo info = new FileInfo(outputPath);
             if (info.Length == 0)
-                throw new InvalidOperationException($"Output file '{outputPath}' is empty.");
+                throw new InvalidOperationException($"MHTML file is empty: {outputPath}");
         }
 
-        // Indicate success.
-        Console.WriteLine("Batch conversion completed successfully.");
+        // Optional: indicate success (no interactive output required)
+        // The program will exit normally if all conversions succeed.
     }
 }

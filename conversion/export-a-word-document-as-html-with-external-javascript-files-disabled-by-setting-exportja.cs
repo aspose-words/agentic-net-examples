@@ -3,30 +3,39 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+public class ExportHtmlExample
 {
     public static void Main()
     {
-        // Create a sample Word document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello, this is a sample document.");
+        // Create a new Word document and add sample content.
+        Document source = new Document();
+        DocumentBuilder builder = new DocumentBuilder(source);
+        builder.Writeln("This is a sample Word document.");
+        builder.Writeln("It will be exported to HTML without external JavaScript files.");
 
-        // Configure HTML save options.
-        // The ExportJavaScript property is not available in the current Aspose.Words version.
-        // By default, Aspose.Words does not generate external JavaScript files, so we simply use the default options.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions();
+        // Configure HTML save options. By default, external JavaScript files are not generated.
+        HtmlSaveOptions htmlOptions = new HtmlSaveOptions();
 
-        // Save the document as HTML.
+        // Define the output HTML file path.
         string outputPath = "output.html";
-        doc.Save(outputPath, saveOptions);
+
+        // Save the document as HTML using the configured options.
+        source.Save(outputPath, htmlOptions);
 
         // Verify that the HTML file was created.
         if (!File.Exists(outputPath))
         {
-            throw new InvalidOperationException("Expected output HTML was not created.");
+            throw new InvalidOperationException("Expected output HTML file was not created.");
         }
 
-        Console.WriteLine($"HTML file successfully created at: {Path.GetFullPath(outputPath)}");
+        // Optionally, read the file to ensure it contains content.
+        string htmlContent = File.ReadAllText(outputPath);
+        if (string.IsNullOrWhiteSpace(htmlContent))
+        {
+            throw new InvalidOperationException("The generated HTML file is empty.");
+        }
+
+        // Indicate successful completion.
+        Console.WriteLine("HTML export completed successfully.");
     }
 }

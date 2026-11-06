@@ -7,15 +7,12 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document in memory.
+        // Create a sample document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document to be saved as compressed PDF/A‑2u.");
+        builder.Writeln("This is a sample document saved as compressed PDF/A‑2u.");
 
-        // Configure PDF save options:
-        // - PDF/A‑2u compliance.
-        // - JPEG image compression with quality 80.
-        // - Optimize output (which also removes unused objects).
+        // Configure PDF save options for PDF/A‑2u compliance with image compression and output optimization.
         PdfSaveOptions saveOptions = new PdfSaveOptions
         {
             Compliance = PdfCompliance.PdfA2u,
@@ -24,21 +21,23 @@ public class Program
             OptimizeOutput = true
         };
 
+        // Define output file path.
         string outputPath = "compressed_pdfa2u.pdf";
 
         // Save the document as a compressed PDF/A‑2u file.
         doc.Save(outputPath, saveOptions);
 
-        // Verify that the output file was created and is not empty.
+        // Verify that the output file was created.
         if (!File.Exists(outputPath))
         {
             throw new InvalidOperationException($"Expected output file '{outputPath}' was not created.");
         }
 
-        FileInfo fileInfo = new FileInfo(outputPath);
-        if (fileInfo.Length == 0)
+        // Verify that the file size is greater than zero.
+        FileInfo info = new FileInfo(outputPath);
+        if (info.Length == 0)
         {
-            throw new InvalidOperationException($"Output file '{outputPath}' is empty.");
+            throw new InvalidOperationException("The generated PDF file is empty.");
         }
     }
 }
