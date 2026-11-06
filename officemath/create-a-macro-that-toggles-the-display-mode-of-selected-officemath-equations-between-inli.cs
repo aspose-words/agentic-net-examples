@@ -1,74 +1,83 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Math;
 
-public class ToggleOfficeMathDisplay
+public class OfficeMathToggleExample
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a paragraph with some introductory text.
-        builder.Writeln("Sample equations:");
+        // Insert a paragraph with some text.
+        builder.Writeln("Sample document with equations:");
 
-        // Insert a few equations using the deterministic EQ‑field bootstrap workflow.
-        InsertEquation(builder, @"\f(1,2)");          // Fraction 1/2
-        InsertEquation(builder, @"\r(3,x)");          // Cube root of x
-        InsertEquation(builder, @"\i \su(n=1,5,n)"); // Integral with summation
+        // Insert first equation (inline by default after toggling).
+        InsertEquation(builder, @"\f(1,2)"); // Simple fraction.
 
-        // Toggle the display mode of each top‑level OfficeMath equation.
+        // Insert a second equation.
+        InsertEquation(builder, @"\r(3,x)"); // Simple root.
+
+        // Save the original document.
+        string originalPath = "Original.docx";
+        doc.Save(originalPath, SaveFormat.Docx);
+
+        // Toggle display mode of top‑level OfficeMath equations.
         foreach (OfficeMath om in doc.GetChildNodes(NodeType.OfficeMath, true))
         {
-            // Operate only on top‑level equations (MathObjectType.OMathPara).
             if (om.MathObjectType == MathObjectType.OMathPara)
             {
-                if (om.DisplayType == OfficeMathDisplayType.Inline)
-                {
-                    // Change to display (separate line) mode.
-                    om.DisplayType = OfficeMathDisplayType.Display;
-                    om.Justification = OfficeMathJustification.Left;
-                }
-                else
-                {
-                    // Change to inline mode.
-                    om.DisplayType = OfficeMathDisplayType.Inline;
-                    om.Justification = OfficeMathJustification.Inline;
-                }
+                om.DisplayType = om.DisplayType == OfficeMathDisplayType.Inline
+                    ? OfficeMathDisplayType.Display
+                    : OfficeMathDisplayType.Inline;
             }
         }
 
-        // Save the resulting document.
-        const string outputPath = "ToggledOfficeMath.docx";
-        doc.Save(outputPath);
+        // Save the document after toggling.
+        string toggledPath = "Toggled.docx";
+        doc.Save(toggledPath, SaveFormat.Docx);
+
+        // Simple validation that files were created.
+        if (!File.Exists(originalPath) || !File.Exists(toggledPath))
+        {
+            throw new InvalidOperationException("One or more output files were not created.");
+        }
     }
 
-    // Helper that inserts an EQ field, converts it to a real OfficeMath node, and removes the field.
-    private static void InsertEquation(DocumentBuilder builder, string eq)
+    // Helper method that creates a real OfficeMath node using the EQ‑field bootstrap workflow.
+    private static void InsertEquation(DocumentBuilder builder, string eqArgument)
     {
-        // Insert an empty EQ field.
-        FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
-
-        // Write the EQ argument string into the field separator.
-        builder.MoveTo(field.Separator);
-        builder.Write(eq);
-
-        // Return the builder to the paragraph that contains the field.
-        builder.MoveTo(field.Start.ParentNode);
-
-        // Convert the field to an OfficeMath object.
-        OfficeMath officeMath = field.AsOfficeMath();
-
-        // If conversion succeeded, replace the field with the OfficeMath node.
-        if (officeMath != null)
+        // Insert an EQ field.
+        Field field = builder.InsertField(FieldType.FieldEquation, true);
+        if (field is FieldEQ fieldEq)
         {
-            field.Start.ParentNode.InsertBefore(officeMath, field.Start);
-            field.Remove();
-        }
+            // Write the EQ argument into the field separator.
+            builder.MoveTo(fieldEq.Separator);
+            builder.Write(eqArgument);
 
-        // Add a line break after the equation for readability.
-        builder.Writeln();
+            // Convert the field to an OfficeMath node.
+            OfficeMath officeMath = fieldEq.AsOfficeMath();
+            if (officeMath != null)
+            {
+                // Insert the OfficeMath node before the field start.
+                Node fieldStart = fieldEq.Start;
+                Node parent = fieldStart.ParentNode;
+
+                if (parent is CompositeNode compositeParent)
+                {
+                    compositeParent.InsertBefore(officeMath, fieldStart);
+                }
+                else
+                {
+                    throw new InvalidOperationException("Parent node is not a composite node.");
+                }
+
+                // Remove the original field.
+                fieldEq.Remove();
+            }
+        }
     }
 }

@@ -3,66 +3,34 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Math;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Path for the sample document.
-        const string filePath = "SampleEquations.docx";
-
-        // Create a new document and a builder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Helper that inserts an equation using the deterministic EQ‑field bootstrap workflow.
-        void InsertEquation(string eqArgument)
-        {
-            // Insert an empty equation field.
-            Field field = builder.InsertField(FieldType.FieldEquation, true);
+        // Add some text and equations using the deterministic EQ‑field bootstrap workflow.
+        builder.Writeln("Paragraph before the first equation.");
+        InsertEquation(builder, @"\f(1,2)"); // Simple fraction.
 
-            // Move to the field separator node and write the EQ argument.
-            builder.MoveTo(field.Separator);
-            builder.Write(eqArgument);
+        builder.Writeln("Paragraph between equations.");
+        InsertEquation(builder, @"\r(3,x)"); // Cube root.
 
-            // Convert the field to a real OfficeMath node.
-            FieldEQ eqField = (FieldEQ)field;
-            OfficeMath officeMath = eqField.AsOfficeMath();
-
-            if (officeMath != null)
-            {
-                // Insert the OfficeMath node before the field start.
-                Node fieldStart = eqField.Start;
-                fieldStart.ParentNode.InsertBefore(officeMath, fieldStart);
-
-                // Remove the original field so only the OfficeMath remains.
-                eqField.Remove();
-            }
-
-            // Move to a new paragraph for the next equation.
-            builder.Writeln();
-        }
-
-        // Insert several simple equations.
-        InsertEquation(@"\f(1,2)");   // Fraction 1/2
-        InsertEquation(@"\r(3,x)");   // Radical
-        InsertEquation(@"\s(5)");     // Summation placeholder
+        builder.Writeln("Paragraph after the second equation.");
 
         // Save the document.
-        doc.Save(filePath, SaveFormat.Docx);
+        string outputPath = "SampleWithEquations.docx";
+        doc.Save(outputPath);
 
         // Validate that the file was created.
-        if (!File.Exists(filePath))
-            throw new Exception("Failed to create the output document.");
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The output document was not saved.");
 
-        // Reload the document for counting.
-        Document loadedDoc = new Document(filePath);
-
-        // Get all OfficeMath nodes.
-        NodeCollection officeMathNodes = loadedDoc.GetChildNodes(NodeType.OfficeMath, true);
-
-        // Count only top‑level equations (MathObjectType.OMathPara).
+        // Count top‑level equations (OfficeMath nodes whose MathObjectType is OMathPara).
+        NodeCollection officeMathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
         int equationCount = 0;
         foreach (OfficeMath om in officeMathNodes)
         {
@@ -72,5 +40,33 @@ public class Program
 
         // Output the result.
         Console.WriteLine($"Total equations: {equationCount}");
+    }
+
+    // Helper that creates a real OfficeMath node from an EQ field and inserts it into the document.
+    private static void InsertEquation(DocumentBuilder builder, string eqSwitch)
+    {
+        // Insert an empty EQ field.
+        Field field = builder.InsertField(FieldType.FieldEquation, true);
+
+        // Move the builder to the field separator node and write the EQ argument.
+        // The separator node is where the field's code (the EQ switch) should be placed.
+        builder.MoveTo(field.Separator);
+        builder.Write(eqSwitch);
+
+        // Convert the field to an OfficeMath node.
+        FieldEQ fieldEq = field as FieldEQ;
+        OfficeMath officeMath = fieldEq?.AsOfficeMath();
+
+        if (officeMath != null)
+        {
+            // Insert the OfficeMath node before the field start.
+            Node fieldStart = field.Start;
+            CompositeNode parent = fieldStart.ParentNode as CompositeNode;
+            if (parent != null)
+                parent.InsertBefore(officeMath, fieldStart);
+
+            // Remove the original field, leaving only the real equation.
+            field.Remove();
+        }
     }
 }

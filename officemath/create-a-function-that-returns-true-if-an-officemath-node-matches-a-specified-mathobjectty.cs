@@ -1,69 +1,63 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Math;
 
 public class Program
 {
-    // Returns true if the OfficeMath node's MathObjectType matches the specified type.
-    public static bool IsMathObjectType(OfficeMath officeMath, MathObjectType type)
-    {
-        if (officeMath == null)
-            throw new ArgumentNullException(nameof(officeMath));
-
-        return officeMath.MathObjectType == type;
-    }
-
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert an EQ field that will be converted to a real OfficeMath object.
+        // Insert an EQ field that will be converted to a real OfficeMath node.
         Field field = builder.InsertField(FieldType.FieldEquation, true);
+        FieldEQ fieldEQ = (FieldEQ)field;
 
-        // Move to the field separator to write the EQ argument.
-        builder.MoveTo(field.Separator);
-        // Write a simple, safe equation (fraction 1 over 2).
-        builder.Write(@"\f(1,2)");
+        // Write a simple equation into the field separator.
+        builder.MoveTo(fieldEQ.Separator);
+        builder.Write("\\f(1,2)"); // fraction 1/2
 
-        // Update the field so that the equation is evaluated.
+        // Update the field so that Aspose.Words evaluates it.
         field.Update();
 
         // Convert the field to OfficeMath.
-        FieldEQ fieldEq = field as FieldEQ;
-        OfficeMath officeMath = fieldEq?.AsOfficeMath();
+        OfficeMath officeMath = fieldEQ.AsOfficeMath();
 
-        if (officeMath != null)
-        {
-            // Insert the OfficeMath node before the field start.
-            CompositeNode parent = (CompositeNode)field.Start.ParentNode;
-            parent.InsertBefore(officeMath, field.Start);
-
-            // Remove the original field.
-            field.Remove();
-        }
-        else
-        {
+        if (officeMath == null)
             throw new InvalidOperationException("Failed to convert EQ field to OfficeMath.");
-        }
 
-        // Save the document.
-        const string outputPath = "Sample.docx";
+        // Insert the OfficeMath node before the field start.
+        Node fieldStart = field.Start;
+        fieldStart.ParentNode.InsertBefore(officeMath, fieldStart);
+
+        // Remove the original field (start, separator, end).
+        field.Remove();
+
+        // Save the document to verify output.
+        string outputPath = "Output.docx";
         doc.Save(outputPath);
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The output document was not created.", outputPath);
 
-        // Reload the document to demonstrate loading.
-        Document loadedDoc = new Document(outputPath);
-
-        // Get all OfficeMath nodes in the document.
-        NodeCollection mathNodes = loadedDoc.GetChildNodes(NodeType.OfficeMath, true);
-
-        // Check each OfficeMath node against the OMathPara type.
-        foreach (OfficeMath om in mathNodes)
+        // Enumerate OfficeMath nodes and test the matching function.
+        NodeCollection mathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
+        for (int i = 0; i < mathNodes.Count; i++)
         {
-            bool isPara = IsMathObjectType(om, MathObjectType.OMathPara);
-            Console.WriteLine($"OfficeMath node MathObjectType is OMathPara: {isPara}");
+            OfficeMath om = (OfficeMath)mathNodes[i];
+            bool isPara = IsMatchingMathObjectType(om, MathObjectType.OMathPara);
+            Console.WriteLine($"OfficeMath node at collection index {i} matches OMathPara: {isPara}");
         }
+    }
+
+    // Returns true if the OfficeMath node's MathObjectType equals the specified target.
+    public static bool IsMatchingMathObjectType(OfficeMath om, MathObjectType target)
+    {
+        if (om == null)
+            return false;
+
+        return om.MathObjectType == target;
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Math;
@@ -8,66 +9,86 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Sample EQ field arguments for simple equations.
-        string[] equations = new[]
+        // Helper to insert an inline equation using the deterministic EQ-field bootstrap workflow.
+        void InsertInlineEquation(string eqSwitch)
         {
-            @"\f(1,2)",               // Fraction 1/2
-            @"\r(3,x)",               // Cube root of x
-            @"\i \su(n=1,5,n)",       // Integral with summation
-            @"\s \up8(Superscript)", // Superscript
-            @"\s \do8(Subscript)"    // Subscript
-        };
+            // Insert a field of type Equation.
+            builder.InsertField(FieldType.FieldEquation, true);
+            // Retrieve the inserted field.
+            FieldStart fieldStart = (FieldStart)builder.CurrentParagraph.GetChildNodes(NodeType.FieldStart, true).Cast<FieldStart>().Last();
+            Field field = fieldStart.GetField();
+            FieldEQ fieldEq = field as FieldEQ;
+            if (fieldEq == null)
+                throw new InvalidOperationException("Failed to create FieldEQ.");
 
-        // Insert each equation into the document using the deterministic EQ‑field bootstrap workflow.
-        foreach (string eq in equations)
-        {
-            // Insert an EQ field.
-            FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
+            // Write the EQ argument into the field separator.
+            builder.MoveTo(fieldEq.Separator);
+            builder.Write(eqSwitch);
 
-            // Write the equation arguments into the field separator.
-            builder.MoveTo(field.Separator);
-            builder.Write(eq);
+            // Convert the field to a real OfficeMath node.
+            OfficeMath officeMath = fieldEq.AsOfficeMath();
+            if (officeMath == null)
+                throw new InvalidOperationException("EQ field could not be converted to OfficeMath.");
 
-            // Return to the field start paragraph.
-            builder.MoveTo(field.Start.ParentNode);
+            // Insert the OfficeMath node before the field start node.
+            Node fieldStartNode = field.Start;
+            fieldStartNode.ParentNode.InsertBefore(officeMath, fieldStartNode);
 
-            // Convert the EQ field to a real OfficeMath object.
-            OfficeMath officeMath = field.AsOfficeMath();
-            if (officeMath != null)
-            {
-                // Insert the OfficeMath node before the field start.
-                field.Start.ParentNode.InsertBefore(officeMath, field.Start);
-
-                // Remove the original field.
-                field.Remove();
-
-                // Move the builder after the inserted OfficeMath and start a new paragraph for the next equation.
-                builder.MoveTo(officeMath);
-                builder.InsertParagraph();
-            }
+            // Remove the original field (including start, separator, and end nodes).
+            field.Remove();
         }
 
-        // Change all top‑level OfficeMath equations from inline to display mode.
+        // Insert several paragraphs with inline equations.
+        builder.Writeln("Report Title");
+        builder.Writeln();
+
+        builder.Writeln("Paragraph 1 with an inline equation:");
+        InsertInlineEquation(@"\f(1,2)");
+        builder.Writeln();
+
+        builder.Writeln("Paragraph 2 with another inline equation:");
+        InsertInlineEquation(@"\r(3,x)");
+        builder.Writeln();
+
+        builder.Writeln("Paragraph 3 with a third inline equation:");
+        InsertInlineEquation(@"\f(5,6)");
+        builder.Writeln();
+
+        // Change all top‑level inline equations to display (separate line) mode.
         NodeCollection mathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
-        foreach (OfficeMath math in mathNodes)
+        int changedCount = 0;
+        foreach (OfficeMath om in mathNodes)
         {
-            if (math.MathObjectType == MathObjectType.OMathPara)
+            if (om.MathObjectType == MathObjectType.OMathPara && om.DisplayType == OfficeMathDisplayType.Inline)
             {
-                math.DisplayType = OfficeMathDisplayType.Display;
-                math.Justification = OfficeMathJustification.Left;
+                om.DisplayType = OfficeMathDisplayType.Display;
+                changedCount++;
             }
         }
 
-        // Save the resulting document.
+        // Save the modified document.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ReportWithDisplayMath.docx");
-        doc.Save(outputPath);
+        doc.Save(outputPath, SaveFormat.Docx);
 
-        // Simple validation to ensure the file was created.
+        // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not saved correctly.");
+            throw new FileNotFoundException("The output document was not created.", outputPath);
+
+        // Reload the document and verify that all equations are now in display mode.
+        Document loadedDoc = new Document(outputPath);
+        int displayCount = loadedDoc.GetChildNodes(NodeType.OfficeMath, true)
+            .Cast<OfficeMath>()
+            .Count(om => om.MathObjectType == MathObjectType.OMathPara && om.DisplayType == OfficeMathDisplayType.Display);
+
+        int expectedCount = 3; // Number of equations we inserted.
+        if (displayCount != expectedCount)
+            throw new InvalidOperationException($"Expected {expectedCount} display equations, but found {displayCount}.");
+
+        // Program completed successfully.
+        Console.WriteLine($"Successfully changed {changedCount} equations to display mode. Output saved to: {outputPath}");
     }
 }

@@ -4,12 +4,12 @@
     "slug": "officemath",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Use native Aspose.Words OfficeMath APIs directly. Create realistic local DOC or DOCX inputs inside the example whenever the task references an existing file, stream, folder, or source document. Work with real OfficeMath nodes discovered through NodeType.OfficeMath, and use documented OfficeMath properties such as DisplayType, Justification, and MathObjectType only.",
+    "preferred_workflow": "Always employ the deterministic EQ-field bootstrap pattern: insert a FieldEquation, write a safe EQ argument into the field separator, update the field, call AsOfficeMath to obtain a real OfficeMath node, insert the node before the field start, and then remove the field. Operate on top-level OfficeMath nodes (MathObjectType.OMathPara) for display-type and justification changes, and create any required source documents locally within the example.",
     "required_packages": [
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.9.0"
+      "Aspose.Words": "26.10.0"
     },
     "required_namespaces": [
       "System",
@@ -19,10 +19,10 @@
       "Aspose.Words.Math",
       "System.Linq",
       "Aspose.Words.Saving",
-      "Aspose.Words.Rendering",
-      "System.Collections.Generic",
-      "System.Text",
-      "Aspose.Words.Tables"
+      "Aspose.Words.Tables",
+      "System.Reflection",
+      "Aspose.Words.Layout",
+      "System.Collections.Generic"
     ],
     "key_apis": [
       "Document",
@@ -30,13 +30,13 @@
       "NodeType",
       "SaveFormat",
       "Directory",
-      "File",
       "Path",
-      "FieldType",
-      "Paragraph",
       "Field",
+      "FieldType",
       "Node",
+      "File",
       "CompositeNode",
+      "Paragraph",
       "Range",
       "StyleIdentifier"
     ]
@@ -53,54 +53,51 @@
     }
   },
   "rules_summary": {
-    "office_math_core_rules": [
-      "Always use native Aspose.Words OfficeMath APIs directly.",
-      "Always work with real OfficeMath nodes discovered through NodeType.OfficeMath.",
-      "Always create local sample source documents inside the example if the task refers to an existing DOC, DOCX, stream, folder, template, or source document.",
-      "Always save the requested output document or report when the task expects one."
+    "strict_api_bans": [
+      "Do not call any API that is not part of Aspose.Words.Math, such as InsertMathObject, MathParser, or LoadMathML."
     ],
-    "formatting_rules": [
-      "Use documented OfficeMath properties such as DisplayType, Justification, and MathObjectType only.",
-      "For top-level equation operations, target only nodes whose MathObjectType is OMathPara.",
-      "Never set DisplayType on nested OfficeMath nodes."
+    "canonical_patterns": [
+      "Use only the documented properties DisplayType, Justification, and MathObjectType on top-level OfficeMath nodes."
     ],
-    "safety_rules": [
-      "Do not invent unsupported equation creation, import, or conversion helpers.",
-      "Do not append or insert a null OfficeMath node.",
-      "Do not validate logical equation counts using all nested OfficeMath descendants unless that is explicitly the task.",
-      "Do not assume source documents, folders, templates, or streams already exist."
+    "nullable_warning_prevention": [
+      "Check for null after AsOfficeMath and before inserting or replacing nodes to avoid NullReferenceException."
     ]
   },
   "common_failure_patterns": [
     {
       "pattern": "Invented OfficeMath creation APIs",
-      "symptom": "Compiler errors around InsertMathObject, InsertEquation, StartMath, EndMath, MathParser, MathMLImporter, LoadMathML, LoadOoxml, or new OfficeMath(document).",
-      "fix": "Use only documented Aspose.Words OfficeMath APIs and follow the verified bootstrap pattern already used in this category."
+      "symptom": "Compiler errors for unknown types such as InsertMathObject or LoadMathML.",
+      "cause": "Code attempts to use non-existent helper methods that are not part of the Aspose.Words API.",
+      "fix": "Replace the invented calls with the documented EQ-field bootstrap sequence.",
+      "prevention": "Reference only the APIs listed in the official Aspose.Words.Math documentation."
     },
     {
-      "pattern": "Invalid OfficeMath type or property names",
-      "symptom": "Compiler errors around unsupported members such as OfficeMath.Start, IsInline, OfficeMathObjectType, or OMathObjectType.",
-      "fix": "Use real OfficeMath nodes and valid members such as DisplayType, Justification, and MathObjectType."
+      "pattern": "Invalid OfficeMath member usage",
+      "symptom": "Compiler errors for members like OfficeMath.Start or IsInline.",
+      "cause": "Incorrect property or method names that do not exist on the OfficeMath class.",
+      "fix": "Use only the valid members DisplayType, Justification, and MathObjectType.",
+      "prevention": "Consult the Aspose.Words.Math reference to verify member names before coding."
     },
     {
-      "pattern": "Nested OfficeMath formatting mistakes",
-      "symptom": "Runtime exceptions when changing DisplayType or Justification on nested OfficeMath nodes.",
-      "fix": "Restrict display-mode and justification changes to top-level OfficeMath nodes whose MathObjectType is OMathPara."
+      "pattern": "Improper nested formatting",
+      "symptom": "Runtime exceptions when setting DisplayType or Justification on nested OfficeMath nodes.",
+      "cause": "Attempting to modify display mode on equations that are not top-level OMathPara objects.",
+      "fix": "Restrict DisplayType and Justification changes to nodes where MathObjectType equals OMathPara.",
+      "prevention": "Filter OfficeMath nodes by MathObjectType before applying formatting properties."
     },
     {
-      "pattern": "Null OfficeMath insertion or replacement",
-      "symptom": "Runtime failures such as Cannot insert a null node or failed replacement after an invalid bootstrap attempt.",
-      "fix": "Null-check created or imported nodes before insertion and only replace valid top-level OfficeMath targets."
+      "pattern": "Null OfficeMath insertion",
+      "symptom": "Runtime failures such as \"Cannot insert a null node\" during replacement or insertion.",
+      "cause": "AsOfficeMath returned null because the EQ field failed to convert.",
+      "fix": "Verify that AsOfficeMath returns a non-null OfficeMath instance before insertion or replacement.",
+      "prevention": "Add explicit null checks and throw informative errors if conversion fails."
     },
     {
-      "pattern": "Verifier missing input asset or path",
-      "symptom": "Runtime failures caused by missing sample files, folders, or streams during sandbox verification.",
-      "fix": "Create temporary local assets inside the example before loading or processing them."
-    },
-    {
-      "pattern": "Brittle logical equation counts",
-      "symptom": "Validation failures caused by counting all nested OfficeMath descendants instead of logical top-level equations.",
-      "fix": "Validate against the exact intended top-level nodes for formatting, replacement, cloning, and display-mode workflows."
+      "pattern": "Missing sample assets",
+      "symptom": "Runtime errors caused by attempts to load non-existent files or folders.",
+      "cause": "Examples assumed the presence of external DOCX files, streams, or directories.",
+      "fix": "Create all required sample documents, folders, and streams programmatically within the example.",
+      "prevention": "Never rely on external assets; generate them locally at runtime."
     }
   ],
   "examples": [
@@ -113,8 +110,8 @@
         "docx",
         "txt"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 2,
@@ -168,8 +165,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 7,
@@ -179,8 +176,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp_secondary",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 8,
@@ -201,8 +198,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 10,
@@ -212,8 +209,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 11,
@@ -223,8 +220,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 12,
@@ -234,8 +231,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 13,
@@ -256,8 +253,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp_secondary",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 15,
@@ -267,8 +264,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm_secondary",
+      "winner": "llm"
     },
     {
       "id": 16,
@@ -278,8 +275,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 17,
@@ -289,8 +286,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp_secondary",
-      "winner": "mcp"
+      "selected_engine": "llm_secondary",
+      "winner": "llm"
     },
     {
       "id": 18,
@@ -300,7 +297,7 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp_secondary",
+      "selected_engine": "mcp",
       "winner": "mcp"
     },
     {
@@ -322,8 +319,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 21,
@@ -333,8 +330,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 22,
@@ -356,7 +353,7 @@
       "outputs": [
         "txt"
       ],
-      "selected_engine": "llm",
+      "selected_engine": "llm_secondary",
       "winner": "llm"
     },
     {
@@ -367,8 +364,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 25,
@@ -379,8 +376,8 @@
         "docx",
         "pdf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 26,
@@ -403,8 +400,8 @@
         "docx",
         "pdf"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 28,
@@ -425,8 +422,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 30,
@@ -436,8 +433,18 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp_secondary",
+      "selected_engine": "mcp",
       "winner": "mcp"
     }
-  ]
+  ],
+  "narrative": {
+    "overview": "The OfficeMath category addresses the handling of mathematical equations represented by Aspose.Words.OfficeMath nodes within Word documents. Verified examples illustrate loading, enumerating, inserting, justifying, cloning, and replacing OfficeMath objects using the native EQ-field bootstrap workflow.",
+    "purpose": "Supply concise, reproducible code snippets that generate realistic DOCX inputs, convert EQ fields to genuine OfficeMath nodes, and perform supported operations such as enumeration, justification, insertion, cloning, and replacement while conforming to Aspose.Words 26.10.0 APIs.",
+    "validation_priorities": [
+      "Validate that each generated document contains at least one top-level OfficeMath node and that its Justification matches the expected value."
+    ],
+    "maintenance_notes": [
+      "Preserve the EQ-field bootstrap sequence unchanged and update sample EQ arguments only when new equation types are explicitly required."
+    ]
+  }
 }

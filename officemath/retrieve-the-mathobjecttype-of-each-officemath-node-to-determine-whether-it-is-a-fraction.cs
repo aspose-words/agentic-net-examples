@@ -4,77 +4,114 @@ using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Math;
 
-public class OfficeMathTypeReporter
+public class OfficeMathTypeDemo
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // ---------- Insert a fraction equation ----------
-        // Insert an EQ field.
-        Field fractionField = builder.InsertField(FieldType.FieldEquation, true);
-        // Move to the field separator and write the EQ argument for a fraction.
-        builder.MoveTo(fractionField.Separator);
-        builder.Write(@"\f(1,2)"); // Represents the fraction 1/2.
-        // Convert the field to a real OfficeMath node.
-        OfficeMath fractionMath = ((FieldEQ)fractionField).AsOfficeMath();
-        if (fractionMath != null)
+        // Insert a fraction equation: \f(1,2)
+        InsertEquation(builder, @"\f(1,2)");
+
+        // Insert a radical equation: \r(3,x)
+        InsertEquation(builder, @"\r(3,x)");
+
+        // Save the document.
+        string docPath = "OfficeMathDemo.docx";
+        doc.Save(docPath);
+
+        // Reload the document.
+        Document loadedDoc = new Document(docPath);
+
+        // Traverse OfficeMath nodes.
+        NodeCollection officeMathNodes = loadedDoc.GetChildNodes(NodeType.OfficeMath, true);
+        int index = 0;
+        foreach (OfficeMath om in officeMathNodes)
         {
-            // Insert the OfficeMath node before the field start and remove the field.
-            fractionField.Start.ParentNode.InsertBefore(fractionMath, fractionField.Start);
-            fractionField.Remove();
-        }
-
-        // Add a new paragraph for the next equation.
-        builder.Writeln();
-
-        // ---------- Insert a radical equation ----------
-        Field radicalField = builder.InsertField(FieldType.FieldEquation, true);
-        builder.MoveTo(radicalField.Separator);
-        builder.Write(@"\r(3,x)"); // Represents the cubic root of x.
-        OfficeMath radicalMath = ((FieldEQ)radicalField).AsOfficeMath();
-        if (radicalMath != null)
-        {
-            radicalField.Start.ParentNode.InsertBefore(radicalMath, radicalField.Start);
-            radicalField.Remove();
-        }
-
-        // Save the document to disk.
-        const string outputPath = "OfficeMathTypes.docx";
-        doc.Save(outputPath);
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Failed to create the output document.");
-
-        // ---------- Enumerate OfficeMath nodes and report their types ----------
-        NodeCollection mathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
-        using (StreamWriter reportWriter = new StreamWriter("MathTypesReport.txt"))
-        {
-            for (int i = 0; i < mathNodes.Count; i++)
+            string typeDescription;
+            switch (om.MathObjectType)
             {
-                OfficeMath om = (OfficeMath)mathNodes[i];
-                string typeDescription = GetMathObjectTypeDescription(om.MathObjectType);
-                string line = $"OfficeMath node #{i + 1}: {om.MathObjectType} ({typeDescription})";
-                Console.WriteLine(line);
-                reportWriter.WriteLine(line);
+                case MathObjectType.Fraction:
+                    typeDescription = "Fraction";
+                    break;
+                case MathObjectType.Radical:
+                    typeDescription = "Radical";
+                    break;
+                default:
+                    typeDescription = "Other (" + om.MathObjectType + ")";
+                    break;
+            }
+
+            Console.WriteLine($"OfficeMath node {index}: {typeDescription}");
+            index++;
+        }
+
+        // Validate presence of both fraction and radical.
+        bool hasFraction = false;
+        bool hasRadical = false;
+        foreach (OfficeMath om in officeMathNodes)
+        {
+            if (om.MathObjectType == MathObjectType.Fraction) hasFraction = true;
+            if (om.MathObjectType == MathObjectType.Radical) hasRadical = true;
+        }
+
+        if (!hasFraction || !hasRadical)
+            throw new InvalidOperationException("Expected both fraction and radical OfficeMath nodes.");
+
+        // Write a simple report file.
+        string reportPath = "OfficeMathReport.txt";
+        using (StreamWriter writer = new StreamWriter(reportPath))
+        {
+            writer.WriteLine("OfficeMath nodes analysis:");
+            index = 0;
+            foreach (OfficeMath om in officeMathNodes)
+            {
+                writer.WriteLine($"Node {index}: MathObjectType = {om.MathObjectType}");
+                index++;
             }
         }
 
-        // Verify the report file was created.
-        if (!File.Exists("MathTypesReport.txt"))
-            throw new InvalidOperationException("Failed to create the report file.");
+        // Verify report file creation.
+        if (!File.Exists(reportPath))
+            throw new FileNotFoundException("Report file was not created.", reportPath);
     }
 
-    // Helper method to translate MathObjectType to a friendly description.
-    private static string GetMathObjectTypeDescription(MathObjectType type)
+    // Helper that inserts an EQ field, writes the equation argument, updates the field,
+    // converts it to OfficeMath, inserts the OfficeMath node, and removes the original field.
+    private static void InsertEquation(DocumentBuilder builder, string eqArgument)
     {
-        return type switch
+        // Insert an EQ field.
+        Field field = builder.InsertField(FieldType.FieldEquation, true);
+
+        // Move to the field separator node and write the EQ argument.
+        builder.MoveTo(field.Separator);
+        builder.Write(eqArgument);
+
+        // Update the field so that Aspose.Words can convert it to OfficeMath.
+        field.Update();
+
+        // Convert the field to OfficeMath.
+        FieldEQ fieldEQ = field as FieldEQ;
+        OfficeMath officeMath = fieldEQ?.AsOfficeMath();
+
+        if (officeMath != null)
         {
-            MathObjectType.Fraction => "Fraction",
-            MathObjectType.Radical => "Radical",
-            MathObjectType.OMathPara => "Paragraph (top‑level equation)",
-            _ => "Other"
-        };
+            // Insert the OfficeMath node before the field start.
+            Node fieldStart = field.Start;
+            fieldStart.ParentNode.InsertBefore(officeMath, fieldStart);
+
+            // Remove the original field.
+            field.Remove();
+
+            // Move the builder after the inserted OfficeMath and start a new line.
+            builder.MoveTo(officeMath);
+            builder.Writeln();
+        }
+        else
+        {
+            throw new InvalidOperationException("Failed to convert EQ field to OfficeMath.");
+        }
     }
 }
