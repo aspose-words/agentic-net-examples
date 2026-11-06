@@ -3,49 +3,52 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
-public class ComparisonExample
+public class Program
 {
     public static void Main()
     {
-        // Create the first documentation file with specific whitespace.
-        Document docOriginal = new Document();
-        DocumentBuilder builderOriginal = new DocumentBuilder(docOriginal);
-        builderOriginal.Writeln("/// <summary>");
-        builderOriginal.Writeln("/// This method does something.");
-        builderOriginal.Writeln("/// </summary>");
-        builderOriginal.Writeln("public void DoWork()");
+        // Create the original document with some source code.
+        Document original = new Document();
+        DocumentBuilder builderOriginal = new DocumentBuilder(original);
+        builderOriginal.Writeln("public class Sample");
         builderOriginal.Writeln("{");
-        builderOriginal.Writeln("    // Implementation");
+        builderOriginal.Writeln("    public void Method()");
+        builderOriginal.Writeln("    {");
+        builderOriginal.Writeln("        int x = 1;");
+        builderOriginal.Writeln("    }");
         builderOriginal.Writeln("}");
 
-        // Create the second documentation file that differs only by whitespace.
-        Document docRevised = new Document();
-        DocumentBuilder builderRevised = new DocumentBuilder(docRevised);
-        // Add extra spaces and blank lines.
-        builderRevised.Writeln("/// <summary>");
-        builderRevised.Writeln("");
-        builderRevised.Writeln("///   This method does something.   ");
-        builderRevised.Writeln("/// </summary>");
-        builderRevised.Writeln("public void DoWork()");
+        // Create the revised document that differs only by whitespace.
+        Document revised = new Document();
+        DocumentBuilder builderRevised = new DocumentBuilder(revised);
+        builderRevised.Writeln("public class Sample");
         builderRevised.Writeln("{");
-        builderRevised.Writeln("        // Implementation");
+        builderRevised.Writeln("    public void Method( )"); // added space before parentheses
+        builderRevised.Writeln("    {");
+        builderRevised.Writeln("        int   x = 1 ;"); // extra spaces
+        builderRevised.Writeln("    }");
         builderRevised.Writeln("}");
 
-        // Configure compare options to ignore formatting (including whitespace) changes.
-        CompareOptions compareOptions = new CompareOptions
-        {
-            IgnoreFormatting = true
-        };
+        // Save the sample documents (optional, for inspection).
+        string basePath = Directory.GetCurrentDirectory();
+        string originalPath = Path.Combine(basePath, "original.docx");
+        string revisedPath = Path.Combine(basePath, "revised.docx");
+        original.Save(originalPath);
+        revised.Save(revisedPath);
+
+        // Configure comparison options to ignore whitespace (treated as formatting) changes.
+        CompareOptions options = new CompareOptions();
+        options.IgnoreFormatting = true; // Whitespace changes are considered formatting.
 
         // Perform the comparison.
-        docOriginal.Compare(docRevised, "Comparer", DateTime.Now, compareOptions);
+        original.Compare(revised, "Comparer", DateTime.Now, options);
 
-        // Output the number of revisions detected.
-        Console.WriteLine($"Revisions detected: {docOriginal.Revisions.Count}");
+        // Verify that no revisions were generated because whitespace changes are ignored.
+        int revisionCount = original.Revisions.Count;
+        Console.WriteLine($"Revisions count after ignoring whitespace: {revisionCount}");
 
         // Save the comparison result.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ComparisonResult.docx");
-        docOriginal.Save(outputPath);
-        Console.WriteLine($"Comparison document saved to: {outputPath}");
+        string resultPath = Path.Combine(basePath, "compare-whitespace.docx");
+        original.Save(resultPath);
     }
 }
