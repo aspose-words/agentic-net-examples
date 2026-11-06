@@ -1,49 +1,61 @@
 using System;
 using System.IO;
 using System.Linq;
-using Aspose.Words;
-using Aspose.Words.Drawing;
 using System.Drawing;
+using Aspose.Words;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder for constructing its content.
         Document doc = new Document();
-        // Use DocumentBuilder for convenience when adding content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // -----------------------------------------------------------------
-        // Create sample paragraphs with comments.
-        // -----------------------------------------------------------------
-        // First comment – contains the keyword "TODO".
-        Paragraph para1 = new Paragraph(doc);
-        doc.FirstSection.Body.AppendChild(para1);
-        Comment comment1 = new Comment(doc, "Alice", "A", DateTime.Now);
-        comment1.SetText("TODO: verify this text.");
-        // Build the comment range: [CommentRangeStart] Run [CommentRangeEnd] Comment
-        para1.AppendChild(new CommentRangeStart(doc, comment1.Id));
-        para1.AppendChild(new Run(doc, "Important text that needs review."));
-        para1.AppendChild(new CommentRangeEnd(doc, comment1.Id));
-        para1.AppendChild(comment1);
+        // First paragraph without any comment.
+        builder.Writeln("This paragraph has no comments.");
 
-        // Second comment – does NOT contain the keyword.
-        Paragraph para2 = new Paragraph(doc);
-        doc.FirstSection.Body.AppendChild(para2);
-        Comment comment2 = new Comment(doc, "Bob", "B", DateTime.Now);
-        comment2.SetText("General note.");
-        para2.AppendChild(new CommentRangeStart(doc, comment2.Id));
-        para2.AppendChild(new Run(doc, "Additional information."));
-        para2.AppendChild(new CommentRangeEnd(doc, comment2.Id));
-        para2.AppendChild(comment2);
+        // Paragraph that will have a comment containing the keyword "important".
+        builder.Writeln("This paragraph will be annotated.");
+        // The paragraph we just wrote is the current one.
+        Paragraph? paraWithKeyword = builder.CurrentParagraph;
+        if (paraWithKeyword != null)
+        {
+            // Create the comment.
+            Comment comment = new Comment(doc)
+            {
+                Author = "John Doe",
+                Initial = "JD",
+                DateTime = DateTime.Now
+            };
+            // Add visible text to the comment body.
+            comment.AppendChild(new Paragraph(doc));
+            comment.FirstParagraph?.AppendChild(new Run(doc, "This is an important comment."));
+            // Attach the comment to the paragraph.
+            paraWithKeyword.AppendChild(comment);
+        }
 
-        // -----------------------------------------------------------------
-        // Search for comments containing a specific keyword and highlight
-        // the text range they are attached to.
-        // -----------------------------------------------------------------
-        const string keyword = "TODO";
+        // Paragraph that will have a comment without the keyword.
+        builder.Writeln("Another paragraph with a regular comment.");
+        Paragraph? paraWithoutKeyword = builder.CurrentParagraph;
+        if (paraWithoutKeyword != null)
+        {
+            Comment otherComment = new Comment(doc)
+            {
+                Author = "Jane Smith",
+                Initial = "JS",
+                DateTime = DateTime.Now
+            };
+            otherComment.AppendChild(new Paragraph(doc));
+            otherComment.FirstParagraph?.AppendChild(new Run(doc, "Just a regular note."));
+            paraWithoutKeyword.AppendChild(otherComment);
+        }
 
+        // Define the keyword to search for inside comment texts.
+        const string keyword = "important";
+
+        // Enumerate all comments in the document.
         var comments = doc.GetChildNodes(NodeType.Comment, true)
                           .OfType<Comment>()
                           .ToList();
@@ -51,35 +63,27 @@ public class Program
         foreach (Comment c in comments)
         {
             // Check if the comment text contains the keyword (case‑insensitive).
-            if (c.GetText().IndexOf(keyword, StringComparison.OrdinalIgnoreCase) >= 0)
+            string commentText = c.GetText();
+            if (!string.IsNullOrEmpty(commentText) &&
+                commentText.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) >= 0)
             {
-                // Locate the start and end markers of the comment range.
-                CommentRangeStart? rangeStart = c.PreviousSibling?.PreviousSibling?.PreviousSibling as CommentRangeStart;
-                CommentRangeEnd?   rangeEnd   = c.PreviousSibling as CommentRangeEnd;
-
-                if (rangeStart != null && rangeEnd != null)
+                // The comment is attached to a paragraph; highlight that paragraph.
+                if (c.ParentNode is Paragraph para)
                 {
-                    // Iterate over all nodes between the start and end markers.
-                    Node? curNode = rangeStart.NextSibling;
-                    while (curNode != null && curNode != rangeEnd)
+                    foreach (Run run in para.Runs)
                     {
-                        if (curNode is Run run)
-                        {
-                            // Apply yellow highlight to the run's font.
-                            run.Font.HighlightColor = Color.Yellow;
-                        }
-                        curNode = curNode.NextSibling;
+                        run.Font.HighlightColor = Color.Yellow;
                     }
                 }
             }
         }
 
-        // -----------------------------------------------------------------
-        // Save the resulting document.
-        // -----------------------------------------------------------------
-        const string outputPath = "CommentsHighlighted.docx";
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
+
+        // Save the modified document.
+        string outputPath = Path.Combine(outputDir, "HighlightedComments.docx");
         doc.Save(outputPath);
-        // Inform the user (no interactive input required).
-        Console.WriteLine($"Document saved to '{Path.GetFullPath(outputPath)}'.");
     }
 }

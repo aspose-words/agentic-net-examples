@@ -8,41 +8,43 @@ using Aspose.Words.Drawing;
 
 public class Program
 {
-    public static void Main()
+    public static void Main(string[] args)
     {
-        // Create a new document and add some paragraphs.
+        // Create a sample document with a couple of comments.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("First paragraph with a comment.");
-        builder.Writeln("Second paragraph without a comment.");
 
-        // Create first comment.
+        // First paragraph with a comment.
+        builder.Writeln("This is the first paragraph.");
         Comment comment1 = new Comment(doc)
         {
-            Author = "John Doe",
-            Initial = "JD",
+            Author = "Alice",
+            Initial = "A",
             DateTime = DateTime.Now.AddDays(-1)
         };
+        // Add visible text to the comment.
         comment1.AppendChild(new Paragraph(doc));
-        comment1.FirstParagraph?.AppendChild(new Run(doc, "Please review this paragraph."));
-
+        comment1.FirstParagraph?.AppendChild(new Run(doc, "Please review this first paragraph."));
         // Attach the comment to the first paragraph.
-        Paragraph? firstParagraph = doc.FirstSection?.Body?.FirstParagraph;
-        firstParagraph?.AppendChild(comment1);
+        doc.FirstSection?.Body?.FirstParagraph?.AppendChild(comment1);
 
-        // Create second comment.
+        // Second paragraph with a comment.
+        builder.Writeln("This is the second paragraph.");
         Comment comment2 = new Comment(doc)
         {
-            Author = "Jane Smith",
-            Initial = "JS",
+            Author = "Bob",
+            Initial = "B",
             DateTime = DateTime.Now
         };
         comment2.AppendChild(new Paragraph(doc));
-        comment2.FirstParagraph?.AppendChild(new Run(doc, "Consider adding more details here."));
-
-        // Attach the second comment to the second paragraph.
-        Paragraph? secondParagraph = doc.FirstSection?.Body?.Paragraphs[1];
+        comment2.FirstParagraph?.AppendChild(new Run(doc, "Check the data in this paragraph."));
+        // Attach the comment to the second paragraph (the last paragraph added).
+        Paragraph? secondParagraph = doc.FirstSection?.Body?.LastParagraph;
         secondParagraph?.AppendChild(comment2);
+
+        // Ensure output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
 
         // Extract comment metadata.
         List<CommentInfo> commentInfos = doc.GetChildNodes(NodeType.Comment, true)
@@ -51,16 +53,20 @@ public class Program
             {
                 Author = c.Author,
                 Date = c.DateTime,
-                Text = c.GetText().Trim()
+                Text = c.GetText()?.Trim() ?? string.Empty
             })
             .ToList();
 
         // Serialize to JSON.
-        string json = JsonSerializer.Serialize(commentInfos, new JsonSerializerOptions { WriteIndented = true });
+        JsonSerializerOptions jsonOptions = new JsonSerializerOptions
+        {
+            WriteIndented = true
+        };
+        string json = JsonSerializer.Serialize(commentInfos, jsonOptions);
 
-        // Ensure output directory exists.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "comments.json");
-        File.WriteAllText(outputPath, json);
+        // Write JSON to file.
+        string jsonPath = Path.Combine(outputDir, "comments.json");
+        File.WriteAllText(jsonPath, json);
     }
 
     // Simple DTO for JSON serialization.
