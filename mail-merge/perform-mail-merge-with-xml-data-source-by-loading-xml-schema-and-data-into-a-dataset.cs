@@ -8,28 +8,28 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple template document with mail merge fields.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-        builder.Writeln("Customer List:");
-        builder.Writeln("Name: <<Name>>");
-        builder.Writeln("Address: <<Address>>");
-        builder.Writeln("--------------------");
-        // Save the template to a file.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        // Create a template document in memory.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // XML schema defining the data structure.
-        string xmlSchema = @"<?xml version=""1.0""?>
-<xs:schema xmlns:xs=""http://www.w3.org/2001/XMLSchema"">
-  <xs:element name=""Customers"">
+        // Insert merge fields that correspond to the XML data columns.
+        builder.Writeln("Employee Information:");
+        builder.InsertField("MERGEFIELD FirstName");
+        builder.Write(" ");
+        builder.InsertField("MERGEFIELD LastName");
+        builder.Writeln();
+
+        // Define an XML schema (XSD) as a string.
+        const string xmlSchema = @"
+<xs:schema xmlns:xs='http://www.w3.org/2001/XMLSchema'>
+  <xs:element name='Employees'>
     <xs:complexType>
       <xs:sequence>
-        <xs:element name=""Customer"" maxOccurs=""unbounded"">
+        <xs:element name='Employee' maxOccurs='unbounded'>
           <xs:complexType>
             <xs:sequence>
-              <xs:element name=""Name"" type=""xs:string""/>
-              <xs:element name=""Address"" type=""xs:string""/>
+              <xs:element name='FirstName' type='xs:string' />
+              <xs:element name='LastName' type='xs:string' />
             </xs:sequence>
           </xs:complexType>
         </xs:element>
@@ -38,20 +38,20 @@ public class Program
   </xs:element>
 </xs:schema>";
 
-        // XML data matching the schema.
-        string xmlData = @"<?xml version=""1.0""?>
-<Customers>
-  <Customer>
-    <Name>John Doe</Name>
-    <Address>123 Main St</Address>
-  </Customer>
-  <Customer>
-    <Name>Jane Smith</Name>
-    <Address>456 Oak Ave</Address>
-  </Customer>
-</Customers>";
+        // Define XML data that conforms to the schema.
+        const string xmlData = @"
+<Employees>
+  <Employee>
+    <FirstName>John</FirstName>
+    <LastName>Doe</LastName>
+  </Employee>
+  <Employee>
+    <FirstName>Jane</FirstName>
+    <LastName>Smith</LastName>
+  </Employee>
+</Employees>";
 
-        // Load schema and data into a DataSet.
+        // Load the schema and data into a DataSet.
         DataSet dataSet = new DataSet();
         using (StringReader schemaReader = new StringReader(xmlSchema))
         {
@@ -62,21 +62,36 @@ public class Program
             dataSet.ReadXml(dataReader);
         }
 
-        // Load the template document.
-        Document doc = new Document(templatePath);
+        // The DataSet contains a table named "Employee" (derived from the element name).
+        // Perform a region-based mail merge for each employee.
+        // Define the region start and end fields in the template.
+        builder.MoveToDocumentEnd();
+        builder.InsertField("MERGEFIELD TableStart:Employees");
+        builder.Writeln("Employee: ");
+        builder.InsertField("MERGEFIELD FirstName");
+        builder.Write(" ");
+        builder.InsertField("MERGEFIELD LastName");
+        builder.InsertField("MERGEFIELD TableEnd:Employees");
 
-        // Perform mail merge using the DataTable named "Customer".
-        DataTable customerTable = dataSet.Tables["Customer"];
-        if (customerTable != null)
-        {
-            doc.MailMerge.Execute(customerTable);
-        }
+        // Execute the mail merge with regions using the DataTable.
+        DataTable employeeTable = dataSet.Tables["Employee"];
+        if (employeeTable == null)
+            throw new InvalidOperationException("Employee table not found in the DataSet.");
+
+        doc.MailMerge.ExecuteWithRegions(employeeTable);
+
+        // Optional cleanup: remove any unused merge fields.
+        doc.MailMerge.CleanupOptions = MailMergeCleanupOptions.RemoveUnusedFields;
 
         // Save the merged document.
-        const string outputPath = "MergedDocument.docx";
+        const string outputPath = "MergedOutput.docx";
         doc.Save(outputPath);
 
-        // Indicate completion.
-        Console.WriteLine("Mail merge completed. Output saved to " + outputPath);
+        // Validate that the output file was created and is not empty.
+        FileInfo fileInfo = new FileInfo(outputPath);
+        if (!fileInfo.Exists || fileInfo.Length == 0)
+            throw new InvalidOperationException("Merged output file was not created correctly.");
+
+        // The program finishes without requiring user interaction.
     }
 }

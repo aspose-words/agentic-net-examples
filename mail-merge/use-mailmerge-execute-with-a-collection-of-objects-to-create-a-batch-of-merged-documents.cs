@@ -1,49 +1,73 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a template document with merge fields.
+        // Create a template document in memory.
         Document template = new Document();
         DocumentBuilder builder = new DocumentBuilder(template);
-        builder.Writeln("Dear <<Name>>,");
-        builder.Writeln("Your appointment is scheduled on <<Date>>.");
-        builder.Writeln("Thank you.");
+        builder.Writeln("Dear ");
+        builder.InsertField("MERGEFIELD FirstName");
+        builder.Write(" ");
+        builder.InsertField("MERGEFIELD LastName");
+        builder.Writeln(",");
+        builder.Writeln("Thank you for your interest.");
 
-        // Prepare a collection of data objects.
-        var data = new List<Person>
+        // Define a simple data source: an array of Person objects.
+        Person[] people = new Person[]
         {
-            new Person { Name = "Alice", Date = DateTime.Today.AddDays(1).ToString("MMMM dd, yyyy") },
-            new Person { Name = "Bob", Date = DateTime.Today.AddDays(2).ToString("MMMM dd, yyyy") },
-            new Person { Name = "Charlie", Date = DateTime.Today.AddDays(3).ToString("MMMM dd, yyyy") }
+            new Person { FirstName = "John", LastName = "Doe" },
+            new Person { FirstName = "Jane", LastName = "Smith" },
+            new Person { FirstName = "Bob", LastName = "Johnson" }
         };
 
-        // Perform mail merge for each object and save the merged document.
-        int index = 1;
-        foreach (var person in data)
+        // Field names must match the merge fields in the template.
+        string[] fieldNames = new string[] { "FirstName", "LastName" };
+
+        // Prepare output folder.
+        string outputFolder = "MergedDocs";
+        Directory.CreateDirectory(outputFolder);
+
+        int docIndex = 1;
+        foreach (Person person in people)
         {
-            // Clone the template for each merge operation.
+            // Clone the template for each record.
             Document mergedDoc = (Document)template.Clone(true);
 
-            // Execute mail merge with the current object's data.
-            mergedDoc.MailMerge.Execute(
-                new[] { "Name", "Date" },
-                new object[] { person.Name, person.Date });
+            // Execute mail merge with the current object's values.
+            object[] fieldValues = new object[] { person.FirstName, person.LastName };
+            mergedDoc.MailMerge.Execute(fieldNames, fieldValues);
 
-            // Save the merged document to a file.
-            string fileName = $"MergedDocument_{index}.docx";
-            mergedDoc.Save(fileName);
-            index++;
+            // Validate that the merge replaced the fields.
+            string mergedText = mergedDoc.GetText();
+            if (string.IsNullOrWhiteSpace(mergedText) ||
+                !mergedText.Contains(person.FirstName) ||
+                !mergedText.Contains(person.LastName))
+            {
+                throw new InvalidOperationException($"Mail merge failed for record {docIndex}.");
+            }
+
+            // Save the merged document.
+            string outputPath = Path.Combine(outputFolder, $"MergedDocument_{docIndex}.docx");
+            mergedDoc.Save(outputPath);
+
+            // Verify that the file was created and is not empty.
+            if (!File.Exists(outputPath) || new FileInfo(outputPath).Length == 0)
+            {
+                throw new InvalidOperationException($"Failed to create output file for record {docIndex}.");
+            }
+
+            docIndex++;
         }
     }
 
-    // Simple class representing the data source for mail merge.
+    // Simple POCO representing a data record.
     public class Person
     {
-        public string Name { get; set; }
-        public string Date { get; set; }
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
     }
 }

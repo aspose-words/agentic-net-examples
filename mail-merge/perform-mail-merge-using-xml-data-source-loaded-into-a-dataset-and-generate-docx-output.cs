@@ -1,65 +1,69 @@
 using System;
 using System.Data;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
+using Aspose.Words.MailMerging;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a template document with merge fields.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First line: Dear <<FirstName>> <<LastName>>,
-        builder.Write("Dear ");
-        builder.InsertField("MERGEFIELD FirstName", "«FirstName»");
+        // Insert merge fields into the template.
+        builder.Writeln("Employee Information:");
+        builder.InsertField("MERGEFIELD FirstName");
         builder.Write(" ");
-        builder.InsertField("MERGEFIELD LastName", "«LastName»");
-        builder.Writeln(",");
+        builder.InsertField("MERGEFIELD LastName");
+        builder.Writeln();
 
-        // Second line: Your order <<OrderID>> has been shipped on <<ShipDate>>.
-        builder.Write("Your order ");
-        builder.InsertField("MERGEFIELD OrderID", "«OrderID»");
-        builder.Write(" has been shipped on ");
-        builder.InsertField("MERGEFIELD ShipDate", "«ShipDate»");
-        builder.Writeln(".");
+        // Save the template (optional, for debugging).
+        const string templatePath = "Template.docx";
+        doc.Save(templatePath);
 
-        // Third line: Thank you for shopping with us.
-        builder.Writeln("Thank you for shopping with us.");
-
-        // XML data source as a string.
-        string xml = @"<?xml version='1.0' encoding='utf-8'?>
-<Customers>
-  <Customer>
-    <FirstName>John</FirstName>
-    <LastName>Doe</LastName>
-    <OrderID>12345</OrderID>
-    <ShipDate>2023-08-01</ShipDate>
-  </Customer>
-  <Customer>
-    <FirstName>Jane</FirstName>
-    <LastName>Smith</LastName>
-    <OrderID>67890</OrderID>
-    <ShipDate>2023-08-02</ShipDate>
-  </Customer>
-</Customers>";
+        // XML data source.
+        string xmlData = @"
+<DataSet>
+    <Person>
+        <FirstName>John</FirstName>
+        <LastName>Doe</LastName>
+    </Person>
+</DataSet>";
 
         // Load XML into a DataSet.
         DataSet dataSet = new DataSet();
-        using (StringReader sr = new StringReader(xml))
+        using (StringReader sr = new StringReader(xmlData))
         {
             dataSet.ReadXml(sr);
         }
 
-        // Get the DataTable that contains the customer records.
-        DataTable customerTable = dataSet.Tables["Customer"];
+        // Retrieve the DataTable that contains the merge data.
+        DataTable table = dataSet.Tables["Person"];
+        if (table == null || table.Rows.Count == 0)
+            throw new InvalidOperationException("No data found for merge.");
 
-        // Perform mail merge for each record in the DataTable.
-        // The Execute method will repeat the document for each row.
-        template.MailMerge.Execute(customerTable);
+        // Prepare field names and values for the simple mail merge.
+        string[] fieldNames = table.Columns.Cast<DataColumn>()
+                                          .Select(col => col.ColumnName)
+                                          .ToArray();
+
+        object[] fieldValues = table.Rows[0].ItemArray;
+
+        // Execute the mail merge.
+        doc.MailMerge.CleanupOptions = MailMergeCleanupOptions.RemoveUnusedFields;
+        doc.MailMerge.Execute(fieldNames, fieldValues);
 
         // Save the merged document.
-        template.Save("MergedOutput.docx");
+        const string outputPath = "MergedOutput.docx";
+        doc.Save(outputPath);
+
+        // Validation: ensure the output file exists and is not empty.
+        if (!File.Exists(outputPath) || new FileInfo(outputPath).Length == 0)
+            throw new InvalidOperationException("Merged document was not created correctly.");
+
+        // The program ends here without waiting for user input.
     }
 }

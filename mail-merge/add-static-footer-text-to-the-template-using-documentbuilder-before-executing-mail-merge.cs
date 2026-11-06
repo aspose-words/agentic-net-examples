@@ -1,7 +1,6 @@
 using System;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
-using Aspose.Words.Fields;
 
 public class Program
 {
@@ -11,35 +10,44 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert some merge fields into the body of the document.
+        // Build the body of the template with a merge field.
         builder.Writeln("Dear ");
-
-        // Insert MERGEFIELD Name.
-        builder.InsertField(FieldType.FieldMergeField, true);
-        builder.Write(" Name");
-
+        builder.InsertField("MERGEFIELD Name");
         builder.Writeln(",");
 
-        builder.Writeln("Your order number is ");
-
-        // Insert MERGEFIELD OrderNumber.
-        builder.InsertField(FieldType.FieldMergeField, true);
-        builder.Write(" OrderNumber");
-
-        builder.Writeln(".");
-
-        // Add static footer text using DocumentBuilder.
+        // Add a static footer text before executing the mail merge.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.Writeln("This is a static footer added before mail merge.");
+        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        builder.Writeln("Company Confidential - Do not distribute");
 
-        // Prepare data for mail merge.
-        string[] fieldNames = { "Name", "OrderNumber" };
-        object[] fieldValues = { "John Doe", "12345" };
+        // Return to the main story (optional, not required for this simple example).
+        builder.MoveToDocumentEnd();
 
-        // Execute mail merge.
+        // Prepare simple data source for the mail merge.
+        string[] fieldNames = { "Name" };
+        object[] fieldValues = { "John Doe" };
+
+        // Execute the mail merge.
         doc.MailMerge.Execute(fieldNames, fieldValues);
 
-        // Save the result to a file.
-        doc.Save("MergedDocument.docx");
+        // Save the merged document.
+        string outputPath = "MergedOutput.docx";
+        doc.Save(outputPath);
+
+        // Validation: ensure the output file exists.
+        if (!File.Exists(outputPath))
+            throw new Exception("The output file was not created.");
+
+        // Validation: ensure the merged field was replaced.
+        string mergedText = doc.GetText();
+        if (!mergedText.Contains("John Doe"))
+            throw new Exception("Mail merge failed – the field value was not inserted.");
+
+        // Validation: ensure the static footer text is present.
+        if (!mergedText.Contains("Company Confidential"))
+            throw new Exception("Static footer text is missing.");
+
+        // Indicate successful completion (optional, not required for non‑interactive run).
+        Console.WriteLine("Mail merge completed successfully.");
     }
 }

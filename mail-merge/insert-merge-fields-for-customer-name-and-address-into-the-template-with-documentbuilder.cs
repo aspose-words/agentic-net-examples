@@ -1,5 +1,7 @@
 using System;
+using System.IO;
 using Aspose.Words;
+using Aspose.Words.MailMerging;
 
 public class Program
 {
@@ -9,17 +11,40 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a greeting line with a merge field for the customer's name.
-        builder.Writeln("Dear ");
-        builder.InsertField("MERGEFIELD CustomerName \\* MERGEFORMAT");
-        builder.Writeln(",");
+        // Build the template with merge fields for customer name and address.
+        builder.Writeln("Customer Information:");
+        builder.InsertField("MERGEFIELD CustomerName");
+        builder.Writeln();
+        builder.InsertField("MERGEFIELD CustomerAddress");
+        builder.Writeln();
 
-        // Insert a line with a merge field for the customer's address.
-        builder.Writeln("Your address is:");
-        builder.InsertField("MERGEFIELD CustomerAddress \\* MERGEFORMAT");
-        builder.Writeln(".");
+        // Prepare simple data source.
+        string[] fieldNames = new string[] { "CustomerName", "CustomerAddress" };
+        object[] fieldValues = new object[] { "John Doe", "123 Main St, Anytown" };
 
-        // Save the document to a file.
-        doc.Save("Output.docx");
+        // Execute the mail merge.
+        doc.MailMerge.Execute(fieldNames, fieldValues);
+
+        // Remove any unused merge fields.
+        doc.MailMerge.CleanupOptions = MailMergeCleanupOptions.RemoveUnusedFields;
+
+        // Save the merged document.
+        string outputPath = "MergedDocument.docx";
+        doc.Save(outputPath);
+
+        // Validate that the output file exists.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The merged document was not created.");
+
+        // Load the saved document to verify merged content.
+        Document resultDoc = new Document(outputPath);
+        string resultText = resultDoc.GetText();
+
+        // Ensure that the merge fields were replaced with the provided values.
+        if (!resultText.Contains("John Doe") || !resultText.Contains("123 Main St"))
+            throw new InvalidOperationException("Mail merge failed: expected values not found in the document.");
+
+        // Optionally, clean up the output file after verification (comment out if you want to keep it).
+        // File.Delete(outputPath);
     }
 }

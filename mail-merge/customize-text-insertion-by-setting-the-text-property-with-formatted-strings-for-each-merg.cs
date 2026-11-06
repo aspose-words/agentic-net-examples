@@ -10,52 +10,82 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a paragraph with two merge fields.
-        builder.Writeln("Hello <<Name>>, today is <<Date>>.");
+        // Insert merge fields into the template.
+        builder.Writeln("Customer Name: ");
+        builder.InsertField("MERGEFIELD Name");
+        builder.Writeln();
+
+        builder.Writeln("Order Date: ");
+        builder.InsertField("MERGEFIELD Date");
+        builder.Writeln();
+
+        builder.Writeln("Order Total: ");
+        builder.InsertField("MERGEFIELD Amount");
+        builder.Writeln();
 
         // Set up a custom field merging callback to format inserted text.
         doc.MailMerge.FieldMergingCallback = new CustomFieldMergingCallback();
 
-        // Define field names and corresponding values.
-        string[] fieldNames = { "Name", "Date" };
-        object[] fieldValues = { "John Doe", DateTime.Now };
+        // Prepare data for the merge.
+        string[] fieldNames = { "Name", "Date", "Amount" };
+        DateTime orderDate = new DateTime(2023, 12, 31);
+        double orderTotal = 1234.56;
+        object[] fieldValues = { "John Doe", orderDate, orderTotal };
 
-        // Execute mail merge.
+        // Execute the mail merge.
         doc.MailMerge.Execute(fieldNames, fieldValues);
 
-        // Save the result to a file.
-        doc.Save("MergedOutput.docx");
+        // Save the merged document.
+        const string outputPath = "MergedDocument.docx";
+        doc.Save(outputPath);
 
-        // Indicate completion.
-        Console.WriteLine("Mail merge completed. Output saved to MergedOutput.docx");
+        // Validate that the merged content contains the expected formatted values.
+        string mergedText = doc.GetText();
+        if (!mergedText.Contains("John Doe") ||
+            !mergedText.Contains(orderDate.ToString("yyyy-MM-dd")) ||
+            !mergedText.Contains(string.Format("{0:C}", orderTotal)))
+        {
+            throw new Exception("Mail merge validation failed: expected values not found in the document.");
+        }
     }
 
-    // Custom callback to control how each merge field value is inserted.
+    // Custom callback to format field values during mail merge.
     private class CustomFieldMergingCallback : IFieldMergingCallback
     {
-        // Called for each merge field during mail merge.
-        public void FieldMerging(FieldMergingArgs e)
+        public void FieldMerging(FieldMergingArgs args)
         {
-            // Format the value based on the field name.
-            if (e.FieldName.Equals("Name", StringComparison.OrdinalIgnoreCase))
+            if (args.FieldValue == null)
             {
-                // Example: convert name to uppercase.
-                e.Text = ((string)e.FieldValue).ToUpperInvariant();
+                args.Text = string.Empty;
+                return;
             }
-            else if (e.FieldName.Equals("Date", StringComparison.OrdinalIgnoreCase))
+
+            switch (args.FieldName)
             {
-                // Example: format date as "Month day, year".
-                DateTime date = (DateTime)e.FieldValue;
-                e.Text = date.ToString("MMMM dd, yyyy");
-            }
-            else
-            {
-                // Default handling for any other fields.
-                e.Text = e.FieldValue?.ToString() ?? string.Empty;
+                case "Date":
+                    // Format DateTime fields as yyyy-MM-dd.
+                    if (args.FieldValue is DateTime dt)
+                        args.Text = dt.ToString("yyyy-MM-dd");
+                    else
+                        args.Text = args.FieldValue.ToString();
+                    break;
+
+                case "Amount":
+                    // Format numeric fields as currency.
+                    if (args.FieldValue is IFormattable fmt)
+                        args.Text = fmt.ToString("C", System.Globalization.CultureInfo.CurrentCulture);
+                    else
+                        args.Text = args.FieldValue.ToString();
+                    break;
+
+                default:
+                    // Default handling for other fields.
+                    args.Text = args.FieldValue.ToString();
+                    break;
             }
         }
 
-        // Not used in this example but required by the interface.
+        // Image fields are not used in this example.
         public void ImageFieldMerging(ImageFieldMergingArgs args) { }
     }
 }

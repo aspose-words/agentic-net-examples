@@ -1,53 +1,56 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.MailMerging;
 
-namespace MailMergeExample
+public class MailMergeExample
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a template document in memory.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+
+        // Insert merge fields into the template.
+        builder.InsertField("MERGEFIELD FirstName");
+        builder.Write(" "); // Add a space between fields.
+        builder.InsertField("MERGEFIELD LastName");
+        builder.Writeln(); // End the line.
+
+        // Define field names and data for simple mail merge.
+        string[] fieldNames = new string[] { "FirstName", "LastName" };
+        object[][] records = new object[][]
         {
-            // Create a template document with merge fields.
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
-            builder.Writeln("Dear <<FirstName>> <<LastName>>,");
-            builder.Writeln("Your order <<OrderId>> is confirmed.");
-            builder.Writeln("Thank you for shopping with us.");
-            builder.Writeln(); // Add an empty line.
+            new object[] { "John", "Doe" },
+            new object[] { "Jane", "Smith" },
+            new object[] { "Alice", "Johnson" }
+        };
 
-            // Define a collection of records to merge.
-            var customers = new List<Customer>
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "MergedDocs");
+        Directory.CreateDirectory(outputDir);
+
+        // Perform mail merge for each record, cloning the template each time.
+        for (int i = 0; i < records.Length; i++)
+        {
+            // Clone the template to keep it unchanged for the next iteration.
+            Document mergedDoc = (Document)template.Clone(true);
+
+            // Execute the simple mail merge.
+            mergedDoc.MailMerge.Execute(fieldNames, records[i]);
+
+            // Validate that the merge replaced the fields.
+            string mergedText = mergedDoc.GetText();
+            foreach (object value in records[i])
             {
-                new Customer { FirstName = "John",  LastName = "Doe",   OrderId = 1001 },
-                new Customer { FirstName = "Jane",  LastName = "Smith", OrderId = 1002 },
-                new Customer { FirstName = "Alice", LastName = "Brown", OrderId = 1003 }
-            };
-
-            // Perform mail merge for each record, cloning the template each time.
-            foreach (var customer in customers)
-            {
-                // Clone the template to keep it unchanged for the next iteration.
-                Document doc = (Document)template.Clone();
-
-                // Execute mail merge with the current record's data.
-                doc.MailMerge.Execute(
-                    new[] { "FirstName", "LastName", "OrderId" },
-                    new object[] { customer.FirstName, customer.LastName, customer.OrderId });
-
-                // Save the merged document to a separate file.
-                string fileName = $"MergedDocument_{customer.OrderId}.docx";
-                doc.Save(fileName);
+                if (value == null || !mergedText.Contains(value.ToString()))
+                {
+                    throw new InvalidOperationException($"Merge failed for record {i}: value '{value}' not found in output.");
+                }
             }
-        }
 
-        // Simple data class representing a record for mail merge.
-        private class Customer
-        {
-            public string FirstName { get; set; }
-            public string LastName  { get; set; }
-            public int    OrderId   { get; set; }
+            // Save the merged document to a separate file.
+            string outputPath = Path.Combine(outputDir, $"MergedDocument_{i + 1}.docx");
+            mergedDoc.Save(outputPath);
         }
     }
 }

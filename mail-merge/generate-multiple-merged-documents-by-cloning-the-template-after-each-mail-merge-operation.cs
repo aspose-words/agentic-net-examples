@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.MailMerging;
 
@@ -7,47 +6,49 @@ public class Program
 {
     public static void Main()
     {
-        // Create a template document with merge fields.
+        // Create a template document in memory.
         Document template = new Document();
         DocumentBuilder builder = new DocumentBuilder(template);
-        builder.Writeln("Dear <<Name>>,");
-        builder.Writeln("Your appointment is scheduled on <<Date>>.");
-        builder.Writeln("Thank you.");
 
-        // Prepare data for multiple merges.
-        var records = new List<Dictionary<string, object>>
+        // Build simple content with merge fields.
+        builder.Writeln("Dear ");
+        builder.InsertField("MERGEFIELD FirstName", "");
+        builder.Write(" ");
+        builder.InsertField("MERGEFIELD LastName", "");
+        builder.Writeln(",");
+        builder.Writeln("This is a test mail merge document.");
+
+        // Define field names and values for multiple records.
+        string[] fieldNames = new string[] { "FirstName", "LastName" };
+        object[][] fieldValues = new object[][]
         {
-            new Dictionary<string, object>
-            {
-                { "Name", "Alice" },
-                { "Date", new DateTime(2023, 12, 1).ToString("D") }
-            },
-            new Dictionary<string, object>
-            {
-                { "Name", "Bob" },
-                { "Date", new DateTime(2023, 12, 2).ToString("D") }
-            },
-            new Dictionary<string, object>
-            {
-                { "Name", "Charlie" },
-                { "Date", new DateTime(2023, 12, 3).ToString("D") }
-            }
+            new object[] { "John", "Doe" },
+            new object[] { "Jane", "Smith" },
+            new object[] { "Bob", "Johnson" }
         };
 
-        // Perform mail merge for each record, cloning the template each time.
-        for (int i = 0; i < records.Count; i++)
+        // Perform a separate merge for each record, cloning the template each time.
+        for (int i = 0; i < fieldValues.Length; i++)
         {
             // Clone the template to keep it unchanged for the next iteration.
             Document mergedDoc = (Document)template.Clone();
 
-            // Execute mail merge with the current record's values.
-            mergedDoc.MailMerge.Execute(
-                new[] { "Name", "Date" },
-                new object[] { records[i]["Name"], records[i]["Date"] });
+            // Remove any unused fields after the merge.
+            mergedDoc.MailMerge.CleanupOptions = MailMergeCleanupOptions.RemoveUnusedFields;
 
-            // Save the merged document with a unique file name.
-            string outputPath = $"MergedDocument_{i + 1}.docx";
-            mergedDoc.Save(outputPath);
+            // Execute the mail merge for the current record.
+            mergedDoc.MailMerge.Execute(fieldNames, fieldValues[i]);
+
+            // Validate that the merged document contains the expected values.
+            string mergedText = mergedDoc.GetText();
+            if (!mergedText.Contains((string)fieldValues[i][0]) || !mergedText.Contains((string)fieldValues[i][1]))
+            {
+                throw new InvalidOperationException($"Mail merge failed for record {i + 1}.");
+            }
+
+            // Save the merged document to a file.
+            string outputFileName = $"MergedDocument_{i + 1}.docx";
+            mergedDoc.Save(outputFileName);
         }
     }
 }
