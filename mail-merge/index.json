@@ -4,40 +4,44 @@
     "slug": "mail-merge",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Use Aspose.Words MailMerge API with locally created templates, explicit MERGEFIELD insertion, exact data-field matching, and Execute or ExecuteWithRegions as appropriate.",
+    "preferred_workflow": "Create the document with DocumentBuilder, insert static text and MERGEFIELD tags using builder.InsertField(\"MERGEFIELD FieldName\"), define region boundaries with TableStart and TableEnd fields, populate a DataTable that matches the region name and column names, set doc.MailMerge.CleanupOptions if unused fields must be removed, invoke doc.MailMerge.Execute for simple merges or doc.MailMerge.ExecuteWithRegions for region merges, and finally save the result in the desired format.",
     "required_packages": [
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.9.0"
+      "Aspose.Words": "26.10.0"
     },
     "required_namespaces": [
       "System",
-      "Aspose.Words",
-      "Aspose.Words.Tables",
-      "System.Data",
       "System.IO",
+      "Aspose.Words",
       "Aspose.Words.MailMerging",
-      "System.Collections.Generic",
-      "SkiaSharp",
+      "System.Data",
+      "Aspose.Words.Tables",
       "Aspose.Words.Fields",
+      "Aspose.Words.Drawing",
+      "System.Linq",
       "System.Globalization",
-      "System.Collections",
-      "Aspose.Words.Saving",
-      "System.IO.Compression",
       "System.Text",
-      "Aspose.Words.BuildingBlocks"
+      "Aspose.Words.Saving",
+      "System.Collections.Generic"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
-      "Directory",
-      "Path",
       "File",
+      "Path",
+      "NodeType",
+      "MemoryStream",
+      "Shape",
+      "Run",
       "Font",
+      "Directory",
       "SaveFormat",
       "Field",
-      "Cell",
+      "Range",
+      "FieldType",
+      "ImageData",
       "StyleIdentifier",
       "Table"
     ]
@@ -55,42 +59,40 @@
   },
   "rules_summary": {
     "strict_api_bans": [
-      "Do not assume template files already exist.",
-      "Do not mismatch merge field names and data field names.",
-      "Do not invent unsupported mail-merge APIs.",
-      "Do not leave merge fields unresolved unless explicitly required by the task."
+      "Do not reference types such as Table, FieldType, MailMergeCleanupOptions, GetRegions, or ImageScale that are not present in the referenced Aspose.Words version.",
+      "Do not assume that a template file exists on disk; always construct the template programmatically or load a known file."
     ],
     "canonical_patterns": [
-      "Create the template locally with DocumentBuilder.",
-      "Insert merge fields explicitly with builder.InsertField(\"MERGEFIELD FieldName\").",
-      "Use MailMerge.Execute for simple merges and ExecuteWithRegions for region-based merges.",
-      "Use MailMergeCleanupOptions when the task requires a clean merged result."
+      "Use DocumentBuilder to build the template and insert MERGEFIELD tags explicitly.",
+      "Implement IFieldMergingCallback for image fields and assign it to doc.MailMerge.FieldMergingCallback.",
+      "Choose MailMerge.Execute for flat data and MailMerge.ExecuteWithRegions for table-based regions."
     ],
     "nullable_warning_prevention": [
-      "Validate arrays, tables, and lookup results before executing mail merge.",
-      "Avoid maybe-null dereference when reading field names, table values, or merge results."
+      "Validate that all field-name arrays, DataTable columns, and image byte arrays are non-null before calling Execute.",
+      "Guard against missing values in the data source by providing default text in the FieldMerging callback."
     ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "Template and data mismatch",
-      "symptom": "Merge fields remain unresolved because field names do not match provided data keys or columns.",
-      "fix": "Ensure merge field names exactly match the field-name array or DataTable column names."
+      "pattern": "Missing API members",
+      "symptom": "Compilation fails with CS0246, CS1061, or CS0234 because types like Table, FieldType, MailMergeCleanupOptions, GetRegions, or ImageScale cannot be resolved.",
+      "cause": "The code references members that are not part of Aspose.Words 26.10.0 or were removed in newer releases.",
+      "fix": "Replace the missing members with supported alternatives: use DocumentBuilder.StartTable/EndTable instead of Table, use FieldType.FieldMergeField for field insertion, omit MailMergeCleanupOptions or use the available CleanupOptions enum, and retrieve region information via doc.MailMerge.GetRegionsHierarchy when GetRegions is unavailable.",
+      "prevention": "Consult the Aspose.Words 26.10.0 API reference and limit code to members listed in the official documentation."
     },
     {
-      "pattern": "Missing local template bootstrap",
-      "symptom": "Examples assume an existing mail merge template document already exists.",
-      "fix": "Create the mail merge template locally using DocumentBuilder before execution."
+      "pattern": "Template bootstrap omission",
+      "symptom": "Runtime validation reports unresolved merge fields because the document contains no MERGEFIELD tags.",
+      "cause": "The example assumes an external template file that was never created.",
+      "fix": "Create the template in code with DocumentBuilder before performing any mail merge operations.",
+      "prevention": "Always include template construction steps in the sample or verify that the referenced file exists in the test environment."
     },
     {
-      "pattern": "Wrong API choice for regions",
-      "symptom": "Region merges are attempted with simple Execute instead of ExecuteWithRegions.",
-      "fix": "Use TableStart/TableEnd fields and ExecuteWithRegions with a matching DataTable."
-    },
-    {
-      "pattern": "Cleanup options omitted",
-      "symptom": "Unused merge fields or regions remain in the output unexpectedly.",
-      "fix": "Apply MailMergeCleanupOptions when the task requires unused fields or empty regions to be removed."
+      "pattern": "Field-name and data mismatch",
+      "symptom": "Unmerged placeholders remain in the output or validation throws an InvalidOperationException indicating missing data.",
+      "cause": "The names of MERGEFIELD tags do not exactly match the keys in the string[] fieldNames array or the column names of the DataTable.",
+      "fix": "Ensure that every MERGEFIELD tag uses the exact identifier defined in the data source, respecting case sensitivity.",
+      "prevention": "Generate field names programmatically from the data source or perform a pre-merge check that compares template fields with data columns."
     }
   ],
   "examples": [
@@ -124,8 +126,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 4,
@@ -168,8 +170,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 8,
@@ -279,8 +281,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 18,
@@ -336,8 +338,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 23,
@@ -347,8 +349,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 24,
@@ -358,8 +360,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 25,
@@ -427,5 +429,15 @@
       "selected_engine": "mcp",
       "winner": "mcp"
     }
-  ]
+  ],
+  "narrative": {
+    "overview": "Mail Merge in Aspose.Words enables programmatic creation of merge templates, insertion of MERGEFIELD tags, and execution of simple or region-based merges. The verified examples demonstrate correct template bootstrapping, image field handling via IFieldMergingCallback, and generation of separate PDF outputs for each record.",
+    "purpose": "The AI coding agent should generate reliable Aspose.Words mail-merge programs that build the template in code, insert exact MERGEFIELD names, configure the appropriate MailMerge API (Execute or ExecuteWithRegions), apply cleanup options when required, and handle image insertion through the IFieldMergingCallback interface without referencing unavailable members.",
+    "validation_priorities": [
+      "Verify that every MERGEFIELD name in the template appears in the supplied field-name collection or DataTable before executing the merge."
+    ],
+    "maintenance_notes": [
+      "Update the sample code whenever Aspose.Words releases a new major version to reflect any API changes and keep the documentation aligned with the current library."
+    ]
+  }
 }

@@ -1,10 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.Data;
 using Aspose.Words;
 using Aspose.Words.MailMerging;
 
-public class Program
+public class MailMergeRegionExample
 {
     public static void Main()
     {
@@ -12,81 +11,75 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a simple merge field for the order ID.
-        builder.Writeln("Order ID:");
-        builder.InsertField("MERGEFIELD OrderID \\* MERGEFORMAT");
+        // Insert a simple merge field for the order number.
+        builder.Writeln("Order Number:");
+        builder.InsertField("MERGEFIELD OrderNumber");
         builder.Writeln();
 
-        // Insert the start of the mail merge region for order items.
-        builder.InsertField("MERGEFIELD TableStart:OrderItems \\* MERGEFORMAT");
+        // Insert the start of the region.
+        builder.InsertField("MERGEFIELD TableStart:OrderItems");
         builder.Writeln();
 
-        // Create a table that will be repeated for each item in the region.
+        // Build a table that will be repeated for each row in the region.
         builder.StartTable();
 
         // Header row.
         builder.InsertCell();
-        builder.Write("Item Name");
+        builder.Write("Item");
         builder.InsertCell();
         builder.Write("Quantity");
+        builder.InsertCell();
+        builder.Write("Price");
         builder.EndRow();
 
         // Data row with merge fields.
         builder.InsertCell();
-        builder.InsertField("MERGEFIELD ItemName \\* MERGEFORMAT");
+        builder.InsertField("MERGEFIELD ItemName");
         builder.InsertCell();
-        builder.InsertField("MERGEFIELD Quantity \\* MERGEFORMAT");
+        builder.InsertField("MERGEFIELD Quantity");
+        builder.InsertCell();
+        builder.InsertField("MERGEFIELD Price");
         builder.EndRow();
 
         builder.EndTable();
 
-        // Insert the end of the mail merge region.
-        builder.InsertField("MERGEFIELD TableEnd:OrderItems \\* MERGEFORMAT");
+        // Insert the end of the region.
+        builder.InsertField("MERGEFIELD TableEnd:OrderItems");
         builder.Writeln();
 
-        // Prepare the data for the merge.
-        var order = new Order
-        {
-            OrderID = "12345",
-            Items = new List<Item>
-            {
-                new Item { ItemName = "Apple",  Quantity = 5 },
-                new Item { ItemName = "Banana", Quantity = 3 },
-                new Item { ItemName = "Orange", Quantity = 7 }
-            }
-        };
+        // Prepare simple merge data.
+        string[] simpleFieldNames = { "OrderNumber" };
+        object[] simpleFieldValues = { "ORD-1001" };
 
-        // Perform a simple merge for the OrderID field.
-        doc.MailMerge.Execute(new[] { "OrderID" }, new object[] { order.OrderID });
-
-        // Convert the collection of items to a DataTable for region merge.
+        // Prepare region data in a DataTable.
         DataTable itemsTable = new DataTable("OrderItems");
         itemsTable.Columns.Add("ItemName", typeof(string));
         itemsTable.Columns.Add("Quantity", typeof(int));
+        itemsTable.Columns.Add("Price", typeof(decimal));
 
-        foreach (var item in order.Items)
-        {
-            itemsTable.Rows.Add(item.ItemName, item.Quantity);
-        }
+        itemsTable.Rows.Add("Widget", 4, 19.99m);
+        itemsTable.Rows.Add("Gadget", 2, 34.50m);
+        itemsTable.Rows.Add("Doohickey", 1, 99.95m);
 
-        // Perform a region merge for the collection of order items.
+        // Execute the mail merge.
+        doc.MailMerge.CleanupOptions = MailMergeCleanupOptions.RemoveUnusedFields;
+        doc.MailMerge.Execute(simpleFieldNames, simpleFieldValues);
         doc.MailMerge.ExecuteWithRegions(itemsTable);
 
         // Save the merged document.
-        doc.Save("MergedOutput.docx");
-    }
+        string outputPath = "MergedOrder.docx";
+        doc.Save(outputPath);
 
-    // Simple class representing an order.
-    public class Order
-    {
-        public string OrderID { get; set; }
-        public List<Item> Items { get; set; }
-    }
+        // Validate that the merge produced expected content.
+        string mergedText = doc.GetText();
+        if (!mergedText.Contains("ORD-1001") ||
+            !mergedText.Contains("Widget") ||
+            !mergedText.Contains("Gadget") ||
+            !mergedText.Contains("Doohickey"))
+        {
+            throw new InvalidOperationException("Mail merge did not produce the expected output.");
+        }
 
-    // Simple class representing an individual order item.
-    public class Item
-    {
-        public string ItemName { get; set; }
-        public int Quantity { get; set; }
+        Console.WriteLine($"Mail merge completed successfully. Output saved to '{outputPath}'.");
     }
 }

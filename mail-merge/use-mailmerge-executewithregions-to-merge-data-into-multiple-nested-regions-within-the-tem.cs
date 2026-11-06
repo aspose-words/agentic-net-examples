@@ -1,67 +1,96 @@
 using System;
 using System.Data;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.MailMerging;
 
-namespace MailMergeNestedRegionsExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a DataSet with two related tables: Customers and Orders.
-            DataSet dataSet = new DataSet();
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Customers table.
-            DataTable customersTable = new DataTable("Customers");
-            customersTable.Columns.Add("Name", typeof(string));
-            customersTable.Columns.Add("Country", typeof(string));
+        // Add a title.
+        builder.Writeln("Customer Orders Report");
+        builder.Writeln();
 
-            customersTable.Rows.Add("Alice", "USA");
-            customersTable.Rows.Add("Bob", "Canada");
-            dataSet.Tables.Add(customersTable);
+        // ---- Begin outer region: Orders ----
+        builder.InsertField("MERGEFIELD TableStart:Orders");
+        builder.Writeln();
 
-            // Orders table.
-            DataTable ordersTable = new DataTable("Orders");
-            ordersTable.Columns.Add("CustomerName", typeof(string)); // Foreign key to Customers.Name
-            ordersTable.Columns.Add("OrderID", typeof(int));
-            ordersTable.Columns.Add("Product", typeof(string));
-            ordersTable.Columns.Add("Quantity", typeof(int));
+        // Order fields.
+        builder.InsertField("MERGEFIELD OrderID");
+        builder.Write("\t");
+        builder.InsertField("MERGEFIELD OrderDate");
+        builder.Writeln();
 
-            ordersTable.Rows.Add("Alice", 1001, "Laptop", 1);
-            ordersTable.Rows.Add("Alice", 1002, "Mouse", 2);
-            ordersTable.Rows.Add("Bob", 2001, "Keyboard", 1);
-            dataSet.Tables.Add(ordersTable);
+        // ---- Begin inner region: OrderDetails ----
+        builder.InsertField("MERGEFIELD TableStart:OrderDetails");
+        builder.Writeln();
 
-            // Define relation between Customers and Orders.
-            DataRelation relation = new DataRelation(
-                "CustomerOrders",
-                customersTable.Columns["Name"],
-                ordersTable.Columns["CustomerName"]);
-            dataSet.Relations.Add(relation);
+        // Detail fields.
+        builder.InsertField("MERGEFIELD ProductName");
+        builder.Write("\t");
+        builder.InsertField("MERGEFIELD Quantity");
+        builder.Writeln();
 
-            // Build a template document with nested mail‑merge regions.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // End inner region.
+        builder.InsertField("MERGEFIELD TableEnd:OrderDetails");
+        builder.Writeln();
 
-            builder.Writeln("Customer Report");
-            builder.Writeln("<<TableStart:Customers>>"); // Outer region start
+        // End outer region.
+        builder.InsertField("MERGEFIELD TableEnd:Orders");
+        builder.Writeln();
 
-            builder.Writeln("Name: <<Name>>");
-            builder.Writeln("Country: <<Country>>");
-            builder.Writeln("Orders:");
+        // Prepare data tables.
+        DataTable orders = new DataTable("Orders");
+        orders.Columns.Add("OrderID", typeof(int));
+        orders.Columns.Add("OrderDate", typeof(DateTime));
 
-            builder.Writeln("<<TableStart:Orders>>"); // Inner region start
-            builder.Writeln("  Order ID: <<OrderID>>, Product: <<Product>>, Qty: <<Quantity>>");
-            builder.Writeln("<<TableEnd:Orders>>");   // Inner region end
+        DataTable details = new DataTable("OrderDetails");
+        details.Columns.Add("OrderID", typeof(int));
+        details.Columns.Add("ProductName", typeof(string));
+        details.Columns.Add("Quantity", typeof(int));
 
-            builder.Writeln("<<TableEnd:Customers>>"); // Outer region end
+        // Sample data for orders.
+        orders.Rows.Add(1, new DateTime(2023, 1, 15));
+        orders.Rows.Add(2, new DateTime(2023, 2, 20));
 
-            // Execute mail merge with regions using the DataSet.
-            doc.MailMerge.ExecuteWithRegions(dataSet);
+        // Sample data for order details.
+        details.Rows.Add(1, "Apple", 10);
+        details.Rows.Add(1, "Banana", 5);
+        details.Rows.Add(2, "Orange", 7);
+        details.Rows.Add(2, "Grapes", 12);
 
-            // Save the result.
-            doc.Save("Output.docx");
-        }
+        // Combine tables into a DataSet and define relation for nested merge.
+        DataSet dataSet = new DataSet();
+        dataSet.Tables.Add(orders);
+        dataSet.Tables.Add(details);
+        dataSet.Relations.Add("Order_Details", orders.Columns["OrderID"], details.Columns["OrderID"]);
+
+        // Execute mail merge with regions.
+        doc.MailMerge.ExecuteWithRegions(dataSet);
+
+        // Remove any unused merge fields.
+        doc.MailMerge.CleanupOptions = MailMergeCleanupOptions.RemoveUnusedFields;
+
+        // Save the merged document.
+        string outputPath = "MergedDocument.docx";
+        doc.Save(outputPath);
+
+        // Validation: ensure file exists and contains expected content.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The output file was not created.");
+
+        FileInfo fileInfo = new FileInfo(outputPath);
+        if (fileInfo.Length == 0)
+            throw new InvalidOperationException("The merged document is empty.");
+
+        Document resultDoc = new Document(outputPath);
+        string resultText = resultDoc.GetText();
+        if (!resultText.Contains("Apple") || !resultText.Contains("Orange"))
+            throw new InvalidOperationException("Merged content does not contain expected values.");
     }
 }

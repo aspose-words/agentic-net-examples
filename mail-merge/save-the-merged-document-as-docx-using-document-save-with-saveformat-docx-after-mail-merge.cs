@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -8,21 +7,37 @@ public class Program
 {
     public static void Main()
     {
-        // Define a simple template with mail merge fields.
-        string template = @"{""Document"":{""Body"":{""Paragraphs"":[{""Runs"":[{""Text"":""Hello <<Name>>, today is <<Date>>.""}]}]}}";
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Load the template into an Aspose.Words Document.
-        using (MemoryStream stream = new MemoryStream(Encoding.UTF8.GetBytes(template)))
-        {
-            Document doc = new Document(stream);
+        // Build a simple template with merge fields.
+        builder.Writeln("Hello ");
+        builder.InsertField("MERGEFIELD FirstName");
+        builder.Writeln(" ");
+        builder.InsertField("MERGEFIELD LastName");
+        builder.Writeln("!");
 
-            // Perform mail merge with sample data.
-            string[] fieldNames = { "Name", "Date" };
-            object[] fieldValues = { "John Doe", DateTime.Now.ToString("D") };
-            doc.MailMerge.Execute(fieldNames, fieldValues);
+        // Prepare data for the merge.
+        string[] fieldNames = { "FirstName", "LastName" };
+        object[] fieldValues = { "John", "Doe" };
 
-            // Save the merged document as DOCX.
-            doc.Save("MergedDocument.docx", SaveFormat.Docx);
-        }
+        // Execute the mail merge.
+        doc.MailMerge.Execute(fieldNames, fieldValues);
+
+        // Save the merged document as DOCX.
+        string outputPath = "MergedDocument.docx";
+        doc.Save(outputPath, SaveFormat.Docx);
+
+        // Validate that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The merged document was not created.");
+
+        // Load the saved document and verify that merge fields were replaced.
+        Document resultDoc = new Document(outputPath);
+        string resultText = resultDoc.GetText();
+
+        if (!resultText.Contains("John") || !resultText.Contains("Doe"))
+            throw new InvalidOperationException("Merged values are missing in the output document.");
     }
 }

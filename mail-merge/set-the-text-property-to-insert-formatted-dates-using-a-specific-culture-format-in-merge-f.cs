@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.MailMerging;
 
@@ -7,37 +8,40 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and add a merge field for the date.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Report Date:");
-        builder.InsertField("MERGEFIELD Date \\* MERGEFORMAT");
 
-        // Assign a custom callback to format the date during mail merge.
-        doc.MailMerge.FieldMergingCallback = new DateFormattingCallback();
+        // Insert a paragraph with a merge field named "ReportDate".
+        builder.Writeln("Report Date: ");
+        builder.InsertField("MERGEFIELD ReportDate \\* MERGEFORMAT");
 
-        // Execute mail merge with the current date.
-        doc.MailMerge.Execute(
-            new string[] { "Date" },
-            new object[] { DateTime.Now });
+        // Prepare data for the merge.
+        string[] fieldNames = { "ReportDate" };
+        DateTime currentDate = DateTime.Now;
+        // Format the date using a specific culture (e.g., German - Germany).
+        string formattedDate = currentDate.ToString("D", new CultureInfo("de-DE"));
+        object[] fieldValues = { formattedDate };
 
-        // Save the resulting document.
-        doc.Save("FormattedDateOutput.docx");
-    }
+        // Execute the mail merge.
+        doc.MailMerge.CleanupOptions = MailMergeCleanupOptions.RemoveUnusedFields;
+        doc.MailMerge.Execute(fieldNames, fieldValues);
 
-    // Custom callback to format date fields using a specific culture.
-    private class DateFormattingCallback : IFieldMergingCallback
-    {
-        public void FieldMerging(FieldMergingArgs e)
+        // Save the merged document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedDocument.docx");
+        doc.Save(outputPath);
+
+        // Validate that the merged document contains the formatted date.
+        string docText = doc.GetText();
+        if (!docText.Contains(formattedDate))
         {
-            if (e.FieldName == "Date" && e.FieldValue is DateTime dt)
-            {
-                // Format the date as "dd MMMM yyyy" in French culture.
-                e.Text = dt.ToString("dd MMMM yyyy", new CultureInfo("fr-FR"));
-            }
+            throw new InvalidOperationException("The merged document does not contain the expected formatted date.");
         }
 
-        // Required by the interface but not used for image fields.
-        public void ImageFieldMerging(ImageFieldMergingArgs args) { }
+        // Ensure the output file was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new FileNotFoundException("The merged document file was not created.", outputPath);
+        }
     }
 }

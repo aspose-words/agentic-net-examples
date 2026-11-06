@@ -1,49 +1,67 @@
 using System;
-using System.Data;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
+using Aspose.Words.MailMerging;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a simple template document with merge fields.
+        // Create a template document in memory.
         Document template = new Document();
         DocumentBuilder builder = new DocumentBuilder(template);
-        builder.Writeln("Dear <<Name>>,");
-        builder.Writeln("Your address is <<Address>>.");
-        builder.Writeln("Thank you for your business.");
-        builder.Writeln("Sincerely,");
-        builder.Writeln("Company XYZ");
 
-        // Prepare data for mail merge.
-        DataTable data = new DataTable("Customers");
-        data.Columns.Add("Name", typeof(string));
-        data.Columns.Add("Address", typeof(string));
+        // Add static heading.
+        builder.Writeln("Customer Information");
+        builder.Writeln();
 
-        data.Rows.Add("Alice Johnson", "123 Maple Street");
-        data.Rows.Add("Bob Smith", "456 Oak Avenue");
-        data.Rows.Add("Carol Davis", "789 Pine Road");
+        // Insert merge fields.
+        builder.InsertField("MERGEFIELD Name");
+        builder.Writeln();
+        builder.InsertField("MERGEFIELD Address");
+        builder.Writeln();
 
-        // Field names used in the template.
-        string[] fieldNames = { "Name", "Address" };
+        // Define the merge field names that correspond to the data source.
+        string[] fieldNames = new string[] { "Name", "Address" };
 
-        // Generate a separate PDF for each record.
-        int index = 1;
-        foreach (DataRow row in data.Rows)
+        // Data for multiple records.
+        var records = new (string Name, string Address)[]
         {
-            // Clone the template to keep it unchanged for the next iteration.
-            Document doc = (Document)template.Clone(true);
+            ("John Doe", "123 Main St"),
+            ("Jane Smith", "456 Oak Ave"),
+            ("Bob Johnson", "789 Pine Rd")
+        };
 
-            // Execute mail merge for the current record.
-            object[] fieldValues = { row["Name"], row["Address"] };
-            doc.MailMerge.Execute(fieldNames, fieldValues);
+        // Perform a separate mail merge for each record.
+        for (int i = 0; i < records.Length; i++)
+        {
+            // Clone the template so each iteration works with a fresh copy.
+            Document outputDoc = (Document)template.Clone(true);
 
-            // Save the result as a PDF file.
-            string fileName = $"Customer_{index}_{row["Name"].ToString().Replace(' ', '_')}.pdf";
-            doc.Save(fileName, SaveFormat.Pdf);
+            // Prepare field values for the current record.
+            object[] fieldValues = new object[] { records[i].Name, records[i].Address };
 
-            index++;
+            // Execute the simple mail merge.
+            outputDoc.MailMerge.Execute(fieldNames, fieldValues);
+
+            // Remove any merge fields that were not used.
+            outputDoc.MailMerge.CleanupOptions = MailMergeCleanupOptions.RemoveUnusedFields;
+
+            // Define a deterministic output file name.
+            string outputFileName = $"Customer_{i + 1}.pdf";
+
+            // Save the merged document as PDF.
+            outputDoc.Save(outputFileName, SaveFormat.Pdf);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputFileName))
+                throw new InvalidOperationException($"Failed to create output file: {outputFileName}");
+
+            // Ensure the PDF is not empty.
+            FileInfo info = new FileInfo(outputFileName);
+            if (info.Length == 0)
+                throw new InvalidOperationException($"Output file is empty: {outputFileName}");
         }
     }
 }

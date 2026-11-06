@@ -1,53 +1,99 @@
 using System;
-using System.Data;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.MailMerging;
 using Aspose.Words.Fields;
 
 public class Program
 {
+    // Path to the static logo image that will be inserted for every merge.
+    private const string LogoFileName = "logo.png";
+
     public static void Main()
     {
-        // Create a temporary 1x1 pixel PNG logo.
-        string logoPath = Path.Combine(Path.GetTempPath(), "logo.png");
-        byte[] pngData = Convert.FromBase64String(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X3eUAAAAASUVORK5CYII=");
-        File.WriteAllBytes(logoPath, pngData);
+        // Ensure the static logo image exists.
+        CreateSampleLogo();
 
-        // Build a simple template with a text merge field and an image merge field.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Dear <<Name>>,");
-        builder.InsertField("MERGEFIELD CompanyLogo \\* MERGEFORMAT");
-        builder.Writeln();
-        builder.Writeln("Thank you for your business.");
+        // Create a template document with merge fields.
+        string templatePath = "Template.docx";
+        CreateTemplateDocument(templatePath);
 
-        // Prepare a data source containing a Name field.
-        DataTable table = new DataTable("Employees");
-        table.Columns.Add("Name", typeof(string));
-        table.Rows.Add("Alice");
-        table.Rows.Add("Bob");
+        // Load the template.
+        Document doc = new Document(templatePath);
 
-        // Execute mail merge.
-        doc.MailMerge.Execute(table);
+        // Set the callback that will handle image field merging.
+        doc.MailMerge.FieldMergingCallback = new ImageFieldMergingHandler(LogoFileName);
 
-        // After merging, replace each CompanyLogo merge field with the static logo image.
-        foreach (Field field in doc.Range.Fields)
-        {
-            if (field.Type == FieldType.FieldMergeField && field.GetFieldCode().Contains("CompanyLogo"))
-            {
-                DocumentBuilder imgBuilder = new DocumentBuilder(doc);
-                imgBuilder.MoveTo(field.Start);
-                imgBuilder.InsertImage(logoPath);
-                field.Remove(); // Remove the original merge field.
-            }
-        }
+        // Prepare simple data source.
+        string[] fieldNames = { "Name", "CompanyLogo" };
+        object[] fieldValues = { "John Doe", null }; // Value for image field is ignored.
+
+        // Execute the mail merge.
+        doc.MailMerge.Execute(fieldNames, fieldValues);
 
         // Save the merged document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedDocument.docx");
+        string outputPath = "Merged.docx";
         doc.Save(outputPath);
 
-        // Clean up the temporary logo file.
-        File.Delete(logoPath);
+        // Simple validation: ensure the output file exists and is not empty.
+        if (!File.Exists(outputPath) || new FileInfo(outputPath).Length == 0)
+            throw new InvalidOperationException("Merged document was not created correctly.");
+    }
+
+    // Creates a tiny PNG logo file from a base64 string.
+    private static void CreateSampleLogo()
+    {
+        // 1x1 pixel transparent PNG.
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAn8B9p6XK6cAAAAASUVORK5CYII=";
+        byte[] imageBytes = Convert.FromBase64String(base64Png);
+        File.WriteAllBytes(LogoFileName, imageBytes);
+    }
+
+    // Builds a simple template containing a text field and an image field.
+    private static void CreateTemplateDocument(string path)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        builder.Writeln("Employee Report");
+        builder.Writeln();
+
+        // Insert a merge field for the employee name.
+        builder.InsertField("MERGEFIELD Name");
+        builder.Writeln();
+
+        // Insert a merge field that will be replaced by the company logo.
+        builder.InsertField("MERGEFIELD CompanyLogo");
+        builder.Writeln();
+
+        doc.Save(path);
+    }
+
+    // Callback class that handles image field merging.
+    private class ImageFieldMergingHandler : IFieldMergingCallback
+    {
+        private readonly string _staticImagePath;
+
+        public ImageFieldMergingHandler(string staticImagePath)
+        {
+            _staticImagePath = staticImagePath;
+        }
+
+        // Called for regular (non-image) fields; not used here.
+        public void FieldMerging(FieldMergingArgs args)
+        {
+            // No custom handling required for text fields.
+        }
+
+        // Called when an image merge field is encountered.
+        public void ImageFieldMerging(ImageFieldMergingArgs args)
+        {
+            // Insert the static logo image regardless of the source data.
+            args.ImageFileName = _staticImagePath;
+
+            // Set image dimensions (in points) using MergeFieldImageDimension.
+            args.ImageWidth = new MergeFieldImageDimension(100);   // Width in points.
+            args.ImageHeight = new MergeFieldImageDimension(50);   // Height in points.
+        }
     }
 }
