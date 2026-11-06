@@ -7,65 +7,65 @@ public class Program
 {
     public static void Main()
     {
-        // Create a temporary working folder.
-        string tempDir = Path.Combine(Path.GetTempPath(), "AsposeJoinExample");
-        Directory.CreateDirectory(tempDir);
+        // Prepare a temporary working directory.
+        string workDir = Path.Combine(Path.GetTempPath(), "AsposeJoinDemo");
+        Directory.CreateDirectory(workDir);
 
-        // Define file paths for the sample documents and the results.
-        string existingDocPath = Path.Combine(tempDir, "ExistingDocument.docx");
-        string webServiceDocPath = Path.Combine(tempDir, "WebServiceDocument.docx");
-        string mergedDocPath = Path.Combine(tempDir, "MergedDocument.docx");
-        string encryptedPdfPath = Path.Combine(tempDir, "MergedDocument_Encrypted.pdf");
+        // Paths for the sample existing DOCX and the final encrypted PDF.
+        string existingDocPath = Path.Combine(workDir, "Existing.docx");
+        string outputPdfPath = Path.Combine(workDir, "CombinedEncrypted.pdf");
 
-        // -------------------------------------------------
-        // 1. Create the first sample DOCX (the existing one).
-        // -------------------------------------------------
+        // -----------------------------------------------------------------
+        // 1. Create a sample existing DOCX document.
+        // -----------------------------------------------------------------
         Document existingDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(existingDoc);
-        builder.Writeln("This is the original document.");
+        builder.Writeln("This is the content of the existing DOCX document.");
         existingDoc.Save(existingDocPath, SaveFormat.Docx);
 
-        // -------------------------------------------------
-        // 2. Create the second sample DOCX (simulating a web‑service output).
-        // -------------------------------------------------
-        Document webServiceDoc = new Document();
-        DocumentBuilder webBuilder = new DocumentBuilder(webServiceDoc);
-        webBuilder.Writeln("This content comes from a simulated web service.");
-        webServiceDoc.Save(webServiceDocPath, SaveFormat.Docx);
+        // -----------------------------------------------------------------
+        // 2. Simulate a web service that returns a DOCX document.
+        //    Here we create the document in memory and obtain a stream.
+        // -----------------------------------------------------------------
+        using (MemoryStream webServiceStream = new MemoryStream())
+        {
+            Document webDoc = new Document();
+            DocumentBuilder webBuilder = new DocumentBuilder(webDoc);
+            webBuilder.Writeln("This content comes from the simulated web service DOCX.");
+            webDoc.Save(webServiceStream, SaveFormat.Docx);
+            webServiceStream.Position = 0; // Reset before loading.
 
-        // -------------------------------------------------
-        // 3. Load both documents from disk.
-        // -------------------------------------------------
-        Document sourceDoc = new Document(existingDocPath);
-        Document docToAppend = new Document(webServiceDocPath);
+            // Load the document returned by the web service.
+            Document webDocFromStream = new Document(webServiceStream);
 
-        // -------------------------------------------------
-        // 4. Append the second document to the first one,
-        //    preserving the source formatting.
-        // -------------------------------------------------
-        sourceDoc.AppendDocument(docToAppend, ImportFormatMode.KeepSourceFormatting);
-        sourceDoc.Save(mergedDocPath, SaveFormat.Docx);
+            // -----------------------------------------------------------------
+            // 3. Append the web service document to the existing document.
+            // -----------------------------------------------------------------
+            existingDoc.AppendDocument(webDocFromStream, ImportFormatMode.KeepSourceFormatting);
+        }
 
-        // -------------------------------------------------
-        // 5. Convert the merged document to an encrypted PDF.
-        //    Use the overload of PdfEncryptionDetails that does not require
-        //    specifying the encryption algorithm (defaults to RC4_128).
-        // -------------------------------------------------
+        // -----------------------------------------------------------------
+        // 4. Save the combined document as an encrypted PDF.
+        // -----------------------------------------------------------------
+        PdfEncryptionDetails encryptionDetails = new PdfEncryptionDetails(
+            userPassword: "UserPassword123",
+            ownerPassword: "OwnerPassword123");
+
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            EncryptionDetails = new PdfEncryptionDetails(
-                userPassword: "UserPassword123",
-                ownerPassword: "OwnerPassword123")
+            EncryptionDetails = encryptionDetails
         };
-        sourceDoc.Save(encryptedPdfPath, pdfOptions);
 
-        // -------------------------------------------------
-        // 6. Verify that the output files were created.
-        // -------------------------------------------------
-        if (!File.Exists(mergedDocPath))
-            throw new FileNotFoundException("Merged DOCX was not created.", mergedDocPath);
+        existingDoc.Save(outputPdfPath, pdfOptions);
 
-        if (!File.Exists(encryptedPdfPath))
-            throw new FileNotFoundException("Encrypted PDF was not created.", encryptedPdfPath);
+        // -----------------------------------------------------------------
+        // 5. Validate that the encrypted PDF was created.
+        // -----------------------------------------------------------------
+        if (!File.Exists(outputPdfPath))
+        {
+            throw new InvalidOperationException($"Failed to create the encrypted PDF at '{outputPdfPath}'.");
+        }
+
+        Console.WriteLine($"Encrypted PDF created successfully at: {outputPdfPath}");
     }
 }

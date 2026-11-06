@@ -1,70 +1,66 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Folder to hold sample source documents
+        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
+        Directory.CreateDirectory(inputFolder);
 
-        // -----------------------------------------------------------------
-        // Create sample source DOCX files.
-        // -----------------------------------------------------------------
-        var sourceFiles = new List<string>();
-        for (int i = 1; i <= 3; i++)
+        // Create sample DOCX files with simple content
+        string[] sourceFiles = new string[3];
+        for (int i = 0; i < sourceFiles.Length; i++)
         {
-            string filePath = Path.Combine(outputDir, $"Source{i}.docx");
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
-            builder.Writeln($"This is the content of source document {i}.");
-
-            // Simple style variation for demonstration.
-            if (i == 2)
-                builder.Font.Bold = true;
-            else if (i == 3)
-                builder.Font.Italic = true;
-
-            doc.Save(filePath, SaveFormat.Docx);
-            sourceFiles.Add(filePath);
+            string filePath = Path.Combine(inputFolder, $"Sample{i + 1}.docx");
+            CreateSampleDocument(filePath, $"This is the content of document {i + 1}.");
+            sourceFiles[i] = filePath;
         }
 
-        // -----------------------------------------------------------------
-        // Destination document that will hold the combined content.
-        // -----------------------------------------------------------------
-        var combinedDoc = new Document();
-
-        // Append each source document with a different ImportFormatMode.
-        for (int i = 0; i < sourceFiles.Count; i++)
+        // Define ImportFormatMode settings for each document
+        ImportFormatMode[] importModes = new ImportFormatMode[]
         {
-            var srcDoc = new Document(sourceFiles[i]);
+            ImportFormatMode.KeepSourceFormatting,
+            ImportFormatMode.UseDestinationStyles,
+            ImportFormatMode.KeepDifferentStyles
+        };
 
-            ImportFormatMode mode = i switch
-            {
-                0 => ImportFormatMode.KeepSourceFormatting,
-                1 => ImportFormatMode.UseDestinationStyles,
-                _ => ImportFormatMode.KeepDifferentStyles
-            };
+        // Load the first document as the base of the combined document
+        Document combinedDoc = new Document(sourceFiles[0]);
 
-            combinedDoc.AppendDocument(srcDoc, mode);
+        // Append remaining documents using the specified ImportFormatMode
+        for (int i = 1; i < sourceFiles.Length; i++)
+        {
+            Document srcDoc = new Document(sourceFiles[i]);
+            combinedDoc.AppendDocument(srcDoc, importModes[i]);
         }
 
-        // -----------------------------------------------------------------
-        // Validation: ensure that at least the expected number of sections
-        // were imported (the destination document starts with one empty section).
-        // -----------------------------------------------------------------
-        if (combinedDoc.Sections.Count < sourceFiles.Count)
-            throw new InvalidOperationException("The combined document does not contain the expected number of sections.");
+        // Save the combined document as PDF
+        string outputPdf = Path.Combine(Directory.GetCurrentDirectory(), "Combined.pdf");
+        combinedDoc.Save(outputPdf, SaveFormat.Pdf);
 
-        // Save the combined document as PDF.
-        string pdfPath = Path.Combine(outputDir, "Combined.pdf");
-        combinedDoc.Save(pdfPath, SaveFormat.Pdf);
+        // Validation: ensure the PDF file exists and contains expected number of sections
+        if (!File.Exists(outputPdf))
+        {
+            throw new InvalidOperationException("The combined PDF file was not created.");
+        }
 
-        // Verify that the PDF was created.
-        if (!File.Exists(pdfPath))
-            throw new FileNotFoundException("Failed to create the combined PDF file.", pdfPath);
+        // The combined document should have as many sections as source documents
+        if (combinedDoc.Sections.Count != sourceFiles.Length)
+        {
+            throw new InvalidOperationException($"Expected {sourceFiles.Length} sections, but found {combinedDoc.Sections.Count}.");
+        }
+    }
+
+    // Helper method to create a simple DOCX file with given text
+    private static void CreateSampleDocument(string filePath, string text)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln(text);
+        doc.Save(filePath, SaveFormat.Docx);
     }
 }
