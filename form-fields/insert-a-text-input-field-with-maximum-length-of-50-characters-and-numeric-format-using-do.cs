@@ -6,38 +6,41 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document and a DocumentBuilder.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a numeric text input field with a maximum length of 50 characters.
-        // The builder's InsertTextInput method already applies the max length.
-        string fieldName = "NumericInput";
-        builder.InsertTextInput(fieldName, TextFormFieldType.Number, "", "0", 50);
+        // Insert a numeric text input form field with a maximum length of 50 characters.
+        // Parameters: name, type, format, default text, max length.
+        builder.InsertTextInput("NumericField", TextFormFieldType.Number, "", "0", 50);
 
-        // Save the document to verify the result.
-        string outputPath = "FormFieldExample.docx";
-        doc.Save(outputPath);
+        // Save the initial document.
+        const string fileName = "FormFieldExample.docx";
+        doc.Save(fileName);
 
-        // Validate that the field exists and has the correct settings.
-        FormField field = doc.Range.FormFields[fieldName];
+        // Retrieve the form field by name.
+        FormField? field = doc.Range.FormFields["NumericField"];
         if (field == null)
         {
-            throw new InvalidOperationException($"Form field '{fieldName}' was not found.");
+            throw new InvalidOperationException("The form field 'NumericField' was not found.");
         }
 
-        // Verify the field is configured for numeric input.
-        if (field.TextInputType != TextFormFieldType.Number)
-        {
-            throw new InvalidOperationException("The field is not configured for numeric input.");
-        }
-
-        // Verify the default value (Result) is set to "0".
+        // Validate the default value.
         if (field.Result != "0")
         {
-            throw new InvalidOperationException("The field's default value is not set to '0'.");
+            throw new InvalidOperationException($"Unexpected default value: {field.Result}");
         }
 
-        Console.WriteLine("Form field created and validated successfully.");
+        // Update the field's result.
+        field.Result = "12345";
+
+        // Validate the updated value.
+        if (field.Result != "12345")
+        {
+            throw new InvalidOperationException($"Failed to update the field value: {field.Result}");
+        }
+
+        // Save the document after the update.
+        doc.Save(fileName);
     }
 }

@@ -6,41 +6,44 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new document and a builder.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Attempt to insert a text input form field with an empty name.
-        try
-        {
-            // This will throw an ArgumentException because the name is empty.
-            builder.InsertTextInput(string.Empty, TextFormFieldType.Regular, "", "Default", 0);
-        }
-        catch (ArgumentException ex)
-        {
-            // Log a warning instead of terminating the program.
-            Console.WriteLine($"Warning: Attempted to insert a form field with an empty name. Details: {ex.Message}");
-        }
+        // Attempt to insert a form field with an empty name.
+        string emptyName = "";
+        InsertTextInputSafe(builder, emptyName, "Default", 0, "");
 
         // Insert a valid text input form field.
-        string fieldName = "CustomerName";
-        builder.InsertTextInput(fieldName, TextFormFieldType.Regular, "", "John Doe", 0);
-        builder.Writeln(); // Add a line break after the field.
-
-        // Verify that the field exists and output its default result.
-        FormField field = doc.Range.FormFields[fieldName];
-        if (field != null)
-        {
-            Console.WriteLine($"Form field '{fieldName}' inserted with default value: '{field.Result}'.");
-        }
-        else
-        {
-            Console.WriteLine($"Error: Form field '{fieldName}' was not found after insertion.");
-        }
+        string validName = "CustomerName";
+        InsertTextInputSafe(builder, validName, "John Doe", 0, "");
 
         // Save the document.
-        string outputPath = "FormFields.docx";
-        doc.Save(outputPath);
-        Console.WriteLine($"Document saved to '{outputPath}'.");
+        doc.Save("FormFieldsOutput.docx");
+
+        // Read and display the form fields that were successfully added.
+        foreach (FormField field in doc.Range.FormFields)
+        {
+            // Ensure the field is not null before accessing its properties.
+            if (field != null)
+            {
+                Console.WriteLine($"Field Name: {field.Name}, Result: {field.Result}");
+            }
+        }
+
+        Console.WriteLine("Processing completed.");
+    }
+
+    private static void InsertTextInputSafe(DocumentBuilder builder, string name, string defaultText, int maxLength, string format)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            Console.WriteLine("Warning: Attempted to insert a form field with an empty name. Operation skipped.");
+            return;
+        }
+
+        // Insert the text input form field using Aspose.Words API.
+        builder.InsertTextInput(name, TextFormFieldType.Regular, format, defaultText, maxLength);
+        Console.WriteLine($"Inserted text input form field '{name}' with default value '{defaultText}'.");
     }
 }

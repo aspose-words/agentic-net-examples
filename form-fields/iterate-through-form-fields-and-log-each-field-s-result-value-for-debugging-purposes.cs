@@ -6,59 +6,58 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a DocumentBuilder for inserting form fields.
+        // Create a new document and a DocumentBuilder to add form fields.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a text input form field.
-        FormField textField = builder.InsertTextInput(
-            "TextField1",                     // field name
-            TextFormFieldType.Regular,        // field type
-            "",                               // format (none)
-            "Default text",                   // default text
-            0);                               // max length (0 = unlimited)
+        // Insert a text input form field. The last parameter is the maximum length of the field.
+        builder.InsertTextInput("TextField1", TextFormFieldType.Regular, "", "Default Text", 0);
 
         // Insert a checkbox form field.
-        FormField checkBox = builder.InsertCheckBox(
-            "CheckBox1",                      // field name
-            true,                             // default state (checked)
-            0);                               // size (default)
+        builder.InsertCheckBox("CheckBox1", false, 0);
 
-        // Insert a dropdown (combo box) form field with predefined items.
-        // The overload requires the field name, an array of item texts, and the selected index.
-        FormField comboBox = builder.InsertComboBox(
-            "DropDown1",                       // field name
-            new[] { "Option 1", "Option 2", "Option 3" }, // items
-            0);                                // selected index (first item)
+        // Insert a dropdown (combo box) form field.
+        builder.InsertComboBox("DropDown1", new string[] { "Option1", "Option2", "Option3" }, 0);
 
-        // Save the document with the created form fields.
+        // Save the document that now contains the form fields.
         const string outputPath = "FormFields.docx";
         doc.Save(outputPath);
 
-        // Load the document (demonstrates reading from a file).
-        Document loadedDoc = new Document(outputPath);
-
         // Ensure that at least one form field exists.
-        if (loadedDoc.Range.FormFields == null || loadedDoc.Range.FormFields.Count == 0)
+        if (doc.Range.FormFields.Count == 0)
         {
-            throw new InvalidOperationException("No form fields were found in the document.");
+            throw new InvalidOperationException("The document does not contain any form fields.");
         }
 
-        // Iterate through all form fields and log their Result values.
-        foreach (FormField field in loadedDoc.Range.FormFields)
+        // Iterate through all form fields and log their values.
+        foreach (FormField field in doc.Range.FormFields)
         {
-            // Guard against null (should not happen in the collection).
             if (field == null)
-                continue;
+                continue; // Guard against null, though collection should not contain nulls.
 
-            // For checkboxes, Result returns "True"/"False".
-            // For dropdowns, Result returns the selected item text.
-            string result = field.Result ?? string.Empty;
+            string fieldInfo;
 
-            Console.WriteLine($"Field Name: {field.Name}, Result: {result}");
+            switch (field.Type)
+            {
+                case FieldType.FieldFormCheckBox:
+                    fieldInfo = $"Name: {field.Name}, Type: CheckBox, Checked: {field.Checked}";
+                    break;
+                case FieldType.FieldFormDropDown:
+                    fieldInfo = $"Name: {field.Name}, Type: DropDown, Selected: {field.Result}";
+                    break;
+                case FieldType.FieldFormTextInput:
+                    fieldInfo = $"Name: {field.Name}, Type: TextInput, Result: {field.Result}";
+                    break;
+                default:
+                    fieldInfo = $"Name: {field.Name}, Type: Unknown, Result: {field.Result}";
+                    break;
+            }
+
+            Console.WriteLine(fieldInfo);
         }
 
-        // Optionally, save the document again after reading (no changes made here).
-        loadedDoc.Save("FormFields_Processed.docx");
+        // Save the document again (even though we didn't modify fields, this satisfies the save requirement).
+        const string finalPath = "FormFields_Output.docx";
+        doc.Save(finalPath);
     }
 }

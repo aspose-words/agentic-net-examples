@@ -6,64 +6,73 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder for it.
+        // Create a new document and builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a paragraph that will become read‑only after protection.
-        builder.Writeln("This paragraph should become read‑only after protection.");
+        // Insert non‑field content.
+        builder.Writeln("This is non‑field content that should not be editable after protection.");
 
-        // Insert a text input form field. The last parameter is maxLength (0 = unlimited).
+        // Insert a text input form field.
         builder.InsertTextInput("TextField", TextFormFieldType.Regular, "", "Default text", 0);
 
         // Insert a checkbox form field.
-        builder.InsertCheckBox("CheckBox", false, 0);
+        builder.InsertCheckBox("CheckBoxField", false, 0);
 
-        // Insert a dropdown (combo box) form field with two items.
-        string[] items = { "Option 1", "Option 2" };
-        builder.InsertComboBox("DropDown", items, 0);
+        // Save the initial document.
+        doc.Save("FormFields.docx");
 
-        // Save the unprotected version (optional).
-        doc.Save("Unprotected.docx");
+        // Protect the document to allow only form field editing.
+        doc.Protect(ProtectionType.AllowOnlyFormFields, "password");
 
-        // Protect the document for read‑only editing (blocks non‑field changes).
-        // Older Aspose.Words versions may not expose ProtectionType.Forms, so ReadOnly is used.
-        doc.Protect(ProtectionType.ReadOnly, "myPassword");
+        // Attempt to edit non‑field content (should fail).
+        bool nonFieldEditFailed = false;
+        Paragraph firstParagraph = doc.FirstSection?.Body?.FirstParagraph;
+        if (firstParagraph != null && firstParagraph.Runs.Count > 0)
+        {
+            try
+            {
+                firstParagraph.Runs[0].Text = "Attempted edit of non‑field content.";
+            }
+            catch (InvalidOperationException)
+            {
+                nonFieldEditFailed = true;
+            }
+            catch (Exception)
+            {
+                // Any other exception also indicates edit is not allowed.
+                nonFieldEditFailed = true;
+            }
+        }
+
+        // Verify that editing a form field is allowed.
+        bool formFieldEditSucceeded = false;
+        FormField textField = doc.Range.FormFields["TextField"];
+        FormField checkBoxField = doc.Range.FormFields["CheckBoxField"];
+        if (textField != null && checkBoxField != null)
+        {
+            try
+            {
+                textField.Result = "Updated value";
+                checkBoxField.Checked = true;
+                formFieldEditSucceeded = true;
+            }
+            catch (Exception)
+            {
+                formFieldEditSucceeded = false;
+            }
+        }
 
         // Save the protected document.
-        doc.Save("Protected.docx");
+        doc.Save("FormFields_Protected.docx");
 
-        // Attempt to edit non‑field content after protection.
-        bool editSucceeded = false;
-        try
-        {
-            // Move the builder to the end of the document and try to add a new paragraph.
-            builder.MoveToDocumentEnd();
-            builder.Writeln("Attempting to edit after protection.");
-            editSucceeded = true; // If no exception, edit succeeded (unexpected).
-        }
-        catch (Exception ex)
-        {
-            // Expected path: editing should be blocked.
-            Console.WriteLine("Editing blocked as expected: " + ex.Message);
-        }
+        // Output verification results.
+        Console.WriteLine(nonFieldEditFailed
+            ? "Non‑field content could not be edited as expected."
+            : "Non‑field content was edited unexpectedly.");
 
-        if (editSucceeded)
-        {
-            Console.WriteLine("Unexpectedly succeeded in editing protected document.");
-        }
-
-        // Verify that at least one form field exists.
-        if (doc.Range.FormFields.Count == 0)
-        {
-            throw new InvalidOperationException("No form fields were found in the document.");
-        }
-
-        // Read and display the default value of the text input field.
-        FormField textField = doc.Range.FormFields["TextField"];
-        if (textField == null)
-            throw new InvalidOperationException("TextField not found.");
-
-        Console.WriteLine("TextField default value: " + textField.Result);
+        Console.WriteLine(formFieldEditSucceeded
+            ? "Form fields were edited successfully."
+            : "Failed to edit form fields.");
     }
 }

@@ -11,28 +11,23 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a text input form field.
-        builder.Writeln("Please enter your name:");
-        builder.InsertTextInput("NameField", TextFormFieldType.Regular, "", "John Doe", 0);
+        builder.InsertTextInput("TextField", TextFormFieldType.Regular, "", "Default text", 0);
         builder.Writeln();
 
         // Insert a checkbox form field.
-        // The third parameter is the size of the checkbox (in points). Use 0 for default size.
-        builder.Writeln("Subscribe to newsletter:");
-        builder.InsertCheckBox("SubscribeField", true, 0);
+        builder.InsertCheckBox("CheckBoxField", false, 0);
         builder.Writeln();
 
-        // Insert a dropdown (combo box) form field with items.
-        builder.Writeln("Select your country:");
-        builder.InsertComboBox("CountryField", new string[] { "USA", "Canada", "United Kingdom" }, 0);
-        builder.Writeln();
-
-        // Save the document before protection (optional).
-        doc.Save("FormFields.docx");
+        // Verify that form fields were added.
+        FormFieldCollection fields = doc.Range.FormFields;
+        if (fields == null || fields.Count == 0)
+            throw new InvalidOperationException("No form fields were created in the document.");
 
         // Protect the document so that only form fields can be edited.
-        doc.Protect(ProtectionType.AllowOnlyFormFields, "myPassword");
+        // ProtectionType enum is available directly in the Aspose.Words namespace.
+        doc.Protect(ProtectionType.AllowOnlyFormFields, "password");
 
         // Save the protected document.
-        doc.Save("FormFields_Protected.docx");
+        doc.Save("ProtectedFormFields.docx");
     }
 }

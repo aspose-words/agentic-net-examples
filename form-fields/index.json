@@ -4,35 +4,33 @@
     "slug": "form-fields",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Use Aspose.Words DocumentBuilder form field APIs and FormField collection directly. Create local sample documents when required and operate on real form field nodes.",
+    "preferred_workflow": "Create a fresh Document, use DocumentBuilder's InsertTextInput, InsertCheckBox, and InsertComboBox methods to add fields, retrieve them via Document.Range.FormFields, validate existence and type, modify Result, Checked, or DropDownItems as needed, and finally protect the document with ProtectionType.AllowOnlyFormFields before saving.",
     "required_packages": [
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.9.0"
+      "Aspose.Words": "26.10.0"
     },
     "required_namespaces": [
       "System",
       "Aspose.Words",
       "Aspose.Words.Fields",
-      "System.IO",
-      "System.Text.Json",
       "System.Collections.Generic",
-      "Aspose.Words.Tables"
+      "System.Text.Json",
+      "Aspose.Words.Saving",
+      "System.IO"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
       "Range",
-      "Directory",
-      "Path",
-      "Font",
-      "FieldType",
       "Field",
-      "NodeType",
+      "FieldType",
+      "Node",
       "Paragraph",
-      "ProtectionType",
       "Run",
+      "ProtectionType",
+      "SaveFormat",
       "File"
     ]
   },
@@ -48,43 +46,56 @@
   },
   "rules_summary": {
     "strict_api_bans": [
-      "Do not assume form fields already exist in a document.",
-      "Do not mix StructuredDocumentTag unless the task explicitly requires content controls.",
-      "Do not invent unsupported form-field helper APIs.",
-      "Do not skip validation of field existence when the task expects an existing field."
+      "Never assume that a form field already exists in the target document; always insert or verify it explicitly.",
+      "Do not use StructuredDocumentTag or other content-control APIs when the task requires legacy form fields.",
+      "Avoid inventing helper methods that are not part of the Aspose.Words API."
     ],
     "canonical_patterns": [
-      "Use DocumentBuilder.InsertTextInput, InsertCheckBox, and InsertComboBox to create legacy form fields.",
-      "Access legacy fields through Document.Range.FormFields.",
-      "Use FormField.Result for text-based values and FormField.Checked for checkboxes.",
-      "Bootstrap local source documents whenever the task implies an existing file or pre-existing fields."
+      "Use DocumentBuilder.InsertTextInput, InsertCheckBox, and InsertComboBox to create legacy fields.",
+      "Access existing fields through Document.Range.FormFields and use Result, Checked, or DropDownItems according to the field type.",
+      "Validate that each field was added and that its properties match the expected defaults before saving."
     ],
     "nullable_warning_prevention": [
-      "Check for null before accessing form fields or lookup results.",
-      "Avoid CS8600, CS8602, and CS8604 by guarding values before dereference.",
-      "Do not rely on maybe-null field lookups without validation."
+      "Check for null after retrieving a FormField from the collection before dereferencing it.",
+      "Guard against missing items in a combo box by ensuring the items array contains at least one element.",
+      "Validate numeric arguments such as maxLength, selectedIndex, and size to stay within the method's contract."
     ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "Mixing legacy form fields with content controls",
-      "symptom": "Examples use StructuredDocumentTag when the task is about legacy form fields.",
-      "fix": "Use DocumentBuilder legacy form-field APIs and Document.Range.FormFields unless the task explicitly requires content controls."
+      "pattern": "Incorrect API signatures",
+      "symptom": "Compilation errors such as CS1503 and CS7036 indicate mismatched argument types or missing required parameters.",
+      "cause": "The code supplies arguments in the wrong order, uses wrong data types, or omits required parameters like maxLength for InsertTextInput or selectedIndex for InsertComboBox.",
+      "fix": "Consult the Aspose.Words documentation and pass arguments exactly as defined: name (string), TextFormFieldType, format (string), default text (string), maxLength (int) for InsertTextInput; name, isChecked (bool), size (int) for InsertCheckBox; name, items (string[]), selectedIndex (int) for InsertComboBox.",
+      "prevention": "Write a small wrapper that calls the overload with named parameters and compile-time checks to ensure all required arguments are provided."
     },
     {
-      "pattern": "Wrong field access pattern",
-      "symptom": "Code assumes unsupported helpers or reads the wrong property for the field type.",
-      "fix": "Access legacy fields through Range.FormFields and use Result, Checked, or DropDownItems according to the field type."
+      "pattern": "Missing or incorrect namespaces",
+      "symptom": "CS0246 and CS0234 errors show that types like FormField, TextFormFieldType, and ProtectionType cannot be resolved.",
+      "cause": "The source file lacks the required using directives or references the wrong Aspose.Words sub-namespaces (e.g., Aspose.Words.Building, Aspose.Words.Forms).",
+      "fix": "Add using Aspose.Words; using Aspose.Words.Fields; and ensure the project references Aspose.Words.dll version 26.10.0.",
+      "prevention": "Include a standard header block with the necessary using statements in every form-field example template."
     },
     {
-      "pattern": "Missing bootstrap input",
-      "symptom": "Examples assume an existing document with form fields already exists.",
-      "fix": "Create a local sample document and seed the required form fields before reading or updating them."
+      "pattern": "Mixing legacy fields with content controls",
+      "symptom": "Examples that import StructuredDocumentTag or other content-control classes fail to compile or behave unexpectedly.",
+      "cause": "Legacy form fields and content controls are distinct APIs; the task explicitly requires legacy fields.",
+      "fix": "Remove all StructuredDocumentTag usage and rely solely on DocumentBuilder legacy insertion methods and the FormFields collection.",
+      "prevention": "Document the distinction in the coding guidelines and enforce a lint rule that flags any usage of StructuredDocumentTag in form-field samples."
     },
     {
-      "pattern": "Weak validation",
-      "symptom": "The example saves output but does not verify that the form field exists or that its value changed.",
-      "fix": "Validate field existence and the final assigned value before finishing."
+      "pattern": "Assuming pre-existing fields",
+      "symptom": "Runtime code attempts to read or modify a field that was never inserted, leading to null-reference exceptions.",
+      "cause": "The sample code starts by loading a document and directly accesses FormFields without first creating them.",
+      "fix": "Bootstrap a minimal document that inserts the required fields before any read or update logic.",
+      "prevention": "Include a step in the workflow that always creates a fresh document or explicitly checks for field existence and throws a clear error if missing."
+    },
+    {
+      "pattern": "Invalid protection constants",
+      "symptom": "CS0117 errors indicate that ProtectionType.Forms does not exist.",
+      "cause": "The correct enum value is ProtectionType.AllowOnlyFormFields; using an outdated or misspelled constant causes compilation failure.",
+      "fix": "Replace ProtectionType.Forms with ProtectionType.AllowOnlyFormFields when calling Document.Protect.",
+      "prevention": "Reference the official enum list in the documentation and add a unit test that verifies document protection can be applied without errors."
     }
   ],
   "examples": [
@@ -96,8 +107,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 2,
@@ -140,8 +151,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 6,
@@ -173,8 +184,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 9,
@@ -206,8 +217,8 @@
       "outputs": [
         "json"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 12,
@@ -228,8 +239,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 14,
@@ -250,8 +261,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 16,
@@ -261,8 +272,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 17,
@@ -272,8 +283,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 18,
@@ -283,8 +294,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 19,
@@ -294,8 +305,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 20,
@@ -305,8 +316,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 21,
@@ -338,8 +349,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 24,
@@ -355,13 +366,13 @@
     {
       "id": 25,
       "file_name": "apply-document-protection-levels-ensuring-only-form-fields-remain-editable-while-other-sec.cs",
-      "task": "Apply document protection levels ensuring only form fields remain editable while other sections are read‑only.",
+      "task": "Apply document protection levels ensuring only form fields remain editable while other sections are read-only.",
       "workflow": "general-form-field",
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 26,
@@ -371,19 +382,19 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 27,
       "file_name": "after-inserting-fields-protect-the-document-and-then-verify-that-non-field-content-cannot.cs",
-      "task": "After inserting fields, protect the document and then verify that non‑field content cannot be edited.",
+      "task": "After inserting fields, protect the document and then verify that non-field content cannot be edited.",
       "workflow": "general-form-field",
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 28,
@@ -418,5 +429,15 @@
       "selected_engine": "mcp",
       "winner": "mcp"
     }
-  ]
+  ],
+  "narrative": {
+    "overview": "The Form Fields category covers the creation, manipulation, and protection of legacy form fields in Word documents using Aspose.Words. Verified examples demonstrate inserting text inputs, check boxes, combo boxes, updating values, and applying form-only protection with robust validation.",
+    "purpose": "Provide concise, reliable guidance for an AI coding agent to generate correct C# snippets that create, read, update, and protect Aspose.Words legacy form fields while avoiding common compilation and runtime pitfalls.",
+    "validation_priorities": [
+      "Always verify that the field name exists in Document.Range.FormFields and that its type matches the intended operation before reading or writing any property."
+    ],
+    "maintenance_notes": [
+      "Update the example repository whenever Aspose.Words introduces new overloads or deprecates legacy form-field APIs to keep the samples current."
+    ]
+  }
 }

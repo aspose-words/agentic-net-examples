@@ -6,41 +6,57 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and insert a checkbox form field named "MyCheckBox".
+        // Create a new document and a builder to add a checkbox form field.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertCheckBox("MyCheckBox", false, 0);
+
+        // Insert a checkbox named "AcceptTerms". Default state is unchecked.
+        builder.InsertCheckBox("AcceptTerms", false, 0);
+
         // Save the initial document.
-        doc.Save("initial.docx");
+        const string initialPath = "FormFieldsExample.docx";
+        doc.Save(initialPath);
 
-        // Load the document to simulate a separate operation.
-        Document loadedDoc = new Document("initial.docx");
+        // ----- External configuration -----
+        // Read the desired checkbox state from an environment variable.
+        // Expected values: "true" or "false". If missing or invalid, default to false.
+        string envValue = Environment.GetEnvironmentVariable("CHECKBOX_STATE");
+        bool configChecked = false;
+        if (!string.IsNullOrEmpty(envValue) && bool.TryParse(envValue, out bool parsed))
+        {
+            configChecked = parsed;
+        }
 
-        // Read external configuration: environment variable "TOGGLE_CHECKBOX".
-        // If the variable is set to "true" (case‑insensitive), the checkbox will be toggled.
-        string toggleSetting = Environment.GetEnvironmentVariable("TOGGLE_CHECKBOX");
-        bool shouldToggle = string.Equals(toggleSetting, "true", StringComparison.OrdinalIgnoreCase);
+        // Load the document that contains the form field.
+        Document loadedDoc = new Document(initialPath);
 
-        // Retrieve the checkbox form field by name.
-        FormField checkBoxField = loadedDoc.Range.FormFields["MyCheckBox"];
+        // Access the collection of form fields.
+        FormFieldCollection fields = loadedDoc.Range.FormFields;
+
+        // Validate that the expected checkbox exists.
+        FormField checkBoxField = fields["AcceptTerms"];
         if (checkBoxField == null)
         {
-            throw new InvalidOperationException("Checkbox form field 'MyCheckBox' was not found.");
+            throw new InvalidOperationException("Checkbox form field 'AcceptTerms' not found.");
         }
 
-        // Verify that the field is indeed a checkbox.
+        // Ensure the field is indeed a checkbox.
         if (checkBoxField.Type != FieldType.FieldFormCheckBox)
         {
-            throw new InvalidOperationException("Form field 'MyCheckBox' is not a checkbox.");
+            throw new InvalidOperationException("Form field 'AcceptTerms' is not a checkbox.");
         }
 
-        // Toggle the checked state if required.
-        if (shouldToggle)
+        // Update the checked state based on the external configuration.
+        checkBoxField.Checked = configChecked;
+
+        // Verify that the update succeeded.
+        if (checkBoxField.Checked != configChecked)
         {
-            checkBoxField.Checked = !checkBoxField.Checked;
+            throw new InvalidOperationException("Failed to update the checkbox state.");
         }
 
         // Save the modified document.
-        loadedDoc.Save("output.docx");
+        const string outputPath = "FormFieldsExample_Updated.docx";
+        loadedDoc.Save(outputPath);
     }
 }
