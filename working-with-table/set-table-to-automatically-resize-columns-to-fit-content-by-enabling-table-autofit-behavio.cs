@@ -7,48 +7,50 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table with varying content length.
+        // Build a simple table with some sample content.
         builder.StartTable();
 
         // First row, first cell.
         builder.InsertCell();
-        builder.Write("Short");
+        builder.Writeln("Header 1");
 
         // First row, second cell.
         builder.InsertCell();
-        builder.Write("A much longer text that should cause the column to expand");
+        builder.Writeln("Header 2");
 
+        // End the first row.
         builder.EndRow();
 
         // Second row, first cell.
         builder.InsertCell();
-        builder.Write("Another short");
+        builder.Writeln("Short");
 
-        // Second row, second cell.
+        // Second row, second cell with longer text.
         builder.InsertCell();
-        builder.Write("More long content to test auto‑fit behavior");
+        builder.Writeln("This is a much longer piece of text that should cause the column to expand.");
 
+        // End the second row and the table.
         builder.EndRow();
-
-        // End the table.
         builder.EndTable();
 
         // Retrieve the created table.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
 
-        // Enable automatic column resizing to fit the cell contents.
+        // Enable AutoFit to contents so columns resize automatically.
         table.AutoFit(AutoFitBehavior.AutoFitToContents);
 
         // Save the document.
         string outputPath = "TableAutoFit.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify that the file was saved.
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not saved correctly.");
+            throw new FileNotFoundException("The output document was not saved.", outputPath);
     }
 }

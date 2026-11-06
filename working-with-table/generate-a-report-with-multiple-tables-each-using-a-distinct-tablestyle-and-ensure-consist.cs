@@ -3,7 +3,7 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class ReportWithMultipleTables
+public class Program
 {
     public static void Main()
     {
@@ -11,12 +11,13 @@ public class ReportWithMultipleTables
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Define the built‑in table styles to be applied.
+        // Define distinct table styles to apply.
+        // Use StyleIdentifier enum – it contains the built‑in table style identifiers.
         StyleIdentifier[] styles = new StyleIdentifier[]
         {
             StyleIdentifier.TableGrid,
             StyleIdentifier.LightShadingAccent1,
-            StyleIdentifier.MediumShading1Accent2
+            StyleIdentifier.LightListAccent2
         };
 
         // Build a table for each style.
@@ -25,53 +26,38 @@ public class ReportWithMultipleTables
             // Start a new table.
             builder.StartTable();
 
-            // Header row.
-            builder.InsertCell();
-            builder.Write("Header 1");
-            builder.InsertCell();
-            builder.Write("Header 2");
-            builder.EndRow();
-
-            // First data row.
-            builder.InsertCell();
-            builder.Write("Row 1, Col 1");
-            builder.InsertCell();
-            builder.Write("Row 1, Col 2");
-            builder.EndRow();
-
-            // Second data row.
-            builder.InsertCell();
-            builder.Write("Row 2, Col 1");
-            builder.InsertCell();
-            builder.Write("Row 2, Col 2");
-            builder.EndRow();
+            // Create 2 rows with 3 columns each.
+            for (int row = 1; row <= 2; row++)
+            {
+                for (int col = 1; col <= 3; col++)
+                {
+                    builder.InsertCell();
+                    builder.Writeln($"Style: {style}, R{row}C{col}");
+                }
+                builder.EndRow();
+            }
 
             // End the table.
             builder.EndTable();
 
-            // Retrieve the table that was just created.
+            // Retrieve the table that was just added.
             Table table = doc.LastSection.Body.Tables[doc.LastSection.Body.Tables.Count - 1];
 
             // Apply the distinct style.
             table.StyleIdentifier = style;
 
-            // Add an empty paragraph to create consistent spacing between tables.
-            builder.Writeln();
+            // Add consistent spacing after the table.
+            builder.Writeln(); // Inserts an empty paragraph as spacing.
         }
 
-        // Define output file path.
-        string outputPath = "ReportWithTables.docx";
-
-        // Save the document.
+        // Save the document to a file.
+        string outputPath = "Report.docx";
         doc.Save(outputPath);
 
-        // Validate that the file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
         {
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+            throw new Exception($"Failed to create the output file: {outputPath}");
         }
-
-        // Inform that the process completed.
-        Console.WriteLine("Document created successfully.");
     }
 }

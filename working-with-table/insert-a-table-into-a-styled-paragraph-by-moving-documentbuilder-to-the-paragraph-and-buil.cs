@@ -1,6 +1,8 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
+using Aspose.Words.Tables;
 
 public class Program
 {
@@ -10,27 +12,36 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a styled paragraph (Heading 1) and keep a reference to it.
+        // Insert a styled paragraph (Heading 1) and some text.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Styled Paragraph");
-        Paragraph styledParagraph = builder.CurrentParagraph;
+        builder.Writeln("Table inserted below:");
+
+        // Retrieve the paragraph we just added.
+        Paragraph styledParagraph = (Paragraph)doc.GetChildNodes(NodeType.Paragraph, true).Last();
 
         // Move the builder to the styled paragraph.
         builder.MoveTo(styledParagraph);
 
-        // Build a 2x2 table inside the paragraph.
+        // Optionally add a line break so the table starts on a new line.
+        builder.Writeln();
+
+        // Build a simple 2x2 table.
         builder.StartTable();
 
-        // First row.
+        // First row, first cell.
         builder.InsertCell();
         builder.Write("Cell 1");
+
+        // First row, second cell.
         builder.InsertCell();
         builder.Write("Cell 2");
         builder.EndRow();
 
-        // Second row.
+        // Second row, first cell.
         builder.InsertCell();
         builder.Write("Cell 3");
+
+        // Second row, second cell.
         builder.InsertCell();
         builder.Write("Cell 4");
         builder.EndRow();
@@ -44,6 +55,11 @@ public class Program
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The document was not saved correctly.");
+        {
+            throw new Exception($"Failed to create the output file: {outputPath}");
+        }
+
+        // Indicate successful completion.
+        Console.WriteLine($"Document saved successfully to '{outputPath}'.");
     }
 }

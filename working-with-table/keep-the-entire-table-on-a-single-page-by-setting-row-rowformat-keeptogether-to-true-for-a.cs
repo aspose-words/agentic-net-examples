@@ -14,30 +14,25 @@ public class Program
         // Build a simple table with 5 rows and 3 columns.
         builder.StartTable();
 
-        for (int row = 1; row <= 5; row++)
+        for (int rowIndex = 0; rowIndex < 5; rowIndex++)
         {
-            for (int col = 1; col <= 3; col++)
+            for (int colIndex = 0; colIndex < 3; colIndex++)
             {
                 builder.InsertCell();
-                builder.Writeln($"Row {row}, Cell {col}");
+                builder.Writeln($"Row {rowIndex + 1}, Cell {colIndex + 1}");
             }
-
-            // End the current row.
             builder.EndRow();
         }
 
-        // End the table.
         builder.EndTable();
 
         // Retrieve the created table.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (table == null)
-            throw new InvalidOperationException("Table was not created.");
+        Table table = doc.FirstSection.Body.Tables[0];
 
-        // Prevent rows from breaking across pages, which keeps the whole table on a single page.
-        foreach (Row r in table.Rows)
+        // Prevent rows from breaking across pages, which keeps the whole table on one page.
+        foreach (Row row in table.Rows)
         {
-            r.RowFormat.AllowBreakAcrossPages = false;
+            row.RowFormat.AllowBreakAcrossPages = false;
         }
 
         // Save the document.
@@ -46,6 +41,8 @@ public class Program
 
         // Verify that the file was saved.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException($"Failed to save the document to '{outputPath}'.");
+        {
+            throw new Exception($"Failed to save the document to '{outputPath}'.");
+        }
     }
 }

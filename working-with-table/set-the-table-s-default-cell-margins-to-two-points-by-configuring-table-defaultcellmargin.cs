@@ -7,7 +7,7 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
@@ -16,35 +16,32 @@ public class Program
 
         builder.InsertCell();
         builder.Writeln("Cell 1");
-
         builder.InsertCell();
         builder.Writeln("Cell 2");
-
         builder.EndRow();
 
         builder.InsertCell();
         builder.Writeln("Cell 3");
-
         builder.InsertCell();
         builder.Writeln("Cell 4");
-
         builder.EndRow();
+
         builder.EndTable();
 
-        // Retrieve the created table.
+        // Get the created table.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (table == null)
-            throw new InvalidOperationException("Table was not created.");
 
-        // Set the default cell margins (padding) to 2 points on all sides for every cell.
+        // Set default cell margins (padding) to 2 points on all sides.
+        // Aspose.Words does not expose a Table.DefaultCellMargin property in recent versions,
+        // so we apply the padding to each cell individually.
         foreach (Row row in table.Rows)
         {
             foreach (Cell cell in row.Cells)
             {
-                cell.CellFormat.TopPadding = 2;
-                cell.CellFormat.BottomPadding = 2;
-                cell.CellFormat.LeftPadding = 2;
-                cell.CellFormat.RightPadding = 2;
+                cell.CellFormat.LeftPadding = 2.0;
+                cell.CellFormat.RightPadding = 2.0;
+                cell.CellFormat.TopPadding = 2.0;
+                cell.CellFormat.BottomPadding = 2.0;
             }
         }
 
@@ -52,8 +49,10 @@ public class Program
         string outputPath = "TableDefaultCellMargin.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was saved.
+        // Verify the file was saved.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not created.", outputPath);
+            throw new Exception("The output document was not created.");
+
+        Console.WriteLine($"Document saved to: {Path.GetFullPath(outputPath)}");
     }
 }

@@ -7,54 +7,45 @@ public class HeaderTableExample
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
-
-        // Create a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Move the builder to the primary header of the first section.
+        // Add a primary header to the first section.
+        HeaderFooter header = new HeaderFooter(doc, HeaderFooterType.HeaderPrimary);
+        doc.FirstSection.HeadersFooters.Add(header);
+
+        // Move the builder to the header so that subsequent operations affect it.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
 
-        // Start building a table in the header.
+        // Build a 2x2 table inside the header.
         builder.StartTable();
 
-        // First row, first cell.
+        // First row.
         builder.InsertCell();
-        builder.Writeln("Header Cell 1");
-
-        // First row, second cell.
+        builder.Write("Header Cell 1");
         builder.InsertCell();
-        builder.Writeln("Header Cell 2");
-
-        // End the first row.
+        builder.Write("Header Cell 2");
         builder.EndRow();
 
-        // Second row, first cell.
+        // Second row.
         builder.InsertCell();
-        builder.Writeln("Header Cell 3");
-
-        // Second row, second cell.
+        builder.Write("Header Cell 3");
         builder.InsertCell();
-        builder.Writeln("Header Cell 4");
-
-        // End the second row.
+        builder.Write("Header Cell 4");
         builder.EndRow();
 
-        // End the table.
+        // Finish the table.
         builder.EndTable();
 
-        // Save the document to a file.
+        // Save the document.
         string outputPath = "HeaderTable.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
         {
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+            throw new Exception($"Failed to create the output file: {outputPath}");
         }
-
-        // Optionally, inform that the process completed successfully.
-        Console.WriteLine($"Document saved successfully to '{outputPath}'.");
     }
 }

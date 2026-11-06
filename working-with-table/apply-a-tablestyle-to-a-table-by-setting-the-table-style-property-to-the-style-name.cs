@@ -11,19 +11,28 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x1 table.
+        // Build a simple 2x2 table.
         builder.StartTable();
 
-        // First cell.
+        // First row, first cell.
         builder.InsertCell();
-        builder.Writeln("Cell 1");
+        builder.Write("Cell 1,1");
 
-        // Second cell.
+        // First row, second cell.
         builder.InsertCell();
-        builder.Writeln("Cell 2");
-
-        // End the row and the table.
+        builder.Write("Cell 1,2");
         builder.EndRow();
+
+        // Second row, first cell.
+        builder.InsertCell();
+        builder.Write("Cell 2,1");
+
+        // Second row, second cell.
+        builder.InsertCell();
+        builder.Write("Cell 2,2");
+        builder.EndRow();
+
+        // End the table.
         builder.EndTable();
 
         // Retrieve the created table.
@@ -31,16 +40,16 @@ public class Program
         if (table == null)
             throw new InvalidOperationException("Table was not created.");
 
-        // Apply a built‑in table style by its correct name.
-        // The built‑in style is named "Table Grid" (note the space).
-        table.StyleName = "Table Grid";
+        // Apply a built‑in table style by name.
+        // The Style property expects a Style object, not a string.
+        table.Style = doc.Styles[StyleIdentifier.TableGrid];
 
-        // Save the document.
+        // Save the document to disk.
         string outputPath = "TableStyleExample.docx";
         doc.Save(outputPath);
 
         // Verify that the file was saved.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not saved.", outputPath);
+            throw new FileNotFoundException("The output document was not created.", outputPath);
     }
 }

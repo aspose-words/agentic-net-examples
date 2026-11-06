@@ -1,23 +1,25 @@
 using System;
-using System.IO;
 using System.Drawing;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class TableShadingExample
+public class Program
 {
     public static void Main()
     {
-        // Create a new document and a DocumentBuilder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Start a table.
         builder.StartTable();
 
-        // Build a 3x4 table (3 rows, 4 columns) with sample text.
-        int rows = 3;
-        int columns = 4;
+        // Define number of rows and columns.
+        int rows = 4;
+        int columns = 3;
+
+        // Populate the table with sample text.
         for (int r = 0; r < rows; r++)
         {
             for (int c = 0; c < columns; c++)
@@ -31,34 +33,42 @@ public class TableShadingExample
         // End the table.
         builder.EndTable();
 
-        // Retrieve the created table.
-        Table table = doc.FirstSection.Body.Tables[0];
-
-        // Iterate through each cell and apply background color based on column index.
-        for (int rowIndex = 0; rowIndex < table.Rows.Count; rowIndex++)
+        // Apply background colors based on column index.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        for (int r = 0; r < table.Rows.Count; r++)
         {
-            Row row = table.Rows[rowIndex];
-            for (int cellIndex = 0; cellIndex < row.Cells.Count; cellIndex++)
+            Row row = table.Rows[r];
+            for (int c = 0; c < row.Cells.Count; c++)
             {
-                Cell cell = row.Cells[cellIndex];
-
-                // Choose a color: even columns LightGray, odd columns LightBlue.
-                Color bgColor = (cellIndex % 2 == 0) ? Color.LightGray : Color.LightBlue;
-
-                // Apply solid shading with the chosen background color.
-                // The default texture is None, so we only need to set the background color.
+                Cell cell = row.Cells[c];
+                // Choose a color per column.
+                Color bgColor = c switch
+                {
+                    0 => Color.LightCoral,   // First column
+                    1 => Color.LightGreen,   // Second column
+                    2 => Color.LightBlue,    // Third column
+                    _ => Color.White
+                };
+                // Apply solid shading.
                 cell.CellFormat.Shading.BackgroundPatternColor = bgColor;
+                cell.CellFormat.Shading.Texture = TextureIndex.TextureSolid;
             }
         }
 
         // Save the document.
-        string outputPath = "TableShading.docx";
+        string outputPath = "TableWithColumnShading.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-        {
             throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
-        }
+
+        // Optional: reopen and ensure the table still exists (basic validation).
+        Document loadedDoc = new Document(outputPath);
+        Table loadedTable = (Table)loadedDoc.GetChild(NodeType.Table, 0, true);
+        if (loadedTable == null || loadedTable.Rows.Count != rows)
+            throw new InvalidOperationException("The saved document does not contain the expected table.");
+
+        // Program ends without waiting for user input.
     }
 }

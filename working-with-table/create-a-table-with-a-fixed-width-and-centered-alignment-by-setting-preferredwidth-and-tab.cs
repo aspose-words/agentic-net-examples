@@ -16,38 +16,38 @@ public class Program
 
         // First row, first cell.
         builder.InsertCell();
-        builder.Writeln("Cell 1, Row 1");
+        builder.Writeln("Cell 1,1");
 
         // First row, second cell.
         builder.InsertCell();
-        builder.Writeln("Cell 2, Row 1");
+        builder.Writeln("Cell 1,2");
 
-        // End the first row.
+        // End first row.
         builder.EndRow();
 
         // Second row, first cell.
         builder.InsertCell();
-        builder.Writeln("Cell 1, Row 2");
+        builder.Writeln("Cell 2,1");
 
         // Second row, second cell.
         builder.InsertCell();
-        builder.Writeln("Cell 2, Row 2");
+        builder.Writeln("Cell 2,2");
 
-        // End the second row.
+        // End second row and the table.
         builder.EndRow();
-
-        // End the table.
         builder.EndTable();
 
         // Retrieve the created table.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
-        // Set a fixed width for the table (e.g., 300 points) and center alignment.
-        table.PreferredWidth = PreferredWidth.FromPoints(300);
+        // Set the table to have a fixed width of 400 points.
+        table.PreferredWidth = PreferredWidth.FromPoints(400);
+
+        // Center the table on the page.
         table.Alignment = TableAlignment.Center;
 
-        // Save the document to a file.
-        string outputPath = "TableOutput.docx";
+        // Save the document.
+        string outputPath = "TableFixedWidth.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.

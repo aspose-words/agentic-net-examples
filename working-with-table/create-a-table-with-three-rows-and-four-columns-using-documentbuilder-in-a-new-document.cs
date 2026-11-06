@@ -1,13 +1,12 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
@@ -20,7 +19,7 @@ public class Program
             for (int col = 1; col <= 4; col++)
             {
                 builder.InsertCell();
-                builder.Writeln($"Row {row}, Cell {col}");
+                builder.Writeln($"Row {row}, Column {col}");
             }
             builder.EndRow();
         }
@@ -29,13 +28,13 @@ public class Program
         builder.EndTable();
 
         // Save the document.
-        string outputPath = "TableExample.docx";
-        doc.Save(outputPath);
+        string fileName = "TableExample.docx";
+        doc.Save(fileName);
 
         // Verify the file was created.
-        if (!File.Exists(outputPath))
+        if (!File.Exists(fileName))
         {
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+            throw new InvalidOperationException($"Failed to create {fileName}");
         }
     }
 }

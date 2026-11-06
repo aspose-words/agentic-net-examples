@@ -22,11 +22,11 @@ public class Program
         builder.InsertCell();
         builder.Writeln("Cell 2");
 
-        // End the row and the table.
+        // Complete the row and the table.
         builder.EndRow();
         builder.EndTable();
 
-        // Retrieve the created table.
+        // Retrieve the created table and its first row.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
         Row row = table.Rows[0];
         Cell firstCell = row.Cells[0];
@@ -36,14 +36,12 @@ public class Program
         firstCell.CellFormat.HorizontalMerge = CellMerge.First;
         secondCell.CellFormat.HorizontalMerge = CellMerge.Previous;
 
-        // Save the document.
+        // Save the document to disk.
         string outputPath = "MergedCells.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Simple validation that the file was created.
         if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException($"Failed to create output file: {outputPath}");
-        }
+            throw new Exception("The output document was not saved correctly.");
     }
 }

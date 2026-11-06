@@ -12,59 +12,66 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Start a new table.
-        Table table = builder.StartTable();
+        builder.StartTable();
 
-        // ----- Header row -----
+        // ----- Header Row -----
         builder.InsertCell();
-        builder.Writeln("Header 1");
+        builder.Write("Header 1");
         builder.InsertCell();
-        builder.Writeln("Header 2");
+        builder.Write("Header 2");
+        builder.InsertCell();
+        builder.Write("Header 3");
         builder.EndRow();
 
-        // ----- Data rows -----
+        // ----- Data Rows -----
         for (int i = 1; i <= 3; i++)
         {
             builder.InsertCell();
-            builder.Writeln($"Data {i}A");
+            builder.Write($"Data {i}A");
             builder.InsertCell();
-            builder.Writeln($"Data {i}B");
+            builder.Write($"Data {i}B");
+            builder.InsertCell();
+            builder.Write($"Data {i}C");
             builder.EndRow();
         }
 
-        // ----- Footer row -----
+        // ----- Footer Row -----
         builder.InsertCell();
-        builder.Writeln("Footer 1");
+        builder.Write("Footer 1");
         builder.InsertCell();
-        builder.Writeln("Footer 2");
+        builder.Write("Footer 2");
+        builder.InsertCell();
+        builder.Write("Footer 3");
         builder.EndRow();
 
         // End the table.
         builder.EndTable();
 
-        // Create a custom table style based on the built‑in "Table Grid" style.
-        Style customStyle = doc.Styles.Add(StyleType.Table, "MyCustomTableStyle");
-        customStyle.BaseStyleName = "Table Grid";
+        // Retrieve the created table (the first table in the document).
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // Apply the custom style to the table.
-        // Setting StyleName is sufficient; no need to set StyleIdentifier.
-        table.StyleName = "MyCustomTableStyle";
+        // Create a custom table style.
+        Style customStyle = doc.Styles.Add(StyleType.Table, "CustomTableStyle");
 
-        // Make header row text bold.
-        Row headerRow = table.Rows[0];
-        foreach (Cell cell in headerRow.Cells)
-        {
-            Paragraph para = cell.FirstParagraph;
-            if (para != null && para.Runs.Count > 0)
-                para.Runs[0].Font.Bold = true;
-        }
+        // Apply the style to the table.
+        table.Style = customStyle;
 
-        // Make footer row text italic.
+        // Make the first row (header) bold via style options.
+        // The TableStyleOptions property belongs to Table, not Style.
+        table.StyleOptions = TableStyleOptions.FirstRow;
+        customStyle.Font.Bold = true;
+
+        // Make the last row (footer) italic by formatting its runs directly.
         Row footerRow = table.Rows[table.Rows.Count - 1];
         foreach (Cell cell in footerRow.Cells)
         {
-            Paragraph para = cell.FirstParagraph;
-            if (para != null && para.Runs.Count > 0)
-                para.Runs[0].Font.Italic = true;
+            foreach (Paragraph para in cell.Paragraphs)
+            {
+                foreach (Run run in para.Runs)
+                {
+                    run.Font.Italic = true;
+                }
+            }
         }
 
         // Save the document.
@@ -73,6 +80,6 @@ public class Program
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not created.");
+            throw new InvalidOperationException("The output document was not created.");
     }
 }

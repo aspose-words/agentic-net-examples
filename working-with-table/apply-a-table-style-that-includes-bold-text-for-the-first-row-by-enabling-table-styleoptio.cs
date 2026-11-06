@@ -28,16 +28,13 @@ public class Program
         builder.Writeln("Data 2");
         builder.EndRow();
 
-        // End the table.
         builder.EndTable();
 
         // Retrieve the created table.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // Apply a built‑in style.
+        // Apply a built‑in style and make the first row bold.
         table.StyleIdentifier = StyleIdentifier.TableGrid;
-
-        // Enable bold text for the first row using the supported style option.
         table.StyleOptions = TableStyleOptions.FirstRow;
 
         // Save the document.
@@ -46,6 +43,11 @@ public class Program
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output file was not created.");
+        {
+            throw new Exception($"Failed to create the output file: {outputPath}");
+        }
+
+        // Inform that the process completed.
+        Console.WriteLine($"Document saved successfully to '{outputPath}'.");
     }
 }

@@ -3,7 +3,6 @@ using System.IO;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Drawing;
 
 public class Program
 {
@@ -17,46 +16,39 @@ public class Program
         int rows = 5;
         int columns = 4;
 
-        // Build the table.
+        // Start building the table.
         builder.StartTable();
-        for (int row = 1; row <= rows; row++)
+
+        for (int row = 0; row < rows; row++)
         {
-            for (int col = 1; col <= columns; col++)
+            for (int col = 0; col < columns; col++)
             {
+                // Insert a new cell.
                 builder.InsertCell();
-                builder.Writeln($"R{row}C{col}");
-                // End the row after the last cell.
-                if (col == columns)
-                    builder.EndRow();
+
+                // Apply alternating background colors per column.
+                // Even columns (0‑based) get LightGray, odd columns get White.
+                builder.CellFormat.Shading.BackgroundPatternColor = (col % 2 == 0) ? Color.LightGray : Color.White;
+
+                // Write some sample text into the cell.
+                builder.Writeln($"R{row + 1}C{col + 1}");
             }
+
+            // End the current row.
+            builder.EndRow();
         }
+
+        // End the table.
         builder.EndTable();
 
-        // Retrieve the created table.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (table == null)
-            throw new InvalidOperationException("Table was not created.");
-
-        // Apply alternating background colors to columns.
-        for (int colIndex = 0; colIndex < columns; colIndex++)
-        {
-            // Choose color based on column index (even = LightGray, odd = White).
-            Color bgColor = (colIndex % 2 == 0) ? Color.LightGray : Color.White;
-
-            foreach (Row row in table.Rows)
-            {
-                Cell cell = row.Cells[colIndex];
-                cell.CellFormat.Shading.Texture = TextureIndex.TextureSolid;
-                cell.CellFormat.Shading.ForegroundPatternColor = bgColor;
-            }
-        }
-
-        // Save the document.
+        // Save the document to a file.
         string outputPath = "AlternatingColumnsTable.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was saved.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException($"Failed to create the output file: {outputPath}");
+        {
+            throw new Exception($"Failed to create the output file: {outputPath}");
+        }
     }
 }

@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -8,20 +7,21 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and add some paragraphs.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a paragraph before the keyword.");
-        builder.Writeln("Please INSERT_HERE the table below."); // Keyword paragraph.
-        builder.Writeln("Another paragraph after the keyword.");
+
+        // Add some paragraphs, one of them contains the keyword.
+        builder.Writeln("First paragraph.");
+        builder.Writeln("Paragraph with keyword INSERT_HERE where table will be inserted.");
+        builder.Writeln("Last paragraph.");
 
         // Search for the paragraph that contains the specific keyword.
         Paragraph targetParagraph = null;
         NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
         foreach (Paragraph para in paragraphs)
         {
-            string text = para.ToString(SaveFormat.Text);
-            if (text.Contains("INSERT_HERE"))
+            if (para.GetText().Contains("INSERT_HERE"))
             {
                 targetParagraph = para;
                 break;
@@ -29,47 +29,42 @@ public class Program
         }
 
         if (targetParagraph == null)
-            throw new InvalidOperationException("Keyword paragraph not found.");
+            throw new InvalidOperationException("Keyword not found in any paragraph.");
 
-        // Build a simple 2x2 table.
-        Table table = new Table(doc);
-        table.SetBorders(LineStyle.Single, 1.0, Color.Black);
+        // Insert an empty paragraph after the target paragraph – this will be the anchor for the new table.
+        CompositeNode parent = targetParagraph.ParentNode as CompositeNode;
+        if (parent == null)
+            throw new InvalidOperationException("Unable to locate a suitable parent node for insertion.");
+
+        Paragraph anchorParagraph = new Paragraph(doc);
+        parent.InsertAfter(anchorParagraph, targetParagraph);
+
+        // Move the builder to the newly inserted paragraph and build a 2x2 table.
+        builder.MoveTo(anchorParagraph);
+        builder.StartTable();
 
         // First row.
-        Row row1 = new Row(doc);
-        Cell cell11 = new Cell(doc);
-        cell11.AppendChild(new Paragraph(doc));
-        cell11.FirstParagraph.AppendChild(new Run(doc, "Cell 1"));
-        row1.AppendChild(cell11);
-
-        Cell cell12 = new Cell(doc);
-        cell12.AppendChild(new Paragraph(doc));
-        cell12.FirstParagraph.AppendChild(new Run(doc, "Cell 2"));
-        row1.AppendChild(cell12);
-        table.AppendChild(row1);
+        builder.InsertCell();
+        builder.Write("Cell 1");
+        builder.InsertCell();
+        builder.Write("Cell 2");
+        builder.EndRow();
 
         // Second row.
-        Row row2 = new Row(doc);
-        Cell cell21 = new Cell(doc);
-        cell21.AppendChild(new Paragraph(doc));
-        cell21.FirstParagraph.AppendChild(new Run(doc, "Cell 3"));
-        row2.AppendChild(cell21);
+        builder.InsertCell();
+        builder.Write("Cell 3");
+        builder.InsertCell();
+        builder.Write("Cell 4");
+        builder.EndRow();
 
-        Cell cell22 = new Cell(doc);
-        cell22.AppendChild(new Paragraph(doc));
-        cell22.FirstParagraph.AppendChild(new Run(doc, "Cell 4"));
-        row2.AppendChild(cell22);
-        table.AppendChild(row2);
+        builder.EndTable();
 
-        // Insert the table after the paragraph containing the keyword.
-        targetParagraph.ParentNode.InsertAfter(table, targetParagraph);
-
-        // Save the document.
-        string outputPath = "Result.docx";
+        // Save the document to disk.
+        string outputPath = "Output.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was saved.
+        // Simple validation that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The document was not saved correctly.");
+            throw new Exception("Document was not saved correctly.");
     }
 }

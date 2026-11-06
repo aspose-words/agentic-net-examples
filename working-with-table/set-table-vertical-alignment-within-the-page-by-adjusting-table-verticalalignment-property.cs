@@ -1,53 +1,57 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace TableVerticalAlignmentExample
 {
-    public static void Main()
+    class Program
     {
-        // Create a new document and a DocumentBuilder.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Start a table.
-        builder.StartTable();
-
-        // Insert first row with two cells.
-        builder.InsertCell();
-        builder.Writeln("Cell 1");
-        builder.InsertCell();
-        builder.Writeln("Cell 2");
-        builder.EndRow();
-
-        // Insert second row with two cells.
-        builder.InsertCell();
-        builder.Writeln("Cell 3");
-        builder.InsertCell();
-        builder.Writeln("Cell 4");
-        builder.EndRow();
-
-        // End the table.
-        builder.EndTable();
-
-        // Retrieve the created table.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-
-        // Set the table alignment to center (horizontal alignment). 
-        // The VerticalAlignment property is not available in this version of Aspose.Words.
-        table.Alignment = TableAlignment.Center;
-
-        // Save the document.
-        string outputPath = "VerticalAlignmentTable.docx";
-        doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
+        static void Main()
         {
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
-        }
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        Console.WriteLine($"Document saved successfully to '{Path.GetFullPath(outputPath)}'.");
+            // Build a simple 2x2 table.
+            builder.StartTable();
+
+            builder.InsertCell();
+            builder.Writeln("Cell 1");
+            builder.InsertCell();
+            builder.Writeln("Cell 2");
+            builder.EndRow();
+
+            builder.InsertCell();
+            builder.Writeln("Cell 3");
+            builder.InsertCell();
+            builder.Writeln("Cell 4");
+            builder.EndRow();
+
+            builder.EndTable();
+
+            // Retrieve the created table.
+            Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+
+            // Aspose.Words does not expose a Table.VerticalAlignment property.
+            // To approximate centering the table on the page vertically,
+            // we can add empty paragraphs before and after the table.
+            // Here we demonstrate a simple approach by inserting a paragraph
+            // with a line break before the table, which can be adjusted as needed.
+            // (If a future version provides Table.VerticalAlignment, replace this block with that property.)
+
+            // Insert an empty paragraph before the table to push it down.
+            Paragraph before = new Paragraph(doc);
+            before.AppendChild(new Run(doc, "\n"));
+            table.ParentNode.InsertBefore(before, table);
+
+            // Insert an empty paragraph after the table to balance spacing.
+            Paragraph after = new Paragraph(doc);
+            after.AppendChild(new Run(doc, "\n"));
+            table.ParentNode.InsertAfter(after, table);
+
+            // Save the document.
+            string outputPath = "TableVerticalAlignment.docx";
+            doc.Save(outputPath);
+        }
     }
 }

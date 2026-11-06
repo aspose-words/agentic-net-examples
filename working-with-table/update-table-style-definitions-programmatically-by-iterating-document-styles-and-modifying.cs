@@ -1,6 +1,6 @@
 using System;
-using System.IO;
 using System.Drawing;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -12,30 +12,24 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a custom table style.
-        Style customStyle = doc.Styles.Add(StyleType.Table, "MyCustomTableStyle");
-        // Set an initial shading for the style (will be modified later).
-        TableStyle tableStyle = (TableStyle)customStyle;
-        tableStyle.Shading.BackgroundPatternColor = Color.LightGray;
-
-        // Build a simple 2x2 table and apply the custom style.
+        // Build a simple 2x2 table.
         builder.StartTable();
-        builder.RowFormat.Height = 20;
+        builder.InsertCell();
+        builder.Write("Header 1");
+        builder.InsertCell();
+        builder.Write("Header 2");
+        builder.EndRow();
+
         builder.InsertCell();
         builder.Write("Cell 1");
         builder.InsertCell();
         builder.Write("Cell 2");
         builder.EndRow();
-        builder.InsertCell();
-        builder.Write("Cell 3");
-        builder.InsertCell();
-        builder.Write("Cell 4");
-        builder.EndRow();
         builder.EndTable();
 
-        // Retrieve the created table and assign the custom style.
+        // Apply an existing table style to the created table.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        table.Style = customStyle; // assign the Style object, not its name
+        table.Style = doc.Styles["Table Grid"];
 
         // Iterate through all styles in the document.
         foreach (Style style in doc.Styles)
@@ -43,32 +37,28 @@ public class Program
             // Process only table styles.
             if (style.Type == StyleType.Table)
             {
-                TableStyle ts = (TableStyle)style;
+                // Cast to TableStyle to access table‑specific formatting.
+                TableStyle tableStyle = (TableStyle)style;
 
-                // Example modification: change shading background to LightBlue.
-                ts.Shading.BackgroundPatternColor = Color.LightBlue;
+                // Change the background shading of the whole table style.
+                tableStyle.Shading.BackgroundPatternColor = Color.LightBlue;
 
-                // Example modification: set all borders to a solid red line.
-                foreach (Border border in ts.Borders)
-                {
-                    border.LineStyle = LineStyle.Single;
-                    border.Color = Color.Red;
-                    border.LineWidth = 1.0; // points
-                }
+                // Set a uniform border color for the style.
+                tableStyle.Borders.Color = Color.DarkBlue;
 
-                // RowBandSize and ColumnBandSize are not available in this version,
-                // so they are omitted.
+                // Note: RowBandSize and ColumnBandSize properties are not available
+                // in the current Aspose.Words version, so they are omitted.
             }
         }
 
-        // Save the document.
+        // Save the modified document.
         string outputPath = "UpdatedTableStyle.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
         {
-            throw new Exception("The output document was not saved correctly.");
+            throw new Exception($"Failed to create the output file: {outputPath}");
         }
     }
 }

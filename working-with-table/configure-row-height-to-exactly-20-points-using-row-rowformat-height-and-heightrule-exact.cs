@@ -14,30 +14,31 @@ public class Program
         // Build a simple table with two rows.
         builder.StartTable();
 
-        // First row.
+        // First row, first cell.
         builder.InsertCell();
-        builder.Writeln("First row, first cell");
+        builder.Writeln("Row 1, Cell 1");
         builder.EndRow();
 
-        // Second row – this row will have its height set to exactly 20 points.
+        // Second row, first cell.
         builder.InsertCell();
-        builder.Writeln("Second row, first cell");
+        builder.Writeln("Row 2, Cell 1");
         builder.EndRow();
 
-        // End the table.
+        // Finish the table.
         builder.EndTable();
 
-        // Access the second row (index 1) and set its height.
-        Row secondRow = doc.FirstSection.Body.Tables[0].Rows[1];
-        secondRow.RowFormat.Height = 20; // Height in points.
-        secondRow.RowFormat.HeightRule = HeightRule.Exactly; // Exact height rule.
+        // Access the first row and set its height to exactly 20 points.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        Row firstRow = table.Rows[0];
+        firstRow.RowFormat.Height = 20; // Height in points.
+        firstRow.RowFormat.HeightRule = HeightRule.Exactly; // Exact height rule.
 
-        // Save the document.
+        // Save the document to disk.
         string outputPath = "RowHeightExact.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Failed to create the output document.");
+            throw new Exception("Failed to create the output document.");
     }
 }

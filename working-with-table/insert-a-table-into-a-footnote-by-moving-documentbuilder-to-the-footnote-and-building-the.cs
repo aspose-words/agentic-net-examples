@@ -12,46 +12,46 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some main text.
-        builder.Writeln("This is a paragraph with a footnote reference.");
+        // Add a paragraph with some text.
+        builder.Writeln("This paragraph contains a footnote reference.");
 
-        // Insert a footnote with empty initial text.
-        Footnote footnote = builder.InsertFootnote(FootnoteType.Footnote, string.Empty);
+        // Insert a footnote and obtain its reference.
+        Footnote footnote = builder.InsertFootnote(
+            FootnoteType.Footnote,
+            "Initial footnote text.");
 
         // Move the builder to the footnote's first paragraph so we can add content there.
         builder.MoveTo(footnote.FirstParagraph);
 
-        // Build a simple 2x2 table inside the footnote.
+        // Build a 2x2 table inside the footnote.
         builder.StartTable();
 
-        // First row
+        // First row.
         builder.InsertCell();
         builder.Write("Cell 1,1");
         builder.InsertCell();
         builder.Write("Cell 1,2");
         builder.EndRow();
 
-        // Second row
+        // Second row.
         builder.InsertCell();
         builder.Write("Cell 2,1");
         builder.InsertCell();
         builder.Write("Cell 2,2");
         builder.EndRow();
 
-        // End the table.
+        // Finish the table.
         builder.EndTable();
 
-        // Save the document.
+        // Save the document to disk.
         string outputPath = "FootnoteTable.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
-        }
+            throw new Exception("Failed to create the output document.");
 
-        // Indicate success.
-        Console.WriteLine($"Document saved successfully to '{Path.GetFullPath(outputPath)}'.");
+        // Indicate successful completion.
+        Console.WriteLine("Document saved to " + Path.GetFullPath(outputPath));
     }
 }

@@ -1,8 +1,8 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
 using Aspose.Words.Drawing;
+using Aspose.Words.Tables;
 
 public class Program
 {
@@ -12,15 +12,17 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a floating rectangle shape that will overlap the table.
-        builder.InsertShape(ShapeType.Rectangle, 100, 50);
-        // Retrieve the inserted shape.
-        Shape shape = (Shape)builder.CurrentParagraph.GetChildNodes(NodeType.Shape, true)[0];
-        // Ensure the shape does not wrap text so it can overlap other objects.
-        shape.WrapType = WrapType.None;
+        // Insert a floating rectangle shape.
+        Shape shape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
+        shape.WrapType = WrapType.Square;
+        shape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
+        shape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
+        shape.Left = 0;   // Position at the left edge of the page.
+        shape.Top = 0;    // Position at the top edge of the page.
+        shape.AllowOverlap = true; // Allow overlapping with other floating objects.
 
-        // Move to a new paragraph to start the table.
-        builder.Writeln();
+        // Move the builder below the shape to start the table.
+        builder.Writeln(); // Ensure we are in a new paragraph.
 
         // Build a simple 2x2 table.
         builder.StartTable();
@@ -29,7 +31,6 @@ public class Program
         builder.InsertCell();
         builder.Write("Cell 2");
         builder.EndRow();
-
         builder.InsertCell();
         builder.Write("Cell 3");
         builder.InsertCell();
@@ -38,17 +39,21 @@ public class Program
         builder.EndTable();
 
         // Retrieve the created table.
-        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // Overlapping is allowed by default when surrounding objects have no text wrapping.
-        // No need to set Table.AllowOverlap because it is read‑only.
+        // In the current Aspose.Words version, Table does not expose
+        // AllowOverlap, WrapType, RelativeHorizontalPosition, etc.
+        // Overlapping with the shape is allowed by default, so no additional
+        // properties need to be set on the table.
 
         // Save the document.
-        string outputPath = "TableOverlap.docx";
+        string outputPath = "TableOverlapExample.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The document was not saved correctly.");
+        {
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+        }
     }
 }

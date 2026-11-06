@@ -7,48 +7,53 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Add a paragraph before the table.
-        builder.Writeln("Paragraph before table.");
+        builder.Writeln("Paragraph before the table.");
 
-        // Build a simple 2x1 table.
+        // Build a simple 2‑row table.
         builder.StartTable();
         builder.InsertCell();
         builder.Write("Cell 1");
         builder.EndRow();
+
         builder.InsertCell();
         builder.Write("Cell 2");
         builder.EndRow();
         builder.EndTable();
 
-        // Add another paragraph after the table.
-        builder.Writeln("Paragraph after table.");
+        // Add a paragraph after the original table.
+        builder.Writeln("Paragraph after the original table.");
 
-        // Locate the first paragraph (the one before the table).
-        Paragraph firstParagraph = (Paragraph)doc.GetChild(NodeType.Paragraph, 0, true);
-        if (firstParagraph == null)
-            throw new InvalidOperationException("First paragraph not found.");
+        // Save the initial document (optional, just to have a file).
+        string originalPath = "Original.docx";
+        doc.Save(originalPath);
 
-        // Locate the first table in the document.
-        Table originalTable = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (originalTable == null)
-            throw new InvalidOperationException("Original table not found.");
+        // Locate the paragraph after which we want to insert the cloned table.
+        // Here we use the first paragraph ("Paragraph before the table.").
+        Paragraph targetParagraph = (Paragraph)doc.GetChildNodes(NodeType.Paragraph, true)[0];
+
+        // Find the first table in the document.
+        Table originalTable = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
         // Clone the table (deep clone).
-        Node clonedTable = originalTable.Clone(true);
+        Table clonedTable = (Table)originalTable.Clone(true);
 
-        // Insert the cloned table after the first paragraph.
-        firstParagraph.ParentNode.InsertAfter(clonedTable, firstParagraph);
+        // Insert the cloned table after the target paragraph.
+        // InsertAfter is called on the parent node of the reference paragraph.
+        targetParagraph.ParentNode.InsertAfter(clonedTable, targetParagraph);
 
-        // Save the document.
-        string outputPath = "ClonedTable.docx";
-        doc.Save(outputPath);
+        // Save the resulting document.
+        string resultPath = "ClonedTable.docx";
+        doc.Save(resultPath);
 
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output file was not created.", outputPath);
+        // Validate that the output file was created.
+        if (!File.Exists(resultPath))
+        {
+            throw new Exception("The output document was not created.");
+        }
     }
 }

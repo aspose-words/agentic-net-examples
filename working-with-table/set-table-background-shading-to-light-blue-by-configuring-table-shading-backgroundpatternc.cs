@@ -8,61 +8,63 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a DocumentBuilder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table.
+        // Start a table.
         builder.StartTable();
 
+        // First row, first cell.
         builder.InsertCell();
         builder.Writeln("Cell 1");
+
+        // End the first row.
+        builder.EndRow();
+
+        // Second row, first cell.
         builder.InsertCell();
         builder.Writeln("Cell 2");
+
+        // End the second row.
         builder.EndRow();
 
-        builder.InsertCell();
-        builder.Writeln("Cell 3");
-        builder.InsertCell();
-        builder.Writeln("Cell 4");
-        builder.EndRow();
-
+        // End the table.
         builder.EndTable();
 
         // Retrieve the created table.
         Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
-        // Apply light‑blue background shading to every cell in the table.
-        ApplyTableShading(table, Color.LightBlue);
-
-        // Save the document.
-        string fileName = "TableShading.docx";
-        doc.Save(fileName);
-
-        // Verify that the file was created.
-        if (!File.Exists(fileName))
-            throw new Exception("The output file was not created.");
-
-        // Reload the document and verify the shading color of the first cell.
-        Document loadedDoc = new Document(fileName);
-        Table loadedTable = (Table)loadedDoc.GetChildNodes(NodeType.Table, true)[0];
-        Cell firstCell = loadedTable.Rows[0].Cells[0];
-        if (firstCell.CellFormat.Shading.BackgroundPatternColor.ToArgb() != Color.LightBlue.ToArgb())
-            throw new Exception("The table shading color is not light blue.");
-
-        // Indicate success.
-        Console.WriteLine($"Table with light blue shading saved to '{fileName}'.");
-    }
-
-    private static void ApplyTableShading(Table table, Color color)
-    {
+        // Apply light blue background shading to every cell in the table.
         foreach (Row row in table.Rows)
         {
             foreach (Cell cell in row.Cells)
             {
-                cell.CellFormat.Shading.BackgroundPatternColor = color;
+                cell.CellFormat.Shading.BackgroundPatternColor = Color.LightBlue;
                 cell.CellFormat.Shading.Texture = TextureIndex.TextureSolid;
             }
         }
+
+        // Save the document.
+        string outputPath = "TableShading.docx";
+        doc.Save(outputPath);
+
+        // Validate that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("The output document was not saved.");
+
+        // Re-open the document to verify shading.
+        Document loadedDoc = new Document(outputPath);
+        Table loadedTable = (Table)loadedDoc.GetChildNodes(NodeType.Table, true)[0];
+
+        // Verify that the first cell has the expected shading color.
+        Cell firstCell = loadedTable.Rows[0].Cells[0];
+        Color bgColor = firstCell.CellFormat.Shading.BackgroundPatternColor;
+
+        if (bgColor.ToArgb() != Color.LightBlue.ToArgb())
+            throw new Exception("Table shading color does not match the expected light blue.");
+
+        // Program completed successfully.
+        Console.WriteLine("Table created with light blue background shading and saved to " + outputPath);
     }
 }

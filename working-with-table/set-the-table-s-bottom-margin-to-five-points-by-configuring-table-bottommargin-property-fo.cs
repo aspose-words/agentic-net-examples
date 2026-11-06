@@ -11,20 +11,27 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 1x1 table.
+        // Build a simple 2‑row, 1‑column table.
         builder.StartTable();
+
+        // First row.
         builder.InsertCell();
-        builder.Write("Sample cell");
+        builder.Writeln("Cell 1");
         builder.EndRow();
+
+        // Second row.
+        builder.InsertCell();
+        builder.Writeln("Cell 2");
+        builder.EndRow();
+
+        // Finish the table.
         builder.EndTable();
 
         // Retrieve the created table.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (table == null)
-            throw new InvalidOperationException("Table was not created.");
 
-        // Set the bottom margin (padding) of the table to five points.
-        table.BottomPadding = 5.0f; // points
+        // Set the table's bottom padding to five points (Aspose.Words uses padding, not margin).
+        table.BottomPadding = 5.0;
 
         // Save the document to disk.
         string outputPath = "TableBottomMargin.docx";
@@ -32,6 +39,6 @@ public class Program
 
         // Verify that the file was saved.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not saved.", outputPath);
+            throw new Exception("The document was not saved correctly.");
     }
 }

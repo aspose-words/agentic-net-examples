@@ -11,39 +11,34 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table.
+        // Add a paragraph before the table.
+        builder.Writeln("Paragraph before the table.");
+
+        // Build a simple 1x2 table.
         builder.StartTable();
         builder.InsertCell();
         builder.Writeln("Cell 1");
         builder.InsertCell();
         builder.Writeln("Cell 2");
         builder.EndRow();
-
-        builder.InsertCell();
-        builder.Writeln("Cell 3");
-        builder.InsertCell();
-        builder.Writeln("Cell 4");
-        builder.EndRow();
         builder.EndTable();
 
-        // Retrieve the created table.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (table == null)
-            throw new InvalidOperationException("Table was not created.");
+        // Add a paragraph after the table.
+        builder.Writeln("Paragraph after the table.");
 
-        // Set the table's text wrapping mode to wrap around surrounding text.
-        // In the current Aspose.Words version the property is called WrapAround.
-        // If the property is unavailable, this line can be omitted as the default
-        // wrapping behavior is already suitable for most scenarios.
-        // Uncomment the following line if the WrapAround property exists:
-        // table.WrapAround = true;
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
+
+        // Set the table to wrap text around it.
+        // The WrapAround property is not available in this version; use TextWrapping instead.
+        table.TextWrapping = TextWrapping.Around;
 
         // Save the document.
         string outputPath = "TableWrapAround.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was saved.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not created.", outputPath);
+            throw new Exception("The output file was not created.");
     }
 }

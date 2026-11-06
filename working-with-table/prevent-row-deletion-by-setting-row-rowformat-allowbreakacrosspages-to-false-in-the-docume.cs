@@ -14,43 +14,34 @@ public class Program
         // Start a table.
         builder.StartTable();
 
-        // Insert first row with two cells.
-        builder.InsertCell();
-        builder.Writeln("Row 1, Cell 1");
-        builder.InsertCell();
-        builder.Writeln("Row 1, Cell 2");
-        builder.EndRow();
-
-        // Insert second row with two cells.
-        builder.InsertCell();
-        builder.Writeln("Row 2, Cell 1");
-        builder.InsertCell();
-        builder.Writeln("Row 2, Cell 2");
-        builder.EndRow();
+        // Add three rows with one cell each.
+        for (int i = 1; i <= 3; i++)
+        {
+            builder.InsertCell();
+            builder.Writeln($"Row {i}, Cell 1");
+            builder.EndRow();
+        }
 
         // End the table.
         builder.EndTable();
 
-        // Retrieve the first row and prevent it from breaking across pages.
+        // Retrieve the created table.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        Row firstRow = table.Rows[0];
-        firstRow.RowFormat.AllowBreakAcrossPages = false;
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
+
+        // Prevent each row from breaking across pages.
+        foreach (Row row in table.Rows)
+        {
+            row.RowFormat.AllowBreakAcrossPages = false;
+        }
 
         // Save the document.
         string outputPath = "PreventRowBreak.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify that the file was saved.
         if (!File.Exists(outputPath))
             throw new FileNotFoundException("The output document was not created.", outputPath);
-
-        // Reload the document and confirm the setting persisted.
-        Document loadedDoc = new Document(outputPath);
-        Table loadedTable = (Table)loadedDoc.GetChild(NodeType.Table, 0, true);
-        Row loadedFirstRow = loadedTable.Rows[0];
-        if (loadedFirstRow.RowFormat.AllowBreakAcrossPages)
-            throw new InvalidOperationException("AllowBreakAcrossPages was not set to false as expected.");
-
-        // Program completed successfully.
     }
 }

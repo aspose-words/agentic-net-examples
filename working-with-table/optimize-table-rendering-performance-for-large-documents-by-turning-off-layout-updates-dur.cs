@@ -3,48 +3,47 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class OptimizeTableRendering
+public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to construct the table.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Define table dimensions.
-        const int rowCount = 500;   // Adjust as needed for a large document.
-        const int columnCount = 10;
-
-        // Start the table.
+        // Build a large table. No explicit layout disabling APIs are needed;
+        // Aspose.Words automatically defers layout calculations until the document is saved or UpdatePageLayout is called.
         builder.StartTable();
 
-        // Populate the table with sample data.
-        for (int row = 0; row < rowCount; row++)
-        {
-            for (int col = 0; col < columnCount; col++)
-            {
-                builder.InsertCell();
-                builder.Writeln($"R{row + 1}C{col + 1}");
-            }
+        // Header row.
+        builder.InsertCell();
+        builder.Write("Header 1");
+        builder.InsertCell();
+        builder.Write("Header 2");
+        builder.EndRow();
 
-            // End the current row.
+        // Add many data rows.
+        for (int i = 0; i < 2000; i++)
+        {
+            builder.InsertCell();
+            builder.Write($"Row {i + 1} Col 1");
+            builder.InsertCell();
+            builder.Write($"Row {i + 1} Col 2");
             builder.EndRow();
         }
 
         // End the table.
         builder.EndTable();
 
-        // Force a layout refresh after all modifications are done.
+        // Force a layout refresh now that the table is complete.
         doc.UpdatePageLayout();
 
-        // Save the document to disk.
+        // Save the document.
         string outputPath = "LargeTable.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Simple validation that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+            throw new Exception("Document was not saved correctly.");
     }
 }

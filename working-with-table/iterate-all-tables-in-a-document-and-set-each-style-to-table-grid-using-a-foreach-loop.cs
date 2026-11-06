@@ -12,51 +12,57 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some introductory text.
-        builder.Writeln("Document with sample tables.");
-
-        // Build a simple 2x2 table.
+        // Insert the first table.
         builder.StartTable();
-
-        // First row.
         builder.InsertCell();
-        builder.Writeln("Cell 1");
+        builder.Write("R1C1");
         builder.InsertCell();
-        builder.Writeln("Cell 2");
+        builder.Write("R1C2");
         builder.EndRow();
 
-        // Second row.
         builder.InsertCell();
-        builder.Writeln("Cell 3");
+        builder.Write("R2C1");
         builder.InsertCell();
-        builder.Writeln("Cell 4");
+        builder.Write("R2C2");
         builder.EndRow();
-
-        // End the table.
         builder.EndTable();
 
-        // Save the initial document (optional, demonstrates creation).
-        string initialPath = "Sample.docx";
-        doc.Save(initialPath);
+        // Insert a paragraph break between tables.
+        builder.Writeln();
 
-        // Iterate all tables in the document and set their style to "Table Grid".
+        // Insert the second table.
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Write("A1");
+        builder.InsertCell();
+        builder.Write("A2");
+        builder.EndRow();
+
+        builder.InsertCell();
+        builder.Write("B1");
+        builder.InsertCell();
+        builder.Write("B2");
+        builder.EndRow();
+        builder.EndTable();
+
+        // Save the original document.
+        string originalPath = "Original.docx";
+        doc.Save(originalPath);
+
+        // Iterate all tables and set each style to "Table Grid".
         foreach (Table table in doc.GetChildNodes(NodeType.Table, true).OfType<Table>())
         {
-            // Apply the built‑in Table Grid style.
             table.StyleIdentifier = StyleIdentifier.TableGrid;
         }
 
         // Save the modified document.
-        string outputPath = "Output.docx";
-        doc.Save(outputPath);
+        string modifiedPath = "Modified.docx";
+        doc.Save(modifiedPath);
 
-        // Verify that the output file was created.
-        if (!File.Exists(outputPath))
+        // Verify that the modified file was saved.
+        if (!File.Exists(modifiedPath))
         {
-            throw new Exception($"Failed to create the output file: {outputPath}");
+            throw new InvalidOperationException("The modified document was not saved correctly.");
         }
-
-        // Inform that the process completed successfully.
-        Console.WriteLine("All tables styled as 'Table Grid' and saved to " + outputPath);
     }
 }

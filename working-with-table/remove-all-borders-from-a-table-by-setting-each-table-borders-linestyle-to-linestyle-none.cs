@@ -15,43 +15,40 @@ public class Program
         builder.StartTable();
 
         builder.InsertCell();
-        builder.Writeln("Cell 1");
+        builder.Write("Cell 1");
         builder.InsertCell();
-        builder.Writeln("Cell 2");
+        builder.Write("Cell 2");
         builder.EndRow();
 
         builder.InsertCell();
-        builder.Writeln("Cell 3");
+        builder.Write("Cell 3");
         builder.InsertCell();
-        builder.Writeln("Cell 4");
+        builder.Write("Cell 4");
         builder.EndRow();
 
         builder.EndTable();
 
-        // Retrieve the created table.
-        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
-
-        // Remove all borders by setting the borders of each row and each cell to None.
-        foreach (Row row in table.Rows)
+        // Remove all borders from every table in the document.
+        foreach (Table table in doc.GetChildNodes(NodeType.Table, true))
         {
-            // Remove borders from the row.
-            row.RowFormat.Borders.LineStyle = LineStyle.None;
-
-            // Remove borders from each cell in the row.
-            foreach (Cell cell in row.Cells)
+            foreach (Row row in table.Rows)
             {
-                cell.CellFormat.Borders.LineStyle = LineStyle.None;
+                foreach (Cell cell in row.Cells)
+                {
+                    // Set the borders of each cell to have no line style.
+                    cell.CellFormat.Borders.LineStyle = LineStyle.None;
+                }
             }
         }
 
-        // Save the document.
-        string outputPath = "NoBordersTable.docx";
+        // Save the document to disk.
+        string outputPath = "TableNoBorders.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("Failed to create the output document.");
+            throw new Exception("The document was not saved correctly.");
 
-        Console.WriteLine($"Document saved successfully to '{outputPath}'.");
+        Console.WriteLine("Document saved successfully.");
     }
 }

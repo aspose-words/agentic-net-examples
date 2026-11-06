@@ -7,47 +7,37 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set paragraph indentation (left and right) to 20 points.
-        builder.ParagraphFormat.LeftIndent = 20;
-        builder.ParagraphFormat.RightIndent = 20;
-        builder.Writeln("This paragraph has left and right indents of 20 points.");
+        // Set paragraph indentation that we want the table to match.
+        builder.ParagraphFormat.LeftIndent = 30;   // points
+        builder.ParagraphFormat.RightIndent = 30; // points
 
-        // Start a new table.
+        // Add a paragraph with some text.
+        builder.Writeln("This paragraph has left and right indents of 30 points.");
+
+        // Start a table.
         builder.StartTable();
 
-        // First row, first cell.
+        // Insert a single cell with some text.
         builder.InsertCell();
-        builder.Writeln("Cell 1");
-        // First row, second cell.
-        builder.InsertCell();
-        builder.Writeln("Cell 2");
-        builder.EndRow();
+        builder.Writeln("Table cell content.");
 
-        // Second row, first cell.
-        builder.InsertCell();
-        builder.Writeln("Cell 3");
-        // Second row, second cell.
-        builder.InsertCell();
-        builder.Writeln("Cell 4");
+        // End the row and the table.
         builder.EndRow();
-
-        // End the table.
         builder.EndTable();
 
         // Retrieve the created table.
-        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
         // Align the table's left indent with the paragraph's left indent.
         table.LeftIndent = builder.ParagraphFormat.LeftIndent;
 
-        // Note: The Aspose.Words API does not provide a Table.RightIndent property,
-        // so only the left indent can be set directly.
+        // Note: Table.RightIndent is not used due to API restrictions.
 
-        // Save the document to disk.
+        // Save the document.
         string outputPath = "TableIndent.docx";
         doc.Save(outputPath);
 
@@ -56,8 +46,5 @@ public class Program
         {
             throw new Exception("The output file was not created.");
         }
-
-        // Program completed successfully.
-        Console.WriteLine("Document saved to " + Path.GetFullPath(outputPath));
     }
 }

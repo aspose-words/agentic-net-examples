@@ -1,43 +1,54 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace TableAutoFitExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Build a simple 3‑column table.
+        builder.StartTable();
+
+        // Header row.
+        builder.InsertCell();
+        builder.Write("Header 1");
+        builder.InsertCell();
+        builder.Write("Header 2");
+        builder.InsertCell();
+        builder.Write("Header 3");
+        builder.EndRow();
+
+        // Data row.
+        builder.InsertCell();
+        builder.Write("Cell 1");
+        builder.InsertCell();
+        builder.Write("Cell 2");
+        builder.InsertCell();
+        builder.Write("Cell 3");
+        builder.EndRow();
+
+        // Finish the table.
+        builder.EndTable();
+
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+
+        // Set the table to automatically fit to the window margins.
+        table.AutoFit(AutoFitBehavior.AutoFitToWindow);
+
+        // Save the document.
+        string outputPath = "TableAutoFit.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was saved successfully.
+        if (!File.Exists(outputPath))
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Build a simple 2x2 table.
-            builder.StartTable();
-
-            builder.InsertCell();
-            builder.Writeln("Cell 1");
-            builder.InsertCell();
-            builder.Writeln("Cell 2");
-            builder.EndRow();
-
-            builder.InsertCell();
-            builder.Writeln("Cell 3");
-            builder.InsertCell();
-            builder.Writeln("Cell 4");
-            builder.EndRow();
-
-            builder.EndTable();
-
-            // Retrieve the created table (first table in the document).
-            Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-
-            // Apply AutoFit behavior so the table fits the window margins.
-            table.AutoFit(AutoFitBehavior.AutoFitToWindow);
-
-            // Save the document to a file.
-            string outputPath = "TableAutoFit.docx";
-            doc.Save(outputPath);
+            throw new InvalidOperationException("The document was not saved correctly.");
         }
     }
 }

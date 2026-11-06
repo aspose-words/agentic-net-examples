@@ -3,7 +3,7 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+public class HeaderFooterTableExample
 {
     public static void Main()
     {
@@ -11,45 +11,13 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // ---------- Insert a table into the primary header ----------
+        // Insert a table into the primary header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        // Ensure there is a paragraph to host the table.
-        builder.Writeln();
-        // Build a 2x2 table.
-        builder.StartTable();
+        BuildSampleTable(builder, "Header");
 
-        builder.InsertCell();
-        builder.Write("Header Cell 1");
-        builder.InsertCell();
-        builder.Write("Header Cell 2");
-        builder.EndRow();
-
-        builder.InsertCell();
-        builder.Write("Header Cell 3");
-        builder.InsertCell();
-        builder.Write("Header Cell 4");
-        builder.EndRow();
-
-        builder.EndTable();
-
-        // ---------- Insert a table into the primary footer ----------
+        // Insert a table into the primary footer.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.Writeln();
-        builder.StartTable();
-
-        builder.InsertCell();
-        builder.Write("Footer Cell 1");
-        builder.InsertCell();
-        builder.Write("Footer Cell 2");
-        builder.EndRow();
-
-        builder.InsertCell();
-        builder.Write("Footer Cell 3");
-        builder.InsertCell();
-        builder.Write("Footer Cell 4");
-        builder.EndRow();
-
-        builder.EndTable();
+        BuildSampleTable(builder, "Footer");
 
         // Save the document.
         string outputPath = "HeaderFooterTable.docx";
@@ -57,8 +25,36 @@ public class Program
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("Failed to create the output document.");
+            throw new Exception($"Failed to create the output file: {outputPath}");
+    }
 
-        Console.WriteLine("Document saved to: " + Path.GetFullPath(outputPath));
+    // Helper method that builds a simple 2x2 table with a title.
+    private static void BuildSampleTable(DocumentBuilder builder, string title)
+    {
+        // Write a title above the table.
+        builder.Writeln($"{title} Table:");
+
+        // Start the table.
+        builder.StartTable();
+
+        // First row.
+        builder.InsertCell();
+        builder.Write($"{title} Cell 1");
+        builder.InsertCell();
+        builder.Write($"{title} Cell 2");
+        builder.EndRow();
+
+        // Second row.
+        builder.InsertCell();
+        builder.Write($"{title} Cell 3");
+        builder.InsertCell();
+        builder.Write($"{title} Cell 4");
+        builder.EndRow();
+
+        // End the table.
+        builder.EndTable();
+
+        // Add a paragraph after the table to ensure proper layout.
+        builder.Writeln();
     }
 }

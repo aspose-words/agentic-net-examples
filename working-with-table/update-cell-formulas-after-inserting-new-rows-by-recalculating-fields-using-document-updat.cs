@@ -2,91 +2,84 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
+using Aspose.Words.Fields;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document and a DocumentBuilder for building content.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple table with two columns: Item and Quantity.
+        // Build a table with a header, two data rows, and a total row that uses a formula.
         builder.StartTable();
 
         // Header row.
-        builder.InsertCell();
-        builder.Writeln("Item");
-        builder.InsertCell();
-        builder.Writeln("Quantity");
+        builder.InsertCell(); builder.Write("Item");
+        builder.InsertCell(); builder.Write("Quantity");
+        builder.InsertCell(); builder.Write("Price");
         builder.EndRow();
 
         // First data row.
-        builder.InsertCell();
-        builder.Writeln("A");
-        builder.InsertCell();
-        builder.Writeln("10");
+        builder.InsertCell(); builder.Write("Apple");
+        builder.InsertCell(); builder.Write("2");
+        builder.InsertCell(); builder.Write("3");
         builder.EndRow();
 
         // Second data row.
-        builder.InsertCell();
-        builder.Writeln("B");
-        builder.InsertCell();
-        builder.Writeln("20");
+        builder.InsertCell(); builder.Write("Banana");
+        builder.InsertCell(); builder.Write("5");
+        builder.InsertCell(); builder.Write("1");
         builder.EndRow();
 
-        // Formula row that sums the values above in the Quantity column.
-        builder.InsertCell();
-        builder.Writeln("Total");
-        builder.InsertCell();
-        // Insert a formula field =SUM(ABOVE). The field result is a placeholder ("0").
-        builder.InsertField("=SUM(ABOVE)", "0");
+        // Total row – the Quantity cell contains a formula that sums the values above.
+        builder.InsertCell(); builder.Write("Total");
+        builder.InsertCell(); builder.InsertField("=SUM(ABOVE)", null);
+        builder.InsertCell(); builder.Write(string.Empty);
         builder.EndRow();
 
-        // End the table.
+        // Finish the table.
         builder.EndTable();
 
-        // Save the initial document (optional, demonstrates the state before insertion).
-        string initialPath = "TableWithFormula.docx";
-        doc.Save(initialPath);
-
-        // Locate the table we just created.
+        // Retrieve the created table.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
         if (table == null)
-            throw new InvalidOperationException("Table was not found in the document.");
+            throw new Exception("Table was not created.");
 
-        // Clone the structure of an existing row (the first data row) to create a new row.
-        Row templateRow = table.Rows[1]; // Row with data (index 1 after header).
-        Row newRow = (Row)templateRow.Clone(true);
+        // Insert a new data row before the total row.
+        Row newRow = new Row(doc);
 
-        // Set the cell values for the new row.
-        // First cell: Item name "C".
-        Cell itemCell = newRow.Cells[0];
-        itemCell.RemoveAllChildren();
-        Paragraph pItem = new Paragraph(doc);
-        pItem.AppendChild(new Run(doc, "C"));
-        itemCell.AppendChild(pItem);
+        // Item cell.
+        Cell itemCell = new Cell(doc);
+        itemCell.AppendChild(new Paragraph(doc));               // Ensure a paragraph exists.
+        itemCell.FirstParagraph.AppendChild(new Run(doc, "Orange"));
+        newRow.AppendChild(itemCell);
 
-        // Second cell: Quantity "30".
-        Cell qtyCell = newRow.Cells[1];
-        qtyCell.RemoveAllChildren();
-        Paragraph pQty = new Paragraph(doc);
-        pQty.AppendChild(new Run(doc, "30"));
-        qtyCell.AppendChild(pQty);
+        // Quantity cell.
+        Cell quantityCell = new Cell(doc);
+        quantityCell.AppendChild(new Paragraph(doc));
+        quantityCell.FirstParagraph.AppendChild(new Run(doc, "3"));
+        newRow.AppendChild(quantityCell);
 
-        // Insert the new row just before the formula row (which is the last row).
-        int formulaRowIndex = table.Rows.Count - 1;
-        table.Rows.Insert(formulaRowIndex, newRow);
+        // Price cell.
+        Cell priceCell = new Cell(doc);
+        priceCell.AppendChild(new Paragraph(doc));
+        priceCell.FirstParagraph.AppendChild(new Run(doc, "2"));
+        newRow.AppendChild(priceCell);
 
-        // Recalculate all fields in the document, including the formula field.
+        // Insert the new row just before the total row (which is the last row).
+        table.Rows.Insert(table.Rows.Count - 1, newRow);
+
+        // Recalculate all fields (the SUM formula) after inserting the new row.
         doc.UpdateFields();
 
-        // Save the updated document.
-        string outputPath = "TableWithUpdatedFormula.docx";
+        // Save the document.
+        const string outputPath = "UpdatedTable.docx";
         doc.Save(outputPath);
 
-        // Verify that the output file was created.
+        // Verify that the file was saved.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not saved.", outputPath);
+            throw new Exception("The document was not saved correctly.");
     }
 }
