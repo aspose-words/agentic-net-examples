@@ -1,61 +1,63 @@
 using System;
+using System.Linq;
 using Aspose.Words;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
         // -----------------------------------------------------------------
-        // 1. Create a sample document and save it locally.
+        // 1. Create a blank document that will serve as the starting point.
         // -----------------------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Initial content.");
-        string filePath = "sample.docx";
-        doc.Save(filePath);
+        const string initialPath = "initial.docx";
+        var initialDoc = new Document();
+        initialDoc.Save(initialPath);
 
         // -----------------------------------------------------------------
-        // 2. Load the saved document.
+        // 2. Load the document and start tracking revisions.
         // -----------------------------------------------------------------
-        Document loadedDoc = new Document(filePath);
+        var doc = new Document(initialPath);
+        doc.StartTrackRevisions("John Doe", DateTime.Now);
 
         // -----------------------------------------------------------------
-        // 3. Enable track changes.
+        // 3. Insert a table while tracking is enabled – this will generate
+        //    insertion revisions.
         // -----------------------------------------------------------------
-        loadedDoc.StartTrackRevisions("DemoAuthor", DateTime.Now);
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("Paragraph before the table.");
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Cell 1");
+        builder.EndRow();
+        builder.InsertCell();
+        builder.Write("Cell 2");
+        builder.EndTable();
 
         // -----------------------------------------------------------------
-        // 4. Insert a table while tracking is active – this creates a revision.
+        // 4. Stop tracking revisions.
         // -----------------------------------------------------------------
-        DocumentBuilder tbuilder = new DocumentBuilder(loadedDoc);
-        tbuilder.StartTable();
-        tbuilder.InsertCell();
-        tbuilder.Write("Cell 1");
-        tbuilder.EndRow();
-        tbuilder.EndTable();
+        doc.StopTrackRevisions();
 
         // -----------------------------------------------------------------
-        // 5. Stop tracking.
+        // 5. Accept only the insertion revisions that were created for the
+        //    table.  We copy the collection to an array first to avoid
+        //    modifying the collection while iterating.
         // -----------------------------------------------------------------
-        loadedDoc.StopTrackRevisions();
+        var revisions = doc.Revisions.Cast<Revision>().ToArray();
 
-        // -----------------------------------------------------------------
-        // 6. Accept only the table insertion revision.
-        //    The revision's ParentNode will be the inserted Table node.
-        // -----------------------------------------------------------------
-        foreach (Revision rev in loadedDoc.Revisions)
+        foreach (var rev in revisions)
         {
-            if (rev.RevisionType == RevisionType.Insertion &&
-                rev.ParentNode != null &&
-                rev.ParentNode.NodeType == NodeType.Table)
-            {
+            if (rev.RevisionType == RevisionType.Insertion)
                 rev.Accept();
-            }
         }
 
         // -----------------------------------------------------------------
-        // 7. Save the final document.
+        // 6. Save the final document.
         // -----------------------------------------------------------------
-        loadedDoc.Save("result.docx");
+        const string resultPath = "result.docx";
+        doc.Save(resultPath);
+
+        Console.WriteLine($"Document processed and saved to {resultPath}");
     }
 }

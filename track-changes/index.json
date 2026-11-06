@@ -4,48 +4,46 @@
     "slug": "track-changes",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Use simple documented revision workflows. Enable tracking when required, modify the document to generate revisions, then inspect, accept, reject, or validate revisions using RevisionCollection APIs. Keep validation narrow and task-specific.",
+    "preferred_workflow": "Enable tracking with Document.StartTrackRevisions, perform the required edits, stop tracking via Document.StopTrackRevisions, then examine Document.Revisions (or RevisionCollection.Groups) to accept, reject, or report revisions, saving the document only after validation succeeds.",
     "required_packages": [
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.9.0"
+      "Aspose.Words": "26.10.0"
     },
     "required_namespaces": [
       "System",
       "System.IO",
       "Aspose.Words",
       "Aspose.Words.Tables",
-      "Aspose.Words.Drawing",
       "Aspose.Words.Replacing",
+      "Aspose.Words.Drawing",
+      "System.Linq",
       "System.Drawing",
       "System.Collections.Generic",
-      "System.Linq",
-      "Aspose.Words.Comparing",
-      "System.Text"
+      "System.Text",
+      "System.Text.RegularExpressions"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
       "SaveFormat",
       "MemoryStream",
-      "Path",
       "Table",
       "Cell",
-      "StyleIdentifier",
-      "Paragraph",
-      "Shape",
       "NodeType",
-      "Directory",
-      "Run",
+      "Paragraph",
+      "Style",
+      "Shape",
       "Range",
       "FindReplaceOptions",
-      "Font",
       "Watermark",
-      "TextWatermarkOptions",
+      "Run",
+      "Font",
       "ProtectionType",
+      "Path",
       "Node",
-      "File"
+      "Directory"
     ]
   },
   "stats": {
@@ -56,40 +54,51 @@
     }
   },
   "rules_summary": {
-    "core_rules": [
-      "Use native Aspose.Words APIs directly.",
-      "Create local sample documents when a task refers to an existing file or document.",
-      "Do not assume external files already exist.",
-      "Always save the requested output when needed.",
-      "Keep validation narrow and task-specific."
+    "strict_api_bans": [
+      "Do not call members that are absent from Aspose.Words 26.10.0; only use documented types such as Document, DocumentBuilder, Revision, RevisionCollection, and RevisionGroup."
     ],
-    "track_changes_rules": [
-      "Use Document.StartTrackRevisions and StopTrackRevisions when relevant.",
-      "Generate revisions by modifying content while tracking is enabled.",
-      "Use Document.Revisions to inspect revisions.",
-      "Use accept and reject workflows only through documented revision APIs."
+    "canonical_patterns": [
+      "Start tracking, modify the document, stop tracking, and then use Document.Revisions or RevisionCollection.Groups to query or process revisions."
     ],
-    "api_safety_rules": [
-      "Do not invent unsupported revision APIs.",
-      "Do not use fake namespaces.",
-      "Use documented Document, Revision, RevisionCollection, and related APIs only."
+    "nullable_warning_prevention": [
+      "Validate the presence of expected outputs (e.g., revision count) before accessing properties that may be null or unavailable."
     ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "Unsupported API invention",
-      "symptom": "Generated code references members that do not exist in the selected package version.",
-      "fix": "Replace invented members with documented Aspose.Words APIs already proven in this category."
+      "pattern": "Unsupported API usage",
+      "symptom": "Compilation fails because the code references types or members that do not exist in the selected Aspose.Words version.",
+      "cause": "Invented or outdated APIs were used instead of the documented members for the current package.",
+      "fix": "Replace the nonexistent members with supported APIs such as Document.StartTrackRevisions, Revision.RevisionType, Revision.Author, and Revision.DateTime.",
+      "prevention": "Consult the official Aspose.Words 26.10.0 reference before writing code and avoid guessing API names."
     },
     {
-      "pattern": "Missing local bootstrap inputs",
-      "symptom": "The example assumes source files, folders, images, or data already exist.",
-      "fix": "Create deterministic local inputs before loading, processing, or validating them."
+      "pattern": "Incorrect method overload",
+      "symptom": "CS1501 errors indicate that a called method has no matching overload signature.",
+      "cause": "Methods like InsertParagraph were invoked with arguments that the API does not accept.",
+      "fix": "Use the correct overloads, for example DocumentBuilder.Writeln(string) or Paragraph.ParagraphFormat.Style assignment.",
+      "prevention": "Verify method signatures via IntelliSense or the API documentation prior to coding."
     },
     {
-      "pattern": "Over-broad validation",
-      "symptom": "The example fails at runtime while checking unrelated document internals.",
-      "fix": "Validate only the requested behavior and the existence of expected outputs."
+      "pattern": "Revision collection mutation during enumeration",
+      "symptom": "Runtime InvalidOperationException reports that the RevisionCollection was modified while being enumerated.",
+      "cause": "Accepting or rejecting revisions inside a foreach loop over doc.Revisions alters the collection during iteration.",
+      "fix": "Copy the collection to an array (e.g., doc.Revisions.Cast<Revision>().ToArray()) before iterating, or iterate by index while adjusting for removals.",
+      "prevention": "Never modify RevisionCollection directly inside its enumerator."
+    },
+    {
+      "pattern": "Missing property in current API",
+      "symptom": "CS1061 errors appear for members such as RevisionDateTime or RevisionGroup.Revisions.",
+      "cause": "The referenced property does not exist in Aspose.Words 26.10.0; the correct property is Revision.DateTime.",
+      "fix": "Replace RevisionDateTime with Revision.DateTime and avoid accessing non-existent RevisionGroup members.",
+      "prevention": "Reference the exact property names listed in the version-specific documentation."
+    },
+    {
+      "pattern": "Missing local input files",
+      "symptom": "Runtime failures occur when loading a document that was never created on disk.",
+      "cause": "Examples assume external files, folders, or images already exist without creating them first.",
+      "fix": "Generate deterministic sample documents in memory or write them to a temporary file before loading or processing.",
+      "prevention": "Always bootstrap required inputs within the sample code."
     }
   ],
   "examples": [
@@ -112,8 +121,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 3,
@@ -134,8 +143,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 5,
@@ -145,8 +154,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 6,
@@ -156,8 +165,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 7,
@@ -189,8 +198,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 10,
@@ -222,8 +231,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 13,
@@ -255,8 +264,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 16,
@@ -266,8 +275,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 17,
@@ -421,8 +430,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 31,
@@ -443,8 +452,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 33,
@@ -509,8 +518,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 39,
@@ -534,5 +543,15 @@
       "selected_engine": "mcp",
       "winner": "mcp"
     }
-  ]
+  ],
+  "narrative": {
+    "overview": "The Track Changes category demonstrates how to record, inspect, and manipulate revision data using Aspose.Words 26.10.0. Verified snippets show creating documents, enabling tracking, performing edits, and confirming revision collections or groups.",
+    "purpose": "Provide an AI coding assistant with concise guidance for implementing revision workflows that start tracking, generate edits, verify revision metadata, and accept or reject changes using only supported Aspose.Words APIs.",
+    "validation_priorities": [
+      "Confirm that the revision collection contains the expected number of items before proceeding with accept/reject logic."
+    ],
+    "maintenance_notes": [
+      "Review and update all examples when a new Aspose.Words version deprecates or renames revision-related members."
+    ]
+  }
 }

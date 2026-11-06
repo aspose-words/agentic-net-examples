@@ -5,44 +5,45 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and add initial content.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello");
+
+        // Add initial content.
+        builder.Writeln("Original paragraph.");
 
         // Enable track changes.
         doc.StartTrackRevisions("Author", DateTime.Now);
 
-        // Make a change that will generate a revision.
-        builder.Writeln("This line is added while tracking.");
+        // Make a change that will generate a revision (insertion).
+        builder.Writeln("Inserted paragraph while tracking.");
 
-        // Stop tracking changes.
+        // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Verify that a revision exists.
+        // Ensure there is at least one revision.
         if (doc.Revisions.Count == 0)
-        {
-            throw new InvalidOperationException("Expected at least one revision, but none were found.");
-        }
+            throw new InvalidOperationException("No revisions were generated.");
 
-        // Get the first revision.
+        // Get the first revision (the insertion we just made).
         Revision revision = doc.Revisions[0];
 
         // Reject the revision.
         revision.Reject();
 
-        // Attempt to accept the same revision again and handle the expected error.
+        // Attempt to accept the same revision after it has been rejected.
         try
         {
             revision.Accept();
-            Console.WriteLine("Revision accepted (unexpected).");
         }
         catch (InvalidOperationException ex)
         {
-            Console.WriteLine("Error: Cannot accept a revision that has already been rejected. " + ex.Message);
+            // Expected error handling for already rejected revision.
+            Console.WriteLine("Error: Cannot accept a revision that has already been rejected.");
+            Console.WriteLine("Exception message: " + ex.Message);
         }
 
-        // Save the final document (optional).
-        doc.Save("Output.docx");
+        // Save the resulting document.
+        doc.Save("TrackChangesResult.docx");
     }
 }

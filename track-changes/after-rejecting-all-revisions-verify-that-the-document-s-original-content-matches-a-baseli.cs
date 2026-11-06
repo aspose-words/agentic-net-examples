@@ -1,56 +1,67 @@
 using System;
-using System.IO;
+using System.Text.RegularExpressions;
 using Aspose.Words;
+using Aspose.Words.Replacing;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for temporary files.
-        string baselinePath = "baseline.docx";
-        string resultPath = "result.docx";
+        // Paths for temporary files
+        const string baselinePath = "Baseline.docx";
+        const string resultPath = "Result.docx";
 
-        // Step 1: Create a baseline document with original content.
+        // -----------------------------------------------------------------
+        // Create baseline document with original content
+        // -----------------------------------------------------------------
         Document baselineDoc = new Document();
         DocumentBuilder baselineBuilder = new DocumentBuilder(baselineDoc);
-        baselineBuilder.Writeln("Hello World!");
+        baselineBuilder.Writeln("Hello world.");
         baselineDoc.Save(baselinePath);
 
-        // Step 2: Load the baseline and start tracking revisions.
+        // -----------------------------------------------------------------
+        // Load baseline and start tracking revisions
+        // -----------------------------------------------------------------
         Document doc = new Document(baselinePath);
-        doc.StartTrackRevisions("Author", DateTime.Now);
+        doc.StartTrackRevisions("SampleAuthor", DateTime.Now);
 
-        // Step 3: Make a change that generates a revision (insert text).
-        DocumentBuilder revBuilder = new DocumentBuilder(doc);
-        revBuilder.MoveToDocumentEnd();
-        revBuilder.Writeln("This is an inserted line.");
+        // Make some changes that will be recorded as revisions
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Insert a new paragraph (revision: insertion)
+        builder.Writeln("This is a new paragraph added while tracking.");
 
-        // Step 4: Stop tracking revisions.
+        // Replace text (revision: deletion + insertion)
+        // Use FindReplaceOptions with a regular expression
+        FindReplaceOptions replaceOptions = new FindReplaceOptions();
+        doc.Range.Replace(new Regex("Hello"), "Hi", replaceOptions);
+
+        // Stop tracking revisions
         doc.StopTrackRevisions();
 
-        // Step 5: Reject all revisions, reverting to the original content.
-        // Use the RevisionCollection API (AcceptAll/RejectAll) as required by Aspose.Words.
+        // -----------------------------------------------------------------
+        // Reject all revisions, restoring the document to its original state
+        // -----------------------------------------------------------------
+        // The RevisionCollection provides RejectAll() to reject every revision.
         doc.Revisions.RejectAll();
 
-        // Save the resulting document.
+        // Save the document after rejection
         doc.Save(resultPath);
 
-        // Step 6: Verify that the resulting document matches the baseline.
-        Document resultDoc = new Document(resultPath);
-        string baselineText = baselineDoc.GetText();
-        string resultText = resultDoc.GetText();
+        // -----------------------------------------------------------------
+        // Verify that the content matches the baseline document
+        // -----------------------------------------------------------------
+        Document afterReject = new Document(resultPath);
+        Document originalBaseline = new Document(baselinePath);
 
-        if (baselineText == resultText)
+        string afterText = afterReject.GetText();
+        string baselineText = originalBaseline.GetText();
+
+        if (afterText != baselineText)
         {
-            Console.WriteLine("Verification succeeded: the document matches the baseline.");
-        }
-        else
-        {
-            throw new InvalidOperationException("Verification failed: the document does not match the baseline.");
+            throw new InvalidOperationException("Document content does not match the baseline after rejecting revisions.");
         }
 
-        // Optional cleanup.
-        // File.Delete(baselinePath);
-        // File.Delete(resultPath);
+        // If we reach this point, verification succeeded
+        Console.WriteLine("Revisions rejected successfully; document matches the baseline.");
     }
 }

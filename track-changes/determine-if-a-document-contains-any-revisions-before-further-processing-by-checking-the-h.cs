@@ -1,5 +1,6 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Replacing;
 
 public class Program
 {
@@ -8,25 +9,26 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Add initial content.
         builder.Writeln("Original paragraph.");
 
-        // Enable track changes.
-        doc.StartTrackRevisions("John Doe", DateTime.Now);
+        // Enable track changes to generate revisions.
+        doc.StartTrackRevisions("Sample Author", DateTime.Now);
 
         // Make a change that will be recorded as a revision.
-        builder.Writeln("Added paragraph while tracking changes.");
+        builder.Writeln("Inserted paragraph while tracking changes.");
 
-        // Stop tracking.
+        // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Save the document (optional, demonstrates persistence).
-        string filePath = "RevisionsDemo.docx";
-        doc.Save(filePath);
-
-        // Determine if the document contains any revisions.
+        // Check whether the document contains any revisions.
         bool hasRevisions = doc.HasRevisions;
 
         // Output the result.
         Console.WriteLine($"Document has revisions: {hasRevisions}");
+
+        // (Optional) Save the document to verify revisions manually if needed.
+        // doc.Save("RevisedDocument.docx");
     }
 }

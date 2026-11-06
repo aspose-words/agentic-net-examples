@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Aspose.Words;
 
@@ -7,27 +6,49 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder for editing.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Author1 makes a revision.
-        doc.StartTrackRevisions("Author1", DateTime.Now);
-        builder.Writeln("Paragraph added by Author1.");
+        // Add an initial paragraph (no revisions).
+        builder.Writeln("Original paragraph.");
+
+        // ---------- Revisions by Alice ----------
+        // Start tracking revisions with author "Alice".
+        doc.StartTrackRevisions("Alice", DateTime.Now);
+
+        // Insert a new paragraph authored by Alice.
+        builder.Writeln("Paragraph added by Alice.");
+
+        // Modify the original paragraph (insertion) authored by Alice.
+        builder.MoveToDocumentStart();
+        builder.Write("Alice inserted text. ");
+
+        // Stop tracking for Alice.
         doc.StopTrackRevisions();
 
-        // Author2 makes a revision.
-        doc.StartTrackRevisions("Author2", DateTime.Now);
-        builder.Writeln("Paragraph added by Author2.");
+        // ---------- Revisions by Bob ----------
+        // Start tracking revisions with author "Bob".
+        doc.StartTrackRevisions("Bob", DateTime.Now);
+
+        // Insert a new paragraph authored by Bob.
+        builder.Writeln("Paragraph added by Bob.");
+
+        // Delete the original paragraph (creates a deletion revision by Bob).
+        Paragraph originalPara = doc.FirstSection.Body.Paragraphs[0];
+        originalPara.Remove();
+
+        // Stop tracking for Bob.
         doc.StopTrackRevisions();
 
+        // ---------- Selective acceptance/rejection ----------
+        // Accept only revisions authored by "Alice", reject all others.
         // Create a snapshot of the revisions to avoid modifying the collection while iterating.
-        List<Revision> revisions = doc.Revisions.Cast<Revision>().ToList();
+        var revisions = doc.Revisions.Cast<Revision>().ToList();
 
-        // Accept revisions authored by Author1, reject all others.
         foreach (Revision rev in revisions)
         {
-            if (rev.Author == "Author1")
+            if (rev.Author == "Alice")
                 rev.Accept();
             else
                 rev.Reject();

@@ -6,47 +6,35 @@ public class Program
     public static void Main()
     {
         // Paths for the sample and cleaned documents.
-        string sourcePath = "sample_with_revisions.docx";
-        string cleanedPath = "cleaned.docx";
+        string originalPath = "Original.docx";
+        string cleanedPath = "Cleaned.docx";
 
         // -----------------------------------------------------------------
-        // 1. Create a sample document and generate some revisions.
+        // Create a sample document with revisions.
         // -----------------------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
 
         // Initial content (no revisions).
-        builder.Writeln("This is the original paragraph.");
+        builder.Writeln("First paragraph.");
 
-        // Enable tracking to create revisions.
-        doc.StartTrackRevisions("SampleAuthor", DateTime.Now);
+        // Enable tracking to generate revisions.
+        sampleDoc.StartTrackRevisions("SampleAuthor", DateTime.Now);
 
-        // Insert new text – this will be recorded as an insertion revision.
-        builder.Writeln("This paragraph was added while tracking revisions.");
+        // Content added while tracking is enabled – this will be a revision.
+        builder.Writeln("Second paragraph added as a revision.");
 
-        // Delete a paragraph – also recorded as a deletion revision.
-        builder.MoveToDocumentStart();
-        builder.CurrentParagraph.Remove();
-
-        // Stop tracking revisions.
-        doc.StopTrackRevisions();
+        // Disable tracking.
+        sampleDoc.StopTrackRevisions();
 
         // Save the document that contains revisions.
-        doc.Save(sourcePath);
+        sampleDoc.Save(originalPath);
 
         // -----------------------------------------------------------------
-        // 2. Load the document with revisions.
+        // Load the document, accept all revisions, and save the cleaned version.
         // -----------------------------------------------------------------
-        Document loadedDoc = new Document(sourcePath);
-
-        // -----------------------------------------------------------------
-        // 3. Accept all revisions, removing revision marks.
-        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(originalPath);
         loadedDoc.AcceptAllRevisions();
-
-        // -----------------------------------------------------------------
-        // 4. Save the cleaned document to a new file.
-        // -----------------------------------------------------------------
         loadedDoc.Save(cleanedPath);
     }
 }

@@ -10,33 +10,35 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 1x2 table.
+        // Insert a simple 2x2 table.
         Table table = builder.StartTable();
         builder.InsertCell();
-        builder.Write("Original Cell 1");
+        builder.Write("Original");
         builder.InsertCell();
         builder.Write("Cell 2");
+        builder.EndRow();
+        builder.InsertCell();
+        builder.Write("Cell 3");
+        builder.InsertCell();
+        builder.Write("Cell 4");
         builder.EndRow();
         builder.EndTable();
 
         // Enable revision tracking.
-        doc.StartTrackRevisions("DemoAuthor", DateTime.Now);
+        doc.StartTrackRevisions("Demo Author", DateTime.Now);
 
-        // Modify the text of the first cell to generate a revision.
-        Table firstTable = (Table)doc.GetChild(NodeType.Table, 0, true);
-        Cell firstCell = firstTable.Rows[0].Cells[0];
-        // Clear existing paragraphs and add new text.
-        firstCell.RemoveAllChildren();
-        firstCell.AppendChild(new Paragraph(doc));
-        firstCell.FirstParagraph.AppendChild(new Run(doc, "Modified Cell 1"));
+        // Modify the first cell while tracking is enabled.
+        Cell firstCell = table.FirstRow.FirstCell;
+        builder.MoveTo(firstCell.FirstParagraph);
+        builder.Writeln("Inserted while tracking");
 
         // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Save the document (optional for verification).
+        // Save the document.
         doc.Save("TrackedDocument.docx");
 
-        // Verify that a revision was created.
+        // Inspect the revisions collection.
         RevisionCollection revisions = doc.Revisions;
         if (revisions.Count == 0)
         {
@@ -44,10 +46,11 @@ public class Program
         }
 
         // Output revision details.
-        Console.WriteLine($"Total revisions: {revisions.Count}");
+        Console.WriteLine($"Revision count: {revisions.Count}");
         foreach (Revision rev in revisions)
         {
-            Console.WriteLine($"Type: {rev.RevisionType}, Author: {rev.Author}, Date: {rev.DateTime}");
+            // RevisionDateTime property may not be available in older versions; omit if not present.
+            Console.WriteLine($"Type: {rev.RevisionType}, Author: {rev.Author}");
         }
     }
 }
