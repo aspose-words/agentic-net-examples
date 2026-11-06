@@ -1,51 +1,70 @@
 using System;
+using System.Globalization;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+public class HyphenationExample
 {
     public static void Main()
     {
-        // Create a sample document with long words that can be hyphenated.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("extraordinarycharacteristically internationalization communication");
+        // Ensure a clean environment.
+        const string dictionaryPath = "hyph_en_US.dic";
+        const string pdfPath = "sample.pdf";
+        const string imagePath = "sample.png";
 
-        // Narrow the page width to force line wrapping.
-        Section section = doc.FirstSection;
-        section.PageSetup.PageWidth = 200;
-        section.PageSetup.LeftMargin = 20;
-        section.PageSetup.RightMargin = 20;
+        // Delete previous artifacts if they exist.
+        if (File.Exists(dictionaryPath)) File.Delete(dictionaryPath);
+        if (File.Exists(pdfPath)) File.Delete(pdfPath);
+        if (File.Exists(imagePath)) File.Delete(imagePath);
 
-        // Create a minimal hyphenation dictionary file.
-        string dictionaryPath = "hyph_en_US.dic";
-        File.WriteAllText(dictionaryPath,
+        // 1. Create a minimal hyphenation dictionary for English (en-US).
+        // The dictionary format: first line is "UTF-8", subsequent lines contain word=hyphenated-pieces.
+        string dictionaryContent =
             "UTF-8\n" +
             "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
             "internationalization=in-ter-na-tion-al-i-za-tion\n" +
-            "communication=com-mu-ni-ca-tion\n");
+            "communication=com-mu-ni-ca-tion\n";
+        File.WriteAllText(dictionaryPath, dictionaryContent);
 
-        // Register the dictionary for English (United States).
+        // 2. Register the dictionary with Aspose.Words.
         Hyphenation.RegisterDictionary("en-US", dictionaryPath);
 
-        // Enable automatic hyphenation.
-        doc.HyphenationOptions.AutoHyphenation = true;
+        // 3. Create a document with narrow page width to force line wrapping and hyphenation.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Save the document as PDF.
-        string pdfPath = "sample.pdf";
+        // Set the locale to English (United States) so the registered dictionary is used.
+        builder.Font.LocaleId = new CultureInfo("en-US").LCID;
+
+        // Narrow page width (points). 1 inch = 72 points.
+        Section section = doc.FirstSection;
+        section.PageSetup.PageWidth = 200; // approx 2.78 inches
+        section.PageSetup.LeftMargin = 20;
+        section.PageSetup.RightMargin = 20;
+
+        // Write a paragraph containing long words that can be hyphenated.
+        builder.Writeln("extraordinarycharacteristically internationalization communication");
+
+        // 4. Save the document as PDF.
         doc.Save(pdfPath, SaveFormat.Pdf);
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("PDF output was not created.");
+            throw new InvalidOperationException("PDF file was not created.");
 
-        // Render the document (with hyphenation) to an image.
-        string imagePath = "rendered.png";
-        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png)
+        // 5. Load the PDF file back into a Document.
+        Document loadedPdf = new Document(pdfPath);
+
+        // 6. Render the first page of the loaded PDF to an image (PNG).
+        ImageSaveOptions imageOptions = new ImageSaveOptions(SaveFormat.Png)
         {
-            PageSet = new PageSet(0) // Render the first page.
+            PageSet = new PageSet(0) // first page (zero‑based index)
         };
-        doc.Save(imagePath, options);
+        loadedPdf.Save(imagePath, imageOptions);
+
         if (!File.Exists(imagePath))
-            throw new InvalidOperationException("Image output was not created.");
+            throw new InvalidOperationException("Image file was not created.");
+
+        // Example completed successfully.
+        Console.WriteLine("Hyphenation PDF rendered to image successfully.");
     }
 }
