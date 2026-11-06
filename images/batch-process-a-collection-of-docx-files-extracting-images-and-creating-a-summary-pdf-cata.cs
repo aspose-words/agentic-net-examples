@@ -3,7 +3,6 @@ using System.IO;
 using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Tables;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 using Newtonsoft.Json;
@@ -12,37 +11,58 @@ public class Program
 {
     public static void Main()
     {
-        // Define working directories
+        // Define folders and files
         string baseDir = Directory.GetCurrentDirectory();
-        string inputDir = Path.Combine(baseDir, "InputDocs");
-        string imageDir = Path.Combine(baseDir, "ExtractedImages");
+        string docsFolder = Path.Combine(baseDir, "Docs");
+        string imagesFolder = Path.Combine(baseDir, "ExtractedImages");
+        string catalogPdfPath = Path.Combine(baseDir, "ImageCatalog.pdf");
         string sampleImagePath = Path.Combine(baseDir, "sample.png");
-        string catalogPath = Path.Combine(baseDir, "Catalog.pdf");
 
-        // Ensure directories exist
-        Directory.CreateDirectory(inputDir);
-        Directory.CreateDirectory(imageDir);
-
-        // -------------------------------------------------
-        // Step 1: Create a deterministic sample image file
-        // -------------------------------------------------
-        CreateSampleImage(sampleImagePath);
+        // Ensure clean environment
+        if (Directory.Exists(docsFolder)) Directory.Delete(docsFolder, true);
+        if (Directory.Exists(imagesFolder)) Directory.Delete(imagesFolder, true);
+        Directory.CreateDirectory(docsFolder);
+        Directory.CreateDirectory(imagesFolder);
 
         // -------------------------------------------------
-        // Step 2: Generate sample DOCX files containing the image
+        // Create a deterministic sample image (sample.png)
+        // -------------------------------------------------
+        int imgWidth = 200;
+        int imgHeight = 200;
+        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(imgWidth, imgHeight))
+        {
+            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
+            {
+                g.Clear(Aspose.Drawing.Color.White);
+                // Draw a simple rectangle
+                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Blue, 5))
+                {
+                    g.DrawRectangle(pen, 10, 10, imgWidth - 20, imgHeight - 20);
+                }
+            }
+            bitmap.Save(sampleImagePath, ImageFormat.Png);
+        }
+
+        // -------------------------------------------------
+        // Create sample DOCX files each containing the image
         // -------------------------------------------------
         int docCount = 3;
         for (int i = 1; i <= docCount; i++)
         {
-            string docPath = Path.Combine(inputDir, $"Document{i}.docx");
-            CreateSampleDocumentWithImage(docPath, sampleImagePath, $"Sample document {i}");
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln($"Document {i} with an embedded image:");
+            builder.InsertImage(sampleImagePath);
+            string docPath = Path.Combine(docsFolder, $"Doc{i}.docx");
+            doc.Save(docPath);
         }
 
         // -------------------------------------------------
-        // Step 3: Batch process DOCX files, extract images
+        // Batch process: extract images from each DOCX
         // -------------------------------------------------
         List<string> extractedImagePaths = new List<string>();
-        foreach (string docFile in Directory.GetFiles(inputDir, "*.docx"))
+        string[] docFiles = Directory.GetFiles(docsFolder, "*.docx");
+        foreach (string docFile in docFiles)
         {
             Document doc = new Document(docFile);
             NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
@@ -51,8 +71,9 @@ public class Program
             {
                 if (shape.HasImage)
                 {
+                    // Use a deterministic PNG extension for extracted images
                     string imageFileName = $"{Path.GetFileNameWithoutExtension(docFile)}_Image{imageIndex}.png";
-                    string imagePath = Path.Combine(imageDir, imageFileName);
+                    string imagePath = Path.Combine(imagesFolder, imageFileName);
                     shape.ImageData.Save(imagePath);
                     extractedImagePaths.Add(imagePath);
                     imageIndex++;
@@ -60,82 +81,51 @@ public class Program
             }
         }
 
-        // Validate that at least one image was extracted
+        // Validate that images were extracted
         if (extractedImagePaths.Count == 0)
             throw new InvalidOperationException("No images were extracted from the DOCX files.");
 
         // -------------------------------------------------
-        // Step 4: Create a PDF catalog summarizing extracted images
+        // Create a summary PDF catalog containing all extracted images
         // -------------------------------------------------
         Document catalogDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(catalogDoc);
+        DocumentBuilder catalogBuilder = new DocumentBuilder(catalogDoc);
+        catalogBuilder.Writeln("Image Catalog");
+        catalogBuilder.Font.Size = 24;
+        catalogBuilder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        catalogBuilder.Writeln();
+        catalogBuilder.Font.Size = 12;
+        catalogBuilder.ParagraphFormat.Alignment = ParagraphAlignment.Left;
 
-        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-        builder.Font.Size = 16;
-        builder.Writeln("Image Catalog");
-        builder.Writeln();
-
+        bool first = true;
         foreach (string imgPath in extractedImagePaths)
         {
-            builder.Font.Size = 12;
-            builder.Writeln($"Source: {Path.GetFileName(imgPath)}");
-            builder.InsertImage(imgPath);
-            builder.Writeln();
-            builder.InsertBreak(BreakType.PageBreak);
+            if (!first)
+                catalogBuilder.InsertBreak(BreakType.PageBreak);
+            first = false;
+
+            // Caption
+            catalogBuilder.Writeln($"Image: {Path.GetFileName(imgPath)}");
+            // Insert the image
+            catalogBuilder.InsertImage(imgPath);
         }
 
         // Save the catalog as PDF
-        catalogDoc.Save(catalogPath, SaveFormat.Pdf);
+        catalogDoc.Save(catalogPdfPath, SaveFormat.Pdf);
 
-        // Validate that the PDF catalog was created
-        if (!File.Exists(catalogPath))
+        // Validate PDF creation
+        if (!File.Exists(catalogPdfPath))
             throw new InvalidOperationException("Failed to create the PDF catalog.");
 
-        // -------------------------------------------------
-        // End of processing
-        // -------------------------------------------------
-    }
-
-    private static void CreateSampleImage(string filePath)
-    {
-        // Create a 200x200 white bitmap and draw a simple rectangle
-        using (Bitmap bitmap = new Bitmap(200, 200))
+        // Optional: Output a simple JSON manifest
+        var manifest = new
         {
-            using (Graphics graphics = Graphics.FromImage(bitmap))
-            {
-                graphics.Clear(Color.White);
-                using (Pen pen = new Pen(Color.Blue, 5))
-                {
-                    graphics.DrawRectangle(pen, 25, 25, 150, 150);
-                }
-            }
-            // Save as PNG
-            bitmap.Save(filePath, ImageFormat.Png);
-        }
-
-        // Validate that the image file exists
-        if (!File.Exists(filePath))
-            throw new InvalidOperationException($"Failed to create sample image at {filePath}");
-    }
-
-    private static void CreateSampleDocumentWithImage(string docPath, string imagePath, string title)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        builder.Font.Size = 14;
-        builder.Writeln(title);
-        builder.Writeln();
-
-        // Insert the sample image
-        builder.InsertImage(imagePath);
-        builder.Writeln();
-
-        // Save the document
-        doc.Save(docPath, SaveFormat.Docx);
-
-        // Validate that the document file exists
-        if (!File.Exists(docPath))
-            throw new InvalidOperationException($"Failed to create sample document at {docPath}");
+            GeneratedAt = DateTime.UtcNow,
+            SourceDocuments = docFiles,
+            ExtractedImages = extractedImagePaths,
+            CatalogPdf = catalogPdfPath
+        };
+        string manifestJson = JsonConvert.SerializeObject(manifest, Formatting.Indented);
+        File.WriteAllText(Path.Combine(baseDir, "manifest.json"), manifestJson);
     }
 }

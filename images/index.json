@@ -4,43 +4,40 @@
     "slug": "images",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Use Aspose.Words Shape and DocumentBuilder image APIs with deterministic local image creation using Aspose.Drawing, validated outputs, and container-aware image traversal.",
+    "preferred_workflow": "Create deterministic local sample images with Aspose.Drawing, insert or extract them using DocumentBuilder and Shape.ImageData, enumerate only Shape nodes that report HasImage, write outputs to explicitly named files, and validate existence after each I/O operation.",
     "required_packages": [
       "Aspose.Words",
       "Aspose.Drawing.Common",
       "Newtonsoft.Json"
     ],
     "package_versions": {
-      "Aspose.Words": "26.9.0",
-      "Aspose.Drawing.Common": "26.8.0"
+      "Aspose.Words": "26.10.0",
+      "Aspose.Drawing.Common": "26.10.0",
+      "Newtonsoft.Json": ""
     },
     "required_namespaces": [
       "System",
       "System.IO",
-      "System.Linq",
       "Aspose.Words",
       "Aspose.Words.Drawing",
       "Aspose.Drawing",
-      "Aspose.Words.Saving",
       "Aspose.Drawing.Imaging",
-      "Aspose.Drawing.Drawing2D",
       "System.IO.Compression",
+      "System.Linq",
       "System.Collections.Generic",
+      "Aspose.Words.Saving",
       "Newtonsoft.Json",
+      "Aspose.Words.Loading",
       "Aspose.Words.Tables",
       "Aspose.Words.Notes",
-      "System.Globalization",
-      "Aspose.Words.Rendering",
-      "Aspose.Words.Loading",
+      "Aspose.Drawing.Drawing2D",
       "System.Text",
-      "System.Xml",
-      "Aspose.Words.Markup",
-      "Aspose.Words.Drawing.Charts",
-      "Aspose.Words.Math",
-      "Aspose.Words.Properties",
       "System.Xml.Linq",
-      "System.Diagnostics",
-      "System.ComponentModel",
+      "Aspose.Words.Replacing",
+      "Aspose.Words.Drawing.Charts",
+      "Aspose.Words.Properties",
+      "Aspose.Words.Markup",
+      "System.Xml",
       "System.Security.Cryptography"
     ],
     "key_apis": [
@@ -48,25 +45,22 @@
       "DocumentBuilder",
       "NodeType",
       "Directory",
+      "File",
       "Path",
       "Shape",
       "ImageData",
       "MemoryStream",
-      "File",
       "Font",
-      "SaveFormat",
-      "ImageSaveOptions",
       "Paragraph",
-      "Node",
+      "SaveFormat",
+      "LoadOptions",
       "Table",
-      "Row",
-      "Cell",
+      "Node",
+      "ImageSaveOptions",
       "Chart",
       "ChartType",
-      "PdfSaveOptions",
       "StyleIdentifier",
-      "LoadOptions",
-      "HtmlSaveOptions"
+      "Watermark"
     ]
   },
   "stats": {
@@ -82,48 +76,56 @@
   },
   "rules_summary": {
     "strict_api_bans": [
-      "Do not use System.Drawing in this category.",
-      "Do not download images from the internet.",
-      "Do not assume image files, folders, or source documents already exist.",
-      "Do not invent unsupported image APIs."
+      "Do not reference System.Drawing; use only Aspose.Drawing for all image creation and manipulation.",
+      "Do not download images from external sources; generate all sample images locally.",
+      "Do not assume pre-existing files or folders; always create required directories and sample assets at runtime."
     ],
     "canonical_patterns": [
-      "Create deterministic local sample images with Aspose.Drawing before using them.",
-      "Use DocumentBuilder.InsertImage for standard insertion and Shape.ImageData for shape-based scenarios.",
-      "Enumerate Shape nodes and check HasImage before accessing ImageData.",
-      "Use local deterministic output names and validate that requested output files are written."
+      "Generate deterministic sample images with Aspose.Drawing before any document processing.",
+      "Insert images with DocumentBuilder.InsertImage for paragraph contexts and with Shape.ImageData for shape-based scenarios.",
+      "Traverse the document tree, filter NodeType.Shape nodes, and process a shape only when shape.HasImage is true."
     ],
     "nullable_warning_prevention": [
-      "Initialize all non-nullable reference type properties to avoid CS8618 warnings.",
-      "Avoid CS8600, CS8602, and CS8604 by guarding maybe-null values before dereference or assignment.",
-      "Declare nullable locals when a value may legitimately be null and null-check before use."
+      "Initialize all non-nullable reference-type fields or properties to avoid CS8618 warnings.",
+      "Guard any potentially null values with explicit null checks before dereferencing to prevent CS8600, CS8602, and CS8604.",
+      "Declare locals as nullable when a null value is legitimate and perform a null-check prior to use."
     ]
   },
   "common_failure_patterns": [
     {
       "pattern": "Missing local image bootstrap",
-      "symptom": "Examples assume an existing image file or source document already exists.",
-      "fix": "Create deterministic local sample images and source documents before insertion, extraction, or conversion."
+      "symptom": "The code fails at runtime because the expected sample image or source document file is not present on disk.",
+      "cause": "The example assumes that an image file or Word document already exists, violating the rule against external dependencies.",
+      "fix": "Create the required image files programmatically with Aspose.Drawing before any insertion or extraction step.",
+      "prevention": "Always include deterministic image-creation logic at the start of the snippet and ensure the output folder is created."
     },
     {
       "pattern": "Shape insertion at invalid location",
-      "symptom": "Runtime failures such as invalid insertion location or self-append mistakes.",
-      "fix": "Append image shapes only once and only into valid containers such as Paragraph."
+      "symptom": "DocumentBuilder throws an exception when attempting to insert a shape into a node that cannot contain child nodes.",
+      "cause": "The code inserts an image shape directly into a container such as a Table cell without first moving the builder to a valid Paragraph node.",
+      "fix": "Move the DocumentBuilder to a Paragraph (or other valid container) before calling InsertImage or creating a Shape.",
+      "prevention": "Validate the target node type with NodeType checks and use DocumentBuilder.MoveTo before any insertion."
     },
     {
       "pattern": "Unsafe image extraction",
-      "symptom": "Code accesses ImageData on nodes that are not image-bearing shapes.",
-      "fix": "Enumerate Shape nodes and require shape.HasImage before accessing or saving ImageData."
+      "symptom": "Accessing ImageData on a non-image Shape results in a NullReferenceException or CS1061 compile error.",
+      "cause": "The snippet iterates over all Shape nodes without confirming that the shape actually contains an image.",
+      "fix": "Filter shapes with shape.HasImage before accessing shape.ImageData or calling Save.",
+      "prevention": "Encapsulate the extraction loop with an if (shape.HasImage) guard and log skipped shapes for transparency."
     },
     {
       "pattern": "Stream reuse bugs",
-      "symptom": "Image or document stream operations fail because MemoryStream.Position was not reset.",
-      "fix": "Always reset stream.Position = 0 before reuse."
+      "symptom": "Saving an image to a MemoryStream and then reusing the same stream fails because the stream position is at the end.",
+      "cause": "The code does not reset MemoryStream.Position to zero before reading or passing the stream to another API.",
+      "fix": "Set stream.Position = 0 immediately after each write operation and before any subsequent read.",
+      "prevention": "Wrap stream handling in a using block and always reset the position after saving."
     },
     {
       "pattern": "Context-specific image container mistakes",
-      "symptom": "Comment, content-control, footnote, or property-based image tasks fail due to wrong document structure assumptions.",
-      "fix": "Traverse the actual container nodes first, then shapes inside them, and insert shapes only through valid child containers."
+      "symptom": "Image extraction from headers, footers, footnotes, or SmartArt fails because the code traverses the wrong node hierarchy.",
+      "cause": "The snippet assumes that images are direct children of the Document node rather than being nested inside HeaderFooter, Footnote, or SmartArt containers.",
+      "fix": "First locate the appropriate container (e.g., HeaderFooter, Footnote) and then enumerate its child Shape nodes.",
+      "prevention": "Structure the traversal logic to reflect the actual document model hierarchy and use explicit container type checks."
     }
   ],
   "examples": [
@@ -159,8 +161,8 @@
         "doc",
         "bmp"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 4,
@@ -182,13 +184,13 @@
       "outputs": [
         "tiff"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 6,
       "file_name": "insert-a-high-resolution-png-image-into-a-specific-paragraph-of-an-existing-docx-file.cs",
-      "task": "Insert a high‑resolution PNG image into a specific paragraph of an existing DOCX file.",
+      "task": "Insert a high-resolution PNG image into a specific paragraph of an existing DOCX file.",
       "workflow": "image-insertion-and-shape",
       "outputs": [
         "docx",
@@ -230,8 +232,8 @@
         "pdf",
         "jpeg"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 10,
@@ -242,8 +244,8 @@
         "docx",
         "bmp"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 11,
@@ -265,8 +267,8 @@
       "outputs": [
         "webp"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 13,
@@ -299,8 +301,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 16,
@@ -311,8 +313,8 @@
         "png",
         "bmp"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 17,
@@ -381,8 +383,8 @@
         "docx",
         "svg"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 23,
@@ -427,8 +429,8 @@
         "png",
         "gif"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 27,
@@ -462,8 +464,8 @@
         "jpeg",
         "tiff"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 30,
@@ -474,8 +476,8 @@
         "doc",
         "emf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 31,
@@ -497,8 +499,8 @@
         "docx",
         "xml"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 33,
@@ -527,13 +529,13 @@
     {
       "id": 35,
       "file_name": "load-a-word-document-replace-all-low-resolution-images-with-high-resolution-versions-from.cs",
-      "task": "Load a Word document, replace all low‑resolution images with high‑resolution versions from a library.",
+      "task": "Load a Word document, replace all low-resolution images with high-resolution versions from a library.",
       "workflow": "general-image-workflow",
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 36,
@@ -561,7 +563,7 @@
     {
       "id": 38,
       "file_name": "apply-a-blur-filter-to-all-extracted-jpeg-images-before-re-embedding-them-into-a-new-word.cs",
-      "task": "Apply a blur filter to all extracted JPEG images before re‑embedding them into a new Word file.",
+      "task": "Apply a blur filter to all extracted JPEG images before re-embedding them into a new Word file.",
       "workflow": "image-extraction",
       "outputs": [
         "jpeg"
@@ -572,7 +574,7 @@
     {
       "id": 39,
       "file_name": "extract-images-from-a-docx-file-s-chart-objects-and-convert-them-to-high-resolution-png.cs",
-      "task": "Extract images from a DOCX file's chart objects and convert them to high‑resolution PNG.",
+      "task": "Extract images from a DOCX file's chart objects and convert them to high-resolution PNG.",
       "workflow": "image-extraction",
       "outputs": [
         "docx",
@@ -612,8 +614,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 43,
@@ -658,8 +660,8 @@
         "pdf",
         "tiff"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 47,
@@ -681,8 +683,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 49,
@@ -704,8 +706,8 @@
       "outputs": [
         "jpeg"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 51,
@@ -739,8 +741,8 @@
         "jpeg",
         "bmp"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 54,
@@ -761,8 +763,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 56,
@@ -772,8 +774,8 @@
       "outputs": [
         "gif"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 57,
@@ -874,8 +876,8 @@
         "docx",
         "png"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 66,
@@ -886,8 +888,8 @@
         "png",
         "tiff"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 67,
@@ -910,8 +912,8 @@
         "docx",
         "xml"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 69,
@@ -927,7 +929,7 @@
     {
       "id": 70,
       "file_name": "apply-a-sharpening-filter-to-all-png-images-extracted-from-word-documents-before-re-saving.cs",
-      "task": "Apply a sharpening filter to all PNG images extracted from Word documents before re‑saving them.",
+      "task": "Apply a sharpening filter to all PNG images extracted from Word documents before re-saving them.",
       "workflow": "image-extraction",
       "outputs": [
         "docx",
@@ -951,7 +953,7 @@
     {
       "id": 72,
       "file_name": "convert-extracted-jpeg-images-to-high-resolution-tiff-for-archival-storage-with-lzw-compre.cs",
-      "task": "Convert extracted JPEG images to high‑resolution TIFF for archival storage with LZW compression.",
+      "task": "Convert extracted JPEG images to high-resolution TIFF for archival storage with LZW compression.",
       "workflow": "image-extraction",
       "outputs": [
         "jpeg",
@@ -1037,13 +1039,13 @@
         "bmp",
         "webp"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 80,
       "file_name": "load-a-word-document-extract-images-and-create-a-powershell-script-to-re-embed-them-later.cs",
-      "task": "Load a Word document, extract images, and create a PowerShell script to re‑embed them later.",
+      "task": "Load a Word document, extract images, and create a PowerShell script to re-embed them later.",
       "workflow": "image-extraction",
       "outputs": [
         "docx"
@@ -1054,7 +1056,7 @@
     {
       "id": 81,
       "file_name": "extract-images-from-a-docx-file-s-embedded-map-objects-and-save-them-as-high-resolution-pn.cs",
-      "task": "Extract images from a DOCX file's embedded map objects and save them as high‑resolution PNG.",
+      "task": "Extract images from a DOCX file's embedded map objects and save them as high-resolution PNG.",
       "workflow": "image-extraction",
       "outputs": [
         "docx",
@@ -1099,7 +1101,7 @@
     {
       "id": 85,
       "file_name": "convert-extracted-tiff-images-to-grayscale-jpeg-for-use-in-low-bandwidth-environments.cs",
-      "task": "Convert extracted TIFF images to grayscale JPEG for use in low‑bandwidth environments.",
+      "task": "Convert extracted TIFF images to grayscale JPEG for use in low-bandwidth environments.",
       "workflow": "image-extraction",
       "outputs": [
         "jpeg",
@@ -1117,8 +1119,8 @@
         "docx",
         "pdf"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 87,
@@ -1129,8 +1131,8 @@
         "docx",
         "svg"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 88,
@@ -1141,8 +1143,8 @@
         "docx",
         "csv"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 89,
@@ -1163,8 +1165,8 @@
       "outputs": [
         "jpeg"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 91,
@@ -1248,14 +1250,14 @@
     {
       "id": 98,
       "file_name": "convert-extracted-jpeg-images-to-high-quality-webp-for-optimized-web-delivery.cs",
-      "task": "Convert extracted JPEG images to high‑quality WebP for optimized web delivery.",
+      "task": "Convert extracted JPEG images to high-quality WebP for optimized web delivery.",
       "workflow": "image-extraction",
       "outputs": [
         "jpeg",
         "webp"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 99,
@@ -1278,8 +1280,8 @@
         "docx",
         "jpeg"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 101,
@@ -1307,7 +1309,7 @@
     {
       "id": 103,
       "file_name": "apply-a-motion-blur-effect-to-all-extracted-jpeg-images-before-re-embedding-them.cs",
-      "task": "Apply a motion blur effect to all extracted JPEG images before re‑embedding them.",
+      "task": "Apply a motion blur effect to all extracted JPEG images before re-embedding them.",
       "workflow": "image-extraction",
       "outputs": [
         "jpeg"
@@ -1324,8 +1326,8 @@
         "docx",
         "png"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 105,
@@ -1353,14 +1355,14 @@
     {
       "id": 107,
       "file_name": "extract-images-from-a-docx-file-s-embedded-video-frames-and-store-them-as-high-resolution.cs",
-      "task": "Extract images from a DOCX file's embedded video frames and store them as high‑resolution PNG.",
+      "task": "Extract images from a DOCX file's embedded video frames and store them as high-resolution PNG.",
       "workflow": "image-extraction",
       "outputs": [
         "docx",
         "png"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 108,
@@ -1456,13 +1458,13 @@
     {
       "id": 116,
       "file_name": "apply-a-saturation-increase-of-20-to-all-extracted-jpeg-images-before-re-saving-them.cs",
-      "task": "Apply a saturation increase of 20% to all extracted JPEG images before re‑saving them.",
+      "task": "Apply a saturation increase of 20% to all extracted JPEG images before re-saving them.",
       "workflow": "image-extraction",
       "outputs": [
         "jpeg"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 117,
@@ -1497,8 +1499,8 @@
         "docx",
         "json"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 120,
@@ -1511,5 +1513,16 @@
       "selected_engine": "mcp",
       "winner": "mcp"
     }
-  ]
+  ],
+  "narrative": {
+    "overview": "The Images category focuses on extracting, inserting, converting, and manipulating raster and vector graphics within Word, PDF, and ODT documents using Aspose.Words and Aspose.Drawing. Verified examples demonstrate deterministic sample image creation, safe shape traversal, and reliable file-system validation for a variety of workflows.",
+    "purpose": "Provide an AI coding agent with clear guidance to generate robust, self-contained .NET snippets that handle image operations in Aspose.Words without external dependencies, while adhering to best-practice patterns for resource management and API usage.",
+    "validation_priorities": [
+      "After each image save operation, verify that the target file exists and throw an informative exception if it does not."
+    ],
+    "maintenance_notes": [
+      "Update the sample image dimensions and colors when new Aspose.Drawing features are released to keep examples relevant.",
+      "Periodically verify that ImageType, ImageFormat, and Save overload signatures have not changed in newer Aspose.Words versions."
+    ]
+  }
 }

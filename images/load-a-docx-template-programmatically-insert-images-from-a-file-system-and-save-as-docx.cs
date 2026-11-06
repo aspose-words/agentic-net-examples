@@ -2,73 +2,79 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Define deterministic file names.
-        const string imagePath = "input.png";
+        // Define file names
         const string templatePath = "template.docx";
+        const string imagePath = "input.png";
         const string outputPath = "output.docx";
 
         // -------------------------------------------------
-        // Create a sample image using Aspose.Drawing.
+        // Step 1: Create a sample DOCX template if it does not exist
         // -------------------------------------------------
-        const int imgWidth = 200;
-        const int imgHeight = 200;
-        using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
+        if (!File.Exists(templatePath))
         {
-            using (Graphics g = Graphics.FromImage(bitmap))
-            {
-                // Fill background with white.
-                g.Clear(Color.White);
-                // Optionally draw a simple rectangle.
-                g.DrawRectangle(Pens.Black, 10, 10, imgWidth - 20, imgHeight - 20);
-            }
-
-            // Save the image to a local file.
-            bitmap.Save(imagePath, ImageFormat.Png);
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            builder.Writeln("This is a sample template document.");
+            builder.Writeln("Below will be an inserted image:");
+            templateDoc.Save(templatePath);
         }
 
-        // Ensure the image file exists before proceeding.
+        // -------------------------------------------------
+        // Step 2: Create a sample image file using Aspose.Drawing
+        // -------------------------------------------------
         if (!File.Exists(imagePath))
-            throw new Exception($"Image file '{imagePath}' was not created.");
+        {
+            const int width = 200;
+            const int height = 100;
+            Bitmap bitmap = new Bitmap(width, height);
+            Graphics graphics = Graphics.FromImage(bitmap);
+            // Fill background with white
+            graphics.Clear(Color.White);
+            // Draw a simple rectangle
+            graphics.DrawRectangle(new Pen(Color.Blue, 3), 10, 10, width - 20, height - 20);
+            // Save the image
+            bitmap.Save(imagePath);
+            // Clean up drawing resources
+            graphics.Dispose();
+            bitmap.Dispose();
+        }
 
         // -------------------------------------------------
-        // Create a simple DOCX template.
-        // -------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder templateBuilder = new DocumentBuilder(templateDoc);
-        templateBuilder.Writeln("This is a template document.");
-        templateDoc.Save(templatePath);
-
-        // Ensure the template file exists.
-        if (!File.Exists(templatePath))
-            throw new Exception($"Template file '{templatePath}' was not created.");
-
-        // -------------------------------------------------
-        // Load the template, insert the image, and save the result.
+        // Step 3: Load the template document
         // -------------------------------------------------
         Document doc = new Document(templatePath);
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        DocumentBuilder docBuilder = new DocumentBuilder(doc);
 
-        // Insert a paragraph before the image for clarity.
-        builder.Writeln("Inserted image below:");
+        // Move to the end of the document to insert the image
+        docBuilder.MoveToDocumentEnd();
 
-        // Insert the image from the file system.
-        builder.InsertImage(imagePath);
+        // -------------------------------------------------
+        // Step 4: Insert the image into the document
+        // -------------------------------------------------
+        if (!File.Exists(imagePath))
+            throw new FileNotFoundException("Image file not found.", imagePath);
 
-        // Save the modified document.
+        docBuilder.InsertParagraph(); // Ensure image starts on a new paragraph
+        docBuilder.InsertImage(imagePath);
+
+        // -------------------------------------------------
+        // Step 5: Save the resulting document
+        // -------------------------------------------------
         doc.Save(outputPath);
 
-        // Validate that the output document was created.
+        // -------------------------------------------------
+        // Validation: Ensure the output file was created
+        // -------------------------------------------------
         if (!File.Exists(outputPath))
-            throw new Exception($"Output file '{outputPath}' was not created.");
+            throw new Exception("Failed to create the output document.");
 
-        // Optionally, clean up temporary files (commented out to keep files for inspection).
-        // File.Delete(imagePath);
+        // Optional: Clean up temporary files (comment out if you want to keep them)
         // File.Delete(templatePath);
+        // File.Delete(imagePath);
     }
 }

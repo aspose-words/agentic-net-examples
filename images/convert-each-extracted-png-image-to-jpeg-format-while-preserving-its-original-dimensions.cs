@@ -9,69 +9,85 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a deterministic PNG image file.
+        // Create a sample PNG image.
         const string pngPath = "sample.png";
-        const int imgWidth = 200;
-        const int imgHeight = 200;
-        using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
+        CreateSamplePng(pngPath);
+
+        // Create a Word document and insert the PNG image.
+        const string docPath = "DocumentWithImages.docx";
+        CreateDocumentWithImage(docPath, pngPath);
+
+        // Load the document, extract PNG images, and convert each to JPEG.
+        ConvertPngImagesToJpeg(docPath);
+    }
+
+    private static void CreateSamplePng(string path)
+    {
+        const int width = 200;
+        const int height = 100;
+
+        using (Bitmap bitmap = new Bitmap(width, height))
         {
-            using (Graphics g = Graphics.FromImage(bitmap))
+            using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                g.Clear(Color.White);
-                // Draw a simple rectangle for visual content.
-                g.FillRectangle(new SolidBrush(Color.Blue), 20, 20, imgWidth - 40, imgHeight - 40);
+                graphics.Clear(Color.White);
+                using (Pen pen = new Pen(Color.Blue, 3))
+                {
+                    graphics.DrawRectangle(pen, 10, 10, width - 20, height - 20);
+                }
             }
-            bitmap.Save(pngPath, ImageFormat.Png);
+
+            bitmap.Save(path, ImageFormat.Png);
         }
 
-        // Step 2: Create a Word document and insert the PNG image.
-        const string docPath = "sample.docx";
+        if (!File.Exists(path))
+            throw new Exception($"Failed to create PNG image at '{path}'.");
+    }
+
+    private static void CreateDocumentWithImage(string docPath, string imagePath)
+    {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(pngPath);
+        builder.InsertImage(imagePath);
         doc.Save(docPath);
 
-        // Step 3: Load the document and extract PNG images.
-        Document loadedDoc = new Document(docPath);
-        NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        if (!File.Exists(docPath))
+            throw new Exception($"Failed to save document at '{docPath}'.");
+    }
+
+    private static void ConvertPngImagesToJpeg(string docPath)
+    {
+        Document doc = new Document(docPath);
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
         int imageIndex = 0;
-        foreach (Shape shape in shapes)
+
+        foreach (Shape shape in shapeNodes)
         {
             if (!shape.HasImage)
                 continue;
 
-            // Process only PNG images.
             if (shape.ImageData.ImageType != ImageType.Png)
                 continue;
 
-            // Save the image to a memory stream.
-            using (MemoryStream ms = new MemoryStream())
+            byte[] imageBytes = shape.ImageData.ImageBytes;
+
+            using (MemoryStream ms = new MemoryStream(imageBytes))
             {
-                shape.ImageData.Save(ms);
-                ms.Position = 0; // Reset stream position before reading.
-
-                // Load the PNG into a bitmap.
-                using (Bitmap pngBitmap = new Bitmap(ms))
+                ms.Position = 0;
+                using (Bitmap bitmap = new Bitmap(ms))
                 {
-                    // Preserve original dimensions when saving as JPEG.
                     string jpegPath = $"extracted-{imageIndex}.jpg";
-                    pngBitmap.Save(jpegPath, ImageFormat.Jpeg);
+                    bitmap.Save(jpegPath, ImageFormat.Jpeg);
 
-                    // Validate that the JPEG file was created.
                     if (!File.Exists(jpegPath))
-                        throw new InvalidOperationException($"Failed to create JPEG file: {jpegPath}");
-
-                    imageIndex++;
+                        throw new Exception($"Failed to save JPEG image at '{jpegPath}'.");
                 }
             }
+
+            imageIndex++;
         }
 
-        // Final validation: ensure at least one JPEG was produced.
         if (imageIndex == 0)
-            throw new InvalidOperationException("No PNG images were found and converted.");
-
-        // Cleanup: optional removal of intermediate files (commented out).
-        // File.Delete(pngPath);
-        // File.Delete(docPath);
+            throw new Exception("No PNG images were found for conversion.");
     }
 }

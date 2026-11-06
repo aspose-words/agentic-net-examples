@@ -3,108 +3,85 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare folders
-        string baseDir = Directory.GetCurrentDirectory();
-        string inputFolder = Path.Combine(baseDir, "InputDocs");
-        string outputRoot = Path.Combine(baseDir, "ExtractedImages");
-        Directory.CreateDirectory(inputFolder);
-        Directory.CreateDirectory(outputRoot);
+        // Base directories
+        string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+        string inputDir = Path.Combine(baseDir, "InputDocs");
+        string outputDir = Path.Combine(baseDir, "ExtractedImages");
+        string sampleImagePath = Path.Combine(baseDir, "sample.png");
 
-        // Create a deterministic sample image (input.png)
-        string sampleImagePath = Path.Combine(baseDir, "input.png");
-        CreateSampleImage(sampleImagePath, 200, 200);
+        // Ensure directories exist
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(outputDir);
 
-        // Create a few ODT documents containing the sample image
-        for (int i = 1; i <= 3; i++)
+        // Create a deterministic sample image
+        CreateSampleImage(sampleImagePath);
+
+        // Create sample ODT documents containing the image
+        CreateSampleDocuments(inputDir, sampleImagePath, 2);
+
+        // Batch extract images from ODT files
+        foreach (string docPath in Directory.GetFiles(inputDir, "*.odt"))
         {
-            string docPath = Path.Combine(inputFolder, $"Doc{i}.odt");
-            CreateOdtWithImages(docPath, sampleImagePath, i);
-        }
+            // Load the document
+            Document doc = new Document(docPath);
+            string docName = Path.GetFileNameWithoutExtension(docPath);
+            string docOutputDir = Path.Combine(outputDir, docName);
+            Directory.CreateDirectory(docOutputDir);
 
-        // Batch extract images from each ODT file
-        foreach (string odtFile in Directory.GetFiles(inputFolder, "*.odt"))
-        {
-            string docName = Path.GetFileNameWithoutExtension(odtFile);
-            string docOutputFolder = Path.Combine(outputRoot, docName);
-            Directory.CreateDirectory(docOutputFolder);
-
-            Document doc = new Document(odtFile);
-            NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+            // Extract images from Shape nodes
+            NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
             int imageIndex = 0;
 
-            foreach (Shape shape in shapeNodes)
+            foreach (Shape shape in shapes)
             {
                 if (shape.HasImage)
                 {
-                    string extension = GetImageExtension(shape.ImageData.ImageType);
-                    string outPath = Path.Combine(docOutputFolder, $"image-{imageIndex}{extension}");
-                    shape.ImageData.Save(outPath);
                     imageIndex++;
+                    // Determine image extension based on image type
+                    string ext = shape.ImageData.ImageType.ToString().ToLower();
+                    string outPath = Path.Combine(docOutputDir, $"image{imageIndex}.{ext}");
+                    shape.ImageData.Save(outPath);
                 }
             }
 
+            // Validate that at least one image was extracted
             if (imageIndex == 0)
-                throw new InvalidOperationException($"No images were extracted from document '{odtFile}'.");
+                throw new Exception($"No images were extracted from document '{docName}'.");
         }
+
+        // Indicate completion
+        Console.WriteLine("Image extraction completed successfully.");
     }
 
-    // Creates a simple white PNG image with a black rectangle for deterministic content
-    private static void CreateSampleImage(string path, int width, int height)
+    private static void CreateSampleImage(string path)
     {
-        using (Bitmap bitmap = new Bitmap(width, height))
-        {
-            using (Graphics g = Graphics.FromImage(bitmap))
-            {
-                g.Clear(Color.White);
-                using (Pen pen = new Pen(Color.Black, 5))
-                {
-                    g.DrawRectangle(pen, 10, 10, width - 20, height - 20);
-                }
-            }
-            bitmap.Save(path, ImageFormat.Png);
-        }
+        // Create a 100x100 pixel bitmap with a solid color
+        Bitmap bitmap = new Bitmap(100, 100);
+        Graphics graphics = Graphics.FromImage(bitmap);
+        graphics.Clear(Color.LightBlue);
+        // Save the bitmap to a PNG file
+        bitmap.Save(path);
+        // Clean up resources
+        graphics.Dispose();
+        bitmap.Dispose();
     }
 
-    // Creates an ODT document and inserts the sample image a number of times
-    private static void CreateOdtWithImages(string docPath, string imagePath, int imageCount)
+    private static void CreateSampleDocuments(string folder, string imagePath, int count)
     {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        for (int i = 0; i < imageCount; i++)
+        for (int i = 1; i <= count; i++)
         {
-            builder.InsertParagraph();
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln($"Sample Document {i}");
+            // Insert the previously created sample image
             builder.InsertImage(imagePath);
-        }
-
-        doc.Save(docPath);
-    }
-
-    // Maps Aspose.Words.Drawing.ImageType to a file extension
-    private static string GetImageExtension(ImageType imageType)
-    {
-        switch (imageType)
-        {
-            case ImageType.Jpeg:
-                return ".jpg";
-            case ImageType.Png:
-                return ".png";
-            case ImageType.Gif:
-                return ".gif";
-            case ImageType.Bmp:
-                return ".bmp";
-            case ImageType.Emf:
-                return ".emf";
-            case ImageType.Wmf:
-                return ".wmf";
-            default:
-                return ".img";
+            string docPath = Path.Combine(folder, $"doc{i}.odt");
+            doc.Save(docPath);
         }
     }
 }

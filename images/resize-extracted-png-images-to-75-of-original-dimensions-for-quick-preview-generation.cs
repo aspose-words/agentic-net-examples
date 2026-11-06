@@ -8,88 +8,77 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample PNG image.
-        const string inputImagePath = "input.png";
-        CreateSamplePng(inputImagePath);
+        // Step 1: Create a deterministic sample PNG image.
+        const string sampleImagePath = "sample.png";
+        const int originalWidth = 200;
+        const int originalHeight = 200;
 
-        // Create a Word document and insert the sample image.
-        const string docPath = "document.docx";
-        CreateDocumentWithImage(docPath, inputImagePath);
-
-        // Extract PNG images, resize them to 75% of original size, and save previews.
-        ExtractAndResizeImages(docPath);
-    }
-
-    private static void CreateSamplePng(string path)
-    {
-        const int width = 200;
-        const int height = 200;
-
-        using (var bitmap = new Bitmap(width, height))
+        using (Bitmap bitmap = new Bitmap(originalWidth, originalHeight))
         {
-            using (var graphics = Graphics.FromImage(bitmap))
+            using (Graphics g = Graphics.FromImage(bitmap))
             {
-                graphics.Clear(Color.White);
-                using (var pen = new Pen(Color.Blue, 5))
-                {
-                    graphics.DrawEllipse(pen, 10, 10, width - 20, height - 20);
-                }
+                g.Clear(Color.White);
+                // Draw a simple red rectangle for visual distinction.
+                g.FillRectangle(new SolidBrush(Color.Red), 20, 20, 160, 160);
             }
-
-            bitmap.Save(path);
+            bitmap.Save(sampleImagePath);
         }
-    }
 
-    private static void CreateDocumentWithImage(string docPath, string imagePath)
-    {
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-        builder.InsertImage(imagePath);
+        // Step 2: Create a Word document and insert the sample image.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.InsertImage(sampleImagePath);
+        const string docPath = "sample.docx";
         doc.Save(docPath);
-    }
 
-    private static void ExtractAndResizeImages(string docPath)
-    {
-        var doc = new Document(docPath);
-        var shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-        int imageIndex = 0;
-
+        // Step 3: Load the document (already in memory) and extract PNG images.
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+        int previewIndex = 0;
         foreach (Shape shape in shapeNodes)
         {
             if (!shape.HasImage)
                 continue;
 
-            using (var originalStream = new MemoryStream())
-            {
-                shape.ImageData.Save(originalStream);
-                originalStream.Position = 0;
+            // Process only PNG images.
+            if (shape.ImageData.ImageType != ImageType.Png)
+                continue;
 
-                using (var originalBitmap = new Bitmap(originalStream))
+            // Save the original image to a memory stream.
+            using (MemoryStream imageStream = new MemoryStream())
+            {
+                shape.ImageData.Save(imageStream);
+                imageStream.Position = 0; // Reset before reading.
+
+                // Load the image using Aspose.Drawing.
+                using (Bitmap originalBitmap = new Bitmap(imageStream))
                 {
+                    // Calculate 75% dimensions.
                     int newWidth = (int)(originalBitmap.Width * 0.75);
                     int newHeight = (int)(originalBitmap.Height * 0.75);
 
-                    using (var resizedBitmap = new Bitmap(newWidth, newHeight))
+                    // Create a resized bitmap.
+                    using (Bitmap resizedBitmap = new Bitmap(newWidth, newHeight))
                     {
-                        using (var graphics = Graphics.FromImage(resizedBitmap))
+                        using (Graphics graphics = Graphics.FromImage(resizedBitmap))
                         {
-                            graphics.Clear(Color.Transparent);
                             graphics.DrawImage(originalBitmap, 0, 0, newWidth, newHeight);
                         }
 
-                        string previewPath = $"preview-{imageIndex}.png";
+                        // Save the preview image.
+                        string previewPath = $"preview-{previewIndex}.png";
                         resizedBitmap.Save(previewPath);
-
-                        if (!File.Exists(previewPath))
-                            throw new Exception($"Failed to save preview image: {previewPath}");
+                        previewIndex++;
                     }
                 }
             }
-
-            imageIndex++;
         }
 
-        if (imageIndex == 0)
-            throw new Exception("No images were extracted from the document.");
+        // Validation: ensure at least one preview image was generated.
+        if (previewIndex == 0)
+            throw new Exception("No PNG images were extracted and resized.");
+
+        // Optional: clean up sample files (comment out if inspection is needed).
+        // File.Delete(sampleImagePath);
+        // File.Delete(docPath);
     }
 }

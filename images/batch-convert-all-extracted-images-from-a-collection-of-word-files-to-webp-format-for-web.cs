@@ -9,96 +9,90 @@ public class Program
 {
     public static void Main()
     {
-        // Define input and output folders
-        string inputFolder = "InputDocs";
-        string outputFolder = "ExtractedWebP";
+        // Prepare folders
+        string inputDir = "InputDocs";
+        string outputDir = "OutputImages";
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(outputDir);
 
-        // Clean previous run data
-        if (Directory.Exists(inputFolder))
-            Directory.Delete(inputFolder, true);
-        if (Directory.Exists(outputFolder))
-            Directory.Delete(outputFolder, true);
-        Directory.CreateDirectory(inputFolder);
-        Directory.CreateDirectory(outputFolder);
+        // Create a sample image (sample.png)
+        string sampleImagePath = "sample.png";
+        CreateSampleImage(sampleImagePath);
 
-        // Create a deterministic sample image (input.png)
-        string sampleImagePath = "input.png";
-        CreateSampleImage(sampleImagePath, 200, 200);
+        // Create sample Word documents with the image inserted
+        CreateSampleWordDocument(Path.Combine(inputDir, "Doc1.docx"), sampleImagePath);
+        CreateSampleWordDocument(Path.Combine(inputDir, "Doc2.docx"), sampleImagePath);
 
-        // Create sample Word documents containing the image
-        CreateSampleDocument(Path.Combine(inputFolder, "Doc1.docx"), sampleImagePath);
-        CreateSampleDocument(Path.Combine(inputFolder, "Doc2.docx"), sampleImagePath);
-
-        // Batch process each Word document
-        foreach (string docPath in Directory.GetFiles(inputFolder, "*.docx"))
+        // Batch process: extract images and convert to WebP
+        int extractedCount = 0;
+        foreach (string docPath in Directory.GetFiles(inputDir, "*.docx"))
         {
             Document doc = new Document(docPath);
-            NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-            int extractedCount = 0;
+            NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
             int imageIndex = 0;
-
-            foreach (Shape shape in shapeNodes)
+            foreach (Shape shape in shapes)
             {
                 if (shape.HasImage)
                 {
-                    // Save the embedded image to a memory stream
-                    using (MemoryStream imgStream = new MemoryStream())
+                    // Get image bytes
+                    byte[] imageBytes = shape.ImageData.ImageBytes;
+
+                    // Load image into Aspose.Drawing.Image
+                    using (MemoryStream ms = new MemoryStream(imageBytes))
                     {
-                        shape.ImageData.Save(imgStream);
-                        imgStream.Position = 0;
-
-                        // Load the image into Aspose.Drawing.Bitmap
-                        using (Bitmap bitmap = new Bitmap(imgStream))
+                        ms.Position = 0;
+                        using (Image img = Image.FromStream(ms))
                         {
-                            // Define output PNG file name (WebP not supported in this environment)
-                            string outputFileName = $"{Path.GetFileNameWithoutExtension(docPath)}_img{imageIndex}.png";
-                            string outputPath = Path.Combine(outputFolder, outputFileName);
+                            // Build output file name
+                            string docName = Path.GetFileNameWithoutExtension(docPath);
+                            string outputFile = Path.Combine(outputDir, $"{docName}_img{imageIndex}.webp");
 
-                            // Save as PNG (fallback for WebP)
-                            bitmap.Save(outputPath, ImageFormat.Png);
-
+                            // Save as WebP (format inferred from extension)
+                            img.Save(outputFile);
                             extractedCount++;
-                            imageIndex++;
                         }
                     }
+                    imageIndex++;
                 }
             }
-
-            // Validate that at least one image was extracted
-            if (extractedCount == 0)
-                throw new InvalidOperationException($"No images were extracted from document '{docPath}'.");
         }
 
-        // Verify that output files exist
-        string[] outputFiles = Directory.GetFiles(outputFolder);
-        if (outputFiles.Length == 0)
-            throw new InvalidOperationException("No images were created in the output folder.");
+        // Validation
+        if (extractedCount == 0)
+        {
+            throw new Exception("No images were extracted and converted.");
+        }
 
-        Console.WriteLine($"Batch conversion completed. {outputFiles.Length} images saved to '{outputFolder}'.");
+        // Clean up sample image file
+        if (File.Exists(sampleImagePath))
+        {
+            File.Delete(sampleImagePath);
+        }
     }
 
-    // Creates a simple white bitmap with a black rectangle for deterministic content
-    private static void CreateSampleImage(string path, int width, int height)
+    private static void CreateSampleImage(string path)
     {
+        int width = 200;
+        int height = 100;
         using (Bitmap bitmap = new Bitmap(width, height))
         {
             using (Graphics g = Graphics.FromImage(bitmap))
             {
-                g.Clear(Aspose.Drawing.Color.White);
-                using (SolidBrush brush = new SolidBrush(Aspose.Drawing.Color.Black))
+                g.Clear(Color.White);
+                using (Pen pen = new Pen(Color.Blue, 3))
                 {
-                    g.FillRectangle(brush, width / 4, height / 4, width / 2, height / 2);
+                    g.DrawRectangle(pen, 10, 10, width - 20, height - 20);
                 }
             }
-            bitmap.Save(path, ImageFormat.Png);
+            bitmap.Save(path);
         }
     }
 
-    // Creates a Word document and inserts the specified image
-    private static void CreateSampleDocument(string docPath, string imagePath)
+    private static void CreateSampleWordDocument(string docPath, string imagePath)
     {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Sample document with an image:");
         builder.InsertImage(imagePath);
         doc.Save(docPath);
     }

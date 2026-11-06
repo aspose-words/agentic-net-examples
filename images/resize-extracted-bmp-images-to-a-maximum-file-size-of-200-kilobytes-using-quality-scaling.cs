@@ -7,142 +7,87 @@ using Aspose.Drawing.Imaging;
 
 public class Program
 {
-    // Maximum allowed file size: 200 KB
-    private const long MaxFileSize = 200 * 1024;
-
     public static void Main()
     {
-        // Step 1: Create a deterministic BMP image.
-        const string sampleBmpPath = "sample.bmp";
-        CreateSampleBmp(sampleBmpPath, 800, 600);
+        // Create a sample BMP image.
+        const string inputBmpPath = "sample.bmp";
+        const int originalWidth = 800;
+        const int originalHeight = 600;
+        Bitmap bmp = new Bitmap(originalWidth, originalHeight);
+        Graphics g = Graphics.FromImage(bmp);
+        g.Clear(Color.White);
+        // Draw a simple rectangle to have some content.
+        g.FillRectangle(new SolidBrush(Color.Blue), 100, 100, 600, 400);
+        g.Dispose();
+        bmp.Save(inputBmpPath, ImageFormat.Bmp);
+        bmp.Dispose();
 
-        // Step 2: Create a Word document and insert the BMP image.
-        const string docPath = "sample.docx";
-        CreateDocumentWithImage(docPath, sampleBmpPath);
+        // Create a Word document and insert the BMP image.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.InsertImage(inputBmpPath);
+        const string docPath = "DocumentWithImage.docx";
+        doc.Save(docPath);
 
-        // Step 3: Load the document and process images.
-        Document doc = new Document(docPath);
-        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+        // Reload the document (optional, demonstrates extraction).
+        Document loadedDoc = new Document(docPath);
+        NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
 
         int imageIndex = 0;
         foreach (Shape shape in shapes)
         {
-            if (!shape.HasImage)
-                continue;
+            if (!shape.HasImage) continue;
 
-            // Extract the image to a memory stream.
-            using (MemoryStream originalStream = new MemoryStream())
+            // Extract image to a memory stream.
+            using (MemoryStream imageStream = new MemoryStream())
             {
-                shape.ImageData.Save(originalStream);
-                originalStream.Position = 0;
+                shape.ImageData.Save(imageStream);
+                imageStream.Position = 0;
 
-                // Load the image into Aspose.Drawing.Bitmap.
-                using (Bitmap originalBitmap = new Bitmap(originalStream))
+                // Load the extracted BMP into Aspose.Drawing.Bitmap.
+                Bitmap extractedBmp = new Bitmap(imageStream);
+                // Resize loop: reduce dimensions until file size <= 200 KB.
+                const long maxFileSize = 200 * 1024; // 200 KB
+                while (true)
                 {
-                    // Resize the bitmap until it meets the size requirement.
-                    using (Bitmap resizedBitmap = ResizeBitmapToMaxSize(originalBitmap, MaxFileSize))
+                    using (MemoryStream tempStream = new MemoryStream())
                     {
-                        // Save the resized image as BMP.
-                        string outputPath = $"resized-{imageIndex}.bmp";
-                        resizedBitmap.Save(outputPath, ImageFormat.Bmp);
-
-                        // Validate output.
-                        FileInfo info = new FileInfo(outputPath);
-                        if (!info.Exists || info.Length > MaxFileSize)
-                        {
-                            throw new InvalidOperationException($"Resized image '{outputPath}' was not created correctly.");
-                        }
+                        extractedBmp.Save(tempStream, ImageFormat.Bmp);
+                        if (tempStream.Length <= maxFileSize) break;
                     }
-                }
-            }
 
-            imageIndex++;
+                    // Reduce dimensions by 90%.
+                    int newWidth = (int)(extractedBmp.Width * 0.9);
+                    int newHeight = (int)(extractedBmp.Height * 0.9);
+                    if (newWidth < 1 || newHeight < 1) break; // Prevent zero size.
+
+                    Bitmap resizedBmp = new Bitmap(newWidth, newHeight);
+                    Graphics graphics = Graphics.FromImage(resizedBmp);
+                    graphics.DrawImage(extractedBmp, 0, 0, newWidth, newHeight);
+                    graphics.Dispose();
+                    extractedBmp.Dispose();
+                    extractedBmp = resizedBmp;
+                }
+
+                // Save the resized BMP.
+                string outputPath = $"resized_image_{imageIndex}.bmp";
+                extractedBmp.Save(outputPath, ImageFormat.Bmp);
+                extractedBmp.Dispose();
+
+                // Validate output.
+                if (!File.Exists(outputPath) || new FileInfo(outputPath).Length == 0)
+                {
+                    throw new InvalidOperationException($"Failed to create resized image: {outputPath}");
+                }
+
+                imageIndex++;
+            }
         }
 
-        // Ensure at least one image was processed.
+        // Final validation: at least one image should have been processed.
         if (imageIndex == 0)
         {
-            throw new InvalidOperationException("No images were found in the document.");
-        }
-    }
-
-    // Creates a deterministic BMP file with simple content.
-    private static void CreateSampleBmp(string path, int width, int height)
-    {
-        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height);
-        Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap);
-        g.Clear(Aspose.Drawing.Color.White);
-        using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Blue, 5))
-        {
-            g.DrawRectangle(pen, 50, 50, width - 100, height - 100);
-        }
-        bitmap.Save(path, ImageFormat.Bmp);
-        g.Dispose();
-        bitmap.Dispose();
-
-        // Validate creation.
-        if (!File.Exists(path))
-            throw new InvalidOperationException($"Failed to create sample BMP at '{path}'.");
-    }
-
-    // Inserts the given image into a new Word document.
-    private static void CreateDocumentWithImage(string docPath, string imagePath)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(imagePath);
-        doc.Save(docPath);
-
-        // Validate creation.
-        if (!File.Exists(docPath))
-            throw new InvalidOperationException($"Failed to create document at '{docPath}'.");
-    }
-
-    // Resizes the bitmap iteratively until its BMP representation fits within maxSize bytes.
-    private static Bitmap ResizeBitmapToMaxSize(Bitmap original, long maxSize)
-    {
-        int currentWidth = original.Width;
-        int currentHeight = original.Height;
-
-        // Clone the original to work on.
-        Bitmap workingBitmap = (Bitmap)original.Clone();
-
-        try
-        {
-            while (true)
-            {
-                // Check current size.
-                using (MemoryStream ms = new MemoryStream())
-                {
-                    workingBitmap.Save(ms, ImageFormat.Bmp);
-                    if (ms.Length <= maxSize)
-                        break;
-                }
-
-                // Reduce dimensions by 10%.
-                currentWidth = (int)(currentWidth * 0.9);
-                currentHeight = (int)(currentHeight * 0.9);
-                if (currentWidth < 1 || currentHeight < 1)
-                    throw new InvalidOperationException("Cannot reduce image size further to meet the file size constraint.");
-
-                // Create a new resized bitmap.
-                Bitmap resized = new Bitmap(currentWidth, currentHeight);
-                using (Graphics g = Graphics.FromImage(resized))
-                {
-                    g.DrawImage(workingBitmap, 0, 0, currentWidth, currentHeight);
-                }
-
-                // Replace the working bitmap.
-                workingBitmap.Dispose();
-                workingBitmap = resized;
-            }
-
-            return workingBitmap;
-        }
-        catch
-        {
-            workingBitmap.Dispose();
-            throw;
+            throw new InvalidOperationException("No images were found and processed in the document.");
         }
     }
 }

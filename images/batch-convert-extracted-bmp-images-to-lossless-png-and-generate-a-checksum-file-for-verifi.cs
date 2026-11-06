@@ -1,8 +1,7 @@
 using System;
 using System.IO;
-using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
+using System.Security.Cryptography;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
@@ -12,100 +11,82 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare folders
-        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputImages");
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputImages");
+        // Define folders and files
+        string inputFolder = "InputImages";
+        string outputFolder = "OutputImages";
+        string docPath = "DocumentWithImages.docx";
+        string checksumFile = "checksums.txt";
+
+        // Clean previous run data
+        if (Directory.Exists(inputFolder)) Directory.Delete(inputFolder, true);
+        if (Directory.Exists(outputFolder)) Directory.Delete(outputFolder, true);
+        if (File.Exists(docPath)) File.Delete(docPath);
+        if (File.Exists(checksumFile)) File.Delete(checksumFile);
+
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Step 1: Create sample BMP images
-        CreateSampleBmp(Path.Combine(inputFolder, "sample1.bmp"), 100, 100, Aspose.Drawing.Color.LightBlue);
-        CreateSampleBmp(Path.Combine(inputFolder, "sample2.bmp"), 120, 80, Aspose.Drawing.Color.LightCoral);
+        // Create sample BMP images
+        for (int i = 1; i <= 2; i++)
+        {
+            string bmpPath = Path.Combine(inputFolder, $"sample{i}.bmp");
+            using (Bitmap bitmap = new Bitmap(100, 100))
+            {
+                using (Graphics g = Graphics.FromImage(bitmap))
+                {
+                    // Distinct fill color for each image
+                    Color fillColor = i == 1 ? Color.LightBlue : Color.LightGreen;
+                    g.Clear(fillColor);
+                }
+                bitmap.Save(bmpPath, ImageFormat.Bmp);
+            }
+        }
 
-        // Step 2: Insert BMP images into a Word document
+        // Create a document and insert the BMP images
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        foreach (string bmpPath in Directory.GetFiles(inputFolder, "*.bmp"))
+        foreach (string bmpFile in Directory.GetFiles(inputFolder, "*.bmp"))
         {
-            builder.InsertImage(bmpPath);
+            builder.InsertImage(bmpFile);
             builder.Writeln(); // separate images
         }
-        string docPath = Path.Combine(Directory.GetCurrentDirectory(), "sample.docx");
         doc.Save(docPath);
 
-        // Step 3: Extract images from the document back to BMP files (overwrite existing)
+        // Load the document for extraction
         Document loadedDoc = new Document(docPath);
         NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int extractedIndex = 0;
+
+        var checksumBuilder = new StringBuilder();
+        int imageIndex = 0;
+
         foreach (Shape shape in shapes)
         {
-            if (shape.HasImage)
+            if (!shape.HasImage) continue;
+
+            // Save extracted image as PNG (lossless)
+            string pngPath = Path.Combine(outputFolder, $"image{++imageIndex}.png");
+            shape.ImageData.Save(pngPath); // format inferred from .png extension
+
+            // Compute SHA256 checksum
+            byte[] pngBytes = File.ReadAllBytes(pngPath);
+            using (SHA256 sha256 = SHA256.Create())
             {
-                string extractedPath = Path.Combine(inputFolder, $"extracted_{extractedIndex}.bmp");
-                shape.ImageData.Save(extractedPath);
-                extractedIndex++;
+                byte[] hash = sha256.ComputeHash(pngBytes);
+                string hashString = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+                checksumBuilder.AppendLine($"{Path.GetFileName(pngPath)} {hashString}");
             }
         }
 
-        // Step 4: Batch convert BMP images to lossless PNG
-        string[] bmpFiles = Directory.GetFiles(inputFolder, "*.bmp");
-        if (bmpFiles.Length == 0)
-            throw new InvalidOperationException("No BMP files found for conversion.");
-
-        foreach (string bmpFile in bmpFiles)
-        {
-            using (Bitmap bitmap = new Bitmap(bmpFile))
-            {
-                string pngFileName = Path.GetFileNameWithoutExtension(bmpFile) + ".png";
-                string pngPath = Path.Combine(outputFolder, pngFileName);
-                bitmap.Save(pngPath, ImageFormat.Png);
-            }
-        }
-
-        // Validate PNG output
+        // Validate that at least one PNG was created
         string[] pngFiles = Directory.GetFiles(outputFolder, "*.png");
         if (pngFiles.Length == 0)
-            throw new InvalidOperationException("PNG conversion produced no files.");
+            throw new InvalidOperationException("No PNG files were generated.");
 
-        // Step 5: Generate checksum file for verification
-        string checksumFilePath = Path.Combine(outputFolder, "checksums.txt");
-        using (StreamWriter writer = new StreamWriter(checksumFilePath, false, Encoding.UTF8))
-        {
-            foreach (string pngFile in pngFiles)
-            {
-                string checksum = ComputeSha256(pngFile);
-                string line = $"{Path.GetFileName(pngFile)} {checksum}";
-                writer.WriteLine(line);
-            }
-        }
+        // Write checksum file
+        File.WriteAllText(checksumFile, checksumBuilder.ToString());
 
         // Validate checksum file
-        if (!File.Exists(checksumFilePath))
-            throw new InvalidOperationException("Checksum file was not created.");
-    }
-
-    private static void CreateSampleBmp(string filePath, int width, int height, Aspose.Drawing.Color fillColor)
-    {
-        using (Bitmap bitmap = new Bitmap(width, height))
-        {
-            using (Graphics g = Graphics.FromImage(bitmap))
-            {
-                g.Clear(fillColor);
-            }
-            bitmap.Save(filePath, ImageFormat.Bmp);
-        }
-    }
-
-    private static string ComputeSha256(string filePath)
-    {
-        using (FileStream stream = File.OpenRead(filePath))
-        using (SHA256 sha256 = SHA256.Create())
-        {
-            byte[] hash = sha256.ComputeHash(stream);
-            StringBuilder sb = new StringBuilder();
-            foreach (byte b in hash)
-                sb.Append(b.ToString("x2"));
-            return sb.ToString();
-        }
+        if (!File.Exists(checksumFile) || new FileInfo(checksumFile).Length == 0)
+            throw new InvalidOperationException("Checksum file was not created or is empty.");
     }
 }
