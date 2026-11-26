@@ -11,16 +11,16 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple template with merge fields.
-        builder.Writeln("Dear ");
+        // Build the template with merge fields.
+        builder.Writeln("Hello, ");
         builder.InsertField("MERGEFIELD FirstName");
         builder.Write(" ");
         builder.InsertField("MERGEFIELD LastName");
-        builder.Writeln(",");
+        builder.Writeln("!");
 
-        // Prepare data for the mail merge.
-        string[] fieldNames = { "FirstName", "LastName" };
-        object[] fieldValues = { "John", "Doe" };
+        // Prepare simple data source for the merge.
+        string[] fieldNames = new string[] { "FirstName", "LastName" };
+        object[] fieldValues = new object[] { "John", "Doe" };
 
         // Execute the mail merge.
         doc.MailMerge.Execute(fieldNames, fieldValues);
@@ -29,7 +29,7 @@ public class Program
         string mergedText = doc.GetText();
         if (!mergedText.Contains("John") || !mergedText.Contains("Doe"))
         {
-            throw new InvalidOperationException("Mail merge did not replace all fields correctly.");
+            throw new InvalidOperationException("Mail merge failed: merged values not found in the document.");
         }
 
         // Save the merged document as PDF.
@@ -39,7 +39,7 @@ public class Program
         // Ensure the PDF file was created.
         if (!File.Exists(outputPath))
         {
-            throw new FileNotFoundException("The PDF file was not created.", outputPath);
+            throw new FileNotFoundException("Failed to create the PDF output file.", outputPath);
         }
     }
 }

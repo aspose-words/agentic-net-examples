@@ -1,8 +1,9 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.MailMerging;
 
-public class MailMergeExample
+public class Program
 {
     public static void Main()
     {
@@ -16,38 +17,33 @@ public class MailMergeExample
         builder.Write(" ");
         builder.InsertField("MERGEFIELD LastName");
         builder.Writeln(",");
-        builder.Writeln("Your order number is ");
-        builder.InsertField("MERGEFIELD OrderNumber");
-        builder.Writeln(".");
+        builder.Writeln("Thank you for your interest.");
 
-        // Define field names and corresponding values.
-        string[] fieldNames = new[] { "FirstName", "LastName", "OrderNumber" };
-        object[] fieldValues = new object[] { "John", "Doe", "12345" };
+        // Prepare data for the mail merge.
+        string[] fieldNames = { "FirstName", "LastName" };
+        object[] fieldValues = { "John", "Doe" };
 
         // Execute the mail merge.
+        doc.MailMerge.CleanupOptions = MailMergeCleanupOptions.RemoveUnusedFields;
         doc.MailMerge.Execute(fieldNames, fieldValues);
-
-        // Validate that the merge replaced all fields.
-        string mergedText = doc.GetText();
-        foreach (object value in fieldValues)
-        {
-            if (value is string str && !mergedText.Contains(str))
-            {
-                throw new InvalidOperationException($"Merged document does not contain expected value: {str}");
-            }
-        }
 
         // Save the merged document.
         string outputPath = "MergedResult.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Validation: ensure the file exists.
         if (!File.Exists(outputPath))
-        {
-            throw new FileNotFoundException("The merged document was not saved correctly.", outputPath);
-        }
+            throw new FileNotFoundException("The merged document was not created.", outputPath);
 
-        // Optionally, indicate success (no interactive input required).
-        Console.WriteLine($"Mail merge completed successfully. File saved to: {Path.GetFullPath(outputPath)}");
+        // Load the saved document to verify merged content.
+        Document resultDoc = new Document(outputPath);
+        string resultText = resultDoc.GetText();
+
+        // Check that the merge fields were replaced.
+        if (!resultText.Contains("John") || !resultText.Contains("Doe"))
+            throw new InvalidOperationException("Mail merge failed: merged values not found in the output.");
+
+        // Optionally, indicate success (no interactive output required).
+        Console.WriteLine("Mail merge completed successfully. Output saved to " + outputPath);
     }
 }

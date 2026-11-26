@@ -12,42 +12,44 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Add a static header.
-        builder.Writeln("=== Invoice ===");
+        builder.Writeln("=== Customer Report ===");
         builder.Writeln();
 
-        // Insert merge fields for Name and Date.
-        builder.Write("Hello ");
-        builder.InsertField("MERGEFIELD Name");
-        builder.Write(", your appointment is on ");
-        builder.InsertField("MERGEFIELD Date");
-        builder.Writeln(".");
+        // Insert merge fields for first and last name.
+        builder.InsertField("MERGEFIELD FirstName");
+        builder.Writeln(" ");
+        builder.InsertField("MERGEFIELD LastName");
+        builder.Writeln();
 
-        // Ensure unused fields are removed after merge.
-        doc.MailMerge.CleanupOptions = MailMergeCleanupOptions.RemoveUnusedFields;
+        // (Optional) Save the template for reference.
+        string templatePath = "Template.docx";
+        doc.Save(templatePath);
 
         // Prepare simple data source.
-        string[] fieldNames = { "Name", "Date" };
-        string dateString = DateTime.Now.ToString("D");
-        object[] fieldValues = { "John Doe", dateString };
+        string[] fieldNames = { "FirstName", "LastName" };
+        object[] fieldValues = { "John", "Doe" };
 
-        // Execute the mail merge.
+        // Execute mail merge with cleanup of unused fields.
+        doc.MailMerge.CleanupOptions = MailMergeCleanupOptions.RemoveUnusedFields;
         doc.MailMerge.Execute(fieldNames, fieldValues);
 
         // Validate that the merge replaced the fields.
         string mergedText = doc.GetText();
-        if (!mergedText.Contains("John Doe") || !mergedText.Contains(dateString))
+        if (string.IsNullOrEmpty(mergedText) ||
+            !mergedText.Contains("John") ||
+            !mergedText.Contains("Doe"))
         {
-            throw new InvalidOperationException("Mail merge did not replace all fields correctly.");
+            throw new InvalidOperationException("Mail merge failed: merged values not found in the document.");
         }
 
         // Save the merged document.
         string outputPath = "MergedOutput.docx";
         doc.Save(outputPath);
 
-        // Verify that the output file was created.
+        // Ensure the output file was created.
         if (!File.Exists(outputPath))
         {
-            throw new FileNotFoundException("The merged document was not created.", outputPath);
+            throw new FileNotFoundException("Merged document was not created.", outputPath);
         }
     }
 }

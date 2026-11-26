@@ -1,7 +1,6 @@
 using System;
 using System.Data;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.MailMerging;
 
@@ -9,67 +8,58 @@ public class Program
 {
     public static void Main()
     {
-        // Create a template document with merge fields and a region for repeating data.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert a table region named "Person".
-        builder.InsertField("MERGEFIELD TableStart:Person", null);
-        builder.Writeln(); // New line after the start field.
-
-        // Insert merge fields that correspond to XML element names.
-        builder.InsertField("MERGEFIELD FirstName", null);
+        // Create a template document with merge fields.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+        builder.Writeln("Customer Information:");
+        builder.InsertField("MERGEFIELD FirstName");
         builder.Write(" ");
-        builder.InsertField("MERGEFIELD LastName", null);
-        builder.Writeln(); // New line for each record.
-
-        // End of the region.
-        builder.InsertField("MERGEFIELD TableEnd:Person", null);
+        builder.InsertField("MERGEFIELD LastName");
         builder.Writeln();
 
         // Prepare XML data.
-        string xmlData = @"
-<People>
-  <Person>
-    <FirstName>John</FirstName>
-    <LastName>Doe</LastName>
-  </Person>
-  <Person>
-    <FirstName>Jane</FirstName>
-    <LastName>Smith</LastName>
-  </Person>
-</People>";
-
+        string xmlContent = @"
+<Root>
+    <Person>
+        <FirstName>John</FirstName>
+        <LastName>Doe</LastName>
+    </Person>
+</Root>";
         // Load XML into a DataSet.
         DataSet dataSet = new DataSet();
-        using (MemoryStream stream = new MemoryStream(Encoding.UTF8.GetBytes(xmlData)))
+        using (MemoryStream ms = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(xmlContent)))
         {
-            dataSet.ReadXml(stream);
+            dataSet.ReadXml(ms);
         }
 
-        // Retrieve the DataTable that matches the region name.
+        // Retrieve the DataTable that matches the merge fields.
+        if (!dataSet.Tables.Contains("Person"))
+            throw new Exception("Expected table 'Person' not found in XML data.");
+
         DataTable personTable = dataSet.Tables["Person"];
-        if (personTable == null)
-            throw new InvalidOperationException("The required DataTable 'Person' was not found in the XML data.");
-
-        // Ensure the table has rows.
         if (personTable.Rows.Count == 0)
-            throw new InvalidOperationException("The DataTable 'Person' contains no rows to merge.");
+            throw new Exception("No data rows found for merge.");
 
-        // Perform region-based mail merge.
-        doc.MailMerge.CleanupOptions = MailMergeCleanupOptions.RemoveUnusedFields;
-        doc.MailMerge.ExecuteWithRegions(personTable);
+        // Perform mail merge using the DataTable.
+        template.MailMerge.CleanupOptions = MailMergeCleanupOptions.RemoveUnusedFields;
+        template.MailMerge.Execute(personTable);
 
-        // Save the merged document.
-        const string outputPath = "MergedOutput.docx";
-        doc.Save(outputPath);
+        // Save merged document.
+        string outputPath = "MergedOutput.docx";
+        template.Save(outputPath);
 
-        // Validate that the merged output contains expected values.
-        string mergedText = doc.GetText();
-        if (!mergedText.Contains("John") || !mergedText.Contains("Jane"))
-            throw new Exception("Mail merge failed: expected values were not found in the output.");
+        // Validate that the merged output contains the expected values.
+        Document resultDoc = new Document(outputPath);
+        string resultText = resultDoc.GetText();
 
-        // Optionally, indicate success (no interactive output required).
-        // The program ends here.
+        if (string.IsNullOrWhiteSpace(resultText) ||
+            !resultText.Contains("John") ||
+            !resultText.Contains("Doe"))
+        {
+            throw new Exception("Mail merge failed: merged content does not contain expected values.");
+        }
+
+        // Indicate success (no interactive output required, but we can write to console).
+        Console.WriteLine("Mail merge completed successfully. Output file: " + Path.GetFullPath(outputPath));
     }
 }
