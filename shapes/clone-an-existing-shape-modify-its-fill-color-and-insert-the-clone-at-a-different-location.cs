@@ -12,27 +12,30 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert an original rectangle shape.
-        builder.InsertShape(ShapeType.Rectangle, 150, 80);
-        // Retrieve the inserted shape.
-        Shape originalShape = (Shape)doc.GetChildNodes(NodeType.Shape, true)[0];
+        // Insert the original shape (a rectangle) and set its fill color.
+        Shape originalShape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
+        originalShape.FillColor = Color.LightGray;
 
-        // Clone the original shape (deep clone).
+        // Add a paragraph break to create a different location.
+        builder.Writeln();
+
+        // Clone the original shape.
         Shape clonedShape = (Shape)originalShape.Clone(true);
-        // Change the fill color of the cloned shape.
+
+        // Modify the fill color of the cloned shape.
         clonedShape.FillColor = Color.Blue;
 
-        // Move the builder to a new paragraph after the original shape.
-        builder.Writeln(); // creates a new paragraph.
-        // Append the cloned shape to the new paragraph.
-        builder.CurrentParagraph.AppendChild(clonedShape);
+        // Insert the cloned shape at the new location.
+        builder.InsertNode(clonedShape);
 
         // Save the document.
         string outputPath = "ClonedShape.docx";
         doc.Save(outputPath);
 
-        // Validate that the file was created.
+        // Validate that the file was saved.
         if (!File.Exists(outputPath))
-            throw new Exception($"Failed to create the output file: {outputPath}");
+        {
+            throw new Exception($"Failed to save the document to '{outputPath}'.");
+        }
     }
 }

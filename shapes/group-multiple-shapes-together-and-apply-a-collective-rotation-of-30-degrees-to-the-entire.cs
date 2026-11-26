@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -13,47 +12,49 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Ensure there is a paragraph to host the group shape.
-        Paragraph paragraph = builder.CurrentParagraph;
+        Paragraph para = new Paragraph(doc);
+        doc.FirstSection.Body.AppendChild(para);
 
-        // Create a GroupShape and set its size and position.
+        // Create a group shape.
         GroupShape group = new GroupShape(doc)
         {
-            Width = 300,
+            // Set size and position of the group.
+            Width = 200,
             Height = 200,
             Left = 100,
             Top = 100,
-            WrapType = WrapType.None
+            // Apply a collective rotation of 30 degrees.
+            Rotation = 30
         };
 
         // First shape: a rectangle.
         Shape rect = new Shape(doc, ShapeType.Rectangle)
         {
-            Width = 120,
+            Width = 80,
             Height = 80,
+            FillColor = System.Drawing.Color.LightBlue,
+            StrokeColor = System.Drawing.Color.Blue,
+            // Position relative to the group.
             Left = 0,
-            Top = 0,
-            StrokeColor = Color.Black,
-            FillColor = Color.LightBlue
+            Top = 0
         };
         group.AppendChild(rect);
 
         // Second shape: an ellipse.
         Shape ellipse = new Shape(doc, ShapeType.Ellipse)
         {
-            Width = 100,
-            Height = 100,
-            Left = 150,
-            Top = 50,
-            StrokeColor = Color.DarkGreen,
-            FillColor = Color.LightGreen
+            Width = 80,
+            Height = 80,
+            FillColor = System.Drawing.Color.LightCoral,
+            StrokeColor = System.Drawing.Color.Red,
+            // Position relative to the group.
+            Left = 120,
+            Top = 0
         };
         group.AppendChild(ellipse);
 
-        // Apply a collective rotation of 30 degrees to the entire group.
-        group.Rotation = 30;
-
         // Insert the group shape into the document.
-        paragraph.AppendChild(group);
+        para.AppendChild(group);
 
         // Save the document.
         string outputPath = "GroupedShapes.docx";

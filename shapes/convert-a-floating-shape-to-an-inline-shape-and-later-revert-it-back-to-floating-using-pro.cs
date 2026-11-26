@@ -3,53 +3,57 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class ShapeConversionExample
+public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a rectangle shape. By default InsertShape creates an inline shape,
-        // so we immediately change its properties to make it floating.
-        Shape floatingShape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
-        floatingShape.WrapType = WrapType.Square;                         // Floating wrap.
-        floatingShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        floatingShape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-        floatingShape.Left = 100; // Position from the left edge of the page.
-        floatingShape.Top = 100;  // Position from the top edge of the page.
+        // Insert a rectangle shape (initially inline).
+        Shape shape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
 
-        // Save the document that contains the floating shape.
-        string floatingPath = "FloatingShape.docx";
+        // Convert the shape to floating by setting wrapping and positioning.
+        shape.WrapType = WrapType.None;
+        shape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
+        shape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
+        shape.Left = 100;
+        shape.Top = 100;
+
+        // Save the document with the floating shape.
+        const string floatingPath = "FloatingShape.docx";
         doc.Save(floatingPath);
-        ValidateFileExists(floatingPath, "floating shape document");
+        ValidateFileExists(floatingPath);
 
-        // ----- Convert the floating shape to an inline shape -----
-        // Making a shape inline is done by setting its WrapType to Inline.
-        floatingShape.WrapType = WrapType.Inline;
+        // Convert the floating shape back to inline.
+        shape.WrapType = WrapType.Inline;
+        shape.RelativeHorizontalPosition = RelativeHorizontalPosition.Margin; // reset to default positioning
+        shape.RelativeVerticalPosition = RelativeVerticalPosition.Margin;   // reset to default positioning
+        shape.Left = 0;
+        shape.Top = 0;
 
-        // Save the document that now contains the shape as inline.
-        string inlinePath = "InlineShape.docx";
+        // Save the document with the inline shape.
+        const string inlinePath = "InlineShape.docx";
         doc.Save(inlinePath);
-        ValidateFileExists(inlinePath, "inline shape document");
+        ValidateFileExists(inlinePath);
 
-        // ----- Convert the inline shape back to a floating shape -----
-        floatingShape.WrapType = WrapType.Square;                         // Restore floating wrap.
-        floatingShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        floatingShape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-        floatingShape.Left = 150; // New horizontal position.
-        floatingShape.Top = 150;  // New vertical position.
+        // Revert the shape to floating again.
+        shape.WrapType = WrapType.None;
+        shape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
+        shape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
+        shape.Left = 150;
+        shape.Top = 150;
 
-        // Save the document with the restored floating shape.
-        string restoredPath = "RestoredFloatingShape.docx";
-        doc.Save(restoredPath);
-        ValidateFileExists(restoredPath, "restored floating shape document");
+        // Save the document with the shape floating again.
+        const string floatingAgainPath = "FloatingAgain.docx";
+        doc.Save(floatingAgainPath);
+        ValidateFileExists(floatingAgainPath);
     }
 
-    private static void ValidateFileExists(string path, string description)
+    private static void ValidateFileExists(string path)
     {
         if (!File.Exists(path))
-            throw new InvalidOperationException($"Failed to create the {description} at '{path}'.");
+            throw new InvalidOperationException($"The file '{path}' was not created.");
     }
 }

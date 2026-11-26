@@ -2,62 +2,70 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using System.Drawing;
 
-namespace SmartArtReplacementExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert a placeholder shape that will act as a SmartArt diagram.
+        // We set AlternativeText to identify it as SmartArt.
+        Shape placeholderSmartArt = builder.InsertShape(ShapeType.Rectangle, 300, 150);
+        placeholderSmartArt.AlternativeText = "SmartArt";
+        placeholderSmartArt.WrapType = WrapType.Inline;
+        placeholderSmartArt.StrokeColor = Color.Black;
+        placeholderSmartArt.FillColor = Color.LightBlue;
+
+        // Save the document with the original placeholder for reference.
+        string originalPath = "OriginalSmartArt.docx";
+        doc.Save(originalPath);
+
+        // Traverse all shapes in the document.
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+        int smartArtCount = 0;
+
+        foreach (Node node in shapeNodes)
         {
-            // Create a new document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            Shape shape = (Shape)node;
 
-            // Add a paragraph to describe the content.
-            builder.Writeln("Document with SmartArt placeholder:");
-
-            // Insert a rectangle shape that will act as a SmartArt placeholder.
-            // Use AlternativeText to mark it as SmartArt for detection later.
-            Shape smartArtPlaceholder = builder.InsertShape(ShapeType.Rectangle, 300, 200);
-            smartArtPlaceholder.AlternativeText = "SmartArt";
-            smartArtPlaceholder.Stroke.Color = System.Drawing.Color.DarkBlue;
-            smartArtPlaceholder.Fill.Color = System.Drawing.Color.LightBlue;
-
-            // Save an intermediate document (optional).
-            string intermediatePath = "Intermediate.docx";
-            doc.Save(intermediatePath);
-
-            // Traverse all shapes in the document.
-            NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-            foreach (Shape shape in shapeNodes)
+            // Detect our placeholder SmartArt via AlternativeText.
+            if (shape.AlternativeText == "SmartArt")
             {
-                // Detect shapes that were marked as SmartArt.
-                if (shape.AlternativeText == "SmartArt")
-                {
-                    // Create a replacement rectangle shape.
-                    Shape replacement = new Shape(doc, ShapeType.Rectangle);
-                    replacement.Width = shape.Width;
-                    replacement.Height = shape.Height;
-                    replacement.Left = shape.Left;
-                    replacement.Top = shape.Top;
-                    replacement.WrapType = shape.WrapType;
-                    replacement.Stroke.Color = System.Drawing.Color.Black;
-                    replacement.Fill.Color = System.Drawing.Color.LightGray;
+                smartArtCount++;
 
-                    // Insert the replacement after the original shape.
-                    shape.ParentNode.InsertAfter(replacement, shape);
-                    // Remove the original SmartArt placeholder.
-                    shape.Remove();
-                }
+                // Create a replacement shape (simple rectangle) with the same size.
+                Shape replacement = new Shape(doc, ShapeType.Rectangle);
+                replacement.Width = shape.Width;
+                replacement.Height = shape.Height;
+                replacement.WrapType = shape.WrapType;
+                replacement.RelativeHorizontalPosition = shape.RelativeHorizontalPosition;
+                replacement.RelativeVerticalPosition = shape.RelativeVerticalPosition;
+                replacement.Left = shape.Left;
+                replacement.Top = shape.Top;
+                replacement.StrokeColor = Color.Black;
+                replacement.FillColor = Color.LightGray;
+
+                // Insert the replacement after the original shape.
+                shape.ParentNode.InsertAfter(replacement, shape);
+                // Remove the original placeholder SmartArt shape.
+                shape.Remove();
             }
-
-            // Save the final document.
-            string outputPath = "Output.docx";
-            doc.Save(outputPath);
-
-            // Validate that the output file was created.
-            if (!File.Exists(outputPath))
-                throw new Exception($"Failed to create the output file: {outputPath}");
         }
+
+        // Validate that at least one SmartArt placeholder was replaced.
+        if (smartArtCount == 0)
+            throw new InvalidOperationException("No SmartArt placeholders were found to replace.");
+
+        // Save the modified document.
+        string outputPath = "ReplacedSmartArt.docx";
+        doc.Save(outputPath);
+
+        // Verify that the output file exists.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The output document was not created.", outputPath);
     }
 }

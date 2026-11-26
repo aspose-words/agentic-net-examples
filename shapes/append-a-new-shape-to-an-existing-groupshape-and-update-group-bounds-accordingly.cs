@@ -1,8 +1,8 @@
 using System;
+using System.Drawing;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Tables; // Required for NodeType
 
 public class Program
 {
@@ -13,53 +13,41 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert an empty paragraph to host the group shape.
-        Paragraph paragraph = new Paragraph(doc);
-        doc.FirstSection.Body.AppendChild(paragraph);
+        Paragraph para = builder.CurrentParagraph;
 
-        // Create a GroupShape and set its initial size and positioning.
-        GroupShape group = new GroupShape(doc)
-        {
-            Width = 300,
-            Height = 200,
-            WrapType = WrapType.None,
-            RelativeHorizontalPosition = RelativeHorizontalPosition.Margin,
-            RelativeVerticalPosition = RelativeVerticalPosition.Margin,
-            Left = 0,
-            Top = 0
-        };
+        // Create a GroupShape and add it to the document.
+        GroupShape group = new GroupShape(doc);
+        para.AppendChild(group);
 
-        // Append the group shape to the paragraph.
-        paragraph.AppendChild(group);
+        // Create an initial rectangle shape inside the group.
+        Shape rect1 = new Shape(doc, ShapeType.Rectangle);
+        rect1.Width = 100;
+        rect1.Height = 50;
+        rect1.Left = 0;
+        rect1.Top = 0;
+        rect1.StrokeColor = Color.Black;
+        rect1.FillColor = Color.LightBlue;
+        group.AppendChild(rect1);
 
-        // Add the first shape (a rectangle) to the group.
-        Shape rect = new Shape(doc, ShapeType.Rectangle)
-        {
-            Width = 100,
-            Height = 50,
-            Left = 0,
-            Top = 0,
-            FillColor = System.Drawing.Color.LightBlue,
-            StrokeColor = System.Drawing.Color.DarkBlue
-        };
-        group.AppendChild(rect);
-
-        // Update the group bounds after adding the first shape.
-        UpdateGroupShapeBounds(group);
-
-        // Append a new shape (an ellipse) to the existing group.
-        Shape ellipse = new Shape(doc, ShapeType.Ellipse)
-        {
-            Width = 80,
-            Height = 80,
-            Left = 120,
-            Top = 30,
-            FillColor = System.Drawing.Color.LightCoral,
-            StrokeColor = System.Drawing.Color.Maroon
-        };
+        // Append a new shape (ellipse) to the existing GroupShape.
+        Shape ellipse = new Shape(doc, ShapeType.Ellipse);
+        ellipse.Width = 80;
+        ellipse.Height = 80;
+        // Position the new shape within the group.
+        ellipse.Left = 120;
+        ellipse.Top = 20;
+        ellipse.StrokeColor = Color.DarkGreen;
+        ellipse.FillColor = Color.LightGreen;
         group.AppendChild(ellipse);
 
-        // Update the group bounds to encompass the newly added shape.
-        UpdateGroupShapeBounds(group);
+        // Recalculate the bounds of the group to encompass all child shapes.
+        RectangleF newBounds = CalculateGroupBounds(group);
+
+        // Update the group's size and position based on the calculated bounds.
+        group.Width = newBounds.Width;
+        group.Height = newBounds.Height;
+        group.Left = newBounds.Left;
+        group.Top = newBounds.Top;
 
         // Save the document.
         string outputPath = "GroupShapeExample.docx";
@@ -67,27 +55,21 @@ public class Program
 
         // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not created.");
-
-        Console.WriteLine("Document created successfully: " + Path.GetFullPath(outputPath));
+            throw new Exception($"Failed to create the output file: {outputPath}");
     }
 
-    // Calculates the bounding rectangle of all child shapes and updates the group's size.
-    private static void UpdateGroupShapeBounds(GroupShape group)
+    // Helper method to compute the union of bounds of all child shapes in a group.
+    private static RectangleF CalculateGroupBounds(GroupShape group)
     {
-        double maxRight = 0;
-        double maxBottom = 0;
-
-        foreach (Shape child in group.GetChildNodes(NodeType.Shape, true))
+        RectangleF bounds = RectangleF.Empty;
+        foreach (Shape child in group.GetChildNodes(NodeType.Shape, false))
         {
-            double right = child.Left + child.Width;
-            double bottom = child.Top + child.Height;
-
-            if (right > maxRight) maxRight = right;
-            if (bottom > maxBottom) maxBottom = bottom;
+            RectangleF childBounds = child.Bounds;
+            if (bounds.IsEmpty)
+                bounds = childBounds;
+            else
+                bounds = RectangleF.Union(bounds, childBounds);
         }
-
-        group.Width = maxRight;
-        group.Height = maxBottom;
+        return bounds;
     }
 }

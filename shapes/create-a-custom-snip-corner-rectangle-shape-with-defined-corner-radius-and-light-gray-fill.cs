@@ -12,20 +12,15 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Define shape dimensions (points).
-        double shapeWidth = 200;
-        double shapeHeight = 100;
+        // Insert a rectangle shape (used as a snip‑corner rectangle) with specific size.
+        Shape snipRect = builder.InsertShape(ShapeType.Rectangle, 200, 100);
 
-        // Insert a rectangle shape. Rounded corners are not directly supported in this version,
-        // so we use a regular rectangle and apply the required fill and border.
-        Shape rectShape = builder.InsertShape(ShapeType.Rectangle, shapeWidth, shapeHeight);
+        // Apply a light gray fill.
+        snipRect.FillColor = Color.LightGray;
 
-        // Set a light gray fill.
-        rectShape.FillColor = Color.LightGray;
-
-        // Optional: set a thin black border.
-        rectShape.StrokeColor = Color.Black;
-        rectShape.StrokeWeight = 0.5;
+        // Optional: set a visible border.
+        snipRect.StrokeColor = Color.Black;
+        snipRect.StrokeWeight = 1.0; // line width in points
 
         // Save the document.
         string outputPath = "CustomSnipCornerRectangle.docx";
@@ -34,7 +29,7 @@ public class Program
         // Validate that the file was created.
         if (!File.Exists(outputPath))
         {
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+            throw new Exception($"Failed to create the output file: {outputPath}");
         }
     }
 }

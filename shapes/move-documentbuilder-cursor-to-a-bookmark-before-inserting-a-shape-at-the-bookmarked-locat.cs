@@ -9,20 +9,21 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Insert a paragraph with a bookmark where the shape will be placed.
         DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert a paragraph with a bookmark named "MyBookmark".
         builder.StartBookmark("MyBookmark");
-        builder.Writeln("Text before the shape.");
+        builder.Writeln("This is the bookmarked location.");
         builder.EndBookmark("MyBookmark");
 
         // Move the builder cursor to the bookmark.
         builder.MoveToBookmark("MyBookmark");
 
         // Insert a rectangle shape at the bookmark location.
+        // Width = 100 points, Height = 50 points.
         builder.InsertShape(ShapeType.Rectangle, 100, 50);
 
-        // Save the document.
+        // Save the document to a file.
         string outputPath = "Output.docx";
         doc.Save(outputPath);
 
@@ -31,8 +32,5 @@ public class Program
         {
             throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
         }
-
-        // Optionally, clean up (not required for this example).
-        // Console.WriteLine("Document created successfully.");
     }
 }

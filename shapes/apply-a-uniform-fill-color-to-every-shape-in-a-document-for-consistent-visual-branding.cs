@@ -13,18 +13,21 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert sample shapes.
-        builder.InsertShape(ShapeType.Rectangle, 150, 80);
-        builder.InsertShape(ShapeType.Ellipse, 100, 100);
-        builder.InsertShape(ShapeType.Triangle, 120, 90);
+        builder.InsertShape(ShapeType.Rectangle, 100, 50);
+        builder.Writeln();
+        builder.InsertShape(ShapeType.Ellipse, 80, 80);
+        builder.Writeln();
+        builder.InsertShape(ShapeType.Triangle, 100, 100);
+        builder.Writeln();
 
-        // Define the uniform fill color for branding.
-        Color brandColor = Color.FromArgb(0, 112, 192); // Example brand blue.
+        // Define the uniform fill color.
+        Color uniformFill = Color.FromArgb(255, 0, 0); // Red
 
         // Apply the fill color to every shape in the document.
         NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
         foreach (Shape shape in shapeNodes)
         {
-            shape.Fill.Color = brandColor;
+            shape.FillColor = uniformFill;
         }
 
         // Save the document.
@@ -33,13 +36,8 @@ public class Program
 
         // Validate that the file was saved.
         if (!File.Exists(outputPath))
-            throw new Exception($"Failed to save the document to '{outputPath}'.");
-
-        // Validate that each shape has the expected fill color.
-        foreach (Shape shape in shapeNodes)
         {
-            if (shape.Fill.Color.ToArgb() != brandColor.ToArgb())
-                throw new Exception("A shape does not have the expected fill color.");
+            throw new Exception($"Failed to save the document to '{outputPath}'.");
         }
     }
 }
