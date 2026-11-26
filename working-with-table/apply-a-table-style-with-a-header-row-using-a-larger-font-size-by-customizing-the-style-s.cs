@@ -11,28 +11,25 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple table with a header row and two data rows.
+        // Create a custom table style with a larger font size.
+        Style tableStyle = doc.Styles.Add(StyleType.Table, "MyTableStyle");
+        tableStyle.Font.Size = 16; // larger font size for the whole table
+
+        // Build a table with a header row.
         builder.StartTable();
 
-        // Header row.
+        // Header row
         builder.InsertCell();
         builder.Write("Header 1");
         builder.InsertCell();
         builder.Write("Header 2");
         builder.EndRow();
 
-        // First data row.
+        // Data row
         builder.InsertCell();
-        builder.Write("Row 1, Cell 1");
+        builder.Write("Cell 1");
         builder.InsertCell();
-        builder.Write("Row 1, Cell 2");
-        builder.EndRow();
-
-        // Second data row.
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 1");
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 2");
+        builder.Write("Cell 2");
         builder.EndRow();
 
         builder.EndTable();
@@ -40,23 +37,21 @@ public class Program
         // Retrieve the created table.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // Create a custom table style.
-        Style customStyle = doc.Styles.Add(StyleType.Table, "MyCustomTableStyle");
-        // Increase the font size for the style (applies to all text using the style).
-        customStyle.Font.Size = 16; // points
-
-        // Apply the custom style to the table.
-        table.Style = customStyle; // Assign the Style object, not its name.
-
-        // Mark the first row as a header row so it receives header formatting.
+        // Apply the custom style and mark the first row as a header row.
+        table.Style = tableStyle;
         table.StyleOptions = TableStyleOptions.FirstRow;
 
         // Save the document.
-        string outputPath = "TableStyleExample.docx";
+        string outputPath = "TableWithHeader.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not saved correctly.");
+        {
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+        }
+
+        // Confirmation.
+        Console.WriteLine($"Document saved successfully to '{Path.GetFullPath(outputPath)}'.");
     }
 }

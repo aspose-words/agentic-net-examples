@@ -7,14 +7,14 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a table with three columns.
+        // Start a table with three columns.
         builder.StartTable();
 
-        // First row – header cells.
+        // First row (header).
         builder.InsertCell();
         builder.Writeln("Column 1");
         builder.InsertCell();
@@ -23,34 +23,36 @@ public class Program
         builder.Writeln("Column 3");
         builder.EndRow();
 
-        // Second row – data cells.
+        // Second row (data).
         builder.InsertCell();
-        builder.Writeln("Data 1");
+        builder.Writeln("Data A");
         builder.InsertCell();
-        builder.Writeln("Data 2");
+        builder.Writeln("Data B");
         builder.InsertCell();
-        builder.Writeln("Data 3");
+        builder.Writeln("Data C");
         builder.EndRow();
 
         // End the table.
         builder.EndTable();
 
         // Retrieve the created table.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
-        // Define explicit column widths (in points).
-        double[] columnWidths = { 100.0, 150.0, 200.0 };
-
-        // Apply the widths to the cells of the first row – this defines column widths.
-        Row firstRow = table.FirstRow;
-        for (int i = 0; i < firstRow.Cells.Count && i < columnWidths.Length; i++)
-        {
-            Cell cell = firstRow.Cells[i];
-            cell.CellFormat.Width = columnWidths[i];
-        }
-
-        // Disable AutoFit to enforce a fixed layout.
+        // Disable automatic fitting to use a fixed layout.
         table.AllowAutoFit = false;
+
+        // Set explicit column widths (in points).
+        // Column 1 width = 100 points, Column 2 = 150 points, Column 3 = 200 points.
+        double[] columnWidths = { 100, 150, 200 };
+
+        foreach (Row row in table.Rows)
+        {
+            for (int i = 0; i < row.Cells.Count; i++)
+            {
+                Cell cell = row.Cells[i];
+                cell.CellFormat.PreferredWidth = PreferredWidth.FromPoints(columnWidths[i]);
+            }
+        }
 
         // Save the document.
         string outputPath = "FixedLayoutTable.docx";
@@ -58,9 +60,11 @@ public class Program
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not created.");
+        {
+            throw new Exception($"Failed to create the output file: {outputPath}");
+        }
 
-        // Inform that the process completed.
-        Console.WriteLine("Document saved to " + Path.GetFullPath(outputPath));
+        // Confirmation message.
+        Console.WriteLine($"Document saved successfully to '{Path.GetFullPath(outputPath)}'.");
     }
 }

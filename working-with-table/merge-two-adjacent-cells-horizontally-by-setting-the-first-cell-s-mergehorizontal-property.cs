@@ -11,37 +11,33 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple table with two adjacent cells.
+        // Build a table with two cells in a single row.
         builder.StartTable();
-
-        // First cell.
         builder.InsertCell();
-        builder.Writeln("Cell 1");
-
-        // Second cell.
+        builder.Writeln("Merged Cell");
         builder.InsertCell();
-        builder.Writeln("Cell 2");
-
-        // Complete the row and the table.
+        builder.Writeln("Second Cell");
         builder.EndRow();
         builder.EndTable();
 
-        // Retrieve the created table and its first row.
+        // Retrieve the created table.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        Row row = table.Rows[0];
+        Row row = table.FirstRow;
         Cell firstCell = row.Cells[0];
         Cell secondCell = row.Cells[1];
 
-        // Merge the two cells horizontally.
+        // Merge the two adjacent cells horizontally.
         firstCell.CellFormat.HorizontalMerge = CellMerge.First;
         secondCell.CellFormat.HorizontalMerge = CellMerge.Previous;
 
-        // Save the document to disk.
-        string outputPath = "MergedCells.docx";
-        doc.Save(outputPath);
+        // Save the document.
+        string fileName = "MergedTable.docx";
+        doc.Save(fileName);
 
-        // Simple validation that the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("The output document was not saved correctly.");
+        // Verify that the file was created.
+        if (!File.Exists(fileName))
+            throw new Exception("Failed to create the output document.");
+
+        Console.WriteLine($"Document '{fileName}' created with merged cells.");
     }
 }

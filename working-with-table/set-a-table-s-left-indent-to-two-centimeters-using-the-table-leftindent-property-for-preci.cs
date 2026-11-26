@@ -11,38 +11,44 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table.
+        // Build a simple 2x2 table.
         builder.StartTable();
 
-        // Insert first cell with some text.
+        // First row, first cell.
         builder.InsertCell();
-        builder.Writeln("Cell 1");
+        builder.Writeln("Cell 1,1");
 
-        // Insert second cell with some text.
+        // First row, second cell.
         builder.InsertCell();
-        builder.Writeln("Cell 2");
-
-        // End the row.
+        builder.Writeln("Cell 1,2");
         builder.EndRow();
 
-        // End the table.
+        // Second row, first cell.
+        builder.InsertCell();
+        builder.Writeln("Cell 2,1");
+
+        // Second row, second cell.
+        builder.InsertCell();
+        builder.Writeln("Cell 2,2");
+        builder.EndRow();
+
+        // End the table construction.
         builder.EndTable();
 
-        // Retrieve the created table.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (table == null)
-            throw new InvalidOperationException("Table was not created.");
+        // Retrieve the created table (first table in the document).
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
-        // Set left indent to 2 centimeters (approximately 56.6929 points).
-        const float centimetersToPoints = 72f / 2.54f; // points per centimeter
-        table.LeftIndent = 2 * centimetersToPoints;
+        // Set the left indent to two centimeters.
+        // 1 centimeter = 28.3464567 points.
+        double twoCentimetersInPoints = 2 * 28.3464567;
+        table.LeftIndent = twoCentimetersInPoints;
 
-        // Save the document.
+        // Save the document to a file.
         string outputPath = "TableIndent.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was saved.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output file was not created.", outputPath);
+            throw new Exception("The output document was not saved correctly.");
     }
 }

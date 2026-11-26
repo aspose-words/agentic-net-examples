@@ -1,77 +1,87 @@
 using System;
-using System.Linq;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace TableSplitExample
 {
-    public static void Main()
+    class Program
     {
-        // Create a new document and a builder.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Build a table with 9 rows, each row contains a single cell with text.
-        builder.StartTable();
-        for (int i = 1; i <= 9; i++)
+        static void Main()
         {
-            builder.InsertCell();
-            builder.Writeln($"Row {i}");
-            builder.EndRow();
+            // Create a new document and a DocumentBuilder.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Build a sample table with 9 rows and 2 columns.
+            builder.StartTable();
+            for (int row = 0; row < 9; row++)
+            {
+                // First cell.
+                builder.InsertCell();
+                builder.Writeln($"Row {row + 1}, Cell 1");
+
+                // Second cell.
+                builder.InsertCell();
+                builder.Writeln($"Row {row + 1}, Cell 2");
+
+                // End the current row.
+                builder.EndRow();
+            }
+            builder.EndTable();
+
+            // Retrieve the first (and only) table in the document.
+            Table firstTable = (Table)doc.GetChild(NodeType.Table, 0, true);
+
+            // ---- First split ----
+            // Split the table so that rows 4‑9 (indices 3‑8) become a new table.
+            Table secondTable = SplitTable(firstTable, 3, firstTable.Rows.Count - 1);
+
+            // ---- Second split ----
+            // Split the second table so that its rows 7‑9 (indices 3‑5) become a new table.
+            Table thirdTable = SplitTable(secondTable, 3, secondTable.Rows.Count - 1);
+
+            // Save the resulting document.
+            string outputPath = "SplitTable.docx";
+            doc.Save(outputPath);
+
+            // Simple validation that the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException("The output file was not created.");
         }
-        builder.EndTable();
 
-        // Retrieve the first (and only) table in the document.
-        Table originalTable = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (originalTable == null)
-            throw new InvalidOperationException("Table was not created.");
+        /// <summary>
+        /// Splits a table by moving rows from startRowIndex to endRowIndex (inclusive)
+        /// into a newly created table that is inserted immediately after the source table.
+        /// </summary>
+        /// <param name="source">The table to split.</param>
+        /// <param name="startRowIndex">Zero‑based index of the first row to move.</param>
+        /// <param name="endRowIndex">Zero‑based index of the last row to move.</param>
+        /// <returns>The newly created table containing the moved rows.</returns>
+        private static Table SplitTable(Table source, int startRowIndex, int endRowIndex)
+        {
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (startRowIndex < 0 || endRowIndex >= source.Rows.Count || startRowIndex > endRowIndex)
+                throw new ArgumentOutOfRangeException("Invalid row indices for split.");
 
-        // Store the rows for easier processing.
-        var rows = originalTable.Rows.Cast<Row>().ToList();
+            // Clone the source table without its rows to preserve formatting.
+            Table newTable = (Table)source.Clone(false);
 
-        // Create three new tables that are clones of the original table structure (without rows).
-        Table firstPart = (Table)originalTable.Clone(false);
-        Table middlePart = (Table)originalTable.Clone(false);
-        Table lastPart = (Table)originalTable.Clone(false);
+            // Move rows from the source to the new table.
+            // Iterate backwards to avoid index shifting when removing rows.
+            for (int i = endRowIndex; i >= startRowIndex; i--)
+            {
+                Row row = source.Rows[i];
+                Row clonedRow = (Row)row.Clone(true);
+                // Insert at the beginning of the new table to keep original order.
+                newTable.Rows.Insert(0, clonedRow);
+                // Remove the row from the original table.
+                source.Rows.RemoveAt(i);
+            }
 
-        // Add rows 0‑2 to the first part.
-        for (int i = 0; i <= 2; i++)
-            firstPart.Rows.Add((Row)rows[i].Clone(true));
-
-        // Add rows 3‑5 to the middle part.
-        for (int i = 3; i <= 5; i++)
-            middlePart.Rows.Add((Row)rows[i].Clone(true));
-
-        // Add rows 6‑8 to the last part.
-        for (int i = 6; i <= 8; i++)
-            lastPart.Rows.Add((Row)rows[i].Clone(true));
-
-        // Insert the new tables into the document at the position of the original table.
-        CompositeNode parent = originalTable.ParentNode as CompositeNode;
-        if (parent == null)
-            throw new InvalidOperationException("Unable to locate a valid parent node for insertion.");
-
-        // Insert after the original table in reverse order so the final order is correct.
-        parent.InsertAfter(lastPart, originalTable);
-        parent.InsertAfter(middlePart, originalTable);
-        parent.InsertAfter(firstPart, originalTable);
-
-        // Remove the original table.
-        originalTable.Remove();
-
-        // Validate that the document now contains three separate tables.
-        NodeCollection allTables = doc.GetChildNodes(NodeType.Table, true);
-        if (allTables.Count != 3)
-            throw new InvalidOperationException($"Expected 3 tables after splitting, but found {allTables.Count}.");
-
-        // Output row counts of each resulting table to the console.
-        Console.WriteLine($"First part rows: {((Table)allTables[0]).Rows.Count}");
-        Console.WriteLine($"Second part rows: {((Table)allTables[1]).Rows.Count}");
-        Console.WriteLine($"Third part rows: {((Table)allTables[2]).Rows.Count}");
-
-        // Save the resulting document.
-        string outputPath = "SplitTable.docx";
-        doc.Save(outputPath);
-        Console.WriteLine($"Document saved to {outputPath}");
+            // Insert the new table right after the source table in the document.
+            source.ParentNode.InsertAfter(newTable, source);
+            return newTable;
+        }
     }
 }

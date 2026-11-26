@@ -11,37 +11,41 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
+        // Build a simple 2x2 table.
         builder.StartTable();
 
-        // Add three rows with one cell each.
-        for (int i = 1; i <= 3; i++)
-        {
-            builder.InsertCell();
-            builder.Writeln($"Row {i}, Cell 1");
-            builder.EndRow();
-        }
+        // First row.
+        builder.InsertCell();
+        builder.Writeln("Row 1, Cell 1");
+        builder.InsertCell();
+        builder.Writeln("Row 1, Cell 2");
+        builder.EndRow();
 
-        // End the table.
+        // Second row.
+        builder.InsertCell();
+        builder.Writeln("Row 2, Cell 1");
+        builder.InsertCell();
+        builder.Writeln("Row 2, Cell 2");
+        builder.EndRow();
+
+        // Finish the table.
         builder.EndTable();
 
         // Retrieve the created table.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (table == null)
-            throw new InvalidOperationException("Table was not created.");
 
-        // Prevent each row from breaking across pages.
+        // Prevent rows from breaking across pages.
         foreach (Row row in table.Rows)
         {
             row.RowFormat.AllowBreakAcrossPages = false;
         }
 
-        // Save the document.
-        string outputPath = "PreventRowBreak.docx";
+        // Save the document to disk.
+        string outputPath = "PreventRowDeletion.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was saved.
+        // Simple validation that the file was saved.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not created.", outputPath);
+            throw new Exception("The output document was not created.");
     }
 }

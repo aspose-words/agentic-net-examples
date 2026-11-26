@@ -9,41 +9,41 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Use DocumentBuilder to construct the table.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a large table. No explicit layout disabling APIs are needed;
-        // Aspose.Words automatically defers layout calculations until the document is saved or UpdatePageLayout is called.
+        // Begin the table.
         builder.StartTable();
 
-        // Header row.
-        builder.InsertCell();
-        builder.Write("Header 1");
-        builder.InsertCell();
-        builder.Write("Header 2");
-        builder.EndRow();
+        int rows = 1000;   // Large number of rows.
+        int columns = 5;   // Number of columns.
 
-        // Add many data rows.
-        for (int i = 0; i < 2000; i++)
+        // Populate the table with cells containing simple text.
+        for (int i = 0; i < rows; i++)
         {
-            builder.InsertCell();
-            builder.Write($"Row {i + 1} Col 1");
-            builder.InsertCell();
-            builder.Write($"Row {i + 1} Col 2");
+            for (int j = 0; j < columns; j++)
+            {
+                builder.InsertCell();
+                builder.Writeln($"R{i + 1}C{j + 1}");
+            }
+
+            // End the current row.
             builder.EndRow();
         }
 
         // End the table.
         builder.EndTable();
 
-        // Force a layout refresh now that the table is complete.
+        // Force a layout pass after all modifications.
         doc.UpdatePageLayout();
 
         // Save the document.
-        string outputPath = "LargeTable.docx";
+        string outputPath = "OptimizedTable.docx";
         doc.Save(outputPath);
 
-        // Simple validation that the file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("Document was not saved correctly.");
+            throw new Exception("The document was not saved correctly.");
     }
 }

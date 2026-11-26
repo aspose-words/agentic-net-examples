@@ -24,22 +24,21 @@ public class Program
         }
         builder.EndTable();
 
-        // Retrieve the created table.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        // Retrieve the created table (first table in the document).
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
-        // Get page setup information from the first section.
+        // Get page setup values (in points).
         PageSetup pageSetup = doc.FirstSection.PageSetup;
-        // Cast to float because PageWidth, LeftMargin and RightMargin are double in this version.
-        float pageWidth = (float)pageSetup.PageWidth;          // Total page width in points.
-        float leftMargin = (float)pageSetup.LeftMargin;        // Left margin in points.
-        float rightMargin = (float)pageSetup.RightMargin;      // Right margin in points.
+        double pageWidth = pageSetup.PageWidth;
+        double leftMargin = pageSetup.LeftMargin;
+        double rightMargin = pageSetup.RightMargin;
 
-        // Calculate the width that fits exactly between the margins.
-        float availableWidth = pageWidth - leftMargin - rightMargin;
+        // Align table left edge with left margin.
+        table.LeftIndent = leftMargin;
 
-        // Align the table with page margins.
-        table.LeftIndent = leftMargin;                                   // Align left side.
-        table.PreferredWidth = PreferredWidth.FromPoints(availableWidth); // Set width to fill the space.
+        // Set table width so that its right edge aligns with the right margin.
+        double tableWidth = pageWidth - leftMargin - rightMargin;
+        table.PreferredWidth = PreferredWidth.FromPoints(tableWidth);
 
         // Save the document.
         string outputPath = "TableMargins.docx";
@@ -47,9 +46,8 @@ public class Program
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("Failed to create the output document.");
+            throw new InvalidOperationException("The output document was not created.");
 
-        // Inform that the process completed.
-        Console.WriteLine($"Document saved to '{Path.GetFullPath(outputPath)}'.");
+        // End of example.
     }
 }

@@ -7,57 +7,58 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder to construct content.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a table with three rows and two columns.
+        // Build a simple 3‑row, 2‑column table.
         builder.StartTable();
 
         // Row 0
         builder.InsertCell();
-        builder.Write("Row 0, Cell 0");
+        builder.Write("R0C0");
         builder.InsertCell();
-        builder.Write("Row 0, Cell 1");
+        builder.Write("R0C1");
         builder.EndRow();
 
-        // Row 1
+        // Row 1 (the row we will delete)
         builder.InsertCell();
-        builder.Write("Row 1, Cell 0");
+        builder.Write("R1C0");
         builder.InsertCell();
-        builder.Write("Row 1, Cell 1");
+        builder.Write("R1C1");
         builder.EndRow();
 
         // Row 2
         builder.InsertCell();
-        builder.Write("Row 2, Cell 0");
+        builder.Write("R2C0");
         builder.InsertCell();
-        builder.Write("Row 2, Cell 1");
+        builder.Write("R2C1");
         builder.EndRow();
 
+        // Finish the table.
         builder.EndTable();
 
         // Retrieve the first table in the document.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
 
-        // Delete the second row (index 1) using Table.Rows[index].Remove().
-        if (table.Rows.Count > 1)
-        {
-            table.Rows[1].Remove();
-        }
-        else
-        {
-            throw new InvalidOperationException("The table does not contain enough rows to delete the specified row.");
-        }
+        // Remember original row count.
+        int originalRowCount = table.Rows.Count;
+
+        // Delete the second row (index 1).
+        table.Rows[1].Remove();
+
+        // Verify that the row count decreased by one.
+        if (table.Rows.Count != originalRowCount - 1)
+            throw new InvalidOperationException("Row removal failed.");
 
         // Save the modified document.
-        string outputPath = "Output.docx";
+        string outputPath = "DeletedRow.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was saved successfully.
+        // Confirm that the file was created.
         if (!File.Exists(outputPath))
-        {
-            throw new IOException("The document was not saved correctly.");
-        }
+            throw new FileNotFoundException("The output file was not saved.", outputPath);
     }
 }

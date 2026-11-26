@@ -1,60 +1,67 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace TableInsertionExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new document that will contain the heading.
-        Document mainDoc = new Document();
-        DocumentBuilder mainBuilder = new DocumentBuilder(mainDoc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a heading paragraph (Heading 1 style).
-        mainBuilder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        mainBuilder.Writeln("Sample Heading");
+            // Insert a heading paragraph.
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+            builder.Writeln("Sample Heading");
 
-        // Locate the heading paragraph node.
-        Paragraph headingParagraph = (Paragraph)mainDoc.GetChild(NodeType.Paragraph, 0, true);
-        if (headingParagraph == null || headingParagraph.ParagraphFormat.StyleIdentifier != StyleIdentifier.Heading1)
-            throw new InvalidOperationException("Heading paragraph not found.");
+            // Locate the heading paragraph we just added.
+            Paragraph headingParagraph = doc.GetChildNodes(NodeType.Paragraph, true)
+                .Cast<Paragraph>()
+                .First(p => p.ParagraphFormat.StyleIdentifier == StyleIdentifier.Heading1);
 
-        // Create a separate temporary document to build the table.
-        Document tempDoc = new Document();
-        DocumentBuilder tableBuilder = new DocumentBuilder(tempDoc);
+            // Build a simple 2x2 table.
+            Table table = new Table(doc);
 
-        // Build a simple 2x2 table.
-        tableBuilder.StartTable();
+            // First row.
+            Row row1 = new Row(doc);
+            Cell cell11 = new Cell(doc);
+            cell11.AppendChild(new Paragraph(doc));
+            cell11.FirstParagraph.AppendChild(new Run(doc, "Cell 1"));
+            row1.AppendChild(cell11);
 
-        tableBuilder.InsertCell();
-        tableBuilder.Write("Cell 1");
-        tableBuilder.EndRow();
+            Cell cell12 = new Cell(doc);
+            cell12.AppendChild(new Paragraph(doc));
+            cell12.FirstParagraph.AppendChild(new Run(doc, "Cell 2"));
+            row1.AppendChild(cell12);
+            table.AppendChild(row1);
 
-        tableBuilder.InsertCell();
-        tableBuilder.Write("Cell 2");
-        tableBuilder.EndRow();
+            // Second row.
+            Row row2 = new Row(doc);
+            Cell cell21 = new Cell(doc);
+            cell21.AppendChild(new Paragraph(doc));
+            cell21.FirstParagraph.AppendChild(new Run(doc, "Cell 3"));
+            row2.AppendChild(cell21);
 
-        tableBuilder.EndTable();
+            Cell cell22 = new Cell(doc);
+            cell22.AppendChild(new Paragraph(doc));
+            cell22.FirstParagraph.AppendChild(new Run(doc, "Cell 4"));
+            row2.AppendChild(cell22);
+            table.AppendChild(row2);
 
-        // Retrieve the created table from the temporary document.
-        Table sourceTable = (Table)tempDoc.GetChild(NodeType.Table, 0, true);
-        if (sourceTable == null)
-            throw new InvalidOperationException("Table was not created.");
+            // Insert the table after the heading paragraph.
+            headingParagraph.ParentNode.InsertAfter(table, headingParagraph);
 
-        // Import the table into the main document.
-        NodeImporter importer = new NodeImporter(tempDoc, mainDoc, ImportFormatMode.KeepSourceFormatting);
-        Table importedTable = (Table)importer.ImportNode(sourceTable, true);
+            // Save the document.
+            string outputPath = "Output.docx";
+            doc.Save(outputPath);
 
-        // Insert the imported table after the heading paragraph.
-        headingParagraph.ParentNode.InsertAfter(importedTable, headingParagraph);
-
-        // Save the resulting document.
-        string outputPath = "Output.docx";
-        mainDoc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not saved.", outputPath);
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new Exception("The output document was not saved correctly.");
+        }
     }
 }

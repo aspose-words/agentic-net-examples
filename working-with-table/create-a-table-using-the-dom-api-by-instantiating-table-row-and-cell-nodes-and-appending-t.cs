@@ -10,50 +10,47 @@ public class Program
         // Create a new empty document.
         Document doc = new Document();
 
-        // Create a new table node.
-        Table table = new Table(doc);
+        // Use DocumentBuilder to construct the table (preferred workflow).
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a 2x3 table (2 rows, 3 columns).
-        for (int rowIndex = 0; rowIndex < 2; rowIndex++)
-        {
-            // Create a new row.
-            Row row = new Row(doc);
+        // Start the table.
+        builder.StartTable();
 
-            for (int colIndex = 0; colIndex < 3; colIndex++)
-            {
-                // Create a new cell.
-                Cell cell = new Cell(doc);
+        // ----- First row -----
+        // First cell.
+        builder.InsertCell();
+        builder.Write("Row 1, Cell 1");
 
-                // Add a paragraph with some text to the cell.
-                Paragraph para = new Paragraph(doc);
-                Run run = new Run(doc, $"Row {rowIndex + 1}, Cell {colIndex + 1}");
-                para.AppendChild(run);
-                cell.AppendChild(para);
+        // Second cell.
+        builder.InsertCell();
+        builder.Write("Row 1, Cell 2");
 
-                // Append the cell to the row.
-                row.AppendChild(cell);
-            }
+        // End the first row.
+        builder.EndRow();
 
-            // Append the row to the table.
-            table.AppendChild(row);
-        }
+        // ----- Second row -----
+        // First cell.
+        builder.InsertCell();
+        builder.Write("Row 2, Cell 1");
 
-        // Append the table to the document's first section body.
-        doc.FirstSection.Body.AppendChild(table);
+        // Second cell.
+        builder.InsertCell();
+        builder.Write("Row 2, Cell 2");
 
-        // Define output file path.
-        string outputPath = "TableCreated.docx";
+        // End the second row.
+        builder.EndRow();
 
-        // Save the document.
+        // End the table.
+        builder.EndTable();
+
+        // Save the document to a file.
+        string outputPath = "CreatedTable.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
         {
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+            throw new Exception("The output document was not created.");
         }
-
-        // Optionally, inform that the process completed.
-        Console.WriteLine($"Document saved successfully to '{outputPath}'.");
     }
 }

@@ -7,46 +7,46 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document.
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a caption above the table: "Table 1 Above".
-        // Use a field to generate the table number automatically.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Caption;
+        // Insert a caption above the table with label "Table" and automatic numbering.
+        // Since InsertCaption is not available, we build the caption manually.
+        builder.Write("Table ");
+        // Insert a SEQ field that will generate the table number.
         builder.InsertField("SEQ Table \\* ARABIC", "1");
-        builder.Write(" Above");
-        builder.Writeln(); // Move to the next paragraph.
+        builder.Write(". Sample data");
+        builder.Writeln(); // Move to a new paragraph after the caption.
 
         // Build a simple 2x2 table.
         builder.StartTable();
 
-        // Header row.
+        // First row (header).
         builder.InsertCell();
         builder.Writeln("Header 1");
         builder.InsertCell();
         builder.Writeln("Header 2");
         builder.EndRow();
 
-        // Data row.
+        // Second row (data).
         builder.InsertCell();
         builder.Writeln("Cell 1");
         builder.InsertCell();
         builder.Writeln("Cell 2");
         builder.EndRow();
 
-        // End the table.
         builder.EndTable();
 
         // Save the document.
-        string fileName = "TableWithCaption.docx";
-        doc.Save(fileName);
+        string outputPath = "TableWithCaption.docx";
+        doc.Save(outputPath);
 
         // Verify that the file was created.
-        if (!File.Exists(fileName))
+        if (!File.Exists(outputPath))
             throw new Exception("The output document was not created.");
 
         // Indicate successful completion.
-        Console.WriteLine($"Document saved to: {Path.GetFullPath(fileName)}");
+        Console.WriteLine($"Document saved to {Path.GetFullPath(outputPath)}");
     }
 }

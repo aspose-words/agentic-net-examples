@@ -11,50 +11,51 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
+        // Build a table with three rows: header, data, and a conditional row.
         builder.StartTable();
 
         // Header row.
         builder.InsertCell();
-        builder.Write("Item");
+        builder.Writeln("Item");
         builder.InsertCell();
-        builder.Write("Value");
+        builder.Writeln("Amount");
         builder.EndRow();
 
-        // Data row with a MERGEFIELD for the value.
+        // Data row with a MERGEFIELD for the amount value.
         builder.InsertCell();
-        builder.Write("Sample");
+        builder.Writeln("Sample");
         builder.InsertCell();
-        builder.InsertField("MERGEFIELD", "Value");
+        // Insert a merge field named "Amount".
+        builder.InsertField("MERGEFIELD Amount \\* MERGEFORMAT", null);
         builder.EndRow();
 
-        // Conditional row that appears only when the value exceeds 100.
-        // The IF field will output the text "High" when the condition is true,
-        // otherwise it will output an empty string, effectively hiding the content.
+        // Conditional row that should appear only when Amount > 100.
+        // Each cell contains an IF field that evaluates the MERGEFIELD.
         builder.InsertCell();
-        // Insert IF field: IF { MERGEFIELD Value } > 100 "High" ""
-        builder.InsertField("IF", "MERGEFIELD Value > 100 \"High\" \"\"");
-        builder.InsertCell(); // Second cell can be left empty.
+        // IF field: if Amount > 100 display "High", otherwise display nothing.
+        builder.InsertField("IF { MERGEFIELD Amount } > 100 \"High\" \"\"", null);
+        builder.InsertCell();
+        // Second cell left empty (could contain additional conditional content).
+        builder.Writeln(string.Empty);
         builder.EndRow();
 
         // End the table.
         builder.EndTable();
 
-        // Save the document before mail merge (optional).
-        string outputPath = "ConditionalTable.docx";
+        // Perform mail merge to supply the Amount value.
+        doc.MailMerge.Execute(
+            new string[] { "Amount" },
+            new object[] { 150 } // Change this value to test the condition.
+        );
+
+        // Save the document.
+        string outputPath = "ConditionalRow.docx";
         doc.Save(outputPath);
 
-        // Perform mail merge with a value that exceeds the threshold.
-        doc.MailMerge.Execute(new string[] { "Value" }, new object[] { 150 });
-
-        // Update fields to evaluate the IF condition.
-        doc.UpdateFields();
-
-        // Save the final document.
-        doc.Save(outputPath);
-
-        // Validate that the file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not created.", outputPath);
+            throw new InvalidOperationException("The output document was not created.");
+
+        // The program ends here without waiting for user input.
     }
 }

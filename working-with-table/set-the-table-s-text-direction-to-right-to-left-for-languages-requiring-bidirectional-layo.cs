@@ -11,41 +11,37 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table.
+        // Build a 2x2 table.
         builder.StartTable();
 
-        // First cell.
+        // First row.
         builder.InsertCell();
-        builder.Writeln("English text (LTR)");
-
-        // Second cell.
+        builder.Writeln("Cell 1,1");
         builder.InsertCell();
-        builder.Writeln("עברית (RTL)");
-
-        // End the first row.
+        builder.Writeln("Cell 1,2");
         builder.EndRow();
 
-        // Second row (optional, just to have more cells).
+        // Second row.
         builder.InsertCell();
-        builder.Writeln("More LTR text");
+        builder.Writeln("Cell 2,1");
         builder.InsertCell();
-        builder.Writeln("עוד טקסט RTL");
+        builder.Writeln("Cell 2,2");
         builder.EndRow();
 
-        // Finish the table.
+        // End the table.
         builder.EndTable();
 
-        // Retrieve the created table.
+        // Retrieve the created table (the first table in the document).
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // Set the text direction of every paragraph inside the table to right‑to‑left.
+        // Ensure all paragraphs inside the table are marked as right‑to‑left.
         foreach (Row row in table.Rows)
         {
             foreach (Cell cell in row.Cells)
             {
-                foreach (Paragraph paragraph in cell.Paragraphs)
+                foreach (Paragraph para in cell.Paragraphs)
                 {
-                    paragraph.ParagraphFormat.Bidi = true; // Enable RTL layout.
+                    para.ParagraphFormat.Bidi = true;
                 }
             }
         }
@@ -56,6 +52,26 @@ public class Program
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not saved correctly.");
+            throw new Exception("The output file was not created.");
+
+        // Load the document again to confirm the setting persists.
+        Document loadedDoc = new Document(outputPath);
+        Table loadedTable = (Table)loadedDoc.GetChild(NodeType.Table, 0, true);
+
+        // Verify that every paragraph inside the loaded table has Bidi set.
+        foreach (Row row in loadedTable.Rows)
+        {
+            foreach (Cell cell in row.Cells)
+            {
+                foreach (Paragraph para in cell.Paragraphs)
+                {
+                    if (!para.ParagraphFormat.Bidi)
+                        throw new Exception("A paragraph inside the table is not set to right‑to‑left.");
+                }
+            }
+        }
+
+        // If we reach this point, the operation succeeded.
+        Console.WriteLine("Table text direction set to right‑to‑left and verified successfully.");
     }
 }

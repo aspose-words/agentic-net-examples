@@ -7,41 +7,70 @@ public class Program
 {
     public static void Main()
     {
-        // Create a source document and add a custom table style.
+        // Create a source document and define a custom table style.
         Document sourceDoc = new Document();
-        // Add a new table style with the specified name.
+        DocumentBuilder sourceBuilder = new DocumentBuilder(sourceDoc);
+
         Style customStyle = sourceDoc.Styles.Add(StyleType.Table, "MyCustomTableStyle");
+        customStyle.Font.Name = "Arial";
+        customStyle.Font.Size = 10;
+        // Note: Shading is not set because the Style class does not expose a Shading property in this version.
 
-        // (Optional) Set any style properties that are available in the current version.
-        // For this example we keep the style minimal; the focus is on copying it.
+        // Build a simple table in the source document and apply the custom style.
+        sourceBuilder.StartTable();
+        sourceBuilder.InsertCell();
+        sourceBuilder.Writeln("Header 1");
+        sourceBuilder.InsertCell();
+        sourceBuilder.Writeln("Header 2");
+        sourceBuilder.EndRow();
 
-        // Save the source document (required for the example to work independently).
-        string sourcePath = "Source.docx";
-        sourceDoc.Save(sourcePath);
+        sourceBuilder.InsertCell();
+        sourceBuilder.Writeln("Cell 1");
+        sourceBuilder.InsertCell();
+        sourceBuilder.Writeln("Cell 2");
+        sourceBuilder.EndRow();
+        sourceBuilder.EndTable();
 
-        // Create a destination document.
-        Document destDoc = new Document();
+        Table sourceTable = (Table)sourceDoc.GetChildNodes(NodeType.Table, true)[0];
+        sourceTable.Style = customStyle;
 
-        // Copy the custom table style from the source document to the destination document.
-        Style copiedStyle = destDoc.Styles.AddCopy(sourceDoc.Styles["MyCustomTableStyle"]);
-
-        // Verify that the style was copied successfully.
-        if (copiedStyle == null || destDoc.Styles["MyCustomTableStyle"] == null)
+        // Save the source document to a memory stream (optional step to simulate file I/O).
+        using (MemoryStream ms = new MemoryStream())
         {
-            throw new InvalidOperationException("The table style was not copied to the destination document.");
+            sourceDoc.Save(ms, SaveFormat.Docx);
+            ms.Position = 0;
+
+            // Load a destination document (empty) and copy the custom table style from the source.
+            Document destDoc = new Document();
+            Style sourceStyle = sourceDoc.Styles["MyCustomTableStyle"];
+            destDoc.Styles.AddCopy(sourceStyle);
+
+            // Build a table in the destination document and apply the copied style.
+            DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
+            destBuilder.StartTable();
+            destBuilder.InsertCell();
+            destBuilder.Writeln("Dest Header 1");
+            destBuilder.InsertCell();
+            destBuilder.Writeln("Dest Header 2");
+            destBuilder.EndRow();
+
+            destBuilder.InsertCell();
+            destBuilder.Writeln("Dest Cell 1");
+            destBuilder.InsertCell();
+            destBuilder.Writeln("Dest Cell 2");
+            destBuilder.EndRow();
+            destBuilder.EndTable();
+
+            Table destTable = (Table)destDoc.GetChildNodes(NodeType.Table, true)[0];
+            destTable.Style = destDoc.Styles["MyCustomTableStyle"];
+
+            // Save the destination document.
+            string outputPath = "Destination.docx";
+            destDoc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new Exception("The destination document was not created.");
         }
-
-        // Save the destination document.
-        string destPath = "Destination.docx";
-        destDoc.Save(destPath);
-
-        // Simple validation that the output files exist.
-        if (!File.Exists(sourcePath) || !File.Exists(destPath))
-        {
-            throw new FileNotFoundException("One of the output files was not created.");
-        }
-
-        // Indicate successful completion.
-        Console.WriteLine("Table style copied successfully.");
     }
 }

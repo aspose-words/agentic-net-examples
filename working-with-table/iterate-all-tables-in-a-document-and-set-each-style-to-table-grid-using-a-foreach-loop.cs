@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -12,57 +11,60 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert the first table.
-        builder.StartTable();
-        builder.InsertCell();
-        builder.Write("R1C1");
-        builder.InsertCell();
-        builder.Write("R1C2");
-        builder.EndRow();
-
-        builder.InsertCell();
-        builder.Write("R2C1");
-        builder.InsertCell();
-        builder.Write("R2C2");
-        builder.EndRow();
-        builder.EndTable();
-
-        // Insert a paragraph break between tables.
-        builder.Writeln();
-
-        // Insert the second table.
+        // Add first table.
+        builder.Writeln("First Table:");
         builder.StartTable();
         builder.InsertCell();
         builder.Write("A1");
         builder.InsertCell();
-        builder.Write("A2");
-        builder.EndRow();
-
-        builder.InsertCell();
         builder.Write("B1");
+        builder.EndRow();
+        builder.InsertCell();
+        builder.Write("A2");
         builder.InsertCell();
         builder.Write("B2");
         builder.EndRow();
         builder.EndTable();
 
-        // Save the original document.
-        string originalPath = "Original.docx";
-        doc.Save(originalPath);
+        // Add a paragraph between tables.
+        builder.Writeln();
+        builder.Writeln("Second Table:");
+
+        // Add second table.
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Write("C1");
+        builder.InsertCell();
+        builder.Write("D1");
+        builder.EndRow();
+        builder.InsertCell();
+        builder.Write("C2");
+        builder.InsertCell();
+        builder.Write("D2");
+        builder.EndRow();
+        builder.EndTable();
+
+        // Save the sample document.
+        string samplePath = "Sample.docx";
+        doc.Save(samplePath);
+
+        // Load the document for processing.
+        Document loadedDoc = new Document(samplePath);
 
         // Iterate all tables and set each style to "Table Grid".
-        foreach (Table table in doc.GetChildNodes(NodeType.Table, true).OfType<Table>())
+        foreach (Table table in loadedDoc.GetChildNodes(NodeType.Table, true))
         {
             table.StyleIdentifier = StyleIdentifier.TableGrid;
         }
 
         // Save the modified document.
-        string modifiedPath = "Modified.docx";
-        doc.Save(modifiedPath);
+        string resultPath = "Result.docx";
+        loadedDoc.Save(resultPath);
 
-        // Verify that the modified file was saved.
-        if (!File.Exists(modifiedPath))
+        // Verify that the output file was created.
+        if (!File.Exists(resultPath))
         {
-            throw new InvalidOperationException("The modified document was not saved correctly.");
+            throw new InvalidOperationException($"Failed to create output file: {resultPath}");
         }
     }
 }

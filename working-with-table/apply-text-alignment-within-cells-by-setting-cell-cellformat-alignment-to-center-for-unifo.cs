@@ -11,48 +11,45 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x3 table.
+        // Start a new table.
         builder.StartTable();
 
-        // First row.
-        for (int i = 0; i < 3; i++)
-        {
-            builder.InsertCell();
-            builder.Writeln($"Cell {i + 1}");
-        }
+        // First row, first cell.
+        builder.InsertCell();
+        builder.Writeln("Cell 1");
+        // Center align text inside the cell by aligning the paragraph.
+        builder.CurrentParagraph.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+
+        // First row, second cell.
+        builder.InsertCell();
+        builder.Writeln("Cell 2");
+        builder.CurrentParagraph.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+
+        // End the first row.
         builder.EndRow();
 
-        // Second row.
-        for (int i = 0; i < 3; i++)
-        {
-            builder.InsertCell();
-            builder.Writeln($"Cell {i + 4}");
-        }
-        builder.EndRow();
+        // Second row, first cell.
+        builder.InsertCell();
+        builder.Writeln("Cell 3");
+        builder.CurrentParagraph.ParagraphFormat.Alignment = ParagraphAlignment.Center;
 
+        // Second row, second cell.
+        builder.InsertCell();
+        builder.Writeln("Cell 4");
+        builder.CurrentParagraph.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+
+        // End the second row and the table.
+        builder.EndRow();
         builder.EndTable();
 
-        // Center-align the paragraphs inside each cell.
-        foreach (Table table in doc.GetChildNodes(NodeType.Table, true))
-        {
-            foreach (Row row in table.Rows)
-            {
-                foreach (Cell cell in row.Cells)
-                {
-                    foreach (Paragraph para in cell.Paragraphs)
-                    {
-                        para.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-                    }
-                }
-            }
-        }
-
-        // Save the document.
+        // Save the document to disk.
         string outputPath = "AlignedTable.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output file was not created.");
+        {
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+        }
     }
 }

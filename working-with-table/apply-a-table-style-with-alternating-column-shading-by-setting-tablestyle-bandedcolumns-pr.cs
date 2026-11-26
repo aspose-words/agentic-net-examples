@@ -11,65 +11,37 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 3x4 table.
+        // Build a 3x3 table.
         builder.StartTable();
-
-        // First row (header).
-        builder.InsertCell();
-        builder.Writeln("Header 1");
-        builder.InsertCell();
-        builder.Writeln("Header 2");
-        builder.InsertCell();
-        builder.Writeln("Header 3");
-        builder.EndRow();
-
-        // Second row.
-        builder.InsertCell();
-        builder.Writeln("Row 1, Cell 1");
-        builder.InsertCell();
-        builder.Writeln("Row 1, Cell 2");
-        builder.InsertCell();
-        builder.Writeln("Row 1, Cell 3");
-        builder.EndRow();
-
-        // Third row.
-        builder.InsertCell();
-        builder.Writeln("Row 2, Cell 1");
-        builder.InsertCell();
-        builder.Writeln("Row 2, Cell 2");
-        builder.InsertCell();
-        builder.Writeln("Row 2, Cell 3");
-        builder.EndRow();
-
-        // Fourth row.
-        builder.InsertCell();
-        builder.Writeln("Row 3, Cell 1");
-        builder.InsertCell();
-        builder.Writeln("Row 3, Cell 2");
-        builder.InsertCell();
-        builder.Writeln("Row 3, Cell 3");
-        builder.EndRow();
-
-        // End the table construction.
+        for (int row = 0; row < 3; row++)
+        {
+            for (int col = 0; col < 3; col++)
+            {
+                builder.InsertCell();
+                builder.Writeln($"R{row + 1}C{col + 1}");
+            }
+            builder.EndRow();
+        }
         builder.EndTable();
 
         // Retrieve the created table.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // Apply a built‑in table style. Use the correct style name "Table Grid".
-        table.Style = doc.Styles["Table Grid"];
+        // Obtain a built‑in table style.
+        TableStyle style = (TableStyle)doc.Styles["Table Grid"];
 
-        // Enable alternating column shading (banded columns).
-        table.StyleOptions |= TableStyleOptions.ColumnBands;
+        // Apply the style to the table.
+        table.Style = style;
 
-        // Save the document to disk.
-        string outputPath = "TableWithBandedColumns.docx";
+        // Enable alternating column shading using the ColumnBands option.
+        table.StyleOptions = TableStyleOptions.ColumnBands;
+
+        // Save the document.
+        string outputPath = "TableStyleBandedColumns.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException("The output document was not saved correctly.");
-        }
+            throw new Exception("The output document was not saved correctly.");
     }
 }

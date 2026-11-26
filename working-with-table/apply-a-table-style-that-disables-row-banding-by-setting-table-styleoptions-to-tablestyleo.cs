@@ -21,7 +21,7 @@ public class Program
         builder.Writeln("Header 2");
         builder.EndRow();
 
-        // Add second row.
+        // Add second row with two cells.
         builder.InsertCell();
         builder.Writeln("Cell 1");
         builder.InsertCell();
@@ -34,14 +34,14 @@ public class Program
         // Retrieve the created table (the first table in the document).
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // Apply a built‑in style.
+        // Apply a built‑in table style.
         table.Style = doc.Styles["Table Grid"];
 
-        // Disable row banding by ensuring the RowBands option is not set.
-        // Using TableStyleOptions.None removes all style options, including row banding.
+        // Disable row banding by clearing the RowBands option.
+        // This achieves the same effect as a hypothetical NoRowBanding option.
         table.StyleOptions = TableStyleOptions.None;
 
-        // Save the document to a file.
+        // Save the document to disk.
         string outputPath = "TableStyleNoRowBanding.docx";
         doc.Save(outputPath);
 

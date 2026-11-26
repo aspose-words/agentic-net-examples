@@ -1,6 +1,6 @@
 using System;
-using System.IO;
 using System.Drawing;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -12,30 +12,34 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 3x3 table.
+        // Build a simple 2x2 table.
         builder.StartTable();
 
-        for (int row = 0; row < 3; row++)
-        {
-            for (int col = 0; col < 3; col++)
-            {
-                builder.InsertCell();
-                builder.Writeln($"R{row + 1}C{col + 1}");
-            }
-            builder.EndRow();
-        }
+        // First row.
+        builder.InsertCell();
+        builder.Writeln("Cell 1,1");
+        builder.InsertCell();
+        builder.Writeln("Cell 1,2");
+        builder.EndRow();
 
+        // Second row.
+        builder.InsertCell();
+        builder.Writeln("Cell 2,1");
+        builder.InsertCell();
+        builder.Writeln("Cell 2,2");
+        builder.EndRow();
+
+        // End the table.
         builder.EndTable();
 
         // Retrieve the created table.
-        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // Apply a double line border to each side of the table.
-        // SetBorder(BorderType, LineStyle, lineWidth, Color, true) adds the border.
-        table.SetBorder(BorderType.Top, LineStyle.Double, 1.5, Color.Black, true);
-        table.SetBorder(BorderType.Bottom, LineStyle.Double, 1.5, Color.Black, true);
-        table.SetBorder(BorderType.Left, LineStyle.Double, 1.5, Color.Black, true);
-        table.SetBorder(BorderType.Right, LineStyle.Double, 1.5, Color.Black, true);
+        // Apply a double border to each side of the table.
+        table.SetBorder(BorderType.Top, LineStyle.Double, 2.0, Color.Black, true);
+        table.SetBorder(BorderType.Bottom, LineStyle.Double, 2.0, Color.Black, true);
+        table.SetBorder(BorderType.Left, LineStyle.Double, 2.0, Color.Black, true);
+        table.SetBorder(BorderType.Right, LineStyle.Double, 2.0, Color.Black, true);
 
         // Save the document.
         string outputPath = "TableWithDoubleBorder.docx";
@@ -43,6 +47,6 @@ public class Program
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not created.");
+            throw new Exception("The output document was not saved correctly.");
     }
 }

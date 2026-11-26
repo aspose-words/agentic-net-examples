@@ -6,110 +6,115 @@ using Aspose.Words;
 using Aspose.Words.Tables;
 using Newtonsoft.Json;
 
-public class Program
+namespace AsposeWordsTableToJson
 {
     // Simple DTOs for JSON serialization
-    public class CellInfo
+    public class TableInfo
     {
-        public string Text { get; set; }
-        public double Width { get; set; }
-        public string ShadingColor { get; set; }
-        public string ParagraphAlignment { get; set; }
+        public int RowCount { get; set; }
+        public List<RowInfo> Rows { get; set; } = new List<RowInfo>();
     }
 
     public class RowInfo
     {
+        public int CellCount { get; set; }
         public List<CellInfo> Cells { get; set; } = new List<CellInfo>();
     }
 
-    public class TableInfo
+    public class CellInfo
     {
-        public List<RowInfo> Rows { get; set; } = new List<RowInfo>();
+        public string Text { get; set; }
+        public string ShadingColor { get; set; } // HTML hex, empty if none
     }
 
-    public static void Main()
+    public class Program
     {
-        // Create a new document and builder
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Build a sample table with formatting
-        builder.StartTable();
-
-        // First row, first cell
-        builder.InsertCell();
-        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-        builder.CellFormat.Shading.BackgroundPatternColor = Color.LightBlue;
-        builder.CellFormat.Width = 100;
-        builder.Write("Header 1");
-
-        // First row, second cell
-        builder.InsertCell();
-        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-        builder.CellFormat.Shading.BackgroundPatternColor = Color.LightGreen;
-        builder.CellFormat.Width = 150;
-        builder.Write("Header 2");
-        builder.EndRow();
-
-        // Second row, first cell
-        builder.InsertCell();
-        builder.ParagraphFormat.Alignment = ParagraphAlignment.Left;
-        builder.CellFormat.Shading.BackgroundPatternColor = Color.White;
-        builder.CellFormat.Width = 100;
-        builder.Write("Row 1, Cell 1");
-
-        // Second row, second cell
-        builder.InsertCell();
-        builder.ParagraphFormat.Alignment = ParagraphAlignment.Right;
-        builder.CellFormat.Shading.BackgroundPatternColor = Color.White;
-        builder.CellFormat.Width = 150;
-        builder.Write("Row 1, Cell 2");
-        builder.EndRow();
-
-        builder.EndTable();
-
-        // Save the document
-        string docPath = "TableDoc.docx";
-        doc.Save(docPath);
-        if (!File.Exists(docPath))
-            throw new Exception("Document was not saved.");
-
-        // Traverse tables and collect information
-        List<TableInfo> tablesInfo = new List<TableInfo>();
-        NodeCollection tables = doc.GetChildNodes(NodeType.Table, true);
-        foreach (Table table in tables)
+        public static void Main()
         {
-            TableInfo tInfo = new TableInfo();
-            foreach (Row row in table.Rows)
+            // 1. Create a sample document with a table
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Start the table
+            builder.StartTable();
+
+            // Header row - apply shading to cells
+            builder.InsertCell();
+            builder.CellFormat.Shading.BackgroundPatternColor = Color.LightBlue;
+            builder.Write("Header 1");
+
+            builder.InsertCell();
+            builder.CellFormat.Shading.BackgroundPatternColor = Color.LightBlue;
+            builder.Write("Header 2");
+
+            builder.EndRow();
+
+            // Data row - no shading
+            builder.InsertCell();
+            builder.CellFormat.Shading.BackgroundPatternColor = Color.Empty;
+            builder.Write("Cell 1");
+
+            builder.InsertCell();
+            builder.Write("Cell 2");
+
+            builder.EndRow();
+
+            // End the table
+            builder.EndTable();
+
+            // Save the sample document
+            string docPath = "SampleTable.docx";
+            doc.Save(docPath);
+            if (!File.Exists(docPath))
+                throw new Exception($"Failed to create document at {docPath}");
+
+            // 2. Traverse tables and collect structure/content
+            TableInfo tableInfo = new TableInfo();
+
+            NodeCollection tables = doc.GetChildNodes(NodeType.Table, true);
+            foreach (Table table in tables)
             {
-                RowInfo rInfo = new RowInfo();
-                foreach (Cell cell in row.Cells)
+                tableInfo.RowCount = table.Rows.Count;
+
+                foreach (Row row in table.Rows)
                 {
-                    CellInfo cInfo = new CellInfo
+                    RowInfo rowInfo = new RowInfo
                     {
-                        Text = cell.GetText().TrimEnd('\a'), // Remove cell marker
-                        Width = cell.CellFormat.Width,
-                        ShadingColor = cell.CellFormat.Shading.BackgroundPatternColor.IsEmpty
-                            ? "None"
-                            : ColorTranslator.ToHtml(cell.CellFormat.Shading.BackgroundPatternColor),
-                        ParagraphAlignment = cell.FirstParagraph?.ParagraphFormat?.Alignment.ToString() ?? "Unknown"
+                        CellCount = row.Cells.Count
                     };
-                    rInfo.Cells.Add(cInfo);
+
+                    foreach (Cell cell in row.Cells)
+                    {
+                        // Capture cell text (trim end-of-cell markers)
+                        string cellText = cell.GetText().TrimEnd('\a', '\r', '\n');
+
+                        // Capture shading color if set
+                        Color shading = cell.CellFormat.Shading.BackgroundPatternColor;
+                        string shadingHex = shading.IsEmpty ? string.Empty : ColorTranslator.ToHtml(shading);
+
+                        rowInfo.Cells.Add(new CellInfo
+                        {
+                            Text = cellText,
+                            ShadingColor = shadingHex
+                        });
+                    }
+
+                    tableInfo.Rows.Add(rowInfo);
                 }
-                tInfo.Rows.Add(rInfo);
             }
-            tablesInfo.Add(tInfo);
+
+            // 3. Serialize to JSON
+            string json = JsonConvert.SerializeObject(tableInfo, Formatting.Indented);
+            string jsonPath = "table.json";
+            File.WriteAllText(jsonPath, json);
+
+            // Verify JSON file creation
+            if (!File.Exists(jsonPath))
+                throw new Exception($"Failed to write JSON report at {jsonPath}");
+
+            // Optional: output paths for confirmation
+            Console.WriteLine($"Document saved to: {Path.GetFullPath(docPath)}");
+            Console.WriteLine($"Table JSON saved to: {Path.GetFullPath(jsonPath)}");
         }
-
-        // Serialize to JSON
-        string json = JsonConvert.SerializeObject(tablesInfo, Formatting.Indented);
-        string jsonPath = "TableStructure.json";
-        File.WriteAllText(jsonPath, json);
-        if (!File.Exists(jsonPath))
-            throw new Exception("JSON report was not created.");
-
-        // Optionally, output paths (no interactive wait)
-        Console.WriteLine($"Document saved to: {Path.GetFullPath(docPath)}");
-        Console.WriteLine($"JSON report saved to: {Path.GetFullPath(jsonPath)}");
     }
 }

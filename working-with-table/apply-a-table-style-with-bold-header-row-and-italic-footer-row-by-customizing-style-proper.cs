@@ -3,63 +3,79 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class TableStyleExample
+public class Program
 {
     public static void Main()
     {
-        // Create a new document and a DocumentBuilder for constructing content.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Define a custom table style.
-        Style customStyle = doc.Styles.Add(StyleType.Table, "CustomTableStyle");
-        // Set a base style (optional) – here we start from the built‑in "Table Grid".
-        customStyle.BaseStyleName = "Table Grid";
-
-        // Build a table with a header row, data rows, and a footer row.
+        // Build a simple 3‑row table (header, data, footer).
         builder.StartTable();
 
-        // ----- Header Row (bold) -----
-        builder.Font.Bold = true; // Make header text bold.
+        // Header row.
         builder.InsertCell();
-        builder.Writeln("Header 1");
+        builder.Write("Header 1");
         builder.InsertCell();
-        builder.Writeln("Header 2");
+        builder.Write("Header 2");
         builder.EndRow();
 
-        // ----- Data Row -----
-        builder.Font.Bold = false; // Normal text for data rows.
+        // Data row.
         builder.InsertCell();
-        builder.Writeln("Data 1");
+        builder.Write("Data 1");
         builder.InsertCell();
-        builder.Writeln("Data 2");
+        builder.Write("Data 2");
         builder.EndRow();
 
-        // ----- Footer Row (italic) -----
-        builder.Font.Italic = true; // Make footer text italic.
+        // Footer row.
         builder.InsertCell();
-        builder.Writeln("Footer 1");
+        builder.Write("Footer 1");
         builder.InsertCell();
-        builder.Writeln("Footer 2");
+        builder.Write("Footer 2");
         builder.EndRow();
 
-        // End the table construction.
+        // End the table.
         builder.EndTable();
 
-        // Retrieve the created table (the first table in the document).
+        // Retrieve the created table.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // Apply the custom style to the table.
-        table.Style = customStyle;
+        // Create a custom table style.
+        Style customStyle = doc.Styles.Add(StyleType.Table, "CustomTableStyle");
+        // Set a base font for the whole table.
+        customStyle.Font.Name = "Arial";
 
-        // Save the document to a file.
+        // Apply the custom style to the table.
+        // For a user‑defined style we only need to set the StyleName.
+        table.StyleName = "CustomTableStyle";
+
+        // Make header row bold.
+        Row headerRow = table.FirstRow;
+        foreach (Cell cell in headerRow.Cells)
+        {
+            Paragraph para = cell.FirstParagraph;
+            Run run = para?.FirstChild as Run;
+            if (run != null)
+                run.Font.Bold = true;
+        }
+
+        // Make footer row italic.
+        Row footerRow = table.LastRow;
+        foreach (Cell cell in footerRow.Cells)
+        {
+            Paragraph para = cell.FirstParagraph;
+            Run run = para?.FirstChild as Run;
+            if (run != null)
+                run.Font.Italic = true;
+        }
+
+        // Save the document.
         string outputPath = "TableStyleExample.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-        {
             throw new Exception("The output document was not created.");
-        }
     }
 }

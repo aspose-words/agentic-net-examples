@@ -7,56 +7,62 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a table with 10 rows and 2 columns.
+        // Build a table with 6 rows and 2 columns.
         builder.StartTable();
-        for (int i = 1; i <= 10; i++)
+        for (int i = 1; i <= 6; i++)
         {
-            // First cell of the row.
             builder.InsertCell();
             builder.Writeln($"Row {i}, Cell 1");
-
-            // Second cell of the row.
             builder.InsertCell();
             builder.Writeln($"Row {i}, Cell 2");
-
-            // End the current row.
             builder.EndRow();
         }
         builder.EndTable();
 
-        // Retrieve the first (and only) table in the document.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        // Retrieve the created table.
+        Table originalTable = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // Split the table at row index 5 (the 6th row becomes the first row of the new table).
-        int splitRowIndex = 5; // zero‑based index
+        // Split the table at row index 3 (zero‑based).
+        // Rows 0‑2 remain in the original table, rows 3‑5 move to a new table.
+        int splitIndex = 3;
+        if (splitIndex < 0 || splitIndex > originalTable.Rows.Count)
+            throw new ArgumentOutOfRangeException(nameof(splitIndex), "Invalid split index.");
 
-        // Clone the original table's formatting without its rows.
-        Table newTable = (Table)table.Clone(false);
+        // Create a new empty table with the same formatting as the original.
+        Table newTable = (Table)originalTable.Clone(false);
 
-        // Insert the new (empty) table right after the original table.
-        table.ParentNode.InsertAfter(newTable, table);
-
-        // Move rows from the split index to the end of the original table into the new table.
-        while (table.Rows.Count > splitRowIndex)
+        // Move rows from the original table to the new table.
+        // Collect rows to move to preserve order.
+        var rowsToMove = new Row[originalTable.Rows.Count - splitIndex];
+        for (int i = splitIndex; i < originalTable.Rows.Count; i++)
         {
-            // Remove the row from the original table.
-            Row movingRow = table.Rows[splitRowIndex];
-            movingRow.Remove();
-
-            // Add the row to the new table.
-            newTable.Rows.Add(movingRow);
+            rowsToMove[i - splitIndex] = originalTable.Rows[i];
         }
 
-        // Save the resulting document.
+        // Remove rows from the original table and add them to the new table.
+        foreach (var row in rowsToMove)
+        {
+            originalTable.Rows.Remove(row);
+            newTable.Rows.Add(row);
+        }
+
+        // Insert the new table after the original table in the document.
+        originalTable.ParentNode.InsertAfter(newTable, originalTable);
+
+        // Save the document.
         string outputPath = "SplitTable.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
             throw new Exception("The output file was not created.");
+
+        // Output row counts for verification.
+        Console.WriteLine($"Original table rows after split: {originalTable.Rows.Count}");
+        Console.WriteLine($"New table rows after split: {newTable.Rows.Count}");
     }
 }

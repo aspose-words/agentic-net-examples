@@ -11,41 +11,30 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table.
+        // Build a simple 2x1 table.
         builder.StartTable();
-
-        // First row, first cell.
         builder.InsertCell();
-        builder.Write("Cell 1");
-
-        // First row, second cell.
+        builder.Writeln("Cell 1");
         builder.InsertCell();
-        builder.Write("Cell 2");
+        builder.Writeln("Cell 2");
         builder.EndRow();
-
-        // Second row, first cell.
-        builder.InsertCell();
-        builder.Write("Cell 3");
-
-        // Second row, second cell.
-        builder.InsertCell();
-        builder.Write("Cell 4");
-        builder.EndRow();
-
-        // End the table construction.
         builder.EndTable();
 
         // Retrieve the created table.
-        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
 
-        // Set right‑to‑left text direction for the entire table by enabling Bidi on all paragraphs.
+        // Enable right‑to‑left text direction for the entire table.
+        // Aspose.Words does not expose a Table.RightToLeft property in this version,
+        // so we set the Bidi flag on every paragraph inside each cell.
         foreach (Row row in table.Rows)
         {
             foreach (Cell cell in row.Cells)
             {
-                foreach (Paragraph para in cell.Paragraphs)
+                foreach (Paragraph paragraph in cell.Paragraphs)
                 {
-                    para.ParagraphFormat.Bidi = true;
+                    paragraph.ParagraphFormat.Bidi = true;
                 }
             }
         }
@@ -54,8 +43,8 @@ public class Program
         string outputPath = "TableRightToLeft.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify that the file was saved.
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not saved correctly.");
+            throw new FileNotFoundException("The output document was not saved.", outputPath);
     }
 }

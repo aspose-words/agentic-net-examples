@@ -11,42 +11,41 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a 2x2 table.
+        // Build a simple 2x2 table.
         builder.StartTable();
 
+        // First row.
         builder.InsertCell();
         builder.Writeln("Cell 1");
-
         builder.InsertCell();
         builder.Writeln("Cell 2");
-
         builder.EndRow();
 
+        // Second row.
         builder.InsertCell();
         builder.Writeln("Cell 3");
-
         builder.InsertCell();
         builder.Writeln("Cell 4");
-
         builder.EndRow();
+
+        // End the table construction.
         builder.EndTable();
 
         // Retrieve the created table (the first table in the document).
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // Apply the built‑in "Table Grid" style to the table by name.
-        // The TableStyleIdentifier enum may not be available in all versions,
-        // so we set the style using its exact name.
-        table.StyleName = "Table Grid";
+        // Apply the built‑in TableGrid style using the StyleIdentifier enum.
+        table.StyleIdentifier = StyleIdentifier.TableGrid;
 
         // Save the document to a file.
         string outputPath = "TableStyleExample.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify that the file was saved successfully.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+            throw new Exception("The document was not saved correctly.");
 
-        Console.WriteLine($"Document saved successfully to '{outputPath}'.");
+        // Indicate successful completion.
+        Console.WriteLine($"Document saved to {outputPath}");
     }
 }

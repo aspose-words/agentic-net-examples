@@ -11,24 +11,35 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple table with several rows.
+        // Build a simple table with three rows and two columns.
         builder.StartTable();
 
-        // Add 5 rows, each with a single cell containing some text.
-        for (int i = 1; i <= 5; i++)
-        {
-            builder.InsertCell();
-            builder.Writeln($"Row {i} - This row should stay together on a page.");
-            builder.EndRow();
-        }
+        // First row
+        builder.InsertCell();
+        builder.Write("Row 1, Cell 1");
+        builder.InsertCell();
+        builder.Write("Row 1, Cell 2");
+        builder.EndRow();
+
+        // Second row
+        builder.InsertCell();
+        builder.Write("Row 2, Cell 1");
+        builder.InsertCell();
+        builder.Write("Row 2, Cell 2");
+        builder.EndRow();
+
+        // Third row
+        builder.InsertCell();
+        builder.Write("Row 3, Cell 1");
+        builder.InsertCell();
+        builder.Write("Row 3, Cell 2");
+        builder.EndRow();
 
         // End the table.
         builder.EndTable();
 
-        // Retrieve the created table.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (table == null)
-            throw new InvalidOperationException("Table was not created.");
+        // Retrieve the created table from the document.
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
         // Prevent each row from breaking across pages.
         foreach (Row row in table.Rows)
@@ -37,12 +48,14 @@ public class Program
             row.RowFormat.AllowBreakAcrossPages = false;
         }
 
-        // Save the document to a file.
+        // Save the document.
         string outputPath = "KeepTogetherRows.docx";
         doc.Save(outputPath);
 
         // Verify that the file was saved.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not created.", outputPath);
+        {
+            throw new Exception($"Failed to create the output file: {outputPath}");
+        }
     }
 }

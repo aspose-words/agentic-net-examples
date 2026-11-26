@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -7,54 +6,48 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a table with two numeric cells and a formula field that sums the numbers above.
+        // Build a table with two rows.
+        // First row contains numeric values.
         builder.StartTable();
 
-        // First row, first cell: numeric value 5
         builder.InsertCell();
-        builder.Write("5");
+        builder.Write("10");
+        builder.InsertCell();
+        builder.Write("20");
         builder.EndRow();
 
-        // Second row, first cell: numeric value 15
+        // Second row contains formula fields that sum the values above each column.
         builder.InsertCell();
-        builder.Write("15");
+        builder.InsertField("=SUM(ABOVE)", "0");
+        builder.InsertCell();
+        builder.InsertField("=SUM(ABOVE)", "0");
         builder.EndRow();
 
-        // Third row, first cell: formula field =SUM(ABOVE)
-        builder.InsertCell();
-        // Insert a formula field that sums the numbers in the column above.
-        builder.InsertField("=SUM(ABOVE)", "?");
-        builder.EndRow();
-
+        // Finish the table.
         builder.EndTable();
 
         // Save the initial document.
-        string initialPath = "TableWithFormula.docx";
-        doc.Save(initialPath);
+        string outputPath = "TableWithFields.docx";
+        doc.Save(outputPath);
 
-        // Modify the first numeric cell (change 5 to 20).
+        // Locate the table in the document.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        Cell firstCell = table.Rows[0].Cells[0];
-        // Clear existing content and write new value.
-        firstCell.RemoveAllChildren();
-        firstCell.AppendChild(new Paragraph(doc));
-        firstCell.FirstParagraph.AppendChild(new Run(doc, "20"));
 
-        // Recalculate fields after the modification.
+        // Modify the first cell's numeric value (change 10 to 30).
+        Cell cellToModify = table.Rows[0].Cells[0];
+        cellToModify.RemoveAllChildren(); // Remove existing content.
+        Paragraph newParagraph = new Paragraph(doc);
+        newParagraph.AppendChild(new Run(doc, "30"));
+        cellToModify.AppendChild(newParagraph);
+
+        // Recalculate all fields (the SUM formulas) after the modification.
         doc.UpdateFields();
 
         // Save the updated document.
-        string updatedPath = "TableWithFormulaUpdated.docx";
-        doc.Save(updatedPath);
-
-        // Verify that the output files were created.
-        if (!File.Exists(initialPath) || !File.Exists(updatedPath))
-        {
-            throw new InvalidOperationException("One or more output files were not created successfully.");
-        }
+        doc.Save(outputPath);
     }
 }

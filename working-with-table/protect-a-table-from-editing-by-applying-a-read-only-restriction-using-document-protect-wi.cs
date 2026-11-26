@@ -1,7 +1,6 @@
-using Aspose.Words;
-using Aspose.Words.Tables;
 using System;
 using System.IO;
+using Aspose.Words;
 
 public class Program
 {
@@ -14,25 +13,21 @@ public class Program
         // Build a simple 2x2 table.
         builder.StartTable();
 
-        // First row.
+        // First row, first cell.
         builder.InsertCell();
-        builder.Writeln("Cell 1,1");
-        builder.InsertCell();
-        builder.Writeln("Cell 1,2");
+        builder.Writeln("Cell 1");
         builder.EndRow();
 
-        // Second row.
+        // Second row, first cell.
         builder.InsertCell();
-        builder.Writeln("Cell 2,1");
-        builder.InsertCell();
-        builder.Writeln("Cell 2,2");
+        builder.Writeln("Cell 2");
         builder.EndRow();
 
         // End the table.
         builder.EndTable();
 
-        // Apply read‑only protection to the document (optional password "secret").
-        doc.Protect(ProtectionType.ReadOnly, "secret");
+        // Apply read‑only protection to the document (the table becomes read‑only as well).
+        doc.Protect(ProtectionType.ReadOnly, "myPassword");
 
         // Save the protected document.
         string outputPath = "ProtectedTable.docx";
@@ -40,8 +35,9 @@ public class Program
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
-        }
+            throw new Exception("The protected document was not saved.");
+
+        // Indicate successful completion.
+        Console.WriteLine("Document saved and protected successfully.");
     }
 }

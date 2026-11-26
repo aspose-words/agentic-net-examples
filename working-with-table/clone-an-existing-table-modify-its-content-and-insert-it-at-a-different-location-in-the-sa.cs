@@ -3,77 +3,59 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace TableCloneExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add an introductory paragraph.
-        builder.Writeln("Document start.");
+            // Build an original table with 2 rows and 2 columns.
+            builder.StartTable();
+            // First row
+            builder.InsertCell();
+            builder.Write("R1C1");
+            builder.InsertCell();
+            builder.Write("R1C2");
+            builder.EndRow();
+            // Second row
+            builder.InsertCell();
+            builder.Write("R2C1");
+            builder.InsertCell();
+            builder.Write("R2C2");
+            builder.EndRow();
+            builder.EndTable();
 
-        // Build a sample table with two columns and three rows.
-        builder.StartTable();
+            // Retrieve the first (and only) table in the document.
+            Table originalTable = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
-        // Header row.
-        builder.InsertCell();
-        builder.Write("Header 1");
-        builder.InsertCell();
-        builder.Write("Header 2");
-        builder.EndRow();
+            // Clone the table (deep clone).
+            Table clonedTable = (Table)originalTable.Clone(true);
 
-        // First data row.
-        builder.InsertCell();
-        builder.Write("Row 1, Cell 1");
-        builder.InsertCell();
-        builder.Write("Row 1, Cell 2");
-        builder.EndRow();
+            // Modify content of the cloned table: change text in the first cell.
+            Cell firstCell = clonedTable.Rows[0].Cells[0];
+            // Clear existing runs and add new text.
+            firstCell.FirstParagraph.Runs.Clear();
+            firstCell.FirstParagraph.AppendChild(new Run(doc, "Modified Cell"));
 
-        // Second data row.
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 1");
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 2");
-        builder.EndRow();
+            // Insert the cloned table after the original table.
+            // The parent of a Table is a CompositeNode (e.g., Body), which provides InsertAfter.
+            CompositeNode parent = originalTable.ParentNode as CompositeNode;
+            if (parent == null)
+                throw new InvalidOperationException("Unable to locate a valid parent node for insertion.");
 
-        // End the table.
-        builder.EndTable();
+            parent.InsertAfter(clonedTable, originalTable);
 
-        // Add a paragraph after the original table.
-        builder.Writeln("Paragraph after original table.");
+            // Save the resulting document.
+            string outputPath = "ClonedTable.docx";
+            doc.Save(outputPath);
 
-        // Locate the original table (the first table in the document).
-        Table originalTable = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (originalTable == null)
-            throw new Exception("Original table not found.");
-
-        // Clone the table deeply.
-        Table clonedTable = (Table)originalTable.Clone(true);
-
-        // Modify the content of the cloned table: change text in the first cell.
-        Cell firstCell = clonedTable.FirstRow.FirstCell;
-        firstCell.RemoveAllChildren(); // Remove existing paragraphs.
-        Paragraph newParagraph = new Paragraph(doc);
-        Run newRun = new Run(doc, "Modified Header 1");
-        newParagraph.AppendChild(newRun);
-        firstCell.AppendChild(newParagraph);
-
-        // Insert the cloned table after the original table.
-        // The parent of a Table is a CompositeNode (e.g., Body). Cast to CompositeNode to use InsertAfter.
-        CompositeNode parent = (CompositeNode)originalTable.ParentNode;
-        parent.InsertAfter(clonedTable, originalTable);
-
-        // Save the resulting document.
-        string outputPath = "ClonedTable.docx";
-        doc.Save(outputPath);
-
-        // Verify that the file was saved.
-        if (!File.Exists(outputPath))
-            throw new Exception("Failed to save the document.");
-
-        // Indicate successful completion.
-        Console.WriteLine("Document saved to " + Path.GetFullPath(outputPath));
+            // Simple validation that the file was created.
+            if (!File.Exists(outputPath))
+                throw new Exception("The output document was not created.");
+        }
     }
 }

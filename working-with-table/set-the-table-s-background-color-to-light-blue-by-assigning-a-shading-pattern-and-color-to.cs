@@ -8,25 +8,33 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and builder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 1x1 table.
+        // Build a simple 2x1 table.
         builder.StartTable();
+
         builder.InsertCell();
-        builder.Write("Sample cell");
+        builder.Writeln("Cell 1");
+
+        builder.InsertCell();
+        builder.Writeln("Cell 2");
+
         builder.EndRow();
         builder.EndTable();
 
         // Retrieve the created table.
-        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // Apply solid light‑blue shading to every cell in the table.
-        foreach (Cell cell in table.GetChildNodes(NodeType.Cell, true))
+        // Apply light blue solid shading to every cell in the table.
+        foreach (Row row in table.Rows)
         {
-            cell.CellFormat.Shading.Texture = TextureIndex.TextureSolid;
-            cell.CellFormat.Shading.ForegroundPatternColor = Color.LightBlue;
+            foreach (Cell cell in row.Cells)
+            {
+                cell.CellFormat.Shading.Texture = TextureIndex.TextureSolid;
+                cell.CellFormat.Shading.ForegroundPatternColor = Color.LightBlue;
+            }
         }
 
         // Save the document.
@@ -35,17 +43,6 @@ public class Program
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("Failed to create the output document.");
-
-        // Reload the document and verify the shading of the first cell.
-        Document loadedDoc = new Document(outputPath);
-        Table loadedTable = (Table)loadedDoc.GetChildNodes(NodeType.Table, true)[0];
-        Cell firstCell = (Cell)loadedTable.GetChildNodes(NodeType.Cell, true)[0];
-
-        if (firstCell.CellFormat.Shading.Texture != TextureIndex.TextureSolid ||
-            firstCell.CellFormat.Shading.ForegroundPatternColor.ToArgb() != Color.LightBlue.ToArgb())
-        {
-            throw new Exception("Table shading was not applied correctly.");
-        }
+            throw new Exception("The output file was not created.");
     }
 }

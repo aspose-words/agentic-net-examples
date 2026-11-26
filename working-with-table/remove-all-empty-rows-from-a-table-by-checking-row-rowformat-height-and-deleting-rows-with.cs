@@ -7,66 +7,67 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a table with five rows.
+        // Build a sample table with five rows.
         builder.StartTable();
 
         // Row 0 – normal height.
         builder.InsertCell();
-        builder.Write("Row 0, Cell 0");
+        builder.Writeln("Row 0");
         builder.EndRow();
 
-        // Row 1 – will be set to zero height (empty row).
+        // Row 1 – empty row with zero height.
         builder.InsertCell();
-        builder.Write("Row 1, Cell 0");
+        // Obtain the current cell and then its parent row.
+        Cell cell1 = (Cell)builder.CurrentParagraph.ParentNode;
+        Row row1 = cell1.ParentRow;
+        row1.RowFormat.Height = 0;
+        row1.RowFormat.HeightRule = HeightRule.Exactly;
         builder.EndRow();
 
         // Row 2 – normal height.
         builder.InsertCell();
-        builder.Write("Row 2, Cell 0");
+        builder.Writeln("Row 2");
         builder.EndRow();
 
-        // Row 3 – will be set to zero height (empty row).
+        // Row 3 – empty row with zero height.
         builder.InsertCell();
-        builder.Write("Row 3, Cell 0");
+        Cell cell3 = (Cell)builder.CurrentParagraph.ParentNode;
+        Row row3 = cell3.ParentRow;
+        row3.RowFormat.Height = 0;
+        row3.RowFormat.HeightRule = HeightRule.Exactly;
         builder.EndRow();
 
         // Row 4 – normal height.
         builder.InsertCell();
-        builder.Write("Row 4, Cell 0");
+        builder.Writeln("Row 4");
         builder.EndRow();
 
+        // End the table construction.
         builder.EndTable();
 
-        // Retrieve the created table.
+        // Locate the first table in the document.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-
-        // Set zero height for rows 1 and 3.
-        table.Rows[1].RowFormat.Height = 0;
-        table.Rows[1].RowFormat.HeightRule = HeightRule.Exactly;
-
-        table.Rows[3].RowFormat.Height = 0;
-        table.Rows[3].RowFormat.HeightRule = HeightRule.Exactly;
+        if (table == null)
+            throw new InvalidOperationException("No table found in the document.");
 
         // Remove rows whose height is zero.
         for (int i = table.Rows.Count - 1; i >= 0; i--)
         {
             Row row = table.Rows[i];
             if (row.RowFormat.Height == 0 && row.RowFormat.HeightRule == HeightRule.Exactly)
-            {
                 row.Remove();
-            }
         }
 
-        // Save the document.
+        // Save the resulting document.
         string outputPath = "Output.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not saved correctly.");
+            throw new FileNotFoundException("The output document was not saved.", outputPath);
     }
 }

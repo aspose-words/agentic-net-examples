@@ -7,48 +7,49 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder for building content.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table.
+        // Build a simple 2x2 table with sample text.
         builder.StartTable();
-
         builder.InsertCell();
-        builder.Write("Cell 1");
+        builder.Writeln("Cell 1,1");
         builder.InsertCell();
-        builder.Write("Cell 2");
+        builder.Writeln("Cell 1,2");
         builder.EndRow();
 
         builder.InsertCell();
-        builder.Write("Cell 3");
+        builder.Writeln("Cell 2,1");
         builder.InsertCell();
-        builder.Write("Cell 4");
+        builder.Writeln("Cell 2,2");
         builder.EndRow();
-
         builder.EndTable();
 
         // Remove all borders from every table in the document.
         foreach (Table table in doc.GetChildNodes(NodeType.Table, true))
         {
+            // Remove borders from each row.
             foreach (Row row in table.Rows)
             {
+                row.RowFormat.Borders.LineStyle = LineStyle.None;
+
+                // Remove borders from each cell in the row.
                 foreach (Cell cell in row.Cells)
                 {
-                    // Set the borders of each cell to have no line style.
                     cell.CellFormat.Borders.LineStyle = LineStyle.None;
                 }
             }
         }
 
-        // Save the document to disk.
-        string outputPath = "TableNoBorders.docx";
+        // Save the document to a file.
+        string outputPath = "Output.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The document was not saved correctly.");
-
-        Console.WriteLine("Document saved successfully.");
+        {
+            throw new Exception("The output file was not created.");
+        }
     }
 }

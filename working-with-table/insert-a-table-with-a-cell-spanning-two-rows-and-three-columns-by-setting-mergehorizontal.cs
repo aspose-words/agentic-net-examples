@@ -7,7 +7,7 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
@@ -15,56 +15,52 @@ public class Program
         builder.StartTable();
 
         // ---------- First Row ----------
-        // Cell that will span 2 rows and 3 columns.
+        // Cell (0,0) – first cell of the merged region.
         builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.First;
+        builder.CellFormat.VerticalMerge = CellMerge.First;
         builder.Writeln("Merged Cell");
-        // Set the first cell of the merge.
-        Cell mergedCell = builder.CurrentParagraph.ParentNode as Cell;
-        mergedCell.CellFormat.HorizontalMerge = CellMerge.First;
-        mergedCell.CellFormat.VerticalMerge = CellMerge.First;
 
-        // Additional cells in the first row (columns 4 and 5).
+        // Cell (0,1) – part of the horizontal merge.
         builder.InsertCell();
-        builder.Writeln("Cell 4-1");
-        builder.InsertCell();
-        builder.Writeln("Cell 5-1");
+        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
 
-        // End the first row.
+        // Cell (0,2) – part of the horizontal merge.
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
+
+        // End first row.
         builder.EndRow();
 
         // ---------- Second Row ----------
-        // Cells that continue the merged area.
-        for (int i = 0; i < 3; i++)
-        {
-            builder.InsertCell();
-            // Set continuation of both horizontal and vertical merge.
-            Cell continuationCell = builder.CurrentParagraph.ParentNode as Cell;
-            continuationCell.CellFormat.HorizontalMerge = CellMerge.Previous;
-            continuationCell.CellFormat.VerticalMerge = CellMerge.Previous;
-        }
-
-        // Additional cells in the second row (columns 4 and 5).
+        // Cell (1,0) – continuation of both horizontal and vertical merge.
         builder.InsertCell();
-        builder.Writeln("Cell 4-2");
-        builder.InsertCell();
-        builder.Writeln("Cell 5-2");
+        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
+        builder.CellFormat.VerticalMerge = CellMerge.Previous;
 
-        // End the second row.
+        // Cell (1,1) – continuation of the horizontal merge.
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
+
+        // Cell (1,2) – continuation of the horizontal merge.
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
+
+        // End second row.
         builder.EndRow();
 
         // Finish the table.
         builder.EndTable();
 
-        // Save the document to a file.
+        // Reset cell formatting to defaults for any further content.
+        builder.CellFormat.ClearFormatting();
+
+        // Save the document.
         string outputPath = "MergedTable.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not created.");
-
-        // Optionally, you could load the document again to ensure it is valid.
-        Document loadedDoc = new Document(outputPath);
-        // No further actions; the program ends here.
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
     }
 }

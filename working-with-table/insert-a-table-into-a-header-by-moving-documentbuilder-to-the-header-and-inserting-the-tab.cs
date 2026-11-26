@@ -9,14 +9,9 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Add a primary header to the first section.
-        Section section = doc.FirstSection;
-        HeaderFooter header = new HeaderFooter(doc, HeaderFooterType.HeaderPrimary);
-        section.HeadersFooters.Add(header);
-
-        // Create a DocumentBuilder and move it to the header.
         DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Move the builder to the primary header of the first section.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
 
         // Build a simple 2x2 table inside the header.
@@ -40,10 +35,10 @@ public class Program
         builder.Write("Header Cell 4");
         builder.EndRow();
 
-        // End the table.
+        // Finish the table.
         builder.EndTable();
 
-        // Save the document.
+        // Save the document to disk.
         string outputPath = "HeaderTable.docx";
         doc.Save(outputPath);
 
@@ -52,5 +47,8 @@ public class Program
         {
             throw new Exception($"Failed to create the output file: {outputPath}");
         }
+
+        // Optionally, indicate success (no interactive prompts required).
+        Console.WriteLine("Document with header table created successfully.");
     }
 }

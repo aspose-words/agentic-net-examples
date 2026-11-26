@@ -6,9 +6,9 @@ using Aspose.Words.Tables;
 
 public class Program
 {
-    public static void Main()
+    public static void Main(string[] args)
     {
-        // Create a new document and a DocumentBuilder.
+        // Create a new document and builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
@@ -31,6 +31,8 @@ public class Program
 
         // Retrieve the created table.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
 
         // Apply background shading to every cell in the table.
         foreach (Row row in table.Rows)
@@ -45,12 +47,8 @@ public class Program
         string outputPath = "TableShading.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify the file was saved.
         if (!File.Exists(outputPath))
-        {
-            throw new Exception("The output document was not created.");
-        }
-
-        Console.WriteLine($"Document saved successfully to: {Path.GetFullPath(outputPath)}");
+            throw new FileNotFoundException("The output document was not saved.", outputPath);
     }
 }

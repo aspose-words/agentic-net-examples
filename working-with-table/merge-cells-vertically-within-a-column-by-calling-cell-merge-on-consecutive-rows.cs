@@ -3,17 +3,17 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace TableMergeExample
+namespace MergeVerticalCellsExample
 {
-    public class Program
+    class Program
     {
-        public static void Main()
+        static void Main()
         {
-            // Create a new document and a builder.
+            // Create a new blank document.
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Build a 3x2 table.
+            // Build a simple 3‑row, 2‑column table.
             builder.StartTable();
 
             // Row 1
@@ -37,29 +37,35 @@ namespace TableMergeExample
             builder.Write("Row 3, Col 2");
             builder.EndRow();
 
-            // End the table.
+            // End the table construction.
             builder.EndTable();
 
             // Retrieve the created table.
             Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-            // Merge cells vertically in the first column (index 0) across the three rows.
-            Cell firstCell = table.Rows[0].Cells[0];
-            Cell secondCell = table.Rows[1].Cells[0];
-            Cell thirdCell = table.Rows[2].Cells[0];
+            // Merge cells vertically in the first column.
+            // The first cell gets the "First" flag, subsequent cells get "Previous".
+            if (table.Rows.Count > 0)
+            {
+                // First cell in the column.
+                Cell firstCell = table.Rows[0].Cells[0];
+                firstCell.CellFormat.VerticalMerge = CellMerge.First;
 
-            // Set vertical merge flags.
-            firstCell.CellFormat.VerticalMerge = CellMerge.First;      // Start of merged region
-            secondCell.CellFormat.VerticalMerge = CellMerge.Previous; // Continuation
-            thirdCell.CellFormat.VerticalMerge = CellMerge.Previous;  // Continuation
+                // Remaining cells in the same column.
+                for (int rowIndex = 1; rowIndex < table.Rows.Count; rowIndex++)
+                {
+                    Cell cell = table.Rows[rowIndex].Cells[0];
+                    cell.CellFormat.VerticalMerge = CellMerge.Previous;
+                }
+            }
 
             // Save the document.
-            string outputPath = "MergedTable.docx";
+            string outputPath = "MergedCells.docx";
             doc.Save(outputPath);
 
             // Verify that the file was created.
             if (!File.Exists(outputPath))
-                throw new Exception("The output file was not created.");
+                throw new InvalidOperationException("The output file was not created.");
         }
     }
 }

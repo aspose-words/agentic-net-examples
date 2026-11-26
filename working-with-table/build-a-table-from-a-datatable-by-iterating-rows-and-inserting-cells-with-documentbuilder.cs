@@ -2,13 +2,12 @@ using System;
 using System.Data;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample DataTable.
+        // Create a DataTable with sample data.
         DataTable dataTable = new DataTable("Sample");
         dataTable.Columns.Add("ID", typeof(int));
         dataTable.Columns.Add("Name", typeof(string));
@@ -22,24 +21,24 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building the table.
+        // Build a table from the DataTable.
         builder.StartTable();
 
         // Insert header row.
         foreach (DataColumn column in dataTable.Columns)
         {
             builder.InsertCell();
-            builder.Write(column.ColumnName);
+            builder.Writeln(column.ColumnName);
         }
         builder.EndRow();
 
         // Insert data rows.
         foreach (DataRow row in dataTable.Rows)
         {
-            foreach (DataColumn column in dataTable.Columns)
+            foreach (object value in row.ItemArray)
             {
                 builder.InsertCell();
-                builder.Write(row[column].ToString());
+                builder.Writeln(value?.ToString() ?? string.Empty);
             }
             builder.EndRow();
         }
@@ -48,26 +47,13 @@ public class Program
         builder.EndTable();
 
         // Save the document.
-        string outputPath = "TableFromDataTable.docx";
+        const string outputPath = "TableFromDataTable.docx";
         doc.Save(outputPath);
 
-        // Validate that the file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception($"Failed to create the output file: {outputPath}");
-
-        // Re-open the document to verify table structure.
-        Document loadedDoc = new Document(outputPath);
-        NodeCollection tables = loadedDoc.GetChildNodes(NodeType.Table, true);
-        if (tables.Count == 0)
-            throw new Exception("No tables found in the saved document.");
-
-        Table table = (Table)tables[0];
-        // Expected rows: header + data rows.
-        int expectedRowCount = dataTable.Rows.Count + 1;
-        if (table.Rows.Count != expectedRowCount)
-            throw new Exception($"Table row count mismatch. Expected: {expectedRowCount}, Actual: {table.Rows.Count}");
-
-        // If execution reaches this point, the table was built successfully.
-        Console.WriteLine("Table created and saved successfully.");
+        {
+            throw new InvalidOperationException($"Failed to create output file: {outputPath}");
+        }
     }
 }

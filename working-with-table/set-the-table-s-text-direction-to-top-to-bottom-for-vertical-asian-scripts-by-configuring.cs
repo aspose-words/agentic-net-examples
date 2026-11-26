@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Reflection;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -7,11 +8,11 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x1 table.
+        // Build a simple 2‑cell table.
         builder.StartTable();
         builder.InsertCell();
         builder.Writeln("Cell 1");
@@ -21,33 +22,29 @@ public class Program
         builder.EndTable();
 
         // Retrieve the created table.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (table == null)
-            throw new InvalidOperationException("Table was not created.");
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
-        // Attempt to set the table's text direction to TopToBottom for vertical Asian scripts.
-        // The TextDirection property may not exist in older versions of Aspose.Words,
-        // so we use reflection to set it only when it is available.
-        var textDirectionProp = typeof(Table).GetProperty("TextDirection");
-        if (textDirectionProp != null)
+        // Attempt to set the table's text direction to TopToBottom if the property exists.
+        PropertyInfo textDirProp = typeof(Table).GetProperty("TextDirection", BindingFlags.Public | BindingFlags.Instance);
+        if (textDirProp != null && textDirProp.CanWrite)
         {
-            // Resolve the enum type (Aspose.Words.Tables.TextDirection) and the required value.
-            Type enumType = textDirectionProp.PropertyType;
-            object topToBottomValue = Enum.Parse(enumType, "TopToBottom");
-            textDirectionProp.SetValue(table, topToBottomValue);
+            Type enumType = textDirProp.PropertyType;
+            // Use Enum.TryParse to avoid exceptions if the enum value name differs.
+            if (Enum.TryParse(enumType, "TopToBottom", out object topToBottomValue))
+            {
+                textDirProp.SetValue(table, topToBottomValue);
+            }
         }
-        else
-        {
-            // If the property is unavailable, you may handle it accordingly.
-            // For this example we simply continue without setting the direction.
-        }
+        // If the property does not exist, we simply continue without setting it.
 
         // Save the document.
         string outputPath = "TableTextDirection.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was saved.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output file was not created.", outputPath);
+        {
+            throw new FileNotFoundException("Failed to create the output document.", outputPath);
+        }
     }
 }

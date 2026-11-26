@@ -1,97 +1,76 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
 using Aspose.Words.Replacing;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the template and result documents.
-        const string templatePath = "Template.docx";
-        const string resultPath = "Result.docx";
+        // Create a template document with a 2x2 table containing placeholder text.
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // -----------------------------------------------------------------
-        // Step 1: Create a template document that contains a table with
-        // placeholder text in each cell.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Build a simple 2x2 table with placeholder text "{{Placeholder}}".
         builder.StartTable();
 
-        // First row, first cell.
+        // First row
         builder.InsertCell();
-        builder.Writeln("{{Placeholder}}");
-
-        // First row, second cell.
+        builder.Write("{{Placeholder}}");
         builder.InsertCell();
-        builder.Writeln("{{Placeholder}}");
+        builder.Write("{{Placeholder}}");
         builder.EndRow();
 
-        // Second row, first cell.
+        // Second row
         builder.InsertCell();
-        builder.Writeln("{{Placeholder}}");
-
-        // Second row, second cell.
+        builder.Write("{{Placeholder}}");
         builder.InsertCell();
-        builder.Writeln("{{Placeholder}}");
+        builder.Write("{{Placeholder}}");
         builder.EndRow();
 
         builder.EndTable();
 
-        // Save the template document.
+        // Save the template document to a temporary file.
+        const string templatePath = "Template.docx";
         templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // Step 2: Load the template document and clone its first table.
-        // -----------------------------------------------------------------
-        Document loadedTemplate = new Document(templatePath);
-        Table originalTable = (Table)loadedTemplate.GetChild(NodeType.Table, 0, true);
-        if (originalTable == null)
+        // Load the template document.
+        var sourceDoc = new Document(templatePath);
+
+        // Locate the first table in the source document.
+        var sourceTable = sourceDoc.GetChildNodes(NodeType.Table, true)[0] as Table;
+        if (sourceTable == null)
             throw new InvalidOperationException("No table found in the template document.");
 
-        // Deep clone the table (including its contents).
-        Table clonedTable = (Table)originalTable.Clone(true);
+        // Clone the table (deep clone).
+        var clonedTable = (Table)sourceTable.Clone(true);
 
-        // -----------------------------------------------------------------
-        // Step 3: Create a destination document and import the cloned table.
-        // -----------------------------------------------------------------
-        Document destDoc = new Document(); // Empty document with a single section.
-
-        // Import the cloned table into the destination document.
-        NodeImporter importer = new NodeImporter(loadedTemplate, destDoc, ImportFormatMode.KeepSourceFormatting);
-        Node importedTableNode = importer.ImportNode(clonedTable, true);
-        Table importedTable = (Table)importedTableNode;
-
-        // Append the imported table to the body of the destination document.
-        destDoc.FirstSection.Body.AppendChild(importedTable);
-
-        // -----------------------------------------------------------------
-        // Step 4: Replace placeholder text in each cell using FindReplaceOptions.
-        // -----------------------------------------------------------------
-        FindReplaceOptions replaceOptions = new FindReplaceOptions();
-        // Example: make the replacement case‑insensitive.
-        replaceOptions.MatchCase = false;
-
-        foreach (Row row in importedTable.Rows)
+        // Replace placeholder text in each cell of the cloned table.
+        var replaceOptions = new FindReplaceOptions();
+        foreach (Row row in clonedTable.Rows)
         {
             foreach (Cell cell in row.Cells)
             {
-                // Replace the placeholder with actual content.
-                cell.Range.Replace("{{Placeholder}}", "Replaced Text", replaceOptions);
+                cell.Range.Replace("{{Placeholder}}", "Replaced", replaceOptions);
             }
         }
 
-        // -----------------------------------------------------------------
-        // Step 5: Save the resulting document.
-        // -----------------------------------------------------------------
-        destDoc.Save(resultPath);
+        // Create a new document to receive the cloned table.
+        var resultDoc = new Document();
+        var resultBuilder = new DocumentBuilder(resultDoc);
+        resultBuilder.Writeln("Table cloned and placeholders replaced:");
 
-        // Simple validation to ensure the file was created.
+        // Import the cloned table into the result document before appending.
+        var importer = new NodeImporter(sourceDoc, resultDoc, ImportFormatMode.KeepSourceFormatting);
+        var importedTable = (Table)importer.ImportNode(clonedTable, true);
+        resultDoc.FirstSection.Body.AppendChild(importedTable);
+
+        // Save the result document.
+        const string resultPath = "Result.docx";
+        resultDoc.Save(resultPath);
+
+        // Verify that the output file exists.
         if (!File.Exists(resultPath))
-            throw new InvalidOperationException($"Failed to create the result document at '{resultPath}'.");
+            throw new FileNotFoundException("Result document was not created.", resultPath);
     }
 }

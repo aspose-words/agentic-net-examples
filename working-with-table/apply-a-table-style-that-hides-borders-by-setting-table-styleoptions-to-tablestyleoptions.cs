@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Drawing;
 
 public class Program
 {
@@ -12,41 +11,34 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x1 table.
+        // Build a simple 2‑row, 1‑column table.
         builder.StartTable();
+
         builder.InsertCell();
-        builder.Writeln("Cell 1");
-        builder.InsertCell();
-        builder.Writeln("Cell 2");
+        builder.Write("First row");
         builder.EndRow();
+
+        builder.InsertCell();
+        builder.Write("Second row");
+        builder.EndRow();
+
         builder.EndTable();
 
-        // Retrieve the created table.
+        // Get the created table.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (table == null)
-            throw new InvalidOperationException("Table was not created.");
 
-        // Apply a built‑in style.
-        table.Style = doc.Styles["Table Grid"];
+        // Apply a built‑in style (optional, here we use TableGrid).
+        table.StyleIdentifier = StyleIdentifier.TableGrid;
 
-        // Hide borders by setting each cell border style to None.
-        foreach (Row row in table.Rows)
-        {
-            foreach (Cell cell in row.Cells)
-            {
-                cell.CellFormat.Borders[BorderType.Left].LineStyle = LineStyle.None;
-                cell.CellFormat.Borders[BorderType.Top].LineStyle = LineStyle.None;
-                cell.CellFormat.Borders[BorderType.Right].LineStyle = LineStyle.None;
-                cell.CellFormat.Borders[BorderType.Bottom].LineStyle = LineStyle.None;
-            }
-        }
+        // Hide all borders by clearing the border formatting.
+        table.ClearBorders();
 
         // Save the document.
-        string outputPath = "TableNoBorders.docx";
-        doc.Save(outputPath);
+        string outputFile = "TableNoBorders.docx";
+        doc.Save(outputFile);
 
         // Verify that the file was saved.
-        if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not saved.", outputPath);
+        if (!File.Exists(outputFile))
+            throw new Exception("The output document was not created.");
     }
 }

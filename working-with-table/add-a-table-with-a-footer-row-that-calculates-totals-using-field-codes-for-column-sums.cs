@@ -11,45 +11,56 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start the table.
+        // Begin the table.
         builder.StartTable();
 
         // Header row.
         builder.InsertCell();
         builder.Write("Item");
         builder.InsertCell();
-        builder.Write("Amount");
+        builder.Write("Quantity");
+        builder.InsertCell();
+        builder.Write("Price");
         builder.EndRow();
 
-        // Data rows.
+        // Add a few data rows.
         for (int i = 1; i <= 3; i++)
         {
             builder.InsertCell();
             builder.Write($"Item {i}");
+
             builder.InsertCell();
-            builder.Write((i * 10).ToString());
+            builder.Write((i * 2).ToString()); // Quantity
+
+            builder.InsertCell();
+            builder.Write((i * 10).ToString()); // Price
+
             builder.EndRow();
         }
 
-        // Footer row with a field that sums the column above.
+        // Footer row with field codes that sum the columns above.
         builder.InsertCell();
         builder.Write("Total");
+
         builder.InsertCell();
-        // Insert a formula field that calculates the sum of the cells above in this column.
-        builder.InsertField("=SUM(ABOVE)", "0");
+        builder.InsertField("=SUM(ABOVE)", null); // Sum of Quantity column.
+
+        builder.InsertCell();
+        builder.InsertField("=SUM(ABOVE)", null); // Sum of Price column.
+
         builder.EndRow();
 
         // End the table.
         builder.EndTable();
 
-        // Save the document.
+        // Save the document to disk.
         string outputPath = "TableWithFooter.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
         {
-            throw new Exception($"Failed to create the output file: {outputPath}");
+            throw new Exception("The output document was not created.");
         }
     }
 }

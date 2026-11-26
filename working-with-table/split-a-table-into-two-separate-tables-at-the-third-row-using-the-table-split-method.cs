@@ -7,7 +7,7 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a DocumentBuilder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
@@ -15,55 +15,51 @@ public class Program
         builder.StartTable();
         for (int row = 1; row <= 5; row++)
         {
-            // First cell.
-            builder.InsertCell();
-            builder.Write($"Row {row} Cell 1");
-
-            // Second cell.
-            builder.InsertCell();
-            builder.Write($"Row {row} Cell 2");
-
-            // End the current row.
+            for (int col = 1; col <= 2; col++)
+            {
+                builder.InsertCell();
+                builder.Writeln($"Row {row}, Cell {col}");
+            }
             builder.EndRow();
         }
         builder.EndTable();
 
-        // Retrieve the created table.
-        Table originalTable = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
+        // Retrieve the first (and only) table in the document.
+        Table originalTable = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (originalTable == null)
+            throw new InvalidOperationException("Table was not created.");
 
-        // Split the table at the third row (index 2).
-        int splitIndex = 2; // zero‑based index where the second table starts
+        // Index of the row after which we split (zero‑based).
+        // Split at the third row => rows 0‑2 stay in the original table.
+        int splitRowIndex = 2;
 
-        // Clone the original table structure (without rows) for the second table.
-        Table secondTable = (Table)originalTable.Clone(false);
+        // Create a new empty table that copies the formatting of the original.
+        Table newTable = (Table)originalTable.Clone(false); // shallow clone, no rows
 
-        // Move rows from the original table to the second table.
-        while (originalTable.Rows.Count > splitIndex)
+        // Move rows that belong to the second part into the new table.
+        while (originalTable.Rows.Count > splitRowIndex + 1)
         {
-            Row rowToMove = originalTable.Rows[splitIndex];
-            originalTable.Rows.RemoveAt(splitIndex);
-            secondTable.Rows.Add(rowToMove);
+            // Row immediately after the split index.
+            Row movingRow = originalTable.Rows[splitRowIndex + 1];
+            // Remove it from the original table.
+            originalTable.Rows.RemoveAt(splitRowIndex + 1);
+            // Add it to the new table.
+            newTable.Rows.Add(movingRow);
         }
 
-        // Insert the new table after the original one.
-        originalTable.ParentNode.InsertAfter(secondTable, originalTable);
+        // Insert the new table into the document right after the original table.
+        originalTable.ParentNode.InsertAfter(newTable, originalTable);
 
-        // Validate the split.
-        if (originalTable.Rows.Count != 2)
-            throw new InvalidOperationException($"Original table should have 2 rows after split, but has {originalTable.Rows.Count}.");
-        if (secondTable.Rows.Count != 3)
-            throw new InvalidOperationException($"Second table should have 3 rows after split, but has {secondTable.Rows.Count}.");
+        // Insert an empty paragraph between the two tables for clarity.
+        Paragraph separator = new Paragraph(doc);
+        originalTable.ParentNode.InsertAfter(separator, originalTable);
 
         // Save the document.
         string outputPath = "SplitTable.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify that the file was saved.
         if (!File.Exists(outputPath))
             throw new FileNotFoundException("The output document was not created.", outputPath);
-
-        Console.WriteLine($"Document saved to '{outputPath}'.");
-        Console.WriteLine($"Original table rows: {originalTable.Rows.Count}");
-        Console.WriteLine($"Second table rows: {secondTable.Rows.Count}");
     }
 }

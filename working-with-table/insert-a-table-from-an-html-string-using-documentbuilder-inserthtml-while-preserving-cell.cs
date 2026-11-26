@@ -12,47 +12,49 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // HTML string containing a table with cell background colors and borders.
-        string html = @"
-<table style='border-collapse:collapse;'>
-    <tr>
-        <td style='background-color:#FFFF00; border:2px solid #FF0000;'>Yellow cell</td>
-        <td style='background-color:#00FF00; border:2px solid #0000FF;'>Green cell</td>
-    </tr>
-    <tr>
-        <td style='background-color:#CCCCCC; border:2px solid #000000;'>Gray cell</td>
-        <td style='border:2px solid #000000;'>No fill</td>
-    </tr>
-</table>";
+        // HTML string containing a table with cell formatting (background color and bold text).
+        string htmlTable = @"
+            <table border='1' style='border-collapse:collapse;'>
+                <tr>
+                    <td style='background-color:#FFFF00; font-weight:bold;'>Header 1</td>
+                    <td style='background-color:#00FF00; font-weight:bold;'>Header 2</td>
+                </tr>
+                <tr>
+                    <td style='background-color:#FFCCCC;'>Cell 1</td>
+                    <td style='background-color:#CCCCFF;'>Cell 2</td>
+                </tr>
+            </table>";
 
-        // Insert the HTML into the document.
-        builder.InsertHtml(html);
+        // Insert the HTML table into the document.
+        builder.InsertHtml(htmlTable);
 
-        // Save the document to a file.
-        string outputPath = "Result.docx";
+        // Save the document.
+        string outputPath = "Output.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output file was not created.");
+            throw new Exception("The output document was not saved.");
 
-        // Reload the document to validate that the table and its formatting were preserved.
+        // Reload the document to verify table and cell formatting.
         Document loadedDoc = new Document(outputPath);
-        Table table = (Table)loadedDoc.GetChild(NodeType.Table, 0, true);
+        Table table = loadedDoc.GetChild(NodeType.Table, 0, true) as Table;
         if (table == null)
-            throw new Exception("No table was found in the loaded document.");
+            throw new Exception("No table was found in the saved document.");
 
-        // Validate the background color of the first cell (should be yellow).
+        // Verify the first cell's background color (should be Yellow).
         Cell firstCell = table.Rows[0].Cells[0];
-        Color bgColor = firstCell.CellFormat.Shading.BackgroundPatternColor;
-        if (bgColor.ToArgb() != Color.Yellow.ToArgb())
-            throw new Exception("The background color of the first cell was not preserved.");
+        Color expectedColor = Color.Yellow; // #FFFF00
+        if (firstCell.CellFormat.Shading.BackgroundPatternColor.ToArgb() != expectedColor.ToArgb())
+            throw new Exception("Cell formatting was not preserved for the first cell.");
 
-        // Validate that the left border of the first cell has a non-zero width (indicating it was imported).
-        Border leftBorder = firstCell.CellFormat.Borders[BorderType.Left];
-        if (leftBorder.LineWidth == 0)
-            throw new Exception("The border of the first cell was not preserved.");
+        // Verify the second cell's background color (should be Lime).
+        Cell secondCell = table.Rows[0].Cells[1];
+        expectedColor = Color.Lime; // #00FF00
+        if (secondCell.CellFormat.Shading.BackgroundPatternColor.ToArgb() != expectedColor.ToArgb())
+            throw new Exception("Cell formatting was not preserved for the second cell.");
 
-        // Additional validations can be added here if needed.
+        // If execution reaches this point, the table was inserted and formatting preserved.
+        Console.WriteLine("Table inserted from HTML and cell formatting preserved successfully.");
     }
 }
