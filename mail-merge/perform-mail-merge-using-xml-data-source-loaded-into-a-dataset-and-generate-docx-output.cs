@@ -1,7 +1,6 @@
 using System;
 using System.Data;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.MailMerging;
 
@@ -9,61 +8,92 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // -------------------------------------------------
+        // 1. Create a new blank document and a builder.
+        // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert merge fields into the template.
-        builder.Writeln("Employee Information:");
-        builder.InsertField("MERGEFIELD FirstName");
-        builder.Write(" ");
-        builder.InsertField("MERGEFIELD LastName");
+        // -------------------------------------------------
+        // 2. Build the mail‑merge template.
+        // -------------------------------------------------
+        builder.Writeln("Employee List:");
+
+        // Start of the mail‑merge region.
+        builder.InsertField(@"MERGEFIELD TableStart:Employee \* MERGEFORMAT");
         builder.Writeln();
 
-        // Save the template (optional, for debugging).
-        const string templatePath = "Template.docx";
-        doc.Save(templatePath);
+        // Fields that will be repeated for each employee.
+        builder.InsertField(@"MERGEFIELD Name \* MERGEFORMAT");
+        builder.Write("\t"); // simple separator
+        builder.InsertField(@"MERGEFIELD Position \* MERGEFORMAT");
+        builder.Writeln();
 
-        // XML data source.
+        // End of the mail‑merge region.
+        builder.InsertField(@"MERGEFIELD TableEnd:Employee \* MERGEFORMAT");
+        builder.Writeln();
+
+        // -------------------------------------------------
+        // 3. Load XML data into a DataSet.
+        // -------------------------------------------------
         string xmlData = @"
-<DataSet>
-    <Person>
-        <FirstName>John</FirstName>
-        <LastName>Doe</LastName>
-    </Person>
-</DataSet>";
+<Root>
+    <Employees>
+        <Employee>
+            <Name>John Doe</Name>
+            <Position>Manager</Position>
+        </Employee>
+        <Employee>
+            <Name>Jane Smith</Name>
+            <Position>Developer</Position>
+        </Employee>
+        <Employee>
+            <Name>Bob Johnson</Name>
+            <Position>Designer</Position>
+        </Employee>
+    </Employees>
+</Root>";
 
-        // Load XML into a DataSet.
         DataSet dataSet = new DataSet();
         using (StringReader sr = new StringReader(xmlData))
         {
             dataSet.ReadXml(sr);
         }
 
-        // Retrieve the DataTable that contains the merge data.
-        DataTable table = dataSet.Tables["Person"];
-        if (table == null || table.Rows.Count == 0)
-            throw new InvalidOperationException("No data found for merge.");
+        // Ensure the DataTable name matches the region name ("Employee").
+        if (!dataSet.Tables.Contains("Employee"))
+            throw new InvalidOperationException("Expected DataTable 'Employee' not found in the DataSet.");
 
-        // Prepare field names and values for the simple mail merge.
-        string[] fieldNames = table.Columns.Cast<DataColumn>()
-                                          .Select(col => col.ColumnName)
-                                          .ToArray();
-
-        object[] fieldValues = table.Rows[0].ItemArray;
-
-        // Execute the mail merge.
+        // -------------------------------------------------
+        // 4. Execute the mail merge with regions.
+        // -------------------------------------------------
         doc.MailMerge.CleanupOptions = MailMergeCleanupOptions.RemoveUnusedFields;
-        doc.MailMerge.Execute(fieldNames, fieldValues);
+        doc.MailMerge.ExecuteWithRegions(dataSet.Tables["Employee"]);
 
-        // Save the merged document.
-        const string outputPath = "MergedOutput.docx";
+        // -------------------------------------------------
+        // 5. Save the merged document.
+        // -------------------------------------------------
+        string outputPath = "MergedOutput.docx";
         doc.Save(outputPath);
 
-        // Validation: ensure the output file exists and is not empty.
-        if (!File.Exists(outputPath) || new FileInfo(outputPath).Length == 0)
-            throw new InvalidOperationException("Merged document was not created correctly.");
+        // -------------------------------------------------
+        // 6. Validate the output file.
+        // -------------------------------------------------
+        FileInfo fi = new FileInfo(outputPath);
+        if (!fi.Exists)
+            throw new FileNotFoundException("The merged document was not created.", outputPath);
+        if (fi.Length == 0)
+            throw new InvalidOperationException("The merged document is empty.");
 
-        // The program ends here without waiting for user input.
+        // Simple validation: ensure each employee name appears in the file.
+        string resultText = doc.GetText();
+        if (!resultText.Contains("John Doe") ||
+            !resultText.Contains("Jane Smith") ||
+            !resultText.Contains("Bob Johnson"))
+        {
+            throw new InvalidOperationException("Merged content does not contain expected employee data.");
+        }
+
+        Console.WriteLine($"Mail merge completed successfully. Output file: {Path.GetFullPath(outputPath)}");
     }
 }

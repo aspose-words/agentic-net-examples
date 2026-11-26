@@ -8,89 +8,95 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a title.
-        builder.Writeln("Customer Orders Report");
+        // Insert a title.
+        builder.Writeln("Orders Report");
         builder.Writeln();
 
-        // ---- Begin outer region: Orders ----
-        builder.InsertField("MERGEFIELD TableStart:Orders");
+        // Start the outer region "Orders".
+        builder.InsertField("MERGEFIELD TableStart:Orders", null);
         builder.Writeln();
 
-        // Order fields.
-        builder.InsertField("MERGEFIELD OrderID");
-        builder.Write("\t");
-        builder.InsertField("MERGEFIELD OrderDate");
+        // Insert fields for each order.
+        builder.Writeln("Order ID: ");
+        builder.InsertField("MERGEFIELD OrderID", null);
+        builder.Writeln();
+        builder.Writeln("Customer: ");
+        builder.InsertField("MERGEFIELD CustomerName", null);
         builder.Writeln();
 
-        // ---- Begin inner region: OrderDetails ----
-        builder.InsertField("MERGEFIELD TableStart:OrderDetails");
+        // Start the inner region "OrderDetails".
+        builder.InsertField("MERGEFIELD TableStart:OrderDetails", null);
         builder.Writeln();
 
-        // Detail fields.
-        builder.InsertField("MERGEFIELD ProductName");
-        builder.Write("\t");
-        builder.InsertField("MERGEFIELD Quantity");
+        // Insert a simple table for order details.
+        builder.StartTable();
+        builder.InsertCell();
+        builder.InsertField("MERGEFIELD Product", null);
+        builder.InsertCell();
+        builder.InsertField("MERGEFIELD Quantity", null);
+        builder.EndRow();
+        builder.EndTable();
+
+        // End the inner region.
+        builder.InsertField("MERGEFIELD TableEnd:OrderDetails", null);
         builder.Writeln();
 
-        // End inner region.
-        builder.InsertField("MERGEFIELD TableEnd:OrderDetails");
-        builder.Writeln();
-
-        // End outer region.
-        builder.InsertField("MERGEFIELD TableEnd:Orders");
+        // End the outer region.
+        builder.InsertField("MERGEFIELD TableEnd:Orders", null);
         builder.Writeln();
 
         // Prepare data tables.
-        DataTable orders = new DataTable("Orders");
-        orders.Columns.Add("OrderID", typeof(int));
-        orders.Columns.Add("OrderDate", typeof(DateTime));
+        DataTable ordersTable = new DataTable("Orders");
+        ordersTable.Columns.Add("OrderID", typeof(int));
+        ordersTable.Columns.Add("CustomerName", typeof(string));
 
-        DataTable details = new DataTable("OrderDetails");
-        details.Columns.Add("OrderID", typeof(int));
-        details.Columns.Add("ProductName", typeof(string));
-        details.Columns.Add("Quantity", typeof(int));
+        ordersTable.Rows.Add(1, "Alice");
+        ordersTable.Rows.Add(2, "Bob");
 
-        // Sample data for orders.
-        orders.Rows.Add(1, new DateTime(2023, 1, 15));
-        orders.Rows.Add(2, new DateTime(2023, 2, 20));
+        DataTable detailsTable = new DataTable("OrderDetails");
+        detailsTable.Columns.Add("OrderID", typeof(int)); // Foreign key to Orders
+        detailsTable.Columns.Add("Product", typeof(string));
+        detailsTable.Columns.Add("Quantity", typeof(int));
 
-        // Sample data for order details.
-        details.Rows.Add(1, "Apple", 10);
-        details.Rows.Add(1, "Banana", 5);
-        details.Rows.Add(2, "Orange", 7);
-        details.Rows.Add(2, "Grapes", 12);
+        detailsTable.Rows.Add(1, "Apples", 5);
+        detailsTable.Rows.Add(1, "Bananas", 3);
+        detailsTable.Rows.Add(2, "Oranges", 7);
+        detailsTable.Rows.Add(2, "Grapes", 2);
 
-        // Combine tables into a DataSet and define relation for nested merge.
+        // Create a DataSet and add tables with a relation.
         DataSet dataSet = new DataSet();
-        dataSet.Tables.Add(orders);
-        dataSet.Tables.Add(details);
-        dataSet.Relations.Add("Order_Details", orders.Columns["OrderID"], details.Columns["OrderID"]);
+        dataSet.Tables.Add(ordersTable);
+        dataSet.Tables.Add(detailsTable);
+        dataSet.Relations.Add("Order_OrderDetails",
+            ordersTable.Columns["OrderID"],
+            detailsTable.Columns["OrderID"]);
+
+        // Clean up any unused fields after merge.
+        doc.MailMerge.CleanupOptions = MailMergeCleanupOptions.RemoveUnusedFields;
 
         // Execute mail merge with regions.
         doc.MailMerge.ExecuteWithRegions(dataSet);
 
-        // Remove any unused merge fields.
-        doc.MailMerge.CleanupOptions = MailMergeCleanupOptions.RemoveUnusedFields;
-
         // Save the merged document.
-        string outputPath = "MergedDocument.docx";
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedOutput.docx");
         doc.Save(outputPath);
 
-        // Validation: ensure file exists and contains expected content.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output file was not created.");
+        // Validate that the output contains expected merged data.
+        string mergedText = doc.GetText();
+        if (string.IsNullOrWhiteSpace(mergedText) ||
+            !mergedText.Contains("Alice") ||
+            !mergedText.Contains("Bob") ||
+            !mergedText.Contains("Apples") ||
+            !mergedText.Contains("Oranges"))
+        {
+            throw new InvalidOperationException("Mail merge did not produce the expected output.");
+        }
 
-        FileInfo fileInfo = new FileInfo(outputPath);
-        if (fileInfo.Length == 0)
-            throw new InvalidOperationException("The merged document is empty.");
-
-        Document resultDoc = new Document(outputPath);
-        string resultText = resultDoc.GetText();
-        if (!resultText.Contains("Apple") || !resultText.Contains("Orange"))
-            throw new InvalidOperationException("Merged content does not contain expected values.");
+        // Indicate successful completion (no interactive output required).
+        Console.WriteLine("Mail merge completed successfully. Output saved to: " + outputPath);
     }
 }

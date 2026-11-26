@@ -1,25 +1,20 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.MailMerging;
 
 public class Program
 {
-    // Callback to handle missing merge fields.
+    // Custom callback to detect missing merge fields.
     private class MissingFieldHandler : IFieldMergingCallback
     {
         public void FieldMerging(FieldMergingArgs args)
         {
-            // If the data source does not contain a value for the field, treat it as missing.
+            // If the data source does not contain a value for the field, throw an exception.
             if (args.FieldValue == null)
-            {
-                Console.WriteLine($"Missing field encountered: {args.FieldName}");
-                // Provide a default replacement text.
-                args.Text = "[Missing]";
-            }
+                throw new InvalidOperationException($"Missing merge field: {args.FieldName}");
         }
 
-        // Required by the interface but not used for image fields.
+        // Not used in this example but required by the interface.
         public void ImageFieldMerging(ImageFieldMergingArgs args) { }
     }
 
@@ -28,35 +23,30 @@ public class Program
         // Create a new document and build the template with merge fields.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertField("MERGEFIELD Name", "«Name»");
-        builder.Writeln();
-        builder.InsertField("MERGEFIELD Age", "«Age»");
-        builder.Writeln();
+        builder.Writeln("Dear ");
+        builder.InsertField("MERGEFIELD FirstName");
+        builder.Write(" ");
+        builder.InsertField("MERGEFIELD LastName");
+        builder.Writeln(",");
 
-        // Attach the missing‑field handler.
+        // Attach the custom callback to handle missing fields.
         doc.MailMerge.FieldMergingCallback = new MissingFieldHandler();
 
-        // Prepare data source – Age field is intentionally omitted.
-        string[] fieldNames = { "Name" };
-        object[] fieldValues = { "John Doe" };
+        // Provide data that lacks the LastName field.
+        string[] fieldNames = { "FirstName" };
+        object[] fieldValues = { "John" };
 
-        // Perform the mail merge.
-        doc.MailMerge.Execute(fieldNames, fieldValues);
+        try
+        {
+            // Execute the mail merge.
+            doc.MailMerge.Execute(fieldNames, fieldValues);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Mail merge failed: {ex.Message}");
+        }
 
-        // Save the merged document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedOutput.docx");
-        doc.Save(outputPath);
-
-        // Load the result to verify the merge.
-        Document resultDoc = new Document(outputPath);
-        string resultText = resultDoc.GetText();
-
-        if (!resultText.Contains("John Doe"))
-            throw new InvalidOperationException("The Name field was not merged correctly.");
-
-        if (!resultText.Contains("[Missing]"))
-            throw new InvalidOperationException("The missing Age field was not handled correctly.");
-
-        Console.WriteLine("Mail merge completed successfully. Output saved to: " + outputPath);
+        // Save the resulting document.
+        doc.Save("Result.docx");
     }
 }

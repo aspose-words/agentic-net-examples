@@ -10,12 +10,13 @@ product: Aspose.Words
 
 ## Purpose
 
-The AI coding agent should generate reliable Aspose.Words mail-merge programs that build the template in code, insert exact MERGEFIELD names, configure the appropriate MailMerge API (Execute or ExecuteWithRegions), apply cleanup options when required, and handle image insertion through the IFieldMergingCallback interface without referencing unavailable members.
+Provide an AI coding assistant with concise, authoritative guidance for implementing reliable mail-merge solutions using Aspose.Words 26.11.0, covering template construction, field insertion, region handling, image callbacks, and output validation.
 
 ## Non-negotiable conventions
 
-- Do not reference types such as Table, FieldType, MailMergeCleanupOptions, GetRegions, or ImageScale that are not present in the referenced Aspose.Words version.
-- Do not assume that a template file exists on disk; always construct the template programmatically or load a known file.
+- Do not assume external template files exist; always generate the template programmatically.
+- Do not reference nonexistent APIs such as MailMerge.ImageFieldMerging or MailMerge.GetRegions.
+- Do not leave merge fields unresolved unless the task explicitly requires it.
 - Bootstrap local sample inputs for existing-file, folder, stream, image, and data workflows.
 - Prefer simple, verifiable workflows over speculative formatting shortcuts.
 
@@ -31,7 +32,7 @@ Use the simplest workflow that satisfies the task.
 
 ## Validation priorities
 
-1. Verify that every MERGEFIELD name in the template appears in the supplied field-name collection or DataTable before executing the merge.
+1. Verify that the merged document contains all expected field values and that region data repeats correctly.
 
 ## File-to-task reference
 
@@ -54,27 +55,27 @@ Use the simplest workflow that satisfies the task.
   - Task: Insert a table placeholder and define a mail merge region for table rows using DocumentBuilder.
   - Workflow: region-mail-merge
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `handle-the-imagefieldmerging-event-to-customize-image-insertion-using-imagefieldmergingarg.cs`
   - Task: Handle the ImageFieldMerging event to customize image insertion using ImageFieldMergingArgs.
   - Workflow: image-mail-merge
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `insert-a-company-logo-into-each-merged-document-by-handling-imagefieldmerging-with-a-stati.cs`
   - Task: Insert a company logo into each merged document by handling ImageFieldMerging with a static image path.
   - Workflow: image-mail-merge
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `apply-conditional-logic-in-imagefieldmerging-to-select-different-images-based-on-field-nam.cs`
   - Task: Apply conditional logic in ImageFieldMerging to select different images based on field name.
   - Workflow: image-mail-merge
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `set-the-text-property-of-a-merge-field-to-apply-bold-formatting-to-inserted-names.cs`
   - Task: Set the Text property of a merge field to apply bold formatting to inserted names.
   - Workflow: simple-mail-merge
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `set-the-text-property-to-insert-formatted-dates-using-a-specific-culture-format-in-merge-f.cs`
   - Task: Set the Text property to insert formatted dates using a specific culture format in merge fields.
   - Workflow: simple-mail-merge
@@ -84,7 +85,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Load XML data into a DataSet using the ReadXml method for mail merge source.
   - Workflow: simple-mail-merge
   - Outputs: xml
-  - Selected engine: mcp
+  - Selected engine: llm
 - `execute-a-simple-mail-merge-with-a-single-data-object-and-save-the-result-as-docx.cs`
   - Task: Execute a simple mail merge with a single data object and save the result as DOCX.
   - Workflow: simple-mail-merge
@@ -104,7 +105,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Execute a mail merge with regions to repeat a product list for each order record.
   - Workflow: region-mail-merge
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `use-mailmerge-executewithregions-to-merge-data-into-multiple-nested-regions-within-the-tem.cs`
   - Task: Use MailMerge.ExecuteWithRegions to merge data into multiple nested regions within the template.
   - Workflow: region-mail-merge
@@ -119,7 +120,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Retrieve mail merge region metadata using MailMergeRegionInfo to verify start and end positions.
   - Workflow: region-mail-merge
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `save-the-merged-document-as-pdf-using-document-save-with-saveformat-pdf-after-mail-merge.cs`
   - Task: Save the merged document as PDF using Document.Save with SaveFormat.Pdf after mail merge.
   - Workflow: simple-mail-merge
@@ -144,7 +145,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Insert a PAGE_BREAK field before each region to start new pages for each repeat.
   - Workflow: region-mail-merge
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `handle-missingfieldevent-to-implement-error-handling-for-absent-merge-fields-before-execut.cs`
   - Task: Handle MissingFieldEvent to implement error handling for absent merge fields before execution.
   - Workflow: simple-mail-merge
@@ -188,35 +189,41 @@ Use the simplest workflow that satisfies the task.
 
 ## Common failure patterns and preferred agent fixes
 
-- **Missing API members**
-  - Symptom: Compilation fails with CS0246, CS1061, or CS0234 because types like Table, FieldType, MailMergeCleanupOptions, GetRegions, or ImageScale cannot be resolved.
-  - Root cause: The code references members that are not part of Aspose.Words 26.10.0 or were removed in newer releases.
-  - Preferred fix: Replace the missing members with supported alternatives: use DocumentBuilder.StartTable/EndTable instead of Table, use FieldType.FieldMergeField for field insertion, omit MailMergeCleanupOptions or use the available CleanupOptions enum, and retrieve region information via doc.MailMerge.GetRegionsHierarchy when GetRegions is unavailable.
-  - Prevention: Consult the Aspose.Words 26.10.0 API reference and limit code to members listed in the official documentation.
+- **Incorrect region field placement**
+  - Symptom: Mail merge throws InvalidOperationException indicating missing item names or badly formed region.
+  - Root cause: TableStart and TableEnd fields are not inserted in the same section, row, or cell, or the region name does not match the DataTable name.
+  - Preferred fix: Insert TableStart and TableEnd fields with identical region names inside the same table structure before executing ExecuteWithRegions.
+  - Prevention: Always build the region template first, then verify the field codes using doc.Range.Fields to ensure correct pairing.
 
-- **Template bootstrap omission**
-  - Symptom: Runtime validation reports unresolved merge fields because the document contains no MERGEFIELD tags.
-  - Root cause: The example assumes an external template file that was never created.
-  - Preferred fix: Create the template in code with DocumentBuilder before performing any mail merge operations.
-  - Prevention: Always include template construction steps in the sample or verify that the referenced file exists in the test environment.
+- **Use of obsolete or missing API members**
+  - Symptom: Compilation fails with CS1061 or CS0246 for members like ImageFieldMerging, GetRegions, or MailMergeCleanupOptions.
+  - Root cause: The code references APIs that were renamed or removed in the current Aspose.Words version.
+  - Preferred fix: Replace obsolete calls with the supported properties: set doc.MailMerge.FieldMergingCallback, use MailMergeCleanupOptions enum, and access region metadata via doc.MailMerge.GetRegions() when available.
+  - Prevention: Consult the Aspose.Words 26.11.0 API reference and avoid hard-coding member names from older versions.
 
-- **Field-name and data mismatch**
-  - Symptom: Unmerged placeholders remain in the output or validation throws an InvalidOperationException indicating missing data.
-  - Root cause: The names of MERGEFIELD tags do not exactly match the keys in the string[] fieldNames array or the column names of the DataTable.
-  - Preferred fix: Ensure that every MERGEFIELD tag uses the exact identifier defined in the data source, respecting case sensitivity.
-  - Prevention: Generate field names programmatically from the data source or perform a pre-merge check that compares template fields with data columns.
+- **Missing System.Drawing dependencies**
+  - Symptom: Compilation errors CS1069 for Bitmap, Graphics, or ImageFormat types.
+  - Root cause: The sample attempts to use System.Drawing types, which are not included in the default .NET 9.0 runtime.
+  - Preferred fix: Provide image data as a byte array or stream (e.g., MemoryStream) and avoid System.Drawing classes entirely.
+  - Prevention: Use base64-encoded PNG data or file streams for images and rely on ImageFieldMergingArgs.ImageStream.
+
+- **Template-data field mismatch**
+  - Symptom: Unresolved MERGEFIELD tags remain in the output or runtime throws InvalidOperationException for missing values.
+  - Root cause: Field names in the template do not exactly match the keys or column names of the supplied data source.
+  - Preferred fix: Ensure that every MERGEFIELD tag name matches a column in the DataTable or an entry in the field-name array, respecting case sensitivity.
+  - Prevention: Generate the field-name list programmatically from the data source and compare it to the template before merging.
 
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Primary package: `Aspose.Words` `26.10.0`
+- Primary package: `Aspose.Words` `26.11.0`
 
 ## Command reference
 
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.10.0
+dotnet add package Aspose.Words --version 26.11.0
 ```
 
 ```powershell
@@ -230,4 +237,4 @@ dotnet run --configuration Release --no-build
 
 ## Category update guidance
 
-- Update the sample code whenever Aspose.Words releases a new major version to reflect any API changes and keep the documentation aligned with the current library.
+- Update the code whenever a new Aspose.Words version changes API signatures, and run the verification suite after each upgrade.

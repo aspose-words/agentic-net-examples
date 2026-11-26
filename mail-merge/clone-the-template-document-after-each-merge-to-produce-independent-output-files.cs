@@ -1,6 +1,5 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
+using System.Data;
 using Aspose.Words;
 using Aspose.Words.MailMerging;
 
@@ -8,62 +7,47 @@ public class Program
 {
     public static void Main()
     {
-        // Create a template document in memory.
+        // Create a template document with merge fields.
         Document template = new Document();
         DocumentBuilder builder = new DocumentBuilder(template);
-
-        // Build simple content with merge fields.
-        builder.Writeln("Hello ");
+        builder.Writeln("Dear ");
         builder.InsertField("MERGEFIELD FirstName");
         builder.Write(" ");
         builder.InsertField("MERGEFIELD LastName");
-        builder.Writeln();
-        builder.Writeln("Address: ");
-        builder.InsertField("MERGEFIELD Address");
-        builder.Writeln();
+        builder.Writeln(",");
+        builder.Writeln("This is a personalized letter.");
 
-        // Define merge field names (must match the fields inserted above).
-        string[] fieldNames = new[] { "FirstName", "LastName", "Address" };
-
-        // Prepare multiple data records.
-        List<object[]> records = new List<object[]>
-        {
-            new object[] { "John", "Doe", "123 Main St" },
-            new object[] { "Jane", "Smith", "456 Oak Ave" },
-            new object[] { "Bob", "Johnson", "789 Pine Rd" }
-        };
+        // Prepare data for multiple merges.
+        string[] firstNames = { "Alice", "Bob", "Charlie" };
+        string[] lastNames = { "Anderson", "Brown", "Clark" };
 
         // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "MergedOutputs");
-        Directory.CreateDirectory(outputDir);
+        string outputDir = "Output";
+        System.IO.Directory.CreateDirectory(outputDir);
 
-        // Process each record: clone the template, perform mail merge, and save.
-        for (int i = 0; i < records.Count; i++)
+        for (int i = 0; i < firstNames.Length; i++)
         {
-            // Clone the template to obtain an independent document for this record.
-            Document outputDoc = (Document)template.Clone(true);
+            // Clone the template to keep each output independent.
+            Document doc = (Document)template.Clone(true);
 
-            // Execute the mail merge with the current record's values.
-            outputDoc.MailMerge.Execute(fieldNames, records[i]);
+            // Execute simple mail merge.
+            doc.MailMerge.CleanupOptions = MailMergeCleanupOptions.RemoveUnusedFields;
+            doc.MailMerge.Execute(
+                new string[] { "FirstName", "LastName" },
+                new object[] { firstNames[i], lastNames[i] });
 
-            // Clean up any unused merge fields.
-            outputDoc.MailMerge.CleanupOptions = MailMergeCleanupOptions.RemoveUnusedFields;
+            // Save the merged document.
+            string fileName = System.IO.Path.Combine(outputDir, $"Merged_{i + 1}.docx");
+            doc.Save(fileName);
 
-            // Validate that all merge fields were replaced.
-            string mergedText = outputDoc.GetText();
-            foreach (object value in records[i])
-            {
-                if (value == null) continue;
-                string valStr = value.ToString();
-                if (!mergedText.Contains(valStr))
-                {
-                    throw new InvalidOperationException($"Merged value '{valStr}' was not found in the document.");
-                }
-            }
+            // Validate that the merged content contains the expected values.
+            string text = doc.GetText();
+            if (!text.Contains(firstNames[i]) || !text.Contains(lastNames[i]))
+                throw new InvalidOperationException($"Merge validation failed for file {fileName}.");
 
-            // Save the merged document to a distinct file.
-            string outputPath = Path.Combine(outputDir, $"MergedDocument_{i + 1}.docx");
-            outputDoc.Save(outputPath);
+            // Optional: also ensure the file was created.
+            if (!System.IO.File.Exists(fileName))
+                throw new InvalidOperationException($"Output file not found: {fileName}.");
         }
     }
 }

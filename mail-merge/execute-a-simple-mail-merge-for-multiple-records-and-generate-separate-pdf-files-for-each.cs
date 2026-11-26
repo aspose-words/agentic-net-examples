@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
@@ -12,56 +13,54 @@ public class Program
         Document template = new Document();
         DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Add static heading.
-        builder.Writeln("Customer Information");
-        builder.Writeln();
+        // Build the template content with merge fields.
+        builder.Writeln("Dear ");
+        builder.InsertField("MERGEFIELD FirstName");
+        builder.Write(" ");
+        builder.InsertField("MERGEFIELD LastName");
+        builder.Writeln(",");
 
-        // Insert merge fields.
-        builder.InsertField("MERGEFIELD Name");
-        builder.Writeln();
-        builder.InsertField("MERGEFIELD Address");
-        builder.Writeln();
+        builder.Writeln("Your order number is ");
+        builder.InsertField("MERGEFIELD OrderNumber");
+        builder.Writeln(".");
 
-        // Define the merge field names that correspond to the data source.
-        string[] fieldNames = new string[] { "Name", "Address" };
+        // Define merge field names.
+        string[] fieldNames = new string[] { "FirstName", "LastName", "OrderNumber" };
 
-        // Data for multiple records.
-        var records = new (string Name, string Address)[]
+        // Define data for multiple records.
+        List<object[]> records = new List<object[]>
         {
-            ("John Doe", "123 Main St"),
-            ("Jane Smith", "456 Oak Ave"),
-            ("Bob Johnson", "789 Pine Rd")
+            new object[] { "John", "Doe", "12345" },
+            new object[] { "Jane", "Smith", "67890" },
+            new object[] { "Alice", "Brown", "54321" }
         };
 
-        // Perform a separate mail merge for each record.
-        for (int i = 0; i < records.Length; i++)
+        // Ensure output directory exists.
+        string outputDir = "OutputPdfs";
+        Directory.CreateDirectory(outputDir);
+
+        // Perform mail merge for each record and save as a separate PDF.
+        for (int i = 0; i < records.Count; i++)
         {
-            // Clone the template so each iteration works with a fresh copy.
-            Document outputDoc = (Document)template.Clone(true);
+            // Clone the template for the current record.
+            Document doc = (Document)template.Clone();
 
-            // Prepare field values for the current record.
-            object[] fieldValues = new object[] { records[i].Name, records[i].Address };
+            // Execute mail merge with cleanup of unused fields.
+            doc.MailMerge.CleanupOptions = MailMergeCleanupOptions.RemoveUnusedFields;
+            doc.MailMerge.Execute(fieldNames, records[i]);
 
-            // Execute the simple mail merge.
-            outputDoc.MailMerge.Execute(fieldNames, fieldValues);
-
-            // Remove any merge fields that were not used.
-            outputDoc.MailMerge.CleanupOptions = MailMergeCleanupOptions.RemoveUnusedFields;
-
-            // Define a deterministic output file name.
-            string outputFileName = $"Customer_{i + 1}.pdf";
+            // Define output file path.
+            string outputPath = Path.Combine(outputDir, $"MergedDocument_{i + 1}.pdf");
 
             // Save the merged document as PDF.
-            outputDoc.Save(outputFileName, SaveFormat.Pdf);
+            doc.Save(outputPath, SaveFormat.Pdf);
 
-            // Verify that the file was created.
-            if (!File.Exists(outputFileName))
-                throw new InvalidOperationException($"Failed to create output file: {outputFileName}");
-
-            // Ensure the PDF is not empty.
-            FileInfo info = new FileInfo(outputFileName);
-            if (info.Length == 0)
-                throw new InvalidOperationException($"Output file is empty: {outputFileName}");
+            // Validate that the file was created and is not empty.
+            FileInfo fileInfo = new FileInfo(outputPath);
+            if (!fileInfo.Exists || fileInfo.Length == 0)
+            {
+                throw new InvalidOperationException($"Failed to create PDF for record {i + 1}.");
+            }
         }
     }
 }

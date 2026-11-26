@@ -2,90 +2,72 @@ using System;
 using Aspose.Words;
 using Aspose.Words.MailMerging;
 
-public class Program
+namespace MailMergeCustomText
 {
-    public static void Main()
+    // Custom callback to control how each merge field is inserted.
+    public class CustomFieldMergingCallback : IFieldMergingCallback
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert merge fields into the template.
-        builder.Writeln("Customer Name: ");
-        builder.InsertField("MERGEFIELD Name");
-        builder.Writeln();
-
-        builder.Writeln("Order Date: ");
-        builder.InsertField("MERGEFIELD Date");
-        builder.Writeln();
-
-        builder.Writeln("Order Total: ");
-        builder.InsertField("MERGEFIELD Amount");
-        builder.Writeln();
-
-        // Set up a custom field merging callback to format inserted text.
-        doc.MailMerge.FieldMergingCallback = new CustomFieldMergingCallback();
-
-        // Prepare data for the merge.
-        string[] fieldNames = { "Name", "Date", "Amount" };
-        DateTime orderDate = new DateTime(2023, 12, 31);
-        double orderTotal = 1234.56;
-        object[] fieldValues = { "John Doe", orderDate, orderTotal };
-
-        // Execute the mail merge.
-        doc.MailMerge.Execute(fieldNames, fieldValues);
-
-        // Save the merged document.
-        const string outputPath = "MergedDocument.docx";
-        doc.Save(outputPath);
-
-        // Validate that the merged content contains the expected formatted values.
-        string mergedText = doc.GetText();
-        if (!mergedText.Contains("John Doe") ||
-            !mergedText.Contains(orderDate.ToString("yyyy-MM-dd")) ||
-            !mergedText.Contains(string.Format("{0:C}", orderTotal)))
+        // This method is called for every merge field during MailMerge.
+        public void FieldMerging(FieldMergingArgs e)
         {
-            throw new Exception("Mail merge validation failed: expected values not found in the document.");
+            // If the field value is not null, format it as a custom string.
+            if (e.FieldValue != null)
+            {
+                // Example of custom formatting: wrap the value in brackets.
+                e.Text = $"[Custom:{e.FieldValue}]";
+            }
+            else
+            {
+                // Provide a placeholder for missing values.
+                e.Text = "[Missing]";
+            }
         }
+
+        // Not used in this example, but required by the interface.
+        public void ImageFieldMerging(ImageFieldMergingArgs args) { }
     }
 
-    // Custom callback to format field values during mail merge.
-    private class CustomFieldMergingCallback : IFieldMergingCallback
+    public class Program
     {
-        public void FieldMerging(FieldMergingArgs args)
+        public static void Main()
         {
-            if (args.FieldValue == null)
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Build a simple template with two merge fields.
+            builder.Writeln("Dear ");
+            builder.InsertField("MERGEFIELD FirstName");
+            builder.Write(" ");
+            builder.InsertField("MERGEFIELD LastName");
+            builder.Writeln(",");
+
+            builder.Writeln("Your account has been created successfully.");
+            builder.Writeln("Thank you!");
+
+            // Assign the custom field merging callback.
+            doc.MailMerge.FieldMergingCallback = new CustomFieldMergingCallback();
+
+            // Prepare data for the merge.
+            string[] fieldNames = { "FirstName", "LastName" };
+            object[] fieldValues = { "John", "Doe" };
+
+            // Execute the mail merge.
+            doc.MailMerge.Execute(fieldNames, fieldValues);
+
+            // Validate that the merged document contains the expected custom text.
+            string mergedText = doc.GetText();
+            if (!mergedText.Contains("[Custom:John]") || !mergedText.Contains("[Custom:Doe]"))
             {
-                args.Text = string.Empty;
-                return;
+                throw new InvalidOperationException("Merged document does not contain the expected custom field values.");
             }
 
-            switch (args.FieldName)
-            {
-                case "Date":
-                    // Format DateTime fields as yyyy-MM-dd.
-                    if (args.FieldValue is DateTime dt)
-                        args.Text = dt.ToString("yyyy-MM-dd");
-                    else
-                        args.Text = args.FieldValue.ToString();
-                    break;
+            // Optionally clean up any unused fields (none in this example).
+            doc.MailMerge.CleanupOptions = MailMergeCleanupOptions.RemoveUnusedFields;
 
-                case "Amount":
-                    // Format numeric fields as currency.
-                    if (args.FieldValue is IFormattable fmt)
-                        args.Text = fmt.ToString("C", System.Globalization.CultureInfo.CurrentCulture);
-                    else
-                        args.Text = args.FieldValue.ToString();
-                    break;
-
-                default:
-                    // Default handling for other fields.
-                    args.Text = args.FieldValue.ToString();
-                    break;
-            }
+            // Save the merged document.
+            const string outputPath = "MergedDocument.docx";
+            doc.Save(outputPath);
         }
-
-        // Image fields are not used in this example.
-        public void ImageFieldMerging(ImageFieldMergingArgs args) { }
     }
 }

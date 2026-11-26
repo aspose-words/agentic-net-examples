@@ -7,44 +7,49 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Paths for the template and the merged output.
+        string templatePath = Path.Combine(Path.GetTempPath(), "Template.docx");
+        string outputPath = Path.Combine(Path.GetTempPath(), "MergedDocument.docx");
+
+        // Create a new document and insert merge fields using DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Build the template with merge fields for customer name and address.
         builder.Writeln("Customer Information:");
         builder.InsertField("MERGEFIELD CustomerName");
         builder.Writeln();
         builder.InsertField("MERGEFIELD CustomerAddress");
         builder.Writeln();
+        doc.Save(templatePath);
 
-        // Prepare simple data source.
-        string[] fieldNames = new string[] { "CustomerName", "CustomerAddress" };
-        object[] fieldValues = new object[] { "John Doe", "123 Main St, Anytown" };
+        // Load the template document.
+        Document templateDoc = new Document(templatePath);
 
-        // Execute the mail merge.
-        doc.MailMerge.Execute(fieldNames, fieldValues);
+        // Define field names and corresponding values.
+        string[] fieldNames = { "CustomerName", "CustomerAddress" };
+        object[] fieldValues = { "John Doe", "123 Main St, Anytown" };
 
-        // Remove any unused merge fields.
-        doc.MailMerge.CleanupOptions = MailMergeCleanupOptions.RemoveUnusedFields;
+        // Perform the mail merge.
+        templateDoc.MailMerge.CleanupOptions = MailMergeCleanupOptions.RemoveUnusedFields;
+        templateDoc.MailMerge.Execute(fieldNames, fieldValues);
 
         // Save the merged document.
-        string outputPath = "MergedDocument.docx";
-        doc.Save(outputPath);
+        templateDoc.Save(outputPath);
 
-        // Validate that the output file exists.
+        // Validate that the merged output contains the expected values.
+        string mergedText = templateDoc.GetText();
+        if (!mergedText.Contains("John Doe") || !mergedText.Contains("123 Main St, Anytown"))
+        {
+            throw new InvalidOperationException("Mail merge failed: merged values not found in the document.");
+        }
+
+        // Ensure the output file exists.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The merged document was not created.");
+        {
+            throw new FileNotFoundException("Merged document was not created.", outputPath);
+        }
 
-        // Load the saved document to verify merged content.
-        Document resultDoc = new Document(outputPath);
-        string resultText = resultDoc.GetText();
-
-        // Ensure that the merge fields were replaced with the provided values.
-        if (!resultText.Contains("John Doe") || !resultText.Contains("123 Main St"))
-            throw new InvalidOperationException("Mail merge failed: expected values not found in the document.");
-
-        // Optionally, clean up the output file after verification (comment out if you want to keep it).
+        // Optional: clean up temporary files (comment out if you want to inspect the files).
+        // File.Delete(templatePath);
         // File.Delete(outputPath);
     }
 }
