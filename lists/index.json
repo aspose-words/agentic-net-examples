@@ -4,21 +4,19 @@
     "slug": "lists",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Create a List via doc.Lists.Add(ListTemplate), assign it to DocumentBuilder.ListFormat.List, set ListFormat.ListLevelNumber for each desired nesting level, write the paragraph content, and finally call ListFormat.RemoveNumbers to terminate the list before adding non-list content.",
+    "preferred_workflow": "Create a List via doc.Lists.Add(ListTemplate), assign it to builder.ListFormat.List, set builder.ListFormat.ListLevelNumber for each nesting level, write the paragraph text, and finally call builder.ListFormat.RemoveNumbers() to terminate the list before adding non-list content.",
     "required_packages": [
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.10.0"
+      "Aspose.Words": "26.11.0"
     },
     "required_namespaces": [
       "System",
       "Aspose.Words",
       "Aspose.Words.Lists",
       "Aspose.Words.Tables",
-      "System.Drawing",
       "System.Linq",
-      "System.Collections.Generic",
       "Aspose.Words.Saving",
       "System.IO"
     ],
@@ -27,8 +25,12 @@
       "DocumentBuilder",
       "NodeType",
       "Paragraph",
+      "Run",
       "Font",
-      "File"
+      "SaveFormat",
+      "File",
+      "Directory",
+      "Path"
     ]
   },
   "stats": {
@@ -45,54 +47,40 @@
   },
   "rules_summary": {
     "strict_api_bans": [
-      "Do not reference APIs that are not present in Aspose.Words 26.10.0, such as ListFormat.IncreaseIndent, ListFormat.DecreaseIndent, ListNumberStyle, or ListLevel.StartingNumber.",
+      "Do not reference APIs that are not present in Aspose.Words, such as ListFormat.IncreaseIndent, DecreaseIndent, List.Clone, or ListNumberStyle.",
       "Do not omit the assignment of builder.ListFormat.List before writing list items."
     ],
     "canonical_patterns": [
-      "Create a list with doc.Lists.Add(ListTemplate) and store the returned List object.",
+      "Create a list with doc.Lists.Add(ListTemplate) and configure its ListLevel properties (NumberStyle, NumberFormat, Alignment, StartAt, NumberPosition, TextPosition).",
       "Apply the list to the builder by setting builder.ListFormat.List, then control nesting with builder.ListFormat.ListLevelNumber.",
-      "Terminate list formatting with builder.ListFormat.RemoveNumbers once the list sequence is complete."
+      "Terminate the list with builder.ListFormat.RemoveNumbers() to prevent unintended list formatting on subsequent paragraphs."
     ],
     "nullable_warning_prevention": [
-      "Guard any List or ListLevel reference with a null check before accessing its members.",
-      "Validate that a Paragraph node is not null before reading or writing its ListFormat properties."
+      "Guard against null List references before accessing ListLevel properties.",
+      "Validate that a Paragraph's ListFormat.IsListItem is true before reading list-specific attributes."
     ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "Use of removed or renamed list APIs",
-      "symptom": "Compilation fails with CS1061 because ListFormat does not contain IncreaseIndent, DecreaseIndent, or ListNumberStyle members.",
-      "cause": "The code references API members that were removed or renamed in the current Aspose.Words version.",
-      "fix": "Replace the missing members with supported alternatives: control nesting via ListFormat.ListLevelNumber and use NumberStyle enum values such as NumberStyle.Bullet or NumberStyle.UppercaseRoman.",
-      "prevention": "Consult the Aspose.Words 26.10.0 documentation for the exact member names before writing list-related code."
+      "pattern": "Use of non-existent API members",
+      "symptom": "Compilation fails with CS1061 because members such as IncreaseIndent, DecreaseIndent, Indentation, StartingNumber, BulletChar, or List.Clone are not found.",
+      "cause": "The code references API members that were removed or never existed in the Aspose.Words 26.11.0 library.",
+      "fix": "Replace the missing members with supported alternatives: control nesting via builder.ListFormat.ListLevelNumber and adjust positioning with ListLevel.NumberPosition and TextPosition; use ListLevel.StartAt to set the start number.",
+      "prevention": "Consult the official Aspose.Words API reference and limit code to members that appear in the current version's documentation."
     },
     {
-      "pattern": "Incorrect list level property names",
-      "symptom": "Compilation fails with CS1061 for ListLevel.StartingNumber, ListLevel.Indentation, or ListLevel.BulletChar.",
-      "cause": "Older property names were used; the current API uses ListLevel.StartAt for the starting number, ListLevel.NumberPosition/TextPosition for indentation, and NumberFormat for custom bullet characters.",
-      "fix": "Use ListLevel.StartAt to set the initial number, adjust ListLevel.NumberPosition and ListLevel.TextPosition for indentation, and set ListLevel.NumberFormat to a custom character string.",
-      "prevention": "Reference the ListLevel class in the official API reference to ensure property names are up-to-date."
+      "pattern": "Incorrect enum or property names",
+      "symptom": "Compilation fails with CS0103 or CS0234 when using ListNumberStyle, NumberStyle.Decimal, or ListLevel.StartingNumber, which are undefined.",
+      "cause": "The code uses outdated or misspelled identifiers; the correct enum is NumberStyle and the correct start-number property is ListLevel.StartAt.",
+      "fix": "Replace ListNumberStyle with NumberStyle, use NumberStyle.Arabic, UppercaseRoman, Bullet, etc., and set ListLevel.StartAt instead of StartingNumber.",
+      "prevention": "Reference the latest enum definitions and property names from the Aspose.Words.Lists namespace."
     },
     {
-      "pattern": "Missing list assignment before writing items",
-      "symptom": "Paragraphs are added but appear as plain text without list numbering or bullets.",
-      "cause": "builder.ListFormat.List was never set, so the builder does not know which list to apply.",
-      "fix": "Assign the List object to builder.ListFormat.List immediately before writing the first list paragraph.",
-      "prevention": "Always set builder.ListFormat.List as the first step of any list-creation workflow."
-    },
-    {
-      "pattern": "Failure to clear list formatting",
-      "symptom": "Subsequent paragraphs unintentionally continue the previous list style.",
-      "cause": "builder.ListFormat.RemoveNumbers was not called after the list sequence.",
-      "fix": "Invoke builder.ListFormat.RemoveNumbers right after the last list item and before adding non-list content.",
-      "prevention": "Include a RemoveNumbers call in every list workflow to reset the builder's list state."
-    },
-    {
-      "pattern": "Incorrect OoxmlCompliance usage",
-      "symptom": "Compilation fails with CS1061 because CompatibilityOptions or Document does not expose an OoxmlCompliance property.",
-      "cause": "The property was removed from the API; compliance is now controlled via SaveOptions.",
-      "fix": "When saving, create a DocxSaveOptions instance and set its Compliance property to OoxmlCompliance.Iso29500_2008_Strict (or a later enum value).",
-      "prevention": "Use SaveOptions to configure compliance settings instead of accessing non-existent Document members."
+      "pattern": "Unsupported OoxmlCompliance usage",
+      "symptom": "Compilation fails with CS1061 because Document, CompatibilityOptions, or OoxmlSaveOptions do not expose an OoxmlCompliance member.",
+      "cause": "The OoxmlCompliance property is not part of the Aspose.Words 26.11.0 API surface.",
+      "fix": "Remove any attempts to set OoxmlCompliance; rely on the default compliance level or configure compatibility via Document.CompatibilityOptions if needed.",
+      "prevention": "Verify property availability in the target Aspose.Words version before using it in code."
     }
   ],
   "examples": [
@@ -170,8 +158,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 8,
@@ -214,8 +202,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 12,
@@ -225,8 +213,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 13,
@@ -428,13 +416,13 @@
     }
   ],
   "narrative": {
-    "overview": "The Lists category for Aspose.Words demonstrates how to create, configure, and manipulate Word list structures using the DocumentBuilder and List APIs. Verified examples show correct usage of ListTemplate, ListLevel properties, and ListFormat methods to produce numbered, bulleted, and custom hierarchical lists.",
-    "purpose": "Provide an AI coding assistant with concise, authoritative guidance for generating and managing Word lists in Aspose.Words, ensuring that generated code compiles against version 26.10.0 and follows best-practice patterns for list creation, nesting, formatting, and cleanup.",
+    "overview": "The Lists category covers creation, configuration, and manipulation of Word list structures using Aspose.Words. Verified examples demonstrate correct usage of List, ListLevel, and DocumentBuilder.ListFormat APIs for numbered, bulleted, nested, and custom lists.",
+    "purpose": "Provide an AI coding assistant with clear guidance on how to generate and modify Word lists reliably, ensuring that only supported Aspose.Words APIs are used and that list formatting is applied and cleared correctly.",
     "validation_priorities": [
-      "Count Paragraph nodes where para.ListFormat.IsListItem is true to verify that the expected number of list items were generated."
+      "Ensure that every list sequence sets builder.ListFormat.List, adjusts ListLevelNumber as needed, and calls RemoveNumbers() when the list ends."
     ],
     "maintenance_notes": [
-      "Update the example code whenever a new Aspose.Words version is released to reflect any API changes and keep the documentation in sync."
+      "Periodically review the Aspose.Words release notes to update the list of supported APIs and adjust the canonical patterns accordingly."
     ]
   }
 }

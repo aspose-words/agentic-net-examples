@@ -10,11 +10,11 @@ product: Aspose.Words
 
 ## Purpose
 
-Provide an AI coding assistant with concise, authoritative guidance for generating and managing Word lists in Aspose.Words, ensuring that generated code compiles against version 26.10.0 and follows best-practice patterns for list creation, nesting, formatting, and cleanup.
+Provide an AI coding assistant with clear guidance on how to generate and modify Word lists reliably, ensuring that only supported Aspose.Words APIs are used and that list formatting is applied and cleared correctly.
 
 ## Non-negotiable conventions
 
-- Do not reference APIs that are not present in Aspose.Words 26.10.0, such as ListFormat.IncreaseIndent, ListFormat.DecreaseIndent, ListNumberStyle, or ListLevel.StartingNumber.
+- Do not reference APIs that are not present in Aspose.Words, such as ListFormat.IncreaseIndent, DecreaseIndent, List.Clone, or ListNumberStyle.
 - Do not omit the assignment of builder.ListFormat.List before writing list items.
 - Bootstrap local sample inputs for existing-file, folder, stream, image, and data workflows.
 - Prefer simple, verifiable workflows over speculative formatting shortcuts.
@@ -32,7 +32,7 @@ Use the simplest workflow that satisfies the task.
 
 ## Validation priorities
 
-1. Count Paragraph nodes where para.ListFormat.IsListItem is true to verify that the expected number of list items were generated.
+1. Ensure that every list sequence sets builder.ListFormat.List, adjusts ListLevelNumber as needed, and calls RemoveNumbers() when the list ends.
 
 ## File-to-task reference
 
@@ -70,7 +70,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Create a custom List object, configure its levels, and add it to Document.Lists collection.
   - Workflow: nested-list-workflow
   - Outputs: doc
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `add-a-new-list-to-the-document-s-listcollection-and-assign-it-to-multiple-paragraphs-to-sh.cs`
   - Task: Add a new List to the document's ListCollection and assign it to multiple paragraphs to share formatting.
   - Workflow: general-list-workflow
@@ -90,12 +90,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Set NumberStyle of a ListLevel to UpperRoman to generate Roman numeral list items.
   - Workflow: nested-list-workflow
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `apply-a-custom-bullet-character-to-a-list-by-setting-listlevel-numberstyle-to-bullet-and-d.cs`
   - Task: Apply a custom bullet character to a list by setting ListLevel.NumberStyle to Bullet and defining BulletChar.
   - Workflow: nested-list-workflow
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `define-startingnumber-for-a-listlevel-to-begin-numbering-at-five-instead-of-default-one.cs`
   - Task: Define StartingNumber for a ListLevel to begin numbering at five instead of default one.
   - Workflow: nested-list-workflow
@@ -189,47 +189,35 @@ Use the simplest workflow that satisfies the task.
 
 ## Common failure patterns and preferred agent fixes
 
-- **Use of removed or renamed list APIs**
-  - Symptom: Compilation fails with CS1061 because ListFormat does not contain IncreaseIndent, DecreaseIndent, or ListNumberStyle members.
-  - Root cause: The code references API members that were removed or renamed in the current Aspose.Words version.
-  - Preferred fix: Replace the missing members with supported alternatives: control nesting via ListFormat.ListLevelNumber and use NumberStyle enum values such as NumberStyle.Bullet or NumberStyle.UppercaseRoman.
-  - Prevention: Consult the Aspose.Words 26.10.0 documentation for the exact member names before writing list-related code.
+- **Use of non-existent API members**
+  - Symptom: Compilation fails with CS1061 because members such as IncreaseIndent, DecreaseIndent, Indentation, StartingNumber, BulletChar, or List.Clone are not found.
+  - Root cause: The code references API members that were removed or never existed in the Aspose.Words 26.11.0 library.
+  - Preferred fix: Replace the missing members with supported alternatives: control nesting via builder.ListFormat.ListLevelNumber and adjust positioning with ListLevel.NumberPosition and TextPosition; use ListLevel.StartAt to set the start number.
+  - Prevention: Consult the official Aspose.Words API reference and limit code to members that appear in the current version's documentation.
 
-- **Incorrect list level property names**
-  - Symptom: Compilation fails with CS1061 for ListLevel.StartingNumber, ListLevel.Indentation, or ListLevel.BulletChar.
-  - Root cause: Older property names were used; the current API uses ListLevel.StartAt for the starting number, ListLevel.NumberPosition/TextPosition for indentation, and NumberFormat for custom bullet characters.
-  - Preferred fix: Use ListLevel.StartAt to set the initial number, adjust ListLevel.NumberPosition and ListLevel.TextPosition for indentation, and set ListLevel.NumberFormat to a custom character string.
-  - Prevention: Reference the ListLevel class in the official API reference to ensure property names are up-to-date.
+- **Incorrect enum or property names**
+  - Symptom: Compilation fails with CS0103 or CS0234 when using ListNumberStyle, NumberStyle.Decimal, or ListLevel.StartingNumber, which are undefined.
+  - Root cause: The code uses outdated or misspelled identifiers; the correct enum is NumberStyle and the correct start-number property is ListLevel.StartAt.
+  - Preferred fix: Replace ListNumberStyle with NumberStyle, use NumberStyle.Arabic, UppercaseRoman, Bullet, etc., and set ListLevel.StartAt instead of StartingNumber.
+  - Prevention: Reference the latest enum definitions and property names from the Aspose.Words.Lists namespace.
 
-- **Missing list assignment before writing items**
-  - Symptom: Paragraphs are added but appear as plain text without list numbering or bullets.
-  - Root cause: builder.ListFormat.List was never set, so the builder does not know which list to apply.
-  - Preferred fix: Assign the List object to builder.ListFormat.List immediately before writing the first list paragraph.
-  - Prevention: Always set builder.ListFormat.List as the first step of any list-creation workflow.
-
-- **Failure to clear list formatting**
-  - Symptom: Subsequent paragraphs unintentionally continue the previous list style.
-  - Root cause: builder.ListFormat.RemoveNumbers was not called after the list sequence.
-  - Preferred fix: Invoke builder.ListFormat.RemoveNumbers right after the last list item and before adding non-list content.
-  - Prevention: Include a RemoveNumbers call in every list workflow to reset the builder's list state.
-
-- **Incorrect OoxmlCompliance usage**
-  - Symptom: Compilation fails with CS1061 because CompatibilityOptions or Document does not expose an OoxmlCompliance property.
-  - Root cause: The property was removed from the API; compliance is now controlled via SaveOptions.
-  - Preferred fix: When saving, create a DocxSaveOptions instance and set its Compliance property to OoxmlCompliance.Iso29500_2008_Strict (or a later enum value).
-  - Prevention: Use SaveOptions to configure compliance settings instead of accessing non-existent Document members.
+- **Unsupported OoxmlCompliance usage**
+  - Symptom: Compilation fails with CS1061 because Document, CompatibilityOptions, or OoxmlSaveOptions do not expose an OoxmlCompliance member.
+  - Root cause: The OoxmlCompliance property is not part of the Aspose.Words 26.11.0 API surface.
+  - Preferred fix: Remove any attempts to set OoxmlCompliance; rely on the default compliance level or configure compatibility via Document.CompatibilityOptions if needed.
+  - Prevention: Verify property availability in the target Aspose.Words version before using it in code.
 
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Primary package: `Aspose.Words` `26.10.0`
+- Primary package: `Aspose.Words` `26.11.0`
 
 ## Command reference
 
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.10.0
+dotnet add package Aspose.Words --version 26.11.0
 ```
 
 ```powershell
@@ -243,4 +231,4 @@ dotnet run --configuration Release --no-build
 
 ## Category update guidance
 
-- Update the example code whenever a new Aspose.Words version is released to reflect any API changes and keep the documentation in sync.
+- Periodically review the Aspose.Words release notes to update the list of supported APIs and adjust the canonical patterns accordingly.

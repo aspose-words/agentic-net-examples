@@ -6,43 +6,53 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a numbered list and add two items.
+        // ---------- Create a numbered list ----------
         List numberedList = doc.Lists.Add(ListTemplate.NumberDefault);
         builder.ListFormat.List = numberedList;
-        builder.Writeln("Numbered Item 1");
-        builder.Writeln("Numbered Item 2");
+        builder.ListFormat.ListLevelNumber = 0;
+        builder.Writeln("First numbered item");
+        builder.Writeln("Second numbered item");
+        // End the list.
         builder.ListFormat.RemoveNumbers();
 
-        // Create a bullet list and add two items.
+        // ---------- Create a bullet list ----------
         List bulletList = doc.Lists.Add(ListTemplate.BulletDefault);
         builder.ListFormat.List = bulletList;
-        builder.Writeln("Bullet Item 1");
-        builder.Writeln("Bullet Item 2");
+        builder.ListFormat.ListLevelNumber = 0;
+        builder.Writeln("First bullet item");
+        builder.Writeln("Second bullet item");
+        // End the list.
         builder.ListFormat.RemoveNumbers();
 
-        // Iterate through all list definitions in the document and modify them uniformly.
+        // ---------- Iterate through all lists and modify them uniformly ----------
         foreach (List list in doc.Lists)
         {
-            // Apply the same formatting to every level of each list.
             foreach (ListLevel level in list.ListLevels)
             {
-                // Change the numbering style to uppercase Roman numerals.
-                level.NumberStyle = NumberStyle.UppercaseRoman;
-
-                // Optionally, set a different font for the list numbers.
+                // Set a common font for list numbers/bullets.
                 level.Font.Name = "Arial";
-                level.Font.Size = 10;
+                level.Font.Size = 12;
+
+                // Apply a uniform numbering style.
+                if (level.NumberStyle == NumberStyle.Bullet)
+                {
+                    // Ensure bullet lists use a standard bullet character.
+                    level.NumberStyle = NumberStyle.Bullet;
+                    level.NumberFormat = "\u2022"; // •
+                }
+                else
+                {
+                    // Use Uppercase Roman numerals for numbered lists.
+                    level.NumberStyle = NumberStyle.UppercaseRoman;
+                }
             }
         }
 
         // Save the modified document.
         doc.Save("ModifiedLists.docx");
-
-        // Indicate completion.
-        Console.WriteLine("Document created and list definitions modified.");
     }
 }

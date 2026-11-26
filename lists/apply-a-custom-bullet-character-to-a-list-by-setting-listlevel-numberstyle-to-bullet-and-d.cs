@@ -1,44 +1,56 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Lists;
-using System.Drawing;
 
-public class Program
+namespace CustomBulletListExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new empty document.
-        Document doc = new Document();
+        public static void Main()
+        {
+            // Create a new empty document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a new list based on the default bullet template.
-        List bulletList = doc.Lists.Add(ListTemplate.BulletDefault);
+            // Create a new list based on the bullet template.
+            List list = doc.Lists.Add(ListTemplate.BulletDefault);
 
-        // Access the first (top) level of the list.
-        ListLevel level = bulletList.ListLevels[0];
+            // Configure the first level of the list to use a custom bullet character.
+            ListLevel level = list.ListLevels[0];
+            // The bullet template already uses the Bullet numbering style,
+            // so we only need to change the character that is displayed.
+            level.NumberFormat = "★"; // Custom bullet character.
 
-        // Set the level to use a bullet style.
-        level.NumberStyle = NumberStyle.Bullet;
+            // Apply the list to the builder.
+            builder.ListFormat.List = list;
 
-        // Define a custom bullet character (★ - black star).
-        level.NumberFormat = "\u2605";
+            // Write list items.
+            builder.Writeln("First custom bullet item");
+            builder.Writeln("Second custom bullet item");
+            builder.Writeln("Third custom bullet item");
 
-        // Optional: customize the appearance of the bullet.
-        level.Font.Name = "Arial";
-        level.Font.Size = 12;
-        level.Font.Color = Color.DarkBlue;
+            // Remove list formatting after the list is complete.
+            builder.ListFormat.RemoveNumbers();
 
-        // Use a DocumentBuilder to add paragraphs that will use the custom bullet list.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.ListFormat.List = bulletList;
+            // Add a normal paragraph after the list to verify list formatting is not applied unintentionally.
+            builder.Writeln("This paragraph is not part of the list.");
 
-        builder.Writeln("First item with a custom bullet.");
-        builder.Writeln("Second item with a custom bullet.");
-        builder.Writeln("Third item with a custom bullet.");
+            // Save the document to a file.
+            string outputPath = "CustomBulletList.docx";
+            doc.Save(outputPath);
 
-        // End the list formatting.
-        builder.ListFormat.RemoveNumbers();
+            // Validation: count paragraphs that are part of the list.
+            int listParagraphCount = 0;
+            foreach (Paragraph para in doc.FirstSection.Body.Paragraphs)
+            {
+                if (para.ListFormat.IsListItem)
+                    listParagraphCount++;
+            }
 
-        // Save the document to a file.
-        doc.Save("CustomBulletList.docx");
+            // Output validation results.
+            Console.WriteLine($"Document saved to '{outputPath}'.");
+            Console.WriteLine($"Number of list paragraphs: {listParagraphCount}");
+            Console.WriteLine("Expected number of list paragraphs: 3");
+        }
     }
 }

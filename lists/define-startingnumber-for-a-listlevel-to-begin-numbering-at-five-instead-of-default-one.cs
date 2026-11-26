@@ -6,40 +6,28 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a numbered list based on a built‑in template.
+        // Create a numbered list using the default number template.
         List list = doc.Lists.Add(ListTemplate.NumberDefault);
 
         // Set the starting number of the first level to 5.
-        ListLevel level0 = list.ListLevels[0];
-        level0.StartAt = 5; // Correct property to define the starting number.
+        list.ListLevels[0].StartAt = 5;
 
         // Apply the list to the builder.
         builder.ListFormat.List = list;
 
-        // Write three list items.
+        // Write three list items; they will be numbered 5, 6, 7.
         builder.Writeln("First item");
         builder.Writeln("Second item");
         builder.Writeln("Third item");
 
-        // End the list formatting.
+        // Remove list formatting after the list is complete.
         builder.ListFormat.RemoveNumbers();
 
-        // Validate that three paragraphs are list items.
-        int listItemCount = 0;
-        foreach (Paragraph para in doc.FirstSection.Body.Paragraphs)
-        {
-            if (para.ListFormat.IsListItem)
-                listItemCount++;
-        }
-
-        // Output validation result.
-        Console.WriteLine($"List items written: {listItemCount}");
-
         // Save the document to a file.
-        doc.Save("ListStartingNumber.docx");
+        doc.Save("Result.docx");
     }
 }

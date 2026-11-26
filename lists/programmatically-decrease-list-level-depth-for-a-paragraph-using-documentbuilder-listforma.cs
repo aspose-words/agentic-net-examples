@@ -1,59 +1,59 @@
 using System;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
-public class Program
+namespace ListIndentExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new empty document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Create a numbered list using a built‑in template.
-        List list = doc.Lists.Add(ListTemplate.NumberDefault);
-
-        // Apply the list to the builder.
-        builder.ListFormat.List = list;
-
-        // First level item.
-        builder.ListFormat.ListLevelNumber = 0; // top level
-        builder.Writeln("Item 1");
-
-        // Increase indent to create a nested level.
-        builder.ListFormat.ListLevelNumber = 1; // second level
-        builder.Writeln("Nested Item 2");
-
-        // Conditional decrease of indent.
-        bool shouldDecrease = true; // Replace with actual condition as needed.
-        if (shouldDecrease)
+        public static void Main()
         {
-            // Decrease indent brings the next paragraph back to the parent level.
-            builder.ListFormat.ListLevelNumber = 0; // back to top level
-        }
-        else
-        {
-            // Keep the current level if not decreasing.
+            // Create a new document and a DocumentBuilder.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Create a numbered list using a built‑in template.
+            List list = doc.Lists.Add(ListTemplate.NumberDefault);
+
+            // Apply the list to the builder.
+            builder.ListFormat.List = list;
+
+            // First level list item.
+            builder.ListFormat.ListLevelNumber = 0;
+            builder.Writeln("Item 1");
+
+            // Second level (nested) list item.
             builder.ListFormat.ListLevelNumber = 1;
+            builder.Writeln("Item 1.1");
+
+            // Conditional decrease of indent (back to previous level).
+            bool shouldDecrease = true; // Replace with real condition as needed.
+            if (shouldDecrease)
+            {
+                // Decrease the list level safely.
+                if (builder.ListFormat.ListLevelNumber > 0)
+                {
+                    builder.ListFormat.ListLevelNumber--;
+                }
+            }
+
+            // This item will be at the level after the possible decrease.
+            // Ensure the correct level is set before writing.
+            builder.Writeln("Item 2");
+
+            // End the list formatting.
+            builder.ListFormat.RemoveNumbers();
+
+            // Save the document.
+            doc.Save("ListIndentExample.docx");
+
+            // Validation: count paragraphs that are part of a list.
+            int listParagraphCount = doc.GetChildNodes(NodeType.Paragraph, true)
+                .Cast<Paragraph>()
+                .Count(p => p.ListFormat.IsListItem);
+
+            Console.WriteLine($"Document contains {listParagraphCount} list paragraphs.");
         }
-
-        // Back to the original level (or adjusted level based on condition).
-        builder.Writeln("Item 3");
-
-        // End list formatting.
-        builder.ListFormat.RemoveNumbers();
-
-        // Simple validation: count paragraphs that are part of a list.
-        int listParagraphs = 0;
-        foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
-        {
-            if (para.ListFormat.IsListItem)
-                listParagraphs++;
-        }
-
-        Console.WriteLine($"Document contains {listParagraphs} list paragraphs.");
-
-        // Save the document to a file.
-        doc.Save("Output.docx");
     }
 }

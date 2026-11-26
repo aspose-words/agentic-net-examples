@@ -6,36 +6,32 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Create a numbered list using a built‑in template.
         List list = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // Adjust the indentation of the first list level to 36 points.
-        // Aspose.Words does not expose an "Indentation" property directly.
-        // Instead, set NumberPosition (position of the number) and TextPosition (position of the list text).
-        ListLevel level0 = list.ListLevels[0];
-        level0.NumberPosition = 36; // distance from left margin to the number
-        level0.TextPosition = 36;   // distance from left margin to the list text
+        // Set the indentation of the first list level to 36 points.
+        // In Aspose.Words the indentation is controlled by NumberPosition (position of the number)
+        // and TextPosition (position of the list text). Setting both to 36 points aligns the list.
+        list.ListLevels[0].NumberPosition = 36;
+        list.ListLevels[0].TextPosition = 36;
 
-        // Apply the list to the builder.
+        // Apply the list to the builder and set the level.
         builder.ListFormat.List = list;
-        builder.ListFormat.ListLevelNumber = 0; // first level
+        builder.ListFormat.ListLevelNumber = 0;
 
         // Write list items.
         builder.Writeln("First item");
         builder.Writeln("Second item");
         builder.Writeln("Third item");
 
-        // Remove list formatting after the list is complete.
+        // End the list formatting.
         builder.ListFormat.RemoveNumbers();
 
         // Save the document to a file.
-        doc.Save("ListIndentationExample.docx");
-
-        // Indicate completion.
-        Console.WriteLine("Document created with list indentation set to 36 points.");
+        doc.Save("ListIndentation.docx");
     }
 }

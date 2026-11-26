@@ -10,46 +10,37 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // ---------- Numbered list ----------
-        // Create a numbered list instance.
+        // ---------- Create first list (numbered) ----------
+        // Add a numbered list to the document using a built‑in template.
         List numberedList = doc.Lists.Add(ListTemplate.NumberDefault);
         // Assign the list to the builder.
         builder.ListFormat.List = numberedList;
         // Write list items.
-        builder.Writeln("First item");
-        builder.Writeln("Second item");
-        builder.Writeln("Third item");
+        builder.Writeln("Numbered item 1");
+        builder.Writeln("Numbered item 2");
         // End the list.
         builder.ListFormat.RemoveNumbers();
 
-        // ---------- Bullet list with a nested level ----------
-        // Create a bullet list instance.
+        // ---------- Create second list (bulleted) ----------
         List bulletList = doc.Lists.Add(ListTemplate.BulletDefault);
         builder.ListFormat.List = bulletList;
-        // First level bullet.
         builder.Writeln("Bullet item 1");
-        // Switch to second level (nested).
-        builder.ListFormat.ListLevelNumber = 2;
-        builder.Writeln("Nested bullet item");
-        // Return to first level.
-        builder.ListFormat.ListLevelNumber = 1;
         builder.Writeln("Bullet item 2");
-        // End the bullet list.
         builder.ListFormat.RemoveNumbers();
 
-        // ---------- Apply uniform formatting to all list levels ----------
+        // ---------- Apply a uniform style to all lists ----------
+        // Iterate over every list in the document.
         foreach (List list in doc.Lists)
         {
+            // Iterate over each level of the current list (max 9 levels).
             foreach (ListLevel level in list.ListLevels)
             {
-                // Consistent font for the list level.
-                level.Font.Name = "Arial";
-                level.Font.Size = 12;
-
-                // Uniform left alignment and indentation.
-                level.Alignment = ListLevelAlignment.Left;
-                level.NumberPosition = 0;
-                level.TextPosition = 18;
+                // Use a numeric format that produces decimal numbers.
+                level.NumberFormat = "%1.";
+                // Set a uniform font for the list level.
+                level.Font.Name = "Times New Roman";
+                // Ensure numbering starts at 1 for each level.
+                level.StartAt = 1;
             }
         }
 

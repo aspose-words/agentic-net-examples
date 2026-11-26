@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Lists;
 using Aspose.Words.Tables;
@@ -14,56 +13,45 @@ namespace ListLevelValidationExample
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Create a list using a built‑in template.
-            List list = doc.Lists.Add(ListTemplate.NumberDefault);
+            // Create a bulleted list template.
+            List list = doc.Lists.Add(ListTemplate.BulletDefault);
 
             // Build a list with varying nesting levels (including an invalid level > 9).
             for (int level = 1; level <= 10; level++)
             {
                 // Assign the list to the builder.
                 builder.ListFormat.List = list;
-
                 // Set the desired nesting level.
                 builder.ListFormat.ListLevelNumber = level;
-
                 // Write the list item.
-                builder.Writeln($"Item at level {level}");
+                builder.Writeln($"List item at level {level}");
             }
 
-            // End list formatting.
+            // Finish the list.
             builder.ListFormat.RemoveNumbers();
 
-            // Save the document (optional, just to demonstrate full workflow).
-            doc.Save("ListLevelValidationOutput.docx");
-
             // Validate that no list exceeds nine levels.
-            List<Paragraph> invalidParagraphs = new List<Paragraph>();
-
+            bool hasInvalidLevel = false;
             foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
             {
-                if (para.IsListItem)
+                if (para.ListFormat.IsListItem)
                 {
                     int currentLevel = para.ListFormat.ListLevelNumber;
                     if (currentLevel > 9)
                     {
-                        invalidParagraphs.Add(para);
+                        hasInvalidLevel = true;
+                        Console.WriteLine($"Invalid list level detected: Paragraph \"{para.GetText().Trim()}\" is at level {currentLevel}.");
                     }
                 }
             }
 
-            // Output validation results.
-            if (invalidParagraphs.Count == 0)
+            if (!hasInvalidLevel)
             {
-                Console.WriteLine("All lists are within the allowed nine levels.");
+                Console.WriteLine("All list levels are within the allowed range (1-9).");
             }
-            else
-            {
-                Console.WriteLine($"Found {invalidParagraphs.Count} paragraph(s) exceeding nine list levels:");
-                foreach (Paragraph p in invalidParagraphs)
-                {
-                    Console.WriteLine($"- Text: \"{p.GetText().Trim()}\" (Level {p.ListFormat.ListLevelNumber})");
-                }
-            }
+
+            // Save the document (optional, demonstrates lifecycle usage).
+            doc.Save("ValidatedListDocument.docx");
         }
     }
 }
