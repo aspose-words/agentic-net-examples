@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
@@ -11,43 +10,34 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a default numbered list (1., 2., 3., ...).
-        builder.ListFormat.ApplyNumberDefault();
+        // Add a numbered list to the document.
+        List list = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // Add a first‑level item.
-        builder.Writeln("First level item 1");
+        // Configure the second list level (index 1) to use lower‑case alphabetic numbering.
+        ListLevel level2 = list.ListLevels[1];
+        level2.NumberStyle = NumberStyle.LowercaseLetter;   // a., b., c., …
+        level2.NumberFormat = "%1.";                       // format of the number
+        // Increase indentation for the second level.
+        level2.NumberPosition = 72;    // position of the number (points)
+        level2.TextPosition = 108;     // position where the text starts (points)
+        level2.TabPosition = 108;      // tab stop after the number
 
-        // Increase the list level to create a second level.
-        builder.ListFormat.ListIndent();
+        // Apply the list to the builder.
+        builder.ListFormat.List = list;
 
-        // Retrieve the list that is currently applied.
-        List list = builder.ListFormat.List;
+        // First‑level list item.
+        builder.ListFormat.ListLevelNumber = 0; // level 0 = first level
+        builder.Writeln("First level item");
 
-        // Configure the second level (index 1) to use lower‑case alphabetic numbering
-        // and increase its indentation.
-        ListLevel secondLevel = list.ListLevels[1];
-        secondLevel.NumberStyle = NumberStyle.LowercaseLetter; // a., b., c., ...
-        // Increase indentation: move the number left and the text right.
-        secondLevel.NumberPosition = -36;   // Position of the number (points).
-        secondLevel.TextPosition = 144;    // Position where the text starts (points).
-        secondLevel.TabPosition = 144;     // Tab stop for the level (points).
-
-        // Add some second‑level items.
+        // Second‑level list items.
+        builder.ListFormat.ListLevelNumber = 1; // level 1 = second level
         builder.Writeln("Second level item a");
         builder.Writeln("Second level item b");
-        builder.Writeln("Second level item c");
 
-        // Return to the first level.
-        builder.ListFormat.ListOutdent();
-
-        // Add another first‑level item.
-        builder.Writeln("First level item 2");
-
-        // End the list formatting.
+        // End the list.
         builder.ListFormat.RemoveNumbers();
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "SecondLevelList.docx");
-        doc.Save(outputPath);
+        // Save the document to a file.
+        doc.Save("ListExample.docx");
     }
 }

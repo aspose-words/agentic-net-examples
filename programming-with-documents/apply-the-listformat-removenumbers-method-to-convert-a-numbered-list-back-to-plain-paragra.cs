@@ -6,29 +6,29 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a numbered list and add three items.
+        // Create a numbered list with three items.
         builder.ListFormat.ApplyNumberDefault();
         builder.Writeln("First item");
         builder.Writeln("Second item");
         builder.Writeln("Third item");
-        // Stop list formatting for any following text.
+        // Stop applying list formatting for subsequent paragraphs.
         builder.ListFormat.RemoveNumbers();
 
-        // Convert the numbered list items back to plain paragraphs.
-        foreach (Paragraph paragraph in doc.GetChildNodes(NodeType.Paragraph, true))
+        // Convert the numbered list back to plain paragraphs.
+        foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
         {
-            if (paragraph.IsListItem)
+            if (para.IsListItem)
             {
-                paragraph.ListFormat.RemoveNumbers();
+                para.ListFormat.RemoveNumbers();
             }
         }
 
         // Save the resulting document.
-        string outputPath = "Output.docx";
+        const string outputPath = "Output.docx";
         doc.Save(outputPath);
     }
 }

@@ -10,12 +10,11 @@ product: Aspose.Words
 
 ## Purpose
 
-An AI coding agent should generate concise, self-contained C# snippets that create or modify Word documents using only the documented Aspose.Words APIs, instantiate any required input assets locally, and verify that the expected output file can be opened.
+Guide an AI coding agent to generate reliable Aspose.Words snippets that create, modify, and validate Word documents while adhering to the documented API surface of version 26.11.0.
 
 ## Non-negotiable conventions
 
-- Do not reference types that are not part of the Aspose.Words package version.
-- Do not import System.Drawing classes for image handling.
+- Do not reference types or namespaces that are not present in Aspose.Words 26.11.0, such as Aspose.Words.Building, Aspose.Words.Footnotes, or non-existent enum members.
 - Bootstrap local sample inputs for existing-file, folder, stream, image, and data workflows.
 - Prefer simple, verifiable workflows over speculative formatting shortcuts.
 
@@ -27,7 +26,7 @@ Use the simplest workflow that satisfies the task.
 
 ## Validation priorities
 
-1. Verify that the output file exists on disk and can be reopened without errors.
+1. Confirm that the generated document file is present on disk and can be opened without exceptions.
 
 ## File-to-task reference
 
@@ -35,7 +34,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Create a first-page header with a centered logo image using DocumentBuilder.
   - Workflow: document-workflow
   - Outputs: doc
-  - Selected engine: llm
+  - Selected engine: mcp
 - `add-an-odd-page-header-containing-a-right-aligned-chapter-title-in-a-custom-font.cs`
   - Task: Add an odd-page header containing a right-aligned chapter title in a custom font.
   - Workflow: document-workflow
@@ -45,7 +44,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Insert an even-page footer that shows page numbers in Roman numerals via InsertField.
   - Workflow: document-workflow
   - Outputs: rtf
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `configure-header-types-for-first-odd-and-even-pages-by-setting-headerfooter-type.cs`
   - Task: Configure header types for first, odd, and even pages by setting HeaderFooter.Type.
   - Workflow: document-workflow
@@ -55,7 +54,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Place an absolutely positioned image in the header using InsertImage with left and top offsets.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `enable-unique-first-page-header-content-by-setting-differentfirstpageheaderfooter-to-true.cs`
   - Task: Enable unique first-page header content by setting DifferentFirstPageHeaderFooter to true.
   - Workflow: document-workflow
@@ -80,12 +79,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Insert a footnote at the current cursor position with custom text via InsertFootnote.
   - Workflow: document-workflow
   - Outputs: rtf
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `add-an-endnote-with-reference-text-using-insertfootnote-and-specify-endnote-type.cs`
   - Task: Add an endnote with reference text using InsertFootnote and specify Endnote type.
   - Workflow: document-workflow
   - Outputs: rtf
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `change-footnote-numbering-style-to-lower-case-roman-numerals-by-setting-document-footnoteo.cs`
   - Task: Change footnote numbering style to lower-case Roman numerals by setting Document.FootnoteOptions.NumberStyle.
   - Workflow: document-workflow
@@ -95,17 +94,17 @@ Use the simplest workflow that satisfies the task.
   - Task: Configure footnote layout to use three columns by assigning Document.FootnoteOptions.Columns.
   - Workflow: document-workflow
   - Outputs: doc
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `position-footnotes-at-the-bottom-of-the-page-by-adjusting-footnoteoptions-position.cs`
   - Task: Position footnotes at the bottom of the page by adjusting FootnoteOptions.Position.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `update-all-footnote-and-endnote-references-after-modifications-by-calling-document-updatef.cs`
   - Task: Update all footnote and endnote references after modifications by calling Document.UpdateFields.
   - Workflow: document-workflow
   - Outputs: doc
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `insert-a-table-of-contents-at-the-document-start-using-inserttableofcontents-with-default.cs`
   - Task: Insert a table of contents at the document start using InsertTableOfContents with default switches.
   - Workflow: document-workflow
@@ -145,7 +144,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply a custom paragraph style to TOC entries by modifying the TOC field's style property.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `insert-a-bookmark-named-chapterstart-at-the-beginning-of-each-chapter-using-documentbuilde.cs`
   - Task: Insert a bookmark named "ChapterStart" at the beginning of each chapter using DocumentBuilder.
   - Workflow: document-workflow
@@ -205,7 +204,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Remove all footnotes while preserving endnotes by clearing Document.Footnotes collection.
   - Workflow: document-workflow
   - Outputs: doc
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `create-a-new-word-document-and-insert-a-table-with-five-rows-and-three-columns.cs`
   - Task: Create a new Word document and insert a table with five rows and three columns.
   - Workflow: document-workflow
@@ -270,7 +269,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Iterate through all tables in a document and apply a uniform cell padding of five points.
   - Workflow: document-workflow
   - Outputs: doc
-  - Selected engine: mcp
+  - Selected engine: llm
 - `convert-a-datatable-with-numeric-values-into-a-table-and-format-numeric-cells-as-currency.cs`
   - Task: Convert a DataTable with numeric values into a table and format numeric cells as currency.
   - Workflow: document-workflow
@@ -280,7 +279,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Add a caption below the table using a paragraph styled as 'Caption' and reference it.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `create-a-bulleted-list-with-three-items-and-customize-the-bullet-character-to-a-dash.cs`
   - Task: Create a bulleted list with three items and customize the bullet character to a dash.
   - Workflow: document-workflow
@@ -295,7 +294,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Define a second list level with alphabetic lower-case numbering and increased indentation.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `restart-list-numbering-at-1-for-a-new-section-after-a-heading-paragraph.cs`
   - Task: Restart list numbering at 1 for a new section after a heading paragraph.
   - Workflow: document-workflow
@@ -320,7 +319,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Set the document's OoxmlCompliance property to OoxmlCompliance.Strict to preserve advanced list settings.
   - Workflow: document-workflow
   - Outputs: doc, xml
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `create-a-paragraph-write-a-long-sentence-and-count-the-number-of-lines-it-occupies.cs`
   - Task: Create a paragraph, write a long sentence, and count the number of lines it occupies.
   - Workflow: document-workflow
@@ -350,7 +349,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Add a paragraph with a drop cap character and specify the number of lines it spans.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `apply-a-custom-style-to-a-paragraph-that-includes-a-border-background-color-and-indentatio.cs`
   - Task: Apply a custom style to a paragraph that includes a border, background color, and indentation.
   - Workflow: document-workflow
@@ -360,12 +359,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Create a paragraph with a custom tab stop at 2 inches and insert text that aligns to it.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `insert-a-table-of-contents-paragraph-that-automatically-reflects-headings-and-list-items.cs`
   - Task: Insert a table of contents paragraph that automatically reflects headings and list items.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `apply-a-conditional-formatting-rule-to-table-cells-that-highlights-values-above-a-threshol.cs`
   - Task: Apply a conditional formatting rule to table cells that highlights values above a threshold.
   - Workflow: document-workflow
@@ -395,7 +394,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Insert a paragraph with a custom line height of 150 percent and verify visual appearance.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `add-a-paragraph-with-a-hanging-indent-of-0-25-inches-for-citation-formatting.cs`
   - Task: Add a paragraph with a hanging indent of 0.25 inches for citation formatting.
   - Workflow: document-workflow
@@ -405,7 +404,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Create a text box, set its internal margins, and insert a paragraph with bold text inside.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `link-two-text-boxes-sequentially-so-that-text-flows-from-the-first-to-the-second-automatic.cs`
   - Task: Link two text boxes sequentially so that text flows from the first to the second automatically.
   - Workflow: document-workflow
@@ -415,7 +414,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Check whether a given text box is the head of a linked sequence using its IsHead property.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `break-the-forward-link-of-a-middle-text-box-to-stop-text-flow-to-the-subsequent-box.cs`
   - Task: Break the forward link of a middle text box to stop text flow to the subsequent box.
   - Workflow: document-workflow
@@ -480,12 +479,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Iterate through each document in a collection and convert all numbered lists to bulleted lists.
   - Workflow: document-workflow
   - Outputs: doc
-  - Selected engine: mcp
+  - Selected engine: llm
 - `create-a-macro-like-routine-that-inserts-a-table-a-paragraph-and-a-linked-text-box-in-one.cs`
   - Task: Create a macro-like routine that inserts a table, a paragraph, and a linked text box in one operation.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `generate-a-report-document-by-merging-data-rows-into-a-table-and-adding-a-summary-paragrap.cs`
   - Task: Generate a report document by merging data rows into a table and adding a summary paragraph.
   - Workflow: document-workflow
@@ -495,7 +494,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply a custom list template to all document lists and enforce a maximum of nine nesting levels.
   - Workflow: document-workflow
   - Outputs: doc
-  - Selected engine: llm
+  - Selected engine: mcp
 - `export-a-document-containing-tables-and-text-boxes-to-an-xps-file-while-preserving-layout.cs`
   - Task: Export a document containing tables and text boxes to an XPS file while preserving layout.
   - Workflow: document-workflow
@@ -525,7 +524,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Set the document's language property to French and adjust paragraph direction for right-to-left scripts.
   - Workflow: document-workflow
   - Outputs: doc
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `apply-a-built-in-title-style-to-the-first-paragraph-and-ensure-it-appears-in-the-document.cs`
   - Task: Apply a built-in 'Title' style to the first paragraph and ensure it appears in the document outline.
   - Workflow: document-workflow
@@ -535,12 +534,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Add a comment to a paragraph and programmatically retrieve the comment text for review.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `insert-a-paragraph-with-a-custom-field-that-calculates-the-sum-of-numbers-in-a-table-colum.cs`
   - Task: Insert a paragraph with a custom field that calculates the sum of numbers in a table column.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `generate-a-document-that-contains-a-table-a-list-and-a-paragraph-then-save-as-odt-format.cs`
   - Task: Generate a document that contains a table, a list, and a paragraph, then save as ODT format.
   - Workflow: document-workflow
@@ -550,7 +549,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Iterate through all shapes in a document and change any text box fill color to light gray.
   - Workflow: document-workflow
   - Outputs: doc
-  - Selected engine: llm
+  - Selected engine: mcp
 - `add-a-page-break-before-each-new-heading-paragraph-and-ensure-the-heading-style-remains-ap.cs`
   - Task: Add a page break before each new heading paragraph and ensure the heading style remains applied.
   - Workflow: document-workflow
@@ -565,7 +564,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply a table style that includes a top border, bottom border, and no side borders.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `apply-a-table-style-that-includes-alternating-column-shading-for-better-readability.cs`
   - Task: Apply a table style that includes alternating column shading for better readability.
   - Workflow: document-workflow
@@ -580,39 +579,51 @@ Use the simplest workflow that satisfies the task.
   - Task: Create a numbered list where each level uses a different numbering scheme, such as decimal and lower-roman.
   - Workflow: document-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 
 ## Common failure patterns and preferred agent fixes
 
-- **Missing System.Drawing dependency**
-  - Symptom: The compiler reports that Bitmap or Graphics types cannot be found in the System.Drawing namespace.
-  - Root cause: The code attempts to create images using System.Drawing classes, which are not referenced in the project and are unnecessary for Aspose.Words image insertion.
-  - Preferred fix: Replace System.Drawing usage with a Base64-encoded image stream and call DocumentBuilder.InsertImage using the stream.
-  - Prevention: Always load images from a MemoryStream or file path and avoid any System.Drawing types in examples.
+- **Missing API in selected version**
+  - Symptom: Compilation fails because properties like PageSetup.DifferentOddAndEvenPages or HeaderFooter.Footers are not found.
+  - Root cause: The code references members that were introduced in later Aspose.Words releases or were never part of the library.
+  - Preferred fix: Use the properties that exist in version 26.11.0 (e.g., PageSetup.DifferentFirstPageHeaderFooter) and, when needed, manipulate headers/footers through the HeadersFooters collection.
+  - Prevention: Consult the official API reference for the exact version before using a property or method.
 
-- **Incorrect or outdated Aspose.Words API usage**
-  - Symptom: Compilation fails because enums, properties, or methods such as HeaderFooter.Type, DifferentOddAndEvenPages, FootnoteType, or Document.Footnotes are not defined.
-  - Root cause: The snippet references API members that were renamed, moved, or removed in version 26.10.0.
-  - Preferred fix: Use the current enum names HeaderFooterType.HeaderFirst, HeaderFooterType.HeaderPrimary, HeaderFooterType.HeaderEven, and include Aspose.Words.Notes for FootnoteType and NumberStyle. Set odd/even header flags via Section.PageSetup.OddAndEvenPagesHeaderFooter or reflectively set DifferentOddAndEvenPages when unavailable.
-  - Prevention: Consult the official Aspose.Words 26.10.0 documentation for the exact member names before coding.
+- **Incorrect namespace or type name**
+  - Symptom: Compiler reports CS0234 errors for namespaces such as Aspose.Words.Building or types like FootnoteType that cannot be resolved.
+  - Root cause: The snippet invents or misspells namespaces and enum names that are not defined in the package.
+  - Preferred fix: Replace invented names with the correct ones, e.g., use Aspose.Words.Notes.FootnoteType and Aspose.Words.Notes.NumberStyle.
+  - Prevention: Rely exclusively on types listed in the package documentation and import the proper namespaces.
 
-- **Invalid method signatures or collection handling**
-  - Symptom: The compiler reports that methods like HeaderFooterCollection.Add overloads or Shape.Position do not exist, and that collections such as Section.Footers are missing.
-  - Root cause: The code calls non-existent overloads or accesses properties that were never part of the API.
-  - Preferred fix: Clone a HeaderFooter node and add it with HeadersFooters.Add, set shape positioning using WrapType, RelativeHorizontalPosition, and RelativeVerticalPosition, and remove footers by enumerating HeadersFooters and deleting items that match footer types.
-  - Prevention: Use only the overloads and properties listed in the Aspose.Words API reference and manipulate collections through supported LINQ queries.
+- **Missing System.Drawing reference**
+  - Symptom: CS1069 errors indicate that Bitmap and Graphics cannot be found in System.Drawing.
+  - Root cause: The code attempts to use System.Drawing types without adding a reference to System.Drawing.Common, which is not required for Aspose.Words image insertion.
+  - Preferred fix: Load images from a byte array or stream and call DocumentBuilder.InsertImage without using Bitmap or Graphics.
+  - Prevention: Avoid System.Drawing entirely; use Base64-encoded image data or file streams for image insertion.
+
+- **Invalid overload usage**
+  - Symptom: CS1501 errors show that InsertImage is called with an unsupported number of arguments, and Shape.Position members are missing.
+  - Root cause: The snippet calls overloads that do not exist in the current API and accesses properties that belong to the Shape class in a different context.
+  - Preferred fix: Use the InsertImage overload that accepts a stream plus positioning parameters (RelativeHorizontalPosition, RelativeVerticalPosition, left, top, width, height, WrapType).
+  - Prevention: Check the method signatures in the official documentation and pass only the supported arguments.
+
+- **Incorrect collection manipulation**
+  - Symptom: CS1061 errors arise when accessing Section.Footers, which does not exist, or when attempting to remove footers via a non-existent collection.
+  - Root cause: Headers and footers are stored together in Section.HeadersFooters, not in separate Footer collections.
+  - Preferred fix: Iterate over Section.HeadersFooters and remove items whose HeaderFooterType is a footer (FooterPrimary, FooterFirst, FooterEven).
+  - Prevention: Use the HeadersFooters collection for all header/footer operations as documented.
 
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Primary package: `Aspose.Words` `26.10.0`
+- Primary package: `Aspose.Words` `26.11.0`
 
 ## Command reference
 
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.10.0
+dotnet add package Aspose.Words --version 26.11.0
 ```
 
 ```powershell
@@ -626,4 +637,4 @@ dotnet run --configuration Release --no-build
 
 ## Category update guidance
 
-- Update examples promptly when a new Aspose.Words version changes enum names or adds new properties.
+- Periodically verify that the code examples compile against the latest Aspose.Words 26.11.0 package to catch API deprecations early.

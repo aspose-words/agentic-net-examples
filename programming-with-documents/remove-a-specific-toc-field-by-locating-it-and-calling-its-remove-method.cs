@@ -2,46 +2,53 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-public class Program
+namespace RemoveTocExample
 {
-    public static void Main()
+    class Program
     {
-        // Create a new document and a builder.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert headings that will appear in the TOC.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 1");
-        builder.Writeln("Chapter 2");
-
-        // Insert the Table of Contents at the beginning of the document.
-        builder.MoveToDocumentStart();
-        builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
-
-        // Save the original document.
-        const string originalPath = "Original.docx";
-        doc.Save(originalPath);
-
-        // Load the document (could also continue using the same instance).
-        Document loadedDoc = new Document(originalPath);
-
-        // Locate the first TOC field in the document.
-        Field tocField = null;
-        foreach (Field field in loadedDoc.Range.Fields)
+        static void Main()
         {
-            if (field.Type == FieldType.FieldTOC)
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Insert a Table of Contents field.
+            builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
+
+            // Add some headings that would appear in the TOC.
+            builder.Font.Size = 16;
+            builder.Font.Bold = true;
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+            builder.Writeln("Chapter 1");
+
+            builder.Font.Size = 14;
+            builder.Font.Bold = false;
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+            builder.Writeln("Section 1.1");
+
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+            builder.Writeln("Chapter 2");
+
+            // Locate the first TOC field in the document.
+            Field tocField = null;
+            foreach (Field field in doc.Range.Fields)
             {
-                tocField = field;
-                break;
+                if (field.Type == FieldType.FieldTOC)
+                {
+                    tocField = field;
+                    break;
+                }
             }
+
+            // Remove the TOC field if it was found.
+            if (tocField != null)
+            {
+                tocField.Remove();
+            }
+
+            // Save the modified document.
+            const string outputPath = "Output.docx";
+            doc.Save(outputPath);
         }
-
-        // Remove the TOC field if it was found.
-        tocField?.Remove();
-
-        // Save the modified document.
-        const string modifiedPath = "Modified.docx";
-        loadedDoc.Save(modifiedPath);
     }
 }

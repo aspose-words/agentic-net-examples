@@ -2,62 +2,57 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert a table with 2 rows and 3 columns as initial content.
+        Table table = builder.StartTable();
+
+        // First row.
+        for (int col = 0; col < 3; col++)
         {
-            // Create a new empty document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Build a simple table with 2 rows and 3 columns.
-            builder.StartTable();
-
-            // First row.
-            for (int col = 0; col < 3; col++)
-            {
-                builder.InsertCell();
-                builder.Write($"R1C{col + 1}");
-            }
-            builder.EndRow();
-
-            // Second row.
-            for (int col = 0; col < 3; col++)
-            {
-                builder.InsertCell();
-                builder.Write($"R2C{col + 1}");
-            }
-            builder.EndRow();
-
-            // End the table.
-            builder.EndTable();
-
-            // Retrieve the created table.
-            Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-
-            // Create a new row to be added at the end of the table.
-            Row newRow = new Row(doc);
-
-            // Fill each cell of the new row with placeholder text.
-            int columnCount = table.Rows[0].Cells.Count;
-            for (int i = 0; i < columnCount; i++)
-            {
-                Cell cell = new Cell(doc);
-                // Add a paragraph with placeholder text.
-                Paragraph para = new Paragraph(doc);
-                para.AppendChild(new Run(doc, $"Placeholder {i + 1}"));
-                cell.AppendChild(para);
-                newRow.Cells.Add(cell);
-            }
-
-            // Append the new row to the table.
-            table.Rows.Add(newRow);
-
-            // Save the document.
-            string outputPath = "Output.docx";
-            doc.Save(outputPath);
+            builder.InsertCell();
+            builder.Write($"Row1Col{col + 1}");
         }
+        builder.EndRow();
+
+        // Second row.
+        for (int col = 0; col < 3; col++)
+        {
+            builder.InsertCell();
+            builder.Write($"Row2Col{col + 1}");
+        }
+        builder.EndRow();
+
+        // End the table construction.
+        builder.EndTable();
+
+        // Insert a new row at the end of the existing table.
+        // The Rows collection is zero‑based; the new row will be added after the last existing row.
+        Row newRow = new Row(doc);
+        // Ensure the new row has the same number of cells as the existing rows.
+        int columnCount = table.Rows[0].Cells.Count;
+        for (int i = 0; i < columnCount; i++)
+        {
+            // Add a new cell to the row.
+            Cell cell = new Cell(doc);
+            // Insert placeholder text into the cell.
+            Paragraph para = new Paragraph(doc);
+            Run run = new Run(doc, "Placeholder");
+            para.AppendChild(run);
+            cell.AppendChild(para);
+            newRow.AppendChild(cell);
+        }
+        // Append the new row to the table.
+        table.Rows.Add(newRow);
+
+        // Save the document to disk.
+        string outputPath = "Output.docx";
+        doc.Save(outputPath);
     }
 }

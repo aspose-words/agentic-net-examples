@@ -7,60 +7,59 @@ public class Program
 {
     public static void Main()
     {
-        // Create a temporary folder for sample documents.
-        string folderPath = Path.Combine(Path.GetTempPath(), "AsposeDocsDemo");
-        Directory.CreateDirectory(folderPath);
+        // Create a temporary directory for sample documents and output.
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
+        Directory.CreateDirectory(workDir);
 
-        // Create sample documents containing numbered lists.
-        CreateSampleDocument(Path.Combine(folderPath, "Doc1.docx"));
-        CreateSampleDocument(Path.Combine(folderPath, "Doc2.docx"));
+        // Create sample documents with numbered lists.
+        string[] sourceFiles =
+        {
+            Path.Combine(workDir, "Doc1.docx"),
+            Path.Combine(workDir, "Doc2.docx")
+        };
 
-        // Get all .docx files in the folder.
-        string[] docFiles = Directory.GetFiles(folderPath, "*.docx");
+        for (int i = 0; i < sourceFiles.Length; i++)
+        {
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Add a numbered list with three items.
+            builder.ListFormat.ApplyNumberDefault();
+            builder.Writeln($"Item {i + 1}.A");
+            builder.Writeln($"Item {i + 1}.B");
+            builder.Writeln($"Item {i + 1}.C");
+            builder.ListFormat.RemoveNumbers();
+
+            doc.Save(sourceFiles[i]);
+        }
 
         // Process each document: convert numbered lists to bulleted lists.
-        foreach (string filePath in docFiles)
+        foreach (string filePath in sourceFiles)
         {
             Document doc = new Document(filePath);
 
-            // Iterate through all paragraphs.
+            // Create a bulleted list template once per document.
+            List bulletList = doc.Lists.Add(ListTemplate.BulletDefault);
+
             foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
             {
-                // Check if the paragraph is part of a list.
-                if (para.IsListItem)
+                if (para.ListFormat.IsListItem &&
+                    para.ListFormat.List != null &&
+                    para.ListFormat.List.ListLevels[0].NumberStyle != NumberStyle.Bullet)
                 {
-                    // Preserve the original list level.
-                    int originalLevel = para.ListFormat.ListLevelNumber;
-
-                    // Apply a bulleted list style to the paragraph.
-                    para.ListFormat.ApplyBulletDefault();
-
-                    // Restore the original level (if it was deeper than level 1).
-                    para.ListFormat.ListLevelNumber = originalLevel;
+                    // Assign the bulleted list to the paragraph.
+                    para.ListFormat.List = bulletList;
                 }
             }
 
-            // Save the modified document with a new name.
-            string outputPath = Path.Combine(folderPath, $"Output_{Path.GetFileName(filePath)}");
+            // Save the converted document.
+            string outputPath = Path.Combine(
+                workDir,
+                Path.GetFileNameWithoutExtension(filePath) + "_Bulleted.docx");
+
             doc.Save(outputPath);
         }
 
-        // No console output required; the output files are created in the temporary folder.
-    }
-
-    // Helper method to create a sample document with a numbered list.
-    private static void CreateSampleDocument(string filePath)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        builder.Writeln("Sample numbered list:");
-        builder.ListFormat.ApplyNumberDefault(); // Start a numbered list.
-        builder.Writeln("Item 1");
-        builder.Writeln("Item 2");
-        builder.Writeln("Item 3");
-        builder.ListFormat.RemoveNumbers(); // End the list.
-
-        doc.Save(filePath);
+        // The program ends here; output files are saved in the Work folder.
     }
 }

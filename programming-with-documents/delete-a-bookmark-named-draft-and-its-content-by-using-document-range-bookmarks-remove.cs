@@ -1,33 +1,44 @@
 using System;
+using System.IO;
 using Aspose.Words;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document.
+        // Define file paths
+        string originalPath = Path.Combine(Environment.CurrentDirectory, "original.docx");
+        string resultPath = Path.Combine(Environment.CurrentDirectory, "result.docx");
+
+        // -------------------------------------------------
+        // Create a new document with a bookmark named "Draft"
+        // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some content before the bookmark.
-        builder.Writeln("This is before the bookmark.");
+        // Insert some text before the bookmark
+        builder.Writeln("This is the beginning of the document.");
 
-        // Insert a bookmark named "Draft" with some content.
+        // Start the bookmark, insert content, then end the bookmark
         builder.StartBookmark("Draft");
-        builder.Writeln("This is draft content to be removed.");
+        builder.Writeln("This content is inside the Draft bookmark and will be removed.");
         builder.EndBookmark("Draft");
 
-        // Add some content after the bookmark.
-        builder.Writeln("This is after the bookmark.");
+        // Insert some text after the bookmark
+        builder.Writeln("This is the end of the document.");
 
-        // Delete the bookmark "Draft" and its content.
-        doc.Range.Bookmarks.Remove("Draft");
+        // Save the original document
+        doc.Save(originalPath);
 
-        // Save the modified document.
-        string outputPath = "Output.docx";
-        doc.Save(outputPath);
+        // -------------------------------------------------
+        // Load the document and remove the "Draft" bookmark
+        // -------------------------------------------------
+        Document loadedDoc = new Document(originalPath);
 
-        // Indicate completion.
-        Console.WriteLine($"Document saved to {outputPath}");
+        // Remove the bookmark named "Draft" (and its content as per task requirement)
+        loadedDoc.Range.Bookmarks.Remove("Draft");
+
+        // Save the modified document
+        loadedDoc.Save(resultPath);
     }
 }

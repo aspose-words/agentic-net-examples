@@ -12,57 +12,58 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a table.
+        // Start a table.
         Table table = builder.StartTable();
 
         // Add header row.
-        for (int col = 1; col <= 3; col++)
-        {
-            builder.InsertCell();
-            builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-            builder.Writeln($"Header {col}");
-        }
+        builder.InsertCell();
+        builder.Write("Header 1");
+        builder.InsertCell();
+        builder.Write("Header 2");
+        builder.InsertCell();
+        builder.Write("Header 3");
         builder.EndRow();
 
         // Add data rows.
-        for (int row = 1; row <= 5; row++)
+        for (int i = 1; i <= 6; i++)
         {
-            for (int col = 1; col <= 3; col++)
-            {
-                builder.InsertCell();
-                builder.Writeln($"Row {row}, Col {col}");
-            }
+            builder.InsertCell();
+            builder.Write($"Row {i} Col 1");
+            builder.InsertCell();
+            builder.Write($"Row {i} Col 2");
+            builder.InsertCell();
+            builder.Write($"Row {i} Col 3");
             builder.EndRow();
         }
 
-        // End the table.
+        // Finish the table.
         builder.EndTable();
 
-        // Apply alternating row shading.
-        // Row 0 is the header; start shading from the first data row (index 1).
-        for (int i = 1; i < table.Rows.Count; i++)
+        // Apply alternating shading (light gray) to every other data row (starting with the first data row).
+        // Row index 0 is the header row, so we start shading from index 1.
+        for (int rowIndex = 1; rowIndex < table.Rows.Count; rowIndex++)
         {
-            Row currentRow = table.Rows[i];
-            Color shade = (i % 2 == 0) ? Color.LightGray : Color.White;
-
-            foreach (Cell cell in currentRow.Cells)
+            // Shade odd-numbered rows (1,3,5, ...) relative to the data rows.
+            if ((rowIndex - 1) % 2 == 0)
             {
-                cell.CellFormat.Shading.BackgroundPatternColor = shade;
+                Row row = table.Rows[rowIndex];
+                foreach (Cell cell in row.Cells)
+                {
+                    cell.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
+                    cell.CellFormat.Shading.Texture = TextureIndex.TextureSolid;
+                }
             }
         }
 
         // Save the document.
-        string outputPath = "TableWithAlternatingShading.docx";
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AlternatingRowsTable.docx");
         doc.Save(outputPath);
 
-        // Verify the file was created.
+        // Verify that the file was created and can be reloaded.
         if (File.Exists(outputPath))
         {
-            Console.WriteLine($"Document saved successfully to '{Path.GetFullPath(outputPath)}'.");
-        }
-        else
-        {
-            Console.WriteLine("Failed to save the document.");
+            Document loadedDoc = new Document(outputPath);
+            // Document successfully reloaded; further processing could be added here.
         }
     }
 }

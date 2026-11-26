@@ -4,55 +4,57 @@
     "slug": "programming-with-documents",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Create a Document, configure Section.PageSetup flags, use DocumentBuilder to move to the appropriate HeaderFooter, insert content such as images or fields, adjust shape positioning with WrapType and relative positions, and finally save the document to a local path while confirming successful reload.",
+    "preferred_workflow": "Create a new Document, attach a DocumentBuilder, configure page setup or header/footer properties via the documented PageSetup members, insert content (text, fields, images) using the overloads that accept streams and positioning parameters, save the file locally, and finally verify that the file exists and can be reloaded.",
     "required_packages": [
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.10.0"
+      "Aspose.Words": "26.11.0"
     },
     "required_namespaces": [
       "System",
       "System.IO",
       "Aspose.Words",
-      "Aspose.Words.Drawing",
       "Aspose.Words.Tables",
-      "Aspose.Words.BuildingBlocks",
-      "System.Collections.Generic",
-      "System.Linq",
+      "Aspose.Words.Drawing",
       "Aspose.Words.Notes",
+      "Aspose.Words.BuildingBlocks",
       "Aspose.Words.Fields",
       "System.Drawing",
-      "System.Data",
       "Aspose.Words.Saving",
-      "System.Globalization",
+      "Aspose.Words.Fonts",
+      "System.Linq",
+      "System.Data",
       "Aspose.Words.Lists",
-      "Aspose.Words.Settings"
+      "System.Reflection",
+      "System.Collections.Generic",
+      "Aspose.Words.Settings",
+      "System.Globalization"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
       "MemoryStream",
+      "Directory",
       "Path",
       "Font",
-      "Paragraph",
-      "Shape",
       "File",
-      "NodeType",
-      "Run",
       "StyleIdentifier",
       "Table",
-      "Style",
+      "Node",
+      "NodeType",
+      "SaveFormat",
       "Range",
+      "Paragraph",
       "Field",
       "FieldType",
-      "Directory",
-      "Node",
-      "Row",
+      "Style",
       "Cell",
+      "Run",
+      "Row",
       "CellFormat",
       "HtmlSaveOptions",
-      "SaveFormat",
+      "Shape",
       "PdfSaveOptions"
     ]
   },
@@ -65,40 +67,50 @@
   },
   "rules_summary": {
     "strict_api_bans": [
-      "Do not reference types that are not part of the Aspose.Words package version.",
-      "Do not import System.Drawing classes for image handling."
+      "Do not reference types or namespaces that are not present in Aspose.Words 26.11.0, such as Aspose.Words.Building, Aspose.Words.Footnotes, or non-existent enum members."
     ],
     "canonical_patterns": [
-      "Load images from a MemoryStream created from a Base64 string.",
-      "Use HeaderFooterType enum values HeaderFirst, HeaderPrimary, and HeaderEven for header configuration.",
-      "Access footnote options through Document.FootnoteOptions and use FootnoteType from Aspose.Words.Notes."
+      "Always create input assets (e.g., images) as in-memory streams or deterministic local files before loading them into the document."
     ],
     "nullable_warning_prevention": [
-      "Check for the existence of a property via reflection before setting it when the library version may not expose it.",
-      "Validate that collections such as HeadersFooters contain the expected items before removal."
+      "Validate only the existence of the expected output file and, when required, reload it to confirm that the document is well-formed."
     ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "Missing System.Drawing dependency",
-      "symptom": "The compiler reports that Bitmap or Graphics types cannot be found in the System.Drawing namespace.",
-      "cause": "The code attempts to create images using System.Drawing classes, which are not referenced in the project and are unnecessary for Aspose.Words image insertion.",
-      "fix": "Replace System.Drawing usage with a Base64-encoded image stream and call DocumentBuilder.InsertImage using the stream.",
-      "prevention": "Always load images from a MemoryStream or file path and avoid any System.Drawing types in examples."
+      "pattern": "Missing API in selected version",
+      "symptom": "Compilation fails because properties like PageSetup.DifferentOddAndEvenPages or HeaderFooter.Footers are not found.",
+      "cause": "The code references members that were introduced in later Aspose.Words releases or were never part of the library.",
+      "fix": "Use the properties that exist in version 26.11.0 (e.g., PageSetup.DifferentFirstPageHeaderFooter) and, when needed, manipulate headers/footers through the HeadersFooters collection.",
+      "prevention": "Consult the official API reference for the exact version before using a property or method."
     },
     {
-      "pattern": "Incorrect or outdated Aspose.Words API usage",
-      "symptom": "Compilation fails because enums, properties, or methods such as HeaderFooter.Type, DifferentOddAndEvenPages, FootnoteType, or Document.Footnotes are not defined.",
-      "cause": "The snippet references API members that were renamed, moved, or removed in version 26.10.0.",
-      "fix": "Use the current enum names HeaderFooterType.HeaderFirst, HeaderFooterType.HeaderPrimary, HeaderFooterType.HeaderEven, and include Aspose.Words.Notes for FootnoteType and NumberStyle. Set odd/even header flags via Section.PageSetup.OddAndEvenPagesHeaderFooter or reflectively set DifferentOddAndEvenPages when unavailable.",
-      "prevention": "Consult the official Aspose.Words 26.10.0 documentation for the exact member names before coding."
+      "pattern": "Incorrect namespace or type name",
+      "symptom": "Compiler reports CS0234 errors for namespaces such as Aspose.Words.Building or types like FootnoteType that cannot be resolved.",
+      "cause": "The snippet invents or misspells namespaces and enum names that are not defined in the package.",
+      "fix": "Replace invented names with the correct ones, e.g., use Aspose.Words.Notes.FootnoteType and Aspose.Words.Notes.NumberStyle.",
+      "prevention": "Rely exclusively on types listed in the package documentation and import the proper namespaces."
     },
     {
-      "pattern": "Invalid method signatures or collection handling",
-      "symptom": "The compiler reports that methods like HeaderFooterCollection.Add overloads or Shape.Position do not exist, and that collections such as Section.Footers are missing.",
-      "cause": "The code calls non-existent overloads or accesses properties that were never part of the API.",
-      "fix": "Clone a HeaderFooter node and add it with HeadersFooters.Add, set shape positioning using WrapType, RelativeHorizontalPosition, and RelativeVerticalPosition, and remove footers by enumerating HeadersFooters and deleting items that match footer types.",
-      "prevention": "Use only the overloads and properties listed in the Aspose.Words API reference and manipulate collections through supported LINQ queries."
+      "pattern": "Missing System.Drawing reference",
+      "symptom": "CS1069 errors indicate that Bitmap and Graphics cannot be found in System.Drawing.",
+      "cause": "The code attempts to use System.Drawing types without adding a reference to System.Drawing.Common, which is not required for Aspose.Words image insertion.",
+      "fix": "Load images from a byte array or stream and call DocumentBuilder.InsertImage without using Bitmap or Graphics.",
+      "prevention": "Avoid System.Drawing entirely; use Base64-encoded image data or file streams for image insertion."
+    },
+    {
+      "pattern": "Invalid overload usage",
+      "symptom": "CS1501 errors show that InsertImage is called with an unsupported number of arguments, and Shape.Position members are missing.",
+      "cause": "The snippet calls overloads that do not exist in the current API and accesses properties that belong to the Shape class in a different context.",
+      "fix": "Use the InsertImage overload that accepts a stream plus positioning parameters (RelativeHorizontalPosition, RelativeVerticalPosition, left, top, width, height, WrapType).",
+      "prevention": "Check the method signatures in the official documentation and pass only the supported arguments."
+    },
+    {
+      "pattern": "Incorrect collection manipulation",
+      "symptom": "CS1061 errors arise when accessing Section.Footers, which does not exist, or when attempting to remove footers via a non-existent collection.",
+      "cause": "Headers and footers are stored together in Section.HeadersFooters, not in separate Footer collections.",
+      "fix": "Iterate over Section.HeadersFooters and remove items whose HeaderFooterType is a footer (FooterPrimary, FooterFirst, FooterEven).",
+      "prevention": "Use the HeadersFooters collection for all header/footer operations as documented."
     }
   ],
   "examples": [
@@ -110,8 +122,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 2,
@@ -132,8 +144,8 @@
       "outputs": [
         "rtf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 4,
@@ -154,8 +166,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 6,
@@ -209,8 +221,8 @@
       "outputs": [
         "rtf"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 11,
@@ -220,8 +232,8 @@
       "outputs": [
         "rtf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 12,
@@ -242,8 +254,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 14,
@@ -253,8 +265,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 15,
@@ -264,8 +276,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 16,
@@ -352,8 +364,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 24,
@@ -485,8 +497,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 36,
@@ -629,8 +641,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 49,
@@ -651,8 +663,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 51,
@@ -684,8 +696,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 54,
@@ -740,8 +752,8 @@
         "doc",
         "xml"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 59,
@@ -806,8 +818,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 65,
@@ -828,8 +840,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 67,
@@ -839,8 +851,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 68,
@@ -905,8 +917,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 74,
@@ -927,8 +939,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 76,
@@ -949,8 +961,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 78,
@@ -1093,8 +1105,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 91,
@@ -1104,8 +1116,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 92,
@@ -1126,8 +1138,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 94,
@@ -1193,8 +1205,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 100,
@@ -1215,8 +1227,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 102,
@@ -1226,8 +1238,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 103,
@@ -1248,8 +1260,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 105,
@@ -1281,8 +1293,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 108,
@@ -1314,18 +1326,18 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     }
   ],
   "narrative": {
-    "overview": "The Programming With Documents category demonstrates how to manipulate Word files using Aspose.Words 26.10.0. Verified examples show header/footer configuration, image insertion, footnote handling, and table of contents management without external dependencies.",
-    "purpose": "An AI coding agent should generate concise, self-contained C# snippets that create or modify Word documents using only the documented Aspose.Words APIs, instantiate any required input assets locally, and verify that the expected output file can be opened.",
+    "overview": "The Programming With Documents category showcases how to manipulate Word files using Aspose.Words 26.11.0, covering header/footer configuration, footnote management, and image placement. The verified examples demonstrate correct use of Document, DocumentBuilder, and related APIs to create self-contained documents without external dependencies.",
+    "purpose": "Guide an AI coding agent to generate reliable Aspose.Words snippets that create, modify, and validate Word documents while adhering to the documented API surface of version 26.11.0.",
     "validation_priorities": [
-      "Verify that the output file exists on disk and can be reopened without errors."
+      "Confirm that the generated document file is present on disk and can be opened without exceptions."
     ],
     "maintenance_notes": [
-      "Update examples promptly when a new Aspose.Words version changes enum names or adds new properties."
+      "Periodically verify that the code examples compile against the latest Aspose.Words 26.11.0 package to catch API deprecations early."
     ]
   }
 }

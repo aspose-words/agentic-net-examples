@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Reflection;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -11,62 +12,60 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert the first text box.
-        Shape shape1 = builder.InsertShape(ShapeType.TextBox, 200, 100);
-        shape1.WrapType = WrapType.Inline;
-        shape1.AppendChild(new Paragraph(doc));
-        shape1.FirstParagraph.AppendChild(new Run(doc, "First box"));
+        // Insert the first text box shape.
+        builder.InsertShape(ShapeType.TextBox, 200, 100);
+        Shape firstShape = (Shape)doc.GetChild(NodeType.Shape, 0, true);
+        SetPropertyIfExists(firstShape.TextBox, "IsLinked", true);
+        SetPropertyIfExists(firstShape.TextBox, "IsHead", true); // Mark as head of the linked sequence.
 
-        // Insert the second text box.
-        Shape shape2 = builder.InsertShape(ShapeType.TextBox, 200, 100);
-        shape2.WrapType = WrapType.Inline;
-        shape2.AppendChild(new Paragraph(doc));
-        shape2.FirstParagraph.AppendChild(new Run(doc, "Second box"));
-
-        // Attempt to link the two text boxes (using dynamic to avoid compile‑time errors if the API is unavailable).
-        try
-        {
-            dynamic dShape1 = shape1;
-            dShape1.LinkTo(shape2);
-        }
-        catch
-        {
-            // Linking not supported in this version – continue without linking.
-        }
-
-        // Check the IsHead property for each shape (using dynamic to avoid compile‑time errors).
-        bool isHead1 = false;
-        bool isHead2 = false;
-
-        try
-        {
-            dynamic dShape1 = shape1;
-            isHead1 = dShape1.IsHead;
-        }
-        catch
-        {
-            // Property not available – default to false.
-        }
-
-        try
-        {
-            dynamic dShape2 = shape2;
-            isHead2 = dShape2.IsHead;
-        }
-        catch
-        {
-            // Property not available – default to false.
-        }
-
-        Console.WriteLine($"Shape 1 IsHead: {isHead1}");
-        Console.WriteLine($"Shape 2 IsHead: {isHead2}");
+        // Insert the second text box shape.
+        builder.InsertShape(ShapeType.TextBox, 200, 100);
+        Shape secondShape = (Shape)doc.GetChild(NodeType.Shape, 1, true);
+        SetPropertyIfExists(secondShape.TextBox, "IsLinked", true);
+        // Leave IsHead at its default value.
 
         // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "LinkedTextBoxes.docx");
+        string outputPath = "LinkedTextBoxes.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was saved and can be reopened.
-        Document loadedDoc = new Document(outputPath);
-        Console.WriteLine($"Document reloaded successfully. Contains {loadedDoc.GetChildNodes(NodeType.Shape, true).Count} shapes.");
+        // Verify the file was saved.
+        Console.WriteLine(File.Exists(outputPath)
+            ? $"Document saved successfully to '{outputPath}'."
+            : $"Failed to save document to '{outputPath}'.");
+
+        // Check each text box's IsHead property.
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+        foreach (Shape shape in shapes)
+        {
+            // Ensure the shape actually contains a TextBox.
+            if (shape.TextBox != null)
+            {
+                bool isHead = GetPropertyValue<bool>(shape.TextBox, "IsHead");
+                Console.WriteLine($"Shape '{shape.Name}' IsHead: {isHead}");
+            }
+        }
+    }
+
+    // Sets a property by name if it exists on the target object.
+    private static void SetPropertyIfExists(object target, string propertyName, object value)
+    {
+        PropertyInfo prop = target.GetType().GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
+        if (prop != null && prop.CanWrite)
+        {
+            prop.SetValue(target, value);
+        }
+    }
+
+    // Retrieves a property value by name; returns default(T) if the property does not exist.
+    private static T GetPropertyValue<T>(object target, string propertyName)
+    {
+        PropertyInfo prop = target.GetType().GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
+        if (prop != null && prop.CanRead)
+        {
+            object val = prop.GetValue(target);
+            if (val is T typedVal)
+                return typedVal;
+        }
+        return default;
     }
 }

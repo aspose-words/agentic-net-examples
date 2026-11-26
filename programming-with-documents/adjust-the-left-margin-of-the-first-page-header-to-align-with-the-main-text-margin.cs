@@ -5,31 +5,34 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set the left margin for the main body (e.g., 72 points = 1 inch).
-        Section section = doc.FirstSection;
-        section.PageSetup.LeftMargin = 72; // 1 inch
+        // Set the main text left margin (e.g., 1 inch).
+        doc.FirstSection.PageSetup.LeftMargin = ConvertUtil.InchToPoint(1.0);
 
-        // Write some body text.
-        builder.Writeln("This is the main body text. It uses the left margin defined for the page.");
+        // Add some body text.
+        builder.Writeln("This is the main body text.");
 
         // Enable a different first‑page header.
-        section.PageSetup.DifferentFirstPageHeaderFooter = true;
+        doc.FirstSection.PageSetup.DifferentFirstPageHeaderFooter = true;
 
-        // Insert the first‑page header.
-        builder.MoveToHeaderFooter(HeaderFooterType.HeaderFirst);
+        // Create the first‑page header.
+        HeaderFooter firstHeader = new HeaderFooter(doc, HeaderFooterType.HeaderFirst);
+        doc.FirstSection.HeadersFooters.Add(firstHeader);
+
+        // Add a paragraph to the first‑page header.
+        Paragraph headerParagraph = new Paragraph(doc);
+        Run run = new Run(doc, "First page header text");
+        headerParagraph.AppendChild(run);
+        firstHeader.AppendChild(headerParagraph);
+
         // Align the header's left margin with the main text margin.
-        builder.ParagraphFormat.LeftIndent = section.PageSetup.LeftMargin;
-        builder.Writeln("First‑page header aligned with main text margin.");
-
-        // Return to the main document body.
-        builder.MoveToDocumentEnd();
+        headerParagraph.ParagraphFormat.LeftIndent = doc.FirstSection.PageSetup.LeftMargin;
 
         // Save the document.
-        string outputPath = "FirstPageHeaderMargin.docx";
+        string outputPath = "AdjustedHeader.docx";
         doc.Save(outputPath);
     }
 }

@@ -1,28 +1,29 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Fonts;
 
-public class Program
+namespace DocumentFormattingExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Initialize a DocumentBuilder for the document.
-        DocumentBuilder builder = new DocumentBuilder(doc);
+            // Initialize DocumentBuilder for the document.
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Apply bold and single underline formatting to the font.
-        builder.Font.Bold = true;
-        builder.Font.Underline = Underline.Single;
+            // Configure the font: bold and single underline.
+            builder.Font.Bold = true;
+            builder.Font.Underline = Underline.Single;
 
-        // Insert the header text with the configured formatting.
-        builder.Writeln("Header Text");
+            // Insert the header text with the configured formatting.
+            builder.Writeln("This is a Bold and Underlined Header");
 
-        // Save the document to a file.
-        string outputPath = "FormattedHeader.docx";
-        doc.Save(outputPath);
-
-        // Indicate that the document has been saved.
-        Console.WriteLine($"Document saved to {outputPath}");
+            // Save the document to a file.
+            string outputPath = "HeaderFormatted.docx";
+            doc.Save(outputPath);
+        }
     }
 }

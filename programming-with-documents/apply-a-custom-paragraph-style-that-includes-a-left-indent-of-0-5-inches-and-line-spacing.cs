@@ -1,21 +1,20 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 
-public class Program
+class Program
 {
-    public static void Main()
+    static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a custom paragraph style.
+        // Define a custom paragraph style.
         Style customStyle = doc.Styles.Add(StyleType.Paragraph, "MyCustomStyle");
-
-        // Set left indent to 0.5 inches (converted to points).
+        // Set left indent to 0.5 inches.
         customStyle.ParagraphFormat.LeftIndent = ConvertUtil.InchToPoint(0.5);
-
-        // Set line spacing to 1.5 (multiple line spacing).
+        // Set line spacing to 1.5 (multiple).
         customStyle.ParagraphFormat.LineSpacingRule = LineSpacingRule.Multiple;
         customStyle.ParagraphFormat.LineSpacing = 1.5;
 

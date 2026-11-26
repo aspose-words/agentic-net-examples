@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Tables;
@@ -12,26 +13,26 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Start a table with a single cell.
-        Table table = builder.StartTable();
+        builder.StartTable();
         builder.InsertCell();
+        builder.EndRow();
+        builder.EndTable();
 
-        // Adjust the cell padding so the text box fits comfortably.
-        builder.CellFormat.LeftPadding = 10;
-        builder.CellFormat.RightPadding = 10;
-        builder.CellFormat.TopPadding = 10;
-        builder.CellFormat.BottomPadding = 10;
+        // Retrieve the created table and its first cell.
+        Table table = doc.FirstSection.Body.Tables[0];
+        Cell cell = table.FirstRow.FirstCell;
+
+        // Adjust cell padding so the text box fits comfortably.
+        cell.CellFormat.TopPadding = 10;
+        cell.CellFormat.BottomPadding = 10;
+        cell.CellFormat.LeftPadding = 10;
+        cell.CellFormat.RightPadding = 10;
 
         // Create a text box shape.
         Shape textBox = new Shape(doc, ShapeType.TextBox);
-        textBox.Width = 150;   // Width of the text box.
-        textBox.Height = 80;   // Height of the text box.
-        textBox.WrapType = WrapType.Inline; // Keep it inline within the cell.
-
-        // Optional: set internal margins of the text box.
-        textBox.TextBox.InternalMarginTop = 5;
-        textBox.TextBox.InternalMarginBottom = 5;
-        textBox.TextBox.InternalMarginLeft = 5;
-        textBox.TextBox.InternalMarginRight = 5;
+        textBox.Width = 150;
+        textBox.Height = 80;
+        textBox.WrapType = WrapType.Inline; // Ensure it stays inside the cell.
 
         // Add some text to the text box.
         Paragraph para = new Paragraph(doc);
@@ -39,15 +40,21 @@ public class Program
         para.AppendChild(run);
         textBox.AppendChild(para);
 
-        // Insert the text box into the current cell.
-        builder.InsertNode(textBox);
-
-        // End the row and the table.
-        builder.EndRow();
-        builder.EndTable();
+        // Insert the text box into the cell.
+        cell.FirstParagraph.AppendChild(textBox);
 
         // Save the document.
         string outputPath = "Output.docx";
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (File.Exists(outputPath))
+        {
+            Console.WriteLine("Document created successfully: " + Path.GetFullPath(outputPath));
+        }
+        else
+        {
+            Console.WriteLine("Failed to create the document.");
+        }
     }
 }

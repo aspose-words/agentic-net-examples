@@ -1,7 +1,8 @@
 using System;
+using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using System.Drawing;
 
 public class Program
 {
@@ -9,37 +10,37 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Ensure the first page has a different header/footer.
+        Section section = doc.FirstSection;
+        section.PageSetup.DifferentFirstPageHeaderFooter = true;
+
+        // Create a header that will appear only on the first page.
+        HeaderFooter firstPageHeader = new HeaderFooter(doc, HeaderFooterType.HeaderFirst);
+        section.HeadersFooters.Add(firstPageHeader);
+
+        // Use a DocumentBuilder to work inside the first‑page header.
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Enable a different header/footer for the first page.
-        builder.PageSetup.DifferentFirstPageHeaderFooter = true;
-
-        // Move the builder to the first page header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderFirst);
 
-        // Create a text box shape.
-        Shape textBox = new Shape(doc, ShapeType.TextBox);
-        textBox.Width = 200;
-        textBox.Height = 50;
-        textBox.WrapType = WrapType.Inline; // Ensure it stays within the header.
+        // Insert a text box shape into the header.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 50);
+        textBox.WrapType = WrapType.None;
         textBox.StrokeColor = Color.Black;
         textBox.FillColor = Color.LightYellow;
 
-        // Add a paragraph to the text box to hold text.
-        Paragraph para = new Paragraph(doc);
-        textBox.AppendChild(para);
-
-        // Insert the text box into the header.
-        builder.InsertNode(textBox);
-
-        // Write text inside the text box.
-        DocumentBuilder shapeBuilder = new DocumentBuilder(doc);
-        shapeBuilder.MoveTo(textBox.FirstParagraph);
-        shapeBuilder.Font.Size = 12;
-        shapeBuilder.Writeln("First page header text box");
+        // Add text inside the text box using the builder.
+        builder.MoveTo(textBox);
+        builder.Writeln("First page header text box");
 
         // Save the document.
-        string outputPath = "FirstPageHeaderWithTextBox.docx";
+        string outputPath = "HeaderTextBox.docx";
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (File.Exists(outputPath))
+        {
+            Console.WriteLine("Document created successfully: " + Path.GetFullPath(outputPath));
+        }
     }
 }

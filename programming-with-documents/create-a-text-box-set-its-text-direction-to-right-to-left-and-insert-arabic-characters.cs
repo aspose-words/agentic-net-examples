@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -11,30 +10,23 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a text box shape with a specific size.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 100);
+        // Insert a text box shape.
+        Shape textBoxShape = builder.InsertShape(ShapeType.TextBox, 200, 100);
 
-        // Move the builder cursor inside the text box.
-        builder.MoveTo(textBox.FirstParagraph);
+        // Create a paragraph that will hold the Arabic text.
+        Paragraph para = new Paragraph(doc);
+        // Set the paragraph direction to right‑to‑left.
+        para.ParagraphFormat.Bidi = true;
 
-        // Set the paragraph direction to right‑to‑left (Bidi) for Arabic text.
-        builder.ParagraphFormat.Bidi = true;
+        // Add the Arabic text run.
+        Run run = new Run(doc, "مرحبا بالعالم");
+        para.AppendChild(run);
 
-        // Insert Arabic characters into the text box.
-        builder.Writeln("مرحبا بالعالم");
+        // Insert the paragraph into the text box.
+        textBoxShape.AppendChild(para);
 
-        // Reset the Bidi setting for subsequent content (optional).
-        builder.ParagraphFormat.Bidi = false;
-
-        // Save the document to disk.
-        string outputPath = "TextBox_RTL.docx";
+        // Save the document.
+        string outputPath = "Output.docx";
         doc.Save(outputPath);
-
-        // Verify that the file was created and can be reopened.
-        if (File.Exists(outputPath))
-        {
-            Document loadedDoc = new Document(outputPath);
-            // No further actions needed; the program will exit.
-        }
     }
 }

@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -8,76 +7,74 @@ public class Program
 {
     public static void Main()
     {
-        // Create a temporary working folder.
-        string workFolder = Path.Combine(Path.GetTempPath(), "AsposeBatchDemo");
-        Directory.CreateDirectory(workFolder);
+        // Define folders for input and output documents.
+        string basePath = Path.Combine(Directory.GetCurrentDirectory(), "BatchProcessingDemo");
+        string inputFolder = Path.Combine(basePath, "InputDocs");
+        string outputFolder = Path.Combine(basePath, "OutputDocs");
 
-        // Create sample documents with tables.
+        // Ensure folders exist.
+        Directory.CreateDirectory(inputFolder);
+        Directory.CreateDirectory(outputFolder);
+
+        // Create sample source documents (3 documents with a simple table each).
         for (int i = 1; i <= 3; i++)
         {
-            string samplePath = Path.Combine(workFolder, $"Doc{i}.docx");
-            CreateSampleDocumentWithTable(samplePath);
+            Document sampleDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+
+            // Insert a heading.
+            builder.Writeln($"Sample Document {i}");
+            builder.Writeln();
+
+            // Insert a 3x3 table.
+            Table table = builder.StartTable();
+            for (int row = 0; row < 3; row++)
+            {
+                for (int col = 0; col < 3; col++)
+                {
+                    builder.InsertCell();
+                    builder.Writeln($"R{row + 1}C{col + 1}");
+                }
+                builder.EndRow();
+            }
+            builder.EndTable();
+
+            // Save the sample document to the input folder.
+            string inputPath = Path.Combine(inputFolder, $"Doc{i}.docx");
+            sampleDoc.Save(inputPath);
         }
 
-        // Define the style and margin settings to apply.
-        StyleIdentifier targetStyle = StyleIdentifier.TableGrid; // Predefined style.
-        double leftMarginPoints = 20.0;   // Left margin in points.
-        double rightMarginPoints = 20.0;  // Right margin in points.
-
-        // Process each document: apply the predefined style and margins to all tables.
-        foreach (string filePath in Directory.GetFiles(workFolder, "*.docx"))
+        // Process each document: replace all tables with a predefined style and margin settings.
+        foreach (string inputPath in Directory.GetFiles(inputFolder, "*.docx"))
         {
-            Document doc = new Document(filePath);
+            // Load the document.
+            Document doc = new Document(inputPath);
 
-            // Find all tables in the document.
-            NodeCollection tables = doc.GetChildNodes(NodeType.Table, true);
-            foreach (Table table in tables)
+            // Iterate over all tables in the document.
+            foreach (Table table in doc.GetChildNodes(NodeType.Table, true))
             {
-                // Apply the predefined style.
-                table.StyleIdentifier = targetStyle;
+                // Apply a predefined style (built‑in "Table Grid").
+                table.Style = doc.Styles["Table Grid"];
 
-                // Apply left indent (margin).
-                table.LeftIndent = leftMarginPoints;
-
-                // Aspose.Words Table does not expose a RightIndent property.
-                // Use RightPadding to simulate a right margin for the table.
-                table.RightPadding = rightMarginPoints;
+                // Set uniform cell margins (5 points on each side).
+                foreach (Row row in table.Rows)
+                {
+                    foreach (Cell cell in row.Cells)
+                    {
+                        cell.CellFormat.LeftPadding = 5;
+                        cell.CellFormat.RightPadding = 5;
+                        cell.CellFormat.TopPadding = 5;
+                        cell.CellFormat.BottomPadding = 5;
+                    }
+                }
             }
 
-            // Save the processed document (overwrite original).
-            doc.Save(filePath);
+            // Save the modified document to the output folder, preserving the original file name.
+            string outputPath = Path.Combine(outputFolder, Path.GetFileName(inputPath));
+            doc.Save(outputPath);
         }
 
-        // Optional verification that files exist after processing.
-        bool allProcessed = Directory.GetFiles(workFolder, "*.docx")
-            .All(f => File.Exists(f));
-    }
-
-    // Helper method to create a simple document containing a table.
-    private static void CreateSampleDocumentWithTable(string filePath)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert a heading.
-        builder.Writeln($"Sample Document: {Path.GetFileNameWithoutExtension(filePath)}");
-
-        // Insert a 3x3 table.
-        Table table = builder.StartTable();
-
-        for (int row = 0; row < 3; row++)
-        {
-            for (int col = 0; col < 3; col++)
-            {
-                builder.InsertCell();
-                builder.Writeln($"R{row + 1}C{col + 1}");
-            }
-            builder.EndRow();
-        }
-
-        builder.EndTable();
-
-        // Save the document.
-        doc.Save(filePath);
+        // Optional: verify that output files were created (no console output required).
+        // The program ends here.
     }
 }

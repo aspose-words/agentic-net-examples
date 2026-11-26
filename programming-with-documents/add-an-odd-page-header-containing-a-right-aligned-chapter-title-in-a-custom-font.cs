@@ -1,6 +1,6 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Tables;
+using Aspose.Words.Drawing;
 
 public class Program
 {
@@ -10,34 +10,35 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Ensure the document has at least one section.
-        Section section = doc.FirstSection;
+        // Configure the first (and only) section to have different odd/even headers.
+        builder.PageSetup.DifferentFirstPageHeaderFooter = false;
+        builder.PageSetup.OddAndEvenPagesHeaderFooter = true;
 
-        // Create an odd-page header.
-        HeaderFooter oddHeader = new HeaderFooter(doc, HeaderFooterType.HeaderPrimary);
-        section.HeadersFooters.Add(oddHeader);
-
-        // Build the header content: right‑aligned chapter title in a custom font.
+        // Move to the odd-page (primary) header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+
+        // Set paragraph alignment to right.
         builder.ParagraphFormat.Alignment = ParagraphAlignment.Right;
-        builder.Font.Name = "Georgia";
-        builder.Font.Size = 14;
+
+        // Set custom font for the chapter title.
+        builder.Font.Name = "Times New Roman";
+        builder.Font.Size = 16;
         builder.Font.Bold = true;
+
+        // Write the chapter title.
         builder.Writeln("Chapter 1: Introduction");
 
-        // Return builder to the main document body.
+        // Return to the main document body.
         builder.MoveToDocumentEnd();
 
-        // Add some body text to generate multiple pages (optional).
-        builder.Font.Name = "Times New Roman";
-        builder.Font.Size = 12;
+        // Add some sample content to generate multiple pages (optional).
         for (int i = 0; i < 30; i++)
         {
             builder.Writeln($"This is line {i + 1} of the document body.");
         }
 
         // Save the document.
-        string outputPath = "Output.docx";
+        string outputPath = "OddPageHeader.docx";
         doc.Save(outputPath);
     }
 }

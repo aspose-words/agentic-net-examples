@@ -1,59 +1,30 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
 public class Program
 {
     public static void Main()
     {
-        // Define file names
-        const string sourceFile = "Sample.docx";
-        const string outputFile = "Output.docx";
-
-        // -------------------------------------------------
-        // Step 1: Create a sample document with a bookmark
-        // -------------------------------------------------
+        // Create a sample document containing a bookmark named "Conclusion".
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add some initial content
-        builder.Writeln("This is the beginning of the document.");
-        builder.Writeln();
-
-        // Insert a bookmark named "Conclusion"
+        builder.Writeln("This is the introduction.");
         builder.StartBookmark("Conclusion");
-        builder.Writeln("Conclusion placeholder text.");
+        builder.Writeln("This is the conclusion placeholder.");
         builder.EndBookmark("Conclusion");
+        string sourcePath = "Sample.docx";
+        doc.Save(sourcePath);
 
-        // Save the source document
-        doc.Save(sourceFile);
-
-        // -------------------------------------------------
-        // Step 2: Load the document and navigate to the bookmark
-        // -------------------------------------------------
-        Document loadedDoc = new Document(sourceFile);
+        // Load the document and navigate to the "Conclusion" bookmark.
+        Document loadedDoc = new Document(sourcePath);
         DocumentBuilder loadedBuilder = new DocumentBuilder(loadedDoc);
-
-        // Move to the bookmark "Conclusion"
         loadedBuilder.MoveToBookmark("Conclusion");
 
-        // Insert a new paragraph after the bookmark and add the summary text
-        loadedBuilder.InsertParagraph();
-        loadedBuilder.Writeln("This is the summary paragraph inserted after the Conclusion bookmark.");
+        // Insert a summary paragraph at the bookmark location.
+        loadedBuilder.Writeln("Summary: This document demonstrates inserting a paragraph at a bookmark.");
 
-        // Save the modified document
-        loadedDoc.Save(outputFile);
-
-        // -------------------------------------------------
-        // Optional: Verify that the output file was created
-        // -------------------------------------------------
-        if (File.Exists(outputFile))
-        {
-            Console.WriteLine($"Document saved successfully to '{outputFile}'.");
-        }
-        else
-        {
-            Console.WriteLine("Failed to save the output document.");
-        }
+        // Save the modified document.
+        string outputPath = "Output.docx";
+        loadedDoc.Save(outputPath);
     }
 }

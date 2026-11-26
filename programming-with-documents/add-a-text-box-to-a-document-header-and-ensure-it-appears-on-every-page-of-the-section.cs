@@ -1,6 +1,4 @@
 using System;
-using System.IO;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -12,40 +10,36 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Move the builder to the primary header of the first section.
+        // Add enough content to generate several pages.
+        for (int i = 0; i < 5; i++)
+        {
+            builder.Writeln($"This is page {i + 1} content.");
+            builder.InsertBreak(BreakType.PageBreak);
+        }
+
+        // Move the builder to the primary header of the first (and only) section.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
 
-        // Insert a text box shape into the header.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 50);
-        // Optional formatting for the text box.
+        // Create a text box shape.
+        Shape textBox = new Shape(doc, ShapeType.TextBox);
+        textBox.Width = 200;
+        textBox.Height = 50;
         textBox.WrapType = WrapType.Inline;
-        textBox.FillColor = Color.LightYellow;
-        textBox.StrokeColor = Color.Black;
 
-        // Add text inside the text box.
+        // Optional: make the text box fit its contents.
+        textBox.TextBox.FitShapeToText = true;
+
+        // Add a paragraph with text inside the text box.
         Paragraph para = new Paragraph(doc);
         Run run = new Run(doc, "Header Text Box");
         para.AppendChild(run);
         textBox.AppendChild(para);
 
-        // Return the builder to the main document body.
-        builder.MoveToDocumentEnd();
+        // Insert the text box into the header.
+        builder.InsertNode(textBox);
 
-        // Add enough content to generate multiple pages.
-        for (int i = 0; i < 30; i++)
-        {
-            builder.Writeln($"This is line {i + 1} of the document body.");
-        }
-
-        // Save the document to disk.
-        string outputPath = "Output.docx";
+        // Save the document.
+        string outputPath = "HeaderWithTextBox.docx";
         doc.Save(outputPath);
-
-        // Verify that the file was saved successfully.
-        if (File.Exists(outputPath))
-        {
-            // Reload the document to ensure it can be opened.
-            Document loadedDoc = new Document(outputPath);
-        }
     }
 }

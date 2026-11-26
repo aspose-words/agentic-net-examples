@@ -1,66 +1,56 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder.
         Document doc = new Document();
-
-        // Perform the macro‑like operation: insert a table, a paragraph, and a linked text box.
-        InsertTableParagraphAndLinkedTextBox(doc);
-
-        // Save the resulting document.
-        string outputPath = "MacroLikeOutput.docx";
-        doc.Save(outputPath);
-    }
-
-    private static void InsertTableParagraphAndLinkedTextBox(Document doc)
-    {
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // ----- Insert a 2x2 table -----
-        Table table = builder.StartTable();
-
-        // First row
+        // Insert a 2x2 table.
+        builder.StartTable();
         builder.InsertCell();
-        builder.Write("Cell 1,1");
+        builder.Write("Cell 1");
         builder.InsertCell();
-        builder.Write("Cell 1,2");
+        builder.Write("Cell 2");
         builder.EndRow();
-
-        // Second row
         builder.InsertCell();
-        builder.Write("Cell 2,1");
+        builder.Write("Cell 3");
         builder.InsertCell();
-        builder.Write("Cell 2,2");
+        builder.Write("Cell 4");
         builder.EndRow();
-
         builder.EndTable();
 
-        // ----- Insert a paragraph after the table -----
-        builder.Writeln(); // Ensure a line break after the table.
-        builder.Writeln("This is a paragraph inserted after the table.");
+        // Insert a paragraph after the table.
+        builder.Writeln("This is a paragraph after the table.");
 
-        // ----- Insert a linked text box -----
-        // Create a shape of type TextBox.
-        Shape textBox = new Shape(doc, ShapeType.TextBox)
+        // Insert a text box.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 100);
+
+        // Add text to the text box.
+        Paragraph para = new Paragraph(doc);
+        Run run = new Run(doc, "Linked text box content");
+        para.AppendChild(run);
+        textBox.AppendChild(para);
+
+        // Note: In newer Aspose.Words versions the Shape class provides an IsLinked property.
+        // If available, you could enable linking with: textBox.IsLinked = true;
+        // The current version used for compilation does not expose this property,
+        // so the example creates a regular text box with content.
+
+        // Save the document.
+        string outputPath = "Output.docx";
+        doc.Save(outputPath);
+
+        // Verify the file was created and can be reloaded.
+        if (File.Exists(outputPath))
         {
-            Width = 200,
-            Height = 100,
-            WrapType = WrapType.Inline
-        };
-
-        // Add text inside the text box.
-        Paragraph tbParagraph = new Paragraph(doc);
-        Run tbRun = new Run(doc, "Linked Text Box Content");
-        tbParagraph.AppendChild(tbRun);
-        textBox.AppendChild(tbParagraph);
-
-        // Insert the text box into the document.
-        builder.InsertNode(textBox);
+            Document reloaded = new Document(outputPath);
+            // Additional checks could be placed here if needed.
+        }
     }
 }

@@ -6,29 +6,34 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a DocumentBuilder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a text box shape.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 100);
+        // Create a text box shape.
+        Shape textBox = new Shape(doc, ShapeType.TextBox);
+        textBox.Width = 200;   // Width in points.
+        textBox.Height = 100;  // Height in points.
 
-        // Set internal margins (in points).
-        textBox.TextBox.InternalMarginTop = 10;
-        textBox.TextBox.InternalMarginBottom = 10;
-        textBox.TextBox.InternalMarginLeft = 10;
-        textBox.TextBox.InternalMarginRight = 10;
+        // Set internal margins of the text box (in points).
+        textBox.TextBox.InternalMarginTop = 5;
+        textBox.TextBox.InternalMarginBottom = 5;
+        textBox.TextBox.InternalMarginLeft = 5;
+        textBox.TextBox.InternalMarginRight = 5;
 
-        // Move the builder inside the text box and add a bold paragraph.
-        builder.MoveTo(textBox.FirstParagraph);
-        builder.Font.Bold = true;
-        builder.Writeln("Bold text inside the text box.");
+        // Insert the text box into the document.
+        builder.InsertNode(textBox);
 
-        // Save the document.
-        string outputPath = "Output.docx";
-        doc.Save(outputPath);
+        // Create a paragraph with bold text.
+        Paragraph paragraph = new Paragraph(doc);
+        Run run = new Run(doc, "Bold text inside the text box");
+        run.Font.Bold = true;
+        paragraph.AppendChild(run);
 
-        // Indicate completion.
-        Console.WriteLine($"Document saved to {outputPath}");
+        // Add the paragraph to the text box.
+        textBox.AppendChild(paragraph);
+
+        // Save the document to a file.
+        doc.Save("Output.docx");
     }
 }

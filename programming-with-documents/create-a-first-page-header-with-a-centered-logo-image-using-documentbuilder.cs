@@ -1,45 +1,37 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
+using Aspose.Words.Tables;
 
-public class Program
+class Program
 {
-    public static void Main()
+    static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Enable a different header/footer for the first page.
-        builder.PageSetup.DifferentFirstPageHeaderFooter = true;
+        // Ensure the first page has a different header/footer.
+        doc.FirstSection.PageSetup.DifferentFirstPageHeaderFooter = true;
 
-        // Move the builder to the first page header.
+        // Base64‑encoded PNG image (a simple 16×16 blue square).
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAAFklEQVR42mNk+M9Qz0AEYBxVSFIAABcAAf+Z6+UAAAAASUVORK5CYII=";
+        byte[] imageBytes = Convert.FromBase64String(base64Png);
+
+        // Move to the first‑page header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderFirst);
 
-        // Center the paragraph that will contain the logo.
+        // Center the image horizontally.
         builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
 
-        // A tiny placeholder PNG (1x1 transparent pixel) encoded in Base64.
-        const string base64Png =
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XcZcAAAAASUVORK5CYII=";
-
-        byte[] imageBytes = Convert.FromBase64String(base64Png);
-        using (MemoryStream imageStream = new MemoryStream(imageBytes))
+        // Insert the logo image from the memory stream.
+        using (MemoryStream ms = new MemoryStream(imageBytes))
         {
-            // Insert the image into the header.
-            builder.InsertImage(imageStream);
+            builder.InsertImage(ms);
         }
 
-        // Return to the main document body.
-        builder.MoveToDocumentEnd();
-
-        // Add some sample body text.
-        builder.Writeln("This is the document body.");
-
-        // Save the document to disk.
-        string outputPath = "FirstPageHeader.docx";
+        // Save the document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FirstPageHeader.docx");
         doc.Save(outputPath);
-        Console.WriteLine($"Document saved to {Path.GetFullPath(outputPath)}");
     }
 }

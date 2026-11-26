@@ -10,55 +10,50 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start the outer table (2 rows x 2 columns).
+        // ---------- Outer Table ----------
+        // Start the outer table.
         Table outerTable = builder.StartTable();
 
-        // ----- First row of outer table -----
-        // Cell (1,1)
+        // First row of the outer table.
         builder.InsertCell();
-        builder.Writeln("Outer Cell 1,1");
-
-        // Cell (1,2) - this cell will contain a nested table.
+        builder.Write("Outer Cell 1");
         builder.InsertCell();
-
-        // Start the nested table inside the current outer cell.
-        Table nestedTable = builder.StartTable();
-
-        // First row of nested table.
-        builder.InsertCell();
-        builder.Writeln("Nested Cell 1,1");
-        builder.InsertCell();
-        builder.Writeln("Nested Cell 1,2");
+        builder.Write("Outer Cell 2");
         builder.EndRow();
 
-        // Second row of nested table.
+        // Second row of the outer table.
         builder.InsertCell();
-        builder.Writeln("Nested Cell 2,1");
+
+        // ---------- Nested (Inner) Table ----------
+        // Start a nested table inside the first cell of the second row.
+        Table innerTable = builder.StartTable();
+
+        // First row of the inner table.
         builder.InsertCell();
-        builder.Writeln("Nested Cell 2,2");
+        builder.Write("Inner 1");
+        builder.InsertCell();
+        builder.Write("Inner 2");
         builder.EndRow();
 
-        // End the nested table.
+        // Second row of the inner table.
+        builder.InsertCell();
+        builder.Write("Inner 3");
+        builder.InsertCell();
+        builder.Write("Inner 4");
+        builder.EndRow();
+
+        // End the inner table.
         builder.EndTable();
 
-        // End the first row of the outer table.
-        builder.EndRow();
-
-        // ----- Second row of outer table -----
-        // Cell (2,1)
+        // Continue with the second cell of the outer table's second row.
         builder.InsertCell();
-        builder.Writeln("Outer Cell 2,1");
-
-        // Cell (2,2)
-        builder.InsertCell();
-        builder.Writeln("Outer Cell 2,2");
+        builder.Write("Outer Cell 4");
         builder.EndRow();
 
         // End the outer table.
         builder.EndTable();
 
-        // Save the document to a file.
-        string outputPath = "NestedTable.docx";
-        doc.Save(outputPath);
+        // Save the document to disk.
+        doc.Save("NestedTable.docx");
     }
 }
