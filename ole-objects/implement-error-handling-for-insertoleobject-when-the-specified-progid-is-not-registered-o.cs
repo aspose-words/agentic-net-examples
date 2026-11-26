@@ -5,7 +5,6 @@ public class Program
 {
     public static void Main()
     {
-        // Example with a ProgID that is unlikely to be registered.
         string progId = "Non.Existent.ProgId";
         InsertOleObject(progId);
     }
@@ -14,28 +13,28 @@ public class Program
     {
         try
         {
-            // Attempt to get the COM type for the specified ProgID.
-            Type comType = Type.GetTypeFromProgID(progId, throwOnError: true);
-            // Try to create an instance of the COM object.
+            Type comType = Type.GetTypeFromProgID(progId);
+            if (comType == null)
+            {
+                throw new COMException($"ProgID '{progId}' is not registered on this system.");
+            }
+
             object comObject = Activator.CreateInstance(comType);
-            Console.WriteLine($"Successfully created OLE object for ProgID '{progId}'.");
-            // Release the COM object if applicable.
+            Console.WriteLine($"Successfully created COM object for ProgID '{progId}'.");
+            // Placeholder for actual OLE insertion logic.
+
             if (comObject != null && Marshal.IsComObject(comObject))
             {
                 Marshal.ReleaseComObject(comObject);
             }
         }
-        catch (COMException comEx)
+        catch (COMException ex)
         {
-            Console.WriteLine($"COMException: ProgID '{progId}' is not registered. Details: {comEx.Message}");
-        }
-        catch (ArgumentException argEx)
-        {
-            Console.WriteLine($"ArgumentException: ProgID '{progId}' is invalid. Details: {argEx.Message}");
+            Console.WriteLine($"COM error: {ex.Message}");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Unexpected error for ProgID '{progId}': {ex.Message}");
+            Console.WriteLine($"Unexpected error: {ex.Message}");
         }
     }
 }

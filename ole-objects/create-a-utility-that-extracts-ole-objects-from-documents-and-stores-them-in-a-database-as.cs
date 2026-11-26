@@ -1,110 +1,90 @@
 using System;
 using System.IO;
 using System.IO.Compression;
-using System.Collections.Generic;
 using System.Text;
 
 public class OleExtractor
 {
     public static void Main()
     {
-        // Prepare paths
-        string tempDir = Path.Combine(Path.GetTempPath(), "OleExtractorDemo");
-        Directory.CreateDirectory(tempDir);
-        string docPath = Path.Combine(tempDir, "sample.docx");
-        string dbPath = Path.Combine(tempDir, "oleobjects.bin");
+        string docPath = "sample.docx";
+        string dbPath = "OleObjects.db";
 
-        // Create a sample .docx (zip) with an embedded OLE object
-        CreateSampleDocumentWithOle(docPath);
+        // Ensure a sample .docx file with an OLE object exists
+        if (!File.Exists(docPath))
+        {
+            CreateSampleDocxWithOle(docPath);
+        }
 
-        // Extract OLE objects and store them in a simple binary "database"
-        int storedCount = ExtractOleObjectsAndStore(docPath, dbPath);
+        // Ensure the database file exists (create empty if needed)
+        if (!File.Exists(dbPath))
+        {
+            using (File.Create(dbPath)) { }
+        }
 
-        Console.WriteLine($"Extracted and stored {storedCount} OLE object(s) into the binary database at:");
-        Console.WriteLine(dbPath);
+        // Extract OLE objects from the .docx and store them as BLOBs
+        int extractedCount = ExtractOleObjectsToDatabase(docPath, dbPath);
+
+        // Write a simple log file with the result (no console interaction)
+        File.WriteAllText("ExtractionLog.txt", $"Extracted {extractedCount} OLE object(s) from '{docPath}' into '{dbPath}'.");
     }
 
-    private static void CreateSampleDocumentWithOle(string docPath)
+    private static void CreateSampleDocxWithOle(string path)
     {
-        // Ensure any existing file is removed
-        if (File.Exists(docPath))
-            File.Delete(docPath);
-
-        // Create a zip archive that mimics a .docx structure
-        using (var zip = ZipFile.Open(docPath, ZipArchiveMode.Create))
+        using (FileStream fs = new FileStream(path, FileMode.Create))
+        using (ZipArchive archive = new ZipArchive(fs, ZipArchiveMode.Create))
         {
-            // Add a dummy OLE object under the typical embeddings folder
-            var entry = zip.CreateEntry("word/embeddings/object1.bin");
-            using (var entryStream = entry.Open())
+            // Minimal required parts for a .docx (empty document.xml)
+            var docEntry = archive.CreateEntry("word/document.xml");
+            using (var writer = new StreamWriter(docEntry.Open(), Encoding.UTF8))
             {
-                // Example binary content of an OLE object
-                byte[] oleData = new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A };
-                entryStream.Write(oleData, 0, oleData.Length);
+                writer.Write(@"<?xml version=""1.0"" encoding=""UTF-8"" standalone=""yes""?><w:document xmlns:w=""http://schemas.openxmlformats.org/wordprocessingml/2006/main""><w:body></w:body></w:document>");
             }
 
-            // Add minimal required parts for a valid .docx (optional for this demo)
-            var contentTypes = zip.CreateEntry("[Content_Types].xml");
-            using (var ctStream = new StreamWriter(contentTypes.Open()))
+            // Add a fake OLE object in the embeddings folder
+            var oleEntry = archive.CreateEntry("word/embeddings/object1.bin");
+            using (var oleStream = oleEntry.Open())
             {
-                ctStream.Write(@"<?xml version=""1.0"" encoding=""UTF-8""?>
-<Types xmlns=""http://schemas.openxmlformats.org/package/2006/content-types"">
-    <Default Extension=""bin"" ContentType=""application/vnd.openxmlformats-officedocument.oleObject""/>
-</Types>");
+                byte[] sampleOleData = Encoding.UTF8.GetBytes("Sample OLE content");
+                oleStream.Write(sampleOleData, 0, sampleOleData.Length);
             }
         }
     }
 
-    private static int ExtractOleObjectsAndStore(string docPath, string dbPath)
+    private static int ExtractOleObjectsToDatabase(string docPath, string dbPath)
     {
-        var extractedObjects = new List<(string FileName, byte[] Data)>();
-
-        // Open the document as a zip archive
-        using (var zip = ZipFile.OpenRead(docPath))
+        int count = 0;
+        using (FileStream fs = new FileStream(docPath, FileMode.Open, FileAccess.Read))
+        using (ZipArchive archive = new ZipArchive(fs, ZipArchiveMode.Read))
         {
-            // Iterate through entries that represent OLE objects
-            foreach (var entry in zip.Entries)
+            foreach (var entry in archive.Entries)
             {
-                if (IsOleEntry(entry.FullName))
+                if (entry.FullName.StartsWith("word/embeddings/", StringComparison.OrdinalIgnoreCase))
                 {
                     using (var entryStream = entry.Open())
                     using (var ms = new MemoryStream())
                     {
                         entryStream.CopyTo(ms);
-                        extractedObjects.Add((Path.GetFileName(entry.FullName), ms.ToArray()));
+                        byte[] data = ms.ToArray();
+                        AppendOleObject(dbPath, entry.FullName, data);
+                        count++;
                     }
                 }
             }
         }
-
-        // Write extracted objects to a simple binary file acting as a "database"
-        using (var fs = new FileStream(dbPath, FileMode.Create, FileAccess.Write, FileShare.None))
-        using (var bw = new BinaryWriter(fs, Encoding.UTF8, leaveOpen: false))
-        {
-            // Write the number of records first
-            bw.Write(extractedObjects.Count);
-
-            foreach (var (fileName, data) in extractedObjects)
-            {
-                // Write file name length and bytes (UTF-8)
-                byte[] nameBytes = Encoding.UTF8.GetBytes(fileName);
-                bw.Write(nameBytes.Length);
-                bw.Write(nameBytes);
-
-                // Write data length and bytes
-                bw.Write(data.Length);
-                bw.Write(data);
-            }
-        }
-
-        return extractedObjects.Count;
+        return count;
     }
 
-    private static bool IsOleEntry(string entryName)
+    private static void AppendOleObject(string dbPath, string objectName, byte[] data)
     {
-        // Typical locations for embedded OLE objects in Office Open XML packages
-        return entryName.StartsWith("word/embeddings/", StringComparison.OrdinalIgnoreCase) ||
-               entryName.StartsWith("embeddings/", StringComparison.OrdinalIgnoreCase) ||
-               entryName.StartsWith("xl/embeddings/", StringComparison.OrdinalIgnoreCase) ||
-               entryName.StartsWith("ppt/embeddings/", StringComparison.OrdinalIgnoreCase);
+        using (FileStream fs = new FileStream(dbPath, FileMode.Append, FileAccess.Write))
+        using (BinaryWriter writer = new BinaryWriter(fs, Encoding.UTF8, leaveOpen: false))
+        {
+            byte[] nameBytes = Encoding.UTF8.GetBytes(objectName);
+            writer.Write(nameBytes.Length);
+            writer.Write(nameBytes);
+            writer.Write(data.Length);
+            writer.Write(data);
+        }
     }
 }

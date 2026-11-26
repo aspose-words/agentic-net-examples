@@ -1,89 +1,103 @@
 using System;
 using System.IO;
-using System.Runtime.InteropServices;
+using System.IO.Compression;
+using System.Text;
 
 public class Program
 {
     public static void Main()
     {
-        // Create temporary folder
-        string tempPath = Path.Combine(Path.GetTempPath(), "OlePdfExample_" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(tempPath);
+        const string outputPath = "Output.docx";
 
-        // Create a minimal PDF file
-        string pdfPath = Path.Combine(tempPath, "sample.pdf");
-        string pdfContent = @"%PDF-1.4
-%âãÏÓ
-1 0 obj
-<< /Type /Catalog /Pages 2 0 R >>
-endobj
-2 0 obj
-<< /Type /Pages /Kids [3 0 R] /Count 1 >>
-endobj
-3 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>
-endobj
-xref
-0 4
-0000000000 65535 f 
-0000000010 00000 n 
-0000000060 00000 n 
-0000000117 00000 n 
-trailer
-<< /Root 1 0 R /Size 4 >>
-startxref
-176
-%%EOF";
-        File.WriteAllText(pdfPath, pdfContent);
+        // Minimal PDF content (just a valid header and EOF)
+        byte[] pdfBytes = Encoding.ASCII.GetBytes("%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF");
 
-        // Path to a custom icon (using a system icon as example)
-        string iconPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), @"shell32.dll");
+        // Tiny 1x1 transparent PNG (used as the custom icon)
+        const string pngBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO6X6ZcAAAAASUVORK5CYII=";
+        byte[] pngBytes = Convert.FromBase64String(pngBase64);
 
-        // Try to get the Word COM type
-        Type wordType = Type.GetTypeFromProgID("Word.Application");
-        if (wordType == null)
+        // XML parts required by a minimal .docx with an OLE object
+        string contentTypesXml = @"<?xml version=""1.0"" encoding=""UTF-8""?>
+<Types xmlns=""http://schemas.openxmlformats.org/package/2006/content-types"">
+  <Default Extension=""rels"" ContentType=""application/vnd.openxmlformats-package.relationships+xml""/>
+  <Default Extension=""xml"" ContentType=""application/xml""/>
+  <Default Extension=""png"" ContentType=""image/png""/>
+  <Default Extension=""pdf"" ContentType=""application/pdf""/>
+  <Override PartName=""/word/document.xml"" ContentType=""application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml""/>
+  <Override PartName=""/word/_rels/document.xml.rels"" ContentType=""application/vnd.openxmlformats-package.relationships+xml""/>
+</Types>";
+
+        string relsXml = @"<?xml version=""1.0"" encoding=""UTF-8""?>
+<Relationships xmlns=""http://schemas.openxmlformats.org/package/2006/relationships"">
+  <Relationship Id=""rId1"" Type=""http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"" Target=""word/document.xml""/>
+</Relationships>";
+
+        string documentXml = @"<?xml version=""1.0"" encoding=""UTF-8"" standalone=""yes""?>
+<w:document xmlns:w=""http://schemas.openxmlformats.org/wordprocessingml/2006/main""
+            xmlns:r=""http://schemas.openxmlformats.org/officeDocument/2006/relationships""
+            xmlns:v=""urn:schemas-microsoft-com:vml""
+            xmlns:o=""urn:schemas-microsoft-com:office:office"">
+  <w:body>
+    <w:p>
+      <w:r>
+        <v:shape id=""OleObjectShape"" style=""width:100pt;height:100pt"" o:ole="""">
+          <v:imagedata r:id=""rId2"" o:title=""PDF Icon""/>
+          <o:OLEObject Type=""Package"" ProgID=""AcroExch.Document.DC"" ShapeID=""_x0000_i1025""
+                       DrawAspect=""Icon"" ObjectID=""_1025"" r:id=""rId1""/>
+        </v:shape>
+      </w:r>
+    </w:p>
+    <w:sectPr/>
+  </w:body>
+</w:document>";
+
+        string documentRelsXml = @"<?xml version=""1.0"" encoding=""UTF-8""?>
+<Relationships xmlns=""http://schemas.openxmlformats.org/package/2006/relationships"">
+  <Relationship Id=""rId1"" Type=""http://schemas.openxmlformats.org/officeDocument/2006/relationships/package"" Target=""embeddings/embedded.pdf""/>
+  <Relationship Id=""rId2"" Type=""http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"" Target=""media/icon.png""/>
+</Relationships>";
+
+        // Create the .docx (zip package) and add all parts
+        using (FileStream fs = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
+        using (ZipArchive archive = new ZipArchive(fs, ZipArchiveMode.Create, leaveOpen: false))
         {
-            Console.WriteLine("Microsoft Word is not installed or not registered for COM interop on this machine.");
-            Console.WriteLine($"PDF created at: {pdfPath}");
-            Console.WriteLine($"Temporary folder: {tempPath}");
-            return;
+            // [Content_Types].xml
+            AddEntry(archive, "[Content_Types].xml", contentTypesXml);
+
+            // _rels/.rels
+            AddEntry(archive, "_rels/.rels", relsXml);
+
+            // word/document.xml
+            AddEntry(archive, "word/document.xml", documentXml);
+
+            // word/_rels/document.xml.rels
+            AddEntry(archive, "word/_rels/document.xml.rels", documentRelsXml);
+
+            // word/embeddings/embedded.pdf
+            AddEntry(archive, "word/embeddings/embedded.pdf", pdfBytes);
+
+            // word/media/icon.png
+            AddEntry(archive, "word/media/icon.png", pngBytes);
         }
 
-        // Start Word via COM
-        dynamic wordApp = Activator.CreateInstance(wordType);
-        wordApp.Visible = false;
+        Console.WriteLine($"Document created: {outputPath}");
+    }
 
-        // Add a new document
-        dynamic doc = wordApp.Documents.Add();
+    private static void AddEntry(ZipArchive archive, string entryName, string content)
+    {
+        ZipArchiveEntry entry = archive.CreateEntry(entryName, CompressionLevel.NoCompression);
+        using (StreamWriter writer = new StreamWriter(entry.Open(), new UTF8Encoding(false)))
+        {
+            writer.Write(content);
+        }
+    }
 
-        // Insert the PDF as an OLE object displayed as an icon
-        dynamic inlineShape = doc.InlineShapes.AddOLEObject(
-            ClassType: "",
-            FileName: pdfPath,
-            LinkToFile: false,
-            DisplayAsIcon: true,
-            IconFileName: iconPath,
-            IconIndex: 0,
-            IconLabel: "Sample PDF"
-        );
-
-        // Set custom display size (points)
-        inlineShape.Width = 200;   // approx 2.78 inches
-        inlineShape.Height = 200;  // approx 2.78 inches
-
-        // Save the document
-        string docPath = Path.Combine(tempPath, "Result.docx");
-        doc.SaveAs2(docPath);
-        doc.Close();
-
-        // Quit Word
-        wordApp.Quit();
-
-        // Release COM objects
-        Marshal.FinalReleaseComObject(inlineShape);
-        Marshal.FinalReleaseComObject(doc);
-        Marshal.FinalReleaseComObject(wordApp);
-
-        Console.WriteLine($"Word document created at: {docPath}");
+    private static void AddEntry(ZipArchive archive, string entryName, byte[] data)
+    {
+        ZipArchiveEntry entry = archive.CreateEntry(entryName, CompressionLevel.NoCompression);
+        using (BinaryWriter writer = new BinaryWriter(entry.Open()))
+        {
+            writer.Write(data);
+        }
     }
 }

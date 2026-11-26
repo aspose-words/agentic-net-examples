@@ -1,104 +1,73 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
+public static class DataFormats
+{
+    public const string FileDrop = "FileDrop";
+}
+
 public class OlePackage
 {
-    private readonly Dictionary<string, MemoryStream> _data = new Dictionary<string, MemoryStream>(StringComparer.OrdinalIgnoreCase);
+    private readonly string[] _files;
 
-    public OlePackage(byte[] fileData, string fileName)
+    private OlePackage(string[] files)
     {
-        // Store the actual file contents
-        _data["FileContents"] = new MemoryStream(fileData, writable: false);
+        _files = files;
+    }
 
-        // Build a minimal FileGroupDescriptorW stream (Unicode)
-        var descriptor = new MemoryStream();
-        using (var writer = new BinaryWriter(descriptor, Encoding.Unicode, leaveOpen: true))
-        {
-            // Number of items (DWORD)
-            writer.Write((uint)1);
+    // Simulate creation from a single file; in a real OLE package this could contain many files.
+    public static OlePackage FromFile(string filePath)
+    {
+        if (!File.Exists(filePath))
+            throw new FileNotFoundException("File not found.", filePath);
 
-            // 64 bytes of placeholder data (as per the original example)
-            writer.Write(new byte[64]);
+        return new OlePackage(new[] { filePath });
+    }
 
-            // File name as 260 WCHARs (520 bytes). Pad with zeros.
-            char[] nameBuffer = new char[260];
-            int copyLen = Math.Min(fileName.Length, 260);
-            fileName.CopyTo(0, nameBuffer, 0, copyLen);
-            writer.Write(nameBuffer);
-        }
-        descriptor.Position = 0;
-        _data["FileGroupDescriptorW"] = descriptor;
+    public bool GetDataPresent(string format)
+    {
+        return format == DataFormats.FileDrop && _files.Length > 0;
     }
 
     public object GetData(string format)
     {
-        if (_data.TryGetValue(format, out var stream))
-        {
-            // Return a new MemoryStream that shares the same underlying buffer (read‑only)
-            return new MemoryStream(stream.ToArray(), writable: false);
-        }
+        if (format == DataFormats.FileDrop)
+            return _files;
         return null;
     }
 }
 
-public class OlePackageInspector
+public class Program
 {
     public static void Main()
     {
-        // Create sample data for the OLE package (a simple text file)
-        byte[] fileData = Encoding.UTF8.GetBytes("Hello from OLE package!");
-        string fileName = "example.txt";
+        // Create a temporary file to embed in the OLE package
+        string tempFilePath = Path.Combine(Path.GetTempPath(), "SampleOlePackage.txt");
+        File.WriteAllText(tempFilePath, "This is sample content inside an OLE package.");
 
-        // Create an OlePackage containing the sample file
-        OlePackage package = new OlePackage(fileData, fileName);
+        // Create an OlePackage from the temporary file
+        OlePackage olePackage = OlePackage.FromFile(tempFilePath);
 
-        // Retrieve the FileGroupDescriptorW which lists the parts (files) in the package
-        MemoryStream descriptorStream = package.GetData("FileGroupDescriptorW") as MemoryStream;
-        if (descriptorStream == null)
+        // Enumerate the parts contained in the package (FileDrop format holds the file names)
+        if (olePackage.GetDataPresent(DataFormats.FileDrop))
         {
-            Console.WriteLine("Failed to obtain FileGroupDescriptorW.");
-            return;
-        }
-
-        descriptorStream.Position = 0;
-        using (BinaryReader reader = new BinaryReader(descriptorStream, Encoding.Unicode, leaveOpen: true))
-        {
-            uint itemCount = reader.ReadUInt32();
-            Console.WriteLine($"Number of items in OLE package: {itemCount}");
-
-            for (int i = 0; i < itemCount; i++)
+            string[] files = (string[])olePackage.GetData(DataFormats.FileDrop);
+            Console.WriteLine($"OLE package contains {files.Length} file(s):");
+            foreach (string file in files)
             {
-                // Skip fields we are not interested in (total 64 bytes)
-                reader.BaseStream.Seek(64, SeekOrigin.Current);
-
-                // Read the Unicode file name (260 WCHARs)
-                char[] nameChars = reader.ReadChars(260);
-                string itemName = new string(nameChars);
-                int nullIndex = itemName.IndexOf('\0');
-                if (nullIndex >= 0)
-                    itemName = itemName.Substring(0, nullIndex);
-
-                Console.WriteLine($"Item {i + 1} name: {itemName}");
-            }
-        }
-
-        // Retrieve the actual file contents (FileContents)
-        MemoryStream contentStream = package.GetData("FileContents") as MemoryStream;
-        if (contentStream != null)
-        {
-            contentStream.Position = 0;
-            using (StreamReader sr = new StreamReader(contentStream, Encoding.UTF8, detectEncodingFromByteOrderMarks: false, leaveOpen: true))
-            {
-                string content = sr.ReadToEnd();
-                Console.WriteLine($"Content of '{fileName}':");
-                Console.WriteLine(content);
+                Console.WriteLine($"- {Path.GetFileName(file)}");
+                byte[] data = File.ReadAllBytes(file);
+                Console.WriteLine($"  Size: {data.Length} bytes");
+                Console.WriteLine($"  Content: {Encoding.UTF8.GetString(data)}");
             }
         }
         else
         {
-            Console.WriteLine("Failed to obtain FileContents.");
+            Console.WriteLine("No files found in the OLE package.");
         }
+
+        // Clean up the temporary file
+        try { File.Delete(tempFilePath); } catch { }
     }
 }

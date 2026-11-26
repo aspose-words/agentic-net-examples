@@ -1,39 +1,43 @@
 using System;
 using System.Security.Cryptography;
+using System.Text;
 
 public class Program
 {
     public static void Main()
     {
-        // Simulated OLE object containing raw binary data (e.g., "Hello World")
-        var oleObject = new OleObjectMock(new byte[] { 0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x20, 0x57, 0x6F, 0x72, 0x6C, 0x64 });
+        // Simulated OLE object containing raw binary data
+        byte[] sampleData = Encoding.UTF8.GetBytes("Example binary content for OLE object.");
+        OLEObject ole = new OLEObject(sampleData);
 
         // Retrieve raw binary data via the Data property
-        byte[] rawData = oleObject.Data;
+        byte[] rawData = ole.Data;
 
-        // Custom processing: compute SHA256 hash of the binary data
-        string hash = ComputeSha256Hash(rawData);
+        // Custom processing: compute SHA-256 hash of the raw data
+        using (SHA256 sha256 = SHA256.Create())
+        {
+            byte[] hash = sha256.ComputeHash(rawData);
+            string hashHex = BitConverter.ToString(hash).Replace("-", "");
+            Console.WriteLine($"SHA-256 hash of OLE data: {hashHex}");
+        }
 
-        Console.WriteLine($"SHA256 hash of OLE data: {hash}");
-    }
-
-    private static string ComputeSha256Hash(byte[] data)
-    {
-        using var sha256 = SHA256.Create();
-        byte[] hashBytes = sha256.ComputeHash(data);
-        return BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+        // Additional custom processing: output the raw bytes as a hex string
+        StringBuilder sb = new StringBuilder();
+        foreach (byte b in rawData)
+        {
+            sb.Append(b.ToString("X2"));
+        }
+        Console.WriteLine($"Raw OLE data (hex): {sb}");
     }
 }
 
-public class OleObjectMock
+// Simple representation of an OLE object with a Data property
+public class OLEObject
 {
-    private readonly byte[] _data;
+    public byte[] Data { get; }
 
-    public OleObjectMock(byte[] data)
+    public OLEObject(byte[] data)
     {
-        _data = data;
+        Data = data ?? Array.Empty<byte>();
     }
-
-    // Exposes the raw binary data of the OLE object
-    public byte[] Data => _data;
 }

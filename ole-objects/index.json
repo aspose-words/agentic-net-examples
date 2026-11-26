@@ -4,46 +4,43 @@
     "slug": "ole-objects",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Bootstrap required sample files locally, use DocumentBuilder.InsertOleObject for all insertions, manipulate Shape.OleFormat for inspection and extraction, replace objects by inserting the new shape at the original parent and then removing the old shape, and always write extracted data to a local file for verification.",
+    "preferred_workflow": "Create any required sample files locally, then use DocumentBuilder.InsertOleObject with a Stream, the appropriate ProgId, and explicit icon parameters; inspect OLE objects through Shape.OleFormat; for replacement, insert the new object at the parent node and subsequently remove the original shape; always write extracted data to a local file and verify its existence before further processing.",
     "required_packages": [
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.10.0"
+      "Aspose.Words": "26.11.0"
     },
     "required_namespaces": [
       "System",
       "System.IO",
-      "Aspose.Words",
-      "System.Runtime.InteropServices",
-      "Aspose.Words.Drawing",
-      "System.Diagnostics",
-      "Microsoft.Win32",
-      "System.Security.Cryptography",
       "System.Text",
-      "System.Collections.Generic",
+      "Aspose.Words",
       "System.IO.Compression",
+      "Aspose.Words.Drawing",
+      "System.Collections.Generic",
+      "System.Security.Cryptography",
       "System.Linq",
       "System.Xml.Linq",
-      "System.Reflection"
+      "System.Runtime.InteropServices"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
-      "Directory",
+      "MemoryStream",
       "File",
       "Path",
-      "Range",
-      "MemoryStream",
       "Shape",
-      "NodeType"
+      "Directory",
+      "NodeType",
+      "Range"
     ]
   },
   "stats": {
-    "total_examples": 29,
-    "publish_ready_successful_examples": 29,
+    "total_examples": 30,
+    "publish_ready_successful_examples": 30,
     "workflow_counts": {
-      "inspection": 7,
+      "inspection": 8,
       "insertion": 3,
       "online-video": 3,
       "ole-package": 3,
@@ -55,50 +52,50 @@
   },
   "rules_summary": {
     "strict_api_bans": [
-      "Do not call undocumented constructors or helpers; only use the documented InsertOleObject overloads and Shape.OleFormat members."
+      "Never call undocumented constructors or helpers for OLE insertion; only the documented InsertOleObject overloads may be used."
     ],
     "canonical_patterns": [
-      "Create temporary input files in the example directory, insert them with InsertOleObject, and clean up after saving the document."
+      "Bootstrap all input assets within the example code and reference them via streams rather than file paths to avoid missing-file errors."
     ],
     "nullable_warning_prevention": [
-      "Check that Shape.OleFormat is not null before accessing its properties to avoid null-reference warnings."
+      "Check that any optional icon stream passed to InsertOleObject is non-null when asIcon is true, and verify Shape.OleFormat is not null before accessing its members."
     ]
   },
   "common_failure_patterns": [
     {
       "pattern": "Incorrect InsertOleObject overload",
-      "symptom": "Compilation fails because no InsertOleObject method matches the supplied argument count.",
-      "cause": "The code supplies an overload signature that does not exist in Aspose.Words 26.10.0.",
-      "fix": "Use one of the supported overloads: InsertOleObject(Stream, string progId, bool asIcon, Stream? presentation) or the overload that accepts width and height via the returned Shape.",
-      "prevention": "Consult the Aspose.Words API reference for the exact parameter list before coding."
+      "symptom": "Compilation fails with CS1501 or CS1503 because the argument list does not match any overload.",
+      "cause": "The code supplies parameters in the wrong order or uses unsupported types such as string for a Stream argument.",
+      "fix": "Use the overload signature InsertOleObject(Stream data, string progId, bool asIcon, Stream presentation) and pass null for the presentation stream when no custom icon is required.",
+      "prevention": "Consult the Aspose.Words API reference for the exact parameter types and order before writing insertion code."
     },
     {
-      "pattern": "Mismatched argument types",
-      "symptom": "CS1503 errors indicate that a string, bool, or int is being passed where a Stream or bool is expected.",
-      "cause": "Arguments are ordered incorrectly or the wrong variable type is supplied to InsertOleObject.",
-      "fix": "Pass a FileStream or MemoryStream for the data argument, a valid ProgId string, a boolean for asIcon, and a Stream for the optional presentation image.",
-      "prevention": "Declare variables with the correct .NET types and match the overload signature exactly."
+      "pattern": "Missing required type or namespace",
+      "symptom": "Compilation fails with CS0246 indicating that types like OlePackage, IStorage, or System.Windows.Forms cannot be found.",
+      "cause": "The example references legacy OLE APIs that are not part of the Aspose.Words assembly or the target .NET framework.",
+      "fix": "Remove references to unsupported types and rely solely on Aspose.Words.Drawing.OlePackage and related classes that are available in the current package version.",
+      "prevention": "Limit code to the namespaces listed in the product documentation and verify package compatibility with the target framework."
     },
     {
-      "pattern": "COM type resolution failure",
-      "symptom": "Runtime throws ArgumentNullException because Type.GetTypeFromProgID returns null.",
-      "cause": "The required COM application (e.g., Word) is not installed or not registered on the current machine.",
-      "fix": "Guard the call with a null check and provide a clear message; run the example only on Windows machines with the appropriate Office component installed.",
-      "prevention": "Document the platform requirement and include a pre-flight check for the ProgID before invoking COM."
+      "pattern": "Accessing non-existent OleFormat members",
+      "symptom": "Compilation fails with CS1061 because properties such as FileName, Data, or OleData are not defined on OleFormat.",
+      "cause": "The code assumes OleFormat exposes file-metadata or raw-data properties that are actually provided by OlePackage.",
+      "fix": "Retrieve file name and binary data through shape.OleFormat.OlePackage.FileName and shape.OleFormat.OlePackage.Data respectively.",
+      "prevention": "Always navigate through OleFormat.OlePackage for package-level information and avoid direct member access on OleFormat."
+    },
+    {
+      "pattern": "Null icon stream when displaying as icon",
+      "symptom": "Runtime throws ArgumentNullException for the parameter 'key' during InsertOleObject execution.",
+      "cause": "The asIcon flag is true while the icon stream argument is null, causing the API to attempt to load a missing system resource.",
+      "fix": "Pass a valid Stream containing an image when asIcon is true, or set asIcon to false to embed the object without an icon.",
+      "prevention": "Guard the InsertOleObject call with a conditional that supplies a non-null icon stream whenever asIcon is true."
     },
     {
       "pattern": "Missing local input asset",
-      "symptom": "Runtime error occurs when the sample spreadsheet, PDF, or icon file cannot be found.",
-      "cause": "The example assumes the presence of external files that are not created at runtime.",
-      "fix": "Generate minimal placeholder files (e.g., a tiny XLSX ZIP header or a simple PDF text) within the example before insertion.",
-      "prevention": "Always create required input files programmatically at the start of the sample."
-    },
-    {
-      "pattern": "Accessing OleFormat on a non-OLE shape",
-      "symptom": "NullReferenceException is thrown while iterating document shapes.",
-      "cause": "The code attempts to read OleFormat from a Shape that does not contain OLE data.",
-      "fix": "Check shape.OleFormat != null before accessing its members.",
-      "prevention": "Filter shapes by shape.HasOleObject or by verifying OleFormat is non-null in loops."
+      "symptom": "Runtime fails because the sample file (e.g., spreadsheet, PDF, or image) does not exist at the expected path.",
+      "cause": "Examples rely on external files that are not created or bundled with the code.",
+      "fix": "Generate the required sample content programmatically (e.g., using MemoryStream) or write a temporary file before insertion.",
+      "prevention": "Include asset creation logic at the start of each example to guarantee that all inputs are present."
     }
   ],
   "examples": [
@@ -110,8 +107,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 2,
@@ -132,8 +129,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 4,
@@ -176,8 +173,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 8,
@@ -187,8 +184,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 9,
@@ -198,8 +195,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 10,
@@ -225,6 +222,17 @@
     },
     {
       "id": 12,
+      "file_name": "retrieve-display-width-and-height-of-an-ole-object-and-adjust-its-size-after-insertion.cs",
+      "task": "Retrieve display width and height of an OLE object and adjust its size after insertion.",
+      "workflow": "inspection",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
+    },
+    {
+      "id": 13,
       "file_name": "retrieve-raw-binary-data-from-an-ole-object-via-its-data-property-for-custom-processing.cs",
       "task": "Retrieve raw binary data from an OLE object via its Data property for custom processing.",
       "workflow": "extraction",
@@ -235,7 +243,7 @@
       "winner": "llm"
     },
     {
-      "id": 13,
+      "id": 14,
       "file_name": "save-raw-binary-data-of-an-ole-object-to-a-temporary-file-for-external-analysis.cs",
       "task": "Save raw binary data of an OLE object to a temporary file for external analysis.",
       "workflow": "extraction",
@@ -247,7 +255,7 @@
       "winner": "llm"
     },
     {
-      "id": 14,
+      "id": 15,
       "file_name": "use-olepackage-class-to-read-and-modify-properties-of-a-legacy-ole-package-in-net.cs",
       "task": "Use OlePackage class to read and modify properties of a legacy OLE package in .NET.",
       "workflow": "ole-package",
@@ -258,7 +266,7 @@
       "winner": "llm"
     },
     {
-      "id": 15,
+      "id": 16,
       "file_name": "use-olepackage-class-to-enumerate-all-parts-of-a-legacy-ole-package-for-inspection.cs",
       "task": "Use OlePackage class to enumerate all parts of a legacy OLE package for inspection.",
       "workflow": "ole-package",
@@ -269,18 +277,18 @@
       "winner": "llm"
     },
     {
-      "id": 16,
+      "id": 17,
       "file_name": "read-the-file-name-property-of-an-ole-package-and-compare-it-with-the-original-source-file.cs",
       "task": "Read the file name property of an OLE package and compare it with the original source file.",
       "workflow": "inspection",
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
-      "id": 17,
+      "id": 18,
       "file_name": "extract-the-ole-object-stream-from-a-document-and-save-it-to-a-binary-file.cs",
       "task": "Extract the OLE object stream from a document and save it to a binary file.",
       "workflow": "extraction",
@@ -292,7 +300,7 @@
       "winner": "llm"
     },
     {
-      "id": 18,
+      "id": 19,
       "file_name": "clone-an-ole-object-from-one-document-and-insert-it-into-another-using-insertoleobject-wit.cs",
       "task": "Clone an OLE object from one document and insert it into another using InsertOleObject with extracted data.",
       "workflow": "extraction",
@@ -303,7 +311,7 @@
       "winner": "existing_repo"
     },
     {
-      "id": 19,
+      "id": 20,
       "file_name": "replace-an-existing-ole-object-in-a-doc-file-with-a-new-image-ole-object-using-insertoleob.cs",
       "task": "Replace an existing OLE object in a DOC file with a new image OLE object using InsertOleObject.",
       "workflow": "replacement",
@@ -314,7 +322,7 @@
       "winner": "existing_repo"
     },
     {
-      "id": 20,
+      "id": 21,
       "file_name": "batch-insert-the-same-excel-ole-object-into-multiple-word-documents-within-a-folder-using.cs",
       "task": "Batch insert the same Excel OLE object into multiple Word documents within a folder using a loop.",
       "workflow": "batch-processing",
@@ -325,7 +333,7 @@
       "winner": "llm"
     },
     {
-      "id": 21,
+      "id": 22,
       "file_name": "batch-insert-identical-excel-ole-object-into-multiple-word-files-using-a-foreach-loop.cs",
       "task": "Batch insert identical Excel OLE object into multiple Word files using a foreach loop.",
       "workflow": "batch-processing",
@@ -336,21 +344,10 @@
       "winner": "llm"
     },
     {
-      "id": 22,
+      "id": 23,
       "file_name": "batch-process-a-collection-of-word-files-to-embed-a-common-online-video-into-each-document.cs",
       "task": "Batch process a collection of Word files to embed a common online video into each document.",
       "workflow": "online-video",
-      "outputs": [
-        "docx"
-      ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
-    },
-    {
-      "id": 23,
-      "file_name": "validate-the-progid-of-an-ole-object-before-insertion-to-avoid-runtime-errors.cs",
-      "task": "Validate the ProgId of an OLE object before insertion to avoid runtime errors.",
-      "workflow": "validation",
       "outputs": [
         "docx"
       ],
@@ -359,6 +356,17 @@
     },
     {
       "id": 24,
+      "file_name": "validate-the-progid-of-an-ole-object-before-insertion-to-avoid-runtime-errors.cs",
+      "task": "Validate the ProgId of an OLE object before insertion to avoid runtime errors.",
+      "workflow": "validation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
+    },
+    {
+      "id": 25,
       "file_name": "implement-error-handling-for-insertoleobject-when-the-specified-progid-is-not-registered-o.cs",
       "task": "Implement error handling for InsertOleObject when the specified ProgId is not registered on the system.",
       "workflow": "validation",
@@ -369,7 +377,7 @@
       "winner": "llm"
     },
     {
-      "id": 25,
+      "id": 26,
       "file_name": "verify-successful-ole-object-insertion-by-checking-the-returned-object-reference-is-not-nu.cs",
       "task": "Verify successful OLE object insertion by checking the returned object reference is not null.",
       "workflow": "validation",
@@ -380,7 +388,7 @@
       "winner": "llm"
     },
     {
-      "id": 26,
+      "id": 27,
       "file_name": "extract-ole-object-metadata-such-as-source-file-name-and-size-and-write-to-a-csv-report.cs",
       "task": "Extract OLE object metadata, such as source file name and size, and write to a CSV report.",
       "workflow": "extraction",
@@ -388,11 +396,11 @@
         "docx",
         "csv"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
-      "id": 27,
+      "id": 28,
       "file_name": "create-a-utility-that-extracts-ole-objects-from-documents-and-stores-them-in-a-database-as.cs",
       "task": "Create a utility that extracts OLE objects from documents and stores them in a database as BLOBs.",
       "workflow": "extraction",
@@ -404,7 +412,7 @@
       "winner": "llm"
     },
     {
-      "id": 28,
+      "id": 29,
       "file_name": "export-all-ole-objects-from-a-document-into-separate-files-preserving-original-extensions.cs",
       "task": "Export all OLE objects from a document into separate files preserving original extensions.",
       "workflow": "extraction",
@@ -416,7 +424,7 @@
       "winner": "llm"
     },
     {
-      "id": 29,
+      "id": 30,
       "file_name": "iterate-through-all-ole-objects-in-a-docx-file-and-log-their-progids-and-display-sizes.cs",
       "task": "Iterate through all OLE objects in a DOCX file and log their ProgIds and display sizes.",
       "workflow": "inspection",
@@ -428,13 +436,13 @@
     }
   ],
   "narrative": {
-    "overview": "The OLE Objects category demonstrates how to embed, inspect, extract, and replace OLE content in Word documents using Aspose.Words 26.10.0. Verified examples cover spreadsheet insertion via InsertOleObject, PDF icon embedding with custom icons, legacy package creation, and dimension handling for precise layout.",
-    "purpose": "Provide an AI coding assistant with clear, reproducible patterns for working with OLE objects in Aspose.Words, ensuring correct API usage, reliable file handling, and deterministic document manipulation.",
+    "overview": "The OLE Objects category covers embedding, inspecting, extracting, and replacing OLE content within Word documents using Aspose.Words. Verified examples demonstrate correct insertion of Excel and PDF OLE objects, icon handling, custom sizing, legacy package embedding, and metadata retrieval.",
+    "purpose": "Provide an AI coding assistant with concise, authoritative guidance for implementing reliable OLE object workflows in Aspose.Words, ensuring correct API usage, robust error handling, and reproducible results across environments.",
     "validation_priorities": [
-      "Verify that InsertOleObject returns a non-null Shape and that the saved document contains the expected OLE stream."
+      "After each InsertOleObject call, confirm that the returned Shape is non-null and that its OleFormat.ProgId matches the expected value."
     ],
     "maintenance_notes": [
-      "Update the example code whenever Aspose.Words introduces new InsertOleObject overloads or deprecates existing ones."
+      "Periodically verify that the InsertOleObject overload signatures have not changed in newer Aspose.Words releases and update the examples accordingly."
     ]
   }
 }

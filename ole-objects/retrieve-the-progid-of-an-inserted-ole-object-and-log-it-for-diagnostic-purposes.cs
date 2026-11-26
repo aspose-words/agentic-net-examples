@@ -1,55 +1,44 @@
 using System;
-using System.Runtime.InteropServices;
-using Microsoft.Win32;
+using System.IO;
+using Aspose.Words;
+using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        const string progId = "Shell.Application";
+        // Prepare a temporary file that will be used as the source of the OLE object.
+        string tempFilePath = Path.Combine(Path.GetTempPath(), "SampleOleSource.txt");
+        File.WriteAllText(tempFilePath, "This is sample OLE content.");
 
-        try
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert the OLE object.
+        // The overload used here is:
+        // InsertOleObject(string fileName, string progId, bool isLink, bool isIcon, Stream iconStream)
+        // We insert a non‑linked object, do not display an icon, and pass null for the icon stream.
+        builder.InsertOleObject(tempFilePath, "Package", false, false, null);
+
+        // Retrieve and display the ProgId of the inserted OLE object.
+        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
         {
-            // Get the COM type from the known ProgID
-            Type comType = Type.GetTypeFromProgID(progId);
-            if (comType == null)
+            if (shape.ShapeType == ShapeType.OleObject && shape.OleFormat != null)
             {
-                Console.WriteLine($"ProgID '{progId}' not found.");
-                return;
-            }
-
-            // Create an instance of the COM object
-            object comObject = Activator.CreateInstance(comType);
-
-            // Retrieve the ProgID by looking it up in the registry using the CLSID (GUID)
-            string retrievedProgId = GetProgIdFromGuid(comType.GUID);
-
-            Console.WriteLine($"Inserted OLE object ProgID: {retrievedProgId}");
-
-            // Release the COM object
-            Marshal.ReleaseComObject(comObject);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error: {ex.Message}");
-        }
-    }
-
-    private static string GetProgIdFromGuid(Guid guid)
-    {
-        // Registry path: HKEY_CLASSES_ROOT\CLSID\{guid}\ProgID
-        string keyPath = $@"CLSID\{{{guid}}}\ProgID";
-        using RegistryKey key = Registry.ClassesRoot.OpenSubKey(keyPath);
-        if (key != null)
-        {
-            // The default value of the ProgID subkey holds the ProgID string
-            object value = key.GetValue(null);
-            if (value is string progId)
-            {
-                return progId;
+                string progId = shape.OleFormat.ProgId;
+                Console.WriteLine($"Inserted OLE object's ProgId: {progId}");
             }
         }
 
-        return "Unknown ProgID";
+        // Save the document (optional, demonstrates lifecycle usage).
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
+        doc.Save(outputPath);
+
+        // Clean up the temporary file.
+        if (File.Exists(tempFilePath))
+        {
+            File.Delete(tempFilePath);
+        }
     }
 }

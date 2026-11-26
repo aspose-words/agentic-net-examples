@@ -1,59 +1,30 @@
 using System;
-using System.IO;
-using System.Diagnostics;
+using Aspose.Words;
+using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Video parameters
-        string videoId = "dQw4w9WgXcQ"; // Example YouTube video ID
-        int width = 560;
-        int height = 315;
+        // Create a new empty document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build the embed URL
-        string embedUrl = $"https://www.youtube.com/embed/{videoId}";
+        // URL of the online video to embed.
+        string videoUrl = "https://example.com/video.mp4";
 
-        // Create HTML content with the iframe
-        string htmlContent = $@"
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset=""utf-8"">
-    <title>Embedded Video</title>
-</head>
-<body>
-    <h2>Embedded YouTube Video</h2>
-    <iframe width=""{width}"" height=""{height}"" src=""{embedUrl}""
-            frameborder=""0"" allow=""accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture""
-            allowfullscreen>
-    </iframe>
-</body>
-</html>";
+        // Insert the OLE object as a linked package.
+        // progId "Package" is used for generic file containers.
+        // isLink = true creates a link to the online resource.
+        // The last parameter (imageFileName) is set to null because we do not provide a placeholder image.
+        Shape oleShape = builder.InsertOleObject("Package", videoUrl, true, false, null);
 
-        // Write HTML to a temporary file
-        string tempPath = Path.Combine(Path.GetTempPath(), $"EmbeddedVideo_{Guid.NewGuid()}.html");
-        File.WriteAllText(tempPath, htmlContent);
+        // Set precise width and height (in points). 1 inch = 72 points.
+        // Example: 5 inches wide and 3 inches high.
+        oleShape.Width = ConvertUtil.InchToPoint(5);
+        oleShape.Height = ConvertUtil.InchToPoint(3);
 
-        // Open the HTML file in the default browser
-        OpenInDefaultBrowser(tempPath);
-    }
-
-    private static void OpenInDefaultBrowser(string filePath)
-    {
-        try
-        {
-            var psi = new ProcessStartInfo
-            {
-                FileName = filePath,
-                UseShellExecute = true // Let the OS decide how to open the file
-            };
-            Process.Start(psi);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Failed to open the file automatically. Error: {ex.Message}");
-            Console.WriteLine($"You can open the file manually at: {filePath}");
-        }
+        // Save the document to disk.
+        doc.Save("Output.docx");
     }
 }
