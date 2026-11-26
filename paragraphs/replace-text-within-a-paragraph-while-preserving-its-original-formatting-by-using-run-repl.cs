@@ -1,37 +1,36 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 
-public class Program
+namespace ParagraphReplaceExample
 {
-    public static void Main()
+    class Program
     {
-        // Create a new document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add a paragraph with formatted text.
-        builder.Font.Name = "Arial";
-        builder.Font.Size = 12;
-        builder.Font.Bold = true;
-        builder.Writeln("Hello world! This is a sample paragraph.");
-
-        // Text to replace.
-        string oldText = "world";
-        string newText = "universe";
-
-        // Replace the text while preserving the original formatting.
-        foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
+        static void Main()
         {
-            foreach (Run run in para.Runs)
+            // Create a new empty document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Add a paragraph with formatted text.
+            builder.Font.Size = 16;
+            builder.Font.Bold = true;
+            builder.Writeln("Hello world! This is a sample paragraph.");
+
+            // Retrieve the first paragraph.
+            Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
+
+            // Replace the word "Hello" with "Hi" while preserving formatting.
+            foreach (Run run in paragraph.Runs)
             {
-                if (run.Text.Contains(oldText))
+                if (run.Text.Contains("Hello"))
                 {
-                    run.Text = run.Text.Replace(oldText, newText);
+                    run.Text = run.Text.Replace("Hello", "Hi");
                 }
             }
-        }
 
-        // Save the modified document.
-        doc.Save("Output.docx");
+            // Save the modified document.
+            doc.Save("Output.docx");
+        }
     }
 }

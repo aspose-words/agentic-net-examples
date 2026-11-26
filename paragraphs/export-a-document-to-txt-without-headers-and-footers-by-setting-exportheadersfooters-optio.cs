@@ -10,28 +10,26 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a header to the document.
+        // Add a header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
         builder.Writeln("This is the header.");
 
-        // Add a body paragraph.
-        builder.MoveToDocumentEnd();
-        builder.Writeln("This is the main body paragraph.");
-
-        // Add a footer to the document.
+        // Add a footer.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
         builder.Writeln("This is the footer.");
 
-        // Remove all headers and footers from the document before saving.
+        // Add a body paragraph.
+        builder.MoveToDocumentEnd();
+        builder.Writeln("This is the main body text of the document.");
+
+        // Remove all headers and footers from the document.
         foreach (Section section in doc.Sections)
         {
             section.HeadersFooters.Clear();
         }
 
-        // Configure TXT save options (no special options needed now).
+        // Save the document as plain text. No headers or footers will be present.
         TxtSaveOptions saveOptions = new TxtSaveOptions();
-
-        // Save the document as a TXT file without headers and footers.
-        doc.Save("output.txt", saveOptions);
+        doc.Save("Exported.txt", saveOptions);
     }
 }

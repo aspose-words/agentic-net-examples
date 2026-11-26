@@ -1,6 +1,6 @@
 # Paragraphs Examples for Aspose.Words for .NET
 
-The Paragraphs category covers insertion, formatting, traversal, and export of Word document paragraphs using Aspose.Words 26.10.0. Verified examples demonstrate safe DocumentBuilder usage, style-separator handling, bi-directional text options, TXT save options, and plain-text list detection.
+The Paragraphs category addresses insertion, formatting, traversal, and export operations on Aspose.Words documents. Verified examples illustrate correct usage of DocumentBuilder for empty paragraph insertion, custom style application, style-separator handling, bi-directional mark saving, and plain-text loading with list detection.
 
 ## Snapshot
 
@@ -8,7 +8,7 @@ The Paragraphs category covers insertion, formatting, traversal, and export of W
 - Slug: paragraphs
 - Total examples: 35
 - Publish-ready successful examples: 35 / 35
-- Source run: 20261102_031946_08fb5b
+- Source run: 20261124_190740_1c00f5
 - Insertion examples: 6
 - Paragraph Formatting examples: 16
 - Traversal Reporting examples: 6
@@ -17,16 +17,20 @@ The Paragraphs category covers insertion, formatting, traversal, and export of W
 
 ## Category rules that shaped these examples
 
-- Never reference namespaces or members that are not part of the official Aspose.Words API.
-- Do not call Run.Replace; modify Run.Text directly to preserve formatting.
-- Use Paragraph.ParagraphFormat for all alignment, spacing, indent, bidi, shading, outline level, and page-break settings.
+- Do not call Run.Replace; modify Run.Text directly.
+- Do not reference non-existent namespaces such as Aspose.Words.Building.
+- Do not use Paragraph.GetLinesCount or any layout-specific line-count API.
+- Use Paragraph.ParagraphFormat to adjust alignment, spacing, indent, shading, and style.
 - Apply built-in styles via ParagraphFormat.StyleIdentifier and custom styles via ParagraphFormat.StyleName.
-- Validate only the specific paragraph or range required for the task, avoiding blanket paragraph-count assertions.
+- Insert empty paragraphs with DocumentBuilder.InsertParagraph() after moving the builder to the target node.
+- Validate only the specific paragraph or node that a task targets instead of asserting global paragraph counts.
+- Check for the existence of a member before using it, and fall back to alternative logic when the API is unavailable.
+- When detecting style separators, compare Run.Text to the Unicode unit separator character (U+001F) if Run.IsStyleSeparator is not present.
 
 ## Prerequisites
 
 - .NET SDK 8.0 or later
-- Aspose.Words for .NET `26.10.0`
+- Aspose.Words for .NET `26.11.0`
 
 ## Running Examples
 
@@ -36,7 +40,7 @@ Each file in this folder is a **single, standalone `.cs` console example**. To r
 # From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.10.0
+dotnet add package Aspose.Words --version 26.11.0
 
 # Copy one example from this folder into the project as Program.cs
 # PowerShell:
@@ -57,7 +61,7 @@ Example:
 # From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.10.0
+dotnet add package Aspose.Words --version 26.11.0
 
 # PowerShell example
 Copy-Item ..\paragraphs\insert-a-new-paragraph-with-custom-text-using-documentbuilder-writeln-inside-a-document-lo.cs .\Program.cs
@@ -83,10 +87,10 @@ dotnet run --configuration Release --no-build
 | 11 | `insert-a-style-separator-run-between-two-text-runs-to-combine-different-paragraph-styles-w.cs` | Insert a style separator run between two text runs to combine different paragraph styles within one paragraph. | paragraph-formatting | docx | mcp |
 | 12 | `search-document-runs-for-styleidentifier-styleseparator-to-identify-existing-style-separat.cs` | Search document runs for StyleIdentifier.StyleSeparator to identify existing style separators for further processing. | traversal-reporting | docx | mcp |
 | 13 | `enable-bi-directional-marks-before-saving-to-plain-text-by-setting-document-addbidimarks-p.cs` | Enable bi-directional marks before saving to plain text by setting Document.AddBidiMarks property to true. | paragraph-formatting | docx | mcp |
-| 14 | `export-a-document-to-txt-format-while-preserving-headers-and-footers-by-enabling-exporthea.cs` | Export a document to TXT format while preserving headers and footers by enabling ExportHeadersFooters option during save. | text-export | txt | mcp |
+| 14 | `export-a-document-to-txt-format-while-preserving-headers-and-footers-by-enabling-exporthea.cs` | Export a document to TXT format while preserving headers and footers by enabling ExportHeadersFooters option during save. | text-export | txt | llm |
 | 15 | `export-a-document-to-txt-without-headers-and-footers-by-setting-exportheadersfooters-optio.cs` | Export a document to TXT without headers and footers by setting ExportHeadersFooters option to false. | text-export | txt | mcp |
-| 16 | `load-a-plain-text-file-with-detectnumberingwithwhitespaces-enabled-to-automatically-recogn.cs` | Load a plain-text file with DetectNumberingWithWhitespaces enabled to automatically recognize list items. | paragraph-formatting | docx | mcp |
-| 17 | `convert-detected-plain-text-list-numbering-into-word-list-structures-after-loading-the-doc.cs` | Convert detected plain-text list numbering into Word list structures after loading the document successfully. | paragraph-formatting | docx | mcp |
+| 16 | `load-a-plain-text-file-with-detectnumberingwithwhitespaces-enabled-to-automatically-recogn.cs` | Load a plain-text file with DetectNumberingWithWhitespaces enabled to automatically recognize list items. | paragraph-formatting | docx | existing_repo |
+| 17 | `convert-detected-plain-text-list-numbering-into-word-list-structures-after-loading-the-doc.cs` | Convert detected plain-text list numbering into Word list structures after loading the document successfully. | paragraph-formatting | docx | llm |
 | 18 | `navigate-to-a-specific-paragraph-index-using-documentbuilder-movetoparagraph-before-applyi.cs` | Navigate to a specific paragraph index using DocumentBuilder.MoveToParagraph before applying formatting changes programmatically. | paragraph-formatting | docx | mcp |
 | 19 | `modify-paragraph-spacing-before-and-after-by-setting-paragraphformat-spacebefore-and-space.cs` | Modify paragraph spacing before and after by setting ParagraphFormat.SpaceBefore and SpaceAfter properties appropriately. | paragraph-formatting | docx | mcp |
 | 20 | `set-paragraph-shading-background-color-to-light-gray-using-paragraphformat-shading-backgro.cs` | Set paragraph shading background color to light gray using ParagraphFormat.Shading.BackgroundPatternColor property. | paragraph-formatting | docx | mcp |
@@ -104,44 +108,51 @@ dotnet run --configuration Release --no-build
 | 32 | `insert-a-paragraph-with-a-field-code-such-as-date-and-format-the-field-result-using-paragr.cs` | Insert a paragraph with a field code such as DATE and format the field result using paragraph formatting. | insertion | docx | mcp |
 | 33 | `determine-whether-a-paragraph-resides-inside-a-table-by-checking-paragraph-isintable-prope.cs` | Determine whether a paragraph resides inside a table by checking Paragraph.IsInTable property value. | traversal-reporting | docx | mcp |
 | 34 | `export-paragraphs-to-plain-text-with-line-numbers-prefixed-by-enabling-line-numbering-opti.cs` | Export paragraphs to plain text with line numbers prefixed by enabling line numbering option in SaveOptions. | text-export | docx | mcp |
-| 35 | `load-a-txt-file-with-list-detection-disabled-and-compare-the-resulting-document-s-list-for.cs` | Load a TXT file with list detection disabled and compare the resulting document's list formatting to enabled mode. | text-export | txt, docx | existing_repo |
+| 35 | `load-a-txt-file-with-list-detection-disabled-and-compare-the-resulting-document-s-list-for.cs` | Load a TXT file with list detection disabled and compare the resulting document's list formatting to enabled mode. | text-export | txt, docx | mcp |
 
 ## Common failure patterns seen during generation and how they were corrected
 
-### Use of non-existent API members
+### Incorrect namespace reference
 
-- Symptom: Compiler reports missing definitions for properties such as Document.AddBidiMarks, TxtSaveOptions.ExportHeadersFooters, or StyleIdentifier.StyleSeparator.
-- Root cause: The code references members that were never implemented in the Aspose.Words library.
-- Preferred fix: Replace the call with the supported alternative (e.g., configure TxtSaveOptions.AddBidiMarks, use the Unicode unit separator character for style separators, or omit unsupported options).
-- Prevention: Consult the official Aspose.Words API reference for the exact version before using a property or method.
+- Symptom: Compiler reports CS0234 indicating that a referenced namespace such as Aspose.Words.Building does not exist.
+- Root cause: The code imports a namespace that is not part of the Aspose.Words library for the targeted version.
+- Preferred fix: Replace the invalid namespace with the correct one, e.g., Aspose.Words.Saving or Aspose.Words.Loading.
+- Prevention: Consult the official API reference for the exact namespace names before adding using directives.
 
-### Incorrect overload usage
+### Missing method overload
 
-- Symptom: Build fails because DocumentBuilder.MoveTo or MoveToParagraph is called with an invalid number of arguments.
-- Root cause: The code supplies parameters that do not match any overload defined in the library.
-- Preferred fix: Use the overload signatures documented for the current version, providing both paragraph index and character index for MoveToParagraph, or call MoveTo with a Node argument.
-- Prevention: Review method signatures in the API docs and pass the required arguments exactly as specified.
+- Symptom: Compiler error CS1501 shows that InsertParagraph does not accept the supplied number of arguments.
+- Root cause: The code calls InsertParagraph with parameters that are not defined in the method signature.
+- Preferred fix: Call InsertParagraph() without arguments after moving the builder to the desired node.
+- Prevention: Verify method signatures in the documentation or IntelliSense before passing arguments.
 
-### Applying paragraph style to a run
+### Member not found on type
 
-- Symptom: Runtime throws ArgumentException stating that the style is not a character style when assigning a StyleIdentifier to Font.StyleIdentifier.
-- Root cause: A paragraph-level style (e.g., Heading1) is being applied to a Run, which only accepts character styles.
-- Preferred fix: Assign a character style such as StyleIdentifier.DefaultParagraphFont to the run, or leave the run with the document's default character formatting.
-- Prevention: Distinguish between paragraph and character styles; use Font.StyleIdentifier only for character styles.
+- Symptom: CS1061 or CS0117 errors indicate that members like Document.AddBidiMarks, TxtSaveOptions.ExportHeadersFooters, Paragraph.IsInTable, or Run.IsStyleSeparator are unavailable.
+- Root cause: The code uses properties or methods that are not implemented in the current Aspose.Words version.
+- Preferred fix: Use supported alternatives such as TxtSaveOptions (which includes headers by default) or detect table membership via Paragraph.GetAncestor(NodeType.Table).
+- Prevention: Check the version-specific API list and guard against unavailable members with conditional compilation or runtime checks.
 
-### Assuming unsupported layout helpers
+### Unsupported line-count API
 
-- Symptom: Compiler errors appear for calls to Paragraph.GetLinesCount or other invented layout APIs.
-- Root cause: The code attempts to use methods that are not part of the Aspose.Words API for line-count or layout information.
-- Preferred fix: Remove the unsupported call and, if line count is needed, approximate it by measuring the rendered height or by using a custom layout engine outside Aspose.Words.
-- Prevention: Limit paragraph-related logic to properties and methods documented in the API reference.
+- Symptom: Compilation fails because Paragraph.GetLinesCount does not exist.
+- Root cause: The code attempts to call a layout-specific helper that is not part of the public API.
+- Preferred fix: Remove the call and, if needed, approximate line count using document layout services or omit the feature.
+- Prevention: Restrict code to documented APIs; avoid assumptions about internal layout calculations.
 
-### Over-broad paragraph count validation
+### Invalid run replacement
 
-- Symptom: Runtime failures occur when the test asserts the total number of paragraphs instead of the targeted subset.
-- Root cause: The validation logic checks the entire document rather than the specific paragraph(s) affected by the operation.
-- Preferred fix: Validate only the paragraph(s) that the task modifies or queries, using precise node references.
-- Prevention: Scope assertions to the exact nodes involved in the operation.
+- Symptom: CS1061 indicates that Run.Replace is missing.
+- Root cause: The code tries to replace text via a non-existent method.
+- Preferred fix: Assign the new string to Run.Text while preserving formatting.
+- Prevention: Use Run.Text property for text updates and keep formatting unchanged.
+
+### Over-broad paragraph validation
+
+- Symptom: Runtime failures occur when the test asserts the total number of paragraphs instead of the targeted one.
+- Root cause: Validation logic checks the whole document rather than the specific paragraph affected by the operation.
+- Preferred fix: Validate only the paragraph(s) directly involved in the task.
+- Prevention: Design assertions to target the exact nodes under test.
 
 ## See Also
 
@@ -154,5 +165,7 @@ dotnet run --configuration Release --no-build
 
 ## Notes for maintainers
 
-- This category is 100% publish-ready for the 26.10.0 run.
-- Update the examples whenever a new Aspose.Words version introduces or deprecates API members, and verify all referenced members against the official documentation.
+- This category is 100% publish-ready for the 26.11.0 run.
+- Update the documentation whenever a new Aspose.Words version introduces or deprecates members referenced in the examples.
+- Add unit tests for each verified workflow to detect regressions in API signatures.
+- Periodically review the rules summary to incorporate newly discovered best-practice patterns.

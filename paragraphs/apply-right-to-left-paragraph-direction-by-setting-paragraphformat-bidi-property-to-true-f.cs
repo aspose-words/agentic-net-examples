@@ -1,5 +1,6 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Tables;
 
 public class Program
 {
@@ -8,15 +9,18 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to insert a paragraph with Arabic text.
+        // Initialize DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("مرحبا بالعالم"); // Arabic: "Hello World"
 
-        // The paragraph that was just created is the current paragraph of the builder.
-        Paragraph arabicParagraph = builder.CurrentParagraph;
+        // Add a regular English paragraph (optional, just for context).
+        builder.Writeln("This is an English paragraph.");
 
-        // Apply right‑to‑left direction for the paragraph.
-        arabicParagraph.ParagraphFormat.Bidi = true;
+        // Add an Arabic paragraph.
+        builder.Writeln("مرحبا بالعالم");
+
+        // The builder's CurrentParagraph now points to the Arabic paragraph we just added.
+        // Set the paragraph direction to right‑to‑left.
+        builder.CurrentParagraph.ParagraphFormat.Bidi = true;
 
         // Save the document to a file.
         doc.Save("Output.docx");

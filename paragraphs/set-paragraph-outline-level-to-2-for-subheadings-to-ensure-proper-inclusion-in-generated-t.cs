@@ -9,37 +9,28 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a title.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Title;
-        builder.Writeln("Document Title");
-
-        // Insert a level‑1 heading.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 1");
-
-        // Insert a level‑2 subheading and explicitly set its outline level to 2.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.ParagraphFormat.OutlineLevel = OutlineLevel.Level2;
-        builder.Writeln("Section 1.1");
-
-        // Another level‑2 subheading.
-        builder.Writeln("Section 1.2");
-
-        // Insert another level‑1 heading.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.ParagraphFormat.OutlineLevel = OutlineLevel.Level1; // reset to default for heading 1
-        builder.Writeln("Chapter 2");
-
-        // Level‑2 subheading under Chapter 2.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.ParagraphFormat.OutlineLevel = OutlineLevel.Level2;
-        builder.Writeln("Section 2.1");
-
-        // Insert a Table of Contents at the beginning of the document.
+        // Insert a Table of Contents placeholder at the beginning of the document.
         builder.MoveToDocumentStart();
+        // The TOC will include outline levels 1 through 3.
         builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
 
-        // Save the document.
-        doc.Save("Output.docx");
+        // Add a main heading (outline level 1) using the built‑in Heading1 style.
+        builder.MoveToDocumentEnd();
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Main Heading");
+
+        // Add a subheading using the built‑in Heading2 style (outline level 2).
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+        builder.Writeln("Subheading (Heading2)");
+
+        // Add a custom paragraph that will act as a subheading.
+        // First set it to the Normal style, then manually set its outline level to 2.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("Custom Subheading");
+        Paragraph customPara = builder.CurrentParagraph;
+        customPara.ParagraphFormat.OutlineLevel = OutlineLevel.Level2;
+
+        // Save the document to the output file.
+        doc.Save("OutputDocument.docx");
     }
 }

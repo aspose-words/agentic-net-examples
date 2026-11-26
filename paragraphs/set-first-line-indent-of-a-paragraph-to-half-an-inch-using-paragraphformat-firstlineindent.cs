@@ -5,18 +5,18 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to add a paragraph.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This paragraph has a first line indent of half an inch.");
+
+        // Insert a paragraph with some text.
+        builder.Writeln("This is a sample paragraph with a first line indent.");
 
         // Retrieve the paragraph that was just added.
-        Paragraph paragraph = builder.CurrentParagraph;
+        Paragraph paragraph = (Paragraph)doc.GetChild(NodeType.Paragraph, 0, true);
 
-        // Set first line indent to half an inch (1 inch = 72 points).
-        paragraph.ParagraphFormat.FirstLineIndent = 36; // 0.5 inch = 36 points
+        // Set the first line indent to half an inch (0.5 * 72 points = 36 points).
+        paragraph.ParagraphFormat.FirstLineIndent = 36.0;
 
         // Save the document to a file.
         doc.Save("FirstLineIndent.docx");

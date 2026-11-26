@@ -5,25 +5,31 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a paragraph with some text.
-        builder.Writeln("This is a sample paragraph that may wrap into multiple lines depending on the page width and formatting.");
+        // Insert a single paragraph that contains explicit line breaks.
+        // The "\r" characters represent line breaks within the paragraph.
+        builder.Writeln("First line.\rSecond line.\rThird line.");
 
-        // Retrieve the first paragraph in the document.
+        // Retrieve the first (and only) paragraph in the document.
         Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
 
-        // The Paragraph.GetLinesCount() method does not exist in the Aspose.Words API.
-        // As a compile‑safe approximation, we store a placeholder value.
-        // In a real scenario you would use layout information to determine the line count.
-        int lineCount = 1; // Approximation: assume at least one line.
+        // Approximate the number of lines by counting line‑break characters in the paragraph text.
+        // GetText() returns the paragraph text including the terminating paragraph mark.
+        string text = paragraph.GetText();
 
-        // Store or use the line count as needed (here we just output it).
-        Console.WriteLine($"Estimated line count for the paragraph: {lineCount}");
+        // Remove the trailing paragraph mark before splitting.
+        text = text.TrimEnd('\r', '\n');
 
-        // Save the document to verify that the example runs without external input.
+        // Split on any line‑break sequence to count lines.
+        int lineCount = text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None).Length;
+
+        // Store the result (here we simply output it).
+        Console.WriteLine($"Approximate line count: {lineCount}");
+
+        // Save the document to demonstrate the full workflow.
         doc.Save("Output.docx");
     }
 }

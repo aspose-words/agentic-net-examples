@@ -10,12 +10,13 @@ product: Aspose.Words
 
 ## Purpose
 
-Provide concise, reliable guidance for an AI coding assistant to generate correct C# snippets that manipulate paragraphs with Aspose.Words, ensuring only documented APIs are used and document integrity is preserved.
+Assist developers in implementing paragraph-level manipulations with Aspose.Words by enforcing supported APIs, correct namespace usage, and precise validation while avoiding common compilation and runtime pitfalls.
 
 ## Non-negotiable conventions
 
-- Never reference namespaces or members that are not part of the official Aspose.Words API.
-- Do not call Run.Replace; modify Run.Text directly to preserve formatting.
+- Do not call Run.Replace; modify Run.Text directly.
+- Do not reference non-existent namespaces such as Aspose.Words.Building.
+- Do not use Paragraph.GetLinesCount or any layout-specific line-count API.
 - Bootstrap local sample inputs for existing-file, folder, stream, image, and data workflows.
 - Prefer simple, verifiable workflows over speculative formatting shortcuts.
 
@@ -31,7 +32,9 @@ Use the simplest workflow that satisfies the task.
 
 ## Validation priorities
 
-1. Check that every referenced type, property, and method exists in Aspose.Words 26.10.0 before compilation.
+1. Ensure that all required Aspose.Words namespaces are imported and that the project references the correct assembly version.
+2. Confirm that every invoked member exists in the target version before compilation.
+3. Scope assertions to the exact nodes affected by the operation.
 
 ## File-to-task reference
 
@@ -104,7 +107,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Export a document to TXT format while preserving headers and footers by enabling ExportHeadersFooters option during save.
   - Workflow: text-export
   - Outputs: txt
-  - Selected engine: mcp
+  - Selected engine: llm
 - `export-a-document-to-txt-without-headers-and-footers-by-setting-exportheadersfooters-optio.cs`
   - Task: Export a document to TXT without headers and footers by setting ExportHeadersFooters option to false.
   - Workflow: text-export
@@ -114,12 +117,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Load a plain-text file with DetectNumberingWithWhitespaces enabled to automatically recognize list items.
   - Workflow: paragraph-formatting
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `convert-detected-plain-text-list-numbering-into-word-list-structures-after-loading-the-doc.cs`
   - Task: Convert detected plain-text list numbering into Word list structures after loading the document successfully.
   - Workflow: paragraph-formatting
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `navigate-to-a-specific-paragraph-index-using-documentbuilder-movetoparagraph-before-applyi.cs`
   - Task: Navigate to a specific paragraph index using DocumentBuilder.MoveToParagraph before applying formatting changes programmatically.
   - Workflow: paragraph-formatting
@@ -209,51 +212,57 @@ Use the simplest workflow that satisfies the task.
   - Task: Load a TXT file with list detection disabled and compare the resulting document's list formatting to enabled mode.
   - Workflow: text-export
   - Outputs: txt, docx
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 
 ## Common failure patterns and preferred agent fixes
 
-- **Use of non-existent API members**
-  - Symptom: Compiler reports missing definitions for properties such as Document.AddBidiMarks, TxtSaveOptions.ExportHeadersFooters, or StyleIdentifier.StyleSeparator.
-  - Root cause: The code references members that were never implemented in the Aspose.Words library.
-  - Preferred fix: Replace the call with the supported alternative (e.g., configure TxtSaveOptions.AddBidiMarks, use the Unicode unit separator character for style separators, or omit unsupported options).
-  - Prevention: Consult the official Aspose.Words API reference for the exact version before using a property or method.
+- **Incorrect namespace reference**
+  - Symptom: Compiler reports CS0234 indicating that a referenced namespace such as Aspose.Words.Building does not exist.
+  - Root cause: The code imports a namespace that is not part of the Aspose.Words library for the targeted version.
+  - Preferred fix: Replace the invalid namespace with the correct one, e.g., Aspose.Words.Saving or Aspose.Words.Loading.
+  - Prevention: Consult the official API reference for the exact namespace names before adding using directives.
 
-- **Incorrect overload usage**
-  - Symptom: Build fails because DocumentBuilder.MoveTo or MoveToParagraph is called with an invalid number of arguments.
-  - Root cause: The code supplies parameters that do not match any overload defined in the library.
-  - Preferred fix: Use the overload signatures documented for the current version, providing both paragraph index and character index for MoveToParagraph, or call MoveTo with a Node argument.
-  - Prevention: Review method signatures in the API docs and pass the required arguments exactly as specified.
+- **Missing method overload**
+  - Symptom: Compiler error CS1501 shows that InsertParagraph does not accept the supplied number of arguments.
+  - Root cause: The code calls InsertParagraph with parameters that are not defined in the method signature.
+  - Preferred fix: Call InsertParagraph() without arguments after moving the builder to the desired node.
+  - Prevention: Verify method signatures in the documentation or IntelliSense before passing arguments.
 
-- **Applying paragraph style to a run**
-  - Symptom: Runtime throws ArgumentException stating that the style is not a character style when assigning a StyleIdentifier to Font.StyleIdentifier.
-  - Root cause: A paragraph-level style (e.g., Heading1) is being applied to a Run, which only accepts character styles.
-  - Preferred fix: Assign a character style such as StyleIdentifier.DefaultParagraphFont to the run, or leave the run with the document's default character formatting.
-  - Prevention: Distinguish between paragraph and character styles; use Font.StyleIdentifier only for character styles.
+- **Member not found on type**
+  - Symptom: CS1061 or CS0117 errors indicate that members like Document.AddBidiMarks, TxtSaveOptions.ExportHeadersFooters, Paragraph.IsInTable, or Run.IsStyleSeparator are unavailable.
+  - Root cause: The code uses properties or methods that are not implemented in the current Aspose.Words version.
+  - Preferred fix: Use supported alternatives such as TxtSaveOptions (which includes headers by default) or detect table membership via Paragraph.GetAncestor(NodeType.Table).
+  - Prevention: Check the version-specific API list and guard against unavailable members with conditional compilation or runtime checks.
 
-- **Assuming unsupported layout helpers**
-  - Symptom: Compiler errors appear for calls to Paragraph.GetLinesCount or other invented layout APIs.
-  - Root cause: The code attempts to use methods that are not part of the Aspose.Words API for line-count or layout information.
-  - Preferred fix: Remove the unsupported call and, if line count is needed, approximate it by measuring the rendered height or by using a custom layout engine outside Aspose.Words.
-  - Prevention: Limit paragraph-related logic to properties and methods documented in the API reference.
+- **Unsupported line-count API**
+  - Symptom: Compilation fails because Paragraph.GetLinesCount does not exist.
+  - Root cause: The code attempts to call a layout-specific helper that is not part of the public API.
+  - Preferred fix: Remove the call and, if needed, approximate line count using document layout services or omit the feature.
+  - Prevention: Restrict code to documented APIs; avoid assumptions about internal layout calculations.
 
-- **Over-broad paragraph count validation**
-  - Symptom: Runtime failures occur when the test asserts the total number of paragraphs instead of the targeted subset.
-  - Root cause: The validation logic checks the entire document rather than the specific paragraph(s) affected by the operation.
-  - Preferred fix: Validate only the paragraph(s) that the task modifies or queries, using precise node references.
-  - Prevention: Scope assertions to the exact nodes involved in the operation.
+- **Invalid run replacement**
+  - Symptom: CS1061 indicates that Run.Replace is missing.
+  - Root cause: The code tries to replace text via a non-existent method.
+  - Preferred fix: Assign the new string to Run.Text while preserving formatting.
+  - Prevention: Use Run.Text property for text updates and keep formatting unchanged.
+
+- **Over-broad paragraph validation**
+  - Symptom: Runtime failures occur when the test asserts the total number of paragraphs instead of the targeted one.
+  - Root cause: Validation logic checks the whole document rather than the specific paragraph affected by the operation.
+  - Preferred fix: Validate only the paragraph(s) directly involved in the task.
+  - Prevention: Design assertions to target the exact nodes under test.
 
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Primary package: `Aspose.Words` `26.10.0`
+- Primary package: `Aspose.Words` `26.11.0`
 
 ## Command reference
 
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.10.0
+dotnet add package Aspose.Words --version 26.11.0
 ```
 
 ```powershell
@@ -267,4 +276,6 @@ dotnet run --configuration Release --no-build
 
 ## Category update guidance
 
-- Update the examples whenever a new Aspose.Words version introduces or deprecates API members, and verify all referenced members against the official documentation.
+- Update the documentation whenever a new Aspose.Words version introduces or deprecates members referenced in the examples.
+- Add unit tests for each verified workflow to detect regressions in API signatures.
+- Periodically review the rules summary to incorporate newly discovered best-practice patterns.

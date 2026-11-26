@@ -5,25 +5,28 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to add content and a bookmark.
         DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Add some initial content.
         builder.Writeln("Paragraph before the bookmark.");
 
-        // Define a bookmark named "MyBookmark".
+        // Insert a bookmark named "MyBookmark".
         builder.StartBookmark("MyBookmark");
-        builder.Writeln("Paragraph inside the bookmark.");
+        builder.Writeln("Text inside the bookmark.");
         builder.EndBookmark("MyBookmark");
 
-        // Move the builder to the bookmark location.
+        // Move the builder to the bookmark.
         builder.MoveToBookmark("MyBookmark");
 
         // Insert an empty paragraph after the bookmark.
         builder.InsertParagraph();
 
-        // Save the resulting document.
+        // Add more content after the empty paragraph to demonstrate placement.
+        builder.Writeln("Paragraph after the empty paragraph.");
+
+        // Save the document.
         doc.Save("Output.docx");
     }
 }

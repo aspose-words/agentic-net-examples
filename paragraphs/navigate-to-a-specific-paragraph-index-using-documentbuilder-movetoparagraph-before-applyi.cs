@@ -10,23 +10,25 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert sample paragraphs.
-        builder.Writeln("Paragraph 1: Introduction.");
-        builder.Writeln("Paragraph 2: Details.");
-        builder.Writeln("Paragraph 3: Conclusion.");
+        // Add several paragraphs to the document.
+        builder.Writeln("Paragraph 0");
+        builder.Writeln("Paragraph 1");
+        builder.Writeln("Paragraph 2");
+        builder.Writeln("Paragraph 3");
+        builder.Writeln("Paragraph 4");
 
-        // Move to the second paragraph (index 1, zero‑based) at the start of the paragraph.
-        builder.MoveToParagraph(1, 0);
+        // Navigate to the third paragraph (index 2) and position the cursor at the start of the paragraph.
+        // The second argument (nodeIndex) is set to 0 to place the cursor before the first node in the paragraph.
+        builder.MoveToParagraph(2, 0);
 
-        // Apply formatting to the paragraph at the current position.
-        // For example, make the text bold and red.
+        // Apply formatting to the paragraph: make the text bold and red.
         builder.Font.Bold = true;
         builder.Font.Color = Color.Red;
 
         // Insert a new line to demonstrate the applied formatting.
-        builder.Writeln("This line inherits the formatting of the moved paragraph.");
+        builder.Writeln("This paragraph is now bold and red.");
 
-        // Save the document to disk.
-        doc.Save("FormattedParagraph.docx");
+        // Save the modified document to a file.
+        doc.Save("Output.docx");
     }
 }
