@@ -9,20 +9,23 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a paragraph with sample citation text.
-        builder.Writeln("Doe, J. (2023). Example citation for hanging indent.");
+        // Sample citation text that may wrap onto multiple lines.
+        string citation = "Doe, J. (2020). Example citation text that may wrap onto multiple lines.";
 
-        // Retrieve the last paragraph (the one we just added).
-        Paragraph paragraph = doc.LastSection.Body.Paragraphs[doc.LastSection.Body.Paragraphs.Count - 1];
+        // Insert the citation as a new paragraph.
+        builder.Writeln(citation);
 
-        // Set hanging indent to 0.25 inches (0.25 * 72 points = 18 points).
-        // In Aspose.Words, a hanging indent is achieved by a negative first‑line indent
-        // and a positive left indent of the same magnitude.
-        paragraph.ParagraphFormat.FirstLineIndent = -18.0; // outdent first line
-        paragraph.ParagraphFormat.LeftIndent = 18.0;      // indent subsequent lines
+        // Retrieve the paragraph that was just added.
+        Paragraph paragraph = (Paragraph)doc.GetChild(NodeType.Paragraph, doc.GetChildNodes(NodeType.Paragraph, true).Count - 1, true);
 
-        // Save the document.
-        string outputPath = "CitationWithHangingIndent.docx";
+        // Set a hanging indent of 0.25 inches.
+        // LeftIndent = 0.25 inches, FirstLineIndent = -0.25 inches (negative creates hanging indent).
+        double indent = ConvertUtil.InchToPoint(0.25);
+        paragraph.ParagraphFormat.LeftIndent = indent;
+        paragraph.ParagraphFormat.FirstLineIndent = -indent;
+
+        // Save the document to a file.
+        string outputPath = "HangingIndent.docx";
         doc.Save(outputPath);
     }
 }

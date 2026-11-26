@@ -1,25 +1,31 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Fields;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document.
+        // Create a new blank document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set the author property (this can be changed later and the field will update).
+        // Set the built‑in Author property of the document.
         doc.BuiltInDocumentProperties.Author = "John Doe";
 
-        // Add a paragraph and insert an AUTHOR field that displays the document's author dynamically.
-        builder.Writeln("Document Author:");
-        FieldAuthor authorField = (FieldAuthor)builder.InsertField(FieldType.FieldAuthor, true);
-        authorField.Update();
+        // Use DocumentBuilder to add content.
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Save the document.
-        const string outputPath = "Output.docx";
+        // Insert a new paragraph.
+        builder.Writeln();
+
+        // Insert a field that displays the Author property dynamically.
+        // The field code "DOCPROPERTY Author" pulls the current Author value.
+        builder.InsertField(" DOCPROPERTY Author ");
+
+        // Add a line break after the field (optional).
+        builder.Writeln();
+
+        // Save the document to a file.
+        string outputPath = "Output.docx";
         doc.Save(outputPath);
     }
 }

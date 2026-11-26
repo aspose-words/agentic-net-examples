@@ -1,72 +1,62 @@
 using System;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Drawing;
 
-namespace ConditionalFormattingExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Define a simple table with numeric values.
+        Table table = builder.StartTable();
+
+        // Header row.
+        builder.InsertCell();
+        builder.Write("Item");
+        builder.InsertCell();
+        builder.Write("Value");
+        builder.EndRow();
+
+        // Sample data rows.
+        string[] items = { "A", "B", "C", "D", "E" };
+        double[] values = { 23.5, 67.2, 45.0, 82.1, 38.9 };
+        double threshold = 50.0; // Highlight values above this.
+
+        for (int i = 0; i < items.Length; i++)
         {
-            // Define output file path.
-            string outputPath = "ConditionalFormatting.docx";
+            builder.InsertCell();
+            builder.Write(items[i]);
 
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.InsertCell();
+            builder.Write(values[i].ToString());
 
-            // Insert a table with 5 rows and 3 columns.
-            Table table = builder.StartTable();
-
-            // Header row.
-            for (int col = 0; col < 3; col++)
-            {
-                builder.InsertCell();
-                builder.Writeln($"Header {col + 1}");
-                builder.CellFormat.Shading.BackgroundPatternColor = System.Drawing.Color.LightGray;
-            }
             builder.EndRow();
-
-            // Data rows with numeric values.
-            Random rnd = new Random();
-            for (int row = 0; row < 5; row++)
-            {
-                for (int col = 0; col < 3; col++)
-                {
-                    builder.InsertCell();
-                    // Generate a random integer between 10 and 100.
-                    int value = rnd.Next(10, 101);
-                    builder.Writeln(value.ToString());
-                }
-                builder.EndRow();
-            }
-
-            builder.EndTable();
-
-            // Define the threshold for highlighting.
-            double threshold = 50.0;
-
-            // Apply conditional formatting: highlight cells with values above the threshold.
-            foreach (Row row in table.Rows)
-            {
-                // Skip header row (optional, based on content).
-                foreach (Cell cell in row.Cells)
-                {
-                    // Try to parse the cell text as a double.
-                    if (double.TryParse(cell.GetText().Trim('\a', '\r', '\n'), out double numericValue))
-                    {
-                        if (numericValue > threshold)
-                        {
-                            // Apply a light yellow background to highlight the cell.
-                            cell.CellFormat.Shading.BackgroundPatternColor = System.Drawing.Color.LightYellow;
-                        }
-                    }
-                }
-            }
-
-            // Save the document to disk.
-            doc.Save(outputPath);
         }
+
+        // End the table.
+        builder.EndTable();
+
+        // Apply conditional formatting: highlight cells with values above the threshold.
+        // Skip the header row (index 0) and start from the first data row.
+        for (int i = 1; i < table.Rows.Count; i++)
+        {
+            Row row = table.Rows[i];
+            Cell valueCell = row.Cells[1]; // Second column holds the numeric value.
+            string cellText = valueCell.GetText().Trim(); // Remove end-of-cell marker.
+
+            if (double.TryParse(cellText, out double cellValue) && cellValue > threshold)
+            {
+                // Set background shading to light yellow.
+                valueCell.CellFormat.Shading.BackgroundPatternColor = Color.Yellow;
+            }
+        }
+
+        // Save the document.
+        string outputPath = "ConditionalFormattingTable.docx";
+        doc.Save(outputPath);
     }
 }

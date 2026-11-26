@@ -1,5 +1,5 @@
 using System;
-using System.IO;
+using System.Globalization;
 using Aspose.Words;
 
 public class Program
@@ -10,23 +10,27 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set the default language to French (Locale ID 1036).
-        builder.Font.LocaleId = 1036; // French
+        // Set the document's language to French (fr-FR) via the Normal style.
+        Style normalStyle = doc.Styles["Normal"];
+        if (normalStyle != null)
+        {
+            // LocaleId expects the Windows LCID of the culture.
+            normalStyle.Font.LocaleId = new CultureInfo("fr-FR").LCID;
+        }
 
-        // Add a paragraph with French text.
-        builder.Writeln("Ceci est un texte en français.");
+        // Add a left‑to‑right paragraph.
+        builder.Writeln("This paragraph uses the French language setting.");
 
-        // Adjust paragraph direction for right-to-left scripts.
-        builder.CurrentParagraph.ParagraphFormat.Bidi = true;
+        // Add a right‑to‑left paragraph (e.g., Arabic text).
+        builder.ParagraphFormat.Bidi = true; // Enable right‑to‑left layout for this paragraph.
+        builder.Writeln("مثال على نص من اليمين إلى اليسار");
+        builder.ParagraphFormat.Bidi = false; // Reset for subsequent paragraphs.
 
         // Save the document.
-        string outputPath = "Output.docx";
+        const string outputPath = "Result.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was saved and can be reopened.
-        if (File.Exists(outputPath))
-        {
-            Document loadedDoc = new Document(outputPath);
-        }
+        // Indicate that the document was created.
+        Console.WriteLine($"Document saved to {outputPath}");
     }
 }

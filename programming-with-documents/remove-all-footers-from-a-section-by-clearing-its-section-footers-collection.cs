@@ -1,57 +1,39 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using Aspose.Words;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some body text.
-        builder.Writeln("Hello World!");
+        // Add some body content.
+        builder.Writeln("This is the main body of the document.");
 
         // Add a primary footer to the first (and only) section.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.Writeln("This is a footer.");
+        builder.Writeln("Sample Footer Text");
 
-        // Get the first section.
-        Section section = doc.Sections[0];
-
-        // Helper to count footers in a section.
-        int CountFooters(Section sec) =>
-            sec.HeadersFooters
-               .OfType<HeaderFooter>()
-               .Count(hf =>
-                   hf.HeaderFooterType == HeaderFooterType.FooterPrimary ||
-                   hf.HeaderFooterType == HeaderFooterType.FooterFirst ||
-                   hf.HeaderFooterType == HeaderFooterType.FooterEven);
-
-        // Verify footers exist before removal.
-        Console.WriteLine($"Footers before removal: {CountFooters(section)}");
+        // Retrieve the first section.
+        Section firstSection = doc.Sections[0];
 
         // Remove all footers from the section.
-        List<HeaderFooter> footersToRemove = section.HeadersFooters
-            .OfType<HeaderFooter>()
-            .Where(hf =>
-                hf.HeaderFooterType == HeaderFooterType.FooterPrimary ||
+        // Aspose.Words stores headers and footers together in the HeadersFooters collection.
+        // Iterate backwards and remove items whose type is a footer.
+        for (int i = firstSection.HeadersFooters.Count - 1; i >= 0; i--)
+        {
+            HeaderFooter hf = firstSection.HeadersFooters[i];
+            if (hf.HeaderFooterType == HeaderFooterType.FooterPrimary ||
                 hf.HeaderFooterType == HeaderFooterType.FooterFirst ||
                 hf.HeaderFooterType == HeaderFooterType.FooterEven)
-            .ToList();
-
-        foreach (HeaderFooter hf in footersToRemove)
-        {
-            section.HeadersFooters.Remove(hf);
+            {
+                firstSection.HeadersFooters.RemoveAt(i);
+            }
         }
 
-        // Verify footers have been removed.
-        Console.WriteLine($"Footers after removal: {CountFooters(section)}");
-
-        // Save the modified document.
-        string outputPath = "Output.docx";
-        doc.Save(outputPath);
+        // Save the resulting document.
+        doc.Save("Output.docx");
     }
 }

@@ -2,72 +2,68 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document and a DocumentBuilder.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a wide table (10 columns, 100% width) into the first section.
-        Table table = builder.StartTable();
-        for (int col = 0; col < 10; col++)
+        // Add a section with a narrow table (will stay portrait).
+        builder.Writeln("Section 1 - Narrow Table");
+        Table narrowTable = builder.StartTable();
+        for (int i = 0; i < 3; i++)
         {
             builder.InsertCell();
-            builder.Writeln($"Col {col + 1}");
+            builder.Write($"Cell {i + 1}");
         }
         builder.EndRow();
         builder.EndTable();
 
-        // Ensure the table occupies the full page width.
-        // Use the correct PreferredWidth factory method.
-        table.PreferredWidth = PreferredWidth.FromPercent(100);
-
-        // Add a second section with a normal table (3 columns) to demonstrate selective orientation.
+        // Insert a section break.
         builder.InsertBreak(BreakType.SectionBreakNewPage);
-        Table smallTable = builder.StartTable();
-        for (int col = 0; col < 3; col++)
+
+        // Add a section with a wide table (more columns, likely to need landscape).
+        builder.Writeln("Section 2 - Wide Table");
+        Table wideTable = builder.StartTable();
+        for (int i = 0; i < 10; i++) // 10 columns makes the table wide.
         {
             builder.InsertCell();
-            builder.Writeln($"Small {col + 1}");
+            builder.Write($"Col {i + 1}");
         }
         builder.EndRow();
         builder.EndTable();
 
-        // Iterate through sections and set orientation to landscape for sections containing wide tables.
+        // Iterate through each section and set orientation to landscape
+        // if the section contains at least one table with more than 5 columns.
         foreach (Section section in doc.Sections)
         {
-            bool containsWideTable = false;
-
-            // Look for any table in the current section.
-            NodeCollection tables = section.Body.GetChildNodes(NodeType.Table, true);
-            foreach (Table tbl in tables)
+            bool hasWideTable = false;
+            foreach (Node node in section.Body.GetChildNodes(NodeType.Table, true))
             {
-                // Consider a table wide if its preferred width is 100% of the page.
-                if (tbl.PreferredWidth.Type == PreferredWidthType.Percent && tbl.PreferredWidth.Value >= 100)
+                Table tbl = (Table)node;
+                if (tbl.Rows.Count > 0 && tbl.Rows[0].Cells.Count > 5)
                 {
-                    containsWideTable = true;
+                    hasWideTable = true;
                     break;
                 }
             }
 
-            if (containsWideTable)
+            if (hasWideTable)
             {
-                // Set page orientation to landscape.
                 section.PageSetup.Orientation = Orientation.Landscape;
             }
         }
 
         // Save the document.
-        string outputPath = "WideTableLandscape.docx";
-        doc.Save(outputPath);
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
+        doc.Save(outputPath, SaveFormat.Docx);
 
-        // Optional verification that the file was created.
-        if (File.Exists(outputPath))
-        {
-            // Document saved successfully.
-        }
+        // Verify that the file was saved and can be reopened.
+        Document reopened = new Document(outputPath);
+        // No further action needed; the program ends here.
     }
 }

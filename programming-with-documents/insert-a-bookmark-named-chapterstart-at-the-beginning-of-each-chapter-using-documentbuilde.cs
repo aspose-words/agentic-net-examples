@@ -1,49 +1,50 @@
 using System;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add sample chapters (Heading 1 style) with some content.
-        for (int i = 1; i <= 3; i++)
+        // Define number of chapters.
+        int chapterCount = 3;
+
+        for (int i = 1; i <= chapterCount; i++)
         {
+            // Insert a bookmark named "ChapterStart" at the beginning of the chapter.
+            builder.StartBookmark("ChapterStart");
+
+            // Insert a heading for the chapter.
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
             builder.Writeln($"Chapter {i}");
+
+            // End the bookmark.
+            builder.EndBookmark("ChapterStart");
+
+            // Add some sample content after the heading.
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-            builder.Writeln($"This is the content of chapter {i}. It contains several sentences to illustrate the chapter body.");
+            builder.Writeln($"This is the content of chapter {i}.");
+            builder.Writeln();
         }
 
-        // Save the initial document (optional, shows the intermediate state).
-        doc.Save("Sample.docx");
+        // Define output path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
 
-        // Insert a bookmark named "ChapterStartX" at the beginning of each chapter.
-        NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
-        int chapterIndex = 1;
+        // Save the document.
+        doc.Save(outputPath);
 
-        foreach (Paragraph para in paragraphs)
+        // Verify that the file was created.
+        if (File.Exists(outputPath))
         {
-            if (para.ParagraphFormat.StyleIdentifier == StyleIdentifier.Heading1)
-            {
-                // Move the builder to the start of the heading paragraph.
-                DocumentBuilder bmBuilder = new DocumentBuilder(doc);
-                bmBuilder.MoveTo(para);
-
-                // Create a unique bookmark name for each chapter.
-                string bookmarkName = $"ChapterStart{chapterIndex}";
-                bmBuilder.StartBookmark(bookmarkName);
-                bmBuilder.EndBookmark(bookmarkName);
-
-                chapterIndex++;
-            }
+            Console.WriteLine($"Document saved successfully to: {outputPath}");
         }
-
-        // Save the final document with bookmarks.
-        doc.Save("ChaptersWithBookmarks.docx");
+        else
+        {
+            Console.WriteLine("Failed to save the document.");
+        }
     }
 }

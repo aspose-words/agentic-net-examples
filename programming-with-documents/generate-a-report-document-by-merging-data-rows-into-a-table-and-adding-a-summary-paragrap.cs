@@ -2,88 +2,87 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Sample data to merge into the table.
-        var employees = new List<Employee>
+        // Sample data rows to merge into the table
+        var records = new List<Record>
         {
-            new Employee { Name = "Alice Johnson", Age = 30, Salary = 75000 },
-            new Employee { Name = "Bob Smith", Age = 45, Salary = 88000 },
-            new Employee { Name = "Carol Davis", Age = 28, Salary = 62000 },
-            new Employee { Name = "David Brown", Age = 35, Salary = 71000 }
+            new Record { Id = 1, Name = "Alice", Amount = 120.50 },
+            new Record { Id = 2, Name = "Bob", Amount = 75.00 },
+            new Record { Id = 3, Name = "Charlie", Amount = 200.75 }
         };
 
-        // Create a new blank document.
+        // Create a new document
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a table with a header row.
-        builder.StartTable();
+        // Add a title paragraph
+        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        builder.Font.Size = 16;
+        builder.Font.Bold = true;
+        builder.Writeln("Sales Report");
+        builder.Font.ClearFormatting();
 
-        // Header cells.
-        builder.InsertCell();
-        builder.Write("Name");
-        builder.InsertCell();
-        builder.Write("Age");
-        builder.InsertCell();
-        builder.Write("Salary");
+        // Start a table with three columns: Id, Name, Amount
+        Table table = builder.StartTable();
+
+        // Header row
+        InsertCell(builder, "ID", true);
+        InsertCell(builder, "Name", true);
+        InsertCell(builder, "Amount", true);
         builder.EndRow();
 
-        // Populate table rows with employee data.
-        foreach (var emp in employees)
+        // Data rows
+        foreach (var rec in records)
         {
-            builder.InsertCell();
-            builder.Write(emp.Name);
-            builder.InsertCell();
-            builder.Write(emp.Age.ToString());
-            builder.InsertCell();
-            builder.Write(emp.Salary.ToString("C"));
+            InsertCell(builder, rec.Id.ToString(), false);
+            InsertCell(builder, rec.Name, false);
+            InsertCell(builder, rec.Amount.ToString("F2"), false);
             builder.EndRow();
         }
 
-        // End the table.
         builder.EndTable();
 
-        // Add a blank line before the summary.
-        builder.Writeln();
+        // Add a summary paragraph after the table
+        builder.ParagraphFormat.Alignment = ParagraphAlignment.Left;
+        builder.Font.Size = 12;
+        double totalAmount = 0;
+        foreach (var rec in records) totalAmount += rec.Amount;
+        builder.Writeln($"Total records: {records.Count}");
+        builder.Writeln($"Grand total amount: {totalAmount:F2}");
 
-        // Compute summary values.
-        int totalEmployees = employees.Count;
-        double averageAge = 0;
-        decimal totalSalary = 0;
-        if (totalEmployees > 0)
-        {
-            averageAge = (double)employees.Sum(e => e.Age) / totalEmployees;
-            totalSalary = employees.Sum(e => e.Salary);
-        }
-
-        // Insert a summary paragraph.
-        builder.Writeln($"Total Employees: {totalEmployees}");
-        builder.Writeln($"Average Age: {averageAge:F1}");
-        builder.Writeln($"Total Salary: {totalSalary:C}");
-
-        // Define output file path.
+        // Save the report document
         string outputPath = "Report.docx";
-
-        // Save the document.
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify the file was saved and can be reopened
         if (File.Exists(outputPath))
         {
-            // Optionally, reopen to ensure it is a valid document.
-            Document verifyDoc = new Document(outputPath);
+            Document loadedDoc = new Document(outputPath);
         }
     }
 
-    // Simple data model for demonstration.
-    private class Employee
+    // Helper method to insert a cell with optional header formatting
+    private static void InsertCell(DocumentBuilder builder, string text, bool isHeader)
     {
+        builder.InsertCell();
+        if (isHeader)
+        {
+            builder.Font.Bold = true;
+        }
+        builder.Writeln(text);
+        builder.Font.ClearFormatting();
+    }
+
+    // Simple data model for the report rows
+    private class Record
+    {
+        public int Id { get; set; }
         public string Name { get; set; }
-        public int Age { get; set; }
-        public decimal Salary { get; set; }
+        public double Amount { get; set; }
     }
 }

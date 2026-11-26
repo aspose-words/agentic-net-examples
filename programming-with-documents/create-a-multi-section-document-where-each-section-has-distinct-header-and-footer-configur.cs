@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.BuildingBlocks;
 
@@ -11,34 +10,33 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        int totalSections = 3;
-
-        for (int i = 1; i <= totalSections; i++)
+        // Create three sections, each with its own header and footer.
+        for (int i = 1; i <= 3; i++)
         {
-            // Insert a section break before every section except the first.
+            // Insert a section break before sections 2 and 3.
             if (i > 1)
                 builder.InsertBreak(BreakType.SectionBreakNewPage);
 
-            // Get the index of the current (last) section.
-            int sectionIndex = doc.Sections.Count - 1;
-
-            // ----- Header -----
-            builder.MoveToSection(sectionIndex);
+            // ----- Header for the current section -----
             builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+            builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
             builder.Writeln($"Header for Section {i}");
 
-            // ----- Footer -----
-            builder.MoveToSection(sectionIndex);
+            // ----- Footer for the current section -----
             builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+            builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
             builder.Writeln($"Footer for Section {i}");
 
-            // ----- Body content -----
-            builder.MoveToSection(sectionIndex);
-            builder.Writeln($"Content of Section {i}");
+            // Return to the main body of the document.
+            builder.MoveToDocumentEnd();
+
+            // Add some body text to the current section.
+            builder.Writeln($"This is the body of section {i}.");
+            builder.Writeln(); // Add an empty line for readability.
         }
 
-        // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MultiSectionHeadersFooters.docx");
+        // Save the document to disk.
+        string outputPath = "MultiSectionHeadersFooters.docx";
         doc.Save(outputPath);
     }
 }

@@ -1,39 +1,43 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Tables;
+using Aspose.Words.BuildingBlocks;
 
-public class Program
+namespace UpdateTocExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert a Table of Contents field at the beginning of the document.
-        // The TOC will include headings of levels 1 through 3.
-        builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
-
-        // Insert a page break so that the following content starts on a new page.
-        builder.InsertBreak(BreakType.PageBreak);
-
-        // Add several sections with headings that will be captured by the TOC.
-        for (int i = 1; i <= 3; i++)
+        public static void Main()
         {
-            // Set the style to Heading 1 for the chapter title.
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Insert a Table of Contents at the beginning of the document.
+            // The TOC will include headings of levels 1 through 3.
+            builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
+            builder.Writeln(); // Add a blank line after TOC.
+
+            // Add first heading (Level 1) and some body text.
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-            builder.Writeln($"Chapter {i}");
-
-            // Add some body text under the heading.
+            builder.Writeln("Chapter 1: Introduction");
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-            builder.Writeln($"This is the content of chapter {i}. It contains some sample text to demonstrate the Table of Contents update functionality.");
+            builder.Writeln("This is the introductory chapter.");
+
+            // Insert a section break to start a new section.
+            builder.InsertBreak(BreakType.SectionBreakNewPage);
+
+            // Add second heading (Level 1) and some body text in the new section.
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+            builder.Writeln("Chapter 2: Details");
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+            builder.Writeln("This section contains detailed information.");
+
+            // Update all fields in the document, which refreshes the TOC entries.
+            doc.UpdateFields();
+
+            // Save the document to disk.
+            string outputPath = "UpdatedTocDocument.docx";
+            doc.Save(outputPath);
         }
-
-        // After adding new headings, update all fields in the document (including the TOC).
-        doc.UpdateFields();
-
-        // Save the updated document to disk.
-        string outputPath = "UpdatedTOC.docx";
-        doc.Save(outputPath);
     }
 }

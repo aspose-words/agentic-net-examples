@@ -1,36 +1,33 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set line spacing to 150 % (multiple of 1.5).
+        // Set line spacing to 150% (multiple of 1.5).
         builder.ParagraphFormat.LineSpacingRule = LineSpacingRule.Multiple;
-        builder.ParagraphFormat.LineSpacing = 1.5; // 150%
+        builder.ParagraphFormat.LineSpacing = 1.5;
 
         // Insert a paragraph with some text.
-        builder.Writeln("This paragraph has a line height of 150 %.");
+        builder.Writeln("This paragraph has a custom line height of 150 percent.");
 
         // Save the document.
-        string outputPath = "ParagraphLineHeight.docx";
+        string outputPath = "Output.docx";
         doc.Save(outputPath);
 
-        // Reload the document and verify the line spacing.
+        // Reload the document to verify the line spacing.
         Document loadedDoc = new Document(outputPath);
-        Paragraph para = loadedDoc.FirstSection.Body.FirstParagraph;
+        Paragraph paragraph = (Paragraph)loadedDoc.GetChild(NodeType.Paragraph, 0, true);
+        bool lineSpacingCorrect = paragraph.ParagraphFormat.LineSpacingRule == LineSpacingRule.Multiple &&
+                                  Math.Abs(paragraph.ParagraphFormat.LineSpacing - 1.5) < 0.001;
 
-        bool ruleCorrect = para.ParagraphFormat.LineSpacingRule == LineSpacingRule.Multiple;
-        double actualLineSpacing = para.ParagraphFormat.LineSpacing;
-        double expectedLineSpacing = 1.5;
-        bool spacingCorrect = Math.Abs(actualLineSpacing - expectedLineSpacing) < 0.001;
-
-        Console.WriteLine(ruleCorrect && spacingCorrect
-            ? "Line spacing set correctly."
-            : $"Line spacing mismatch. Expected rule Multiple and spacing {expectedLineSpacing}, got rule {para.ParagraphFormat.LineSpacingRule} and spacing {actualLineSpacing}.");
+        // Output verification result.
+        Console.WriteLine("Line spacing set correctly: " + lineSpacingCorrect);
     }
 }

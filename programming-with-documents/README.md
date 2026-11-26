@@ -1,6 +1,6 @@
 # Programming With Documents Examples for Aspose.Words for .NET
 
-The Programming With Documents category demonstrates how to manipulate Word files using Aspose.Words 26.10.0. Verified examples show header/footer configuration, image insertion, footnote handling, and table of contents management without external dependencies.
+The Programming With Documents category showcases how to manipulate Word files using Aspose.Words 26.11.0, covering header/footer configuration, footnote management, and image placement. The verified examples demonstrate correct use of Document, DocumentBuilder, and related APIs to create self-contained documents without external dependencies.
 
 ## Snapshot
 
@@ -8,23 +8,19 @@ The Programming With Documents category demonstrates how to manipulate Word file
 - Slug: programming-with-documents
 - Total examples: 110
 - Publish-ready successful examples: 110 / 110
-- Source run: 20261102_031946_08fb5b
+- Source run: 20261124_190740_1c00f5
 - Document Workflow examples: 110
 
 ## Category rules that shaped these examples
 
-- Do not reference types that are not part of the Aspose.Words package version.
-- Do not import System.Drawing classes for image handling.
-- Load images from a MemoryStream created from a Base64 string.
-- Use HeaderFooterType enum values HeaderFirst, HeaderPrimary, and HeaderEven for header configuration.
-- Access footnote options through Document.FootnoteOptions and use FootnoteType from Aspose.Words.Notes.
-- Check for the existence of a property via reflection before setting it when the library version may not expose it.
-- Validate that collections such as HeadersFooters contain the expected items before removal.
+- Do not reference types or namespaces that are not present in Aspose.Words 26.11.0, such as Aspose.Words.Building, Aspose.Words.Footnotes, or non-existent enum members.
+- Always create input assets (e.g., images) as in-memory streams or deterministic local files before loading them into the document.
+- Validate only the existence of the expected output file and, when required, reload it to confirm that the document is well-formed.
 
 ## Prerequisites
 
 - .NET SDK 8.0 or later
-- Aspose.Words for .NET `26.10.0`
+- Aspose.Words for .NET `26.11.0`
 
 ## Running Examples
 
@@ -34,7 +30,7 @@ Each file in this folder is a **single, standalone `.cs` console example**. To r
 # From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.10.0
+dotnet add package Aspose.Words --version 26.11.0
 
 # Copy one example from this folder into the project as Program.cs
 # PowerShell:
@@ -55,7 +51,7 @@ Example:
 # From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.10.0
+dotnet add package Aspose.Words --version 26.11.0
 
 # PowerShell example
 Copy-Item ..\programming-with-documents\create-a-first-page-header-with-a-centered-logo-image-using-documentbuilder.cs .\Program.cs
@@ -68,21 +64,21 @@ dotnet run --configuration Release --no-build
 
 | # | File | Original task | Workflow | Outputs | Selected engine |
 |---|---|---|---|---|---|
-| 1 | `create-a-first-page-header-with-a-centered-logo-image-using-documentbuilder.cs` | Create a first-page header with a centered logo image using DocumentBuilder. | document-workflow | doc | llm |
+| 1 | `create-a-first-page-header-with-a-centered-logo-image-using-documentbuilder.cs` | Create a first-page header with a centered logo image using DocumentBuilder. | document-workflow | doc | mcp |
 | 2 | `add-an-odd-page-header-containing-a-right-aligned-chapter-title-in-a-custom-font.cs` | Add an odd-page header containing a right-aligned chapter title in a custom font. | document-workflow | docx | mcp |
-| 3 | `insert-an-even-page-footer-that-shows-page-numbers-in-roman-numerals-via-insertfield.cs` | Insert an even-page footer that shows page numbers in Roman numerals via InsertField. | document-workflow | rtf | mcp |
+| 3 | `insert-an-even-page-footer-that-shows-page-numbers-in-roman-numerals-via-insertfield.cs` | Insert an even-page footer that shows page numbers in Roman numerals via InsertField. | document-workflow | rtf | existing_repo |
 | 4 | `configure-header-types-for-first-odd-and-even-pages-by-setting-headerfooter-type.cs` | Configure header types for first, odd, and even pages by setting HeaderFooter.Type. | document-workflow | docx | mcp |
-| 5 | `place-an-absolutely-positioned-image-in-the-header-using-insertimage-with-left-and-top-off.cs` | Place an absolutely positioned image in the header using InsertImage with left and top offsets. | document-workflow | docx | mcp |
+| 5 | `place-an-absolutely-positioned-image-in-the-header-using-insertimage-with-left-and-top-off.cs` | Place an absolutely positioned image in the header using InsertImage with left and top offsets. | document-workflow | docx | existing_repo |
 | 6 | `enable-unique-first-page-header-content-by-setting-differentfirstpageheaderfooter-to-true.cs` | Enable unique first-page header content by setting DifferentFirstPageHeaderFooter to true. | document-workflow | docx | mcp |
 | 7 | `activate-odd-and-even-page-headers-by-setting-section-pagesetup-differentoddandevenpages-p.cs` | Activate odd and even page headers by setting Section.PageSetup.DifferentOddAndEvenPages property. | document-workflow | docx | mcp |
 | 8 | `copy-header-content-from-the-previous-section-into-the-current-section-using-headerfooterc.cs` | Copy header content from the previous section into the current section using HeaderFooterCollection.Add. | document-workflow | docx | mcp |
 | 9 | `remove-all-footers-from-a-section-by-clearing-its-section-footers-collection.cs` | Remove all footers from a section by clearing its Section.Footers collection. | document-workflow | docx | mcp |
-| 10 | `insert-a-footnote-at-the-current-cursor-position-with-custom-text-via-insertfootnote.cs` | Insert a footnote at the current cursor position with custom text via InsertFootnote. | document-workflow | rtf | llm |
-| 11 | `add-an-endnote-with-reference-text-using-insertfootnote-and-specify-endnote-type.cs` | Add an endnote with reference text using InsertFootnote and specify Endnote type. | document-workflow | rtf | mcp |
+| 10 | `insert-a-footnote-at-the-current-cursor-position-with-custom-text-via-insertfootnote.cs` | Insert a footnote at the current cursor position with custom text via InsertFootnote. | document-workflow | rtf | existing_repo |
+| 11 | `add-an-endnote-with-reference-text-using-insertfootnote-and-specify-endnote-type.cs` | Add an endnote with reference text using InsertFootnote and specify Endnote type. | document-workflow | rtf | existing_repo |
 | 12 | `change-footnote-numbering-style-to-lower-case-roman-numerals-by-setting-document-footnoteo.cs` | Change footnote numbering style to lower-case Roman numerals by setting Document.FootnoteOptions.NumberStyle. | document-workflow | doc | existing_repo |
-| 13 | `configure-footnote-layout-to-use-three-columns-by-assigning-document-footnoteoptions-colum.cs` | Configure footnote layout to use three columns by assigning Document.FootnoteOptions.Columns. | document-workflow | doc | existing_repo |
-| 14 | `position-footnotes-at-the-bottom-of-the-page-by-adjusting-footnoteoptions-position.cs` | Position footnotes at the bottom of the page by adjusting FootnoteOptions.Position. | document-workflow | docx | llm |
-| 15 | `update-all-footnote-and-endnote-references-after-modifications-by-calling-document-updatef.cs` | Update all footnote and endnote references after modifications by calling Document.UpdateFields. | document-workflow | doc | llm |
+| 13 | `configure-footnote-layout-to-use-three-columns-by-assigning-document-footnoteoptions-colum.cs` | Configure footnote layout to use three columns by assigning Document.FootnoteOptions.Columns. | document-workflow | doc | llm |
+| 14 | `position-footnotes-at-the-bottom-of-the-page-by-adjusting-footnoteoptions-position.cs` | Position footnotes at the bottom of the page by adjusting FootnoteOptions.Position. | document-workflow | docx | existing_repo |
+| 15 | `update-all-footnote-and-endnote-references-after-modifications-by-calling-document-updatef.cs` | Update all footnote and endnote references after modifications by calling Document.UpdateFields. | document-workflow | doc | existing_repo |
 | 16 | `insert-a-table-of-contents-at-the-document-start-using-inserttableofcontents-with-default.cs` | Insert a table of contents at the document start using InsertTableOfContents with default switches. | document-workflow | doc | mcp |
 | 17 | `customize-toc-entry-levels-to-include-headings-1-3-by-specifying-the-o-1-3-switch.cs` | Customize TOC entry levels to include headings 1-3 by specifying the \o "1-3" switch. | document-workflow | docx | mcp |
 | 18 | `include-only-specific-styles-in-the-toc-by-using-the-t-switch-with-a-comma-separated-list.cs` | Include only specific styles in the TOC by using the \t switch with a comma-separated list. | document-workflow | docx | mcp |
@@ -90,7 +86,7 @@ dotnet run --configuration Release --no-build
 | 20 | `rebuild-toc-page-numbers-by-calling-document-updatepagelayout-method-following-updatefield.cs` | Rebuild TOC page numbers by calling Document.UpdatePageLayout method following UpdateFields. | document-workflow | doc | mcp |
 | 21 | `extract-all-toc-entries-by-iterating-over-document-range-fields-where-field-type-equals-fi.cs` | Extract all TOC entries by iterating over Document.Range.Fields where Field.Type equals FieldType.TOC. | document-workflow | doc | mcp |
 | 22 | `remove-a-specific-toc-field-by-locating-it-and-calling-its-remove-method.cs` | Remove a specific TOC field by locating it and calling its Remove method. | document-workflow | docx | mcp |
-| 23 | `apply-a-custom-paragraph-style-to-toc-entries-by-modifying-the-toc-field-s-style-property.cs` | Apply a custom paragraph style to TOC entries by modifying the TOC field's style property. | document-workflow | docx | existing_repo |
+| 23 | `apply-a-custom-paragraph-style-to-toc-entries-by-modifying-the-toc-field-s-style-property.cs` | Apply a custom paragraph style to TOC entries by modifying the TOC field's style property. | document-workflow | docx | mcp |
 | 24 | `insert-a-bookmark-named-chapterstart-at-the-beginning-of-each-chapter-using-documentbuilde.cs` | Insert a bookmark named "ChapterStart" at the beginning of each chapter using DocumentBuilder. | document-workflow | doc | mcp |
 | 25 | `navigate-to-a-bookmark-called-conclusion-and-insert-a-summary-paragraph-with-documentbuild.cs` | Navigate to a bookmark called "Conclusion" and insert a summary paragraph with DocumentBuilder. | document-workflow | doc | mcp |
 | 26 | `delete-a-bookmark-named-draft-and-its-content-by-using-document-range-bookmarks-remove.cs` | Delete a bookmark named "Draft" and its content by using Document.Range.Bookmarks.Remove. | document-workflow | doc | mcp |
@@ -102,7 +98,7 @@ dotnet run --configuration Release --no-build
 | 32 | `apply-bold-and-underline-formatting-to-header-text-by-configuring-documentbuilder-font-bef.cs` | Apply bold and underline formatting to header text by configuring DocumentBuilder.Font before insertion. | document-workflow | doc | mcp |
 | 33 | `create-an-even-page-footer-that-displays-the-document-title-aligned-left-using-documentbui.cs` | Create an even-page footer that displays the document title aligned left using DocumentBuilder.InsertField. | document-workflow | doc, rtf | mcp |
 | 34 | `copy-an-existing-header-from-one-document-to-another-by-exporting-headerfooter-as-a-node-a.cs` | Copy an existing header from one document to another by exporting HeaderFooter as a node and importing. | document-workflow | doc | mcp |
-| 35 | `remove-all-footnotes-while-preserving-endnotes-by-clearing-document-footnotes-collection.cs` | Remove all footnotes while preserving endnotes by clearing Document.Footnotes collection. | document-workflow | doc | existing_repo |
+| 35 | `remove-all-footnotes-while-preserving-endnotes-by-clearing-document-footnotes-collection.cs` | Remove all footnotes while preserving endnotes by clearing Document.Footnotes collection. | document-workflow | doc | llm |
 | 36 | `create-a-new-word-document-and-insert-a-table-with-five-rows-and-three-columns.cs` | Create a new Word document and insert a table with five rows and three columns. | document-workflow | doc | mcp |
 | 37 | `merge-the-first-two-cells-of-the-second-row-in-the-table-to-form-a-single-cell.cs` | Merge the first two cells of the second row in the table to form a single cell. | document-workflow | docx | mcp |
 | 38 | `split-the-merged-cell-back-into-two-separate-cells-using-the-splitcell-method.cs` | Split the merged cell back into two separate cells using the SplitCell method. | document-workflow | docx | mcp |
@@ -115,36 +111,36 @@ dotnet run --configuration Release --no-build
 | 45 | `create-a-nested-table-inside-a-cell-of-the-outer-table-to-display-detailed-information.cs` | Create a nested table inside a cell of the outer table to display detailed information. | document-workflow | docx | mcp |
 | 46 | `export-the-constructed-table-to-an-html-fragment-while-preserving-cell-borders.cs` | Export the constructed table to an HTML fragment while preserving cell borders. | document-workflow | html | mcp |
 | 47 | `load-an-existing-docx-file-locate-the-first-table-and-change-its-border-thickness.cs` | Load an existing DOCX file, locate the first table, and change its border thickness. | document-workflow | docx, doc | mcp |
-| 48 | `iterate-through-all-tables-in-a-document-and-apply-a-uniform-cell-padding-of-five-points.cs` | Iterate through all tables in a document and apply a uniform cell padding of five points. | document-workflow | doc | mcp |
+| 48 | `iterate-through-all-tables-in-a-document-and-apply-a-uniform-cell-padding-of-five-points.cs` | Iterate through all tables in a document and apply a uniform cell padding of five points. | document-workflow | doc | llm |
 | 49 | `convert-a-datatable-with-numeric-values-into-a-table-and-format-numeric-cells-as-currency.cs` | Convert a DataTable with numeric values into a table and format numeric cells as currency. | document-workflow | docx | mcp |
-| 50 | `add-a-caption-below-the-table-using-a-paragraph-styled-as-caption-and-reference-it.cs` | Add a caption below the table using a paragraph styled as 'Caption' and reference it. | document-workflow | docx | llm |
+| 50 | `add-a-caption-below-the-table-using-a-paragraph-styled-as-caption-and-reference-it.cs` | Add a caption below the table using a paragraph styled as 'Caption' and reference it. | document-workflow | docx | mcp |
 | 51 | `create-a-bulleted-list-with-three-items-and-customize-the-bullet-character-to-a-dash.cs` | Create a bulleted list with three items and customize the bullet character to a dash. | document-workflow | docx | mcp |
 | 52 | `generate-a-numbered-list-with-roman-numeral-formatting-for-the-first-level-items.cs` | Generate a numbered list with Roman numeral formatting for the first level items. | document-workflow | docx | mcp |
-| 53 | `define-a-second-list-level-with-alphabetic-lower-case-numbering-and-increased-indentation.cs` | Define a second list level with alphabetic lower-case numbering and increased indentation. | document-workflow | docx | existing_repo |
+| 53 | `define-a-second-list-level-with-alphabetic-lower-case-numbering-and-increased-indentation.cs` | Define a second list level with alphabetic lower-case numbering and increased indentation. | document-workflow | docx | mcp |
 | 54 | `restart-list-numbering-at-1-for-a-new-section-after-a-heading-paragraph.cs` | Restart list numbering at 1 for a new section after a heading paragraph. | document-workflow | docx | mcp |
 | 55 | `limit-list-nesting-to-nine-levels-and-verify-that-deeper-levels-default-to-plain-text.cs` | Limit list nesting to nine levels and verify that deeper levels default to plain text. | document-workflow | docx | mcp |
 | 56 | `apply-the-listformat-removenumbers-method-to-convert-a-numbered-list-back-to-plain-paragra.cs` | Apply the ListFormat.RemoveNumbers method to convert a numbered list back to plain paragraphs. | document-workflow | docx | mcp |
 | 57 | `insert-a-multi-level-list-where-each-level-uses-a-different-list-style-defined-in-the-docu.cs` | Insert a multi-level list where each level uses a different list style defined in the document. | document-workflow | doc | llm |
-| 58 | `set-the-document-s-ooxmlcompliance-property-to-ooxmlcompliance-strict-to-preserve-advanced.cs` | Set the document's OoxmlCompliance property to OoxmlCompliance.Strict to preserve advanced list settings. | document-workflow | doc, xml | mcp |
+| 58 | `set-the-document-s-ooxmlcompliance-property-to-ooxmlcompliance-strict-to-preserve-advanced.cs` | Set the document's OoxmlCompliance property to OoxmlCompliance.Strict to preserve advanced list settings. | document-workflow | doc, xml | existing_repo |
 | 59 | `create-a-paragraph-write-a-long-sentence-and-count-the-number-of-lines-it-occupies.cs` | Create a paragraph, write a long sentence, and count the number of lines it occupies. | document-workflow | docx | existing_repo |
 | 60 | `apply-the-built-in-heading-2-style-to-a-paragraph-and-adjust-its-spacing-before-and-after.cs` | Apply the built-in 'Heading 2' style to a paragraph and adjust its spacing before and after. | document-workflow | docx | mcp |
 | 61 | `set-paragraph-alignment-to-justified-and-enable-word-wrap-for-better-layout-on-narrow-page.cs` | Set paragraph alignment to justified and enable word wrap for better layout on narrow pages. | document-workflow | docx | mcp |
 | 62 | `insert-a-paragraph-containing-a-hyperlink-and-configure-it-to-open-in-a-new-browser-tab.cs` | Insert a paragraph containing a hyperlink and configure it to open in a new browser tab. | document-workflow | docx | mcp |
 | 63 | `apply-a-custom-paragraph-style-that-includes-a-left-indent-of-0-5-inches-and-line-spacing.cs` | Apply a custom paragraph style that includes a left indent of 0.5 inches and line spacing of 1.5. | document-workflow | docx | mcp |
-| 64 | `add-a-paragraph-with-a-drop-cap-character-and-specify-the-number-of-lines-it-spans.cs` | Add a paragraph with a drop cap character and specify the number of lines it spans. | document-workflow | docx | existing_repo |
+| 64 | `add-a-paragraph-with-a-drop-cap-character-and-specify-the-number-of-lines-it-spans.cs` | Add a paragraph with a drop cap character and specify the number of lines it spans. | document-workflow | docx | mcp |
 | 65 | `apply-a-custom-style-to-a-paragraph-that-includes-a-border-background-color-and-indentatio.cs` | Apply a custom style to a paragraph that includes a border, background color, and indentation. | document-workflow | docx | mcp |
-| 66 | `create-a-paragraph-with-a-custom-tab-stop-at-2-inches-and-insert-text-that-aligns-to-it.cs` | Create a paragraph with a custom tab stop at 2 inches and insert text that aligns to it. | document-workflow | docx | mcp |
-| 67 | `insert-a-table-of-contents-paragraph-that-automatically-reflects-headings-and-list-items.cs` | Insert a table of contents paragraph that automatically reflects headings and list items. | document-workflow | docx | mcp |
+| 66 | `create-a-paragraph-with-a-custom-tab-stop-at-2-inches-and-insert-text-that-aligns-to-it.cs` | Create a paragraph with a custom tab stop at 2 inches and insert text that aligns to it. | document-workflow | docx | llm |
+| 67 | `insert-a-table-of-contents-paragraph-that-automatically-reflects-headings-and-list-items.cs` | Insert a table of contents paragraph that automatically reflects headings and list items. | document-workflow | docx | llm |
 | 68 | `apply-a-conditional-formatting-rule-to-table-cells-that-highlights-values-above-a-threshol.cs` | Apply a conditional formatting rule to table cells that highlights values above a threshold. | document-workflow | docx | mcp |
 | 69 | `add-a-paragraph-with-a-background-shading-of-light-yellow-to-highlight-important-informati.cs` | Add a paragraph with a background shading of light yellow to highlight important information. | document-workflow | docx | mcp |
 | 70 | `insert-a-paragraph-that-contains-a-field-for-page-number-and-format-it-as-roman-numerals.cs` | Insert a paragraph that contains a field for page number and format it as Roman numerals. | document-workflow | docx | llm |
 | 71 | `apply-a-built-in-quote-style-to-a-paragraph-and-increase-its-left-indent-for-emphasis.cs` | Apply a built-in 'Quote' style to a paragraph and increase its left indent for emphasis. | document-workflow | docx | mcp |
 | 72 | `add-a-paragraph-with-a-custom-field-that-displays-the-document-s-author-name-dynamically.cs` | Add a paragraph with a custom field that displays the document's author name dynamically. | document-workflow | doc | mcp |
-| 73 | `insert-a-paragraph-with-a-custom-line-height-of-150-percent-and-verify-visual-appearance.cs` | Insert a paragraph with a custom line height of 150 percent and verify visual appearance. | document-workflow | docx | llm |
+| 73 | `insert-a-paragraph-with-a-custom-line-height-of-150-percent-and-verify-visual-appearance.cs` | Insert a paragraph with a custom line height of 150 percent and verify visual appearance. | document-workflow | docx | mcp |
 | 74 | `add-a-paragraph-with-a-hanging-indent-of-0-25-inches-for-citation-formatting.cs` | Add a paragraph with a hanging indent of 0.25 inches for citation formatting. | document-workflow | docx | mcp |
-| 75 | `create-a-text-box-set-its-internal-margins-and-insert-a-paragraph-with-bold-text-inside.cs` | Create a text box, set its internal margins, and insert a paragraph with bold text inside. | document-workflow | docx | llm |
+| 75 | `create-a-text-box-set-its-internal-margins-and-insert-a-paragraph-with-bold-text-inside.cs` | Create a text box, set its internal margins, and insert a paragraph with bold text inside. | document-workflow | docx | mcp |
 | 76 | `link-two-text-boxes-sequentially-so-that-text-flows-from-the-first-to-the-second-automatic.cs` | Link two text boxes sequentially so that text flows from the first to the second automatically. | document-workflow | docx | existing_repo |
-| 77 | `check-whether-a-given-text-box-is-the-head-of-a-linked-sequence-using-its-ishead-property.cs` | Check whether a given text box is the head of a linked sequence using its IsHead property. | document-workflow | docx | existing_repo |
+| 77 | `check-whether-a-given-text-box-is-the-head-of-a-linked-sequence-using-its-ishead-property.cs` | Check whether a given text box is the head of a linked sequence using its IsHead property. | document-workflow | docx | llm |
 | 78 | `break-the-forward-link-of-a-middle-text-box-to-stop-text-flow-to-the-subsequent-box.cs` | Break the forward link of a middle text box to stop text flow to the subsequent box. | document-workflow | docx | existing_repo |
 | 79 | `retrieve-the-parent-shape-of-a-text-box-and-change-its-rotation-angle-to-45-degrees.cs` | Retrieve the parent Shape of a text box and change its rotation angle to 45 degrees. | document-workflow | docx | mcp |
 | 80 | `add-a-text-box-to-a-document-header-and-ensure-it-appears-on-every-page-of-the-section.cs` | Add a text box to a document header and ensure it appears on every page of the section. | document-workflow | doc | mcp |
@@ -157,50 +153,64 @@ dotnet run --configuration Release --no-build
 | 87 | `apply-a-gradient-fill-to-a-text-box-and-ensure-the-gradient-renders-correctly-in-pdf.cs` | Apply a gradient fill to a text box and ensure the gradient renders correctly in PDF. | document-workflow | pdf | existing_repo |
 | 88 | `insert-a-text-box-then-set-its-anchor-position-to-be-relative-to-the-page-margin.cs` | Insert a text box, then set its anchor position to be relative to the page margin. | document-workflow | docx | mcp |
 | 89 | `batch-process-a-set-of-documents-to-replace-all-tables-with-a-predefined-style-and-margin.cs` | Batch process a set of documents to replace all tables with a predefined style and margin settings. | document-workflow | doc | mcp |
-| 90 | `iterate-through-each-document-in-a-collection-and-convert-all-numbered-lists-to-bulleted-l.cs` | Iterate through each document in a collection and convert all numbered lists to bulleted lists. | document-workflow | doc | mcp |
-| 91 | `create-a-macro-like-routine-that-inserts-a-table-a-paragraph-and-a-linked-text-box-in-one.cs` | Create a macro-like routine that inserts a table, a paragraph, and a linked text box in one operation. | document-workflow | docx | mcp |
+| 90 | `iterate-through-each-document-in-a-collection-and-convert-all-numbered-lists-to-bulleted-l.cs` | Iterate through each document in a collection and convert all numbered lists to bulleted lists. | document-workflow | doc | llm |
+| 91 | `create-a-macro-like-routine-that-inserts-a-table-a-paragraph-and-a-linked-text-box-in-one.cs` | Create a macro-like routine that inserts a table, a paragraph, and a linked text box in one operation. | document-workflow | docx | llm |
 | 92 | `generate-a-report-document-by-merging-data-rows-into-a-table-and-adding-a-summary-paragrap.cs` | Generate a report document by merging data rows into a table and adding a summary paragraph. | document-workflow | doc | mcp |
-| 93 | `apply-a-custom-list-template-to-all-document-lists-and-enforce-a-maximum-of-nine-nesting-l.cs` | Apply a custom list template to all document lists and enforce a maximum of nine nesting levels. | document-workflow | doc | llm |
+| 93 | `apply-a-custom-list-template-to-all-document-lists-and-enforce-a-maximum-of-nine-nesting-l.cs` | Apply a custom list template to all document lists and enforce a maximum of nine nesting levels. | document-workflow | doc | mcp |
 | 94 | `export-a-document-containing-tables-and-text-boxes-to-an-xps-file-while-preserving-layout.cs` | Export a document containing tables and text boxes to an XPS file while preserving layout. | document-workflow | doc, xps | mcp |
 | 95 | `insert-a-paragraph-with-a-field-code-that-displays-the-current-date-in-mmmm-dd-yyyy-format.cs` | Insert a paragraph with a field code that displays the current date in 'MMMM dd, yyyy' format. | document-workflow | docx | mcp |
 | 96 | `set-the-document-s-compatibility-mode-to-word2010-before-adding-complex-list-structures.cs` | Set the document's compatibility mode to Word2010 before adding complex list structures. | document-workflow | doc | existing_repo |
 | 97 | `set-the-document-s-compatibility-level-to-word2016-before-adding-complex-table-structures.cs` | Set the document's compatibility level to Word2016 before adding complex table structures. | document-workflow | doc | existing_repo |
 | 98 | `set-the-document-s-default-font-to-calibri-size-11-and-apply-it-to-all-new-paragraphs.cs` | Set the document's default font to Calibri, size 11, and apply it to all new paragraphs. | document-workflow | doc | mcp |
-| 99 | `set-the-document-s-language-property-to-french-and-adjust-paragraph-direction-for-right-to.cs` | Set the document's language property to French and adjust paragraph direction for right-to-left scripts. | document-workflow | doc | existing_repo |
+| 99 | `set-the-document-s-language-property-to-french-and-adjust-paragraph-direction-for-right-to.cs` | Set the document's language property to French and adjust paragraph direction for right-to-left scripts. | document-workflow | doc | llm |
 | 100 | `apply-a-built-in-title-style-to-the-first-paragraph-and-ensure-it-appears-in-the-document.cs` | Apply a built-in 'Title' style to the first paragraph and ensure it appears in the document outline. | document-workflow | doc | mcp |
-| 101 | `add-a-comment-to-a-paragraph-and-programmatically-retrieve-the-comment-text-for-review.cs` | Add a comment to a paragraph and programmatically retrieve the comment text for review. | document-workflow | docx | llm |
-| 102 | `insert-a-paragraph-with-a-custom-field-that-calculates-the-sum-of-numbers-in-a-table-colum.cs` | Insert a paragraph with a custom field that calculates the sum of numbers in a table column. | document-workflow | docx | mcp |
+| 101 | `add-a-comment-to-a-paragraph-and-programmatically-retrieve-the-comment-text-for-review.cs` | Add a comment to a paragraph and programmatically retrieve the comment text for review. | document-workflow | docx | existing_repo |
+| 102 | `insert-a-paragraph-with-a-custom-field-that-calculates-the-sum-of-numbers-in-a-table-colum.cs` | Insert a paragraph with a custom field that calculates the sum of numbers in a table column. | document-workflow | docx | llm |
 | 103 | `generate-a-document-that-contains-a-table-a-list-and-a-paragraph-then-save-as-odt-format.cs` | Generate a document that contains a table, a list, and a paragraph, then save as ODT format. | document-workflow | doc | mcp |
-| 104 | `iterate-through-all-shapes-in-a-document-and-change-any-text-box-fill-color-to-light-gray.cs` | Iterate through all shapes in a document and change any text box fill color to light gray. | document-workflow | doc | llm |
+| 104 | `iterate-through-all-shapes-in-a-document-and-change-any-text-box-fill-color-to-light-gray.cs` | Iterate through all shapes in a document and change any text box fill color to light gray. | document-workflow | doc | mcp |
 | 105 | `add-a-page-break-before-each-new-heading-paragraph-and-ensure-the-heading-style-remains-ap.cs` | Add a page break before each new heading paragraph and ensure the heading style remains applied. | document-workflow | docx | mcp |
 | 106 | `create-a-table-with-alternating-row-shading-using-a-custom-table-style-defined-programmati.cs` | Create a table with alternating row shading using a custom table style defined programmatically. | document-workflow | docx | llm |
-| 107 | `apply-a-table-style-that-includes-a-top-border-bottom-border-and-no-side-borders.cs` | Apply a table style that includes a top border, bottom border, and no side borders. | document-workflow | docx | llm |
+| 107 | `apply-a-table-style-that-includes-a-top-border-bottom-border-and-no-side-borders.cs` | Apply a table style that includes a top border, bottom border, and no side borders. | document-workflow | docx | mcp |
 | 108 | `apply-a-table-style-that-includes-alternating-column-shading-for-better-readability.cs` | Apply a table style that includes alternating column shading for better readability. | document-workflow | docx | mcp |
 | 109 | `apply-a-custom-paragraph-style-that-includes-both-left-and-right-borders-and-a-light-gray.cs` | Apply a custom paragraph style that includes both left and right borders and a light gray background. | document-workflow | docx | mcp |
-| 110 | `create-a-numbered-list-where-each-level-uses-a-different-numbering-scheme-such-as-decimal.cs` | Create a numbered list where each level uses a different numbering scheme, such as decimal and lower-roman. | document-workflow | docx | mcp |
+| 110 | `create-a-numbered-list-where-each-level-uses-a-different-numbering-scheme-such-as-decimal.cs` | Create a numbered list where each level uses a different numbering scheme, such as decimal and lower-roman. | document-workflow | docx | existing_repo |
 
 ## Common failure patterns seen during generation and how they were corrected
 
-### Missing System.Drawing dependency
+### Missing API in selected version
 
-- Symptom: The compiler reports that Bitmap or Graphics types cannot be found in the System.Drawing namespace.
-- Root cause: The code attempts to create images using System.Drawing classes, which are not referenced in the project and are unnecessary for Aspose.Words image insertion.
-- Preferred fix: Replace System.Drawing usage with a Base64-encoded image stream and call DocumentBuilder.InsertImage using the stream.
-- Prevention: Always load images from a MemoryStream or file path and avoid any System.Drawing types in examples.
+- Symptom: Compilation fails because properties like PageSetup.DifferentOddAndEvenPages or HeaderFooter.Footers are not found.
+- Root cause: The code references members that were introduced in later Aspose.Words releases or were never part of the library.
+- Preferred fix: Use the properties that exist in version 26.11.0 (e.g., PageSetup.DifferentFirstPageHeaderFooter) and, when needed, manipulate headers/footers through the HeadersFooters collection.
+- Prevention: Consult the official API reference for the exact version before using a property or method.
 
-### Incorrect or outdated Aspose.Words API usage
+### Incorrect namespace or type name
 
-- Symptom: Compilation fails because enums, properties, or methods such as HeaderFooter.Type, DifferentOddAndEvenPages, FootnoteType, or Document.Footnotes are not defined.
-- Root cause: The snippet references API members that were renamed, moved, or removed in version 26.10.0.
-- Preferred fix: Use the current enum names HeaderFooterType.HeaderFirst, HeaderFooterType.HeaderPrimary, HeaderFooterType.HeaderEven, and include Aspose.Words.Notes for FootnoteType and NumberStyle. Set odd/even header flags via Section.PageSetup.OddAndEvenPagesHeaderFooter or reflectively set DifferentOddAndEvenPages when unavailable.
-- Prevention: Consult the official Aspose.Words 26.10.0 documentation for the exact member names before coding.
+- Symptom: Compiler reports CS0234 errors for namespaces such as Aspose.Words.Building or types like FootnoteType that cannot be resolved.
+- Root cause: The snippet invents or misspells namespaces and enum names that are not defined in the package.
+- Preferred fix: Replace invented names with the correct ones, e.g., use Aspose.Words.Notes.FootnoteType and Aspose.Words.Notes.NumberStyle.
+- Prevention: Rely exclusively on types listed in the package documentation and import the proper namespaces.
 
-### Invalid method signatures or collection handling
+### Missing System.Drawing reference
 
-- Symptom: The compiler reports that methods like HeaderFooterCollection.Add overloads or Shape.Position do not exist, and that collections such as Section.Footers are missing.
-- Root cause: The code calls non-existent overloads or accesses properties that were never part of the API.
-- Preferred fix: Clone a HeaderFooter node and add it with HeadersFooters.Add, set shape positioning using WrapType, RelativeHorizontalPosition, and RelativeVerticalPosition, and remove footers by enumerating HeadersFooters and deleting items that match footer types.
-- Prevention: Use only the overloads and properties listed in the Aspose.Words API reference and manipulate collections through supported LINQ queries.
+- Symptom: CS1069 errors indicate that Bitmap and Graphics cannot be found in System.Drawing.
+- Root cause: The code attempts to use System.Drawing types without adding a reference to System.Drawing.Common, which is not required for Aspose.Words image insertion.
+- Preferred fix: Load images from a byte array or stream and call DocumentBuilder.InsertImage without using Bitmap or Graphics.
+- Prevention: Avoid System.Drawing entirely; use Base64-encoded image data or file streams for image insertion.
+
+### Invalid overload usage
+
+- Symptom: CS1501 errors show that InsertImage is called with an unsupported number of arguments, and Shape.Position members are missing.
+- Root cause: The snippet calls overloads that do not exist in the current API and accesses properties that belong to the Shape class in a different context.
+- Preferred fix: Use the InsertImage overload that accepts a stream plus positioning parameters (RelativeHorizontalPosition, RelativeVerticalPosition, left, top, width, height, WrapType).
+- Prevention: Check the method signatures in the official documentation and pass only the supported arguments.
+
+### Incorrect collection manipulation
+
+- Symptom: CS1061 errors arise when accessing Section.Footers, which does not exist, or when attempting to remove footers via a non-existent collection.
+- Root cause: Headers and footers are stored together in Section.HeadersFooters, not in separate Footer collections.
+- Preferred fix: Iterate over Section.HeadersFooters and remove items whose HeaderFooterType is a footer (FooterPrimary, FooterFirst, FooterEven).
+- Prevention: Use the HeadersFooters collection for all header/footer operations as documented.
 
 ## See Also
 
@@ -213,5 +223,5 @@ dotnet run --configuration Release --no-build
 
 ## Notes for maintainers
 
-- This category is 100% publish-ready for the 26.10.0 run.
-- Update examples promptly when a new Aspose.Words version changes enum names or adds new properties.
+- This category is 100% publish-ready for the 26.11.0 run.
+- Periodically verify that the code examples compile against the latest Aspose.Words 26.11.0 package to catch API deprecations early.

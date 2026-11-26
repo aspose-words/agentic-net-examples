@@ -9,33 +9,33 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // ---------- Section 1 ----------
-        // Add a primary header to the first section.
+        // Add a header to the first section.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Writeln("Header for Section 1");
-
-        // Add some body text to the first section.
+        builder.Writeln("Header of Section 1");
         builder.MoveToDocumentEnd();
-        builder.Writeln("Body of Section 1.");
 
-        // Insert a section break to start Section 2.
+        // Add body text to the first section.
+        builder.Writeln("This is the first section.");
+
+        // Insert a new section.
         builder.InsertBreak(BreakType.SectionBreakNewPage);
+        // Add body text to the second section.
+        builder.Writeln("This is the second section.");
 
-        // ---------- Section 2 ----------
-        // Copy the header from the previous (first) section into the current (second) section.
-        HeaderFooter sourceHeader = doc.Sections[0].HeadersFooters[HeaderFooterType.HeaderPrimary];
-        HeaderFooter clonedHeader = (HeaderFooter)sourceHeader.Clone(true);
-        // Add the cloned header to the current section's header collection.
-        doc.Sections[1].HeadersFooters.Add(clonedHeader);
+        // Copy the header from the previous section (section 0) to the current section (section 1).
+        Section previousSection = doc.Sections[0];
+        Section currentSection = doc.Sections[1];
 
-        // Add some body text to the second section.
-        builder.Writeln("Body of Section 2.");
+        HeaderFooter previousHeader = previousSection.HeadersFooters[HeaderFooterType.HeaderPrimary];
+        if (previousHeader != null)
+        {
+            // Clone the header and add it to the current section's header/footer collection.
+            HeaderFooter clonedHeader = (HeaderFooter)previousHeader.Clone(true);
+            currentSection.HeadersFooters.Add(clonedHeader);
+        }
 
         // Save the document.
         string outputPath = "Output.docx";
         doc.Save(outputPath);
-
-        // Verify that the file was saved and can be reopened.
-        Document reopened = new Document(outputPath);
     }
 }

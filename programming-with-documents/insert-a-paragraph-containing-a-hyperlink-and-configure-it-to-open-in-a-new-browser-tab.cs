@@ -10,21 +10,16 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a paragraph with a hyperlink.
-        builder.Writeln(); // Ensure we are on a new paragraph.
-        builder.InsertHyperlink("Visit Aspose.Words", "https://www.aspose.com", false);
-
-        // Retrieve the inserted hyperlink field and set it to open in a new browser tab.
-        // The target "_blank" instructs browsers to open the link in a new tab/window.
-        FieldHyperlink hyperlink = (FieldHyperlink)doc.Range.Fields[doc.Range.Fields.Count - 1];
+        // Insert a hyperlink field and cast it to FieldHyperlink to set the target.
+        FieldHyperlink hyperlink = (FieldHyperlink)builder.InsertHyperlink("Visit Aspose", "https://www.aspose.com", false);
+        // Configure the hyperlink to open in a new browser tab.
         hyperlink.Target = "_blank";
-        hyperlink.Update();
 
-        // Save the document to disk.
+        // Add a line break after the hyperlink.
+        builder.Writeln();
+
+        // Save the document.
         string outputPath = "Hyperlink.docx";
         doc.Save(outputPath);
-
-        // Verify that the file was saved (optional, no output required).
-        // The program ends here.
     }
 }

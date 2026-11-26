@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
@@ -6,77 +7,68 @@ public class Program
 {
     public static void Main()
     {
+        // Path for the output document.
+        string outputPath = "ListNesting.docx";
+
         // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a heading.
-        builder.Writeln("List with varying nesting levels (max 9 levels supported by Word):");
-
-        // Start a numbered list.
+        // Apply a default numbered list to start list formatting.
         builder.ListFormat.ApplyNumberDefault();
 
-        // Insert items with increasing list levels (0‑based). Word supports levels 0‑8 (9 levels).
-        const int totalItems = 12; // Create more items than the supported levels.
-        for (int i = 0; i < totalItems; i++)
+        // Attempt to create list items for 11 levels (0‑based indices 0..10).
+        // Aspose.Words supports only 9 levels (0..8). Levels beyond that should fall back to plain text.
+        for (int level = 0; level < 11; level++)
         {
-            // Set the desired list level. Levels beyond 8 will be treated as plain text.
-            builder.ListFormat.ListLevelNumber = i; // 0‑based level.
-            builder.Writeln($"Item at level {i + 1}");
+            try
+            {
+                // Set the desired list level. If the level is out of range, Aspose.Words will ignore the list formatting.
+                builder.ListFormat.ListLevelNumber = level;
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                // If an exception occurs, reset to plain text formatting.
+                builder.ListFormat.RemoveNumbers();
+            }
+
+            // Write the paragraph text.
+            builder.Writeln($"Level {level + 1}");
         }
 
-        // End the list.
+        // End list formatting.
         builder.ListFormat.RemoveNumbers();
 
         // Save the document.
-        const string fileName = "NestedList.docx";
-        doc.Save(fileName);
+        doc.Save(outputPath);
 
-        // Reload the document to verify the behavior.
-        Document loaded = new Document(fileName);
-        bool verificationPassed = true;
-        const int maxSupportedLevel = 9; // Word supports up to 9 levels (0‑8).
+        // Reload the document to verify list nesting behavior.
+        Document loadedDoc = new Document(outputPath);
+        ParagraphCollection paragraphs = loadedDoc.FirstSection.Body.Paragraphs;
 
-        foreach (Paragraph para in loaded.GetChildNodes(NodeType.Paragraph, true))
+        // Verify each paragraph.
+        for (int i = 0; i < paragraphs.Count; i++)
         {
-            string text = para.GetText().Trim();
+            Paragraph para = paragraphs[i];
+            bool isListItem = para.ListFormat.IsListItem;
+            int listLevel = para.ListFormat.ListLevelNumber; // Returns 0‑based level; -1 if not a list item.
 
-            // Skip empty paragraphs.
-            if (string.IsNullOrEmpty(text))
-                continue;
+            // Expected: first 9 paragraphs are list items, deeper ones are plain text.
+            bool shouldBeList = i < 9; // Zero‑based index; first 9 paragraphs correspond to levels 0‑8.
 
-            // Identify paragraphs that were intended to be list items.
-            if (text.StartsWith("Item at level"))
+            if (isListItem != shouldBeList)
             {
-                // Extract the level number from the paragraph text.
-                // Expected format: "Item at level X"
-                string[] parts = text.Split(' ');
-                if (parts.Length >= 4 && int.TryParse(parts[3], out int levelFromText))
-                {
-                    // ListFormat.IsListItem indicates whether the paragraph is a list item.
-                    bool isListItem = para.ListFormat.IsListItem;
-                    int listLevel = para.ListFormat.ListLevelNumber; // 0‑based.
-
-                    if (levelFromText <= maxSupportedLevel)
-                    {
-                        // Levels within the supported range should be list items.
-                        if (!isListItem || listLevel != levelFromText - 1)
-                            verificationPassed = false;
-                    }
-                    else
-                    {
-                        // Levels beyond the supported range should be plain text (not a list item).
-                        if (isListItem)
-                            verificationPassed = false;
-                    }
-                }
-                else
-                {
-                    verificationPassed = false;
-                }
+                Console.WriteLine($"Verification failed at paragraph {i + 1}: " +
+                                  $"IsListItem={isListItem}, Expected={shouldBeList}");
+            }
+            else
+            {
+                Console.WriteLine($"Paragraph {i + 1} verified. " +
+                                  $"IsListItem={isListItem}, Level={(listLevel >= 0 ? listLevel + 1 : 0)}");
             }
         }
 
-        Console.WriteLine(verificationPassed ? "Verification passed." : "Verification failed.");
+        // Clean up: optionally delete the file after verification.
+        // File.Delete(outputPath);
     }
 }

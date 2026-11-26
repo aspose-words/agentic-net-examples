@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
@@ -8,62 +7,64 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a list with more than nine nesting levels.
-        builder.Writeln("Start of document");
-        builder.ListFormat.ApplyNumberDefault();
-        for (int i = 1; i <= 12; i++)
+        // Insert sample list items with varying nesting levels (including deeper than 9).
+        for (int i = 0; i < 12; i++)
         {
-            builder.Writeln($"Level {i}");
-            if (i < 12)
-                builder.ListFormat.ListIndent();
+            // Start a numbered list using the default list template.
+            builder.ListFormat.ApplyNumberDefault();
+
+            // Set the desired list level (0‑based). Levels 0‑10 correspond to nesting levels 1‑11.
+            builder.ListFormat.ListLevelNumber = i; // Intentionally exceed the max of 8 (level 9).
+
+            // Write the list item.
+            builder.Writeln($"List item at intended level {i + 1}");
         }
-        // Close the list.
+
+        // End the list formatting for subsequent paragraphs.
         builder.ListFormat.RemoveNumbers();
 
-        // Apply a custom list template to all lists in the document.
-        foreach (List list in doc.Lists)
-        {
-            // Define a simple custom bullet for the first level.
-            ListLevel level = list.ListLevels[0];
-            // Set bullet style via NumberFormat; omit NumberStyle to avoid missing enum.
-            level.Font.Name = "Arial";
-            level.Font.Size = 10;
-            level.Font.Color = Color.Blue;
-            level.NumberFormat = "•";
+        // Create a custom list template (Numbered list with custom formatting).
+        List customList = doc.Lists.Add(ListTemplate.NumberDefault);
 
-            // Ensure remaining levels inherit the same style.
-            for (int lvl = 1; lvl < list.ListLevels.Count; lvl++)
-            {
-                ListLevel src = list.ListLevels[0];
-                ListLevel dst = list.ListLevels[lvl];
-                dst.Font.Name = src.Font.Name;
-                dst.Font.Size = src.Font.Size;
-                dst.Font.Color = src.Font.Color;
-                dst.NumberFormat = src.NumberFormat;
-            }
+        // Example: customize the first three levels.
+        for (int level = 0; level < 3; level++)
+        {
+            ListLevel listLevel = customList.ListLevels[level];
+            listLevel.NumberFormat = $"{level + 1}.";
+            listLevel.NumberStyle = NumberStyle.Arabic;
+            listLevel.Alignment = ListLevelAlignment.Left;
+            listLevel.Font.Size = 12;
+            listLevel.Font.Name = "Arial";
         }
 
-        // Enforce a maximum of nine nesting levels.
+        // Apply the custom list to all existing list items and enforce a maximum nesting level of 9.
         foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
         {
-            if (para.IsListItem && para.ListFormat.ListLevelNumber > 9)
+            if (para.IsListItem)
             {
-                para.ListFormat.ListLevelNumber = 9;
+                // Assign the custom list.
+                para.ListFormat.List = customList;
+
+                // Enforce maximum nesting level of 9 (zero‑based index 8).
+                if (para.ListFormat.ListLevelNumber > 8)
+                {
+                    para.ListFormat.ListLevelNumber = 8;
+                }
             }
         }
 
         // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CustomListTemplate.docx");
         doc.Save(outputPath);
 
-        // Verify the file was saved.
+        // Verify the file was created.
         if (File.Exists(outputPath))
         {
-            Console.WriteLine($"Document saved successfully to '{outputPath}'.");
+            Console.WriteLine($"Document saved successfully to: {outputPath}");
         }
         else
         {

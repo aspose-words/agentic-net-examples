@@ -1,5 +1,6 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 
 public class Program
 {
@@ -9,26 +10,26 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Enable different first page header/footer.
-        builder.PageSetup.DifferentFirstPageHeaderFooter = true;
+        // Enable different first page header/footer for the first section.
+        Section section = doc.FirstSection;
+        section.PageSetup.DifferentFirstPageHeaderFooter = true;
 
-        // Add content to the first‑page header.
+        // Add content to the first page header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderFirst);
         builder.Writeln("First Page Header");
 
-        // Add content to the primary header (used for all other pages).
+        // Add content to the primary (default) header for the rest of the pages.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
         builder.Writeln("Primary Header");
 
-        // Add enough body text to generate multiple pages.
+        // Add some body text to generate multiple pages.
         builder.MoveToDocumentEnd();
-        for (int i = 0; i < 30; i++)
-        {
-            builder.Writeln($"Paragraph {i + 1}");
-        }
+        builder.Writeln("This is page 1.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("This is page 2.");
 
-        // Save the document.
-        const string outputPath = "FirstPageHeader.docx";
+        // Save the document to disk.
+        string outputPath = "FirstPageHeader.docx";
         doc.Save(outputPath);
     }
 }

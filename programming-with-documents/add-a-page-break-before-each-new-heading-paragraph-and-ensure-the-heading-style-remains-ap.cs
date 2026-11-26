@@ -1,57 +1,48 @@
 using System;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add sample content: normal paragraph, heading, normal, heading, etc.
-        builder.Writeln("This is an introductory paragraph.");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 1");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Content of chapter 1.");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Section 1.1");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Details of section 1.1.");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 2");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Content of chapter 2.");
+        // Add some introductory text.
+        builder.Writeln("This is the introductory paragraph before any headings.");
 
-        // Insert a page break before each heading paragraph.
-        // Get all paragraph nodes.
-        NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
+        // Define headings to add.
+        string[] headings = { "Chapter 1: Getting Started", "Chapter 2: Advanced Topics", "Chapter 3: Conclusion" };
 
-        foreach (Paragraph para in paragraphs)
+        foreach (string heading in headings)
         {
-            StyleIdentifier styleId = para.ParagraphFormat.StyleIdentifier;
-            if (styleId == StyleIdentifier.Heading1 ||
-                styleId == StyleIdentifier.Heading2 ||
-                styleId == StyleIdentifier.Heading3 ||
-                styleId == StyleIdentifier.Heading4 ||
-                styleId == StyleIdentifier.Heading5 ||
-                styleId == StyleIdentifier.Heading6 ||
-                styleId == StyleIdentifier.Heading7 ||
-                styleId == StyleIdentifier.Heading8 ||
-                styleId == StyleIdentifier.Heading9)
-            {
-                // Move the builder to the start of the heading paragraph and insert a page break.
-                DocumentBuilder headingBuilder = new DocumentBuilder(doc);
-                headingBuilder.MoveTo(para);
-                headingBuilder.InsertBreak(BreakType.PageBreak);
-                // The heading style remains unchanged.
-            }
+            // Insert a page break before the heading.
+            builder.InsertBreak(BreakType.PageBreak);
+
+            // Apply the Heading 1 style.
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+
+            // Write the heading text.
+            builder.Writeln(heading);
+
+            // Reset style to Normal for subsequent content (optional).
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
         }
 
-        // Save the document.
+        // Save the document to disk.
         string outputPath = "Output.docx";
         doc.Save(outputPath);
+
+        // Simple verification that the file was created.
+        if (File.Exists(outputPath))
+        {
+            Console.WriteLine($"Document saved successfully to '{outputPath}'.");
+        }
+        else
+        {
+            Console.WriteLine("Failed to save the document.");
+        }
     }
 }

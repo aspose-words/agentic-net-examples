@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -11,40 +10,45 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a table with 3 columns and 5 rows.
+        // Start a table with 3 columns.
         Table table = builder.StartTable();
 
-        // Define header row.
-        for (int col = 0; col < 3; col++)
+        // Add header cells.
+        for (int i = 0; i < 3; i++)
         {
             builder.InsertCell();
-            builder.Write($"Header {col + 1}");
+            builder.Write($"Header {i + 1}");
         }
         builder.EndRow();
 
-        // Fill table with sample data.
-        for (int row = 0; row < 4; row++)
+        // Sample data to populate the table.
+        string[,] data = new string[,]
         {
-            for (int col = 0; col < 3; col++)
+            { "Short", "Medium length", "A very long piece of text that should expand the column" },
+            { "Another short", "Another medium length text", "Another long text that will affect column width" },
+            { "Tiny", "Some text", "Longer text again" },
+            { "Small", "Medium", "Very very long text that will definitely cause the column to expand" }
+        };
+
+        // Fill the table with data rows.
+        for (int r = 0; r < data.GetLength(0); r++)
+        {
+            for (int c = 0; c < data.GetLength(1); c++)
             {
                 builder.InsertCell();
-                // Vary content length to demonstrate width adjustment.
-                string content = $"Row {row + 1}, Column {col + 1}";
-                if (col == 1) content += " - longer text example";
-                builder.Write(content);
+                builder.Write(data[r, c]);
             }
             builder.EndRow();
         }
 
-        // End the table.
+        // End the table construction.
         builder.EndTable();
 
         // Adjust column widths proportionally to fit the content.
-        // AutoFitToContents resizes each column based on its longest cell content.
         table.AutoFit(AutoFitBehavior.AutoFitToContents);
 
-        // Save the document to a file.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "AdjustedTable.docx");
+        // Save the document to disk.
+        string outputPath = "AdjustedTable.docx";
         doc.Save(outputPath);
     }
 }

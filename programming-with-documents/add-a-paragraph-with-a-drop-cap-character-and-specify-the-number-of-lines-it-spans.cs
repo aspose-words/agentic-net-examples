@@ -2,36 +2,35 @@ using System;
 using System.IO;
 using Aspose.Words;
 
-namespace DropCapExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Write a paragraph. The first character will become the drop cap.
+        builder.Writeln("A quick brown fox jumps over the lazy dog.");
+
+        // Retrieve the paragraph we just added.
+        Paragraph paragraph = (Paragraph)doc.GetChild(NodeType.Paragraph, 0, true);
+
+        // Enable drop cap. The default number of lines is 3, which satisfies the requirement.
+        paragraph.ParagraphFormat.DropCapPosition = DropCapPosition.Normal;
+
+        // Save the document to disk.
+        string outputPath = "DropCapExample.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (File.Exists(outputPath))
         {
-            // Create a new blank document.
-            Document doc = new Document();
-
-            // Attach a DocumentBuilder to the document.
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Set the number of lines the drop cap should span.
-            // This makes the next paragraph start with a large capital letter.
-            builder.ParagraphFormat.LinesToDrop = 4;
-
-            // Write the drop cap character.
-            builder.Writeln("H");
-
-            // Reset LinesToDrop to 0 so subsequent text behaves normally.
-            builder.ParagraphFormat.LinesToDrop = 0;
-
-            // Write the remaining text that will wrap around the drop cap.
-            builder.Writeln("ello world! This paragraph demonstrates a drop cap character spanning four lines.");
-
-            // Define the output path (in the same folder as the executable).
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DropCapExample.docx");
-
-            // Save the document.
-            doc.Save(outputPath);
+            Console.WriteLine($"Document saved successfully to '{outputPath}'.");
+        }
+        else
+        {
+            Console.WriteLine("Failed to save the document.");
         }
     }
 }
