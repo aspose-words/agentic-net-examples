@@ -7,44 +7,62 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with three sections having different page orientations.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        // Create a sample source document that contains both portrait and landscape sections.
+        const string sourcePath = "Source.docx";
+        CreateSampleDocument(sourcePath);
 
-        // Section 1 – Portrait (default orientation).
-        builder.Writeln("Section 1 - Portrait");
+        // Load the source document.
+        Document sourceDoc = new Document(sourcePath);
 
-        // Section 2 – Landscape.
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
-        builder.PageSetup.Orientation = Orientation.Landscape;
-        builder.Writeln("Section 2 - Landscape");
+        // Ensure the layout is up‑to‑date so that PageCount is accurate.
+        sourceDoc.UpdatePageLayout();
 
-        // Section 3 – Portrait again.
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
-        builder.PageSetup.Orientation = Orientation.Portrait;
-        builder.Writeln("Section 3 - Portrait again");
+        // Prepare the output folder.
+        const string outputFolder = "Output";
+        Directory.CreateDirectory(outputFolder);
 
-        // Split the document by sections, preserving formatting and orientation.
-        for (int i = 0; i < sourceDoc.Sections.Count; i++)
+        // Total number of pages in the source document.
+        int totalPages = sourceDoc.PageCount;
+
+        // Split the document page by page.
+        // Aspose.Words uses zero‑based page indexes for ExtractPages.
+        for (int pageIndex = 0; pageIndex < totalPages; pageIndex++)
         {
-            Section originalSection = sourceDoc.Sections[i];
+            // Extract a single page while preserving its formatting and orientation.
+            Document pageDoc = sourceDoc.ExtractPages(pageIndex, 1);
 
-            // Create a new empty document to hold the single section.
-            Document splitDoc = new Document();
-            splitDoc.RemoveAllChildren(); // Remove the default empty section.
-
-            // Import the section from the source document into the new document.
-            NodeImporter importer = new NodeImporter(sourceDoc, splitDoc, ImportFormatMode.KeepSourceFormatting);
-            Section importedSection = (Section)importer.ImportNode(originalSection, true);
-            splitDoc.AppendChild(importedSection);
-
-            // Save the split part as a DOCX file.
-            string fileName = $"Section_{i + 1}.docx";
-            splitDoc.Save(fileName, SaveFormat.Docx);
+            // Save the extracted page as a separate DOCX file.
+            string outPath = Path.Combine(outputFolder, $"Page_{pageIndex + 1}.docx");
+            pageDoc.Save(outPath, SaveFormat.Docx);
 
             // Verify that the file was created.
-            if (!File.Exists(fileName))
-                throw new Exception($"Failed to create split file: {fileName}");
+            if (!File.Exists(outPath))
+                throw new InvalidOperationException($"Failed to create split file: {outPath}");
         }
+    }
+
+    // Generates a sample document containing portrait and landscape sections.
+    private static void CreateSampleDocument(string path)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // First section – portrait orientation.
+        builder.PageSetup.Orientation = Orientation.Portrait;
+        builder.Writeln("Section 1 – Portrait");
+        builder.Writeln("Content on page 1.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("Content on page 2.");
+
+        // Second section – landscape orientation.
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
+        builder.PageSetup.Orientation = Orientation.Landscape;
+        builder.Writeln("Section 2 – Landscape");
+        builder.Writeln("Content on page 3.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("Content on page 4.");
+
+        // Save the source document.
+        doc.Save(path, SaveFormat.Docx);
     }
 }

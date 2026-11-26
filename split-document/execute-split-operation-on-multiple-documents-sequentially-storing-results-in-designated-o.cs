@@ -1,87 +1,70 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.BuildingBlocks; // Used for DocumentBuilder
 
 public class Program
 {
     public static void Main()
     {
-        // Base directories for input and output.
+        // Define input and output directories.
         string baseDir = Directory.GetCurrentDirectory();
         string inputDir = Path.Combine(baseDir, "InputDocs");
         string outputDir = Path.Combine(baseDir, "OutputDocs");
 
-        // Ensure a clean environment.
-        if (Directory.Exists(inputDir)) Directory.Delete(inputDir, true);
-        if (Directory.Exists(outputDir)) Directory.Delete(outputDir, true);
         Directory.CreateDirectory(inputDir);
         Directory.CreateDirectory(outputDir);
 
         // Create sample source documents.
-        int sourceDocCount = 2;
-        for (int i = 1; i <= sourceDocCount; i++)
+        CreateSampleDocument(Path.Combine(inputDir, "Doc1.docx"), 3);
+        CreateSampleDocument(Path.Combine(inputDir, "Doc2.docx"), 2);
+
+        // Process each document sequentially.
+        foreach (string sourcePath in Directory.GetFiles(inputDir, "*.docx"))
         {
-            Document srcDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(srcDoc);
-
-            // Section 1
-            builder.Writeln($"Document {i} - Section 1");
-            builder.InsertBreak(BreakType.SectionBreakNewPage);
-
-            // Section 2
-            builder.Writeln($"Document {i} - Section 2");
-
-            string srcPath = Path.Combine(inputDir, $"Doc{i}.docx");
-            srcDoc.Save(srcPath);
-        }
-
-        // Process each source document: split by sections.
-        string[] sourceFiles = Directory.GetFiles(inputDir, "*.docx");
-        foreach (string srcFilePath in sourceFiles)
-        {
-            // Load source document.
-            Document sourceDoc = new Document(srcFilePath);
-            string srcFileName = Path.GetFileNameWithoutExtension(srcFilePath);
-            string docOutputDir = Path.Combine(outputDir, srcFileName);
+            Document sourceDoc = new Document(sourcePath);
+            string docName = Path.GetFileNameWithoutExtension(sourcePath);
+            string docOutputDir = Path.Combine(outputDir, docName);
             Directory.CreateDirectory(docOutputDir);
 
-            int sectionIndex = 1;
-            foreach (Section srcSection in sourceDoc.Sections)
+            int sectionCount = sourceDoc.Sections.Count;
+            for (int i = 0; i < sectionCount; i++)
             {
-                // Create a new empty document.
+                Section section = sourceDoc.Sections[i];
                 Document splitDoc = new Document();
-                splitDoc.RemoveAllChildren(); // Remove the default empty section.
 
-                // Import the source section into the new document.
+                // Import the section into the new document.
                 NodeImporter importer = new NodeImporter(sourceDoc, splitDoc, ImportFormatMode.KeepSourceFormatting);
-                Section importedSection = (Section)importer.ImportNode(srcSection, true);
+                Section importedSection = (Section)importer.ImportNode(section, true);
                 splitDoc.AppendChild(importedSection);
 
-                // Save the split document.
-                string outPath = Path.Combine(docOutputDir, $"Section{sectionIndex}.docx");
-                splitDoc.Save(outPath);
-                sectionIndex++;
-            }
-        }
+                string splitPath = Path.Combine(docOutputDir, $"Section_{i + 1}.docx");
+                splitDoc.Save(splitPath);
 
-        // Validation: ensure each expected split file exists.
-        foreach (string srcFilePath in sourceFiles)
+                // Validate that the split file was created.
+                if (!File.Exists(splitPath))
+                    throw new InvalidOperationException($"Failed to create split file: {splitPath}");
+            }
+
+            // Verify the expected number of split files.
+            string[] splitFiles = Directory.GetFiles(docOutputDir, "Section_*.docx");
+            if (splitFiles.Length != sectionCount)
+                throw new InvalidOperationException($"Expected {sectionCount} split files for {docName}, but found {splitFiles.Length}.");
+        }
+    }
+
+    // Helper method to create a sample document with a given number of sections.
+    private static void CreateSampleDocument(string path, int sections)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        for (int i = 0; i < sections; i++)
         {
-            string srcFileName = Path.GetFileNameWithoutExtension(srcFilePath);
-            string docOutputDir = Path.Combine(outputDir, srcFileName);
-            // Expecting two sections per source document.
-            for (int s = 1; s <= 2; s++)
-            {
-                string expectedPath = Path.Combine(docOutputDir, $"Section{s}.docx");
-                if (!File.Exists(expectedPath))
-                {
-                    throw new FileNotFoundException($"Expected split file not found: {expectedPath}");
-                }
-            }
+            builder.Writeln($"This is content of Section {i + 1} in document {Path.GetFileName(path)}.");
+            if (i < sections - 1)
+                builder.InsertBreak(BreakType.SectionBreakNewPage);
         }
 
-        // Indicate successful completion (no interactive prompts).
-        Console.WriteLine("Document splitting completed successfully.");
+        doc.Save(path);
     }
 }

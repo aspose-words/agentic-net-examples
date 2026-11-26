@@ -1,78 +1,75 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
-public class SplitDocumentToPdf
+public class SplitDocumentExample
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        // Prepare output directory
+        string outputDir = "SplitOutput";
         Directory.CreateDirectory(outputDir);
 
-        // Create a sample document with multiple sections, each having its own header/footer.
-        string sourcePath = Path.Combine(Directory.GetCurrentDirectory(), "Sample.docx");
-        CreateSampleDocument(sourcePath);
+        // Create a sample source document with two sections, each having its own header/footer
+        string sourcePath = "SampleDocument.docx";
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        // Load the source document.
-        Document sourceDoc = new Document(sourcePath);
+        // Section 1
+        builder.PageSetup.DifferentFirstPageHeaderFooter = true;
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        builder.Writeln("Header - Section 1");
+        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+        builder.Writeln("Footer - Section 1");
+        builder.MoveToDocumentStart();
+        builder.Writeln("Section 1 - Paragraph 1");
+        builder.Writeln("Section 1 - Paragraph 2");
 
-        // Split the document by sections and save each part as a PDF.
-        int partIndex = 1;
-        foreach (Section section in sourceDoc.Sections)
+        // Start Section 2
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
+        builder.Writeln("Section 2 - Paragraph 1");
+        builder.Writeln("Section 2 - Paragraph 2");
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        builder.Writeln("Header - Section 2");
+        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+        builder.Writeln("Footer - Section 2");
+
+        // Save the source document
+        sourceDoc.Save(sourcePath);
+
+        // Load the document (could reuse sourceDoc, but loading demonstrates typical workflow)
+        Document doc = new Document(sourcePath);
+
+        // Split the document by sections and save each part as a PDF
+        for (int i = 0; i < doc.Sections.Count; i++)
         {
-            // Create a new empty document and clear its default content.
-            Document partDoc = new Document();
-            partDoc.RemoveAllChildren(); // Remove the automatically created empty section.
+            Section section = doc.Sections[i];
 
-            // Import the current section into the new document, preserving formatting.
-            NodeImporter importer = new NodeImporter(sourceDoc, partDoc, ImportFormatMode.KeepSourceFormatting);
+            // Create a new empty document for the split part
+            Document splitDoc = new Document();
+
+            // Import the section into the new document, preserving formatting
+            NodeImporter importer = new NodeImporter(doc, splitDoc, ImportFormatMode.KeepSourceFormatting);
             Section importedSection = (Section)importer.ImportNode(section, true);
-            partDoc.AppendChild(importedSection);
 
-            // Save the split part as PDF.
-            string pdfPath = Path.Combine(outputDir, $"Part_{partIndex}.pdf");
-            partDoc.Save(pdfPath);
+            // Append the imported section to the new document
+            splitDoc.AppendChild(importedSection);
 
-            // Verify the PDF was created.
-            if (!File.Exists(pdfPath))
-                throw new InvalidOperationException($"Failed to create PDF: {pdfPath}");
-
-            partIndex++;
+            // Save the split part as PDF
+            string pdfPath = Path.Combine(outputDir, $"Section_{i + 1}.pdf");
+            splitDoc.Save(pdfPath, SaveFormat.Pdf);
         }
 
-        // Ensure at least one PDF was generated.
-        if (partIndex == 1)
-            throw new InvalidOperationException("No sections were found to split.");
-    }
-
-    // Generates a sample DOCX with three sections, each having distinct headers, footers, and body content.
-    private static void CreateSampleDocument(string filePath)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        for (int i = 1; i <= 3; i++)
+        // Validate that the expected PDF files were created
+        for (int i = 0; i < doc.Sections.Count; i++)
         {
-            // Header.
-            builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-            builder.Writeln($"Header for Section {i}");
-
-            // Footer.
-            builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-            builder.Writeln($"Footer for Section {i}");
-
-            // Body content.
-            builder.MoveToDocumentEnd();
-            builder.Writeln($"This is the content of Section {i}.");
-            builder.Writeln($"More text in Section {i} to ensure layout is preserved.");
-
-            // Insert a section break after each section except the last.
-            if (i < 3)
-                builder.InsertBreak(BreakType.SectionBreakNewPage);
+            string expectedPath = Path.Combine(outputDir, $"Section_{i + 1}.pdf");
+            if (!File.Exists(expectedPath))
+                throw new FileNotFoundException($"Expected split PDF not found: {expectedPath}");
         }
 
-        // Save the sample document.
-        doc.Save(filePath);
+        // Optional: indicate success (no interactive input required)
+        Console.WriteLine("Document split completed successfully.");
     }
 }

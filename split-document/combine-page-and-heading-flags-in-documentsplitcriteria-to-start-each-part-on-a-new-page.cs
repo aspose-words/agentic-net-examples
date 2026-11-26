@@ -3,57 +3,54 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class SplitDocumentExample
+public class Program
 {
     public static void Main()
     {
-        // Create a sample document with two chapters separated by a page break.
+        // Prepare output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // Create a sample document with headings and a page break.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Chapter 1 (Heading 1)
+        // First heading and paragraph.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 1");
+        builder.Writeln("Heading 1");
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Content of chapter 1.");
+        builder.Writeln("Paragraph under heading 1.");
 
-        // Insert a manual page break.
+        // Insert a page break.
         builder.InsertBreak(BreakType.PageBreak);
 
-        // Chapter 2 (Heading 1)
+        // Second heading and paragraph.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 2");
+        builder.Writeln("Heading 2");
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Content of chapter 2.");
+        builder.Writeln("Paragraph under heading 2.");
 
-        // Ensure the output folder exists.
-        string outputDir = "Output";
-        Directory.CreateDirectory(outputDir);
+        // Save the source document.
+        string sourcePath = Path.Combine(outputDir, "Sample.docx");
+        doc.Save(sourcePath);
 
-        // Configure HTML save options:
-        // - Split on both page breaks and heading paragraphs.
-        // - Use heading level 1 as the split point.
-        // - Do not export headers/footers (they are not needed for this demo).
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Html)
-        {
-            DocumentSplitCriteria = DocumentSplitCriteria.PageBreak | DocumentSplitCriteria.HeadingParagraph,
-            DocumentSplitHeadingLevel = 1,
-            ExportHeadersFootersMode = ExportHeadersFootersMode.None
-        };
+        // Set up HTML save options with combined split criteria (page break + heading paragraph).
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Html);
+        saveOptions.DocumentSplitCriteria = DocumentSplitCriteria.PageBreak | DocumentSplitCriteria.HeadingParagraph;
+        saveOptions.DocumentSplitHeadingLevel = 1; // Split at heading level 1.
+        saveOptions.ExportPageMargins = true;
+        saveOptions.ExportImagesAsBase64 = true;
 
-        // Save the document; Aspose.Words will generate multiple HTML files.
-        string baseFilePath = Path.Combine(outputDir, "SampleDocument.html");
-        doc.Save(baseFilePath, saveOptions);
+        // Save the document, which will generate split HTML files.
+        string baseHtmlPath = Path.Combine(outputDir, "SplitDocument.html");
+        doc.Save(baseHtmlPath, saveOptions);
 
-        // Validate that at least one split file (the base file) was created.
-        // Additional split parts, if any, will have an index suffix (e.g., SampleDocument_1.html).
-        string[] allHtmlFiles = Directory.GetFiles(outputDir, "SampleDocument*.html");
-        if (allHtmlFiles.Length == 0)
-        {
-            throw new InvalidOperationException("No HTML files were generated.");
-        }
+        // Validate that split files were created (at least two parts expected).
+        string[] splitFiles = Directory.GetFiles(outputDir, "SplitDocument*.html");
+        if (splitFiles.Length < 2)
+            throw new Exception("Expected split HTML files were not created.");
 
-        // Optionally, list the generated files (uncomment for debugging).
-        // foreach (var file in allHtmlFiles) Console.WriteLine(file);
+        // Output the count of generated files.
+        Console.WriteLine($"Split operation completed. Generated {splitFiles.Length} HTML files in '{outputDir}'.");
     }
 }

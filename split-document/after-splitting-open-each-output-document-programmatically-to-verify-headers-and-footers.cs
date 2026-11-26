@@ -1,87 +1,75 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
 
-public class SplitDocumentExample
+public class Program
 {
     public static void Main()
     {
-        // Prepare sample data for headers and footers.
-        var headerTexts = new List<string> { "Header 1", "Header 2" };
-        var footerTexts = new List<string> { "Footer 1", "Footer 2" };
+        // Create a sample document with two sections, each having distinct header/footer text.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        // Create a source document with two sections, each having its own header and footer.
-        var sourceDoc = new Document();
-        var builder = new DocumentBuilder(sourceDoc);
+        // Section 1
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        builder.Writeln("Header Section 1");
+        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+        builder.Writeln("Footer Section 1");
+        builder.MoveToDocumentEnd();
+        builder.Writeln("Content of Section 1");
 
-        for (int i = 0; i < headerTexts.Count; i++)
-        {
-            // Start a new section after the first one.
-            if (i > 0)
-                builder.InsertBreak(BreakType.SectionBreakNewPage);
+        // Section 2
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        builder.Writeln("Header Section 2");
+        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+        builder.Writeln("Footer Section 2");
+        builder.MoveToDocumentEnd();
+        builder.Writeln("Content of Section 2");
 
-            // Add header.
-            builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-            builder.Writeln(headerTexts[i]);
-
-            // Add footer.
-            builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-            builder.Writeln(footerTexts[i]);
-
-            // Add some body content.
-            builder.MoveToDocumentEnd();
-            builder.Writeln($"This is the body of section {i + 1}.");
-        }
-
-        // Save the source document.
-        string sourcePath = Path.Combine(Directory.GetCurrentDirectory(), "Source.docx");
+        // Save the source document (optional, just for reference).
+        string sourcePath = "Source.docx";
         sourceDoc.Save(sourcePath);
 
-        // Load the source document for splitting.
-        var loadedSource = new Document(sourcePath);
-        var splitFiles = new List<string>();
+        // Expected header/footer texts for validation after splitting.
+        var expectedHeadersFooters = new List<(string Header, string Footer)>
+        {
+            ("Header Section 1", "Footer Section 1"),
+            ("Header Section 2", "Footer Section 2")
+        };
 
         // Split the document by sections.
-        for (int i = 0; i < loadedSource.Sections.Count; i++)
+        int index = 1;
+        foreach (Section srcSection in sourceDoc.Sections)
         {
-            var section = loadedSource.Sections[i];
-
             // Create a new empty document.
-            var splitDoc = new Document();
-            splitDoc.RemoveAllChildren();
+            Document splitDoc = new Document();
+            splitDoc.RemoveAllChildren(); // Remove the default empty section.
 
-            // Import the section into the new document.
-            var importer = new NodeImporter(loadedSource, splitDoc, ImportFormatMode.KeepSourceFormatting);
-            var importedSection = (Section)importer.ImportNode(section, true);
+            // Import the current section into the new document.
+            NodeImporter importer = new NodeImporter(sourceDoc, splitDoc, ImportFormatMode.KeepSourceFormatting);
+            Section importedSection = (Section)importer.ImportNode(srcSection, true);
             splitDoc.AppendChild(importedSection);
 
             // Save the split document.
-            string splitPath = Path.Combine(Directory.GetCurrentDirectory(), $"Section_{i + 1}.docx");
+            string splitPath = $"Split_{index}.docx";
             splitDoc.Save(splitPath);
-            splitFiles.Add(splitPath);
+
+            // Reopen the saved document to verify header and footer.
+            Document loadedDoc = new Document(splitPath);
+            string headerText = loadedDoc.FirstSection.HeadersFooters[HeaderFooterType.HeaderPrimary].GetText();
+            string footerText = loadedDoc.FirstSection.HeadersFooters[HeaderFooterType.FooterPrimary].GetText();
+
+            var expected = expectedHeadersFooters[index - 1];
+            if (!headerText.Contains(expected.Header) || !footerText.Contains(expected.Footer))
+            {
+                throw new Exception($"Header/footer validation failed for {splitPath}");
+            }
+
+            index++;
         }
 
-        // Verify headers and footers in each split document.
-        for (int i = 0; i < splitFiles.Count; i++)
-        {
-            var doc = new Document(splitFiles[i]);
-            var sec = doc.Sections[0];
-
-            // Retrieve header text.
-            string header = sec.HeadersFooters[HeaderFooterType.HeaderPrimary]?.GetText() ?? string.Empty;
-            // Retrieve footer text.
-            string footer = sec.HeadersFooters[HeaderFooterType.FooterPrimary]?.GetText() ?? string.Empty;
-
-            if (!header.Contains(headerTexts[i]))
-                throw new Exception($"Header validation failed for {splitFiles[i]}. Expected to contain \"{headerTexts[i]}\", but got \"{header}\".");
-
-            if (!footer.Contains(footerTexts[i]))
-                throw new Exception($"Footer validation failed for {splitFiles[i]}. Expected to contain \"{footerTexts[i]}\", but got \"{footer}\".");
-        }
-
-        // All validations passed.
+        // If execution reaches this point, all validations passed.
         Console.WriteLine("Document split and header/footer verification completed successfully.");
     }
 }

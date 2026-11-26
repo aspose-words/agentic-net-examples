@@ -2,51 +2,67 @@ using System;
 using System.IO;
 using Aspose.Words;
 
-public class Program
+public class MergeSplitDocuments
 {
     public static void Main()
     {
-        // Define output folder and ensure it exists
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputFolder);
+        // Create a sample source document with three sections.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        // Paths for the split documents and the merged result
-        string doc1Path = Path.Combine(outputFolder, "Part1.docx");
-        string doc2Path = Path.Combine(outputFolder, "Part2.docx");
-        string mergedPath = Path.Combine(outputFolder, "Merged.docx");
+        builder.Writeln("Content of Section 1");
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
+        builder.Writeln("Content of Section 2");
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
+        builder.Writeln("Content of Section 3");
 
-        // Create first sample document
-        Document doc1 = new Document();
-        DocumentBuilder builder1 = new DocumentBuilder(doc1);
-        builder1.Writeln("This is the content of the first split document.");
-        doc1.Save(doc1Path);
+        // Save the source document (optional, for reference).
+        string sourcePath = "Source.docx";
+        sourceDoc.Save(sourcePath);
 
-        // Create second sample document
-        Document doc2 = new Document();
-        DocumentBuilder builder2 = new DocumentBuilder(doc2);
-        builder2.Writeln("This is the content of the second split document.");
-        doc2.Save(doc2Path);
+        // Split the source document into separate documents per section.
+        string[] partPaths = new string[sourceDoc.Sections.Count];
+        for (int i = 0; i < sourceDoc.Sections.Count; i++)
+        {
+            // Create a new empty document.
+            Document partDoc = new Document();
 
-        // Load the split documents
-        Document part1 = new Document(doc1Path);
-        Document part2 = new Document(doc2Path);
+            // Import the current section into the new document.
+            NodeImporter importer = new NodeImporter(sourceDoc, partDoc, ImportFormatMode.KeepSourceFormatting);
+            Section importedSection = (Section)importer.ImportNode(sourceDoc.Sections[i], true);
+            partDoc.AppendChild(importedSection);
 
-        // Append the second document to the first one, preserving source formatting
-        part1.AppendDocument(part2, ImportFormatMode.KeepSourceFormatting);
+            // Save the split part.
+            string partPath = $"Part{i + 1}.docx";
+            partDoc.Save(partPath);
+            partPaths[i] = partPath;
+        }
 
-        // Save the merged document
-        part1.Save(mergedPath);
+        // Verify that split parts were created.
+        foreach (string path in partPaths)
+        {
+            if (!File.Exists(path))
+                throw new FileNotFoundException($"Expected split part not found: {path}");
+        }
 
-        // Validation: ensure merged file exists and contains both pieces of text
-        if (!File.Exists(mergedPath))
-            throw new FileNotFoundException("Merged document was not created.", mergedPath);
+        // Load selected split documents (e.g., Part1 and Part3) and merge them.
+        string part1Path = partPaths[0];
+        string part3Path = partPaths[2];
 
-        Document mergedDoc = new Document(mergedPath);
-        string mergedText = mergedDoc.GetText();
+        Document mergedDoc = new Document(part1Path);
+        Document part3Doc = new Document(part3Path);
+        mergedDoc.AppendDocument(part3Doc, ImportFormatMode.KeepSourceFormatting);
 
-        if (!mergedText.Contains("first split document") || !mergedText.Contains("second split document"))
-            throw new InvalidOperationException("Merged document does not contain expected content.");
+        // Save the combined document.
+        string combinedPath = "Combined.docx";
+        mergedDoc.Save(combinedPath);
 
-        // Program completed successfully
+        // Validate that the combined document exists.
+        if (!File.Exists(combinedPath))
+            throw new FileNotFoundException($"Combined document was not created: {combinedPath}");
+
+        // Optional cleanup (commented out).
+        // File.Delete(sourcePath);
+        // foreach (string path in partPaths) File.Delete(path);
     }
 }

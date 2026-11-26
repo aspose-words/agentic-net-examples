@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 
 public class Program
@@ -15,74 +14,61 @@ public class Program
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Create sample DOCX files if none exist.
-        CreateSampleDocuments(inputFolder);
+        // Create sample DOCX files (2 documents, each with 3 pages).
+        CreateSampleDocument(Path.Combine(inputFolder, "Sample1.docx"));
+        CreateSampleDocument(Path.Combine(inputFolder, "Sample2.docx"));
 
         // Process each DOCX file: split by pages and save each page as a PDF.
-        var docxFiles = Directory.GetFiles(inputFolder, "*.docx");
-        int totalExpectedPdfs = 0;
-
-        foreach (var docxPath in docxFiles)
+        foreach (string docxPath in Directory.GetFiles(inputFolder, "*.docx"))
         {
-            Document doc = new Document(docxPath);
-            int pageCount = doc.PageCount;
-            totalExpectedPdfs += pageCount;
+            Document sourceDoc = new Document(docxPath);
+            int pageCount = sourceDoc.PageCount;
 
+            // Page indexes for ExtractPages are zero‑based, so iterate from 0.
             for (int pageIndex = 0; pageIndex < pageCount; pageIndex++)
             {
-                // Extract a single page (zero‑based index).
-                Document pageDoc = doc.ExtractPages(pageIndex, 1);
+                // Extract a single page as a new document.
+                Document pageDoc = sourceDoc.ExtractPages(pageIndex, 1);
 
-                // Build output PDF file name.
+                // Build output PDF file name (page numbers are 1‑based for readability).
                 string pdfFileName = $"{Path.GetFileNameWithoutExtension(docxPath)}_Page{pageIndex + 1}.pdf";
                 string pdfPath = Path.Combine(outputFolder, pdfFileName);
 
                 // Save the extracted page as PDF.
-                pageDoc.Save(pdfPath, SaveFormat.Pdf);
+                pageDoc.Save(pdfPath);
             }
         }
 
-        // Validate that the expected number of PDF files were created.
+        // Validation: ensure that a PDF was created for each page of each source document.
+        int expectedPdfCount = 0;
+        foreach (string docxPath in Directory.GetFiles(inputFolder, "*.docx"))
+        {
+            Document doc = new Document(docxPath);
+            expectedPdfCount += doc.PageCount;
+        }
+
         int actualPdfCount = Directory.GetFiles(outputFolder, "*.pdf").Length;
-        if (actualPdfCount != totalExpectedPdfs)
+        if (actualPdfCount != expectedPdfCount)
         {
             throw new InvalidOperationException(
-                $"Expected {totalExpectedPdfs} PDF files, but found {actualPdfCount}.");
+                $"PDF split validation failed. Expected {expectedPdfCount} PDFs, but found {actualPdfCount}.");
         }
-
-        // Program completed successfully.
     }
 
-    // Helper method to create a couple of sample multi‑page DOCX documents.
-    private static void CreateSampleDocuments(string folder)
+    // Helper method to create a sample multi‑page DOCX document.
+    private static void CreateSampleDocument(string filePath)
     {
-        // Document 1: 3 pages of repeated text.
-        string doc1Path = Path.Combine(folder, "Sample1.docx");
-        if (!File.Exists(doc1Path))
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        for (int i = 1; i <= 3; i++)
         {
-            Document doc1 = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc1);
-            for (int i = 0; i < 150; i++) // Enough lines to span multiple pages.
-            {
-                builder.Writeln($"Sample document 1 - line {i + 1}");
-            }
-            doc1.Save(doc1Path);
+            builder.Writeln($"This is page {i} of the sample document.");
+            // Insert a page break after each page except the last.
+            if (i < 3)
+                builder.InsertBreak(BreakType.PageBreak);
         }
 
-        // Document 2: 2 pages with headings.
-        string doc2Path = Path.Combine(folder, "Sample2.docx");
-        if (!File.Exists(doc2Path))
-        {
-            Document doc2 = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc2);
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-            builder.Writeln("Heading for Document 2");
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-            for (int i = 0; i < 100; i++)
-            {
-                builder.Writeln($"Sample document 2 - paragraph {i + 1}");
-            }
-            doc2.Save(doc2Path);
-        }
+        doc.Save(filePath);
     }
 }

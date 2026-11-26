@@ -1,64 +1,73 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with three sections.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a temporary folder for the sample source document.
+        string tempFolder = Path.Combine(Path.GetTempPath(), "AsposeSplitSample");
+        Directory.CreateDirectory(tempFolder);
 
-        for (int i = 1; i <= 3; i++)
-        {
-            // Start a new section for each iteration (except the first, which already exists).
-            if (i > 1)
-                builder.InsertBreak(BreakType.SectionBreakNewPage);
+        // Path for the source document.
+        string sourcePath = Path.Combine(tempFolder, "SourceDocument.docx");
 
-            // Add some content that will be visible in the split output.
-            builder.Writeln($"This is content of Section {i}.");
-        }
+        // Build a sample document with three sections.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        // Simulate a network share by creating a folder under the current directory.
-        string networkSharePath = Path.Combine(Environment.CurrentDirectory, "NetworkShare");
+        // Section 1
+        builder.Writeln("Section 1 - Content");
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
+
+        // Section 2
+        builder.Writeln("Section 2 - Content");
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
+
+        // Section 3
+        builder.Writeln("Section 3 - Content");
+
+        // Save the source document.
+        sourceDoc.Save(sourcePath);
+
+        // Load the document (simulating a real load scenario).
+        Document loadedDoc = new Document(sourcePath);
+
+        // Define a network share path (simulated with a local folder).
+        string networkSharePath = Path.Combine(Path.GetTempPath(), "NetworkShare");
         Directory.CreateDirectory(networkSharePath);
 
-        // Split the document by its sections.
-        int sectionIndex = 1;
-        foreach (Section section in doc.Sections)
+        // Split the document by sections.
+        for (int i = 0; i < loadedDoc.Sections.Count; i++)
         {
-            // Create a new empty document that will hold the single section.
+            // Create a new empty document.
             Document splitDoc = new Document();
-
-            // Import the section from the source document into the new document.
-            NodeImporter importer = new NodeImporter(doc, splitDoc, ImportFormatMode.KeepSourceFormatting);
-            Section importedSection = (Section)importer.ImportNode(section, true);
-
-            // Remove the default empty section that a new Document contains.
+            // Remove the default empty section.
             splitDoc.RemoveAllChildren();
 
-            // Append the imported section as the sole section of the split document.
+            // Import the current section from the source document.
+            NodeImporter importer = new NodeImporter(loadedDoc, splitDoc, ImportFormatMode.KeepSourceFormatting);
+            Section importedSection = (Section)importer.ImportNode(loadedDoc.Sections[i], true);
+
+            // Append the imported section to the new document.
             splitDoc.AppendChild(importedSection);
 
-            // Save each split part as an individual HTML file.
-            string fileName = $"Section_{sectionIndex}.html";
-            string filePath = Path.Combine(networkSharePath, fileName);
-            splitDoc.Save(filePath, SaveFormat.Html);
-            sectionIndex++;
+            // Save the split part.
+            string partPath = Path.Combine(networkSharePath, $"Section_{i + 1}.docx");
+            splitDoc.Save(partPath);
         }
 
-        // Validate that the expected number of split files were created.
-        string[] splitFiles = Directory.GetFiles(networkSharePath, "*.html");
-        if (splitFiles.Length != doc.Sections.Count)
-            throw new InvalidOperationException(
-                $"Expected {doc.Sections.Count} split files, but found {splitFiles.Length}.");
-
-        // Output the paths of the generated files (no interactive prompts).
-        foreach (string file in splitFiles)
+        // Validate that each expected file exists.
+        for (int i = 0; i < loadedDoc.Sections.Count; i++)
         {
-            Console.WriteLine($"Created split file: {file}");
+            string partPath = Path.Combine(networkSharePath, $"Section_{i + 1}.docx");
+            if (!File.Exists(partPath))
+                throw new InvalidOperationException($"Expected split file not found: {partPath}");
         }
+
+        // Optional cleanup (commented out).
+        // Directory.Delete(tempFolder, true);
+        // Directory.Delete(networkSharePath, true);
     }
 }
