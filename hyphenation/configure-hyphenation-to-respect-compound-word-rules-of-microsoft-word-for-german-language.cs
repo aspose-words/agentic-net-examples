@@ -7,39 +7,38 @@ public class Program
 {
     public static void Main()
     {
-        // Create a blank document.
+        // Create a minimal German hyphenation dictionary containing a compound word.
+        const string dictionaryPath = "hyph_de_DE.dic";
+        File.WriteAllText(dictionaryPath,
+            "UTF-8\n" +
+            "Donaudampfschifffahrtsgesellschaft=Do-nau-dampf-schiff-fahrts-gesell-schaft\n");
+
+        // Register the German dictionary for hyphenation.
+        Aspose.Words.Hyphenation.RegisterDictionary("de-DE", dictionaryPath);
+
+        // Create a new document and set up a narrow page width to force line wrapping.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set the text locale to German (Switzerland) so that Word uses German hyphenation rules.
-        builder.Font.LocaleId = new CultureInfo("de-CH").LCID;
+        // Set the document locale to German (de-DE) so that hyphenation uses the German rules.
+        builder.Font.LocaleId = new CultureInfo("de-DE").LCID;
 
-        // Write a long German compound word that will need hyphenation.
-        builder.Writeln("Donaudampfschifffahrtsgesellschaftskapitän");
+        // Configure page layout.
+        Section section = doc.FirstSection;
+        section.PageSetup.PageWidth = 200;   // points
+        section.PageSetup.LeftMargin = 20;
+        section.PageSetup.RightMargin = 20;
 
-        // Narrow the page width to force line wrapping and hyphenation.
-        doc.FirstSection.PageSetup.PageWidth = 200;
-        doc.FirstSection.PageSetup.LeftMargin = 20;
-        doc.FirstSection.PageSetup.RightMargin = 20;
+        // Add German text containing the compound word that can be hyphenated.
+        builder.Writeln(
+            "Die Donaudampfschifffahrtsgesellschaft ist ein berühmtes Beispiel für ein langes deutsches Kompositum.");
 
-        // Enable automatic hyphenation for the document.
-        doc.HyphenationOptions.AutoHyphenation = true;
+        // Save the document as PDF to visualize hyphenation.
+        const string outputPath = "GermanHyphenated.pdf";
+        doc.Save(outputPath, SaveFormat.Pdf);
 
-        // Create a minimal German hyphenation dictionary file.
-        const string dictPath = "hyph_de_CH.dic";
-        File.WriteAllText(dictPath,
-            "UTF-8\n" +
-            "Donaudampfschifffahrtsgesellschaftskapitän=Do-nau-dampf-schiff-fahrts-ge-sell-schafts-ka-pit-än");
-
-        // Register the dictionary for the \"de-CH\" language code.
-        Hyphenation.RegisterDictionary("de-CH", dictPath);
-
-        // Save the document as PDF to observe hyphenation.
-        const string outPath = "HyphenatedGerman.pdf";
-        doc.Save(outPath, SaveFormat.Pdf);
-
-        // Verify that the PDF was created.
-        if (!File.Exists(outPath))
+        // Validate that the output file was created.
+        if (!File.Exists(outputPath))
             throw new InvalidOperationException("Expected PDF output was not created.");
     }
 }

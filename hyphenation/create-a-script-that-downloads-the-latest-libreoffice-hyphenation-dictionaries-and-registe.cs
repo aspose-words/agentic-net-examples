@@ -1,55 +1,46 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        const string dictionaryFile = "hyph_en_US.dic";
-        const string outputPdf = "Hyphenated.pdf";
-
-        // Minimal hyphenation dictionary (OpenOffice format)
+        // Create a minimal hyphenation dictionary file locally.
+        const string dictionaryPath = "hyph_en_US.dic";
         string dictionaryContent =
             "UTF-8\n" +
             "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
             "internationalization=in-ter-na-tion-al-i-za-tion\n" +
             "communication=com-mu-ni-ca-tion\n";
 
-        // Write the dictionary to the local file system
-        File.WriteAllText(dictionaryFile, dictionaryContent);
+        File.WriteAllText(dictionaryPath, dictionaryContent);
 
-        // Register the dictionary for the "en-US" locale
-        Hyphenation.RegisterDictionary("en-US", dictionaryFile);
+        // Register the dictionary for the en-US locale.
+        Hyphenation.RegisterDictionary("en-US", dictionaryPath);
 
-        // Verify that registration succeeded
-        if (!Hyphenation.IsDictionaryRegistered("en-US"))
-            throw new InvalidOperationException("Failed to register the hyphenation dictionary.");
-
-        // Create a blank document and add sample text
+        // Build a document that contains words from the dictionary.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Narrow page width forces line wrapping and hyphenation.
+        Section section = doc.FirstSection;
+        PageSetup setup = section.PageSetup;
+        setup.PageWidth = 200; // points (~2.78 inches)
+        setup.LeftMargin = 20;
+        setup.RightMargin = 20;
+
+        // Write sample text that can be hyphenated.
         builder.Writeln("extraordinarycharacteristically internationalization communication");
 
-        // Narrow page width to force line wrapping
-        doc.FirstSection.PageSetup.PageWidth = 200;
-        doc.FirstSection.PageSetup.LeftMargin = 20;
-        doc.FirstSection.PageSetup.RightMargin = 20;
+        // Save the document as PDF.
+        const string outputPath = "hyphenated.pdf";
+        doc.Save(outputPath, SaveFormat.Pdf);
 
-        // Enable automatic hyphenation
-        doc.HyphenationOptions.AutoHyphenation = true;
-        doc.HyphenationOptions.HyphenateCaps = true;
-        doc.HyphenationOptions.HyphenationZone = 360; // 0.25 inch (360 twips)
-
-        // Save the document as PDF
-        doc.Save(outputPdf, SaveFormat.Pdf);
-
-        // Validate that the PDF was created
-        if (!File.Exists(outputPdf))
-            throw new InvalidOperationException($"The expected output file '{outputPdf}' was not created.");
-
-        // Optional: clean up the temporary dictionary file
-        // File.Delete(dictionaryFile);
+        // Verify that the output file was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new InvalidOperationException($"Expected output file '{outputPath}' was not created.");
+        }
     }
 }

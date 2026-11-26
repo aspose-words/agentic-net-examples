@@ -1,39 +1,46 @@
 using System;
 using System.IO;
-using System.Linq;
+using System.Globalization;
 using Aspose.Words;
 
 public class Program
 {
     public static void Main()
     {
-        // Path for the French hyphenation dictionary.
-        const string dictionaryPath = "hyph_fr_FR.dic";
-
         // Create a minimal French hyphenation dictionary.
-        string[] dictionaryContent =
-        {
-            "UTF-8",
-            "bonjour=bon-jour",
-            "extraordinaire=ex-tra-or-di-nai-re"
-        };
-        File.WriteAllLines(dictionaryPath, dictionaryContent);
+        const string dictionaryPath = "hyph_fr_FR.dic";
+        string dictionaryContent =
+            "UTF-8\n" +
+            "extraordinaire=ex-tra-or-di-nai-re\n" +
+            "communication=com-mu-ni-ca-tion\n";
 
-        // Verify the dictionary file was created.
-        if (!File.Exists(dictionaryPath))
-            throw new InvalidOperationException("Failed to create the hyphenation dictionary file.");
+        File.WriteAllText(dictionaryPath, dictionaryContent);
 
         // Register the dictionary with Aspose.Words.
-        Aspose.Words.Hyphenation.RegisterDictionary("fr-FR", dictionaryPath);
+        Hyphenation.RegisterDictionary("fr-FR", dictionaryPath);
 
-        // Retrieve and log the hyphenation patterns for French.
-        string[] allLines = File.ReadAllLines(dictionaryPath);
-        var patterns = allLines.Skip(1); // Skip the encoding line.
-
+        // Retrieve and log the hyphenation patterns.
         Console.WriteLine("Hyphenation patterns for French (fr-FR):");
-        foreach (string pattern in patterns)
+        foreach (string line in File.ReadAllLines(dictionaryPath))
         {
-            Console.WriteLine(pattern);
+            Console.WriteLine(line);
         }
+
+        // Create a document to demonstrate hyphenation.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Font.LocaleId = (int)CultureInfo.GetCultureInfo("fr-FR").LCID;
+        builder.Writeln("extraordinaire communication extraordinaire communication");
+
+        // Narrow page width to force hyphenation.
+        doc.FirstSection.PageSetup.PageWidth = 200;
+        doc.FirstSection.PageSetup.LeftMargin = 20;
+        doc.FirstSection.PageSetup.RightMargin = 20;
+
+        // Save the document as PDF.
+        const string outputPath = "HyphenatedFrench.pdf";
+        doc.Save(outputPath);
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("Expected PDF output was not created.");
     }
 }
