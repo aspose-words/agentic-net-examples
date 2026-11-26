@@ -9,49 +9,52 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample DOCX document with text using a TrueType font.
+        // Paths for temporary files
+        string docxPath = "sample.docx";
+        string pdfPath = "output.pdf";
+
+        // Create a simple DOCX document that uses a TrueType font
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.Name = "Arial";
-        builder.Writeln("Hello World! This document is rendered to PDF with full font embedding.");
+        builder.Font.Name = "Arial"; // Use a common TrueType font
+        builder.Writeln("This is a sample paragraph to test full font embedding in PDF.");
 
-        // Define PDF save options to embed full fonts and disable subsetting.
-        string pdfPath = "output.pdf";
+        // Save the DOCX locally
+        doc.Save(docxPath);
+
+        // Configure PDF save options to embed full fonts (disable subsetting)
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            // Embed the complete font (no subsetting).
+            // Embed the entire font file instead of creating a subset.
             EmbedFullFonts = true
-            // FontEmbeddingMode property is not required for full embedding in this version.
         };
 
-        // Render the DOCX to PDF.
+        // Render the DOCX to PDF with the configured options
         doc.Save(pdfPath, pdfOptions);
 
-        // Verify that the PDF file was created.
+        // Verify that the PDF file was created
         if (!File.Exists(pdfPath))
-            throw new Exception("PDF file was not created.");
+            throw new FileNotFoundException("PDF file was not created.", pdfPath);
 
-        // Load the PDF content as text for inspection.
-        byte[] pdfBytes = File.ReadAllBytes(pdfPath);
-        string pdfContent = Encoding.ASCII.GetString(pdfBytes);
+        // Read PDF content as text for inspection (ASCII is sufficient for marker strings)
+        string pdfContent = File.ReadAllText(pdfPath, Encoding.ASCII);
 
-        // Check for embedded font markers in the PDF.
-        bool hasEmbeddedFont = pdfContent.Contains("/FontFile") ||
-                               pdfContent.Contains("/FontFile2") ||
-                               pdfContent.Contains("/FontFile3") ||
-                               pdfContent.Contains("/Subtype /TrueType");
+        // Check for embedded font markers (e.g., /FontFile, /FontFile2, /FontFile3)
+        bool hasEmbeddedFontMarker = pdfContent.Contains("/FontFile") ||
+                                     pdfContent.Contains("/FontFile2") ||
+                                     pdfContent.Contains("/FontFile3");
 
-        if (!hasEmbeddedFont)
-            throw new Exception("Embedded font markers were not found in the PDF.");
+        if (!hasEmbeddedFontMarker)
+            throw new InvalidOperationException("No embedded font markers were found in the PDF.");
 
-        // Verify that no subset font name pattern (e.g., ABCDEF+FontName) exists.
-        Regex subsetRegex = new Regex(@"[A-Z]{6}\+");
-        bool hasSubsetPrefix = subsetRegex.IsMatch(pdfContent);
+        // Verify that subsetting is disabled by ensuring no subset font name prefixes (e.g., ABCDEF+)
+        // Subset fonts typically have a six-letter uppercase prefix followed by '+'
+        bool hasSubsetPrefix = Regex.IsMatch(pdfContent, @"[A-Z]{6}\+");
 
         if (hasSubsetPrefix)
-            throw new Exception("Subset font prefix detected; subsetting is not disabled.");
+            throw new InvalidOperationException("Subset font prefixes were detected; full font embedding was not applied.");
 
-        // Success message.
-        Console.WriteLine("PDF rendered with full font embedding and subsetting disabled.");
+        // If we reach this point, the PDF has full font embedding without subsetting
+        Console.WriteLine("PDF rendered with full font embedding and without subsetting successfully.");
     }
 }

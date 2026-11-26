@@ -3,55 +3,54 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class RenderingExample
+public class Program
 {
     public static void Main()
     {
-        // Define file paths in the temporary directory.
-        string tempDir = Path.Combine(Path.GetTempPath(), "AsposeWordsRendering");
-        Directory.CreateDirectory(tempDir);
-        string docxPath = Path.Combine(tempDir, "Sample.docx");
-        string pdfPath = Path.Combine(tempDir, "Sample.pdf");
+        // Define file names for the sample DOCX and the rendered PDF.
+        string docPath = "Sample.docx";
+        string pdfPath = "RenderedOutput.pdf";
 
         // -----------------------------------------------------------------
-        // 1. Create a simple DOCX document locally.
+        // Step 1: Create a simple DOCX document locally.
         // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello World! This is a sample document for rendering.");
-        doc.Save(docxPath, SaveFormat.Docx);
+        builder.Writeln("Hello, Aspose.Words rendering example!");
+        // Save the sample document to disk.
+        doc.Save(docPath, SaveFormat.Docx);
 
         // -----------------------------------------------------------------
-        // 2. Load the DOCX document.
+        // Step 2: Load the DOCX document from the file system.
         // -----------------------------------------------------------------
-        Document loadedDoc = new Document(docxPath);
+        Document loadedDoc = new Document(docPath);
 
         // -----------------------------------------------------------------
-        // 3. Configure PDF rendering options.
+        // Step 3: Configure rendering options before conversion.
+        // Example: Save as PDF/A-1b with JPEG image compression.
         // -----------------------------------------------------------------
-        PdfSaveOptions pdfOptions = new PdfSaveOptions
+        PdfSaveOptions saveOptions = new PdfSaveOptions
         {
-            // Example: produce PDF/A-1b compliant file.
             Compliance = PdfCompliance.PdfA1b,
-            // Example: compress images using JPEG with quality 80.
             ImageCompression = PdfImageCompression.Jpeg,
-            JpegQuality = 80
+            JpegQuality = 90
         };
 
         // -----------------------------------------------------------------
-        // 4. Render (save) the document to PDF using the configured options.
+        // Step 4: Render the document to PDF using the configured options.
         // -----------------------------------------------------------------
-        loadedDoc.Save(pdfPath, pdfOptions);
+        loadedDoc.Save(pdfPath, saveOptions);
 
         // -----------------------------------------------------------------
-        // 5. Validate that the PDF file was created.
+        // Step 5: Validate that the PDF file was created successfully.
         // -----------------------------------------------------------------
         if (!File.Exists(pdfPath))
         {
-            throw new InvalidOperationException("PDF rendering failed: output file not found.");
+            throw new InvalidOperationException($"Failed to create the PDF file at '{pdfPath}'.");
         }
 
-        // Optional: output the location of the generated PDF.
-        Console.WriteLine($"PDF successfully created at: {pdfPath}");
+        // Optional: Output file size for confirmation (no user interaction required).
+        long fileSize = new FileInfo(pdfPath).Length;
+        Console.WriteLine($"PDF rendered successfully. File size: {fileSize} bytes.");
     }
 }

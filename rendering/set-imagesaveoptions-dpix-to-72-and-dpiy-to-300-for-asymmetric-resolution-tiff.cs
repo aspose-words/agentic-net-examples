@@ -7,34 +7,33 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple document.
+        // Create a simple document with one paragraph.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Sample text for asymmetric DPI TIFF rendering.");
 
-        // Configure image save options for TIFF.
-        // Aspose.Words does not expose separate DpiX/DpiY properties.
-        // The closest available setting is the single Resolution property,
-        // which applies to both axes. Here we set it to the lower DPI (72)
-        // to ensure the image is at least that resolution.
+        // Configure ImageSaveOptions for TIFF with asymmetric DPI.
         ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            Resolution = 72 // Uniform DPI; asymmetric DPI is not supported directly.
+            // Horizontal (X) resolution.
+            HorizontalResolution = 72,
+            // Vertical (Y) resolution.
+            VerticalResolution = 300
         };
 
         // Define output file path.
-        string outputPath = "asymmetric_resolution.tiff";
+        string outputPath = "asymmetric_dpi.tiff";
 
-        // Save the document as TIFF.
+        // Save the document as a TIFF image using the configured options.
         doc.Save(outputPath, saveOptions);
 
         // Verify that the file was created.
-        if (!File.Exists(outputPath) || new FileInfo(outputPath).Length == 0)
+        if (!File.Exists(outputPath))
         {
-            throw new InvalidOperationException($"Failed to create TIFF file at '{outputPath}'.");
+            throw new FileNotFoundException("The TIFF file was not created.", outputPath);
         }
 
-        // Indicate success.
-        Console.WriteLine($"TIFF saved successfully at '{Path.GetFullPath(outputPath)}'.");
+        // Output a confirmation.
+        Console.WriteLine($"TIFF file saved successfully to '{Path.GetFullPath(outputPath)}'.");
     }
 }

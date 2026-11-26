@@ -7,31 +7,33 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple document in memory.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello, high‑resolution TIFF!");
+
+        // Add some sample content.
+        builder.Writeln("Hello World! This is a sample document for high‑resolution TIFF rendering.");
 
         // Configure image save options for TIFF with 600 DPI.
-        // The ImageSaveOptions class uses the Resolution property to set both DpiX and DpiY.
+        // In Aspose.Words the DPI is set via the Resolution property (applies to both X and Y).
         ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
             Resolution = 600
         };
 
         // Define output file path.
-        string outputPath = "high_res_output.tiff";
+        string outputPath = "HighResOutput.tiff";
 
-        // Save the document as a TIFF image.
+        // Save the document as a high‑resolution TIFF image.
         doc.Save(outputPath, saveOptions);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
         {
-            throw new InvalidOperationException($"Failed to create the TIFF file at '{outputPath}'.");
+            throw new Exception($"Failed to create the TIFF file at '{outputPath}'.");
         }
 
-        // Report success (no user interaction required).
-        Console.WriteLine($"TIFF file saved successfully at '{Path.GetFullPath(outputPath)}' with 600 DPI.");
+        // Indicate success.
+        Console.WriteLine($"TIFF file saved successfully at '{Path.GetFullPath(outputPath)}'.");
     }
 }

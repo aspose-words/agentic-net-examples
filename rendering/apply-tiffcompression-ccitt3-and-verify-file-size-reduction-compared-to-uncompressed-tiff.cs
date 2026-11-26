@@ -13,15 +13,19 @@ public class Program
         builder.Writeln("This is a sample document used to demonstrate TIFF compression with Aspose.Words.");
         builder.Writeln("The quick brown fox jumps over the lazy dog.");
         builder.Writeln("Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
+        // Add enough content to make the TIFF size noticeable.
+        for (int i = 0; i < 20; i++)
+        {
+            builder.Writeln($"Additional line {i + 1}: The quick brown fox jumps over the lazy dog.");
+        }
 
-        // Define file names for the two TIFF outputs.
-        string uncompressedPath = "output_uncompressed.tiff";
-        string compressedPath = "output_ccitt3.tiff";
+        // Define file names.
+        string uncompressedPath = "uncompressed.tiff";
+        string compressedPath = "compressed.tiff";
 
         // Save the document as an uncompressed TIFF.
         ImageSaveOptions uncompressedOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            // Explicitly set no compression.
             TiffCompression = TiffCompression.None
         };
         doc.Save(uncompressedPath, uncompressedOptions);
@@ -43,14 +47,21 @@ public class Program
         long uncompressedSize = new FileInfo(uncompressedPath).Length;
         long compressedSize = new FileInfo(compressedPath).Length;
 
+        // Output sizes for reference (optional).
         Console.WriteLine($"Uncompressed TIFF size: {uncompressedSize} bytes");
-        Console.WriteLine($"CCITT3 compressed TIFF size: {compressedSize} bytes");
+        Console.WriteLine($"Compressed TIFF size:   {compressedSize} bytes");
 
-        // Ensure that compression resulted in a smaller file.
+        // Verify that compression reduced the file size significantly.
         if (compressedSize >= uncompressedSize)
-            throw new InvalidOperationException("Compressed TIFF is not smaller than the uncompressed version.");
+            throw new InvalidOperationException("Compressed TIFF is not smaller than the uncompressed TIFF.");
 
-        // Indicate successful verification.
-        Console.WriteLine("Compression successful: file size reduced as expected.");
+        // Optionally, ensure a reasonable reduction (e.g., at least 10% smaller).
+        double reductionPercent = 100.0 * (uncompressedSize - compressedSize) / uncompressedSize;
+        if (reductionPercent < 10)
+            throw new InvalidOperationException($"File size reduction ({reductionPercent:F2}%) is less than expected.");
+
+        // Clean up resources (optional).
+        // File.Delete(uncompressedPath);
+        // File.Delete(compressedPath);
     }
 }

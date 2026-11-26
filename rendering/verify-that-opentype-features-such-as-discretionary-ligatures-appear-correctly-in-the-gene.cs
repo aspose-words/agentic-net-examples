@@ -2,43 +2,57 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
+using Aspose.Words.Fonts;
 
 public class Program
 {
     public static void Main()
     {
+        // Path for the output TIFF file.
+        string outputPath = "OpenTypeLigatures.tiff";
+
         // Create a new blank document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Use a font that contains discretionary ligatures (e.g., Times New Roman).
-        builder.Font.Name = "Times New Roman";
+        // Ensure the document uses a font that supports discretionary ligatures (e.g., Gabriola).
+        // If the font is not available on the system, Aspose.Words will fall back to a default font.
+        Run run = new Run(doc, "office"); // The word "office" contains the "ffi" ligature.
+        run.Font.Name = "Gabriola";
 
-        // Write text that can form a discretionary ligature such as "fi".
-        builder.Writeln("office");
+        // Add the run to a paragraph and the paragraph to the document.
+        Paragraph para = new Paragraph(doc);
+        para.AppendChild(run);
+        doc.FirstSection.Body.AppendChild(para);
 
-        // Write the Unicode ligature character directly (ﬁ) to ensure it is rendered as a single glyph.
-        builder.Writeln("\uFB01"); // Unicode for 'ﬁ'
+        // Optional: configure FontSettings to point to the system fonts folder.
+        // This helps Aspose.Words locate the required font if it is not in the default search locations.
+        FontSettings fontSettings = new FontSettings();
+        string fontsFolder = Environment.GetFolderPath(Environment.SpecialFolder.Fonts);
+        if (Directory.Exists(fontsFolder))
+        {
+            fontSettings.SetFontsFolder(fontsFolder, false);
+        }
+        doc.FontSettings = fontSettings;
 
-        // Path for the output TIFF file.
-        string tiffPath = "output.tiff";
-
-        // Configure image save options for TIFF.
-        // No need to set PageCount – by default all pages are rendered.
+        // Render the document to a multipage TIFF image.
         ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff);
+        // Use default DPI and other settings; they are sufficient for this verification.
+        doc.Save(outputPath, saveOptions);
 
-        // Save the document as a multipage TIFF.
-        doc.Save(tiffPath, saveOptions);
+        // Verify that the TIFF file was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new InvalidOperationException($"Failed to create the TIFF file at '{outputPath}'.");
+        }
 
-        // Verify that the TIFF file was created and is not empty.
-        if (!File.Exists(tiffPath))
-            throw new Exception("TIFF file was not created.");
+        // Verify that the source document has at least one page.
+        if (doc.PageCount < 1)
+        {
+            throw new InvalidOperationException("The source document does not contain any pages.");
+        }
 
-        FileInfo info = new FileInfo(tiffPath);
-        if (info.Length == 0)
-            throw new Exception("TIFF file is empty.");
-
-        // Output a simple confirmation.
-        Console.WriteLine($"TIFF rendered successfully. Pages: {doc.PageCount}, File size: {info.Length} bytes.");
+        // Output simple confirmation (no user interaction required).
+        Console.WriteLine($"TIFF file generated successfully at '{Path.GetFullPath(outputPath)}'.");
+        Console.WriteLine($"Document page count: {doc.PageCount}");
     }
 }

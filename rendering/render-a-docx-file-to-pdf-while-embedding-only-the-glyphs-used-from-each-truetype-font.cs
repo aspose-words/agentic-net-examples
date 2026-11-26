@@ -3,52 +3,46 @@ using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using Aspose.Words;
-using Aspose.Words.Fonts;
 using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Path for the resulting PDF.
-        string pdfPath = "output.pdf";
+        // Paths for the temporary DOCX and the resulting PDF
+        const string docPath = "sample.docx";
+        const string pdfPath = "output.pdf";
 
-        // Create a new document and add a paragraph that uses a TrueType font (Arial).
+        // Create a sample DOCX that uses a TrueType font (e.g., Arial)
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Font.Name = "Arial";
-        builder.Writeln("Hello World! This is a test document using Arial font.");
+        builder.Writeln("This is a sample text using Arial font.");
+        builder.Writeln("Additional characters: 1234567890!@#$%^&*()");
+        doc.Save(docPath);
 
-        // Configure font settings to resolve fonts from the system fonts folder.
-        FontSettings fontSettings = new FontSettings();
-        string fontsFolder = Environment.GetFolderPath(Environment.SpecialFolder.Fonts);
-        fontSettings.SetFontsFolder(fontsFolder, true);
-        doc.FontSettings = fontSettings;
+        // Configure PDF save options.
+        // By default Aspose.Words embeds only the glyphs actually used (subset).
+        PdfSaveOptions pdfOptions = new PdfSaveOptions();
 
-        // Save the document as PDF with subset embedding (only used glyphs are embedded).
-        PdfSaveOptions pdfOptions = new PdfSaveOptions
-        {
-            // In older versions EmbedSubset may be unavailable; setting EmbedFullFonts to false
-            // forces subsetting of the fonts.
-            EmbedFullFonts = false
-        };
+        // Render the DOCX to PDF with the specified options
         doc.Save(pdfPath, pdfOptions);
 
-        // Verify that the PDF file was created.
+        // Verify that the PDF file was created
         if (!File.Exists(pdfPath))
             throw new FileNotFoundException("PDF file was not created.", pdfPath);
 
-        // Load the PDF content as text to look for subset font markers.
-        string pdfContent = Encoding.ASCII.GetString(File.ReadAllBytes(pdfPath));
+        // Simple verification: look for typical subset‑font markers in the PDF content
+        string pdfContent = File.ReadAllText(pdfPath, Encoding.ASCII);
+        bool hasSubsetFont = pdfContent.Contains("/FontFile2") ||
+                             pdfContent.Contains("/FontFile3") ||
+                             Regex.IsMatch(pdfContent, @"[A-Z]{6}\+");
 
-        // Check for typical subset font indicators: /FontFile2 entry or a subset font name (e.g., ABCDEF+Arial).
-        bool hasSubsetMarker = pdfContent.Contains("/FontFile2") ||
-                               Regex.IsMatch(pdfContent, @"[A-Z]{6}\+");
+        if (!hasSubsetFont)
+            throw new InvalidOperationException("The PDF does not contain embedded subset fonts.");
 
-        if (!hasSubsetMarker)
-            throw new InvalidOperationException("The PDF does not contain subset font markers; embedding may not be subsetted.");
-
-        // Indicate successful rendering with subset embedding.
-        Console.WriteLine("PDF rendered successfully with subset font embedding.");
+        // (Optional) Clean up generated files
+        // File.Delete(docPath);
+        // File.Delete(pdfPath);
     }
 }

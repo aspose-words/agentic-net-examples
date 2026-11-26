@@ -7,46 +7,47 @@ public class Program
 {
     public static void Main()
     {
-        // Create a temporary source folder and generate sample DOCX files.
-        string sourceFolder = Path.Combine(Path.GetTempPath(), "DocxBatchSource");
-        Directory.CreateDirectory(sourceFolder);
-        for (int i = 1; i <= 3; i++)
+        // Create a temporary working folder.
+        string workFolder = Path.Combine(Path.GetTempPath(), "AsposeWordsBatchTiff");
+        Directory.CreateDirectory(workFolder);
+
+        // Create sample DOCX files.
+        for (int i = 1; i <= 2; i++)
         {
-            string docPath = Path.Combine(sourceFolder, $"Sample{i}.docx");
+            string docPath = Path.Combine(workFolder, $"Sample{i}.docx");
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
             builder.Writeln($"This is sample document {i}.");
             doc.Save(docPath);
         }
 
-        // Create an output folder for the TIFF files.
-        string outputFolder = Path.Combine(Path.GetTempPath(), "TiffBatchOutput");
-        Directory.CreateDirectory(outputFolder);
-
-        // Process each DOCX file in the source folder.
-        string[] docxFiles = Directory.GetFiles(sourceFolder, "*.docx");
+        // Process each DOCX file in the folder.
+        string[] docxFiles = Directory.GetFiles(workFolder, "*.docx");
         foreach (string docxFile in docxFiles)
         {
+            // Load the source document.
             Document document = new Document(docxFile);
 
-            // Configure image save options for TIFF with 200 DPI and CCITT3 compression.
+            // Configure TIFF rendering options: 200 DPI and CCITT3 compression.
             ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
             {
-                Resolution = 200,                     // Sets both DpiX and DpiY.
+                // Resolution sets both DpiX and DpiY.
+                Resolution = 200,
                 TiffCompression = TiffCompression.Ccitt3
             };
 
-            string tiffFileName = Path.GetFileNameWithoutExtension(docxFile) + ".tiff";
-            string tiffPath = Path.Combine(outputFolder, tiffFileName);
+            // Determine output TIFF path.
+            string tiffPath = Path.ChangeExtension(docxFile, ".tiff");
 
+            // Save the document as a TIFF image.
             document.Save(tiffPath, saveOptions);
 
             // Verify that the TIFF file was created.
             if (!File.Exists(tiffPath))
-                throw new Exception($"Failed to create TIFF file: {tiffPath}");
+                throw new InvalidOperationException($"Failed to create TIFF file: {tiffPath}");
         }
 
         // Indicate completion.
-        Console.WriteLine($"Processed {docxFiles.Length} DOCX files. TIFF files are saved in: {outputFolder}");
+        Console.WriteLine("Batch processing completed successfully.");
     }
 }

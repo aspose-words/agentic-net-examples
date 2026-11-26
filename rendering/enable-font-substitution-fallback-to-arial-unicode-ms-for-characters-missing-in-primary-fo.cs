@@ -11,24 +11,33 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set a primary font that does not contain certain Unicode characters.
+        // Use a primary font that does not contain Chinese characters.
         builder.Font.Name = "Times New Roman";
-        builder.Writeln("Hello, world! 你好, مرحبا");
+        builder.Writeln("Hello world!");
+        builder.Writeln("中文字符测试"); // Chinese characters.
 
-        // Configure font substitution to use Arial Unicode MS as fallback.
+        // Configure font settings with fallback to Arial Unicode MS.
         FontSettings fontSettings = new FontSettings();
-        fontSettings.SubstitutionSettings.DefaultFontSubstitution.DefaultFontName = "Arial Unicode MS";
+
+        // Ensure Aspose.Words can locate system fonts.
+        string fontsFolder = Environment.GetFolderPath(Environment.SpecialFolder.Fonts);
+        fontSettings.SetFontsFolder(fontsFolder, true);
+
+        // Set fallback for missing glyphs.
+        var defaultSubstitution = fontSettings.SubstitutionSettings.DefaultFontSubstitution;
+        defaultSubstitution.DefaultFontName = "Arial Unicode MS";
+
+        // Apply the font settings to the document.
         doc.FontSettings = fontSettings;
 
         // Render the document to PDF.
-        string outputPath = "Output.pdf";
+        string outputPath = "RenderedWithFallback.pdf";
         doc.Save(outputPath, SaveFormat.Pdf);
 
         // Verify that the PDF was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Failed to create the PDF output.");
+            throw new FileNotFoundException("The PDF file was not created.", outputPath);
 
-        // Optionally, indicate success (no interactive input required).
-        Console.WriteLine("PDF generated successfully with font fallback.");
+        Console.WriteLine($"Document rendered successfully to '{outputPath}'.");
     }
 }

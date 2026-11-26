@@ -7,53 +7,69 @@ public class Program
 {
     public static void Main()
     {
-        // Create a folder for sample DOCX files.
-        string sourceFolder = Path.Combine(Directory.GetCurrentDirectory(), "SampleDocs");
-        Directory.CreateDirectory(sourceFolder);
+        // Define a temporary working folder.
+        string workFolder = Path.Combine(Path.GetTempPath(), "DocxToTiffDemo");
+        Directory.CreateDirectory(workFolder);
 
-        // Generate a few sample DOCX documents.
-        for (int i = 1; i <= 2; i++)
+        // Create sample DOCX files.
+        for (int i = 1; i <= 3; i++)
         {
-            Document doc = new Document();
-            Paragraph para = new Paragraph(doc);
-            Run run = new Run(doc, $"This is sample document {i}.");
-            para.AppendChild(run);
-            doc.FirstSection.Body.AppendChild(para);
-
-            string docPath = Path.Combine(sourceFolder, $"Doc{i}.docx");
-            doc.Save(docPath);
+            string docPath = Path.Combine(workFolder, $"Sample{i}.docx");
+            CreateSampleDocument(docPath, i * 2); // Vary page count.
         }
 
-        // Create a folder for the TIFF output.
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "TiffOutput");
-        Directory.CreateDirectory(outputFolder);
+        // Define custom DPI.
+        const int customDpi = 300;
 
-        // Define custom DPI for the TIFF images.
-        const float customDpi = 300f;
-
-        // Batch convert each DOCX file to a multipage TIFF.
-        foreach (string docxPath in Directory.GetFiles(sourceFolder, "*.docx"))
+        // Process each DOCX file in the folder.
+        foreach (string docxFile in Directory.GetFiles(workFolder, "*.docx"))
         {
-            Document document = new Document(docxPath);
+            // Load the document.
+            Document doc = new Document(docxFile);
 
-            ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
+            // Configure image save options for multipage TIFF.
+            ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
             {
-                // Render all pages (default behavior) into a single multipage TIFF.
-                // No need to set PageSet explicitly.
-                Resolution = customDpi
+                // Set the desired DPI.
+                Resolution = customDpi,
+                // Ensure all pages are saved to the same TIFF file.
+                PageSet = PageSet.All,
+                // Use CCITT Group 4 compression (available in the current API).
+                TiffCompression = TiffCompression.Ccitt4
             };
 
-            string tiffPath = Path.Combine(outputFolder,
-                Path.GetFileNameWithoutExtension(docxPath) + ".tiff");
+            // Determine output TIFF path.
+            string tiffPath = Path.ChangeExtension(docxFile, ".tiff");
 
-            document.Save(tiffPath, saveOptions);
+            // Save the document as a multipage TIFF.
+            doc.Save(tiffPath, options);
 
-            // Verify that the TIFF file was created.
+            // Validate that the TIFF file was created.
             if (!File.Exists(tiffPath))
                 throw new InvalidOperationException($"Failed to create TIFF file: {tiffPath}");
         }
 
-        // Indicate successful completion.
-        Console.WriteLine("Batch conversion completed successfully.");
+        // Optional cleanup: delete the temporary folder.
+        // Directory.Delete(workFolder, true);
+    }
+
+    // Helper method to create a sample DOCX with a given number of pages.
+    private static void CreateSampleDocument(string filePath, int pageCount)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        for (int p = 1; p <= pageCount; p++)
+        {
+            builder.Writeln($"Page {p}");
+            // Add enough text to force a new page.
+            for (int i = 0; i < 30; i++)
+                builder.Writeln("Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
+
+            if (p < pageCount)
+                builder.InsertBreak(BreakType.PageBreak);
+        }
+
+        doc.Save(filePath);
     }
 }

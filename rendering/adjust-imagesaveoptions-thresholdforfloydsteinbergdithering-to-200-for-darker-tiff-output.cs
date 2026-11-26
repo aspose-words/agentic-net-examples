@@ -5,31 +5,30 @@ using Aspose.Words.Saving;
 
 public class Program
 {
-    public static void Main()
+    public static void Main(string[] args)
     {
-        // Create a simple document with some text.
+        // Create a simple document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample text for TIFF rendering with custom dithering threshold.");
+        builder.Writeln("Sample text for TIFF rendering with dithering.");
 
-        // Configure ImageSaveOptions for TIFF output.
+        // Configure ImageSaveOptions for TIFF with a higher dithering threshold.
         ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff);
-        // Set the threshold for Floyd‑Steinberg dithering to a higher value (darker output).
-        saveOptions.ThresholdForFloydSteinbergDithering = 200;
+        saveOptions.ThresholdForFloydSteinbergDithering = 200; // Darker output.
 
         // Define output file path.
         string outputPath = "output.tiff";
 
-        // Render the document to a TIFF image using the configured options.
+        // Save the document as a TIFF image using the configured options.
         doc.Save(outputPath, saveOptions);
 
-        // Verify that the TIFF file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
         {
-            throw new InvalidOperationException($"Failed to create the TIFF file at '{outputPath}'.");
+            throw new Exception($"Failed to create the TIFF file at '{outputPath}'.");
         }
 
-        // Optionally, report success (no user interaction required).
-        Console.WriteLine($"TIFF file saved successfully to '{Path.GetFullPath(outputPath)}'.");
+        // Optionally, report success (no interactive prompts required).
+        Console.WriteLine("TIFF file created successfully with custom dithering threshold.");
     }
 }

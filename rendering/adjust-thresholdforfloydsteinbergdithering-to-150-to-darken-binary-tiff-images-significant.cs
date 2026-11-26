@@ -10,19 +10,13 @@ public class Program
         // Create a simple document with some text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document to demonstrate TIFF dithering threshold adjustment.");
-        builder.Writeln("The quick brown fox jumps over the lazy dog.");
-        builder.Writeln("Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
+        builder.Writeln("Sample text to demonstrate TIFF dithering threshold adjustment.");
 
-        // Configure image save options for binary TIFF.
+        // Configure image save options for TIFF.
         ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            // Render the document as a black‑and‑white image.
-            ImageColorMode = ImageColorMode.BlackAndWhite,
-            // Increase the threshold to 150 to darken the binary output.
+            // Increase the threshold for Floyd‑Steinberg dithering to darken the binary image.
             ThresholdForFloydSteinbergDithering = 150
-            // The default dithering method for black‑and‑white TIFF is Floyd‑Steinberg,
-            // so no explicit Dithering property is required.
         };
 
         // Define output file path.
@@ -37,8 +31,7 @@ public class Program
             throw new InvalidOperationException($"Failed to create the TIFF file at '{outputPath}'.");
         }
 
-        // Report the file size to confirm that rendering occurred.
-        long fileSize = new FileInfo(outputPath).Length;
-        Console.WriteLine($"TIFF file saved successfully. Size: {fileSize} bytes.");
+        // Optionally, indicate success (no interactive input required).
+        Console.WriteLine($"TIFF image saved successfully to '{Path.GetFullPath(outputPath)}'.");
     }
 }

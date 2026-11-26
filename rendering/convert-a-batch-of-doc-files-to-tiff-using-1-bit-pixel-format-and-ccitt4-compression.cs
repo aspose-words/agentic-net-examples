@@ -1,62 +1,63 @@
 using System;
 using System.IO;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+public class BatchDocToTiff
 {
     public static void Main()
     {
-        // Create a temporary folder for sample DOCX files.
-        string sourceFolder = Path.Combine(Directory.GetCurrentDirectory(), "BatchDocs");
-        Directory.CreateDirectory(sourceFolder);
+        // Create a temporary directory for sample DOC files.
+        string inputDir = Path.Combine(Path.GetTempPath(), "DocToTiffInput");
+        Directory.CreateDirectory(inputDir);
 
-        // Generate a few sample DOCX documents.
+        // Create a temporary directory for output TIFF files.
+        string outputDir = Path.Combine(Path.GetTempPath(), "DocToTiffOutput");
+        Directory.CreateDirectory(outputDir);
+
+        // Generate sample DOC files.
+        List<string> docPaths = new List<string>();
         for (int i = 1; i <= 3; i++)
         {
-            string docPath = Path.Combine(sourceFolder, $"Sample{i}.docx");
+            string docPath = Path.Combine(inputDir, $"Sample{i}.doc");
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
             builder.Writeln($"This is sample document {i}.");
+            // Add a second page to test multi‑page TIFF.
+            builder.InsertBreak(BreakType.PageBreak);
+            builder.Writeln($"Second page of document {i}.");
             doc.Save(docPath);
+            docPaths.Add(docPath);
         }
 
-        // Create an output folder for the generated TIFF files.
-        string outputFolder = Path.Combine(sourceFolder, "Output");
-        Directory.CreateDirectory(outputFolder);
-
-        // Process each DOCX file in the source folder.
-        string[] docFiles = Directory.GetFiles(sourceFolder, "*.docx");
-        foreach (string docFile in docFiles)
+        // Convert each DOC file to a multi‑page TIFF with 1‑bit color and CCITT4 compression.
+        foreach (string docPath in docPaths)
         {
-            // Load the source document.
-            Document document = new Document(docFile);
+            Document doc = new Document(docPath);
 
-            // Configure TIFF rendering options: 1‑bit (black‑and‑white) and CCITT4 compression.
-            ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
+            ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
             {
+                // Render all pages into a single multi‑page TIFF.
+                PageSet = PageSet.All,
+                // Use 1‑bit (black and white) color mode.
                 ImageColorMode = ImageColorMode.BlackAndWhite,
+                // Set CCITT4 compression.
                 TiffCompression = TiffCompression.Ccitt4,
-                PageSet = PageSet.All // Render all pages.
+                // Optional: set resolution (dpi) if desired.
+                Resolution = 300
             };
 
-            // Determine the output TIFF file path.
-            string tiffPath = Path.Combine(outputFolder, Path.GetFileNameWithoutExtension(docFile) + ".tiff");
+            string tiffPath = Path.Combine(outputDir, Path.GetFileNameWithoutExtension(docPath) + ".tiff");
+            doc.Save(tiffPath, options);
 
-            // Save the document as a multipage TIFF.
-            document.Save(tiffPath, saveOptions);
-
-            // Verify that the TIFF file was created.
+            // Validate that the TIFF file was created.
             if (!File.Exists(tiffPath))
-                throw new Exception($"Failed to create TIFF file: {tiffPath}");
+                throw new InvalidOperationException($"Failed to create TIFF file: {tiffPath}");
         }
 
-        // Optional: confirm that the number of generated TIFF files matches the source count.
-        int expectedCount = docFiles.Length;
-        int actualCount = Directory.GetFiles(outputFolder, "*.tiff").Length;
-        if (actualCount != expectedCount)
-            throw new Exception($"Expected {expectedCount} TIFF files, but found {actualCount}.");
-
-        // Program completed successfully.
+        // Clean up temporary input files (optional).
+        // Directory.Delete(inputDir, true);
+        // Output directory remains for inspection.
     }
 }

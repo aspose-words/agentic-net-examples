@@ -1,52 +1,68 @@
 using System;
 using System.IO;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class BatchDocxToTiff
+public class Program
 {
     public static void Main()
     {
-        // Define a temporary working folder.
-        string workFolder = Path.Combine(Path.GetTempPath(), "DocxToTiffDemo");
-        Directory.CreateDirectory(workFolder);
+        // Define base, source, and output folders.
+        string baseFolder = Path.Combine(Path.GetTempPath(), "DocxToTiffDemo");
+        string sourceFolder = Path.Combine(baseFolder, "SourceDocs");
+        string outputFolder = Path.Combine(baseFolder, "TiffOutput");
 
-        // Create sample DOCX files in the folder.
-        for (int i = 1; i <= 2; i++)
-        {
-            string docxPath = Path.Combine(workFolder, $"Sample{i}.docx");
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln($"This is sample document {i}.");
-            doc.Save(docxPath);
-        }
+        Directory.CreateDirectory(sourceFolder);
+        Directory.CreateDirectory(outputFolder);
 
-        // Prepare shared ImageSaveOptions for TIFF output.
-        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        // Create sample DOCX files in the source folder.
+        CreateSampleDocx(Path.Combine(sourceFolder, "Sample1.docx"),
+                         "Hello World! This is the first document.");
+        CreateSampleDocx(Path.Combine(sourceFolder, "Sample2.docx"),
+                         "Second document with multiple paragraphs.\nParagraph two.\nParagraph three.");
+
+        // Shared ImageSaveOptions for TIFF conversion.
+        var tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            // Example: set resolution to 300 DPI.
             Resolution = 300
-            // Additional options can be set here if needed.
+            // Compression option omitted because the enum value is not available in this version.
         };
 
-        // Process each DOCX file in the folder.
-        foreach (string docxFile in Directory.GetFiles(workFolder, "*.docx"))
+        // Perform batch conversion.
+        string[] docxFiles = Directory.GetFiles(sourceFolder, "*.docx");
+        var generatedTiffs = new List<string>();
+
+        foreach (string docxPath in docxFiles)
         {
-            // Load the DOCX document.
-            Document document = new Document(docxFile);
-
-            // Determine output TIFF file path.
-            string tiffFile = Path.ChangeExtension(docxFile, ".tiff");
-
-            // Save the document as a multipage TIFF using the shared options.
-            document.Save(tiffFile, tiffOptions);
-
-            // Validate that the TIFF file was created.
-            if (!File.Exists(tiffFile))
-                throw new InvalidOperationException($"Failed to create TIFF file: {tiffFile}");
+            var doc = new Document(docxPath);
+            string tiffPath = Path.Combine(outputFolder,
+                                           Path.GetFileNameWithoutExtension(docxPath) + ".tiff");
+            doc.Save(tiffPath, tiffOptions);
+            generatedTiffs.Add(tiffPath);
         }
 
-        // Optional: indicate successful completion.
-        Console.WriteLine("Batch conversion completed successfully.");
+        // Validate that each TIFF file was created.
+        foreach (string tiffPath in generatedTiffs)
+        {
+            if (!File.Exists(tiffPath))
+                throw new InvalidOperationException($"TIFF file was not created: {tiffPath}");
+        }
+
+        // Indicate successful conversion.
+        Console.WriteLine($"Converted {generatedTiffs.Count} DOCX files to TIFF in folder: {outputFolder}");
+    }
+
+    // Helper method to create a simple DOCX file with given text.
+    private static void CreateSampleDocx(string filePath, string content)
+    {
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        string[] lines = content.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+        foreach (string line in lines)
+        {
+            builder.Writeln(line);
+        }
+        doc.Save(filePath);
     }
 }
