@@ -10,34 +10,34 @@ public class Program
     public static void Main()
     {
         // Sample JSON array to import.
-        string json = "[\"First item\", \"Second item\", \"Third item\"]";
+        string json = "[\"First item\",\"Second item\",\"Third item\"]";
 
-        // Deserialize JSON into a list of strings.
+        // Deserialize JSON array into a list of strings.
         List<string> items = JsonConvert.DeserializeObject<List<string>>(json) ?? new List<string>();
 
         // Create a new blank document.
         Document doc = new Document();
 
-        // Create a block-level repeating section content control.
+        // Create a block‑level repeating section content control.
         StructuredDocumentTag repeatingSection = new StructuredDocumentTag(doc, SdtType.RepeatingSection, MarkupLevel.Block)
         {
-            Title = "RepeatingItems",
-            Tag = "repeating-items"
+            Title = "ItemsRepeatingSection",
+            Tag = "items-repeating"
         };
 
         // For each entry in the JSON array, add a paragraph inside the repeating section.
         foreach (string item in items)
         {
-            Paragraph paragraph = new Paragraph(doc);
-            paragraph.AppendChild(new Run(doc, item));
-            repeatingSection.AppendChild(paragraph);
+            Paragraph para = new Paragraph(doc);
+            para.AppendChild(new Run(doc, item));
+            repeatingSection.AppendChild(para);
         }
 
         // Insert the repeating section into the document body.
         doc.FirstSection.Body.AppendChild(repeatingSection);
 
         // Save the resulting document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "RepeatingSection.docx");
+        string outputPath = "RepeatingSection.docx";
         doc.Save(outputPath);
     }
 }

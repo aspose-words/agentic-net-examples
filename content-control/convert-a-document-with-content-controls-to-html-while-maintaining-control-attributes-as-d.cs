@@ -1,4 +1,7 @@
 using System;
+using System.IO;
+using System.Linq;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Markup;
 using Aspose.Words.Saving;
@@ -9,40 +12,67 @@ public class Program
     public static void Main()
     {
         // Create a new document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Add an inline plain‑text content control.
-        StructuredDocumentTag plainSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline);
-        plainSdt.Title = "CustomerName";
-        plainSdt.Tag = "customer-name";
-        plainSdt.RemoveAllChildren();
-        plainSdt.AppendChild(new Run(doc, "Contoso"));
-        // Insert the inline SDT into the current paragraph.
-        builder.CurrentParagraph?.AppendChild(plainSdt);
-        builder.Writeln(); // start a new paragraph.
+        // Add introductory paragraph.
+        builder.Writeln("Document with content controls:");
 
-        // Add a block‑level rich‑text content control.
-        StructuredDocumentTag richSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block);
-        richSdt.Title = "SectionContent";
-        richSdt.Tag = "section-content";
-        Paragraph innerParagraph = new Paragraph(doc);
-        innerParagraph.AppendChild(new Run(doc, "This is block content control."));
-        richSdt.AppendChild(innerParagraph);
-        // Insert the block SDT into the document body.
-        doc.FirstSection.Body.AppendChild(richSdt);
+        // Create an inline plain‑text content control.
+        var inlineSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        {
+            Title = "CustomerName",
+            Tag = "customer-name"
+        };
+        inlineSdt.RemoveAllChildren();
+        inlineSdt.AppendChild(new Run(doc, "Contoso"));
+        // Append the inline SDT to the current paragraph.
+        builder.CurrentParagraph.AppendChild(inlineSdt);
+        builder.Writeln(); // move to next line.
 
-        // Save the source DOCX.
+        // Create a block‑level rich‑text content control.
+        var blockSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
+        {
+            Title = "SectionContent",
+            Tag = "section-content"
+        };
+        var blockParagraph = new Paragraph(doc);
+        blockParagraph.AppendChild(new Run(doc, "This is block content control text."));
+        blockSdt.AppendChild(blockParagraph);
+        // Append the block SDT to the document body.
+        doc.FirstSection.Body.AppendChild(blockSdt);
+
+        // Save the source DOCX (optional, for inspection).
         doc.Save("sample.docx");
 
-        // Load the document and convert to HTML.
-        Document loadedDoc = new Document("sample.docx");
-        HtmlSaveOptions htmlOptions = new HtmlSaveOptions
+        // Prepare HTML save options to export content controls as data‑attributes.
+        var htmlOptions = new HtmlSaveOptions(SaveFormat.Html);
+
+        // Set ExportContentControlDataAttributes if the property exists (Aspose.Words 22.9+).
+        var dataAttrProp = typeof(HtmlSaveOptions).GetProperty("ExportContentControlDataAttributes");
+        if (dataAttrProp != null && dataAttrProp.CanWrite)
         {
-            // In newer versions this option can be set to export content control
-            // attributes as data‑attributes. If the property is unavailable, the
-            // default behavior still preserves the attributes in the HTML.
-        };
-        loadedDoc.Save("sample.html", htmlOptions);
+            dataAttrProp.SetValue(htmlOptions, true);
+        }
+
+        // Export the document to HTML.
+        doc.Save("output.html", htmlOptions);
+
+        // Extract content‑control metadata and write it to JSON.
+        var controls = doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
+            .OfType<StructuredDocumentTag>()
+            .Select(sdt => new
+            {
+                Title = sdt.Title,
+                Tag = sdt.Tag,
+                Type = sdt.SdtType.ToString(),
+                Text = sdt.GetText().Trim()
+            })
+            .ToList();
+
+        var json = JsonConvert.SerializeObject(controls, Formatting.Indented);
+        File.WriteAllText("controls.json", json);
+
+        Console.WriteLine("Conversion completed. Files created: sample.docx, output.html, controls.json");
     }
 }

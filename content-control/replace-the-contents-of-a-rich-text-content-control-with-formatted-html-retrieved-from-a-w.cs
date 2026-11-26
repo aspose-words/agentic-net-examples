@@ -2,83 +2,66 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
+using System.Threading.Tasks;
 using Aspose.Words;
 using Aspose.Words.Markup;
-using Aspose.Words.Loading;
 using Newtonsoft.Json;
 
 public class Program
 {
-    public static void Main()
+    public static async Task Main()
     {
-        // 1. Create a sample document with a block‑level rich‑text content control.
+        // Create a sample document with a block‑level rich‑text content control.
         Document doc = new Document();
-        StructuredDocumentTag richSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
-        {
-            Title = "HtmlContent",
-            Tag = "html-content"
-        };
+        StructuredDocumentTag richTextSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block);
+        richTextSdt.Title = "HtmlContent";
+        richTextSdt.Tag = "html-content";
 
-        // Add a placeholder paragraph inside the content control.
-        Paragraph placeholderPara = new Paragraph(doc);
-        placeholderPara.AppendChild(new Run(doc, "Placeholder text."));
-        richSdt.AppendChild(placeholderPara);
+        // Add an initial placeholder paragraph inside the content control.
+        Paragraph placeholder = new Paragraph(doc);
+        placeholder.AppendChild(new Run(doc, "Placeholder text"));
+        richTextSdt.AppendChild(placeholder);
 
         // Insert the content control into the document body.
-        doc.FirstSection.Body.AppendChild(richSdt);
+        doc.FirstSection.Body.AppendChild(richTextSdt);
+        doc.Save("template.docx");
 
-        // Optional: save the seed document for inspection.
-        doc.Save("input.docx");
+        // Retrieve formatted HTML from a web service.
+        string html = await GetHtmlAsync("https://www.example.com");
 
-        // 2. Retrieve formatted HTML from a web service.
-        string html;
-        using (HttpClient client = new HttpClient())
-        {
-            HttpResponseMessage response = client.GetAsync("https://www.example.com").Result;
-            response.EnsureSuccessStatusCode();
-            html = response.Content.ReadAsStringAsync().Result;
-        }
-
-        // 3. Locate the rich‑text content control by its title.
+        // Find the rich‑text content control by its title.
         StructuredDocumentTag targetSdt = doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
             .OfType<StructuredDocumentTag>()
             .FirstOrDefault(s => s.Title == "HtmlContent");
 
         if (targetSdt == null)
-            throw new InvalidOperationException("Rich‑text content control not found.");
-
-        // 4. Remove any existing children of the content control.
-        targetSdt.RemoveAllChildren();
-
-        // 5. Load the retrieved HTML into a temporary document.
-        using (MemoryStream htmlStream = new MemoryStream(Encoding.UTF8.GetBytes(html)))
         {
-            LoadOptions loadOptions = new LoadOptions { LoadFormat = LoadFormat.Html };
-            Document htmlDoc = new Document(htmlStream, loadOptions);
-
-            // 6. Import only block‑level nodes (paragraphs, tables, etc.) into the content control.
-            var blockNodes = htmlDoc.FirstSection.Body.GetChildNodes(NodeType.Any, true)
-                .Where(n => n.NodeType == NodeType.Paragraph || n.NodeType == NodeType.Table);
-
-            foreach (Node node in blockNodes)
-            {
-                Node importedNode = doc.ImportNode(node, true, ImportFormatMode.KeepSourceFormatting);
-                targetSdt.AppendChild(importedNode);
-            }
+            throw new InvalidOperationException("Rich‑text content control not found.");
         }
 
-        // 7. Serialize some information about the updated control to JSON.
-        var info = new
-        {
-            Title = targetSdt.Title,
-            Tag = targetSdt.Tag,
-            Content = targetSdt.GetText().Trim()
-        };
-        string json = JsonConvert.SerializeObject(info, Formatting.Indented);
-        File.WriteAllText("control-info.json", json);
+        // Replace the existing content with the retrieved HTML.
+        targetSdt.RemoveAllChildren();
+        Paragraph htmlParagraph = new Paragraph(doc);
+        targetSdt.AppendChild(htmlParagraph);
 
-        // 8. Save the updated document.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.MoveTo(htmlParagraph);
+        builder.InsertHtml(html);
+
+        // Optionally serialize the inserted HTML to a JSON file (demonstrates Newtonsoft.Json usage).
+        var payload = new { SourceUrl = "https://www.example.com", HtmlContent = html };
+        string json = JsonConvert.SerializeObject(payload, Formatting.Indented);
+        File.WriteAllText("htmlPayload.json", json);
+
+        // Save the updated document.
         doc.Save("output.docx");
+    }
+
+    private static async Task<string> GetHtmlAsync(string url)
+    {
+        using HttpClient client = new HttpClient();
+        HttpResponseMessage response = await client.GetAsync(url);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsStringAsync();
     }
 }

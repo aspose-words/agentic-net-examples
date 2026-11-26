@@ -15,90 +15,72 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Plain text inline content control.
-        StructuredDocumentTag plainTextSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
-        {
-            Title = "CustomerName",
-            Tag = "customer-name"
-        };
-        plainTextSdt.RemoveAllChildren();
-        plainTextSdt.AppendChild(new Run(doc, "Contoso"));
-        builder.CurrentParagraph.AppendChild(plainTextSdt);
-        builder.Writeln();
+        StructuredDocumentTag plainText = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline);
+        plainText.Title = "CustomerName";
+        plainText.Tag = "customer-name";
+        plainText.RemoveAllChildren();
+        plainText.AppendChild(new Run(doc, "Contoso"));
+        builder.Writeln("Plain text control:");
+        builder.CurrentParagraph.AppendChild(plainText);
 
         // Rich text block content control.
-        StructuredDocumentTag richTextSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
-        {
-            Title = "SectionContent",
-            Tag = "section-content"
-        };
+        StructuredDocumentTag richText = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block);
+        richText.Title = "SectionContent";
+        richText.Tag = "section-content";
         Paragraph richParagraph = new Paragraph(doc);
         richParagraph.AppendChild(new Run(doc, "This is a rich text block content control."));
-        richTextSdt.AppendChild(richParagraph);
-        doc.FirstSection.Body.AppendChild(richTextSdt);
+        richText.AppendChild(richParagraph);
         builder.Writeln();
-
-        // Drop‑down list inline content control.
-        StructuredDocumentTag dropDownSdt = new StructuredDocumentTag(doc, SdtType.DropDownList, MarkupLevel.Inline)
-        {
-            Title = "Country",
-            Tag = "country"
-        };
-        dropDownSdt.ListItems.Add(new SdtListItem("USA", "US"));
-        dropDownSdt.ListItems.Add(new SdtListItem("Canada", "CA"));
-        dropDownSdt.ListItems.Add(new SdtListItem("Mexico", "MX"));
-        builder.CurrentParagraph.AppendChild(dropDownSdt);
-        builder.Writeln();
+        doc.FirstSection.Body.AppendChild(richText);
 
         // Checkbox inline content control.
-        StructuredDocumentTag checkBoxSdt = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Inline)
-        {
-            Title = "Subscribe",
-            Tag = "subscribe",
-            Checked = true
-        };
-        builder.CurrentParagraph.AppendChild(checkBoxSdt);
+        StructuredDocumentTag checkbox = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Inline);
+        checkbox.Title = "AgreeTerms";
+        checkbox.Tag = "agree-terms";
+        checkbox.Checked = true;
         builder.Writeln();
+        builder.Writeln("Checkbox control:");
+        builder.CurrentParagraph.AppendChild(checkbox);
 
-        // Date inline content control (using default settings).
-        StructuredDocumentTag dateSdt = new StructuredDocumentTag(doc, SdtType.Date, MarkupLevel.Inline)
-        {
-            Title = "BirthDate",
-            Tag = "birth-date"
-        };
-        builder.CurrentParagraph.AppendChild(dateSdt);
+        // Drop-down list inline content control.
+        StructuredDocumentTag dropdown = new StructuredDocumentTag(doc, SdtType.DropDownList, MarkupLevel.Inline);
+        dropdown.Title = "Country";
+        dropdown.Tag = "country";
+        dropdown.ListItems.Add(new SdtListItem("USA", "US"));
+        dropdown.ListItems.Add(new SdtListItem("Canada", "CA"));
+        dropdown.ListItems.Add(new SdtListItem("Mexico", "MX"));
         builder.Writeln();
+        builder.Writeln("Drop-down list control:");
+        builder.CurrentParagraph.AppendChild(dropdown);
 
         // Repeating section block content control.
-        StructuredDocumentTag repeatingSdt = new StructuredDocumentTag(doc, SdtType.RepeatingSection, MarkupLevel.Block)
-        {
-            Title = "Items",
-            Tag = "items"
-        };
+        StructuredDocumentTag repeating = new StructuredDocumentTag(doc, SdtType.RepeatingSection, MarkupLevel.Block);
+        repeating.Title = "Items";
+        repeating.Tag = "items";
         Paragraph itemParagraph = new Paragraph(doc);
         itemParagraph.AppendChild(new Run(doc, "Item 1"));
-        repeatingSdt.AppendChild(itemParagraph);
-        doc.FirstSection.Body.AppendChild(repeatingSdt);
-        builder.Writeln();
+        repeating.AppendChild(itemParagraph);
+        doc.FirstSection.Body.AppendChild(repeating);
 
         // Save the sample document.
         const string samplePath = "sample.docx";
         doc.Save(samplePath);
 
-        // Load the document for processing.
+        // Load the document (simulating processing an existing file).
         Document loadedDoc = new Document(samplePath);
 
-        // Enumerate all StructuredDocumentTag nodes and collect summary information.
-        List<object> summary = loadedDoc
-            .GetChildNodes(NodeType.StructuredDocumentTag, true)
+        // Gather summary information about all content controls.
+        var summary = loadedDoc.GetChildNodes(NodeType.StructuredDocumentTag, true)
             .OfType<StructuredDocumentTag>()
             .Select(sdt => new
             {
+                Type = sdt.SdtType.ToString(),
                 Title = sdt.Title,
                 Tag = sdt.Tag,
-                Type = sdt.SdtType.ToString(),
-                Appearance = sdt.Appearance.ToString()
+                // Additional details for specific types.
+                IsChecked = sdt.SdtType == SdtType.Checkbox ? sdt.Checked : (bool?)null,
+                ListItemCount = (sdt.SdtType == SdtType.DropDownList || sdt.SdtType == SdtType.ComboBox) ? sdt.ListItems.Count : (int?)null
             })
-            .Cast<object>()
             .ToList();
 
         // Serialize the summary to JSON.

@@ -1,6 +1,4 @@
 using System;
-using System.IO;
-using System.Linq;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Markup;
@@ -12,59 +10,64 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Insert a plain‑text content control that is intended for numeric input.
+        // Ensure there is a paragraph to host the content control.
+        Paragraph paragraph = new Paragraph(doc);
+        doc.FirstSection.Body.AppendChild(paragraph);
+
+        // Create an inline plain‑text content control.
         StructuredDocumentTag numericSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
         {
             Title = "NumericInput",
             Tag = "numeric-input"
-            // PlaceholderName is omitted because a placeholder building block is not defined.
+            // PlaceholderName omitted because it requires a building block that does not exist.
         };
 
-        // Set an initial valid numeric value.
+        // Initialise with empty content.
         numericSdt.RemoveAllChildren();
-        numericSdt.AppendChild(new Run(doc, "123"));
+        numericSdt.AppendChild(new Run(doc, string.Empty));
 
-        // Add the content control to the first paragraph of the document.
-        Paragraph para = doc.FirstSection.Body.FirstParagraph;
-        para.AppendChild(numericSdt);
+        // Insert the content control into the paragraph with surrounding text.
+        paragraph.AppendChild(new Run(doc, "Please provide a number: "));
+        paragraph.AppendChild(numericSdt);
+        paragraph.AppendChild(new Run(doc, "."));
 
-        // Save the intermediate document.
-        string intermediatePath = "numeric_input_initial.docx";
-        doc.Save(intermediatePath);
+        // Save the initial document.
+        doc.Save("NumericContentControl.docx");
 
-        // -----------------------------------------------------------------
-        // Simulate user editing: load the document and change the content
-        // control's text to an invalid (non‑numeric) value.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(intermediatePath);
+        // ----- Simulate editing: valid numeric input -----
+        SetContentControlText(numericSdt, "12345");
+        ValidateNumericContentControl(numericSdt, "Valid numeric input");
 
-        // Find the content control by its title.
-        StructuredDocumentTag? foundSdt = loadedDoc.GetChildNodes(NodeType.StructuredDocumentTag, true)
-            .OfType<StructuredDocumentTag>()
-            .FirstOrDefault(s => s.Title == "NumericInput");
-
-        if (foundSdt == null)
+        // ----- Simulate editing: invalid non‑numeric input -----
+        SetContentControlText(numericSdt, "ABC");
+        try
         {
-            throw new InvalidOperationException("Numeric input content control not found.");
+            ValidateNumericContentControl(numericSdt, "Invalid non‑numeric input");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Validation error: {ex.Message}");
         }
 
-        // Replace the existing text with an invalid value to simulate editing.
-        foundSdt.RemoveAllChildren();
-        foundSdt.AppendChild(new Run(loadedDoc, "ABC")); // Non‑numeric input.
+        // Save the document after simulated edits.
+        doc.Save("NumericContentControl_Edited.docx");
+    }
 
-        // Validate that the content control contains only digits.
-        string sdtText = foundSdt.GetText().Trim();
+    private static void SetContentControlText(StructuredDocumentTag sdt, string text)
+    {
+        // Replace any existing children with a single run containing the new text.
+        sdt.RemoveAllChildren();
+        sdt.AppendChild(new Run(sdt.Document, text));
+    }
 
-        if (!Regex.IsMatch(sdtText, @"^\d+$"))
+    private static void ValidateNumericContentControl(StructuredDocumentTag sdt, string context)
+    {
+        string content = sdt.GetText().Trim();
+        if (!Regex.IsMatch(content, @"^\d+$"))
         {
-            // If validation fails, replace with a default numeric value and lock the control.
-            foundSdt.RemoveAllChildren();
-            foundSdt.AppendChild(new Run(loadedDoc, "0"));
-            foundSdt.LockContents = true;
+            throw new InvalidOperationException($"{context}: Content '{content}' is not numeric.");
         }
 
-        // Save the final document after validation.
-        string finalPath = "numeric_input_validated.docx";
-        loadedDoc.Save(finalPath);
+        Console.WriteLine($"{context}: Content '{content}' is valid numeric.");
     }
 }

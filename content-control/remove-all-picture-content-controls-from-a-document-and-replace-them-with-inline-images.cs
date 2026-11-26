@@ -1,84 +1,102 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Markup;
 using Aspose.Words.Drawing;
+using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a tiny PNG image (1x1 pixel) and save it locally.
-        byte[] pngBytes = Convert.FromBase64String(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=");
-        const string imageFileName = "sample.png";
-        File.WriteAllBytes(imageFileName, pngBytes);
-
         // -----------------------------------------------------------------
-        // Step 1: Create a sample document that contains a picture content control.
+        // Create a sample document that contains a picture content control.
         // -----------------------------------------------------------------
-        Document inputDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(inputDoc);
+        Document doc = new Document();
 
-        builder.Writeln("Document with a picture content control:");
+        // Create a block-level picture content control and add it to the document body.
+        StructuredDocumentTag pictureSdt = new StructuredDocumentTag(doc, SdtType.Picture, MarkupLevel.Block);
+        pictureSdt.Title = "SamplePicture";
+        pictureSdt.Tag = "sample-picture";
 
-        // Create an inline picture content control.
-        StructuredDocumentTag pictureSdt = new StructuredDocumentTag(inputDoc, SdtType.Picture, MarkupLevel.Inline);
-        // Insert the image into the content control.
-        Shape pictureShape = new Shape(inputDoc, ShapeType.Image);
-        pictureShape.ImageData.SetImage(imageFileName);
-        pictureSdt.AppendChild(pictureShape);
+        // Append the content control to the body.
+        doc.FirstSection.Body.AppendChild(pictureSdt);
 
-        // Append the content control to the current paragraph.
-        Paragraph currentParagraph = builder.CurrentParagraph;
-        currentParagraph.AppendChild(pictureSdt);
+        // Inside the content control add a paragraph that will hold the image.
+        Paragraph sdtParagraph = new Paragraph(doc);
+        pictureSdt.AppendChild(sdtParagraph);
 
-        builder.Writeln("End of document.");
+        // ---------------------------------------------------------------
+        // Generate a simple red square image using Aspose.Drawing.
+        // ---------------------------------------------------------------
+        using (Bitmap bitmap = new Bitmap(100, 100))
+        {
+            // Fill the bitmap with red pixels.
+            for (int y = 0; y < bitmap.Height; y++)
+            {
+                for (int x = 0; x < bitmap.Width; x++)
+                {
+                    bitmap.SetPixel(x, y, Color.Red);
+                }
+            }
 
+            // Save the bitmap to a memory stream in PNG format.
+            using (MemoryStream imageStream = new MemoryStream())
+            {
+                bitmap.Save(imageStream, ImageFormat.Png);
+                imageStream.Position = 0;
+
+                // Insert the image into the picture content control.
+                DocumentBuilder sdtBuilder = new DocumentBuilder(doc);
+                sdtBuilder.MoveTo(sdtParagraph);
+                sdtBuilder.InsertImage(imageStream);
+            }
+        }
+
+        // Save the seed document.
         const string inputPath = "input.docx";
-        inputDoc.Save(inputPath);
+        doc.Save(inputPath);
 
-        // -----------------------------------------------------------------
-        // Step 2: Load the document and replace all picture content controls with inline images.
-        // -----------------------------------------------------------------
-        Document doc = new Document(inputPath);
+        // ---------------------------------------------------------------
+        // Load the document and replace picture content controls with inline images.
+        // ---------------------------------------------------------------
+        Document loadedDoc = new Document(inputPath);
 
-        // Find all picture content controls.
-        List<StructuredDocumentTag> pictureControls = doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
+        // Find all picture content controls in the document.
+        var pictureSdts = loadedDoc.GetChildNodes(NodeType.StructuredDocumentTag, true)
             .OfType<StructuredDocumentTag>()
-            .Where(sdt => sdt.SdtType == SdtType.Picture)
+            .Where(s => s.SdtType == SdtType.Picture)
             .ToList();
 
-        foreach (StructuredDocumentTag sdt in pictureControls)
+        foreach (StructuredDocumentTag sdt in pictureSdts)
         {
-            // Locate the image (Shape) inside the picture content control.
+            // Locate the first shape (image) inside the content control.
             Shape? shape = sdt.GetChildNodes(NodeType.Shape, true)
                 .OfType<Shape>()
                 .FirstOrDefault();
 
-            if (shape == null)
-                continue; // No image found; skip this control.
+            if (shape != null && shape.HasImage)
+            {
+                // Extract the image bytes.
+                byte[] imageBytes = shape.ImageData.ImageBytes;
 
-            // Extract the image bytes.
-            using MemoryStream imageStream = new MemoryStream();
-            shape.ImageData.Save(imageStream);
-            imageStream.Position = 0;
+                // Insert the image inline at the position of the content control.
+                DocumentBuilder replaceBuilder = new DocumentBuilder(loadedDoc);
+                replaceBuilder.MoveTo(sdt);
+                using (MemoryStream imgStream = new MemoryStream(imageBytes))
+                {
+                    replaceBuilder.InsertImage(imgStream);
+                }
 
-            // Insert the image inline at the position of the picture content control.
-            DocumentBuilder insertBuilder = new DocumentBuilder(doc);
-            insertBuilder.MoveTo(sdt);
-            insertBuilder.InsertImage(imageStream);
-
-            // Remove the original picture content control.
-            sdt.Remove();
+                // Remove the original picture content control.
+                sdt.Remove();
+            }
         }
 
-        // -----------------------------------------------------------------
-        // Step 3: Save the resulting document.
-        // -----------------------------------------------------------------
+        // Save the resulting document.
         const string outputPath = "output.docx";
-        doc.Save(outputPath);
+        loadedDoc.Save(outputPath);
     }
 }

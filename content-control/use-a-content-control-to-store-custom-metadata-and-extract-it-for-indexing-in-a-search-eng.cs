@@ -6,98 +6,80 @@ using Aspose.Words;
 using Aspose.Words.Markup;
 using Newtonsoft.Json;
 
-public class ContentControlMetadataExample
+public class Program
 {
     public static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
 
-        // Insert a paragraph to host inline content controls.
-        Paragraph para = doc.FirstSection.Body.FirstParagraph;
-
-        // Plain text content control with custom metadata.
-        StructuredDocumentTag productNameSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        // Create a block‑level rich‑text content control to hold product information.
+        StructuredDocumentTag productInfoSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
         {
-            Title = "ProductName",
-            Tag = "product-name"
+            Title = "ProductInfo",
+            Tag = "product-info"
         };
-        productNameSdt.RemoveAllChildren();
-        productNameSdt.AppendChild(new Run(doc, "Widget"));
-        para.AppendChild(productNameSdt);
 
-        // Rich text (block) content control with custom metadata.
-        StructuredDocumentTag descriptionSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
-        {
-            Title = "Description",
-            Tag = "product-description"
-        };
-        Paragraph descPara = new Paragraph(doc);
-        descPara.AppendChild(new Run(doc, "A useful widget for everyday tasks."));
-        descriptionSdt.AppendChild(descPara);
-        doc.FirstSection.Body.AppendChild(descriptionSdt);
+        // Add a paragraph with the product name inside the content control.
+        Paragraph productNamePara = new Paragraph(doc);
+        productNamePara.AppendChild(new Run(doc, "Widget A"));
+        productInfoSdt.AppendChild(productNamePara);
 
-        // Drop‑down list content control with custom metadata.
-        StructuredDocumentTag categorySdt = new StructuredDocumentTag(doc, SdtType.DropDownList, MarkupLevel.Inline)
+        // Insert the block‑level content control into the document body.
+        doc.FirstSection.Body.AppendChild(productInfoSdt);
+
+        // Create a custom XML part that stores additional metadata.
+        string customXml = @"<metadata>
+                                <category>Gadgets</category>
+                                <price>19.99</price>
+                             </metadata>";
+        // Add the XML part with a generated ID.
+        string xmlPartId = Guid.NewGuid().ToString();
+        CustomXmlPart xmlPart = doc.CustomXmlParts.Add(xmlPartId, customXml);
+
+        // Create a plain‑text inline content control that maps to the <category> element.
+        StructuredDocumentTag categorySdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
         {
             Title = "Category",
             Tag = "product-category"
         };
-        categorySdt.ListItems.Add(new SdtListItem("Tools", "Tools"));
-        categorySdt.ListItems.Add(new SdtListItem("Gadgets", "Gadgets"));
-        categorySdt.ListItems.Add(new SdtListItem("Accessories", "Accessories"));
-        // Set default selected value by inserting the corresponding text.
-        categorySdt.RemoveAllChildren();
-        categorySdt.AppendChild(new Run(doc, "Tools"));
-        para.AppendChild(categorySdt);
+        // Map the content control to the custom XML part.
+        categorySdt.XmlMapping.SetMapping(xmlPart, "/metadata[1]/category[1]", string.Empty);
 
-        // Create a custom XML part and map it to a content control.
-        string customXml = "<product><id>12345</id></product>";
-        // Add the XML part with an identifier.
-        CustomXmlPart xmlPart = doc.CustomXmlParts.Add("productXml", customXml);
-        StructuredDocumentTag productIdSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
-        {
-            Title = "ProductId",
-            Tag = "product-id"
-        };
-        // Map the content control to the <id> element.
-        productIdSdt.XmlMapping.SetMapping(xmlPart, "/product[1]/id[1]", string.Empty);
-        para.AppendChild(productIdSdt);
+        // Insert the mapped content control after the product name.
+        productNamePara.AppendChild(new Run(doc, " - Category: "));
+        productNamePara.AppendChild(categorySdt);
 
-        // Save the document.
-        const string docPath = "product.docx";
+        // Save the document with the content controls.
+        string docPath = "ProductInfo.docx";
         doc.Save(docPath);
 
-        // Extract metadata from all content controls for indexing.
-        List<object> indexEntries = doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
-            .Cast<StructuredDocumentTag>()
-            .Select(sdt =>
+        // -----------------------------------------------------------------
+        // Extraction phase: collect metadata from all content controls.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(docPath);
+        List<object> extractedMetadata = new List<object>();
+
+        // Enumerate all StructuredDocumentTag nodes in the document.
+        foreach (StructuredDocumentTag sdt in loadedDoc.GetChildNodes(NodeType.StructuredDocumentTag, true)
+                                                    .OfType<StructuredDocumentTag>())
+        {
+            // Retrieve the displayed text of the content control.
+            string text = sdt.GetText().Trim();
+
+            // Build a simple metadata object.
+            var meta = new
             {
-                string? xpath = null;
-                if (sdt.XmlMapping != null && sdt.XmlMapping.IsMapped)
-                {
-                    xpath = sdt.XmlMapping.XPath;
-                }
+                Title = sdt.Title,
+                Tag = sdt.Tag,
+                Text = text
+            };
+            extractedMetadata.Add(meta);
+        }
 
-                return new
-                {
-                    Title = sdt.Title,
-                    Tag = sdt.Tag,
-                    Type = sdt.SdtType.ToString(),
-                    Text = sdt.GetText().Trim(),
-                    XmlMappingXPath = xpath
-                };
-            })
-            .Cast<object>()
-            .ToList();
-
-        // Serialize to JSON.
-        string json = JsonConvert.SerializeObject(indexEntries, Formatting.Indented);
-        const string jsonPath = "index.json";
+        // Serialize the collected metadata to JSON for indexing.
+        string json = JsonConvert.SerializeObject(extractedMetadata, Formatting.Indented);
+        string jsonPath = "metadata-index.json";
         File.WriteAllText(jsonPath, json);
-
-        // Output paths for verification (no interactive input required).
-        Console.WriteLine($"Document saved to: {Path.GetFullPath(docPath)}");
-        Console.WriteLine($"Index JSON saved to: {Path.GetFullPath(jsonPath)}");
     }
 }

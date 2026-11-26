@@ -1,7 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Markup;
 using Newtonsoft.Json;
@@ -10,63 +10,68 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with repeating section content controls.
-        Document doc = new Document();
+        // Create a sample document with a repeating section content control.
+        Document seedDoc = new Document();
+        StructuredDocumentTag repeatingSection = new StructuredDocumentTag(seedDoc, SdtType.RepeatingSection, MarkupLevel.Block);
+        repeatingSection.Title = "Products";
+        repeatingSection.Tag = "products";
 
-        // First repeating section.
-        StructuredDocumentTag repeating1 = new StructuredDocumentTag(doc, SdtType.RepeatingSection, MarkupLevel.Block);
-        repeating1.Title = "Products";
-        repeating1.Tag = "products-section";
+        // First repeating item.
+        StructuredDocumentTag item1 = new StructuredDocumentTag(seedDoc, SdtType.RepeatingSectionItem, MarkupLevel.Block);
+        Paragraph p1 = new Paragraph(seedDoc);
+        p1.AppendChild(new Run(seedDoc, "Product A"));
+        item1.AppendChild(p1);
+        repeatingSection.AppendChild(item1);
 
-        Paragraph p1 = new Paragraph(doc);
-        p1.AppendChild(new Run(doc, "Product A"));
-        repeating1.AppendChild(p1);
+        // Second repeating item.
+        StructuredDocumentTag item2 = new StructuredDocumentTag(seedDoc, SdtType.RepeatingSectionItem, MarkupLevel.Block);
+        Paragraph p2 = new Paragraph(seedDoc);
+        p2.AppendChild(new Run(seedDoc, "Product B"));
+        item2.AppendChild(p2);
+        repeatingSection.AppendChild(item2);
 
-        // Add a second item inside the same repeating section to demonstrate multiple items.
-        Paragraph p2 = new Paragraph(doc);
-        p2.AppendChild(new Run(doc, "Product B"));
-        repeating1.AppendChild(p2);
+        // Insert the repeating section into the document body.
+        seedDoc.FirstSection.Body.AppendChild(repeatingSection);
+        const string inputPath = "input.docx";
+        seedDoc.Save(inputPath);
 
-        // Insert the first repeating section into the document body.
-        doc.FirstSection.Body.AppendChild(repeating1);
+        // Load the document containing repeating sections.
+        Document doc = new Document(inputPath);
 
-        // Second repeating section with different content.
-        StructuredDocumentTag repeating2 = new StructuredDocumentTag(doc, SdtType.RepeatingSection, MarkupLevel.Block);
-        repeating2.Title = "Services";
-        repeating2.Tag = "services-section";
+        // Find all repeating section content controls.
+        List<object> extractedData = new List<object>();
+        var repeatingSections = doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
+                                   .OfType<StructuredDocumentTag>()
+                                   .Where(sdt => sdt.SdtType == SdtType.RepeatingSection);
 
-        Paragraph p3 = new Paragraph(doc);
-        p3.AppendChild(new Run(doc, "Consulting"));
-        repeating2.AppendChild(p3);
+        foreach (var section in repeatingSections)
+        {
+            // Get all repeating section items inside this repeating section.
+            var items = section.GetChildNodes(NodeType.StructuredDocumentTag, false)
+                               .OfType<StructuredDocumentTag>()
+                               .Where(item => item.SdtType == SdtType.RepeatingSectionItem)
+                               .ToList();
 
-        doc.FirstSection.Body.AppendChild(repeating2);
-
-        // Save the sample document.
-        const string inputPath = "sample.docx";
-        doc.Save(inputPath);
-
-        // Load the document from file.
-        Document loadedDoc = new Document(inputPath);
-
-        // Extract all repeating section content controls.
-        List<object> repeatingSections = loadedDoc
-            .GetChildNodes(NodeType.StructuredDocumentTag, true)
-            .OfType<StructuredDocumentTag>()
-            .Where(sdt => sdt.SdtType == SdtType.RepeatingSection)
-            .Select(sdt => new
+            for (int i = 0; i < items.Count; i++)
             {
-                Title = sdt.Title,
-                Tag = sdt.Tag,
-                Text = sdt.GetText().Trim()
-            })
-            .Cast<object>()
-            .ToList();
+                var item = items[i];
+                string text = item.GetText().Trim();
+                extractedData.Add(new
+                {
+                    SectionTitle = section.Title,
+                    SectionTag = section.Tag,
+                    ItemIndex = i + 1,
+                    ItemText = text
+                });
+            }
+        }
 
-        // Serialize the extracted data to JSON.
-        string json = JsonConvert.SerializeObject(repeatingSections, Formatting.Indented);
-
-        // Write JSON to file.
+        // Serialize the extracted information to JSON.
+        string json = JsonConvert.SerializeObject(extractedData, Formatting.Indented);
         const string outputPath = "repeating-sections.json";
         File.WriteAllText(outputPath, json);
+
+        // Optionally, save the document after processing.
+        doc.Save("processed.docx");
     }
 }
