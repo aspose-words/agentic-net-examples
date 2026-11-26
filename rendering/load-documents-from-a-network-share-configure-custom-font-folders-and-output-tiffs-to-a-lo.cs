@@ -9,45 +9,59 @@ public class Program
 {
     public static void Main()
     {
-        // Simulate a network share folder.
-        string networkShareFolder = Path.Combine(Directory.GetCurrentDirectory(), "NetworkShare");
-        Directory.CreateDirectory(networkShareFolder);
+        // Prepare temporary directories to simulate a network share, custom fonts, and output location.
+        string baseTemp = Path.Combine(Path.GetTempPath(), "AsposeWordsExample");
+        string networkShareDir = Path.Combine(baseTemp, "NetworkShare");
+        string customFontDir = Path.Combine(baseTemp, "CustomFonts");
+        string outputDir = Path.Combine(baseTemp, "Output");
 
-        // Path for the source document on the simulated network share.
-        string sourceDocPath = Path.Combine(networkShareFolder, "Sample.docx");
+        Directory.CreateDirectory(networkShareDir);
+        Directory.CreateDirectory(customFontDir);
+        Directory.CreateDirectory(outputDir);
 
-        // Create a simple source document.
+        // Create a simple source document locally.
         Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Hello from the simulated network share!");
+        sourceDoc.FirstSection.Body.FirstParagraph.AppendChild(new Run(sourceDoc, "Hello from Aspose.Words!"));
+        string sourceDocPath = Path.Combine(networkShareDir, "Sample.docx");
         sourceDoc.Save(sourceDocPath);
 
-        // Configure a custom fonts folder (empty for this example).
-        string customFontsFolder = Path.Combine(Directory.GetCurrentDirectory(), "CustomFonts");
-        Directory.CreateDirectory(customFontsFolder);
-        FontSettings fontSettings = new FontSettings();
-        fontSettings.SetFontsFolder(customFontsFolder, false);
+        // Copy a TrueType font to the custom fonts folder (if a system font is available).
+        string systemFonts = Environment.GetFolderPath(Environment.SpecialFolder.Fonts);
+        string sampleFontName = "arial.ttf"; // Common Windows font.
+        string systemFontPath = Path.Combine(systemFonts, sampleFontName);
+        if (File.Exists(systemFontPath))
+        {
+            File.Copy(systemFontPath, Path.Combine(customFontDir, sampleFontName), true);
+        }
 
-        // Load the document from the network share using the custom FontSettings.
+        // Configure FontSettings to use the custom fonts folder.
+        FontSettings fontSettings = new FontSettings();
+        fontSettings.SetFontsFolder(customFontDir, false);
+
+        // Load the document from the simulated network share using the configured FontSettings.
         LoadOptions loadOptions = new LoadOptions { FontSettings = fontSettings };
         Document loadedDoc = new Document(sourceDocPath, loadOptions);
 
-        // Prepare the output directory for TIFF files.
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputTiff");
-        Directory.CreateDirectory(outputFolder);
-        string outputTiffPath = Path.Combine(outputFolder, "Sample.tiff");
+        // Ensure the loaded document uses the same FontSettings when rendering.
+        loadedDoc.FontSettings = fontSettings;
 
-        // Render the document to a multipage TIFF.
-        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff);
-        loadedDoc.Save(outputTiffPath, saveOptions);
-
-        // Verify that the TIFF file was created.
-        if (!File.Exists(outputTiffPath))
+        // Prepare TIFF save options to render all pages.
+        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            throw new Exception("Failed to create the TIFF output file.");
+            PageSet = PageSet.All
+        };
+
+        // Save the rendered TIFF to the local output directory.
+        string tiffPath = Path.Combine(outputDir, "RenderedOutput.tiff");
+        loadedDoc.Save(tiffPath, tiffOptions);
+
+        // Validate that the TIFF file was created.
+        if (!File.Exists(tiffPath))
+        {
+            throw new Exception("TIFF rendering failed: output file not found.");
         }
 
-        // Indicate success.
-        Console.WriteLine("Document rendered to TIFF successfully: " + outputTiffPath);
+        // Optional: clean up temporary files (comment out if inspection is needed).
+        // Directory.Delete(baseTemp, true);
     }
 }

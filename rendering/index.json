@@ -4,13 +4,13 @@
     "slug": "rendering",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Load the source document, optionally assign a FontSettings instance with required font folders, configure an ImageSaveOptions object using documented properties (Resolution, TiffCompression, ImageColorMode, ThresholdForFloydSteinbergDithering, PageSet, PageSavingCallback), and invoke Document.Save with the options. Validate only the existence of the output file and any task-specific attributes.",
+    "preferred_workflow": "Load the source Document, optionally assign a FontSettings instance, create the appropriate SaveOptions subclass (e.g., ImageSaveOptions for TIFF), set only supported properties such as Resolution, TiffCompression, PixelFormat, PageSet, or PageSavingCallback, invoke Document.Save with the configured options, and finally verify that the output file exists.",
     "required_packages": [
       "Aspose.Words",
       "Aspose.Drawing.Common"
     ],
     "package_versions": {
-      "Aspose.Words": "26.10.0",
+      "Aspose.Words": "26.11.0",
       "Aspose.Drawing.Common": "26.10.0"
     },
     "required_namespaces": [
@@ -20,10 +20,13 @@
       "Aspose.Words.Saving",
       "Aspose.Words.Fonts",
       "Aspose.Words.Loading",
-      "System.Linq",
-      "System.Threading.Tasks",
       "System.Text",
+      "System.Collections.Generic",
+      "System.Threading.Tasks",
+      "System.Linq",
+      "System.Xml.Linq",
       "System.Text.RegularExpressions",
+      "Aspose.Words.Drawing",
       "System.Threading"
     ],
     "key_apis": [
@@ -50,47 +53,47 @@
   },
   "rules_summary": {
     "strict_api_bans": [
-      "Do not reference members that are absent from the Aspose.Words 26.10.0 API surface.",
-      "Avoid using System.Drawing types unless a specific Aspose API requires them."
+      "Never reference members that are absent from Aspose.Words 26.11.0.",
+      "Do not invent namespaces, types, or properties that are not documented."
     ],
     "canonical_patterns": [
-      "Use ImageSaveOptions.Resolution to set DPI for TIFF rendering.",
-      "Set ImageSaveOptions.TiffCompression and ImageSaveOptions.ImageColorMode for binary or color TIFFs.",
-      "Employ FontSettings.SetFontsFolder to point to custom font directories and use FontSettings.FallbackSettings.LoadMsOfficeFallbackSettings for fallback handling."
+      "Use ImageSaveOptions.Resolution to specify DPI instead of a non-existent DesiredDpi property.",
+      "Select pixel formats via ImagePixelFormat (e.g., Format1bppIndexed) and set ImageSaveOptions.ImageColorMode for black-and-white output.",
+      "Control page range with ImageSaveOptions.PageSet rather than undefined PageIndex or PageCount properties."
     ],
     "nullable_warning_prevention": [
-      "Create all input files, folders, and streams deterministically before loading them.",
-      "Check for null or missing objects only when the task explicitly requires such validation."
+      "Validate only the creation of the expected output file and its basic properties.",
+      "Avoid inspecting unrelated document internals or performing extensive content checks."
     ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "Missing API member",
-      "symptom": "The compiler reports CS0117 or CS1061 because a property such as DesiredDpi, Compression, or FontFallbackSettings does not exist on the target type.",
-      "cause": "The code uses property names from older or undocumented versions of Aspose.Words.",
-      "fix": "Replace the nonexistent member with the correct documented property (e.g., use ImageSaveOptions.Resolution instead of DesiredDpi, use ImageSaveOptions.TiffCompression instead of Compression, and access FontSettings.FallbackSettings for fallback configuration).",
-      "prevention": "Consult the official Aspose.Words 26.10.0 API reference before referencing a member and rely on IntelliSense to surface available members."
+      "pattern": "Use of non-existent API members",
+      "symptom": "The compiler reports CS0117 or CS1061 errors because a referenced property or enum value does not exist.",
+      "cause": "Code was written against imagined members such as DesiredDpi, PixelFormat, TiffCompression.CcittGroup4, or SubstitutionSettings.Enabled that are not part of the current Aspose.Words version.",
+      "fix": "Replace the invalid member with the documented alternative (e.g., use ImageSaveOptions.Resolution, ImagePixelFormat, TiffCompression.Lzw, or configure font substitution via reflection only when the property is present).",
+      "prevention": "Consult the official Aspose.Words API reference for the exact property names and supported enum values before coding."
     },
     {
-      "pattern": "Incorrect namespace or type",
-      "symptom": "CS0246 or CS0234 errors appear because types like LoadOptions, Break, or FontSettings are not found in the imported namespaces.",
-      "cause": "The code omits required using directives or references types that belong to different Aspose namespaces.",
-      "fix": "Add the appropriate using statements (e.g., Aspose.Words.Loading for LoadOptions, Aspose.Words for Break) and reference the correct type names.",
-      "prevention": "Review the required_namespaces list for the category and include them at the top of every snippet."
+      "pattern": "Missing required namespaces or types",
+      "symptom": "CS0246 errors indicate that types like LoadOptions, FontSettings, or FontFallbackSettings cannot be found.",
+      "cause": "The source file omitted necessary using directives or referenced types that belong to a different assembly version.",
+      "fix": "Add the appropriate using statements (e.g., Aspose.Words.Fonts) and ensure the project references the correct Aspose.Words package version.",
+      "prevention": "Always include the namespaces listed in the category's required_namespaces section when using related APIs."
     },
     {
-      "pattern": "Invalid callback implementation",
-      "symptom": "CS1660 occurs when assigning a lambda to ImageSaveOptions.PageSavingCallback because the property expects an IPageSavingCallback implementation.",
-      "cause": "The code treats the callback interface as a delegate rather than implementing the IPageSavingCallback contract.",
-      "fix": "Create a class that implements IPageSavingCallback.PageSaving and assign an instance of that class to PageSavingCallback.",
-      "prevention": "Always implement the required interface explicitly; never use a lambda unless the API defines a delegate type."
+      "pattern": "Assuming external files or folders exist",
+      "symptom": "Runtime failures occur because the program tries to load a document, font folder, or XML file that was never created.",
+      "cause": "Examples presumed the presence of input assets without creating deterministic local samples.",
+      "fix": "Create sample input files, directories, or font collections programmatically before loading or processing them.",
+      "prevention": "Bootstrap all required assets within the example code to make the sample self-contained."
     },
     {
-      "pattern": "Runtime argument or file errors",
-      "symptom": "The program throws ArgumentException or FileNotFoundException when required command-line arguments are missing or when expected files are not created.",
-      "cause": "The example assumes external files or arguments exist without providing fallbacks.",
-      "fix": "Generate deterministic sample inputs when they are absent and validate argument count before parsing.",
-      "prevention": "Never rely on pre-existing files; always create minimal test assets in the code path."
+      "pattern": "Over-broad runtime validation",
+      "symptom": "The program throws exceptions after successful rendering while checking unrelated document structures.",
+      "cause": "Validation logic examined internal nodes or properties that are irrelevant to the task.",
+      "fix": "Limit validation to the existence of the output file and, if needed, simple format-specific checks such as page count.",
+      "prevention": "Keep verification narrow and directly related to the requested behavior."
     }
   ],
   "examples": [
@@ -213,8 +216,8 @@
       "outputs": [
         "tiff"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 12,
@@ -305,8 +308,8 @@
       "outputs": [
         "tiff"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 20,
@@ -318,8 +321,8 @@
         "doc",
         "tiff"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 21,
@@ -342,8 +345,8 @@
       "outputs": [
         "tiff"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 23,
@@ -491,8 +494,8 @@
       "outputs": [
         "tiff"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 36,
@@ -548,8 +551,8 @@
         "doc",
         "xml"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 41,
@@ -695,8 +698,8 @@
         "doc",
         "tiff"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 54,
@@ -816,8 +819,8 @@
       "outputs": [
         "tiff"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 64,
@@ -849,8 +852,8 @@
       "outputs": [
         "tiff"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 67,
@@ -895,19 +898,19 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     }
   ],
   "narrative": {
-    "overview": "The Rendering category for Aspose.Words provides APIs to convert documents to image formats such as TIFF with fine-grained control over resolution, compression, pixel format, and font handling. Verified examples demonstrate correct usage of ImageSaveOptions, FontSettings, and page-level callbacks to produce high-quality TIFF output while avoiding common compilation pitfalls.",
-    "purpose": "Guide an AI coding assistant to generate reliable Aspose.Words rendering snippets that load documents, configure image save options, manage custom fonts, and save the result, ensuring the code compiles against version 26.10.0 and runs without unnecessary side effects.",
+    "overview": "The Aspose.Words rendering category illustrates how to convert Word documents to TIFF and other image formats using the library's native APIs. Verified examples demonstrate correct use of ImageSaveOptions, font configuration, page selection, and batch processing without invoking unsupported members.",
+    "purpose": "Guide an AI coding agent to produce dependable Aspose.Words rendering code that loads documents, applies documented save options, manages font settings, and writes the requested output while staying within the supported API surface.",
     "validation_priorities": [
-      "Confirm that the output file exists after Document.Save.",
-      "If the task specifies page limits, verify that the generated TIFF contains the expected number of pages."
+      "Ensure that the generated file exists and that its DPI, compression, and pixel format match the values configured in the save options."
     ],
     "maintenance_notes": [
-      "Periodically verify that all property names used in examples match the current Aspose.Words 26.10.0 documentation to prevent regression after library updates."
+      "Review the Aspose.Words release notes periodically and update examples when new properties are added or existing ones are deprecated.",
+      "Regenerate sample documents if the default content model changes in future versions."
     ]
   }
 }

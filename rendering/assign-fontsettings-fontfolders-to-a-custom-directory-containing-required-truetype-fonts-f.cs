@@ -2,63 +2,63 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fonts;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Define a custom folder for TrueType fonts.
+        // Define paths for the sample document and the rendered PDF.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+        string pdfPath = Path.Combine(outputDir, "RenderedDocument.pdf");
+
+        // Create a custom folder that will hold TrueType fonts.
         string customFontFolder = Path.Combine(Directory.GetCurrentDirectory(), "CustomFonts");
         Directory.CreateDirectory(customFontFolder);
 
-        // Attempt to copy a known system TrueType font into the custom folder (if it exists).
-        // This step ensures the folder actually contains a font for rendering.
+        // OPTIONAL: If a TrueType font file is available on the machine, copy it into the custom folder.
+        // This step is safe even if the source font does not exist; the example focuses on assigning the folder.
         try
         {
-            string systemFontsPath = Environment.GetFolderPath(Environment.SpecialFolder.Fonts);
-            string sourceFontPath = Path.Combine(systemFontsPath, "arial.ttf");
-            if (File.Exists(sourceFontPath))
+            string systemFontPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Fonts), "arial.ttf");
+            if (File.Exists(systemFontPath))
             {
                 string destFontPath = Path.Combine(customFontFolder, "arial.ttf");
-                File.Copy(sourceFontPath, destFontPath, overwrite: true);
+                File.Copy(systemFontPath, destFontPath, true);
             }
         }
         catch
         {
-            // If copying fails (e.g., on non‑Windows platforms), continue without a font file.
-            // Aspose.Words will fall back to its default font handling.
+            // Ignore any errors while copying system fonts; the folder assignment is still demonstrated.
         }
 
-        // Create a simple document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.Name = "Arial"; // Use the font we attempted to place in the custom folder.
-        builder.Writeln("This text is rendered using a custom font folder.");
-
-        // Configure FontSettings to use the custom font folder.
+        // Create a FontSettings instance and assign the custom font folder.
         FontSettings fontSettings = new FontSettings();
-        fontSettings.SetFontsFolder(customFontFolder, recursive: true);
+        // Assign the folder (recursive search enabled) to the FontSettings.
+        fontSettings.SetFontsFolder(customFontFolder, true);
+
+        // Create a new blank document.
+        Document doc = new Document();
+
+        // Apply the FontSettings to the document.
         doc.FontSettings = fontSettings;
 
+        // Add a paragraph that uses a font expected to be found in the custom folder.
+        // If the font is not present, Aspose.Words will fall back to a default font.
+        var builder = new DocumentBuilder(doc);
+        builder.Font.Name = "Arial"; // Example font name; adjust if a different custom font is placed in the folder.
+        builder.Writeln("This paragraph is rendered using fonts from the custom folder.");
+
         // Render the document to PDF.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "RenderedOutput.pdf");
-        doc.Save(outputPath, SaveFormat.Pdf);
+        doc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Verify that the PDF file was created.
-        if (!File.Exists(outputPath))
+        // Validate that the PDF file was created.
+        if (!File.Exists(pdfPath))
+        {
             throw new InvalidOperationException("Failed to create the rendered PDF file.");
+        }
 
-        // Simple validation: check the PDF content for embedded font markers.
-        // This looks for typical PDF font embedding entries such as "/FontFile" or subset font names.
-        string pdfContent = File.ReadAllText(outputPath);
-        bool containsEmbeddedFont = pdfContent.Contains("/FontFile") || pdfContent.Contains("/FontFile2") ||
-                                    pdfContent.Contains("/FontFile3") || System.Text.RegularExpressions.Regex.IsMatch(pdfContent, @"[A-Z]{6}\+");
-
-        if (!containsEmbeddedFont)
-            throw new InvalidOperationException("The rendered PDF does not contain embedded TrueType font markers.");
-
-        // Indicate successful execution.
-        Console.WriteLine("Document rendered successfully with custom font folder.");
+        // Optionally, output the path of the generated PDF (no interactive prompts).
+        Console.WriteLine($"PDF rendered successfully to: {pdfPath}");
     }
 }

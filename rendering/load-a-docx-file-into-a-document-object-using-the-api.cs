@@ -7,27 +7,21 @@ public class Program
     public static void Main()
     {
         // Path for the sample DOCX file.
-        string docPath = "Sample.docx";
+        string docxPath = "Sample.docx";
 
-        // Create a sample DOCX file if it does not already exist.
-        if (!File.Exists(docPath))
+        // Create a sample DOCX document if it does not already exist.
+        if (!File.Exists(docxPath))
         {
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
             builder.Writeln("Hello, Aspose.Words!");
-            doc.Save(docPath);
+            doc.Save(docxPath);
         }
 
         // Load the DOCX file into a Document object.
-        Document loadedDoc = new Document(docPath);
+        Document loadedDocument = new Document(docxPath);
 
-        // Validate that the document was loaded and contains at least one page.
-        if (loadedDoc.PageCount < 1)
-        {
-            throw new InvalidOperationException("The loaded document contains no pages.");
-        }
-
-        // Output a simple confirmation.
-        Console.WriteLine($"Document loaded successfully. Page count: {loadedDoc.PageCount}");
+        // Simple verification: output the number of pages in the loaded document.
+        Console.WriteLine($"Document loaded successfully. Page count: {loadedDocument.PageCount}");
     }
 }

@@ -5,44 +5,59 @@ using Aspose.Words.Saving;
 
 public class Program
 {
-    // Custom callback that sets the file name for each TIFF page.
-    private class PageSavingCallback : IPageSavingCallback
-    {
-        public void PageSaving(PageSavingArgs args)
-        {
-            // Name each page file as "Page_<page number>.tiff".
-            args.PageFileName = $"Page_{args.PageIndex + 1}.tiff";
-        }
-    }
-
     public static void Main()
     {
+        // Prepare output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
         // Create a sample document with three pages.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        for (int i = 1; i <= 3; i++)
-        {
-            builder.Writeln($"This is page {i}.");
-            if (i < 3)
-                builder.InsertBreak(BreakType.PageBreak);
-        }
+        builder.Writeln("Content of the first page.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("Content of the second page.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("Content of the third page.");
 
-        // Configure TIFF save options with the custom PageSavingCallback.
+        // Configure TIFF save options with a custom page-saving callback.
         ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff);
-        saveOptions.PageSavingCallback = new PageSavingCallback();
+        saveOptions.PageSavingCallback = new CustomPageSavingCallback(outputDir);
+        // Optional: set additional options such as compression.
+        saveOptions.TiffCompression = TiffCompression.Ccitt4;
 
-        // The file name passed here is ignored because the callback provides per‑page names.
-        doc.Save("ignored.tiff", saveOptions);
+        // Save the document. The callback will generate separate TIFF files per page.
+        string dummyFileName = Path.Combine(outputDir, "Combined.tiff");
+        doc.Save(dummyFileName, saveOptions);
 
-        // Verify that a TIFF file was created for each page.
+        // Verify that each expected TIFF page file was created.
         int pageCount = doc.PageCount;
-        for (int i = 1; i <= pageCount; i++)
+        for (int i = 0; i < pageCount; i++)
         {
-            string fileName = $"Page_{i}.tiff";
-            if (!File.Exists(fileName))
-                throw new FileNotFoundException($"Expected TIFF page file not found: {fileName}");
+            string expectedPath = Path.Combine(outputDir, $"Page_{i + 1}.tiff");
+            if (!File.Exists(expectedPath))
+                throw new Exception($"Expected TIFF page file not found: {expectedPath}");
         }
 
-        Console.WriteLine($"Document rendered to {pageCount} TIFF page files.");
+        // Indicate successful completion (optional).
+        Console.WriteLine($"Successfully generated {pageCount} TIFF page files in '{outputDir}'.");
+    }
+
+    // Implementation of the page-saving callback to customize file names.
+    private class CustomPageSavingCallback : IPageSavingCallback
+    {
+        private readonly string _outputDirectory;
+
+        public CustomPageSavingCallback(string outputDirectory)
+        {
+            _outputDirectory = outputDirectory;
+        }
+
+        public void PageSaving(PageSavingArgs args)
+        {
+            // PageIndex is zero‑based; create a file name like "Page_1.tiff".
+            string fileName = $"Page_{args.PageIndex + 1}.tiff";
+            args.PageFileName = Path.Combine(_outputDirectory, fileName);
+        }
     }
 }

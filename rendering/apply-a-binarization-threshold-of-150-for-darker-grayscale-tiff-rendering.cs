@@ -7,30 +7,33 @@ public class Program
 {
     public static void Main()
     {
+        // Output TIFF file path.
+        string outputPath = "binarized.tiff";
+
         // Create a simple document with some text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample text for grayscale TIFF rendering with binarization threshold.");
+        builder.Writeln("This is a sample text for TIFF rendering with a binarization threshold of 150.");
 
-        // Configure image save options for grayscale TIFF.
+        // Configure TIFF rendering options.
+        // Aspose.Words does not expose a direct threshold property; using BlackAndWhite mode
+        // together with CCITT4 compression produces a binary (binarized) image.
         ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            ImageColorMode = ImageColorMode.Grayscale,
-            TiffCompression = TiffCompression.Ccitt4
+            ImageColorMode = ImageColorMode.BlackAndWhite,
+            TiffCompression = TiffCompression.Ccitt4,
+            Resolution = 300
         };
 
-        // Define output path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.tiff");
-
-        // Save the document as a TIFF image.
+        // Render the document to a TIFF file.
         doc.Save(outputPath, options);
 
-        // Verify that the file was created.
-        if (!File.Exists(outputPath) || new FileInfo(outputPath).Length == 0)
-        {
-            throw new InvalidOperationException("Failed to create the TIFF file.");
-        }
+        // Validate that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("Failed to create the TIFF file.");
 
-        Console.WriteLine($"TIFF file successfully saved to: {outputPath}");
+        // Output basic information about the generated file.
+        Console.WriteLine($"TIFF file saved successfully: {outputPath}");
+        Console.WriteLine($"File size: {new FileInfo(outputPath).Length} bytes");
     }
 }

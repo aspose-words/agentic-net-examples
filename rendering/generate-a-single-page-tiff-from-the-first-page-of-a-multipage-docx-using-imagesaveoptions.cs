@@ -7,32 +7,37 @@ public class Program
 {
     public static void Main()
     {
-        // Create a multi‑page document.
+        // Create a multi‑page DOCX document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add content for three pages.
-        for (int i = 1; i <= 3; i++)
+        builder.Writeln("This is page 1.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("This is page 2.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("This is page 3.");
+
+        // Save the source document (optional, just to demonstrate file creation).
+        string sourcePath = "sample.docx";
+        doc.Save(sourcePath);
+
+        // Prepare ImageSaveOptions for TIFF output, rendering only the first page.
+        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            builder.Writeln($"This is page {i}.");
-            if (i < 3)
-                builder.InsertBreak(BreakType.PageBreak);
-        }
+            // Render only page 1.
+            PageSet = new PageSet(1, 1)
+        };
 
-        // Define save options for TIFF and limit rendering to the first page (zero‑based index).
-        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff);
-        tiffOptions.PageSet = new PageSet(0); // Render only the first page.
-
-        string outputPath = "FirstPage.tiff";
-
-        // Save the first page as a single‑page TIFF.
-        doc.Save(outputPath, tiffOptions);
+        // Render the first page to a single‑page TIFF file.
+        string tiffPath = "first_page.tiff";
+        doc.Save(tiffPath, options);
 
         // Verify that the TIFF file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"Failed to create TIFF file at '{outputPath}'.");
+        if (!File.Exists(tiffPath))
+            throw new Exception($"Failed to create TIFF file at '{tiffPath}'.");
 
-        // Optionally, report success (no interactive prompts required).
-        Console.WriteLine($"TIFF file created successfully: {Path.GetFullPath(outputPath)}");
+        // Optionally, clean up the temporary DOCX file.
+        if (File.Exists(sourcePath))
+            File.Delete(sourcePath);
     }
 }

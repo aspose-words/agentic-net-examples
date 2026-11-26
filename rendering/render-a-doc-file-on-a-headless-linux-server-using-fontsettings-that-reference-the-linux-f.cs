@@ -2,41 +2,54 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fonts;
+using Aspose.Words.Loading;   // Needed for LoadOptions
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the sample document and rendered PDF.
-        string sourcePath = "sample.docx";
-        string outputPath = "rendered.pdf";
+        // Create a temporary working directory.
+        string workingDir = Path.Combine(Path.GetTempPath(), "AsposeRenderExample");
+        Directory.CreateDirectory(workingDir);
 
-        // 1. Create a simple DOCX document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        // Use a font that is commonly available on Linux (e.g., DejaVu Sans).
-        builder.Font.Name = "DejaVu Sans";
-        builder.Writeln("Hello, world! This document is rendered on a headless Linux server.");
-        doc.Save(sourcePath);
+        // Paths for the intermediate DOCX and final PDF.
+        string sourceDocPath = Path.Combine(workingDir, "sample.docx");
+        string outputPdfPath = Path.Combine(workingDir, "output.pdf");
 
-        // 2. Load the document with FontSettings pointing to the Linux fonts folder.
-        Document loadedDoc = new Document(sourcePath);
+        // Configure FontSettings to point to the Linux fonts folder.
+        string linuxFontsFolder = "/usr/share/fonts/truetype";
         FontSettings fontSettings = new FontSettings();
-        // Set the folder that contains system fonts on most Linux distributions.
-        // The second parameter (true) enables recursive search in subfolders.
-        fontSettings.SetFontsFolder("/usr/share/fonts", true);
-        loadedDoc.FontSettings = fontSettings;
+        fontSettings.SetFontsFolder(linuxFontsFolder, false);
 
-        // 3. Render the document to PDF.
-        loadedDoc.Save(outputPath, SaveFormat.Pdf);
+        // Build a simple document that uses a common Linux font.
+        Document doc = new Document();
+        doc.FontSettings = fontSettings;
 
-        // 4. Verify that the PDF was created.
-        if (!File.Exists(outputPath))
+        Paragraph paragraph = new Paragraph(doc);
+        Run run = new Run(doc, "Hello, Aspose.Words rendering with custom fonts on Linux!");
+        run.Font.Name = "DejaVu Sans"; // Typical font available on Linux.
+        paragraph.AppendChild(run);
+        doc.FirstSection.Body.AppendChild(paragraph);
+
+        // Save the source DOCX.
+        doc.Save(sourceDocPath);
+
+        // Load the document again with the same FontSettings (simulating a separate load on a headless server).
+        LoadOptions loadOptions = new LoadOptions { FontSettings = fontSettings };
+        Document loadedDoc = new Document(sourceDocPath, loadOptions);
+
+        // Render the document to PDF.
+        loadedDoc.Save(outputPdfPath, SaveFormat.Pdf);
+
+        // Verify that the PDF was created.
+        if (!File.Exists(outputPdfPath))
         {
-            throw new InvalidOperationException($"Failed to create the rendered PDF at '{outputPath}'.");
+            throw new Exception("Failed to create the PDF output.");
         }
 
-        // Optional: indicate success (no interactive prompts).
-        Console.WriteLine("Document rendered successfully to PDF.");
+        // Optional cleanup (commented out to allow inspection of generated files).
+        // File.Delete(sourceDocPath);
+        // File.Delete(outputPdfPath);
+        // Directory.Delete(workingDir);
     }
 }

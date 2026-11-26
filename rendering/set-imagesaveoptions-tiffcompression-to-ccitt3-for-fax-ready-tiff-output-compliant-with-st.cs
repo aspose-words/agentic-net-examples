@@ -7,26 +7,35 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple document.
+        // Create a simple document with some text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document for fax‑ready TIFF output.");
+        builder.Writeln("Hello, Aspose.Words!");
 
-        // Configure TIFF save options with CCITT3 compression.
-        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff);
-        tiffOptions.TiffCompression = TiffCompression.Ccitt3;
+        // Configure image save options for TIFF with CCITT3 compression (fax‑ready).
+        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff);
+        saveOptions.TiffCompression = TiffCompression.Ccitt3;
 
         // Define output file path.
         string outputPath = "fax_ready_output.tiff";
 
         // Save the document as a TIFF image using the specified options.
-        doc.Save(outputPath, tiffOptions);
+        doc.Save(outputPath, saveOptions);
 
-        // Verify that the file was created.
+        // Verify that the TIFF file was created successfully.
         if (!File.Exists(outputPath))
+        {
             throw new InvalidOperationException($"Failed to create TIFF file at '{outputPath}'.");
+        }
 
-        // Optionally, report success (no interactive prompts required).
-        Console.WriteLine($"TIFF file saved successfully to '{Path.GetFullPath(outputPath)}'.");
+        // Optional: ensure the file is not empty.
+        FileInfo info = new FileInfo(outputPath);
+        if (info.Length == 0)
+        {
+            throw new InvalidOperationException("The generated TIFF file is empty.");
+        }
+
+        // Indicate successful completion.
+        Console.WriteLine($"TIFF file saved successfully to '{outputPath}'.");
     }
 }

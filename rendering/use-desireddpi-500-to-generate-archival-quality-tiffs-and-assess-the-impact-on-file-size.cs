@@ -7,29 +7,23 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document and a builder to add content.
+        // Create a simple document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a sample document for TIFF rendering with high DPI.");
 
-        // Add enough text to generate multiple pages.
-        builder.Writeln("Sample Document for TIFF Rendering");
-        for (int i = 1; i <= 2000; i++)
-        {
-            builder.Writeln($"This is line {i} of sample text to increase document size and page count.");
-        }
+        // Define output file paths.
+        string defaultTiffPath = Path.Combine(Directory.GetCurrentDirectory(), "output_default.tiff");
+        string highDpiTiffPath = Path.Combine(Directory.GetCurrentDirectory(), "output_high.tiff");
 
-        // Define output file names.
-        string defaultTiffPath = "output_default.tiff";
-        string highDpiTiffPath = "output_500dpi.tiff";
+        // Render TIFF with default DPI.
+        doc.Save(defaultTiffPath, SaveFormat.Tiff);
 
-        // Save with default DPI (no explicit resolution set).
-        ImageSaveOptions defaultOptions = new ImageSaveOptions(SaveFormat.Tiff);
-        doc.Save(defaultTiffPath, defaultOptions);
-
-        // Save with higher DPI (use Resolution property instead of DesiredDpi).
+        // Render TIFF with high DPI (500).
         ImageSaveOptions highDpiOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            Resolution = 500 // DPI setting for archival‑quality TIFF.
+            // The Resolution property sets the DPI for image rendering.
+            Resolution = 500
         };
         doc.Save(highDpiTiffPath, highDpiOptions);
 
@@ -45,7 +39,6 @@ public class Program
 
         // Output the size comparison.
         Console.WriteLine($"Default DPI TIFF size: {defaultSize} bytes");
-        Console.WriteLine($"500 DPI TIFF size: {highDpiSize} bytes");
-        Console.WriteLine($"Size increase factor: {(double)highDpiSize / defaultSize:F2}");
+        Console.WriteLine($"High DPI (500) TIFF size: {highDpiSize} bytes");
     }
 }

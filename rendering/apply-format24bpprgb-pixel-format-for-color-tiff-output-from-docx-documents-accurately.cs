@@ -7,39 +7,34 @@ public class Program
 {
     public static void Main()
     {
-        // Define file paths.
-        string docPath = "SampleDocument.docx";
-        string tiffPath = "SampleDocument.tiff";
-
-        // Create a new document and add some colored content.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.Size = 24;
-        builder.Font.Color = System.Drawing.Color.DarkBlue;
-        builder.Writeln("This is a sample DOCX document rendered to a color TIFF.");
 
-        // Save the DOCX file (optional, just to show the source exists).
-        doc.Save(docPath);
+        // Add some sample content.
+        builder.Writeln("This is a sample document rendered to a 24‑bpp color TIFF.");
 
-        // Configure ImageSaveOptions for TIFF with 24bppRgb (color) pixel format.
-        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        // Prepare the output folder.
+        string artifactsDir = "Artifacts";
+        Directory.CreateDirectory(artifactsDir);
+        string outputPath = Path.Combine(artifactsDir, "Color24bpp.tiff");
+
+        // Configure image save options for TIFF with 24‑bpp RGB pixel format.
+        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            // Optional: set compression to none to keep full color fidelity.
-            TiffCompression = TiffCompression.None,
-            // Set a reasonable resolution.
-            Resolution = 300
+            PixelFormat = ImagePixelFormat.Format24BppRgb,
+            // Optional: set compression to None to keep the file size predictable.
+            TiffCompression = TiffCompression.None
         };
 
-        // Render the document to a multi-page TIFF.
-        doc.Save(tiffPath, saveOptions);
+        // Save the document as a TIFF image using the configured options.
+        doc.Save(outputPath, options);
 
-        // Validate that the TIFF file was created.
-        if (!File.Exists(tiffPath))
-        {
-            throw new Exception($"TIFF file was not created at path: {tiffPath}");
-        }
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException($"Failed to create TIFF file at '{outputPath}'.");
 
-        // Output a simple confirmation (no user interaction required).
-        Console.WriteLine($"Document successfully rendered to color TIFF: {tiffPath}");
+        // Optionally, report success (no interactive prompts required).
+        Console.WriteLine($"TIFF file saved successfully to: {outputPath}");
     }
 }

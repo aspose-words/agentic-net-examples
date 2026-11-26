@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Fonts;
 
@@ -11,32 +12,43 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Configure FontSettings to use the system fonts folder.
-        string fontsFolder = Environment.GetFolderPath(Environment.SpecialFolder.Fonts);
+        // Use a font that supports OpenType ligatures.
+        builder.Font.Name = "Times New Roman";
+        builder.Writeln("office"); // Contains "ff" ligature opportunity.
+
+        // Add Arabic text to demonstrate contextual forms.
+        builder.Font.Name = "Arial";
+        builder.Font.LocaleId = 1025; // Arabic locale.
+        builder.Writeln("العربية");
+
+        // Configure FontSettings to point to the system fonts folder.
         FontSettings fontSettings = new FontSettings();
-        fontSettings.SetFontsFolder(fontsFolder, false);
+        string fontsFolder = Environment.GetFolderPath(Environment.SpecialFolder.Fonts);
+        if (Directory.Exists(fontsFolder))
+        {
+            fontSettings.SetFontsFolder(fontsFolder, false);
+        }
         doc.FontSettings = fontSettings;
 
-        // Add text that contains ligatures (e.g., "ff", "fi") and Arabic text for contextual forms.
-        builder.Font.Name = "Times New Roman";
-        builder.Writeln("Office");      // Contains "ff" ligature.
-        builder.Writeln("affinity");    // Contains "fi" ligature.
-
-        builder.Font.Name = "Arial";
-        builder.Writeln("العربية");      // Arabic text with contextual shaping.
-
-        // Render the document to PDF. OpenType features (ligatures, contextual forms) are applied by default.
-        string outputPath = "Output.pdf";
-        doc.Save(outputPath, SaveFormat.Pdf);
+        // Render the document to PDF.
+        string pdfPath = "Output.pdf";
+        doc.Save(pdfPath, SaveFormat.Pdf);
 
         // Verify that the PDF file was created.
-        if (!File.Exists(outputPath))
+        if (!File.Exists(pdfPath))
         {
-            throw new InvalidOperationException($"Failed to create PDF file at '{outputPath}'.");
+            throw new Exception("PDF rendering failed: file was not created.");
         }
 
-        // Optionally, you could inspect the PDF bytes for embedded font markers,
-        // but for this example we only confirm the file exists.
-        Console.WriteLine($"PDF rendering completed successfully. File saved to: {Path.GetFullPath(outputPath)}");
+        // Simple inspection for embedded font markers in the PDF content.
+        byte[] pdfBytes = File.ReadAllBytes(pdfPath);
+        string pdfText = Encoding.ASCII.GetString(pdfBytes);
+        bool hasEmbeddedFont = pdfText.Contains("/FontFile") ||
+                               pdfText.Contains("/FontFile2") ||
+                               pdfText.Contains("/FontFile3");
+
+        Console.WriteLine(hasEmbeddedFont
+            ? "PDF created with embedded fonts (OpenType features preserved)."
+            : "PDF created, but embedded font markers were not found.");
     }
 }

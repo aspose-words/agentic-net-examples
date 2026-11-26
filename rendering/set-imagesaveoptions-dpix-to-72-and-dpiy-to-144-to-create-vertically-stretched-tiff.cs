@@ -7,33 +7,31 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple document with one paragraph.
+        // Create a simple document with a paragraph.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample text for TIFF rendering.");
+        builder.Writeln("This is a sample document rendered to a vertically stretched TIFF.");
 
-        // Define the output TIFF file path.
-        string tiffPath = "Output.tiff";
-
-        // Configure image save options with custom DPI values.
+        // Configure image save options for TIFF with custom DPI settings.
+        // Use HorizontalResolution and VerticalResolution to set different DPI values.
         ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            // Horizontal DPI (X axis)
-            HorizontalResolution = 72,
-            // Vertical DPI (Y axis) – this will stretch the image vertically.
-            VerticalResolution = 144
+            HorizontalResolution = 72,   // Horizontal DPI
+            VerticalResolution = 144    // Vertical DPI (stretched vertically)
         };
 
-        // Render the document to a TIFF image using the specified options.
-        doc.Save(tiffPath, saveOptions);
+        // Define output file path.
+        string outputPath = "stretched_output.tiff";
 
-        // Verify that the TIFF file was created.
-        if (!File.Exists(tiffPath))
+        // Save the document as a TIFF image using the specified options.
+        doc.Save(outputPath, saveOptions);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
         {
-            throw new Exception("Failed to create the TIFF file.");
+            throw new FileNotFoundException("The TIFF file was not created.", outputPath);
         }
 
-        // Indicate success.
-        Console.WriteLine("TIFF file created successfully at: " + Path.GetFullPath(tiffPath));
+        Console.WriteLine($"TIFF image saved successfully to '{Path.GetFullPath(outputPath)}'.");
     }
 }

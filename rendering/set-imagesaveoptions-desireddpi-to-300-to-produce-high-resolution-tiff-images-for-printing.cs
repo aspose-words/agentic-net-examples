@@ -10,29 +10,28 @@ public class Program
         // Create a simple document with some text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document rendered to a high‑resolution TIFF image.");
+        builder.Writeln("Hello, high‑resolution TIFF!");
 
-        // Configure image save options for TIFF with a resolution of 300 DPI.
+        // Configure image save options for TIFF with 300 DPI.
         ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            // The property to set DPI is Resolution, not DesiredDpi.
+            // The DPI setting is specified via the Resolution property.
             Resolution = 300
         };
 
-        // Define the output file path.
-        string outputPath = "output.tiff";
+        // Define output file path.
+        string outputPath = "high_res_output.tiff";
 
-        // Save the document as a TIFF image using the configured options.
+        // Save the document as a TIFF image using the specified DPI.
         doc.Save(outputPath, saveOptions);
 
-        // Verify that the TIFF file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
         {
-            throw new FileNotFoundException("The TIFF image was not created.", outputPath);
+            throw new InvalidOperationException($"Failed to create the TIFF file at '{outputPath}'.");
         }
 
-        // Output the file size to confirm that the image was saved.
-        long fileSize = new FileInfo(outputPath).Length;
-        Console.WriteLine($"TIFF image saved successfully. File size: {fileSize} bytes.");
+        // Report success (no interactive input required).
+        Console.WriteLine($"TIFF image saved successfully with 300 DPI at: {Path.GetFullPath(outputPath)}");
     }
 }

@@ -7,28 +7,28 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple document in memory.
+        // Create a simple document with some text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello World!");
+        builder.Writeln("Hello, world! This is a test for 1‑bit black‑white TIFF output.");
 
-        // Configure image save options for 1‑bit black‑white TIFF.
+        // Define the output file path.
+        string outputPath = "output_1bpp.tiff";
+
+        // Configure ImageSaveOptions for TIFF with 1‑bit indexed pixel format.
         ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff);
         saveOptions.PixelFormat = ImagePixelFormat.Format1bppIndexed;
 
-        // Define output file path.
-        string outputPath = "output.tiff";
-
-        // Save the document as a TIFF image using the configured options.
+        // Save the document as a TIFF image.
         doc.Save(outputPath, saveOptions);
 
         // Verify that the TIFF file was created.
         if (!File.Exists(outputPath))
         {
-            throw new InvalidOperationException($"Failed to create the TIFF file at '{outputPath}'.");
+            throw new InvalidOperationException("The TIFF file was not created.");
         }
 
-        // Indicate success (optional).
-        Console.WriteLine("TIFF image saved successfully with 1‑bit pixel format.");
+        // Indicate successful completion.
+        Console.WriteLine("TIFF saved successfully: " + Path.GetFullPath(outputPath));
     }
 }
