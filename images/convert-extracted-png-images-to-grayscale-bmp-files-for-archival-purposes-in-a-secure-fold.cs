@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
@@ -9,106 +10,125 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a deterministic PNG image.
-        const string pngPath = "input.png";
-        CreateSamplePng(pngPath);
+        // 1. Create a deterministic sample PNG image.
+        const string samplePngPath = "sample.png";
+        CreateSamplePng(samplePngPath);
 
-        // Step 2: Create a Word document and insert the PNG image.
+        // 2. Insert the PNG into a Word document.
         const string docPath = "sample.docx";
-        CreateDocumentWithImage(docPath, pngPath);
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.InsertImage(samplePngPath);
+        doc.Save(docPath);
 
-        // Step 3: Load the document and extract PNG images.
-        var document = new Document(docPath);
-        var shapes = document.GetChildNodes(NodeType.Shape, true);
-        int imageIndex = 0;
-        string secureFolder = "SecureArchive";
-        Directory.CreateDirectory(secureFolder);
+        // 3. Extract PNG images from the document.
+        string extractedFolder = "Extracted";
+        Directory.CreateDirectory(extractedFolder);
+        List<string> extractedPngFiles = ExtractPngImages(doc, extractedFolder);
+
+        if (extractedPngFiles.Count == 0)
+            throw new InvalidOperationException("No PNG images were extracted from the document.");
+
+        // 4. Convert each extracted PNG to a grayscale BMP and store in a secure folder.
+        string secureArchiveFolder = "SecureArchive";
+        Directory.CreateDirectory(secureArchiveFolder);
+        int bmpCount = 0;
+
+        foreach (string pngFile in extractedPngFiles)
+        {
+            string bmpFileName = Path.GetFileNameWithoutExtension(pngFile) + ".bmp";
+            string bmpPath = Path.Combine(secureArchiveFolder, bmpFileName);
+            ConvertPngToGrayscaleBmp(pngFile, bmpPath);
+            bmpCount++;
+        }
+
+        if (bmpCount == 0)
+            throw new InvalidOperationException("No BMP files were created during conversion.");
+
+        Console.WriteLine($"Successfully created {bmpCount} grayscale BMP file(s) in '{secureArchiveFolder}'.");
+    }
+
+    private static void CreateSamplePng(string filePath)
+    {
+        const int width = 200;
+        const int height = 100;
+        using (Bitmap bitmap = new Bitmap(width, height))
+        {
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                g.Clear(Color.White);
+                // Draw a simple red rectangle.
+                using (SolidBrush brush = new SolidBrush(Color.Red))
+                {
+                    g.FillRectangle(brush, 20, 20, width - 40, height - 40);
+                }
+            }
+            bitmap.Save(filePath, ImageFormat.Png);
+        }
+
+        if (!File.Exists(filePath))
+            throw new InvalidOperationException($"Failed to create sample PNG at '{filePath}'.");
+    }
+
+    private static List<string> ExtractPngImages(Document doc, string outputFolder)
+    {
+        List<string> pngFiles = new List<string>();
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
 
         foreach (Shape shape in shapes)
         {
             if (!shape.HasImage)
                 continue;
 
-            // Process only PNG images.
+            // Only process PNG images.
             if (shape.ImageData.ImageType != ImageType.Png)
                 continue;
 
-            // Save the image to a memory stream.
-            using (var imageStream = new MemoryStream())
+            using (MemoryStream ms = new MemoryStream())
             {
-                shape.ImageData.Save(imageStream);
-                imageStream.Position = 0; // Reset before reading.
+                shape.ImageData.Save(ms);
+                ms.Position = 0;
 
-                // Load the PNG into a bitmap.
-                using (var originalBitmap = new Bitmap(imageStream))
+                string pngPath = Path.Combine(outputFolder,
+                    $"extracted-{Guid.NewGuid()}.png");
+
+                using (FileStream fs = new FileStream(pngPath, FileMode.Create, FileAccess.Write))
                 {
-                    // Convert to grayscale.
-                    using (var grayBitmap = new Bitmap(originalBitmap.Width, originalBitmap.Height))
-                    {
-                        for (int y = 0; y < originalBitmap.Height; y++)
-                        {
-                            for (int x = 0; x < originalBitmap.Width; x++)
-                            {
-                                var pixel = originalBitmap.GetPixel(x, y);
-                                int gray = (int)(pixel.R * 0.3 + pixel.G * 0.59 + pixel.B * 0.11);
-                                var grayColor = Color.FromArgb(gray, gray, gray);
-                                grayBitmap.SetPixel(x, y, grayColor);
-                            }
-                        }
-
-                        // Save the grayscale BMP to the secure folder.
-                        string outputPath = Path.Combine(secureFolder, $"image-{imageIndex}.bmp");
-                        grayBitmap.Save(outputPath, ImageFormat.Bmp);
-
-                        // Validate that the file was created.
-                        if (!File.Exists(outputPath))
-                            throw new Exception($"Failed to save grayscale BMP: {outputPath}");
-                    }
+                    ms.CopyTo(fs);
                 }
-            }
 
-            imageIndex++;
+                pngFiles.Add(pngPath);
+            }
         }
 
-        // Ensure at least one image was processed.
-        if (imageIndex == 0)
-            throw new Exception("No PNG images were found and converted.");
+        return pngFiles;
     }
 
-    private static void CreateSamplePng(string filePath)
+    private static void ConvertPngToGrayscaleBmp(string pngPath, string bmpPath)
     {
-        const int width = 200;
-        const int height = 200;
+        using (Bitmap original = new Bitmap(pngPath))
+        {
+            int width = original.Width;
+            int height = original.Height;
+            using (Bitmap grayBitmap = new Bitmap(width, height, PixelFormat.Format24bppRgb))
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < width; x++)
+                    {
+                        Color pixelColor = original.GetPixel(x, y);
+                        // Compute luminance using standard Rec. 601 coefficients.
+                        int gray = (int)(0.299 * pixelColor.R + 0.587 * pixelColor.G + 0.114 * pixelColor.B);
+                        Color grayColor = Color.FromArgb(gray, gray, gray);
+                        grayBitmap.SetPixel(x, y, grayColor);
+                    }
+                }
 
-        // Create bitmap and draw a red ellipse on white background.
-        var bitmap = new Bitmap(width, height);
-        var graphics = Graphics.FromImage(bitmap);
-        graphics.Clear(Color.White);
-        var pen = new Pen(Color.Red, 5);
-        graphics.DrawEllipse(pen, 20, 20, width - 40, height - 40);
+                grayBitmap.Save(bmpPath, ImageFormat.Bmp);
+            }
+        }
 
-        // Save as PNG.
-        bitmap.Save(filePath, ImageFormat.Png);
-
-        // Cleanup drawing resources.
-        pen.Dispose();
-        graphics.Dispose();
-        bitmap.Dispose();
-
-        // Validate that the PNG was created.
-        if (!File.Exists(filePath))
-            throw new Exception($"Failed to create sample PNG image: {filePath}");
-    }
-
-    private static void CreateDocumentWithImage(string docPath, string imagePath)
-    {
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-        builder.InsertImage(imagePath);
-        doc.Save(docPath);
-
-        // Validate that the document was saved.
-        if (!File.Exists(docPath))
-            throw new Exception($"Failed to create Word document: {docPath}");
+        if (!File.Exists(bmpPath))
+            throw new InvalidOperationException($"Failed to save BMP file at '{bmpPath}'.");
     }
 }

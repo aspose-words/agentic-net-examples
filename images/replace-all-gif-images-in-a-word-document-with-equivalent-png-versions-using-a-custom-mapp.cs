@@ -3,94 +3,109 @@ using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
+using AsposeDrawing = Aspose.Drawing;
+using AsposeDrawingImaging = Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // Create a sample GIF image (100x100, light blue background)
-        // -----------------------------------------------------------------
-        string gifPath = "sample1.gif";
-        using (Aspose.Drawing.Bitmap gifBitmap = new Aspose.Drawing.Bitmap(100, 100))
+        // Prepare deterministic file names.
+        const string gifPath = "sample.gif";
+        const string pngPath = "sample.png";
+        const string inputDocPath = "input.docx";
+        const string outputDocPath = "output.docx";
+
+        // Create a sample GIF image.
+        using (AsposeDrawing.Bitmap bitmap = new AsposeDrawing.Bitmap(200, 100))
         {
-            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(gifBitmap))
+            using (AsposeDrawing.Graphics g = AsposeDrawing.Graphics.FromImage(bitmap))
             {
-                g.Clear(Aspose.Drawing.Color.LightBlue);
+                g.Clear(AsposeDrawing.Color.White);
+                g.DrawRectangle(AsposeDrawing.Pens.Black, 10, 10, 180, 80);
+                g.DrawString("GIF Image",
+                    new AsposeDrawing.Font("Arial", 12),
+                    AsposeDrawing.Brushes.Black,
+                    new AsposeDrawing.PointF(30, 40));
             }
-            gifBitmap.Save(gifPath, ImageFormat.Gif);
+            bitmap.Save(gifPath, AsposeDrawingImaging.ImageFormat.Gif);
         }
 
-        // -----------------------------------------------------------------
-        // Create the equivalent PNG image (same size, same background)
-        // -----------------------------------------------------------------
-        string pngPath = "sample1.png";
-        using (Aspose.Drawing.Bitmap pngBitmap = new Aspose.Drawing.Bitmap(100, 100))
+        // Create the PNG counterpart (same visual content).
+        using (AsposeDrawing.Bitmap bitmap = new AsposeDrawing.Bitmap(200, 100))
         {
-            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(pngBitmap))
+            using (AsposeDrawing.Graphics g = AsposeDrawing.Graphics.FromImage(bitmap))
             {
-                g.Clear(Aspose.Drawing.Color.LightBlue);
+                g.Clear(AsposeDrawing.Color.White);
+                g.DrawRectangle(AsposeDrawing.Pens.Black, 10, 10, 180, 80);
+                g.DrawString("PNG Image",
+                    new AsposeDrawing.Font("Arial", 12),
+                    AsposeDrawing.Brushes.Black,
+                    new AsposeDrawing.PointF(30, 40));
             }
-            pngBitmap.Save(pngPath, ImageFormat.Png);
+            bitmap.Save(pngPath, AsposeDrawingImaging.ImageFormat.Png);
         }
 
-        // -----------------------------------------------------------------
-        // Build a Word document that contains the GIF image
-        // -----------------------------------------------------------------
+        // Verify that the images were created.
+        if (!File.Exists(gifPath) || !File.Exists(pngPath))
+            throw new Exception("Failed to create sample images.");
+
+        // Create a new document and insert the GIF image.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(gifPath);
-        string inputDocPath = "input.docx";
         doc.Save(inputDocPath);
 
-        // -----------------------------------------------------------------
-        // Load the document for processing
-        // -----------------------------------------------------------------
+        // Verify input document creation.
+        if (!File.Exists(inputDocPath))
+            throw new Exception("Failed to create input document.");
+
+        // Load the document for processing.
         Document loadedDoc = new Document(inputDocPath);
 
-        // Mapping from original GIF file name to replacement PNG path.
-        // In this simple example we replace any GIF with the prepared PNG.
-        var gifToPngMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        // Custom mapping from GIF file name to PNG file name.
+        Dictionary<string, string> gifToPngMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            { Path.GetFileName(gifPath), pngPath }
+            { gifPath, pngPath }
         };
 
         int replacedCount = 0;
 
-        // Iterate over all Shape nodes that contain images.
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        foreach (Shape shape in shapeNodes)
+        // Iterate over all Shape nodes that may contain images.
+        NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        foreach (Shape shape in shapes)
         {
             if (!shape.HasImage)
                 continue;
 
-            // Replace only GIF images.
+            // Check if the image is a GIF.
             if (shape.ImageData.ImageType == ImageType.Gif)
             {
-                // Since ImageData does not expose the original file name,
-                // we replace any GIF image using the mapping dictionary.
-                // If a specific mapping is required, additional logic can be added here.
-                string key = Path.GetFileName(gifPath); // known key for this demo
-                if (gifToPngMap.TryGetValue(key, out string newPngPath))
+                // In this example we know the source key.
+                string sourceKey = gifPath;
+
+                if (gifToPngMap.TryGetValue(sourceKey, out string newImagePath) && File.Exists(newImagePath))
                 {
-                    shape.ImageData.SetImage(newPngPath);
+                    shape.ImageData.SetImage(newImagePath);
                     replacedCount++;
                 }
             }
         }
 
-        // Ensure at least one replacement happened.
+        // Ensure at least one replacement occurred.
         if (replacedCount == 0)
-            throw new InvalidOperationException("No GIF images were replaced.");
+            throw new Exception("No GIF images were found and replaced.");
 
         // Save the modified document.
-        string outputDocPath = "output.docx";
         loadedDoc.Save(outputDocPath);
 
-        // Validate that the output file was created.
+        // Validate output.
         if (!File.Exists(outputDocPath))
-            throw new FileNotFoundException("The output document was not created.", outputDocPath);
+            throw new Exception("Failed to save the output document.");
+
+        // Optional cleanup (commented out).
+        // File.Delete(gifPath);
+        // File.Delete(pngPath);
+        // File.Delete(inputDocPath);
     }
 }

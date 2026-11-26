@@ -9,94 +9,76 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare folders
-        string baseDir = Directory.GetCurrentDirectory();
-        string inputFolder = Path.Combine(baseDir, "InputImages");
-        string extractedFolder = Path.Combine(baseDir, "ExtractedImages");
-        string outputFolder = Path.Combine(baseDir, "OutputImages");
+        // Prepare input and output folders.
+        string inputFolder = "input_images";
+        string outputFolder = "output_images";
         Directory.CreateDirectory(inputFolder);
-        Directory.CreateDirectory(extractedFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Step 1: Create sample TIFF images
-        for (int i = 1; i <= 3; i++)
+        // Create sample TIFF images with different DPI values.
+        CreateSampleTiff(Path.Combine(inputFolder, "sample1.tif"), 96f);
+        CreateSampleTiff(Path.Combine(inputFolder, "sample2.tif"), 300f);
+
+        // Batch convert each TIFF to lossless PNG while preserving DPI.
+        string[] tiffFiles = Directory.GetFiles(inputFolder, "*.tif");
+        foreach (string tiffPath in tiffFiles)
         {
-            string tiffPath = Path.Combine(inputFolder, $"sample{i}.tiff");
-            using (Bitmap bitmap = new Bitmap(200, 200))
+            // Load the TIFF into a temporary Word document to use Aspose.Words image handling.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.InsertImage(tiffPath);
+
+            // Retrieve the inserted shape that contains the image.
+            Shape shape = (Shape)doc.GetChildNodes(NodeType.Shape, true)[0];
+            if (!shape.HasImage)
+                continue;
+
+            // Get the raw image bytes from the shape.
+            byte[] imageBytes = shape.ImageData.ImageBytes;
+
+            // Load the image bytes into Aspose.Drawing.Bitmap.
+            using (MemoryStream ms = new MemoryStream(imageBytes))
             {
-                using (Graphics g = Graphics.FromImage(bitmap))
+                ms.Position = 0;
+                using (Bitmap bitmap = new Bitmap(ms))
                 {
-                    g.Clear(Aspose.Drawing.Color.White);
-                    // Draw a simple rectangle with a different color for each image
-                    Aspose.Drawing.Brush brush = new SolidBrush(Aspose.Drawing.Color.FromArgb(50 * i, 100, 150));
-                    g.FillRectangle(brush, 20, 20, 160, 160);
-                    brush.Dispose();
-                }
-                // Set DPI (example 300x300)
-                bitmap.SetResolution(300f, 300f);
-                bitmap.Save(tiffPath, ImageFormat.Tiff);
-            }
-        }
+                    // Preserve original DPI.
+                    float dpiX = bitmap.HorizontalResolution;
+                    float dpiY = bitmap.VerticalResolution;
+                    bitmap.SetResolution(dpiX, dpiY);
 
-        // Step 2: Create a Word document and insert the TIFF images
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        foreach (string tiffFile in Directory.GetFiles(inputFolder, "*.tiff"))
-        {
-            builder.InsertImage(tiffFile);
-            builder.Writeln(); // separate images
-        }
-        string docPath = Path.Combine(baseDir, "Sample.docx");
-        doc.Save(docPath);
-
-        // Step 3: Extract images from the document (they will be saved as TIFF)
-        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
-        int extractedIndex = 1;
-        foreach (Shape shape in shapes)
-        {
-            if (shape.HasImage)
-            {
-                string extractedPath = Path.Combine(extractedFolder, $"extracted{extractedIndex}.tiff");
-                shape.ImageData.Save(extractedPath);
-                extractedIndex++;
-            }
-        }
-
-        // Validate extraction
-        if (Directory.GetFiles(extractedFolder, "*.tiff").Length == 0)
-            throw new Exception("No images were extracted from the document.");
-
-        // Step 4: Batch convert extracted TIFF images to lossless PNG while preserving DPI
-        foreach (string tiffFile in Directory.GetFiles(extractedFolder, "*.tiff"))
-        {
-            using (Bitmap tiffBitmap = new Bitmap(tiffFile))
-            {
-                // Preserve DPI
-                float dpiX = tiffBitmap.HorizontalResolution;
-                float dpiY = tiffBitmap.VerticalResolution;
-
-                // Create a new bitmap with the same size and DPI
-                using (Bitmap pngBitmap = new Bitmap(tiffBitmap.Width, tiffBitmap.Height))
-                {
-                    pngBitmap.SetResolution(dpiX, dpiY);
-                    using (Graphics g = Graphics.FromImage(pngBitmap))
-                    {
-                        g.Clear(Aspose.Drawing.Color.Transparent);
-                        g.DrawImage(tiffBitmap, 0, 0, tiffBitmap.Width, tiffBitmap.Height);
-                    }
-
-                    string pngPath = Path.Combine(outputFolder,
-                        Path.GetFileNameWithoutExtension(tiffFile) + ".png");
-                    pngBitmap.Save(pngPath, ImageFormat.Png);
+                    // Save as PNG with the same DPI.
+                    string outputPath = Path.Combine(outputFolder,
+                        Path.GetFileNameWithoutExtension(tiffPath) + ".png");
+                    bitmap.Save(outputPath, ImageFormat.Png);
                 }
             }
         }
 
-        // Validate conversion
-        if (Directory.GetFiles(outputFolder, "*.png").Length == 0)
-            throw new Exception("No PNG files were created during conversion.");
+        // Validate that at least one PNG was created.
+        int pngCount = Directory.GetFiles(outputFolder, "*.png").Length;
+        if (pngCount == 0)
+            throw new InvalidOperationException("No PNG files were created during conversion.");
 
-        // Cleanup (optional)
-        // Console.WriteLine("Batch conversion completed successfully.");
+        // Example completed successfully.
+        Console.WriteLine($"Conversion completed. {pngCount} PNG file(s) saved to '{outputFolder}'.");
+    }
+
+    // Helper method to create a deterministic TIFF image with a specific DPI.
+    private static void CreateSampleTiff(string filePath, float dpi)
+    {
+        int width = 200;
+        int height = 200;
+        using (Bitmap bitmap = new Bitmap(width, height))
+        {
+            bitmap.SetResolution(dpi, dpi);
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                g.Clear(Color.White);
+                // Draw a simple rectangle to have visible content.
+                g.FillRectangle(Brushes.LightBlue, 20, 20, width - 40, height - 40);
+            }
+            bitmap.Save(filePath, ImageFormat.Tiff);
+        }
     }
 }

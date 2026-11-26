@@ -9,72 +9,82 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a sample TIFF image.
-        const string tiffPath = "sample.tif";
-        using (Bitmap bitmap = new Bitmap(200, 200))
+        // Create a deterministic sample TIFF image.
+        const string tiffPath = "sample.tiff";
+        using (Bitmap bmp = new Bitmap(200, 200))
         {
-            using (Graphics g = Graphics.FromImage(bitmap))
+            using (Graphics g = Graphics.FromImage(bmp))
             {
-                g.Clear(Color.White);
-                using (SolidBrush brush = new SolidBrush(Color.Blue))
+                g.Clear(Aspose.Drawing.Color.White);
+                // Draw a simple red rectangle.
+                using (SolidBrush brush = new SolidBrush(Aspose.Drawing.Color.Red))
                 {
                     g.FillRectangle(brush, 50, 50, 100, 100);
                 }
             }
-            bitmap.Save(tiffPath, ImageFormat.Tiff);
+            bmp.Save(tiffPath, ImageFormat.Tiff);
         }
 
-        // Step 2: Create a Word document and insert the TIFF image.
-        const string docPath = "sample.docx";
+        // Create a Word document and insert the TIFF image.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(tiffPath);
+        const string docPath = "DocumentWithTiff.docx";
         doc.Save(docPath);
 
-        // Step 3: Load the document and extract images (process all images, the sample is TIFF).
-        Document loadedDoc = new Document(docPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int imageIndex = 0;
+        // Prepare output folder.
+        const string outputFolder = "ConvertedImages";
+        Directory.CreateDirectory(outputFolder);
 
-        foreach (Shape shape in shapeNodes)
+        // Extract images from the document, convert TIFF to grayscale JPEG.
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+        int convertedCount = 0;
+
+        foreach (Shape shape in shapes)
         {
             if (!shape.HasImage)
                 continue;
 
-            // Get image bytes.
-            byte[] imageBytes = shape.ImageData.ImageBytes;
-            using (MemoryStream ms = new MemoryStream(imageBytes))
+            // Save the shape image to a memory stream.
+            using (MemoryStream imgStream = new MemoryStream())
             {
-                ms.Position = 0;
-                using (Bitmap srcBitmap = new Bitmap(ms))
+                shape.ImageData.Save(imgStream);
+                imgStream.Position = 0;
+
+                // Load the image using Aspose.Drawing.
+                using (Bitmap original = new Bitmap(imgStream))
                 {
                     // Convert to grayscale.
-                    for (int y = 0; y < srcBitmap.Height; y++)
+                    using (Bitmap grayBmp = new Bitmap(original.Width, original.Height))
                     {
-                        for (int x = 0; x < srcBitmap.Width; x++)
+                        for (int y = 0; y < original.Height; y++)
                         {
-                            Color pixel = srcBitmap.GetPixel(x, y);
-                            int gray = (int)(0.299 * pixel.R + 0.587 * pixel.G + 0.114 * pixel.B);
-                            Color grayColor = Color.FromArgb(gray, gray, gray);
-                            srcBitmap.SetPixel(x, y, grayColor);
+                            for (int x = 0; x < original.Width; x++)
+                            {
+                                Aspose.Drawing.Color pixel = original.GetPixel(x, y);
+                                int gray = (int)(0.3 * pixel.R + 0.59 * pixel.G + 0.11 * pixel.B);
+                                Aspose.Drawing.Color grayColor = Aspose.Drawing.Color.FromArgb(gray, gray, gray);
+                                grayBmp.SetPixel(x, y, grayColor);
+                            }
                         }
-                    }
 
-                    // Save as JPEG.
-                    string jpegPath = $"image-{imageIndex}.jpg";
-                    srcBitmap.Save(jpegPath, ImageFormat.Jpeg);
-                    if (!File.Exists(jpegPath))
-                        throw new Exception($"Failed to create JPEG file: {jpegPath}");
-                    imageIndex++;
+                        // Save as JPEG.
+                        string outputPath = Path.Combine(outputFolder, $"image-{convertedCount + 1}.jpg");
+                        grayBmp.Save(outputPath, ImageFormat.Jpeg);
+                        if (!File.Exists(outputPath))
+                            throw new Exception($"Failed to create output file: {outputPath}");
+
+                        convertedCount++;
+                    }
                 }
             }
         }
 
-        // Validation: ensure at least one JPEG was created.
-        if (imageIndex == 0)
-            throw new Exception("No images were found and converted.");
+        // Validate that at least one image was converted.
+        if (convertedCount == 0)
+            throw new Exception("No images were extracted and converted.");
 
-        // Optional cleanup (commented out).
+        // Cleanup temporary files (optional).
         // File.Delete(tiffPath);
         // File.Delete(docPath);
     }

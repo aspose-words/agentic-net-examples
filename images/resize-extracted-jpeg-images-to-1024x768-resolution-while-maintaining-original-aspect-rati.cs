@@ -2,9 +2,6 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Tables;
-using Aspose.Words.Drawing.Charts;
-using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
@@ -12,85 +9,86 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a sample JPEG image.
-        const string originalImagePath = "sample.jpg";
-        const int originalWidth = 2000;
-        const int originalHeight = 1500;
-        using (Bitmap bitmap = new Bitmap(originalWidth, originalHeight))
+        // Create a deterministic sample JPEG image.
+        const string inputImagePath = "sample.jpg";
+        using (Bitmap bitmap = new Bitmap(2000, 1500))
         {
             using (Graphics g = Graphics.FromImage(bitmap))
             {
-                g.Clear(Color.LightBlue);
-                // Draw a simple rectangle.
-                using (Pen pen = new Pen(Color.DarkBlue, 10))
-                {
-                    g.DrawRectangle(pen, 100, 100, originalWidth - 200, originalHeight - 200);
-                }
+                g.Clear(Color.White);
+                // Draw a simple rectangle for visual content.
+                g.FillRectangle(new SolidBrush(Color.LightBlue), 100, 100, 1800, 1300);
             }
-            bitmap.Save(originalImagePath, ImageFormat.Jpeg);
+            bitmap.Save(inputImagePath, ImageFormat.Jpeg);
         }
 
-        // Step 2: Insert the image into a Word document.
-        const string docPath = "DocumentWithImage.docx";
+        // Create a Word document and insert the sample image.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(originalImagePath);
+        builder.InsertImage(inputImagePath);
+        const string docPath = "sample.docx";
         doc.Save(docPath);
 
-        // Step 3: Extract JPEG images, resize while maintaining aspect ratio, and save.
-        const int maxWidth = 1024;
-        const int maxHeight = 768;
-        int imageIndex = 0;
-        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
+        // Load the document (optional, demonstrates load/save lifecycle).
+        Document loadedDoc = new Document(docPath);
+
+        // Extract JPEG images, resize them while maintaining aspect ratio, and save.
+        NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        int resizedCount = 0;
+
+        for (int i = 0; i < shapes.Count; i++)
         {
+            Shape shape = (Shape)shapes[i];
             if (!shape.HasImage)
                 continue;
 
-            // Ensure the image is JPEG.
-            ImageType imageType = shape.ImageData.ImageType;
-            if (imageType != ImageType.Jpeg)
+            // Process only JPEG images.
+            if (shape.ImageData.ImageType != ImageType.Jpeg)
                 continue;
 
-            using (MemoryStream imageStream = new MemoryStream())
+            // Save the original image to a memory stream.
+            using (MemoryStream ms = new MemoryStream())
             {
-                shape.ImageData.Save(imageStream);
-                imageStream.Position = 0;
+                shape.ImageData.Save(ms);
+                ms.Position = 0; // Reset stream before reading.
 
-                using (Bitmap originalBitmap = new Bitmap(imageStream))
+                // Load the image into a bitmap.
+                using (Bitmap original = new Bitmap(ms))
                 {
-                    // Calculate new dimensions while preserving aspect ratio.
-                    double ratioX = (double)maxWidth / originalBitmap.Width;
-                    double ratioY = (double)maxHeight / originalBitmap.Height;
-                    double ratio = Math.Min(ratioX, ratioY);
-                    int newWidth = (int)(originalBitmap.Width * ratio);
-                    int newHeight = (int)(originalBitmap.Height * ratio);
+                    // Determine new size within 1024x768 while preserving aspect ratio.
+                    const int maxWidth = 1024;
+                    const int maxHeight = 768;
+                    double widthScale = (double)maxWidth / original.Width;
+                    double heightScale = (double)maxHeight / original.Height;
+                    double scale = Math.Min(widthScale, heightScale);
+                    if (scale > 1) scale = 1; // Do not upscale if image is smaller.
 
-                    using (Bitmap resizedBitmap = new Bitmap(newWidth, newHeight))
+                    int newWidth = (int)(original.Width * scale);
+                    int newHeight = (int)(original.Height * scale);
+
+                    // Resize the image.
+                    using (Bitmap resized = new Bitmap(newWidth, newHeight))
                     {
-                        using (Graphics graphics = Graphics.FromImage(resizedBitmap))
+                        using (Graphics g = Graphics.FromImage(resized))
                         {
-                            graphics.Clear(Color.White);
-                            graphics.DrawImage(originalBitmap, 0, 0, newWidth, newHeight);
+                            g.DrawImage(original, 0, 0, newWidth, newHeight);
                         }
 
-                        string resizedImagePath = $"resized-{imageIndex}.jpg";
-                        resizedBitmap.Save(resizedImagePath, ImageFormat.Jpeg);
-
-                        if (!File.Exists(resizedImagePath))
-                            throw new InvalidOperationException($"Failed to create resized image: {resizedImagePath}");
+                        // Save the resized image.
+                        string outputPath = $"resized-{i + 1}.jpg";
+                        resized.Save(outputPath, ImageFormat.Jpeg);
+                        resizedCount++;
                     }
                 }
             }
-
-            imageIndex++;
         }
 
-        // Validation: ensure at least one image was processed.
-        if (imageIndex == 0)
-            throw new InvalidOperationException("No JPEG images were found to resize.");
+        // Validate that at least one image was resized and saved.
+        if (resizedCount == 0)
+            throw new InvalidOperationException("No JPEG images were found and resized.");
 
-        // Cleanup: optional removal of intermediate files (commented out).
-        // File.Delete(originalImagePath);
+        // Optional cleanup: delete temporary files if desired.
+        // File.Delete(inputImagePath);
         // File.Delete(docPath);
     }
 }

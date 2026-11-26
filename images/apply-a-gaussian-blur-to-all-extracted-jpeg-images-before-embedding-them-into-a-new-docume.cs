@@ -20,50 +20,45 @@ public class Program
         srcBuilder.InsertImage(sampleImagePath);
         sourceDoc.Save(sourceDocPath);
 
-        // Load the source document and extract JPEG images.
+        // Load the source document for extraction.
         Document loadedSource = new Document(sourceDocPath);
         NodeCollection shapes = loadedSource.GetChildNodes(NodeType.Shape, true);
+
+        // Prepare the output document.
+        Document resultDoc = new Document();
+        DocumentBuilder resultBuilder = new DocumentBuilder(resultDoc);
+
         int imageIndex = 0;
+        int blurredCount = 0;
+
         foreach (Shape shape in shapes)
         {
-            if (!shape.HasImage) continue;
-
-            // Ensure the image is a JPEG.
-            string imageFormat = shape.ImageData.ImageType.ToString();
-            if (!imageFormat.Equals("Jpeg", StringComparison.OrdinalIgnoreCase))
+            if (!shape.HasImage)
                 continue;
 
-            // Extract image bytes.
+            // Only process JPEG images.
+            if (shape.ImageData.ImageType != ImageType.Jpeg)
+                continue;
+
+            // Extract the image to a memory stream.
             using (MemoryStream imgStream = new MemoryStream())
             {
                 shape.ImageData.Save(imgStream);
                 imgStream.Position = 0;
 
-                // Load image into Aspose.Drawing.Bitmap.
-                using (Bitmap originalBitmap = new Bitmap(imgStream))
+                // Load the image into a bitmap.
+                using (Aspose.Drawing.Bitmap originalBitmap = new Aspose.Drawing.Bitmap(imgStream))
                 {
                     // Apply Gaussian blur.
-                    using (Bitmap blurredBitmap = ApplyGaussianBlur(originalBitmap))
+                    using (Aspose.Drawing.Bitmap blurredBitmap = ApplyGaussianBlur(originalBitmap))
                     {
                         // Save blurred image to a temporary file.
                         string blurredPath = $"blurred_{imageIndex}.jpg";
                         blurredBitmap.Save(blurredPath, ImageFormat.Jpeg);
+                        blurredCount++;
 
-                        // Create a new document and embed the blurred image.
-                        Document resultDoc = new Document();
-                        DocumentBuilder resultBuilder = new DocumentBuilder(resultDoc);
+                        // Insert blurred image into the result document.
                         resultBuilder.InsertImage(blurredPath);
-                        string resultDocPath = $"result_{imageIndex}.docx";
-                        resultDoc.Save(resultDocPath);
-
-                        // Validate output.
-                        if (!File.Exists(resultDocPath))
-                            throw new InvalidOperationException($"Failed to create {resultDocPath}");
-                        if (!File.Exists(blurredPath))
-                            throw new InvalidOperationException($"Failed to create {blurredPath}");
-
-                        // Clean up temporary blurred image file.
-                        File.Delete(blurredPath);
                     }
                 }
             }
@@ -71,71 +66,100 @@ public class Program
             imageIndex++;
         }
 
-        // Validate that at least one image was processed.
-        if (imageIndex == 0)
-            throw new InvalidOperationException("No JPEG images were found in the source document.");
+        // Save the result document.
+        const string resultDocPath = "result.docx";
+        resultDoc.Save(resultDocPath);
 
-        // Clean up sample files.
-        File.Delete(sampleImagePath);
-        File.Delete(sourceDocPath);
+        // Validation.
+        if (!File.Exists(resultDocPath))
+            throw new Exception("Result document was not created.");
+
+        if (blurredCount == 0)
+            throw new Exception("No JPEG images were processed and blurred.");
+
+        // Clean up temporary files (optional).
+        if (File.Exists(sampleImagePath)) File.Delete(sampleImagePath);
+        if (File.Exists(sourceDocPath)) File.Delete(sourceDocPath);
+        for (int i = 0; i < imageIndex; i++)
+        {
+            string blurredPath = $"blurred_{i}.jpg";
+            if (File.Exists(blurredPath)) File.Delete(blurredPath);
+        }
     }
 
+    // Creates a simple deterministic JPEG image.
     private static void CreateSampleJpeg(string path)
     {
         const int width = 200;
         const int height = 100;
-        using (Bitmap bitmap = new Bitmap(width, height))
+        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
         {
-            using (Graphics g = Graphics.FromImage(bitmap))
+            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
             {
-                g.Clear(Color.White);
-                using (SolidBrush brush = new SolidBrush(Color.Red))
+                g.Clear(Aspose.Drawing.Color.White);
+                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Blue, 3))
                 {
-                    g.FillRectangle(brush, 20, 20, 160, 60);
+                    g.DrawRectangle(pen, 10, 10, width - 20, height - 20);
+                }
+                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 24))
+                {
+                    using (Aspose.Drawing.SolidBrush brush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Red))
+                    {
+                        g.DrawString("Sample", font, brush, new Aspose.Drawing.PointF(30, 30));
+                    }
                 }
             }
             bitmap.Save(path, ImageFormat.Jpeg);
         }
     }
 
-    private static Bitmap ApplyGaussianBlur(Bitmap src)
+    // Applies a simple Gaussian blur using a 3x3 kernel.
+    private static Aspose.Drawing.Bitmap ApplyGaussianBlur(Aspose.Drawing.Bitmap src)
     {
         int w = src.Width;
         int h = src.Height;
-        Bitmap dst = new Bitmap(w, h);
+        Aspose.Drawing.Bitmap dst = new Aspose.Drawing.Bitmap(w, h);
 
-        double[,] kernel = new double[5, 5]
-        {
-            { 1,  4,  7,  4, 1 },
-            { 4, 16, 26, 16, 4 },
-            { 7, 26, 41, 26, 7 },
-            { 4, 16, 26, 16, 4 },
-            { 1,  4,  7,  4, 1 }
+        // 3x3 Gaussian kernel.
+        int[,] kernel = {
+            {1, 2, 1},
+            {2, 4, 2},
+            {1, 2, 1}
         };
-        double kernelSum = 273.0;
+        int kernelWeight = 16;
 
         for (int y = 0; y < h; y++)
         {
             for (int x = 0; x < w; x++)
             {
-                double r = 0, g = 0, b = 0;
-                for (int ky = -2; ky <= 2; ky++)
+                int r = 0, g = 0, b = 0;
+
+                for (int ky = -1; ky <= 1; ky++)
                 {
-                    int py = Math.Min(Math.Max(y + ky, 0), h - 1);
-                    for (int kx = -2; kx <= 2; kx++)
+                    int py = y + ky;
+                    if (py < 0) py = 0;
+                    if (py >= h) py = h - 1;
+
+                    for (int kx = -1; kx <= 1; kx++)
                     {
-                        int px = Math.Min(Math.Max(x + kx, 0), w - 1);
-                        Color pixelColor = src.GetPixel(px, py);
-                        double weight = kernel[ky + 2, kx + 2];
+                        int px = x + kx;
+                        if (px < 0) px = 0;
+                        if (px >= w) px = w - 1;
+
+                        Aspose.Drawing.Color pixelColor = src.GetPixel(px, py);
+                        int weight = kernel[ky + 1, kx + 1];
+
                         r += pixelColor.R * weight;
                         g += pixelColor.G * weight;
                         b += pixelColor.B * weight;
                     }
                 }
-                int ir = Math.Min(255, Math.Max(0, (int)(r / kernelSum)));
-                int ig = Math.Min(255, Math.Max(0, (int)(g / kernelSum)));
-                int ib = Math.Min(255, Math.Max(0, (int)(b / kernelSum)));
-                dst.SetPixel(x, y, Color.FromArgb(ir, ig, ib));
+
+                r = Math.Min(255, Math.Max(0, r / kernelWeight));
+                g = Math.Min(255, Math.Max(0, g / kernelWeight));
+                b = Math.Min(255, Math.Max(0, b / kernelWeight));
+
+                dst.SetPixel(x, y, Aspose.Drawing.Color.FromArgb(r, g, b));
             }
         }
 

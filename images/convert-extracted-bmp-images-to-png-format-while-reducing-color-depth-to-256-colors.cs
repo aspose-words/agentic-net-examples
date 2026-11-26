@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
@@ -10,68 +9,83 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a deterministic BMP image using Aspose.Drawing.
+        // ------------------------------------------------------------
+        // 1. Create a deterministic BMP image using Aspose.Drawing.
+        // ------------------------------------------------------------
         const string bmpPath = "sample.bmp";
         Aspose.Drawing.Bitmap bmp = new Aspose.Drawing.Bitmap(200, 200);
-        Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bmp);
-        g.Clear(Aspose.Drawing.Color.White);
-        // Draw a simple red rectangle.
-        using (Aspose.Drawing.SolidBrush brush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Red))
-        {
-            g.FillRectangle(brush, new Aspose.Drawing.Rectangle(50, 50, 100, 100));
-        }
+        Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bmp);
+        graphics.Clear(Aspose.Drawing.Color.White);
+        graphics.DrawRectangle(Aspose.Drawing.Pens.Black, 20, 20, 160, 160);
+        // Save the BMP file – this file will be inserted into the Word document.
         bmp.Save(bmpPath, Aspose.Drawing.Imaging.ImageFormat.Bmp);
-        g.Dispose();
+        graphics.Dispose();
         bmp.Dispose();
 
-        // Step 2: Insert the BMP image into a Word document.
-        const string docPath = "DocumentWithBmp.docx";
+        // ------------------------------------------------------------
+        // 2. Insert the BMP image into a new Word document.
+        // ------------------------------------------------------------
+        const string docPath = "sample.docx";
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(bmpPath);
         doc.Save(docPath);
 
-        // Step 3: Load the document and convert each extracted image to PNG with 256‑color depth.
+        // ------------------------------------------------------------
+        // 3. Reload the document and enumerate all Shape nodes that contain images.
+        // ------------------------------------------------------------
         Document loadedDoc = new Document(docPath);
-        List<string> convertedFiles = new List<string>();
-        int imageIndex = 0;
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
 
-        foreach (Shape shape in loadedDoc.GetChildNodes(NodeType.Shape, true))
+        int convertedCount = 0;
+        foreach (Shape shape in shapeNodes)
         {
             if (!shape.HasImage)
-                continue;
+                continue; // Skip shapes without images.
 
-            // Save the image data to a memory stream.
-            using (MemoryStream imgStream = new MemoryStream())
+            // ------------------------------------------------------------
+            // 4. Extract the image data to a memory stream.
+            // ------------------------------------------------------------
+            using (MemoryStream imageStream = new MemoryStream())
             {
-                shape.ImageData.Save(imgStream);
-                imgStream.Position = 0;
+                shape.ImageData.Save(imageStream);
+                imageStream.Position = 0; // Reset for reading.
 
-                // Load the image with Aspose.Drawing.
-                using (Aspose.Drawing.Bitmap originalBmp = new Aspose.Drawing.Bitmap(imgStream))
+                // ------------------------------------------------------------
+                // 5. Load the extracted image into Aspose.Drawing.Bitmap.
+                // ------------------------------------------------------------
+                using (Aspose.Drawing.Bitmap originalBmp = new Aspose.Drawing.Bitmap(imageStream))
                 {
-                    // Convert to 8‑bpp indexed (256 colors).
+                    // ------------------------------------------------------------
+                    // 6. Reduce color depth to 256 colors (8‑bpp indexed).
+                    // ------------------------------------------------------------
                     using (Aspose.Drawing.Bitmap indexedBmp = originalBmp.Clone(
-                        new Aspose.Drawing.Rectangle(0, 0, originalBmp.Width, originalBmp.Height),
+                        new Rectangle(0, 0, originalBmp.Width, originalBmp.Height),
                         Aspose.Drawing.Imaging.PixelFormat.Format8bppIndexed))
                     {
-                        // Save as PNG.
-                        string pngPath = $"converted-{imageIndex}.png";
+                        // ------------------------------------------------------------
+                        // 7. Save the converted image as PNG.
+                        // ------------------------------------------------------------
+                        string pngPath = $"converted-{convertedCount}.png";
                         indexedBmp.Save(pngPath, Aspose.Drawing.Imaging.ImageFormat.Png);
-                        convertedFiles.Add(pngPath);
-                        imageIndex++;
+
+                        // Validate that the PNG file was created.
+                        if (!File.Exists(pngPath))
+                            throw new Exception($"Failed to create PNG file: {pngPath}");
+
+                        convertedCount++;
                     }
                 }
             }
         }
 
-        // Step 4: Validate that at least one PNG file was created.
-        if (convertedFiles.Count == 0)
-        {
-            throw new InvalidOperationException("No images were found or converted.");
-        }
+        // ------------------------------------------------------------
+        // 8. Ensure at least one image was converted.
+        // ------------------------------------------------------------
+        if (convertedCount == 0)
+            throw new Exception("No images were found and converted.");
 
-        // Optional cleanup (comment out to keep files for inspection).
+        // Optional cleanup (commented out to allow inspection of generated files).
         // File.Delete(bmpPath);
         // File.Delete(docPath);
     }

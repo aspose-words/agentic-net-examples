@@ -18,71 +18,69 @@ public class Program
         Directory.CreateDirectory(outputFolder);
 
         // -------------------------------------------------
-        // Create a deterministic sample image (100x100 white)
+        // Create a deterministic sample image (if not exists)
         // -------------------------------------------------
-        int width = 100;
-        int height = 100;
-        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
+        if (!File.Exists(sampleImagePath))
         {
-            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
+            int width = 200;
+            int height = 100;
+            using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
             {
-                g.Clear(Aspose.Drawing.Color.White);
+                using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
+                {
+                    g.Clear(Aspose.Drawing.Color.White);
+                    using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Blue, 3))
+                    {
+                        g.DrawRectangle(pen, 10, 10, width - 20, height - 20);
+                    }
+                }
+                bitmap.Save(sampleImagePath, Aspose.Drawing.Imaging.ImageFormat.Png);
             }
-            bitmap.Save(sampleImagePath);
         }
 
         // -------------------------------------------------
-        // Create a sample DOCX containing the image
+        // Create a sample DOCX containing the image (if not exists)
         // -------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(sampleImagePath);
-        doc.Save(inputDocPath);
+        if (!File.Exists(inputDocPath))
+        {
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("Document with an embedded image:");
+            builder.InsertImage(sampleImagePath);
+            doc.Save(inputDocPath);
+        }
 
         // -------------------------------------------------
-        // Load the DOCX and extract all embedded images
+        // Load the DOCX file
         // -------------------------------------------------
         Document loadedDoc = new Document(inputDocPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
 
+        // -------------------------------------------------
+        // Extract all embedded images
+        // -------------------------------------------------
+        NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
         int imageIndex = 0;
-        foreach (Shape shape in shapeNodes)
+
+        foreach (Shape shape in shapes)
         {
             if (shape.HasImage)
             {
-                string extension = GetExtension(shape.ImageData.ImageType);
-                string outputPath = Path.Combine(outputFolder, $"image-{imageIndex}{extension}");
+                // Determine file extension from the image type
+                string extension = shape.ImageData.ImageType.ToString().ToLowerInvariant();
+                string outputPath = Path.Combine(outputFolder, $"Image-{imageIndex}.{extension}");
                 shape.ImageData.Save(outputPath);
-                if (!File.Exists(outputPath))
-                    throw new InvalidOperationException($"Failed to save extracted image to '{outputPath}'.");
                 imageIndex++;
             }
         }
 
-        // Validation: ensure at least one image was extracted
+        // -------------------------------------------------
+        // Validation
+        // -------------------------------------------------
         if (imageIndex == 0)
-            throw new InvalidOperationException("No images were extracted from the document.");
-    }
-
-    // Helper to map ImageType to file extension
-    private static string GetExtension(ImageType imageType)
-    {
-        switch (imageType)
         {
-            case ImageType.Jpeg:
-                return ".jpeg";
-            case ImageType.Png:
-                return ".png";
-            case ImageType.Gif:
-                return ".gif";
-            case ImageType.Bmp:
-                return ".bmp";
-            case ImageType.Emf:
-                return ".emf";
-            case ImageType.Wmf:
-                return ".wmf";
-            default:
-                return ".img";
+            throw new InvalidOperationException("No images were extracted from the document.");
         }
+
+        Console.WriteLine($"Extraction complete. {imageIndex} image(s) saved to \"{outputFolder}\".");
     }
 }

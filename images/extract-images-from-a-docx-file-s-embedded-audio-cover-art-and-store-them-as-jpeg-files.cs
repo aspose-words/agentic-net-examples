@@ -9,79 +9,51 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare deterministic file names
-        string imagePath = "cover.png";
-        string audioPath = "sample.mp3";
-        string docPath = "sample.docx";
-
-        // Create a sample image (100x100 white background with a red rectangle)
-        Bitmap bitmap = new Bitmap(100, 100);
-        Graphics graphics = Graphics.FromImage(bitmap);
-        graphics.Clear(Color.White);
-        using (Pen pen = new Pen(Color.Red, 5))
+        // Create a deterministic sample image to act as audio cover art.
+        const string coverImagePath = "cover.png";
+        using (Bitmap bitmap = new Bitmap(200, 200))
         {
-            graphics.DrawRectangle(pen, 10, 10, 80, 80);
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                g.Clear(Aspose.Drawing.Color.White);
+                // Draw a simple rectangle as placeholder content.
+                g.DrawRectangle(new Pen(Aspose.Drawing.Color.Black), 20, 20, 160, 160);
+            }
+            bitmap.Save(coverImagePath);
         }
-        bitmap.Save(imagePath);
-        graphics.Dispose();
-        bitmap.Dispose();
 
-        // Create a dummy audio file (simple MP3 header)
-        File.WriteAllBytes(audioPath, new byte[] { 0x49, 0x44, 0x33, 0x03, 0x00, 0x00, 0x00 });
-
-        // Create a new document and insert the image and the audio OLE object
+        // Create a new document and insert the sample image.
+        const string docPath = "sample.docx";
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert the sample image (acts as cover art)
-        builder.InsertImage(imagePath);
-
-        // Insert the audio file as an OLE object using a FileStream
-        using (FileStream audioStream = File.OpenRead(audioPath))
-        {
-            builder.InsertOleObject(audioStream, "Package", false, null);
-        }
-
-        // Save the document
+        builder.InsertImage(coverImagePath);
         doc.Save(docPath);
 
-        // Reload the document for extraction
+        // Reload the document for extraction.
         Document loadedDoc = new Document(docPath);
-        NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
 
+        // Extract all images (including cover art) and save them as JPEG files.
         int extractedCount = 0;
-        int imageIndex = 1;
-
+        NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
         foreach (Shape shape in shapes)
         {
             if (shape.HasImage)
             {
-                // Save the shape's image to a temporary PNG file
-                string tempPngPath = $"temp-{imageIndex}.png";
-                shape.ImageData.Save(tempPngPath);
-
-                // Load the temporary PNG and save as JPEG
-                using (Image img = Image.FromFile(tempPngPath))
+                byte[] imageBytes = shape.ImageData.ImageBytes;
+                using (MemoryStream ms = new MemoryStream(imageBytes))
                 {
-                    string outputPath = $"extracted-{imageIndex}.jpg";
-                    img.Save(outputPath, ImageFormat.Jpeg);
-                    extractedCount++;
+                    using (Aspose.Drawing.Image img = Aspose.Drawing.Image.FromStream(ms))
+                    {
+                        string outputPath = $"extracted-{extractedCount}.jpg";
+                        img.Save(outputPath, ImageFormat.Jpeg);
+                        extractedCount++;
+                    }
                 }
-
-                // Clean up the temporary file
-                if (File.Exists(tempPngPath))
-                    File.Delete(tempPngPath);
-
-                imageIndex++;
             }
         }
 
-        // Validate that at least one image was extracted
+        // Validate that at least one image was extracted.
         if (extractedCount == 0)
-        {
             throw new InvalidOperationException("No images were extracted from the document.");
-        }
-
-        Console.WriteLine($"Extraction complete. {extractedCount} image(s) saved as JPEG.");
     }
 }

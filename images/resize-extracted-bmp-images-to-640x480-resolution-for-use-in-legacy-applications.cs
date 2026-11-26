@@ -3,78 +3,89 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
-using Newtonsoft.Json; // Included as required package
+using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a sample BMP image.
+        // ------------------------------------------------------------
+        // 1. Create a deterministic sample BMP image (200x200).
+        // ------------------------------------------------------------
         const string sampleBmpPath = "sample.bmp";
-        using (Bitmap bmp = new Bitmap(200, 200))
+        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(200, 200);
+        Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap);
+        g.Clear(Aspose.Drawing.Color.White);
+        // Draw a simple blue rectangle.
+        using (Aspose.Drawing.SolidBrush brush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Blue))
         {
-            using (Graphics g = Graphics.FromImage(bmp))
-            {
-                g.Clear(Color.LightBlue);
-                // Simple drawing to make the image non‑empty.
-                g.FillRectangle(new SolidBrush(Color.DarkBlue), 50, 50, 100, 100);
-            }
-            bmp.Save(sampleBmpPath);
+            g.FillRectangle(brush, 20, 20, 160, 160);
         }
+        // Save the bitmap to a file so it can be inserted into the document.
+        bitmap.Save(sampleBmpPath);
+        // Clean up drawing objects.
+        g.Dispose();
+        bitmap.Dispose();
 
-        // Step 2: Create a Word document and insert the BMP image.
-        const string docPath = "sample.docx";
+        // ------------------------------------------------------------
+        // 2. Create a Word document and insert the BMP image.
+        // ------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(sampleBmpPath);
+        const string docPath = "sample.docx";
         doc.Save(docPath);
 
-        // Step 3: Load the document and extract embedded BMP images.
+        // ------------------------------------------------------------
+        // 3. Reload the document to simulate an extraction scenario.
+        // ------------------------------------------------------------
         Document loadedDoc = new Document(docPath);
+
+        // ------------------------------------------------------------
+        // 4. Extract each image, resize it to 640x480, and save the result.
+        // ------------------------------------------------------------
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int extractedCount = 0;
+        int imageIndex = 0;
 
         foreach (Shape shape in shapeNodes)
         {
             if (!shape.HasImage)
                 continue;
 
-            // Save the extracted image.
-            string extractedPath = $"extracted_{extractedCount}.bmp";
-            shape.ImageData.Save(extractedPath);
-            extractedCount++;
-
-            // Step 4: Resize the extracted BMP to 640x480.
-            string resizedPath = Path.GetFileNameWithoutExtension(extractedPath) + "_resized.bmp";
-            using (Bitmap original = new Bitmap(extractedPath))
+            // Save the original image data to a memory stream.
+            using (MemoryStream originalStream = new MemoryStream())
             {
-                using (Bitmap resized = new Bitmap(640, 480))
+                // Aspose.Words ImageData.Save overload takes only the stream.
+                shape.ImageData.Save(originalStream);
+                originalStream.Position = 0; // Reset before reading.
+
+                // Load the image into an Aspose.Drawing.Bitmap.
+                using (Aspose.Drawing.Bitmap originalBitmap = new Aspose.Drawing.Bitmap(originalStream))
                 {
-                    using (Graphics g = Graphics.FromImage(resized))
+                    // Create a new bitmap with the target size.
+                    using (Aspose.Drawing.Bitmap resizedBitmap = new Aspose.Drawing.Bitmap(640, 480))
                     {
-                        g.Clear(Color.White);
-                        g.DrawImage(original, 0, 0, 640, 480);
+                        using (Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(resizedBitmap))
+                        {
+                            // Draw the original image stretched to the new dimensions.
+                            graphics.DrawImage(originalBitmap, new Rectangle(0, 0, 640, 480));
+                        }
+
+                        string resizedPath = $"resized-{imageIndex}.bmp";
+                        resizedBitmap.Save(resizedPath);
+                        if (!File.Exists(resizedPath))
+                            throw new Exception($"Resized image was not created: {resizedPath}");
                     }
-                    resized.Save(resizedPath);
                 }
             }
 
-            // Validate that the resized file was created.
-            if (!File.Exists(resizedPath))
-                throw new Exception($"Resized image was not created: {resizedPath}");
+            imageIndex++;
         }
 
-        // Final validation: ensure at least one image was processed.
-        if (extractedCount == 0)
+        // ------------------------------------------------------------
+        // 5. Validate that at least one image was processed.
+        // ------------------------------------------------------------
+        if (imageIndex == 0)
             throw new Exception("No images were extracted from the document.");
-
-        // Cleanup: optional removal of intermediate files (commented out).
-        // File.Delete(sampleBmpPath);
-        // File.Delete(docPath);
-        // for (int i = 0; i < extractedCount; i++)
-        // {
-        //     File.Delete($"extracted_{i}.bmp");
-        //     File.Delete($"extracted_{i}_resized.bmp");
-        // }
     }
 }

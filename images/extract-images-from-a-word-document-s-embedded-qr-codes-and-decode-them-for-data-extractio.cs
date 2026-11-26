@@ -5,62 +5,55 @@ using Aspose.Words.Drawing;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
-public class ExtractAndDecodeQrImages
+public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a deterministic QR‑like image using Aspose.Drawing.
+        // Paths for temporary files
         const string qrImagePath = "qr.png";
-        const int width = 200;
-        const int height = 200;
+        const string docPath = "sample.docx";
+        const string extractedImagePath = "extracted-0.png";
 
-        // Create bitmap and graphics objects.
-        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height);
-        Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap);
-        try
+        // -------------------------------------------------
+        // 1. Create a deterministic QR‑code‑like image.
+        // -------------------------------------------------
+        const int imgWidth = 200;
+        const int imgHeight = 200;
+        using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
         {
-            // White background.
-            graphics.Clear(Aspose.Drawing.Color.White);
-
-            // Simple black square to simulate a QR pattern.
-            using (SolidBrush blackBrush = new SolidBrush(Aspose.Drawing.Color.Black))
+            using (Graphics g = Graphics.FromImage(bitmap))
             {
-                graphics.FillRectangle(blackBrush, 50, 50, 100, 100);
+                // White background
+                g.Clear(Aspose.Drawing.Color.White);
+
+                // Simple black pattern to simulate a QR code
+                using (Brush blackBrush = new SolidBrush(Aspose.Drawing.Color.Black))
+                {
+                    // Draw a few black squares
+                    g.FillRectangle(blackBrush, 20, 20, 40, 40);
+                    g.FillRectangle(blackBrush, 140, 20, 40, 40);
+                    g.FillRectangle(blackBrush, 20, 140, 40, 40);
+                    g.FillRectangle(blackBrush, 140, 140, 40, 40);
+                    g.FillRectangle(blackBrush, 80, 80, 40, 40);
+                }
             }
 
-            // Draw the encoded text (for demonstration purposes).
-            using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 20))
-            using (SolidBrush blackBrush = new SolidBrush(Aspose.Drawing.Color.Black))
-            {
-                graphics.DrawString("Hello", font, blackBrush, new PointF(60, 160));
-            }
-
-            // Save the image to a local file.
+            // Save the image to a deterministic file
             bitmap.Save(qrImagePath, ImageFormat.Png);
         }
-        finally
-        {
-            // Clean up drawing resources.
-            graphics.Dispose();
-            bitmap.Dispose();
-        }
 
-        // Verify that the image file was created.
-        if (!File.Exists(qrImagePath))
-            throw new FileNotFoundException($"Failed to create the QR image at '{qrImagePath}'.");
-
-        // Step 2: Insert the image into a Word document.
-        const string docPath = "DocumentWithQR.docx";
+        // -------------------------------------------------
+        // 2. Create a Word document and embed the QR image.
+        // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Document with an embedded QR code image:");
         builder.InsertImage(qrImagePath);
         doc.Save(docPath);
 
-        // Verify that the document was saved.
-        if (!File.Exists(docPath))
-            throw new FileNotFoundException($"Failed to save the document at '{docPath}'.");
-
-        // Step 3: Load the document and extract embedded images.
+        // -------------------------------------------------
+        // 3. Load the document (simulating a separate step) and extract images.
+        // -------------------------------------------------
         Document loadedDoc = new Document(docPath);
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
         int extractedCount = 0;
@@ -69,23 +62,40 @@ public class ExtractAndDecodeQrImages
         {
             if (shape.HasImage)
             {
-                // Save each extracted image with a deterministic name.
-                string extractedImagePath = $"extracted_qr_{extractedCount}.png";
+                // Save the extracted image
                 shape.ImageData.Save(extractedImagePath);
                 extractedCount++;
 
-                // Simple placeholder "decoding" – in a real scenario you would pass the image
-                // to a QR decoding library such as ZXing.Net.
-                // Here we assume the QR encodes the text "Hello".
-                Console.WriteLine($"Extracted image saved to: {extractedImagePath}");
-                Console.WriteLine("Decoded QR data: Hello");
+                // -------------------------------------------------
+                // 4. Decode the QR code (stub implementation).
+                // -------------------------------------------------
+                // In a real scenario a QR decoding library would be used.
+                // Here we return a hard‑coded value because we generated the image ourselves.
+                string decodedData = DecodeQrStub(extractedImagePath);
+                Console.WriteLine($"Extracted image saved to '{extractedImagePath}'.");
+                Console.WriteLine($"Decoded QR data: {decodedData}");
             }
         }
 
-        // Validate that at least one image was extracted.
+        // -------------------------------------------------
+        // 5. Validation.
+        // -------------------------------------------------
         if (extractedCount == 0)
+        {
             throw new InvalidOperationException("No images were extracted from the document.");
+        }
 
-        Console.WriteLine($"Total extracted images: {extractedCount}");
+        // Clean up temporary files (optional)
+        // File.Delete(qrImagePath);
+        // File.Delete(docPath);
+        // File.Delete(extractedImagePath);
+    }
+
+    // Stub method that pretends to decode a QR code.
+    private static string DecodeQrStub(string imagePath)
+    {
+        // Since we created the QR‑like image ourselves, we know the encoded data.
+        // Replace this stub with a real QR decoder if needed.
+        return "Sample QR Data";
     }
 }

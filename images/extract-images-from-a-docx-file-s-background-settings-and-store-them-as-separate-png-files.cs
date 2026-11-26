@@ -3,83 +3,93 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create a deterministic background image (bg.png).
-        // -----------------------------------------------------------------
+        // Create a deterministic sample background image.
         const string backgroundImagePath = "bg.png";
-        using (Bitmap bitmap = new Bitmap(200, 200))
+        CreateSampleImage(backgroundImagePath, 600, 800);
+
+        // Create a DOCX document and add the background image as a shape behind the text.
+        const string docPath = "sample.docx";
+        CreateDocumentWithBackground(docPath, backgroundImagePath);
+
+        // Extract all images (including background) from the document and save as PNG files.
+        ExtractImages(docPath);
+    }
+
+    private static void CreateSampleImage(string filePath, int width, int height)
+    {
+        using (Bitmap bitmap = new Bitmap(width, height))
         {
-            using (Graphics g = Graphics.FromImage(bitmap))
+            using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                g.Clear(Aspose.Drawing.Color.White);
-                using (SolidBrush brush = new SolidBrush(Aspose.Drawing.Color.Red))
+                graphics.Clear(Aspose.Drawing.Color.LightBlue);
+                // Draw a simple rectangle for visual distinction.
+                using (var pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.DarkBlue, 5))
                 {
-                    g.FillRectangle(brush, 50, 50, 100, 100);
+                    graphics.DrawRectangle(pen, 50, 50, width - 100, height - 100);
                 }
             }
-            bitmap.Save(backgroundImagePath, ImageFormat.Png);
+            bitmap.Save(filePath);
         }
 
-        // -----------------------------------------------------------------
-        // 2. Create a DOCX document and insert the background image so that
-        //    it covers the printable page area.
-        // -----------------------------------------------------------------
-        const string docPath = "sample.docx";
+        if (!File.Exists(filePath))
+            throw new Exception($"Failed to create sample image: {filePath}");
+    }
+
+    private static void CreateDocumentWithBackground(string docPath, string imagePath)
+    {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Calculate printable page dimensions.
-        double pageWidth = doc.FirstSection.PageSetup.PageWidth -
-                           doc.FirstSection.PageSetup.LeftMargin -
-                           doc.FirstSection.PageSetup.RightMargin;
-        double pageHeight = doc.FirstSection.PageSetup.PageHeight -
-                            doc.FirstSection.PageSetup.TopMargin -
-                            doc.FirstSection.PageSetup.BottomMargin;
+        // Create a shape that covers the whole page and set it behind the text.
+        Shape backgroundShape = new Shape(doc, ShapeType.Image);
+        backgroundShape.ImageData.SetImage(imagePath);
+        backgroundShape.Width = doc.FirstSection.PageSetup.PageWidth;
+        backgroundShape.Height = doc.FirstSection.PageSetup.PageHeight;
+        backgroundShape.WrapType = WrapType.None;
+        backgroundShape.BehindText = true;
 
-        // Insert the image using InsertImage (preferred API). This returns the
-        // underlying Shape which we can further configure.
-        Shape bgShape = builder.InsertImage(backgroundImagePath, (float)pageWidth, (float)pageHeight);
-        bgShape.WrapType = WrapType.None;
-        bgShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        bgShape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-        bgShape.BehindText = true;
+        // Insert the shape at the beginning of the document.
+        builder.InsertNode(backgroundShape);
 
-        // Save the document.
+        // Add some sample text to demonstrate that the image is behind the text.
+        builder.Writeln("This document contains a background image.");
+
         doc.Save(docPath);
 
-        // -----------------------------------------------------------------
-        // 3. Load the document and extract all images (including the background).
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(docPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int extractedCount = 0;
+        if (!File.Exists(docPath))
+            throw new Exception($"Failed to create document: {docPath}");
+    }
 
+    private static void ExtractImages(string docPath)
+    {
+        Document doc = new Document(docPath);
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+
+        int extractedCount = 0;
         foreach (Shape shape in shapeNodes)
         {
             if (shape.HasImage)
             {
-                string outputImagePath = $"extracted-{extractedCount}.png";
-                shape.ImageData.Save(outputImagePath);
-                if (!File.Exists(outputImagePath))
-                    throw new Exception($"Failed to save extracted image to '{outputImagePath}'.");
+                string outputPath = $"extracted-{extractedCount}.png";
+                shape.ImageData.Save(outputPath);
                 extractedCount++;
             }
         }
 
-        // Validate that at least one image was extracted.
         if (extractedCount == 0)
             throw new Exception("No images were extracted from the document.");
 
-        // -----------------------------------------------------------------
-        // (Optional) Clean up temporary files.
-        // -----------------------------------------------------------------
-        // File.Delete(backgroundImagePath);
-        // File.Delete(docPath);
+        // Validation: ensure all extracted files exist.
+        for (int i = 0; i < extractedCount; i++)
+        {
+            string path = $"extracted-{i}.png";
+            if (!File.Exists(path))
+                throw new Exception($"Expected extracted image not found: {path}");
+        }
     }
 }

@@ -9,80 +9,98 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare folders
+        // Prepare deterministic file names and folders
         string inputImagePath = "sample.png";
+        string docPath = "sample.docx";
         string outputFolder = "output";
         Directory.CreateDirectory(outputFolder);
 
-        // Create a sample PNG image
-        using (Bitmap bitmap = new Bitmap(200, 200))
+        // -------------------------------------------------
+        // Step 1: Create a sample PNG image using Aspose.Drawing
+        // -------------------------------------------------
+        int imgWidth = 200;
+        int imgHeight = 100;
+        using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
         {
             using (Graphics g = Graphics.FromImage(bitmap))
             {
                 g.Clear(Color.White);
-                // Draw a simple rectangle for visual content
-                using (Pen pen = new Pen(Color.Blue, 5))
+                // Draw a simple rectangle
+                using (Pen pen = new Pen(Color.Blue, 3))
                 {
-                    g.DrawRectangle(pen, 20, 20, 160, 160);
+                    g.DrawRectangle(pen, 10, 10, imgWidth - 20, imgHeight - 20);
                 }
             }
             bitmap.Save(inputImagePath, ImageFormat.Png);
         }
 
-        // Create a Word document and insert the sample image
+        // -------------------------------------------------
+        // Step 2: Create a Word document and insert the PNG image
+        // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(inputImagePath);
-        string docPath = "sample.docx";
         doc.Save(docPath);
 
-        // Reload the document (simulating typical load workflow)
+        // -------------------------------------------------
+        // Step 3: Load the document and extract PNG images
+        // -------------------------------------------------
         Document loadedDoc = new Document(docPath);
-
-        // Extract PNG images, apply color balance, and save them
         NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int imageIndex = 0;
+        int extractedCount = 0;
+
         foreach (Shape shape in shapes)
         {
-            if (!shape.HasImage) continue;
+            if (!shape.HasImage)
+                continue;
+
+            // Ensure the image is a PNG
+            if (shape.ImageData.ImageType != ImageType.Png)
+                continue;
 
             // Save the original image to a memory stream
-            using (MemoryStream ms = new MemoryStream())
+            using (MemoryStream imgStream = new MemoryStream())
             {
-                shape.ImageData.Save(ms);
-                ms.Position = 0; // Reset before reading
+                shape.ImageData.Save(imgStream);
+                imgStream.Position = 0; // Reset stream position before reading
 
                 // Load the image into Aspose.Drawing.Bitmap
-                using (Bitmap img = new Bitmap(ms))
+                using (Bitmap originalBitmap = new Bitmap(imgStream))
                 {
-                    // Apply a simple color balance adjustment
-                    for (int y = 0; y < img.Height; y++)
+                    // -------------------------------------------------
+                    // Step 4: Apply a simple color balance adjustment
+                    // Increase the red channel by 20% (clamped to 255)
+                    // -------------------------------------------------
+                    Bitmap adjustedBitmap = new Bitmap(originalBitmap.Width, originalBitmap.Height);
+                    for (int y = 0; y < originalBitmap.Height; y++)
                     {
-                        for (int x = 0; x < img.Width; x++)
+                        for (int x = 0; x < originalBitmap.Width; x++)
                         {
-                            Color pixel = img.GetPixel(x, y);
-                            int r = Math.Min(255, pixel.R + 30);
-                            int g = Math.Max(0, pixel.G - 20);
-                            int b = Math.Min(255, pixel.B + 10);
-                            Color newColor = Color.FromArgb(pixel.A, r, g, b);
-                            img.SetPixel(x, y, newColor);
+                            Color pixel = originalBitmap.GetPixel(x, y);
+                            int newR = Math.Min(255, (int)(pixel.R * 1.2));
+                            Color newColor = Color.FromArgb(pixel.A, newR, pixel.G, pixel.B);
+                            adjustedBitmap.SetPixel(x, y, newColor);
                         }
                     }
 
                     // Save the adjusted image to the output folder
-                    string outputPath = Path.Combine(outputFolder, $"image-{imageIndex}.png");
-                    img.Save(outputPath, ImageFormat.Png);
-                    imageIndex++;
+                    string outputPath = Path.Combine(outputFolder, $"extracted-{extractedCount}.png");
+                    adjustedBitmap.Save(outputPath, ImageFormat.Png);
+                    adjustedBitmap.Dispose();
+
+                    extractedCount++;
                 }
             }
         }
 
-        // Validation: ensure at least one image was saved
-        if (imageIndex == 0)
+        // -------------------------------------------------
+        // Validation: ensure at least one image was processed
+        // -------------------------------------------------
+        if (extractedCount == 0)
             throw new InvalidOperationException("No PNG images were extracted and processed.");
 
         // Cleanup temporary files (optional)
-        File.Delete(inputImagePath);
-        File.Delete(docPath);
+        // File.Delete(inputImagePath);
+        // File.Delete(docPath);
     }
 }

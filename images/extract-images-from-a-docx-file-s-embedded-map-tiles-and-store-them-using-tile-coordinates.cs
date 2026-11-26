@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
@@ -9,96 +10,123 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare deterministic folders
-        const string inputFolder = "InputImages";
-        const string outputFolder = "ExtractedTiles";
-        Directory.CreateDirectory(inputFolder);
+        // Prepare a deterministic output folder.
+        string outputFolder = "output";
         Directory.CreateDirectory(outputFolder);
 
-        // Step 1: Create sample tile images (2x2 grid)
-        for (int x = 0; x < 2; x++)
+        // Sample tile coordinates.
+        var tileCoordinates = new List<(int X, int Y)>
         {
-            for (int y = 0; y < 2; y++)
-            {
-                string fileName = $"tile_{x}_{y}.png";
-                string filePath = Path.Combine(inputFolder, fileName);
+            (0, 0), (0, 1), (1, 0), (1, 1)
+        };
 
-                // Create a simple bitmap
-                using (Bitmap bitmap = new Bitmap(100, 100))
-                {
-                    using (Graphics g = Graphics.FromImage(bitmap))
-                    {
-                        // Fill background with a distinct color per tile
-                        Color bgColor = (x + y) % 2 == 0 ? Color.LightBlue : Color.LightGreen;
-                        g.Clear(bgColor);
-                    }
+        // Create sample tile images and insert them into a DOCX.
+        string docPath = Path.Combine(outputFolder, "map_tiles.docx");
+        CreateDocumentWithTiles(docPath, tileCoordinates, outputFolder);
 
-                    // Save the bitmap to a deterministic file
-                    bitmap.Save(filePath, ImageFormat.Png);
-                }
-            }
-        }
+        // Load the document and extract images using tile coordinates.
+        ExtractTiles(docPath, outputFolder);
+    }
 
-        // Step 2: Build a DOCX that contains the tile images
+    private static void CreateDocumentWithTiles(string docPath, List<(int X, int Y)> tiles, string folder)
+    {
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        for (int x = 0; x < 2; x++)
+        foreach (var (x, y) in tiles)
         {
-            for (int y = 0; y < 2; y++)
+            // Create a deterministic sample image for the tile.
+            string imageFileName = $"tile_{x}_{y}.png";
+            string imagePath = Path.Combine(folder, imageFileName);
+            CreateSampleTileImage(imagePath, x, y);
+
+            // Insert the image into the document.
+            builder.InsertImage(imagePath);
+
+            // The inserted shape is the last child of the current paragraph.
+            Shape shape = builder.CurrentParagraph.LastChild as Shape;
+            if (shape != null && shape.HasImage)
             {
-                string imagePath = Path.Combine(inputFolder, $"tile_{x}_{y}.png");
-
-                // Insert the image and obtain the created Shape
-                Shape shape = builder.InsertImage(imagePath);
-                // Store tile coordinates in AlternativeText for later extraction
+                // Store tile coordinates in the shape's AlternativeText property.
                 shape.AlternativeText = $"{x}_{y}";
-
-                // Add a line break between images for readability
-                builder.Writeln();
             }
+
+            // Add a line break between tiles for readability.
+            builder.Writeln();
         }
 
-        // Save the sample document
-        const string docPath = "MapTiles.docx";
+        // Save the document containing the map tiles.
         doc.Save(docPath);
+    }
 
-        // Step 3: Load the document and extract images using tile coordinates
-        Document loadedDoc = new Document(docPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+    private static void CreateSampleTileImage(string path, int x, int y)
+    {
+        const int width = 100;
+        const int height = 100;
 
+        // Create a bitmap and draw deterministic content.
+        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
+        {
+            using (Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap))
+            {
+                // Fill background with white.
+                graphics.Clear(Aspose.Drawing.Color.White);
+
+                // Draw a simple rectangle with a color based on coordinates.
+                Aspose.Drawing.Color fillColor = Aspose.Drawing.Color.FromArgb(255, (x * 80) % 256, (y * 80) % 256);
+                using (Aspose.Drawing.SolidBrush brush = new Aspose.Drawing.SolidBrush(fillColor))
+                {
+                    graphics.FillRectangle(brush, 10, 10, width - 20, height - 20);
+                }
+
+                // Draw the coordinates as text using Aspose.Drawing.Font.
+                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 12))
+                using (Aspose.Drawing.SolidBrush textBrush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Black))
+                {
+                    graphics.DrawString($"{x},{y}", font, textBrush, new Aspose.Drawing.PointF(15, 40));
+                }
+            }
+
+            // Save the bitmap as PNG.
+            bitmap.Save(path, Aspose.Drawing.Imaging.ImageFormat.Png);
+        }
+    }
+
+    private static void ExtractTiles(string docPath, string outputFolder)
+    {
+        // Load the document containing the map tiles.
+        Document doc = new Document(docPath);
+
+        // Find all Shape nodes in the document.
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
         int extractedCount = 0;
-        int genericIndex = 0;
 
-        foreach (Shape shape in shapeNodes)
+        foreach (Shape shape in shapes)
         {
             if (!shape.HasImage)
                 continue;
 
-            // Determine output file name based on stored coordinates
+            // Retrieve tile coordinates from AlternativeText.
             string altText = shape.AlternativeText;
-            string outputFileName;
+            if (string.IsNullOrEmpty(altText))
+                continue;
 
-            if (!string.IsNullOrWhiteSpace(altText))
-            {
-                // Expected format: "x_y"
-                outputFileName = $"tile_{altText}.png";
-            }
-            else
-            {
-                // Fallback name if no coordinates are stored
-                outputFileName = $"extracted_{genericIndex++}.png";
-            }
+            string[] parts = altText.Split('_');
+            if (parts.Length != 2)
+                continue;
 
-            string outputPath = Path.Combine(outputFolder, outputFileName);
-            shape.ImageData.Save(outputPath);
+            if (!int.TryParse(parts[0], out int x) || !int.TryParse(parts[1], out int y))
+                continue;
+
+            // Save the extracted image using tile coordinates.
+            string outputImagePath = Path.Combine(outputFolder, $"extracted_tile_{x}_{y}.png");
+            shape.ImageData.Save(outputImagePath);
             extractedCount++;
         }
 
-        // Validation: ensure at least one image was extracted
+        // Validate that at least one image was extracted.
         if (extractedCount == 0)
-            throw new InvalidOperationException("No images were extracted from the document.");
-
-        Console.WriteLine($"Extraction complete. {extractedCount} image(s) saved to '{outputFolder}'.");
+            throw new InvalidOperationException("No tile images were extracted from the document.");
     }
 }

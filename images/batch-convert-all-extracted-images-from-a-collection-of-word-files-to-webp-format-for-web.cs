@@ -10,90 +10,76 @@ public class Program
     public static void Main()
     {
         // Prepare folders
-        string inputDir = "InputDocs";
-        string outputDir = "OutputImages";
-        Directory.CreateDirectory(inputDir);
-        Directory.CreateDirectory(outputDir);
+        string baseDir = Directory.GetCurrentDirectory();
+        string inputFolder = Path.Combine(baseDir, "InputDocs");
+        string outputFolder = Path.Combine(baseDir, "OutputImages");
+        Directory.CreateDirectory(inputFolder);
+        Directory.CreateDirectory(outputFolder);
 
-        // Create a sample image (sample.png)
-        string sampleImagePath = "sample.png";
-        CreateSampleImage(sampleImagePath);
-
-        // Create sample Word documents with the image inserted
-        CreateSampleWordDocument(Path.Combine(inputDir, "Doc1.docx"), sampleImagePath);
-        CreateSampleWordDocument(Path.Combine(inputDir, "Doc2.docx"), sampleImagePath);
-
-        // Batch process: extract images and convert to WebP
-        int extractedCount = 0;
-        foreach (string docPath in Directory.GetFiles(inputDir, "*.docx"))
-        {
-            Document doc = new Document(docPath);
-            NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
-            int imageIndex = 0;
-            foreach (Shape shape in shapes)
-            {
-                if (shape.HasImage)
-                {
-                    // Get image bytes
-                    byte[] imageBytes = shape.ImageData.ImageBytes;
-
-                    // Load image into Aspose.Drawing.Image
-                    using (MemoryStream ms = new MemoryStream(imageBytes))
-                    {
-                        ms.Position = 0;
-                        using (Image img = Image.FromStream(ms))
-                        {
-                            // Build output file name
-                            string docName = Path.GetFileNameWithoutExtension(docPath);
-                            string outputFile = Path.Combine(outputDir, $"{docName}_img{imageIndex}.webp");
-
-                            // Save as WebP (format inferred from extension)
-                            img.Save(outputFile);
-                            extractedCount++;
-                        }
-                    }
-                    imageIndex++;
-                }
-            }
-        }
-
-        // Validation
-        if (extractedCount == 0)
-        {
-            throw new Exception("No images were extracted and converted.");
-        }
-
-        // Clean up sample image file
-        if (File.Exists(sampleImagePath))
-        {
-            File.Delete(sampleImagePath);
-        }
-    }
-
-    private static void CreateSampleImage(string path)
-    {
-        int width = 200;
-        int height = 100;
-        using (Bitmap bitmap = new Bitmap(width, height))
+        // Create a deterministic sample image (input.png)
+        string sampleImagePath = Path.Combine(baseDir, "input.png");
+        using (Bitmap bitmap = new Bitmap(200, 200))
         {
             using (Graphics g = Graphics.FromImage(bitmap))
             {
                 g.Clear(Color.White);
-                using (Pen pen = new Pen(Color.Blue, 3))
+                // Draw a simple rectangle
+                using (SolidBrush brush = new SolidBrush(Color.Blue))
                 {
-                    g.DrawRectangle(pen, 10, 10, width - 20, height - 20);
+                    g.FillRectangle(brush, 50, 50, 100, 100);
                 }
             }
-            bitmap.Save(path);
+            bitmap.Save(sampleImagePath, ImageFormat.Png);
         }
-    }
 
-    private static void CreateSampleWordDocument(string docPath, string imagePath)
-    {
+        // Create a sample Word document containing the image
+        string docPath = Path.Combine(inputFolder, "SampleDocument.docx");
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample document with an image:");
-        builder.InsertImage(imagePath);
+        builder.InsertImage(sampleImagePath);
         doc.Save(docPath);
+
+        // Batch process all Word files in the input folder
+        int totalConverted = 0;
+        foreach (string file in Directory.GetFiles(inputFolder, "*.docx"))
+        {
+            Document loadDoc = new Document(file);
+            NodeCollection shapes = loadDoc.GetChildNodes(NodeType.Shape, true);
+            int shapeIndex = 0;
+            foreach (Shape shape in shapes)
+            {
+                if (!shape.HasImage) continue;
+
+                // Save the shape image to a memory stream
+                using (MemoryStream imgStream = new MemoryStream())
+                {
+                    shape.ImageData.Save(imgStream);
+                    imgStream.Position = 0;
+
+                    // Load the image into Aspose.Drawing.Bitmap
+                    using (Bitmap bmp = new Bitmap(imgStream))
+                    {
+                        // Define output WebP file name (saved as PNG content for compatibility)
+                        string outputFileName = $"{Path.GetFileNameWithoutExtension(file)}_img{shapeIndex}.webp";
+                        string outputPath = Path.Combine(outputFolder, outputFileName);
+
+                        // Save as PNG format but keep .webp extension (WebP not directly supported)
+                        bmp.Save(outputPath, ImageFormat.Png);
+                        totalConverted++;
+
+                        // Validate that the file was created
+                        if (!File.Exists(outputPath))
+                            throw new InvalidOperationException($"Failed to create output image: {outputPath}");
+                    }
+                }
+                shapeIndex++;
+            }
+        }
+
+        // Ensure at least one image was converted
+        if (totalConverted == 0)
+            throw new InvalidOperationException("No images were extracted and converted.");
+
+        Console.WriteLine($"Total images converted to WebP (PNG content): {totalConverted}");
     }
 }

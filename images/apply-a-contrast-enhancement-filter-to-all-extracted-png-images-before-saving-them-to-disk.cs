@@ -9,120 +9,120 @@ public class Program
 {
     public static void Main()
     {
-        // -------------------------------------------------
-        // Create a deterministic sample PNG image.
-        // -------------------------------------------------
+        // Step 1: Create a deterministic sample PNG image.
         const string sampleImagePath = "sample.png";
-        const int imgWidth = 200;
-        const int imgHeight = 200;
+        CreateSamplePng(sampleImagePath);
 
-        // Use Aspose.Drawing.Bitmap and Aspose.Drawing.Graphics as required.
-        using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
-        {
-            using (Graphics g = Graphics.FromImage(bitmap))
-            {
-                g.Clear(Color.White);
-                using (SolidBrush brush = new SolidBrush(Color.Red))
-                {
-                    g.FillRectangle(brush, 20, 20, imgWidth - 40, imgHeight - 40);
-                }
-            }
-
-            bitmap.Save(sampleImagePath);
-        }
-
-        // -------------------------------------------------
-        // Insert the sample PNG image twice into a Word document.
-        // -------------------------------------------------
+        // Step 2: Create a Word document and insert the sample image twice.
         const string docPath = "sample.docx";
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(sampleImagePath);
-        builder.Writeln(); // separate images with a line break
-        builder.InsertImage(sampleImagePath);
-        doc.Save(docPath);
+        CreateDocumentWithImages(docPath, sampleImagePath);
 
-        // -------------------------------------------------
-        // Reload the document to simulate a fresh load scenario.
-        // -------------------------------------------------
-        Document loadedDoc = new Document(docPath);
-
-        // -------------------------------------------------
-        // Extract all PNG images, apply contrast enhancement, and save them.
-        // -------------------------------------------------
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        // Step 3: Load the document and extract PNG images, applying contrast enhancement.
+        Document doc = new Document(docPath);
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
         int extractedCount = 0;
+        int index = 0;
 
-        for (int i = 0; i < shapeNodes.Count; i++)
+        foreach (Shape shape in shapeNodes)
         {
-            Shape shape = (Shape)shapeNodes[i];
             if (!shape.HasImage)
                 continue;
 
+            // Process only PNG images.
             if (shape.ImageData.ImageType != ImageType.Png)
                 continue;
 
-            // Save the original image to a memory stream.
-            using (MemoryStream imgStream = new MemoryStream())
+            using (MemoryStream imageStream = new MemoryStream())
             {
-                shape.ImageData.Save(imgStream);
-                imgStream.Position = 0; // reset before reading
+                shape.ImageData.Save(imageStream);
+                imageStream.Position = 0; // Reset before reading.
 
-                // Load the image into Aspose.Drawing.Bitmap.
-                using (Bitmap originalBitmap = new Bitmap(imgStream))
+                // Load the image using Aspose.Drawing.Bitmap.
+                using (Bitmap original = new Bitmap(imageStream))
                 {
-                    // Ensure we work with a non‑indexed pixel format.
-                    using (Bitmap workingBitmap = new Bitmap(
-                        originalBitmap.Width,
-                        originalBitmap.Height,
-                        PixelFormat.Format32bppArgb))
+                    // Convert to a non‑indexed pixel format (32bpp ARGB) to allow SetPixel.
+                    using (Bitmap bitmap = new Bitmap(original.Width, original.Height, PixelFormat.Format32bppArgb))
                     {
-                        // Draw the original image onto the new bitmap.
-                        using (Graphics g = Graphics.FromImage(workingBitmap))
+                        using (Graphics g = Graphics.FromImage(bitmap))
                         {
-                            g.DrawImage(originalBitmap, 0, 0, originalBitmap.Width, originalBitmap.Height);
+                            g.DrawImage(original, 0, 0, original.Width, original.Height);
                         }
 
-                        // Apply a simple contrast enhancement.
-                        const double contrastFactor = 1.2; // >1 increases contrast
-                        for (int y = 0; y < workingBitmap.Height; y++)
-                        {
-                            for (int x = 0; x < workingBitmap.Width; x++)
-                            {
-                                Color pixel = workingBitmap.GetPixel(x, y);
+                        // Apply contrast enhancement (contrast value: 50).
+                        AdjustContrast(bitmap, 50f);
 
-                                int r = AdjustContrast(pixel.R, contrastFactor);
-                                int gVal = AdjustContrast(pixel.G, contrastFactor);
-                                int b = AdjustContrast(pixel.B, contrastFactor);
-
-                                Color newPixel = Color.FromArgb(pixel.A, r, gVal, b);
-                                workingBitmap.SetPixel(x, y, newPixel);
-                            }
-                        }
-
-                        // Save the enhanced image to disk.
-                        string outPath = $"extracted-contrast-{extractedCount + 1}.png";
-                        workingBitmap.Save(outPath);
-                        if (!File.Exists(outPath))
-                            throw new InvalidOperationException($"Failed to save enhanced image to '{outPath}'.");
+                        string outputPath = $"extracted_contrast_{index}.png";
+                        bitmap.Save(outputPath, ImageFormat.Png);
                         extractedCount++;
+                        index++;
                     }
                 }
             }
         }
 
+        // Validation: ensure at least one image was processed.
         if (extractedCount == 0)
-            throw new InvalidOperationException("No PNG images were extracted from the document.");
-
-        // Optional cleanup (commented out).
-        // File.Delete(sampleImagePath);
-        // File.Delete(docPath);
+            throw new InvalidOperationException("No PNG images were extracted and processed.");
     }
 
-    // Helper method to adjust a single channel based on contrast factor.
-    private static int AdjustContrast(int value, double factor)
+    // Creates a simple deterministic PNG image.
+    private static void CreateSamplePng(string path)
     {
-        double newVal = ((value - 128) * factor) + 128;
-        return Math.Max(0, Math.Min(255, (int)Math.Round(newVal)));
+        const int width = 200;
+        const int height = 200;
+        using (Bitmap bitmap = new Bitmap(width, height))
+        {
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                g.Clear(Color.White);
+                // Draw a simple blue ellipse.
+                using (SolidBrush brush = new SolidBrush(Color.Blue))
+                {
+                    g.FillEllipse(brush, 20, 20, width - 40, height - 40);
+                }
+            }
+            bitmap.Save(path, ImageFormat.Png);
+        }
+    }
+
+    // Creates a Word document and inserts the same image twice.
+    private static void CreateDocumentWithImages(string docPath, string imagePath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.InsertImage(imagePath);
+        builder.Writeln(); // Add a line break between images.
+        builder.InsertImage(imagePath);
+        doc.Save(docPath);
+    }
+
+    // Adjusts contrast of the bitmap. Contrast range: -255 to 255.
+    private static void AdjustContrast(Bitmap bitmap, float contrast)
+    {
+        // Clamp contrast to valid range.
+        if (contrast < -255f) contrast = -255f;
+        if (contrast > 255f) contrast = 255f;
+
+        double factor = (259 * (contrast + 255)) / (255.0 * (259 - contrast));
+
+        for (int y = 0; y < bitmap.Height; y++)
+        {
+            for (int x = 0; x < bitmap.Width; x++)
+            {
+                Color original = bitmap.GetPixel(x, y);
+                int r = Truncate((int)(factor * (original.R - 128) + 128));
+                int g = Truncate((int)(factor * (original.G - 128) + 128));
+                int b = Truncate((int)(factor * (original.B - 128) + 128));
+                Color adjusted = Color.FromArgb(original.A, r, g, b);
+                bitmap.SetPixel(x, y, adjusted);
+            }
+        }
+    }
+
+    private static int Truncate(int value)
+    {
+        if (value < 0) return 0;
+        if (value > 255) return 255;
+        return value;
     }
 }

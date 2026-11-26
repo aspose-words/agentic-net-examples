@@ -10,97 +10,65 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a deterministic sample image.
-        const string sampleImagePath = "sample.png";
-        CreateSampleImage(sampleImagePath);
-
-        // Step 2: Create a Word document and insert the sample image.
-        const string docPath = "sample.docx";
-        CreateDocumentWithImage(docPath, sampleImagePath);
-
-        // Step 3: Load the document.
-        Document doc = new Document(docPath);
-
-        // Step 4: Extract images from the document.
-        List<string> extractedImagePaths = ExtractImages(doc);
-
-        // Validate that at least one image was extracted.
-        if (extractedImagePaths.Count == 0)
-            throw new InvalidOperationException("No images were extracted from the document.");
-
-        // Step 5: Generate a Markdown file with image links.
-        const string markdownPath = "images.md";
-        GenerateMarkdown(markdownPath, extractedImagePaths);
-    }
-
-    private static void CreateSampleImage(string path)
-    {
-        // Create a 200x200 white bitmap.
+        // Create a deterministic sample image.
+        const string sampleImagePath = "input.png";
         using (Bitmap bitmap = new Bitmap(200, 200))
         {
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                graphics.Clear(Aspose.Drawing.Color.White);
-                // Draw a simple black rectangle for visual distinction.
-                using (Pen pen = new Pen(Aspose.Drawing.Color.Black, 5))
-                {
-                    graphics.DrawRectangle(pen, 20, 20, 160, 160);
-                }
+                graphics.Clear(Color.White);
+                // Draw a simple rectangle for visual distinction.
+                graphics.DrawRectangle(new Pen(Color.Black), 20, 20, 160, 160);
             }
-            // Save the bitmap as PNG.
-            bitmap.Save(path, ImageFormat.Png);
+            bitmap.Save(sampleImagePath);
         }
 
-        // Ensure the file exists.
-        if (!File.Exists(path))
-            throw new FileNotFoundException($"Failed to create sample image at '{path}'.");
-    }
-
-    private static void CreateDocumentWithImage(string docPath, string imagePath)
-    {
+        // Create a Word document and insert the sample image.
+        const string docPath = "sample.docx";
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        // Insert the image into the document.
-        builder.InsertImage(imagePath);
-        // Save the document.
+        builder.InsertImage(sampleImagePath);
         doc.Save(docPath);
-        // Validate the document was saved.
-        if (!File.Exists(docPath))
-            throw new FileNotFoundException($"Failed to save document at '{docPath}'.");
-    }
 
-    private static List<string> ExtractImages(Document doc)
-    {
-        List<string> imagePaths = new List<string>();
-        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
-        int index = 1;
-        foreach (Shape shape in shapes)
+        // Load the document for image extraction.
+        Document loadedDoc = new Document(docPath);
+
+        // Extract images from the document.
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        List<string> extractedImageFiles = new List<string>();
+        int imageIndex = 0;
+
+        foreach (Shape shape in shapeNodes)
         {
             if (shape.HasImage)
             {
-                string imageFileName = $"extracted-{index}.png";
+                string imageFileName = $"image{imageIndex}.png";
                 shape.ImageData.Save(imageFileName);
-                if (!File.Exists(imageFileName))
-                    throw new FileNotFoundException($"Failed to save extracted image '{imageFileName}'.");
-                imagePaths.Add(imageFileName);
-                index++;
+                extractedImageFiles.Add(imageFileName);
+                imageIndex++;
             }
         }
-        return imagePaths;
-    }
 
-    private static void GenerateMarkdown(string markdownPath, List<string> imagePaths)
-    {
-        using (StreamWriter writer = new StreamWriter(markdownPath, false))
+        // Validate that at least one image was extracted.
+        if (extractedImageFiles.Count == 0)
+            throw new InvalidOperationException("No images were extracted from the document.");
+
+        // Create a Markdown file with image links.
+        const string markdownPath = "output.md";
+        using (StreamWriter writer = new StreamWriter(markdownPath))
         {
-            foreach (string imgPath in imagePaths)
+            foreach (string imgFile in extractedImageFiles)
             {
-                writer.WriteLine($"![]({imgPath})");
+                writer.WriteLine($"![]({imgFile})");
             }
         }
 
-        // Validate markdown file creation.
+        // Validate that the markdown file was created.
         if (!File.Exists(markdownPath))
-            throw new FileNotFoundException($"Failed to create markdown file at '{markdownPath}'.");
+            throw new InvalidOperationException("Markdown file was not created.");
+
+        // Optional: Clean up temporary files (comment out if you want to keep them).
+        // File.Delete(sampleImagePath);
+        // File.Delete(docPath);
     }
 }

@@ -1,40 +1,40 @@
 using System;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Newtonsoft.Json;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
-using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a deterministic sample image (200x200, light blue background).
-        const string sampleImagePath = "input.png";
-        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(200, 200);
-        Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap);
-        graphics.Clear(Aspose.Drawing.Color.LightBlue);
-        bitmap.Save(sampleImagePath);
-        graphics.Dispose();
-        bitmap.Dispose();
+        // Step 1: Create a deterministic sample image file (input.png).
+        const string imagePath = "input.png";
+        using (Bitmap bitmap = new Bitmap(100, 100))
+        {
+            using (Graphics graphics = Graphics.FromImage(bitmap))
+            {
+                graphics.Clear(Color.White);
+            }
+            bitmap.Save(imagePath);
+        }
 
-        // Create a Word document and insert the sample image.
+        // Step 2: Create a Word document and insert the sample image.
         const string docPath = "sample.docx";
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(sampleImagePath);
+        builder.InsertImage(imagePath);
         doc.Save(docPath);
 
-        // Load the document for image extraction.
+        // Step 3: Load the document for image extraction.
         Document loadedDoc = new Document(docPath);
 
-        // Extract images and collect base64 data.
-        List<object> extractedImages = new List<object>();
+        // Step 4: Extract images, encode them as Base64 strings.
+        List<string> base64Images = new List<string>();
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int imageIndex = 0;
-
         foreach (Shape shape in shapeNodes)
         {
             if (shape.HasImage)
@@ -45,35 +45,26 @@ public class Program
                     ms.Position = 0;
                     byte[] imageBytes = ms.ToArray();
                     string base64 = Convert.ToBase64String(imageBytes);
-
-                    // Use the shape name if available; otherwise generate a deterministic file name.
-                    string fileName = shape.Name;
-                    if (string.IsNullOrEmpty(fileName))
-                    {
-                        fileName = $"image{imageIndex}.png";
-                    }
-
-                    extractedImages.Add(new { FileName = fileName, Base64 = base64 });
-                    imageIndex++;
+                    base64Images.Add(base64);
                 }
             }
         }
 
         // Validate that at least one image was extracted.
-        if (extractedImages.Count == 0)
+        if (base64Images.Count == 0)
         {
-            throw new Exception("No images were extracted from the document.");
+            throw new InvalidOperationException("No images were extracted from the document.");
         }
 
-        // Serialize the image data to JSON.
-        string json = JsonConvert.SerializeObject(extractedImages, Formatting.Indented);
+        // Step 5: Serialize the Base64 image list to JSON.
+        string json = JsonConvert.SerializeObject(base64Images, Formatting.Indented);
         const string jsonPath = "images.json";
         File.WriteAllText(jsonPath, json);
 
         // Validate that the JSON file was created.
         if (!File.Exists(jsonPath))
         {
-            throw new Exception("Failed to create the JSON output file.");
+            throw new InvalidOperationException("Failed to create the JSON output file.");
         }
     }
 }

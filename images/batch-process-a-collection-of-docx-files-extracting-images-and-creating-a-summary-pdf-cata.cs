@@ -3,129 +3,121 @@ using System.IO;
 using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
 using Newtonsoft.Json;
 
-public class Program
+public class ImageBatchProcessor
 {
     public static void Main()
     {
-        // Define folders and files
+        // Define folders
         string baseDir = Directory.GetCurrentDirectory();
-        string docsFolder = Path.Combine(baseDir, "Docs");
-        string imagesFolder = Path.Combine(baseDir, "ExtractedImages");
-        string catalogPdfPath = Path.Combine(baseDir, "ImageCatalog.pdf");
-        string sampleImagePath = Path.Combine(baseDir, "sample.png");
+        string inputFolder = Path.Combine(baseDir, "InputDocs");
+        string imageFolder = Path.Combine(baseDir, "ExtractedImages");
+        string outputFolder = Path.Combine(baseDir, "Output");
 
-        // Ensure clean environment
-        if (Directory.Exists(docsFolder)) Directory.Delete(docsFolder, true);
-        if (Directory.Exists(imagesFolder)) Directory.Delete(imagesFolder, true);
-        Directory.CreateDirectory(docsFolder);
-        Directory.CreateDirectory(imagesFolder);
+        // Ensure folders exist
+        Directory.CreateDirectory(inputFolder);
+        Directory.CreateDirectory(imageFolder);
+        Directory.CreateDirectory(outputFolder);
 
-        // -------------------------------------------------
-        // Create a deterministic sample image (sample.png)
-        // -------------------------------------------------
-        int imgWidth = 200;
-        int imgHeight = 200;
-        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(imgWidth, imgHeight))
-        {
-            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
-            {
-                g.Clear(Aspose.Drawing.Color.White);
-                // Draw a simple rectangle
-                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Blue, 5))
-                {
-                    g.DrawRectangle(pen, 10, 10, imgWidth - 20, imgHeight - 20);
-                }
-            }
-            bitmap.Save(sampleImagePath, ImageFormat.Png);
-        }
+        // Create a deterministic sample image (input.png)
+        string sampleImagePath = Path.Combine(baseDir, "input.png");
+        CreateSampleImage(sampleImagePath, 200, 200);
 
-        // -------------------------------------------------
-        // Create sample DOCX files each containing the image
-        // -------------------------------------------------
+        // Create sample DOCX files containing the sample image
         int docCount = 3;
         for (int i = 1; i <= docCount; i++)
         {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln($"Document {i} with an embedded image:");
-            builder.InsertImage(sampleImagePath);
-            string docPath = Path.Combine(docsFolder, $"Doc{i}.docx");
-            doc.Save(docPath);
+            string docPath = Path.Combine(inputFolder, $"Doc{i}.docx");
+            CreateSampleDocumentWithImage(docPath, sampleImagePath, $"Sample document {i}");
         }
 
-        // -------------------------------------------------
-        // Batch process: extract images from each DOCX
-        // -------------------------------------------------
-        List<string> extractedImagePaths = new List<string>();
-        string[] docFiles = Directory.GetFiles(docsFolder, "*.docx");
-        foreach (string docFile in docFiles)
+        // Extract images from each DOCX and collect info for the catalog
+        var extractedInfo = new List<ExtractedImageInfo>();
+        foreach (string docPath in Directory.GetFiles(inputFolder, "*.docx"))
         {
-            Document doc = new Document(docFile);
+            Document doc = new Document(docPath);
             NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
-            int imageIndex = 0;
+            int imageIndex = 1;
             foreach (Shape shape in shapes)
             {
                 if (shape.HasImage)
                 {
-                    // Use a deterministic PNG extension for extracted images
-                    string imageFileName = $"{Path.GetFileNameWithoutExtension(docFile)}_Image{imageIndex}.png";
-                    string imagePath = Path.Combine(imagesFolder, imageFileName);
+                    string imageFileName = $"{Path.GetFileNameWithoutExtension(docPath)}_Image{imageIndex}.png";
+                    string imagePath = Path.Combine(imageFolder, imageFileName);
                     shape.ImageData.Save(imagePath);
-                    extractedImagePaths.Add(imagePath);
+                    extractedInfo.Add(new ExtractedImageInfo
+                    {
+                        SourceDocument = Path.GetFileName(docPath),
+                        ImageFileName = imageFileName,
+                        ImagePath = imagePath
+                    });
                     imageIndex++;
                 }
             }
         }
 
-        // Validate that images were extracted
-        if (extractedImagePaths.Count == 0)
+        // Validate that at least one image was extracted
+        if (extractedInfo.Count == 0)
             throw new InvalidOperationException("No images were extracted from the DOCX files.");
 
-        // -------------------------------------------------
-        // Create a summary PDF catalog containing all extracted images
-        // -------------------------------------------------
-        Document catalogDoc = new Document();
-        DocumentBuilder catalogBuilder = new DocumentBuilder(catalogDoc);
-        catalogBuilder.Writeln("Image Catalog");
-        catalogBuilder.Font.Size = 24;
-        catalogBuilder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-        catalogBuilder.Writeln();
-        catalogBuilder.Font.Size = 12;
-        catalogBuilder.ParagraphFormat.Alignment = ParagraphAlignment.Left;
-
-        bool first = true;
-        foreach (string imgPath in extractedImagePaths)
+        // Create a PDF catalog summarizing the extracted images
+        Document catalog = new Document();
+        DocumentBuilder builder = new DocumentBuilder(catalog);
+        foreach (var info in extractedInfo)
         {
-            if (!first)
-                catalogBuilder.InsertBreak(BreakType.PageBreak);
-            first = false;
-
-            // Caption
-            catalogBuilder.Writeln($"Image: {Path.GetFileName(imgPath)}");
-            // Insert the image
-            catalogBuilder.InsertImage(imgPath);
+            builder.Writeln($"Source Document: {info.SourceDocument}");
+            builder.Writeln($"Image: {info.ImageFileName}");
+            builder.InsertImage(info.ImagePath);
+            builder.Writeln(); // Add spacing
         }
 
-        // Save the catalog as PDF
-        catalogDoc.Save(catalogPdfPath, SaveFormat.Pdf);
+        string catalogPath = Path.Combine(outputFolder, "ImageCatalog.pdf");
+        catalog.Save(catalogPath, SaveFormat.Pdf);
 
         // Validate PDF creation
-        if (!File.Exists(catalogPdfPath))
+        if (!File.Exists(catalogPath))
             throw new InvalidOperationException("Failed to create the PDF catalog.");
 
-        // Optional: Output a simple JSON manifest
-        var manifest = new
+        // Optional: write a JSON manifest of extracted images
+        string manifestPath = Path.Combine(outputFolder, "manifest.json");
+        string json = JsonConvert.SerializeObject(extractedInfo, Formatting.Indented);
+        File.WriteAllText(manifestPath, json);
+    }
+
+    private static void CreateSampleImage(string path, int width, int height)
+    {
+        using (Bitmap bitmap = new Bitmap(width, height))
         {
-            GeneratedAt = DateTime.UtcNow,
-            SourceDocuments = docFiles,
-            ExtractedImages = extractedImagePaths,
-            CatalogPdf = catalogPdfPath
-        };
-        string manifestJson = JsonConvert.SerializeObject(manifest, Formatting.Indented);
-        File.WriteAllText(Path.Combine(baseDir, "manifest.json"), manifestJson);
+            using (Graphics graphics = Graphics.FromImage(bitmap))
+            {
+                graphics.Clear(Color.White);
+                // Draw a simple rectangle
+                using (var pen = new Pen(Color.Black, 3))
+                {
+                    graphics.DrawRectangle(pen, 10, 10, width - 20, height - 20);
+                }
+            }
+            bitmap.Save(path);
+        }
+    }
+
+    private static void CreateSampleDocumentWithImage(string docPath, string imagePath, string title)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln(title);
+        builder.InsertParagraph();
+        builder.InsertImage(imagePath);
+        doc.Save(docPath);
+    }
+
+    private class ExtractedImageInfo
+    {
+        public string SourceDocument { get; set; }
+        public string ImageFileName { get; set; }
+        public string ImagePath { get; set; }
     }
 }

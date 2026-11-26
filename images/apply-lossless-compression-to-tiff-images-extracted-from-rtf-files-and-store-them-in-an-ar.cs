@@ -12,96 +12,102 @@ public class Program
     public static void Main()
     {
         // Step 1: Create a sample TIFF image.
-        const string sampleImagePath = "sample.tif";
+        const string sampleTiffPath = "sample.tif";
         using (Bitmap bitmap = new Bitmap(200, 200))
         {
             using (Graphics g = Graphics.FromImage(bitmap))
             {
-                g.Clear(Color.White);
-                g.FillRectangle(Brushes.Black, 50, 50, 100, 100);
+                g.Clear(Color.LightBlue);
+                g.DrawRectangle(new Pen(Color.DarkBlue, 5), 20, 20, 160, 160);
             }
-            bitmap.Save(sampleImagePath, ImageFormat.Tiff);
+            bitmap.Save(sampleTiffPath, ImageFormat.Tiff);
         }
 
-        // Step 2: Create an RTF document and embed the TIFF image.
-        const string rtfPath = "input.rtf";
+        // Step 2: Create an RTF document and insert the TIFF image.
+        const string rtfPath = "sample.rtf";
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(sampleImagePath);
-        doc.Save(rtfPath);
+        builder.InsertImage(sampleTiffPath);
+        doc.Save(rtfPath, SaveFormat.Rtf);
 
-        // Step 3: Load the RTF document and extract TIFF images.
+        // Step 3: Load the RTF document and extract embedded images.
         Document loadedDoc = new Document(rtfPath);
-        var shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true)
-                                 .Cast<Shape>()
-                                 .Where(s => s.HasImage)
-                                 .ToList();
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        int imageIndex = 0;
+        var extractedPaths = new System.Collections.Generic.List<string>();
 
-        if (shapeNodes.Count == 0)
-            throw new InvalidOperationException("No images were found in the document.");
-
-        // Prepare the ZIP archive.
-        const string zipPath = "compressed_images.zip";
-        using (FileStream zipStream = new FileStream(zipPath, FileMode.Create))
-        using (ZipArchive archive = new ZipArchive(zipStream, ZipArchiveMode.Update))
+        foreach (Shape shape in shapeNodes)
         {
-            int index = 0;
-            foreach (Shape shape in shapeNodes)
+            if (!shape.HasImage) continue;
+
+            // Save the extracted image to a temporary file.
+            string extractedPath = $"extracted_{imageIndex}.tif";
+            shape.ImageData.Save(extractedPath);
+            extractedPaths.Add(extractedPath);
+            imageIndex++;
+        }
+
+        if (extractedPaths.Count == 0)
+            throw new InvalidOperationException("No images were extracted from the RTF document.");
+
+        // Step 4: Apply lossless compression (LZW) to each extracted TIFF image.
+        var compressedPaths = new System.Collections.Generic.List<string>();
+        ImageCodecInfo tiffCodec = ImageCodecInfo.GetImageEncoders()
+            .FirstOrDefault(c => c.FormatID == ImageFormat.Tiff.Guid);
+        if (tiffCodec == null)
+            throw new InvalidOperationException("TIFF codec not found.");
+
+        Encoder compressionEncoder = Encoder.Compression;
+        EncoderParameters encoderParams = new EncoderParameters(1);
+        encoderParams.Param[0] = new EncoderParameter(compressionEncoder, (long)EncoderValue.CompressionLZW);
+
+        for (int i = 0; i < extractedPaths.Count; i++)
+        {
+            string srcPath = extractedPaths[i];
+            string compressedPath = $"compressed_{i}.tif";
+
+            using (FileStream fs = new FileStream(srcPath, FileMode.Open, FileAccess.Read))
+            using (MemoryStream ms = new MemoryStream())
             {
-                // Save the original image to a memory stream.
-                using (MemoryStream originalStream = new MemoryStream())
+                fs.CopyTo(ms);
+                ms.Position = 0;
+
+                using (Bitmap bmp = new Bitmap(ms))
                 {
-                    shape.ImageData.Save(originalStream);
-                    originalStream.Position = 0;
-
-                    // Load the image into a Bitmap.
-                    using (Bitmap imgBitmap = new Bitmap(originalStream))
-                    {
-                        // Prepare encoder parameters for lossless LZW compression.
-                        ImageCodecInfo tiffCodec = ImageCodecInfo.GetImageEncoders()
-                            .FirstOrDefault(c => c.FormatID == ImageFormat.Tiff.Guid);
-                        if (tiffCodec == null)
-                            throw new InvalidOperationException("TIFF codec not found.");
-
-                        EncoderParameters encoderParams = new EncoderParameters(1);
-                        EncoderParameter compressionParam = new EncoderParameter(
-                            Encoder.Compression,
-                            (long)EncoderValue.CompressionLZW);
-                        encoderParams.Param[0] = compressionParam;
-
-                        // Save the compressed image to another memory stream.
-                        using (MemoryStream compressedStream = new MemoryStream())
-                        {
-                            imgBitmap.Save(compressedStream, tiffCodec, encoderParams);
-                            compressedStream.Position = 0;
-
-                            // Add the compressed image to the ZIP archive.
-                            string entryName = $"image-{index}.tif";
-                            ZipArchiveEntry entry = archive.CreateEntry(entryName);
-                            using (Stream entryStream = entry.Open())
-                            {
-                                compressedStream.CopyTo(entryStream);
-                            }
-                        }
-                    }
+                    bmp.Save(compressedPath, tiffCodec, encoderParams);
                 }
-                index++;
+            }
+
+            compressedPaths.Add(compressedPath);
+        }
+
+        // Step 5: Store compressed images in a ZIP archive.
+        const string archivePath = "ImagesArchive.zip";
+        using (FileStream zipToOpen = new FileStream(archivePath, FileMode.Create))
+        using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Update))
+        {
+            foreach (string path in compressedPaths)
+            {
+                ZipArchiveEntry entry = archive.CreateEntry(Path.GetFileName(path));
+                using (Stream entryStream = entry.Open())
+                using (FileStream fileStream = new FileStream(path, FileMode.Open, FileAccess.Read))
+                {
+                    fileStream.CopyTo(entryStream);
+                }
             }
         }
 
-        // Validation: ensure the ZIP file was created and contains entries.
-        if (!File.Exists(zipPath))
-            throw new InvalidOperationException("The ZIP archive was not created.");
-
-        using (FileStream zipCheck = new FileStream(zipPath, FileMode.Open))
-        using (ZipArchive archiveCheck = new ZipArchive(zipCheck, ZipArchiveMode.Read))
+        // Validation: ensure the archive contains entries.
+        using (ZipArchive archive = ZipFile.OpenRead(archivePath))
         {
-            if (archiveCheck.Entries.Count == 0)
-                throw new InvalidOperationException("No images were added to the ZIP archive.");
+            if (!archive.Entries.Any())
+                throw new InvalidOperationException("The archive does not contain any images.");
         }
 
-        // Cleanup temporary files.
-        File.Delete(sampleImagePath);
+        // Cleanup temporary files (optional).
+        foreach (var path in extractedPaths) File.Delete(path);
+        foreach (var path in compressedPaths) File.Delete(path);
+        File.Delete(sampleTiffPath);
         File.Delete(rtfPath);
     }
 }

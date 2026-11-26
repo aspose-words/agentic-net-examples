@@ -1,130 +1,156 @@
 using System;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
-public class Program
+public class BatchImageExtractor
 {
+    // Password used for encrypting the final ZIP archive
+    private const string ZipPassword = "StrongPassword123";
+
     // Entry point
     public static void Main()
     {
-        // Define deterministic paths
-        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "BatchImageProcessing");
+        // Prepare folders
+        string baseDir = Directory.GetCurrentDirectory();
         string inputDocsDir = Path.Combine(baseDir, "InputDocs");
-        string extractedImagesDir = Path.Combine(baseDir, "ExtractedImages");
-        string zipPath = Path.Combine(baseDir, "ImagesArchive.zip");
-        string sampleImagePath = Path.Combine(baseDir, "sample.png");
+        string imagesDir = Path.Combine(baseDir, "ExtractedImages");
+        string outputDir = Path.Combine(baseDir, "Output");
 
-        // Ensure clean environment
-        if (Directory.Exists(baseDir))
-            Directory.Delete(baseDir, true);
         Directory.CreateDirectory(inputDocsDir);
-        Directory.CreateDirectory(extractedImagesDir);
+        Directory.CreateDirectory(imagesDir);
+        Directory.CreateDirectory(outputDir);
 
-        // -------------------------------------------------
-        // 1. Create a deterministic sample image (sample.png)
-        // -------------------------------------------------
-        CreateSampleImage(sampleImagePath);
+        // 1. Create a deterministic sample image (input.png)
+        string sampleImagePath = Path.Combine(baseDir, "input.png");
+        CreateSampleImage(sampleImagePath, 200, 200);
 
-        // -------------------------------------------------
         // 2. Create sample DOCX files that contain the image
-        // -------------------------------------------------
-        const int docCount = 3;
-        for (int i = 1; i <= docCount; i++)
-        {
-            string docPath = Path.Combine(inputDocsDir, $"Document{i}.docx");
-            CreateDocumentWithImage(docPath, sampleImagePath);
-        }
+        CreateSampleDocument(Path.Combine(inputDocsDir, "Doc1.docx"), sampleImagePath);
+        CreateSampleDocument(Path.Combine(inputDocsDir, "Doc2.docx"), sampleImagePath);
 
-        // -------------------------------------------------
         // 3. Batch process DOCX files: extract images
-        // -------------------------------------------------
-        int totalExtracted = 0;
-        foreach (string docFile in Directory.GetFiles(inputDocsDir, "*.docx"))
-        {
-            totalExtracted += ExtractImagesFromDocument(docFile, extractedImagesDir);
-        }
-
+        int totalExtracted = ExtractImagesFromDocuments(inputDocsDir, imagesDir);
         if (totalExtracted == 0)
             throw new InvalidOperationException("No images were extracted from the documents.");
 
-        // -------------------------------------------------
-        // 4. Create a ZIP archive of extracted images
-        // -------------------------------------------------
-        CreateZipArchive(extractedImagesDir, zipPath);
-
-        // Validate ZIP creation
+        // 4. Create a ZIP archive of the extracted images
+        string zipPath = Path.Combine(outputDir, "ImagesArchive.zip");
+        ZipFile.CreateFromDirectory(imagesDir, zipPath, CompressionLevel.Optimal, false);
         if (!File.Exists(zipPath))
             throw new InvalidOperationException("Failed to create the ZIP archive.");
 
-        // Example completed successfully
-        Console.WriteLine($"Processed {docCount} documents, extracted {totalExtracted} images, and created ZIP at: {zipPath}");
+        // 5. Encrypt the ZIP archive with a password (AES)
+        string encryptedZipPath = Path.Combine(outputDir, "ImagesArchive.zip.enc");
+        EncryptFileWithPassword(zipPath, encryptedZipPath, ZipPassword);
+        if (!File.Exists(encryptedZipPath))
+            throw new InvalidOperationException("Failed to encrypt the ZIP archive.");
+
+        Console.WriteLine("Batch processing completed successfully.");
+        Console.WriteLine($"Extracted images count: {totalExtracted}");
+        Console.WriteLine($"Encrypted ZIP archive created at: {encryptedZipPath}");
     }
 
-    // Creates a simple white PNG image with a black rectangle for deterministic content
-    private static void CreateSampleImage(string filePath)
+    // Creates a simple white PNG image with a black rectangle for demonstration
+    private static void CreateSampleImage(string filePath, int width, int height)
     {
-        const int width = 200;
-        const int height = 100;
-
-        // Use Aspose.Drawing types explicitly
-        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height);
-        Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap);
-        graphics.Clear(Aspose.Drawing.Color.White);
-
-        using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Black, 3))
+        using (Bitmap bitmap = new Bitmap(width, height))
         {
-            graphics.DrawRectangle(pen, 10, 10, width - 20, height - 20);
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                g.Clear(Color.White);
+                // Draw a simple black rectangle
+                using (Pen pen = new Pen(Color.Black, 5))
+                {
+                    g.DrawRectangle(pen, 10, 10, width - 20, height - 20);
+                }
+            }
+            bitmap.Save(filePath, ImageFormat.Png);
         }
 
-        // Save the image
-        bitmap.Save(filePath);
-
-        // Clean up
-        graphics.Dispose();
-        bitmap.Dispose();
+        if (!File.Exists(filePath))
+            throw new InvalidOperationException($"Failed to create sample image at {filePath}.");
     }
 
-    // Creates a DOCX file and inserts the provided image
-    private static void CreateDocumentWithImage(string docPath, string imagePath)
+    // Generates a DOCX file containing the specified image
+    private static void CreateSampleDocument(string docPath, string imagePath)
     {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln($"Document generated on {DateTime.Now}");
+        builder.Writeln($"Document: {Path.GetFileName(docPath)}");
         builder.InsertImage(imagePath);
         doc.Save(docPath);
+        if (!File.Exists(docPath))
+            throw new InvalidOperationException($"Failed to create sample document at {docPath}.");
     }
 
-    // Extracts all images from a DOCX file and saves them to the target folder
-    private static int ExtractImagesFromDocument(string docPath, string targetFolder)
+    // Extracts all images from DOCX files in the source folder into the destination folder
+    private static int ExtractImagesFromDocuments(string sourceFolder, string destinationFolder)
     {
-        Document doc = new Document(docPath);
-        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
-        int imageIndex = 0;
+        int extractedCount = 0;
+        string[] docFiles = Directory.GetFiles(sourceFolder, "*.docx", SearchOption.TopDirectoryOnly);
 
-        foreach (Shape shape in shapes)
+        foreach (string docFile in docFiles)
         {
-            if (shape.HasImage)
+            Document doc = new Document(docFile);
+            NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+
+            int imageIndex = 0;
+            foreach (Shape shape in shapes)
             {
-                string imageExt = shape.ImageData.ImageType.ToString().ToLower(); // e.g., png, jpeg
-                string imageFileName = $"{Path.GetFileNameWithoutExtension(docPath)}_image{++imageIndex}.{imageExt}";
-                string imageFullPath = Path.Combine(targetFolder, imageFileName);
-                shape.ImageData.Save(imageFullPath);
+                if (shape.HasImage)
+                {
+                    string imageExt = shape.ImageData.ImageType.ToString().ToLower(); // e.g., png, jpeg
+                    string imageFileName = $"{Path.GetFileNameWithoutExtension(docFile)}_img{imageIndex}.{imageExt}";
+                    string imagePath = Path.Combine(destinationFolder, imageFileName);
+                    shape.ImageData.Save(imagePath);
+                    if (!File.Exists(imagePath))
+                        throw new InvalidOperationException($"Failed to save extracted image to {imagePath}.");
+
+                    extractedCount++;
+                    imageIndex++;
+                }
             }
         }
 
-        return imageIndex; // number of images extracted from this document
+        return extractedCount;
     }
 
-    // Creates a ZIP archive containing all files from sourceFolder
-    private static void CreateZipArchive(string sourceFolder, string zipFilePath)
+    // Encrypts a file using AES (CBC) with a password-derived key
+    private static void EncryptFileWithPassword(string inputFile, string outputFile, string password)
     {
-        // Ensure the destination zip does not already exist
-        if (File.Exists(zipFilePath))
-            File.Delete(zipFilePath);
+        // Derive a 256-bit key from the password using SHA256
+        byte[] key;
+        using (SHA256 sha = SHA256.Create())
+        {
+            key = sha.ComputeHash(Encoding.UTF8.GetBytes(password));
+        }
 
-        ZipFile.CreateFromDirectory(sourceFolder, zipFilePath, CompressionLevel.Optimal, false);
+        // Generate a random IV and prepend it to the encrypted file
+        using (Aes aes = Aes.Create())
+        {
+            aes.Key = key;
+            aes.Mode = CipherMode.CBC;
+            aes.Padding = PaddingMode.PKCS7;
+            aes.GenerateIV();
+
+            using (FileStream fsInput = new FileStream(inputFile, FileMode.Open, FileAccess.Read))
+            using (FileStream fsOutput = new FileStream(outputFile, FileMode.Create, FileAccess.Write))
+            {
+                // Write IV first
+                fsOutput.Write(aes.IV, 0, aes.IV.Length);
+
+                using (CryptoStream cryptoStream = new CryptoStream(fsOutput, aes.CreateEncryptor(), CryptoStreamMode.Write))
+                {
+                    fsInput.CopyTo(cryptoStream);
+                }
+            }
+        }
     }
 }

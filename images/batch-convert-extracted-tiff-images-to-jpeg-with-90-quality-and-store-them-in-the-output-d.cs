@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
@@ -9,63 +10,71 @@ public class Program
     public static void Main()
     {
         // Prepare folders
-        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputImages");
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputImages");
-        Directory.CreateDirectory(inputFolder);
-        Directory.CreateDirectory(outputFolder);
+        string baseDir = Directory.GetCurrentDirectory();
+        string inputDir = Path.Combine(baseDir, "input");
+        string outputDir = Path.Combine(baseDir, "output");
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(outputDir);
 
         // Create sample TIFF images
-        for (int i = 1; i <= 3; i++)
+        CreateSampleTiff(Path.Combine(inputDir, "sample1.tif"));
+        CreateSampleTiff(Path.Combine(inputDir, "sample2.tif"));
+
+        // Get all TIFF files in the input folder
+        string[] tiffFiles = Directory.GetFiles(inputDir, "*.*", SearchOption.TopDirectoryOnly)
+                                      .Where(f => f.EndsWith(".tif", StringComparison.OrdinalIgnoreCase) ||
+                                                  f.EndsWith(".tiff", StringComparison.OrdinalIgnoreCase))
+                                      .ToArray();
+
+        if (tiffFiles.Length == 0)
+            throw new InvalidOperationException("No TIFF files found in the input directory.");
+
+        // Prepare JPEG encoder with 90% quality
+        ImageCodecInfo jpegCodec = ImageCodecInfo.GetImageEncoders()
+                                                 .FirstOrDefault(c => c.FormatID == ImageFormat.Jpeg.Guid);
+        if (jpegCodec == null)
+            throw new InvalidOperationException("JPEG codec not found.");
+
+        EncoderParameters encoderParams = new EncoderParameters(1);
+        encoderParams.Param[0] = new EncoderParameter(Encoder.Quality, 90L);
+
+        // Convert each TIFF to JPEG
+        foreach (string tiffPath in tiffFiles)
         {
-            string tiffPath = Path.Combine(inputFolder, $"sample{i}.tif");
-            using (Bitmap bmp = new Bitmap(200, 200))
+            using (Bitmap bitmap = new Bitmap(tiffPath))
             {
-                using (Graphics g = Graphics.FromImage(bmp))
-                {
-                    g.Clear(Aspose.Drawing.Color.White);
-                    g.FillRectangle(new SolidBrush(Aspose.Drawing.Color.FromArgb(50 * i, 100, 150)), 20, 20, 160, 160);
-                }
-                bmp.Save(tiffPath, ImageFormat.Tiff);
-            }
-        }
-
-        // Batch convert TIFF to JPEG with 90% quality
-        string[] tiffFiles = Directory.GetFiles(inputFolder, "*.tif");
-        foreach (string tiffFile in tiffFiles)
-        {
-            using (Bitmap bitmap = new Bitmap(tiffFile))
-            {
-                string jpegFileName = Path.GetFileNameWithoutExtension(tiffFile) + ".jpg";
-                string jpegPath = Path.Combine(outputFolder, jpegFileName);
-
-                // Set JPEG quality to 90%
-                EncoderParameters encoderParams = new EncoderParameters(1);
-                encoderParams.Param[0] = new EncoderParameter(Encoder.Quality, 90L);
-
-                ImageCodecInfo jpegCodec = GetEncoder(ImageFormat.Jpeg);
-                if (jpegCodec == null)
-                    throw new InvalidOperationException("JPEG encoder not found.");
-
+                string fileNameWithoutExt = Path.GetFileNameWithoutExtension(tiffPath);
+                string jpegPath = Path.Combine(outputDir, fileNameWithoutExt + ".jpg");
                 bitmap.Save(jpegPath, jpegCodec, encoderParams);
             }
         }
 
         // Validate output
-        int jpegCount = Directory.GetFiles(outputFolder, "*.jpg").Length;
-        if (jpegCount == 0)
+        string[] jpegFiles = Directory.GetFiles(outputDir, "*.jpg", SearchOption.TopDirectoryOnly);
+        if (jpegFiles.Length == 0)
             throw new InvalidOperationException("No JPEG files were created.");
 
-        Console.WriteLine($"Conversion completed. {jpegCount} JPEG file(s) saved to '{outputFolder}'.");
+        // Optionally, you could output the result paths (not required by the rules)
+        // Console.WriteLine("Conversion completed. JPEG files created:");
+        // foreach (var file in jpegFiles) Console.WriteLine(file);
     }
 
-    private static ImageCodecInfo GetEncoder(ImageFormat format)
+    private static void CreateSampleTiff(string filePath)
     {
-        ImageCodecInfo[] codecs = ImageCodecInfo.GetImageEncoders();
-        foreach (ImageCodecInfo codec in codecs)
+        const int width = 200;
+        const int height = 200;
+        using (Bitmap bitmap = new Bitmap(width, height))
         {
-            if (codec.FormatID == format.Guid)
-                return codec;
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                g.Clear(Color.White);
+                // Draw a simple rectangle
+                using (Pen pen = new Pen(Color.Blue, 5))
+                {
+                    g.DrawRectangle(pen, 20, 20, width - 40, height - 40);
+                }
+            }
+            bitmap.Save(filePath, ImageFormat.Tiff);
         }
-        return null;
     }
 }
