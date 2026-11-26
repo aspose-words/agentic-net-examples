@@ -9,29 +9,34 @@ public class Program
     // Entry point of the console application.
     public static void Main()
     {
-        // Simulate a cancellation event.
-        LogCancellationEvent("User requested cancellation of the operation.");
+        // Ensure any existing audit file is removed for a clean run.
+        if (File.Exists(AuditFilePath))
+        {
+            File.Delete(AuditFilePath);
+        }
 
-        // Simulate another cancellation event.
-        LogCancellationEvent("System timeout triggered cancellation.");
+        // Simulate a few cancellation events.
+        LogCancellation("User requested cancellation of operation X.");
+        System.Threading.Thread.Sleep(500); // Simulate time gap.
+        LogCancellation("System timeout caused cancellation of operation Y.");
 
         // Verify that the audit file was created.
         if (!File.Exists(AuditFilePath))
         {
-            throw new InvalidOperationException($"Audit file was not created at path: {AuditFilePath}");
+            throw new InvalidOperationException("Audit file was not created.");
         }
 
-        // Optionally, display the contents of the audit file (not required for compliance).
+        // Optionally, display the contents (not required, but harmless).
         // Console.WriteLine(File.ReadAllText(AuditFilePath));
     }
 
-    // Logs a cancellation event with a timestamp to the audit file.
-    private static void LogCancellationEvent(string description)
+    // Writes a cancellation event with a timestamp to the audit file.
+    private static void LogCancellation(string reason)
     {
         string timestamp = DateTime.UtcNow.ToString("o"); // ISO 8601 format.
-        string logEntry = $"{timestamp} - Cancellation: {description}{Environment.NewLine}";
+        string logEntry = $"[{timestamp}] Cancellation: {reason}";
 
         // Append the log entry to the audit file.
-        File.AppendAllText(AuditFilePath, logEntry);
+        File.AppendAllText(AuditFilePath, logEntry + Environment.NewLine);
     }
 }

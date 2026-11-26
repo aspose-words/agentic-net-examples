@@ -1,76 +1,51 @@
 using System;
 using System.IO;
 using System.Net.Http;
-using System.Threading.Tasks;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 public class Program
 {
-    public static async Task Main()
+    public static void Main()
     {
-        // Retrieve token (in real scenarios this could come from a secure store)
-        string token = GetToken();
+        // Expected token for accessing the external resource.
+        const string expectedToken = "secret123";
 
-        // Validate token before any network operation
-        if (!IsTokenValid(token))
+        // Simulated token received from a caller or configuration.
+        string providedToken = "secret123";
+
+        // Verify token before making any network request.
+        if (providedToken != expectedToken)
         {
-            Console.WriteLine("Invalid or missing token. Skipping external resource retrieval.");
+            Console.WriteLine("Invalid token. Skipping external document retrieval.");
             return;
         }
 
-        // URL of the external document (placeholder)
-        string url = "https://example.com/sample.docx";
+        // Token is valid – proceed to download the document.
+        const string documentUrl = "https://github.com/aspose-words/Aspose.Words-for-.NET/raw/master/Examples/Data/Document.docx";
 
-        // Download the document using the valid token
-        byte[] documentBytes = await DownloadDocumentAsync(url, token);
+        using var httpClient = new HttpClient();
+        byte[] documentBytes = httpClient.GetByteArrayAsync(documentUrl).Result;
 
-        // Load the document from the downloaded bytes
-        using (MemoryStream stream = new MemoryStream(documentBytes))
+        // Load the downloaded bytes into a MemoryStream for Aspose.Words.
+        using var memoryStream = new MemoryStream(documentBytes);
+        memoryStream.Position = 0;
+
+        // Create a Document object from the stream.
+        var document = new Document(memoryStream);
+
+        // Apply read‑only protection with a password.
+        document.Protect(ProtectionType.ReadOnly, "password");
+
+        // Save the protected document locally.
+        const string outputPath = "ProtectedOutput.docx";
+        document.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
         {
-            Document doc = new Document(stream);
-
-            // Apply read‑only protection with a password
-            doc.Protect(ProtectionType.ReadOnly, "protectPassword");
-
-            // Save the protected document locally
-            string outputPath = "ProtectedDocument.docx";
-            doc.Save(outputPath);
-
-            // Verify that the file was created
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The protected document was not saved correctly.");
-
-            Console.WriteLine($"Document saved and protected at '{outputPath}'.");
+            throw new InvalidOperationException("The protected document was not saved as expected.");
         }
-    }
 
-    // Simulate token retrieval; replace with real implementation as needed
-    private static string GetToken()
-    {
-        // Return empty string to demonstrate token check failure.
-        // Change to a non‑empty value to allow the download to proceed.
-        return "";
-    }
-
-    // Simple token validation logic
-    private static bool IsTokenValid(string token)
-    {
-        return !string.IsNullOrWhiteSpace(token);
-    }
-
-    // Perform the HTTP GET request with the token as a Bearer token
-    private static async Task<byte[]> DownloadDocumentAsync(string url, string token)
-    {
-        using (HttpClient client = new HttpClient())
-        {
-            client.DefaultRequestHeaders.Authorization =
-                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-
-            HttpResponseMessage response = await client.GetAsync(url);
-            response.EnsureSuccessStatusCode();
-
-            return await response.Content.ReadAsByteArrayAsync();
-        }
+        Console.WriteLine($"Document downloaded, protected, and saved to '{outputPath}'.");
     }
 }

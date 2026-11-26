@@ -1,42 +1,62 @@
 using System;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static void Main()
     {
-        // Create a cancellation token source and cancel it immediately.
-        var cts = new CancellationTokenSource();
-        cts.Cancel();
-
+        // Create a cancellation token source that cancels after a short delay.
+        using var cts = new CancellationTokenSource(100);
         try
         {
-            // Perform an operation that checks the token and throws if cancelled.
-            PerformOperation(cts.Token);
+            // Execute a cancellable operation synchronously.
+            PerformCancellableOperation(cts.Token).Wait();
         }
-        catch (OperationCanceledException ex)
+        catch (AggregateException aggEx)
         {
-            // Capture and log the stack trace for debugging.
-            string logMessage = $"OperationCanceledException caught at {DateTime.Now}{Environment.NewLine}" +
-                                $"Message: {ex.Message}{Environment.NewLine}" +
-                                $"Stack Trace:{Environment.NewLine}{ex.StackTrace}{Environment.NewLine}";
-
-            // Write to console.
-            Console.WriteLine(logMessage);
-
-            // Also write to a log file in the current directory.
-            string logFilePath = Path.Combine(Directory.GetCurrentDirectory(), "exception_log.txt");
-            File.WriteAllText(logFilePath, logMessage);
+            // Unwrap and handle OperationCanceledException.
+            foreach (var ex in aggEx.InnerExceptions)
+            {
+                if (ex is OperationCanceledException oce)
+                {
+                    LogException(oce);
+                }
+                else
+                {
+                    // Re‑throw any other unexpected exceptions.
+                    throw;
+                }
+            }
         }
     }
 
-    private static void PerformOperation(CancellationToken token)
+    private static async Task PerformCancellableOperation(CancellationToken token)
     {
-        // This will throw OperationCanceledException if the token is cancelled.
-        token.ThrowIfCancellationRequested();
+        // Simulate work that periodically checks for cancellation.
+        for (int i = 0; i < 10; i++)
+        {
+            token.ThrowIfCancellationRequested();
+            await Task.Delay(50, token);
+        }
+    }
 
-        // Simulate work (won't be reached because token is already cancelled).
-        Console.WriteLine("Operation completed.");
+    private static void LogException(OperationCanceledException ex)
+    {
+        // Capture the stack trace.
+        string stackTrace = ex.StackTrace ?? "No stack trace available";
+
+        // Log details to the console.
+        Console.WriteLine("OperationCanceledException caught.");
+        Console.WriteLine("Message: " + ex.Message);
+        Console.WriteLine("StackTrace:");
+        Console.WriteLine(stackTrace);
+
+        // Also write the information to a file for later analysis.
+        File.WriteAllText(
+            "cancellation_log.txt",
+            $"Message: {ex.Message}{Environment.NewLine}StackTrace:{Environment.NewLine}{stackTrace}"
+        );
     }
 }

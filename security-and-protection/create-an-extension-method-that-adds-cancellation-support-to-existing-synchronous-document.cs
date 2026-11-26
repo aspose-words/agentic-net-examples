@@ -6,63 +6,53 @@ using Aspose.Words;
 
 namespace AsposeWordsCancellationDemo
 {
-    // Extension methods for Aspose.Words Document to add cancellation support.
+    // Extension method that adds cancellation support to Document.Save.
     public static class DocumentExtensions
     {
-        // Saves the document to a file with cancellation support.
-        public static Task SaveAsync(this Document document, string fileName, CancellationToken cancellationToken = default)
+        public static async Task SaveAsync(this Document doc, string fileName, CancellationToken cancellationToken = default)
         {
-            // Run the synchronous Save inside a Task so the token can be observed.
-            return Task.Run(() =>
-            {
-                // Throw if cancellation was requested before starting the save.
-                cancellationToken.ThrowIfCancellationRequested();
+            // Throw if cancellation requested before starting the save.
+            cancellationToken.ThrowIfCancellationRequested();
 
-                // Perform the actual save operation.
-                document.Save(fileName);
+            // Run the synchronous Save on a background thread, observing the token.
+            await Task.Run(() =>
+            {
+                // Check again inside the task in case token was cancelled while queued.
+                cancellationToken.ThrowIfCancellationRequested();
+                doc.Save(fileName);
             }, cancellationToken);
         }
     }
 
-    public class Program
+    class Program
     {
-        public static async Task Main(string[] args)
+        static async Task Main()
         {
             // Create a simple document.
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
             builder.Writeln("Hello, Aspose.Words with cancellation support!");
 
-            string outputPath = "output.docx";
+            // Define output path.
+            string outputPath = Path.Combine(Path.GetTempPath(), "CancellationDemo.docx");
 
-            // Normal save with cancellation token that is not cancelled.
-            using (CancellationTokenSource cts = new CancellationTokenSource())
-            {
-                await doc.SaveAsync(outputPath, cts.Token);
-            }
+            // Ensure any existing file is removed.
+            if (File.Exists(outputPath))
+                File.Delete(outputPath);
 
-            // Verify that the file was created.
+            // Create a cancellation token source (not cancelled).
+            using CancellationTokenSource cts = new CancellationTokenSource();
+
+            // Save the document using the extension method.
+            await doc.SaveAsync(outputPath, cts.Token);
+
+            // Verify the file was created.
             if (!File.Exists(outputPath))
-                throw new InvalidOperationException($"The file '{outputPath}' was not created.");
+                throw new InvalidOperationException("Document was not saved.");
 
-            // Demonstrate cancellation before the save starts.
-            using (CancellationTokenSource cts = new CancellationTokenSource())
-            {
-                cts.Cancel(); // Cancel immediately.
-
-                try
-                {
-                    await doc.SaveAsync("should_not_be_created.docx", cts.Token);
-                    throw new InvalidOperationException("SaveAsync should have been cancelled but completed.");
-                }
-                catch (OperationCanceledException)
-                {
-                    // Expected cancellation.
-                }
-            }
-
-            // Clean up created files.
-            File.Delete(outputPath);
+            // Load the saved document to confirm it is readable.
+            Document loaded = new Document(outputPath);
+            Console.WriteLine("Document saved successfully to: " + outputPath);
         }
     }
 }

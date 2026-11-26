@@ -1,66 +1,60 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a simple document.
+        // Create a sample document with many paragraphs to make layout processing noticeable.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello world. This is a test document.");
-
-        // Save the initial document (optional, just to have a file on disk).
-        const string initialPath = "initial.docx";
-        doc.Save(initialPath);
-
-        // Set up a cancellation token source.
-        CancellationTokenSource cts = new CancellationTokenSource();
-
-        // Start layout building in a separate task.
-        Task layoutTask = Task.Run(() =>
+        for (int i = 0; i < 5000; i++)
         {
-            // Check for cancellation before starting the layout operation.
-            if (cts.Token.IsCancellationRequested)
-                throw new OperationCanceledException(cts.Token);
+            builder.Writeln($"Paragraph {i + 1}");
+        }
 
-            // Aspose.Words does not accept a cancellation token directly,
-            // so we perform the layout only if cancellation has not been requested.
-            doc.UpdatePageLayout();
+        // Prepare a cancellation token that will be triggered after a short delay.
+        using CancellationTokenSource cts = new CancellationTokenSource();
+        // Cancel after 100 milliseconds.
+        Task.Run(async () =>
+        {
+            await Task.Delay(100);
+            cts.Cancel();
+        });
 
-            // After the layout finishes, check again in case cancellation was requested
-            // during the operation (unlikely for a single call, but follows the requirement).
-            if (cts.Token.IsCancellationRequested)
-                throw new OperationCanceledException(cts.Token);
-        }, cts.Token);
-
-        // Simulate a condition that triggers cancellation shortly after the task starts.
-        Thread.Sleep(100);
-        cts.Cancel();
-
+        // Build the layout while monitoring the cancellation token.
+        // Since Aspose.Words does not provide an overload with CancellationToken,
+        // run the layout operation on a separate task and wait with the token.
+        Task layoutTask = Task.Run(() => doc.UpdatePageLayout(), cts.Token);
         try
         {
-            layoutTask.Wait();
+            layoutTask.Wait(cts.Token);
             Console.WriteLine("Layout completed without cancellation.");
         }
-        catch (AggregateException ex) when (ex.InnerException is OperationCanceledException)
+        catch (OperationCanceledException)
         {
-            Console.WriteLine("Layout was cancelled as requested.");
+            Console.WriteLine("Layout was cancelled via the cancellation token.");
+            return;
+        }
+        catch (AggregateException ae) when (ae.InnerExceptions.Any(e => e is OperationCanceledException))
+        {
+            Console.WriteLine("Layout was cancelled via the cancellation token.");
+            return;
         }
 
-        // Save the document only if layout was not cancelled.
-        if (!cts.IsCancellationRequested)
-        {
-            const string finalPath = "final.docx";
-            doc.Save(finalPath);
-            Console.WriteLine($"Document saved to '{finalPath}'.");
-        }
-        else
-        {
-            Console.WriteLine("Document not saved because layout was cancelled.");
-        }
+        // Save the document if layout completed.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "LayoutResult.docx");
+        doc.Save(outputPath, SaveFormat.Docx);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The document was not saved as expected.");
+
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }
