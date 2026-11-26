@@ -2,60 +2,62 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Comparing;
+using Aspose.Words.Tables;
 
-public class ComparisonExample
+public class Program
 {
     public static void Main()
     {
-        // Create the original document with a header and body.
+        // Create the original document with two sections.
         Document original = new Document();
         DocumentBuilder builderOriginal = new DocumentBuilder(original);
+        builderOriginal.Writeln("Section 1 - Original text.");
+        builderOriginal.InsertBreak(BreakType.SectionBreakNewPage);
+        builderOriginal.Writeln("Section 2 - Original text.");
+        string originalPath = Path.Combine(Directory.GetCurrentDirectory(), "original.docx");
+        original.Save(originalPath);
 
-        // Add header content.
-        builderOriginal.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builderOriginal.Writeln("Header original");
-
-        // Add body content.
-        builderOriginal.MoveToDocumentEnd();
-        builderOriginal.Writeln("Body original");
-
-        // Create the revised document with different header and body text.
+        // Create the revised document with changes in both sections.
         Document revised = new Document();
         DocumentBuilder builderRevised = new DocumentBuilder(revised);
+        builderRevised.Writeln("Section 1 - Revised text."); // Change in Section 1
+        builderRevised.InsertBreak(BreakType.SectionBreakNewPage);
+        builderRevised.Writeln("Section 2 - Revised text."); // Change in Section 2
+        string revisedPath = Path.Combine(Directory.GetCurrentDirectory(), "revised.docx");
+        revised.Save(revisedPath);
 
-        // Add revised header content.
-        builderRevised.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builderRevised.Writeln("Header revised");
-
-        // Add revised body content.
-        builderRevised.MoveToDocumentEnd();
-        builderRevised.Writeln("Body revised");
-
-        // Configure compare options to ignore header/footer changes.
+        // Set compare options (e.g., ignore formatting) – focus on textual changes.
         CompareOptions options = new CompareOptions
         {
-            IgnoreHeadersAndFooters = true
+            IgnoreFormatting = true
         };
 
-        // Perform the comparison. Header changes will be ignored; only body changes generate revisions.
+        // Perform comparison; revisions are added to the original document.
         original.Compare(revised, "Comparer", DateTime.Now, options);
 
-        // Output revision information to the console.
-        int revisionCount = original.Revisions.Count;
-        Console.WriteLine($"Total revisions detected (excluding ignored sections): {revisionCount}");
+        // Save the comparison result.
+        string resultPath = Path.Combine(Directory.GetCurrentDirectory(), "comparison_result.docx");
+        original.Save(resultPath);
 
-        // List each revision type and its text.
+        // Analyze revisions only in Section 1 (index 0).
+        int targetSectionIndex = 0;
+        int revisionsInTargetSection = 0;
+
         foreach (Revision revision in original.Revisions)
         {
-            string revType = revision.RevisionType.ToString();
-            // The revised text is stored in the node that the revision refers to.
-            string revText = revision.ParentNode?.GetText()?.Trim() ?? string.Empty;
-            Console.WriteLine($"- {revType}: \"{revText}\"");
+            // Find the ancestor Section of the revision's parent node.
+            Node? ancestor = revision.ParentNode?.GetAncestor(NodeType.Section);
+            if (ancestor is Section section)
+            {
+                int sectionIndex = original.Sections.IndexOf(section);
+                if (sectionIndex == targetSectionIndex)
+                {
+                    revisionsInTargetSection++;
+                }
+            }
         }
 
-        // Save the compared document showing the revisions.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ComparisonResult.docx");
-        original.Save(outputPath);
-        Console.WriteLine($"Compared document saved to: {outputPath}");
+        // Output the count of revisions found in the targeted section.
+        Console.WriteLine($"Revisions in Section {targetSectionIndex + 1}: {revisionsInTargetSection}");
     }
 }

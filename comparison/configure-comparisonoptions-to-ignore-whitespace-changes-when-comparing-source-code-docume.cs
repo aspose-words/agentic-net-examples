@@ -7,48 +7,41 @@ public class Program
 {
     public static void Main()
     {
-        // Create the original document with some source code.
+        // Create the original documentation file.
         Document original = new Document();
-        DocumentBuilder builderOriginal = new DocumentBuilder(original);
-        builderOriginal.Writeln("public class Sample");
-        builderOriginal.Writeln("{");
-        builderOriginal.Writeln("    public void Method()");
-        builderOriginal.Writeln("    {");
-        builderOriginal.Writeln("        int x = 1;");
-        builderOriginal.Writeln("    }");
-        builderOriginal.Writeln("}");
+        DocumentBuilder builder1 = new DocumentBuilder(original);
+        builder1.Writeln("/// <summary>");
+        builder1.Writeln("/// This method does something.");
+        builder1.Writeln("/// </summary>");
+        builder1.Writeln("public void DoWork(){ }");
 
-        // Create the revised document that differs only by whitespace.
+        // Create the revised documentation file with whitespace changes only.
         Document revised = new Document();
-        DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.Writeln("public class Sample");
-        builderRevised.Writeln("{");
-        builderRevised.Writeln("    public void Method( )"); // added space before parentheses
-        builderRevised.Writeln("    {");
-        builderRevised.Writeln("        int   x = 1 ;"); // extra spaces
-        builderRevised.Writeln("    }");
-        builderRevised.Writeln("}");
+        DocumentBuilder builder2 = new DocumentBuilder(revised);
+        builder2.Writeln("/// <summary>   "); // trailing spaces
+        builder2.Writeln("///   This method does something."); // leading spaces
+        builder2.Writeln("/// </summary>");
+        builder2.Writeln(""); // extra blank line
+        builder2.Writeln("public void DoWork(){ }");
 
-        // Save the sample documents (optional, for inspection).
-        string basePath = Directory.GetCurrentDirectory();
-        string originalPath = Path.Combine(basePath, "original.docx");
-        string revisedPath = Path.Combine(basePath, "revised.docx");
-        original.Save(originalPath);
-        revised.Save(revisedPath);
-
-        // Configure comparison options to ignore whitespace (treated as formatting) changes.
-        CompareOptions options = new CompareOptions();
-        options.IgnoreFormatting = true; // Whitespace changes are considered formatting.
+        // Configure compare options to ignore formatting (including whitespace).
+        CompareOptions options = new CompareOptions
+        {
+            IgnoreFormatting = true
+        };
 
         // Perform the comparison.
         original.Compare(revised, "Comparer", DateTime.Now, options);
 
-        // Verify that no revisions were generated because whitespace changes are ignored.
+        // Verify that whitespace changes were ignored (no revisions expected).
         int revisionCount = original.Revisions.Count;
-        Console.WriteLine($"Revisions count after ignoring whitespace: {revisionCount}");
 
         // Save the comparison result.
-        string resultPath = Path.Combine(basePath, "compare-whitespace.docx");
-        original.Save(resultPath);
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ComparisonResult.docx");
+        original.Save(outputPath);
+
+        // Output the result information.
+        Console.WriteLine($"Revisions count: {revisionCount}");
+        Console.WriteLine($"Comparison result saved to: {outputPath}");
     }
 }

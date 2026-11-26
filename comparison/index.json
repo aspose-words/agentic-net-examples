@@ -4,41 +4,42 @@
     "slug": "comparison",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Create deterministic source documents in code, configure a CompareOptions instance only with members that exist in the target library, invoke Document.Compare on the document that should receive revisions, inspect Document.Revisions directly, optionally accept or reject specific revision types, and finally save the result. Ensure streams are rewound before reuse and wrap only disposable objects (e.g., MemoryStream) in using statements.",
+    "preferred_workflow": "Create deterministic in-memory source documents, optionally write them to temporary files, configure only the CompareOptions members that exist in the installed Aspose.Words version, call Document.Compare with author and timestamp arguments, iterate Document.Revisions to verify and filter changes, accept or reject revisions as required, and finally save the document; always reset MemoryStream.Position before reuse and dispose objects that implement IDisposable.",
     "required_packages": [
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.10.0"
+      "Aspose.Words": "26.11.0"
     },
     "required_namespaces": [
       "System",
       "System.IO",
       "Aspose.Words",
       "Aspose.Words.Comparing",
+      "Aspose.Words.Saving",
+      "System.Reflection",
       "Aspose.Words.Tables",
       "Aspose.Words.Drawing",
       "Aspose.Words.Drawing.Charts",
       "System.Drawing",
       "System.Collections.Generic",
-      "Aspose.Words.Replacing",
-      "Aspose.Words.Saving"
+      "System.Linq"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
+      "SaveFormat",
       "Directory",
       "Path",
-      "SaveFormat",
       "MemoryStream",
       "Font",
       "CompareOptions",
-      "Table",
+      "Node",
       "NodeType",
       "Shape",
       "Chart",
       "ChartType",
-      "ChartSeries",
+      "Table",
       "Row",
       "Cell",
       "CellFormat",
@@ -57,63 +58,62 @@
   },
   "rules_summary": {
     "strict_api_bans": [
-      "Do not reference members that are not present in Aspose.Words 26.10.0, such as CompareOptions.IgnoreWhitespaceChanges or Revision.GetText.",
-      "Do not fabricate revision-type constants that the library does not define.",
-      "Do not assume external files exist; generate sample inputs programmatically."
+      "Do not reference Aspose.Words members that are not present in version 26.11.0.",
+      "Do not invent comparison options, revision members, or enum values that are absent from the official API."
     ],
     "canonical_patterns": [
-      "Instantiate Document and DocumentBuilder, build distinct content, then call Document.Compare with author and timestamp.",
-      "Use the Revisions collection to count, filter, accept, or reject actual Revision objects.",
-      "Reset MemoryStream.Position to zero before loading a document from a stream."
+      "Use Document.Compare with a real author name and comparison timestamp.",
+      "Create meaningful differences between local source documents before comparing them.",
+      "Inspect and process actual document.Revisions items for filtering, counting, acceptance, or rejection."
     ],
     "nullable_warning_prevention": [
-      "Initialize all non-nullable reference-type fields before use.",
-      "Declare locals as nullable when a value may be null and guard them with explicit null checks.",
-      "Avoid dereferencing possibly null Revision.ParentNode without a preceding null test."
+      "Initialize all non-nullable reference-type properties to avoid CS8618 warnings.",
+      "Guard maybe-null values with explicit null checks before dereferencing them.",
+      "Declare locals as nullable when a value may legitimately be null and verify them before use."
     ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "Use of non-existent API members",
-      "symptom": "The compiler reports CS1061 or CS0117 because a property or flag such as CompareOptions.IgnoreWhitespaceChanges does not exist.",
-      "cause": "The example was written against a newer or different version of Aspose.Words where those members are defined.",
-      "fix": "Remove the unsupported member and rely on the available options, for example set CompareOptions.IgnoreFormatting to treat whitespace as formatting.",
-      "prevention": "Consult the official API reference for version 26.10.0 before using any CompareOptions flags."
+      "pattern": "Use of non-existent CompareOptions members",
+      "symptom": "The compiler reports CS0117 errors for properties such as IgnoreCase, IgnoreWhitespace, ShowDeletedContent, DetectMove, DetectMovedParagraphs, and ComparisonTarget.",
+      "cause": "The code references CompareOptions members that were removed or never existed in the current Aspose.Words release.",
+      "fix": "Reference only the properties documented for CompareOptions in version 26.11.0, such as IgnoreCaseChanges, IgnoreFormatting, or use reflection to set optional flags when they are available.",
+      "prevention": "Consult the official API reference for the exact property names and guard reflective access with version checks."
     },
     {
-      "pattern": "Assumed external documents",
-      "symptom": "Runtime code fails with FileNotFoundException or the comparison produces zero revisions because the input files were never created.",
-      "cause": "The sample assumes pre-existing DOCX/DOC files or folder structures.",
-      "fix": "Generate the required source documents in the example code using DocumentBuilder before invoking Compare.",
-      "prevention": "Always bootstrap sample inputs locally; never rely on external files that are not part of the snippet."
+      "pattern": "Invocation of undefined Revision members",
+      "symptom": "CS1061 errors appear for Revision.GetText, Revision.RevisionDate, Revision.RevisionDateTime, and missing RevisionCollection.Clear.",
+      "cause": "The code attempts to call members that are not part of the Revision class in the installed library.",
+      "fix": "Use Revision.ParentNode?.GetText() to obtain affected text and Revision.DateTime for timestamps; do not call Clear on RevisionCollection because it is read-only.",
+      "prevention": "Access only the members listed in the Revision documentation and treat the Revisions collection as immutable."
     },
     {
-      "pattern": "Missing revision members",
-      "symptom": "Compilation errors such as CS1061 for Revision.GetText or Revision.Node appear.",
-      "cause": "The code accesses members that are not part of the Revision class in the target library.",
-      "fix": "Use Revision.ParentNode to obtain the affected node and call GetText on that node instead of on Revision.",
-      "prevention": "Reference the Revision documentation and use only the properties and methods that exist."
+      "pattern": "Incorrect disposal of Document objects",
+      "symptom": "CS1674 errors indicate that Document cannot be used in a using statement because it does not implement IDisposable.",
+      "cause": "The code assumes Document implements IDisposable, which it does not in Aspose.Words.",
+      "fix": "Create Document instances without a using block and rely on the garbage collector, or call Document.Dispose only if a future version adds it.",
+      "prevention": "Check the type hierarchy before applying the disposable pattern."
     },
     {
-      "pattern": "Incorrect collection manipulation",
-      "symptom": "CS1061 errors arise when calling Clear on RevisionCollection or CopyTo with an unsupported overload.",
-      "cause": "The example uses collection methods that the library does not implement.",
-      "fix": "Iterate over the collection and remove items individually if needed, or simply accept all revisions without clearing the collection.",
-      "prevention": "Check the RevisionCollection API for supported operations before invoking them."
+      "pattern": "Missing exception types for loading errors",
+      "symptom": "CS0234 and CS0246 errors show that LoadingException, FileFormatException, and LoadFormatException are not defined.",
+      "cause": "The code imports exception types that belong to other libraries or older Aspose.Words versions.",
+      "fix": "Catch the generic Aspose.Words.LoadFormatException or System.IO.IOException as appropriate.",
+      "prevention": "Reference the exception types that appear in the current API documentation."
     },
     {
-      "pattern": "Nullable reference misuse",
-      "symptom": "Compiler warnings CS8600, CS8602, or CS8604 appear when a possibly null value is assigned or dereferenced.",
-      "cause": "The code does not guard against null results from properties such as Revision.ParentNode.",
-      "fix": "Introduce nullable locals and perform explicit null checks before accessing members.",
-      "prevention": "Enable nullable reference analysis and follow the nullable_warning_prevention guidelines."
+      "pattern": "Assuming revisions without inspecting the collection",
+      "symptom": "Logic checks revision counts or types based on hard-coded values rather than enumerating Document.Revisions.",
+      "cause": "The example code reports expected revision numbers without verifying them.",
+      "fix": "Iterate Document.Revisions and count or filter actual items to determine the outcome.",
+      "prevention": "Always base decisions on the live Revisions collection."
     },
     {
-      "pattern": "Incorrect disposal pattern",
-      "symptom": "CS1674 indicates that Document does not implement IDisposable, yet it is used in a using statement.",
-      "cause": "The example assumes Document implements IDisposable, which it does not in this version.",
-      "fix": "Do not place Document in a using block; rely on the library's internal resource management.",
-      "prevention": "Wrap only objects that implement IDisposable (e.g., MemoryStream) in using statements."
+      "pattern": "Comparing identical documents without introducing differences",
+      "symptom": "The comparison produces zero revisions even though the task expects changes.",
+      "cause": "Both source documents contain the same content.",
+      "fix": "Introduce deterministic differences such as altered text, formatting, or structural changes before calling Compare.",
+      "prevention": "Create sample inputs that deliberately differ in the aspect under test."
     }
   ],
   "examples": [
@@ -202,8 +202,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 9,
@@ -269,8 +269,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 15,
@@ -280,8 +280,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 16,
@@ -313,8 +313,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 19,
@@ -346,8 +346,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 22,
@@ -390,8 +390,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 26,
@@ -423,8 +423,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 29,
@@ -445,18 +445,18 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     }
   ],
   "narrative": {
-    "overview": "The Comparison category demonstrates how to use Aspose.Words native document-comparison APIs to detect, process, and export revisions. Verified examples illustrate correct document creation, option configuration, revision inspection, and resource cleanup.",
-    "purpose": "Provide concise, executable guidance for an AI coding assistant to generate reliable Aspose.Words comparison snippets that compile against version 26.10.0 and follow best-practice patterns.",
+    "overview": "The Comparison category demonstrates how to use Aspose.Words native document-comparison APIs to detect, process, and report revisions across a variety of document types. Verified examples cover author attribution, case-insensitive comparison, whitespace-ignoring comparison, moved-paragraph detection, revision-target selection, deleted-content retention, orientation changes, chart revisions, revision enumeration, and table-cell formatting analysis.",
+    "purpose": "An AI coding agent should generate correct, self-contained C# snippets that create sample source documents, configure supported CompareOptions, invoke Document.Compare, inspect the Document.Revisions collection, and persist the result while respecting nullability and resource-management guidelines.",
     "validation_priorities": [
-      "Verify that the compiled code accesses only members defined in the referenced Aspose.Words assembly and that Document.Revisions.Count reflects the expected changes."
+      "Ensure that the compiled snippet uses only members that exist in Aspose.Words 26.11.0 and that revision handling is performed through the Document.Revisions collection."
     ],
     "maintenance_notes": [
-      "Update the rules summary whenever a new Aspose.Words version introduces additional CompareOptions flags or revision members."
+      "Update the example code whenever a new Aspose.Words release changes the CompareOptions or Revision API surface."
     ]
   }
 }

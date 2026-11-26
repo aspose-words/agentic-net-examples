@@ -1,44 +1,53 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
-public class Program
+public class StreamComparisonExample
 {
     public static void Main()
     {
-        // Create the first document with distinct content.
-        Document doc1 = new Document();
-        DocumentBuilder builder1 = new DocumentBuilder(doc1);
-        builder1.Writeln("Alpha");
+        // Create the original document with some content.
+        Document original = new Document();
+        DocumentBuilder builderOriginal = new DocumentBuilder(original);
+        builderOriginal.Writeln("This is the original document.");
 
-        // Save the first document into a memory stream.
-        using MemoryStream ms1 = new MemoryStream();
-        doc1.Save(ms1, SaveFormat.Docx);
-        ms1.Position = 0;
+        // Save the original document to a memory stream.
+        using MemoryStream originalStream = new MemoryStream();
+        original.Save(originalStream, SaveFormat.Docx);
+        originalStream.Position = 0; // Reset stream position for reading.
 
-        // Create the second document with different content.
-        Document doc2 = new Document();
-        DocumentBuilder builder2 = new DocumentBuilder(doc2);
-        builder2.Writeln("Beta");
+        // Create the revised document with different content.
+        Document revised = new Document();
+        DocumentBuilder builderRevised = new DocumentBuilder(revised);
+        builderRevised.Writeln("This is the revised document with changes.");
 
-        // Save the second document into a memory stream.
-        using MemoryStream ms2 = new MemoryStream();
-        doc2.Save(ms2, SaveFormat.Docx);
-        ms2.Position = 0;
+        // Save the revised document to a memory stream.
+        using MemoryStream revisedStream = new MemoryStream();
+        revised.Save(revisedStream, SaveFormat.Docx);
+        revisedStream.Position = 0; // Reset stream position for reading.
 
         // Load the documents back from the memory streams.
-        Document loaded1 = new Document(ms1);
-        Document loaded2 = new Document(ms2);
+        Document loadedOriginal = new Document(originalStream);
+        Document loadedRevised = new Document(revisedStream);
 
         // Perform comparison between the two documents.
-        loaded1.Compare(loaded2, "Author", DateTime.Now);
+        loadedOriginal.Compare(loadedRevised, "Comparer", DateTime.Now);
 
-        // Save the comparison result to a memory stream and obtain a byte array.
+        // Verify that at least one revision was created.
+        if (loadedOriginal.Revisions.Count == 0)
+        {
+            throw new InvalidOperationException("Expected at least one revision after comparison.");
+        }
+
+        // Save the comparison result to a new memory stream.
         using MemoryStream resultStream = new MemoryStream();
-        loaded1.Save(resultStream, SaveFormat.Docx);
+        loadedOriginal.Save(resultStream, SaveFormat.Docx);
+
+        // Convert the result stream to a byte array.
         byte[] resultBytes = resultStream.ToArray();
 
-        // Output the size of the resulting byte array.
-        Console.WriteLine($"Result byte array length: {resultBytes.Length}");
+        // Output the size of the resulting byte array to the console.
+        Console.WriteLine($"Comparison result byte array length: {resultBytes.Length}");
     }
 }

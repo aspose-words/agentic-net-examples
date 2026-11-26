@@ -1,58 +1,47 @@
 using System;
+using System.IO;
 using Aspose.Words;
+using Aspose.Words.Comparing;
 
-public class OrientationComparisonExample
+public class Program
 {
     public static void Main()
     {
-        // Create the first document with portrait orientation.
-        Document portraitDoc = new Document();
-        DocumentBuilder portraitBuilder = new DocumentBuilder(portraitDoc);
-        portraitBuilder.PageSetup.Orientation = Orientation.Portrait;
-        portraitBuilder.Writeln("This document is in portrait orientation.");
+        // Create the original document with portrait orientation.
+        Document docPortrait = new Document();
+        DocumentBuilder builderPortrait = new DocumentBuilder(docPortrait);
+        builderPortrait.PageSetup.Orientation = Orientation.Portrait;
+        builderPortrait.Writeln("This is a sample paragraph for orientation comparison.");
 
-        // Create the second document with landscape orientation.
-        Document landscapeDoc = new Document();
-        DocumentBuilder landscapeBuilder = new DocumentBuilder(landscapeDoc);
-        landscapeBuilder.PageSetup.Orientation = Orientation.Landscape;
-        landscapeBuilder.Writeln("This document is in landscape orientation.");
+        // Create the revised document with landscape orientation.
+        Document docLandscape = new Document();
+        DocumentBuilder builderLandscape = new DocumentBuilder(docLandscape);
+        builderLandscape.PageSetup.Orientation = Orientation.Landscape;
+        builderLandscape.Writeln("This is a sample paragraph for orientation comparison.");
+
+        // Set compare options (default options are sufficient for detecting formatting changes).
+        CompareOptions compareOptions = new CompareOptions();
 
         // Compare the two documents.
-        string author = "OrientationComparer";
-        DateTime compareDate = DateTime.Now;
-        portraitDoc.Compare(landscapeDoc, author, compareDate);
+        docPortrait.Compare(docLandscape, "OrientationComparer", DateTime.Now, compareOptions);
 
-        // Verify that at least one revision exists.
-        int totalRevisions = portraitDoc.Revisions.Count;
-        if (totalRevisions == 0)
+        // Verify that the orientation change generated at least one revision.
+        int revisionCount = docPortrait.Revisions.Count;
+        if (revisionCount == 0)
         {
-            throw new InvalidOperationException("Expected revisions after comparison, but none were found.");
+            throw new InvalidOperationException("No revisions detected; orientation change was not captured.");
         }
 
-        // Check whether any revision corresponds to a section (orientation) change.
-        bool orientationRevisionFound = false;
-        foreach (Revision rev in portraitDoc.Revisions)
+        // Output revision details.
+        Console.WriteLine($"Total revisions detected: {revisionCount}");
+        foreach (Revision rev in docPortrait.Revisions)
         {
-            if (rev.RevisionType == RevisionType.FormatChange && rev.ParentNode != null && rev.ParentNode.NodeType == NodeType.Section)
-            {
-                // The format change on a Section node indicates an orientation change.
-                orientationRevisionFound = true;
-                break;
-            }
-        }
-
-        if (!orientationRevisionFound)
-        {
-            throw new InvalidOperationException("Orientation change was not detected as a revision.");
+            Console.WriteLine($"Revision Type: {rev.RevisionType}, Author: {rev.Author}");
         }
 
         // Save the comparison result.
-        string outputPath = "OrientationComparison.docx";
-        portraitDoc.Save(outputPath);
-
-        // Output a simple summary.
-        Console.WriteLine($"Comparison completed. Total revisions: {totalRevisions}");
-        Console.WriteLine($"Orientation change detected as revision: {orientationRevisionFound}");
-        Console.WriteLine($"Result saved to: {outputPath}");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OrientationComparisonResult.docx");
+        docPortrait.Save(outputPath);
+        Console.WriteLine($"Compared document saved to: {outputPath}");
     }
 }
