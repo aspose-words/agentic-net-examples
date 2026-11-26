@@ -2,18 +2,18 @@
 
 > Compiler-validated, AI-friendly C# examples covering Aspose.Words for .NET document-processing workflows.
 
-- Examples: 1793
+- Examples: 1794
 - Categories: 29
 - Pass Rate: 100.0%
-- NuGet Version: 26.10.0
+- NuGet Version: 26.11.0
 - Framework: net8.0
-- Last Updated: 2026-11-05
+- Last Updated: 2026-11-25
 - Structured index: ./index.json
 - Agent instructions: ./AGENTS.md
 
 ## Repository Overview
 
-The repository provides ready-to-run console samples that demonstrate how to use Aspose.Words for .NET across many scenarios. Each example is self-contained, builds on the documented API, and can be executed with minimal setup.
+The repository provides ready-to-run console samples that demonstrate core and advanced features of Aspose.Words for .NET. Each example is self-contained, reproducible, and aligned with the documented API behavior.
 
 ## What Makes These Examples Different
 
@@ -24,13 +24,13 @@ The repository provides ready-to-run console samples that demonstrate how to use
 
 ## How to Use
 
-To explore any feature, select the appropriate category, set up a temporary .NET console project, add the required NuGet packages, copy the example code, run it, and verify the produced output.
+All examples follow a common workflow: select the relevant feature category, review its metadata, set up a temporary .NET console project, install the required NuGet packages, copy the example code, and verify the output.
 
 1. Choose the category that matches the document-processing task.
 2. Read the category README.md, AGENTS.md, and index.json before selecting an example.
 3. Create a temporary console project targeting the repository's configured .NET framework.
-4. Install Aspose.Words and any additional packages listed by the selected category.
-5. Copy the selected standalone .cs file into the temporary project as Program.cs.
+4. Install Aspose.Words and any additional packages listed for the chosen category.
+5. Copy the standalone .cs file into the project as Program.cs.
 6. Build and run the project, then inspect the expected output files or console result.
 
 ## Categories
@@ -52,7 +52,7 @@ To explore any feature, select the appropriate category, set up a temporary .NET
 - [Lists](./lists/): 30 validated examples; category guidance in [AGENTS.md](./lists/AGENTS.md)
 - [Mail Merge](./mail-merge/): 30 validated examples; category guidance in [AGENTS.md](./mail-merge/AGENTS.md)
 - [OfficeMath](./officemath/): 30 validated examples; category guidance in [AGENTS.md](./officemath/AGENTS.md)
-- [OLE Objects](./ole-objects/): 29 validated examples; category guidance in [AGENTS.md](./ole-objects/AGENTS.md)
+- [OLE Objects](./ole-objects/): 30 validated examples; category guidance in [AGENTS.md](./ole-objects/AGENTS.md)
 - [Paragraphs](./paragraphs/): 35 validated examples; category guidance in [AGENTS.md](./paragraphs/AGENTS.md)
 - [Programming With Documents](./programming-with-documents/): 110 validated examples; category guidance in [AGENTS.md](./programming-with-documents/AGENTS.md)
 - [Range](./range/): 30 validated examples; category guidance in [AGENTS.md](./range/AGENTS.md)
@@ -67,21 +67,21 @@ To explore any feature, select the appropriate category, set up a temporary .NET
 
 ## Guidance for Coding Agents
 
-Act as a senior .NET documentation editor who provides clear, concise guidance for using Aspose.Words examples.
+Act as a senior .NET documentation editor who ensures each example is accurate, self-contained, and conforms to the repository's standards.
 
-- Use root metadata for repository navigation and category metadata for feature-specific implementation guidance.
+- Use root metadata for repository navigation and category metadata for feature-specific guidance.
 - Preserve exact file-to-task traceability when updating generated examples.
 - Keep every example as a standalone console application with explicit inputs and outputs.
 - Use the package versions and additional dependencies recorded for the selected category.
 - Require successful build and runtime verification before publishing an example.
-- Regenerate README.md, AGENTS.md, index.json, and llm.txt together instead of editing generated metadata independently.
+- Regenerate README.md, AGENTS.md, index.json, and llm.txt together rather than editing them independently.
 - Keep raw generation evidence as diagnostic input separate from publication-ready documentation.
 
 ## Maintenance
 
 - Regenerate root metadata after category content, package versions, or validation results change.
-- Preserve metadata-sources as the audit trail for prompts, raw diagnostics, polished sections, and assembly manifests.
-- Keep the generated maintenance attribution and refresh its date whenever root metadata is rebuilt.
+- Preserve metadata sources as the audit trail for prompts, diagnostics, polished sections, and assembly manifests.
+- Refresh the generated maintenance attribution date whenever root metadata is rebuilt.
 
 ## See Also
 
@@ -93,4 +93,4 @@ Act as a senior .NET documentation editor who provides clear, concise guidance f
 
 ---
 
-*Maintained by an [agentic example generation workflow](https://metrics.aspose.com/agents/sections/examples) | For the human-oriented overview, see [README.md](./README.md) | Last updated: 2026-11-05*
+*Maintained by an [agentic example generation workflow](https://metrics.aspose.com/agents/sections/examples) | For the human-oriented overview, see [README.md](./README.md) | Last updated: 2026-11-25*

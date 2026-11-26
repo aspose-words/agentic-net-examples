@@ -3,7 +3,7 @@ name: aspose-words-examples
 description: AI-friendly C# code examples for Aspose.Words for .NET
 language: csharp
 framework: net8.0
-package: Aspose.Words 26.10.0
+package: Aspose.Words 26.11.0
 ---
 
 # Aspose.Words for .NET Examples
@@ -12,7 +12,7 @@ AI-friendly repository containing validated C# examples for Aspose.Words for .NE
 
 ## Persona
 
-Act as a senior .NET documentation editor who provides clear, concise guidance for using Aspose.Words examples.
+Act as a senior .NET documentation editor who ensures each example is accurate, self-contained, and conforms to the repository's standards.
 
 When working in this repository:
 - Keep every `.cs` file as a standalone console application.
@@ -21,13 +21,13 @@ When working in this repository:
 
 ## Repository Overview
 
-The repository provides ready-to-run console samples that demonstrate how to use Aspose.Words for .NET across many scenarios. Each example is self-contained, builds on the documented API, and can be executed with minimal setup.
+The repository provides ready-to-run console samples that demonstrate core and advanced features of Aspose.Words for .NET. Each example is self-contained, reproducible, and aligned with the documented API behavior.
 
-**Statistics** (as of 2026-11-05):
-- Total Examples: 1793
+**Statistics** (as of 2026-11-25):
+- Total Examples: 1794
 - Categories: 29
 - Overall Pass Rate: 100.0%
-- Source Run: 20261102_031946_08fb5b
+- Source Run: 20261124_190740_1c00f5
 
 ## Category Details
 
@@ -100,7 +100,7 @@ The repository provides ready-to-run console samples that demonstrate how to use
 - Guide: [AGENTS.md](./officemath/AGENTS.md)
 
 ### ole-objects
-- Examples: 29
+- Examples: 30
 - Guide: [AGENTS.md](./ole-objects/AGENTS.md)
 
 ### paragraphs
@@ -230,7 +230,7 @@ llm.txt
 | [Lists](./lists/) | 30 | 100.0% | [AGENTS.md](./lists/AGENTS.md) |
 | [Mail Merge](./mail-merge/) | 30 | 100.0% | [AGENTS.md](./mail-merge/AGENTS.md) |
 | [OfficeMath](./officemath/) | 30 | 100.0% | [AGENTS.md](./officemath/AGENTS.md) |
-| [OLE Objects](./ole-objects/) | 29 | 100.0% | [AGENTS.md](./ole-objects/AGENTS.md) |
+| [OLE Objects](./ole-objects/) | 30 | 100.0% | [AGENTS.md](./ole-objects/AGENTS.md) |
 | [Paragraphs](./paragraphs/) | 35 | 100.0% | [AGENTS.md](./paragraphs/AGENTS.md) |
 | [Programming With Documents](./programming-with-documents/) | 110 | 100.0% | [AGENTS.md](./programming-with-documents/AGENTS.md) |
 | [Range](./range/) | 30 | 100.0% | [AGENTS.md](./range/AGENTS.md) |
@@ -255,7 +255,7 @@ cd ExampleProject
 ### Add required packages
 
 ```bash
-dotnet add package Aspose.Words --version 26.10.0
+dotnet add package Aspose.Words --version 26.11.0
 ```
 
 Add other packages only when an example requires them, for example:
@@ -278,20 +278,20 @@ dotnet run --configuration Release --no-build
 
 ## Notes for Agents
 
-- Use root metadata for repository navigation and category metadata for feature-specific implementation guidance.
+- Use root metadata for repository navigation and category metadata for feature-specific guidance.
 - Preserve exact file-to-task traceability when updating generated examples.
 - Keep every example as a standalone console application with explicit inputs and outputs.
 - Use the package versions and additional dependencies recorded for the selected category.
 - Require successful build and runtime verification before publishing an example.
-- Regenerate README.md, AGENTS.md, index.json, and llm.txt together instead of editing generated metadata independently.
+- Regenerate README.md, AGENTS.md, index.json, and llm.txt together rather than editing them independently.
 - Keep raw generation evidence as diagnostic input separate from publication-ready documentation.
 
 ### Metadata Maintenance
 
 - Regenerate root metadata after category content, package versions, or validation results change.
-- Preserve metadata-sources as the audit trail for prompts, raw diagnostics, polished sections, and assembly manifests.
-- Keep the generated maintenance attribution and refresh its date whenever root metadata is rebuilt.
+- Preserve metadata sources as the audit trail for prompts, diagnostics, polished sections, and assembly manifests.
+- Refresh the generated maintenance attribution date whenever root metadata is rebuilt.
 
 ---
 
-*Maintained by an [agentic example generation workflow](https://metrics.aspose.com/agents/sections/examples) | For repository overview, see [README.md](./README.md) | Last updated: 2026-11-05*
+*Maintained by an [agentic example generation workflow](https://metrics.aspose.com/agents/sections/examples) | For repository overview, see [README.md](./README.md) | Last updated: 2026-11-25*
