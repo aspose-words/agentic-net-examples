@@ -8,70 +8,89 @@ public class Program
 {
     public static void Main()
     {
-        // Path for the sample document (saved in the program's working directory).
-        string samplePath = Path.Combine(Directory.GetCurrentDirectory(), "SampleEquations.docx");
+        // Create a sample DOCX with a few equations using the deterministic EQ-field bootstrap workflow.
+        string samplePath = "SampleWithEquations.docx";
+        CreateSampleDocument(samplePath);
 
-        // -----------------------------------------------------------------
-        // Create a sample DOCX containing a few OfficeMath equations.
-        // -----------------------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Validate that the document was saved.
+        if (!File.Exists(samplePath))
+            throw new FileNotFoundException($"Failed to create the sample document at '{samplePath}'.");
 
-        // First equation: a simple fraction.
-        builder.Writeln("First equation:");
-        InsertEquation(builder, @"\f(1,2)");
+        // Load the document that contains OfficeMath equations.
+        Document doc = new Document(samplePath);
 
-        // Second equation: a simple root.
-        builder.Writeln();
-        builder.Writeln("Second equation:");
-        InsertEquation(builder, @"\r(3,x)");
+        // Enumerate all OfficeMath nodes in the document.
+        NodeCollection officeMathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
+        Console.WriteLine($"Total OfficeMath nodes found: {officeMathNodes.Count}");
 
-        // Save the sample document.
-        doc.Save(samplePath, SaveFormat.Docx);
-
-        // -----------------------------------------------------------------
-        // Load the document and enumerate each OfficeMath node.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(samplePath);
-        NodeCollection equations = loadedDoc.GetChildNodes(NodeType.OfficeMath, true);
-
-        Console.WriteLine($"Total OfficeMath nodes found: {equations.Count}");
-        for (int i = 0; i < equations.Count; i++)
+        for (int i = 0; i < officeMathNodes.Count; i++)
         {
-            OfficeMath om = (OfficeMath)equations[i];
+            OfficeMath om = officeMathNodes[i] as OfficeMath;
+            if (om == null)
+                continue;
+
+            // Output basic information about each equation.
             Console.WriteLine($"Equation {i + 1}:");
             Console.WriteLine($"  MathObjectType : {om.MathObjectType}");
             Console.WriteLine($"  DisplayType    : {om.DisplayType}");
             Console.WriteLine($"  Justification  : {om.Justification}");
-            Console.WriteLine($"  Text (for display) : {om.GetText()}");
+            Console.WriteLine($"  Text (display) : {om.GetText()}");
         }
     }
 
-    // Helper method that creates an OfficeMath node using the deterministic EQ-field bootstrap workflow.
-    private static void InsertEquation(DocumentBuilder builder, string eqArgument)
+    private static void CreateSampleDocument(string filePath)
     {
-        // Insert an empty Equation field.
-        Field field = builder.InsertField(FieldType.FieldEquation, true);
-        FieldEQ fieldEQ = (FieldEQ)field;
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Move to the field separator and write the EQ argument.
-        builder.MoveTo(fieldEQ.Separator);
-        builder.Write(eqArgument);
+        // First equation: \f(1,2)
+        InsertEquation(builder, @"\f(1,2)");
+        builder.Writeln(); // Add a line break between equations.
 
-        // Update the field so that Aspose.Words can convert it to OfficeMath.
-        field.Update();
+        // Second equation: \r(3,x)
+        InsertEquation(builder, @"\r(3,x)");
+        builder.Writeln();
+
+        // Save the document.
+        doc.Save(filePath);
+    }
+
+    private static void InsertEquation(DocumentBuilder builder, string eqSwitch)
+    {
+        // Insert a field of type FieldEquation.
+        builder.InsertField(FieldType.FieldEquation, true);
+
+        // Retrieve the inserted field (it is the last field in the document).
+        Document doc = builder.Document;
+        if (doc.Range.Fields.Count == 0)
+            throw new InvalidOperationException("Failed to insert the equation field.");
+
+        Field field = doc.Range.Fields[doc.Range.Fields.Count - 1];
+
+        // Move the builder to the field separator and write the EQ argument.
+        builder.MoveTo(field.Separator);
+        builder.Write(eqSwitch);
 
         // Convert the field to a real OfficeMath node.
-        OfficeMath? officeMath = fieldEQ.AsOfficeMath();
+        FieldEQ fieldEQ = field as FieldEQ;
+        OfficeMath officeMath = fieldEQ?.AsOfficeMath();
+
         if (officeMath != null)
         {
-            // Insert the OfficeMath node before the field start and remove the original field.
-            field.Start.ParentNode.InsertBefore(officeMath, field.Start);
+            // Insert the OfficeMath node before the field start.
+            Node fieldStart = field.Start;
+            CompositeNode parent = fieldStart.ParentNode as CompositeNode;
+            if (parent == null)
+                throw new InvalidOperationException("Field start does not have a composite parent.");
+
+            parent.InsertBefore(officeMath, fieldStart);
+
+            // Remove the original field from the document.
             field.Remove();
         }
         else
         {
-            throw new InvalidOperationException("Failed to convert EQ field to OfficeMath.");
+            throw new InvalidOperationException("Failed to convert the field to OfficeMath.");
         }
     }
 }

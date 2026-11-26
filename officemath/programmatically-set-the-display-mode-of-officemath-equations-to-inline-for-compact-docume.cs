@@ -12,72 +12,68 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Helper method to insert a top‑level OfficeMath equation using the EQ‑field bootstrap workflow.
-        void InsertEquation(string eqSwitch)
-        {
-            // Insert an EQ field.
-            Field field = builder.InsertField(FieldType.FieldEquation, true);
-            FieldEQ fieldEq = field as FieldEQ;
-            if (fieldEq == null)
-                throw new InvalidOperationException("Failed to create FieldEQ.");
+        // Insert first equation using the deterministic EQ‑field bootstrap workflow.
+        InsertEquation(builder, @"\f(1,2)");
 
-            // Move to the separator and write the EQ argument.
-            builder.MoveTo(fieldEq.Separator);
-            builder.Write(eqSwitch);
+        // Insert second equation.
+        InsertEquation(builder, @"\r(3,x)");
 
-            // Update the field so that the EQ argument is recognized.
-            field.Update();
-
-            // Convert the field to a real OfficeMath node.
-            OfficeMath officeMath = fieldEq.AsOfficeMath();
-            if (officeMath == null)
-                throw new InvalidOperationException("EQ field could not be converted to OfficeMath.");
-
-            // Insert the OfficeMath node before the field start run.
-            Node fieldStart = fieldEq.Start;
-            fieldStart.ParentNode.InsertBefore(officeMath, fieldStart);
-
-            // Remove the original field (including its runs).
-            fieldEq.Remove();
-        }
-
-        // Insert first equation in the first paragraph.
-        InsertEquation(@"\f(1,2)"); // Simple fraction.
-
-        // Start a new paragraph and insert a second equation.
-        builder.Writeln();
-        InsertEquation(@"\r(3,x)"); // Simple root.
-
-        // Set display mode of all top‑level OfficeMath equations to Inline.
-        NodeCollection mathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
-        foreach (OfficeMath om in mathNodes)
+        // Set all top‑level OfficeMath equations to inline display mode.
+        foreach (OfficeMath om in doc.GetChildNodes(NodeType.OfficeMath, true))
         {
             if (om.MathObjectType == MathObjectType.OMathPara)
-            {
                 om.DisplayType = OfficeMathDisplayType.Inline;
-            }
         }
 
         // Save the document.
         string outputPath = "Output.docx";
         doc.Save(outputPath, SaveFormat.Docx);
 
-        // Validation: ensure the file exists.
+        // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not created.", outputPath);
+            throw new Exception("The output document was not created.");
 
-        // Reload the document to verify the display mode.
-        Document loadedDoc = new Document(outputPath);
-        NodeCollection loadedMathNodes = loadedDoc.GetChildNodes(NodeType.OfficeMath, true);
-        foreach (OfficeMath om in loadedMathNodes)
+        // Reload and verify that the display type is inline.
+        Document loaded = new Document(outputPath);
+        foreach (OfficeMath om in loaded.GetChildNodes(NodeType.OfficeMath, true))
         {
             if (om.MathObjectType == MathObjectType.OMathPara &&
                 om.DisplayType != OfficeMathDisplayType.Inline)
-            {
-                throw new InvalidOperationException("One or more top‑level equations are not set to Inline display mode.");
-            }
+                throw new Exception("An equation was not set to inline display mode.");
         }
+    }
 
-        // The example completes without interactive prompts.
+    // Helper method to insert an equation via EQ field and convert it to OfficeMath.
+    private static void InsertEquation(DocumentBuilder builder, string eqArgument)
+    {
+        // Insert an empty EQ field.
+        Field field = builder.InsertField(FieldType.FieldEquation, true);
+        FieldEQ fieldEq = field as FieldEQ;
+        if (fieldEq == null)
+            throw new InvalidOperationException("Failed to create FieldEQ.");
+
+        // Move to the field separator and write the EQ argument.
+        // A leading space is required after the field code.
+        builder.MoveTo(fieldEq.Separator);
+        builder.Write(" " + eqArgument);
+
+        // Update the field so that Aspose.Words can convert it to OfficeMath.
+        field.Update();
+
+        // Convert the field to an OfficeMath object.
+        OfficeMath officeMath = fieldEq.AsOfficeMath();
+        if (officeMath == null)
+            throw new InvalidOperationException("EQ field could not be converted to OfficeMath.");
+
+        // Insert the OfficeMath node before the field start.
+        Node fieldStart = fieldEq.Start;
+        fieldStart.ParentNode.InsertBefore(officeMath, fieldStart);
+
+        // Remove the original field.
+        fieldEq.Remove();
+
+        // Move the builder to the inserted equation for further content.
+        builder.MoveTo(officeMath);
+        builder.Writeln(); // Add a paragraph break after the equation.
     }
 }

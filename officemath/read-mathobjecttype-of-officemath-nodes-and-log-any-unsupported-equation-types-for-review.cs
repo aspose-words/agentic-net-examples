@@ -9,83 +9,83 @@ public class OfficeMathInspector
 {
     public static void Main()
     {
-        // Paths for output files
-        string docPath = "OfficeMathSample.docx";
-        string reportPath = "UnsupportedMathTypes.txt";
-
-        // Create a new document and builder
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Helper to create an OfficeMath node from an EQ field
-        void InsertEquation(string eqArgument)
+        // Helper to create a safe OfficeMath equation via EQ field bootstrap.
+        void InsertEquation(string eqSwitch)
         {
-            // Insert an EQ field
+            // Insert an empty EQ field.
             Field field = builder.InsertField(FieldType.FieldEquation, true);
-
-            // Write the EQ argument into the field separator
+            // Write the equation switch into the field separator.
             builder.MoveTo(field.Separator);
-            builder.Write(eqArgument);
-
-            // Convert the field to a real OfficeMath node
-            OfficeMath officeMath = ((FieldEQ)field).AsOfficeMath();
-
-            if (officeMath != null)
+            builder.Write(eqSwitch);
+            // Convert the field to a real OfficeMath node.
+            OfficeMath? om = ((FieldEQ)field).AsOfficeMath();
+            if (om != null)
             {
-                // Insert the OfficeMath node before the field start within the containing paragraph
-                Paragraph paragraph = field.Start.ParentParagraph;
-                if (paragraph != null)
-                {
-                    paragraph.InsertBefore(officeMath, field.Start);
-                }
-
-                // Remove the original field
+                // Insert the OfficeMath node before the field start.
+                field.Start.ParentNode.InsertBefore(om, field.Start);
+                // Remove the original field.
                 field.Remove();
             }
         }
 
-        // Insert a simple fraction equation (will produce nested OfficeMath objects)
-        builder.Writeln("Equation 1:");
-        InsertEquation(@"\frac(1,2)");
+        // Insert several sample equations.
+        InsertEquation(@"\f(1,2)");      // Fraction
+        builder.Writeln(); // New paragraph
+        InsertEquation(@"\r(3,x)");      // Root
+        builder.Writeln(); // New paragraph
+        InsertEquation(@"\int x dx");   // Integral (simple)
+        builder.Writeln(); // New paragraph
 
-        // Insert a function equation (e.g., sine)
-        builder.Writeln();
-        builder.Writeln("Equation 2:");
-        InsertEquation(@"\sin(30)");
-
-        // Save the document
+        // Save the document.
+        string docPath = "Sample.docx";
         doc.Save(docPath, SaveFormat.Docx);
 
-        // Reload the document to ensure a clean state
+        // Reload the document to ensure a clean state.
         Document loadedDoc = new Document(docPath);
 
-        // Collect unsupported MathObjectTypes
-        List<string> unsupportedLogs = new List<string>();
-        NodeCollection officeMathNodes = loadedDoc.GetChildNodes(NodeType.OfficeMath, true);
-        for (int i = 0; i < officeMathNodes.Count; i++)
+        // Collect unsupported MathObjectTypes (those not OMathPara).
+        List<string> unsupportedTypes = new List<string>();
+        NodeCollection mathNodes = loadedDoc.GetChildNodes(NodeType.OfficeMath, true);
+        foreach (OfficeMath om in mathNodes)
         {
-            OfficeMath om = (OfficeMath)officeMathNodes[i];
-            MathObjectType type = om.MathObjectType;
-
-            // Only OMathPara is considered supported for this example
-            if (type != MathObjectType.OMathPara)
+            if (om.MathObjectType != MathObjectType.OMathPara)
             {
-                string log = $"Unsupported MathObjectType: {type} at node index {i}";
-                unsupportedLogs.Add(log);
-                Console.WriteLine(log);
+                unsupportedTypes.Add(om.MathObjectType.ToString());
             }
         }
 
-        // Write the report to a text file
-        File.WriteAllLines(reportPath, unsupportedLogs);
+        // Prepare report content.
+        string reportPath = "UnsupportedEquations.txt";
+        using (StreamWriter writer = new StreamWriter(reportPath))
+        {
+            if (unsupportedTypes.Count == 0)
+            {
+                writer.WriteLine("No unsupported equation types found.");
+                Console.WriteLine("No unsupported equation types found.");
+            }
+            else
+            {
+                writer.WriteLine("Unsupported MathObjectTypes detected:");
+                foreach (string typeName in unsupportedTypes)
+                {
+                    writer.WriteLine("- " + typeName);
+                }
+                Console.WriteLine("Unsupported MathObjectTypes detected:");
+                foreach (string typeName in unsupportedTypes)
+                {
+                    Console.WriteLine("- " + typeName);
+                }
+            }
+        }
 
-        // Validate that output files were created
-        if (!File.Exists(docPath))
-            throw new Exception($"Document was not saved to '{docPath}'.");
+        // Validate that the report file was created.
         if (!File.Exists(reportPath))
-            throw new Exception($"Report was not saved to '{reportPath}'.");
-
-        // Indicate completion
-        Console.WriteLine("Processing completed.");
+        {
+            throw new InvalidOperationException("Report file was not created.");
+        }
     }
 }
