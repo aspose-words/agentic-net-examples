@@ -10,12 +10,13 @@ product: Aspose.Words
 
 ## Purpose
 
-An AI coding agent should generate C# code that accesses Document.VbaProject, works with VbaModuleCollection and VbaReferenceCollection, and saves the result as a DOCM file. The agent must rely exclusively on documented Aspose.Words APIs, guard against null objects, and keep validation scoped to the specific macro task.
+Guide an AI coding agent to produce concise, correct C# examples that manipulate Aspose.Words VBA objects, enforce macro-enabled saving, and respect the documented API surface without introducing unsupported members.
 
 ## Non-negotiable conventions
 
-- Do not call any member that is not present in Aspose.Words 26.10.0.
-- Do not instantiate VbaReference or VbaModule with arguments; only use the parameterless constructors.
+- Do not reference members that are not present in Aspose.Words 26.11.0.
+- Do not instantiate VbaReference or VbaModule with unsupported constructors.
+- Do not create VbaModuleType values that are not defined in the library.
 - Bootstrap local sample inputs for existing-file, folder, stream, image, and data workflows.
 - Prefer simple, verifiable workflows over speculative formatting shortcuts.
 
@@ -27,7 +28,7 @@ Use the simplest workflow that satisfies the task.
 
 ## Validation priorities
 
-1. Validate that the loaded document contains a non-null VbaProject and that the Modules collection has the expected number of items before any modification.
+1. Validate that a VBA project exists and contains at least one module before any modification.
 
 ## File-to-task reference
 
@@ -35,7 +36,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Load a DOCX file containing VBA macros and enumerate all modules in the VbaProject.
   - Workflow: vba-workflow
   - Outputs: docx, doc
-  - Selected engine: mcp
+  - Selected engine: llm
 - `validate-that-a-loaded-document-s-vbaproject-contains-at-least-one-module-before-attemptin.cs`
   - Task: Validate that a loaded document's VbaProject contains at least one module before attempting modifications.
   - Workflow: vba-workflow
@@ -45,12 +46,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Enumerate VbaProject.References, filter out COM references, and log remaining references to console.
   - Workflow: vba-workflow
   - Outputs: docm
-  - Selected engine: llm
+  - Selected engine: mcp
 - `retrieve-the-source-code-of-a-specific-vbamodule-and-write-it-to-a-text-file-for-analysis.cs`
   - Task: Retrieve the source code of a specific VbaModule and write it to a text file for analysis.
   - Workflow: vba-workflow
   - Outputs: docm
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `iterate-through-all-vbamodules-in-a-document-and-replace-deprecated-api-calls-with-updated.cs`
   - Task: Iterate through all VbaModules in a document and replace deprecated API calls with updated equivalents.
   - Workflow: vba-workflow
@@ -60,12 +61,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Perform a case-insensitive search across all VBA modules for deprecated function names and replace them.
   - Workflow: vba-workflow
   - Outputs: docm
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `replace-hard-coded-file-paths-in-macro-source-code-with-relative-paths-using-string-manipu.cs`
   - Task: Replace hard-coded file paths in macro source code with relative paths using string manipulation functions.
   - Workflow: vba-workflow
   - Outputs: docm
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `update-the-sourcecode-of-a-vbamodule-to-include-error-handling-using-on-error-resume-next.cs`
   - Task: Update the SourceCode of a VbaModule to include error handling using On Error Resume Next statements.
   - Workflow: vba-workflow
@@ -85,12 +86,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Create a new VbaProject, add a standard module, and assign custom macro code to its SourceCode property.
   - Workflow: vba-workflow
   - Outputs: docm
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `create-a-vba-project-with-a-class-module-define-a-public-method-and-invoke-it-from-another.cs`
   - Task: Create a VBA project with a class module, define a public method, and invoke it from another module.
   - Workflow: vba-workflow
   - Outputs: docm
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `add-a-reference-to-the-microsoft-excel-object-library-in-a-vbaproject-and-verify-its-prese.cs`
   - Task: Add a reference to the Microsoft Excel Object Library in a VbaProject and verify its presence.
   - Workflow: vba-workflow
@@ -105,7 +106,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Add a reference to a custom COM library, then call its methods from a newly added VBA module.
   - Workflow: vba-workflow
   - Outputs: docm
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `remove-an-existing-reference-from-a-vbaproject-s-references-collection-and-confirm-the-ref.cs`
   - Task: Remove an existing reference from a VbaProject's References collection and confirm the reference count decreases.
   - Workflow: vba-workflow
@@ -140,12 +141,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Copy a single VbaModule from a source document's VBA project into a destination document's project.
   - Workflow: vba-workflow
   - Outputs: doc
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `load-a-docx-file-create-a-new-vba-project-and-copy-selected-modules-from-another-document.cs`
   - Task: Load a DOCX file, create a new VBA project, and copy selected modules from another document into it.
   - Workflow: vba-workflow
   - Outputs: docx, doc
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `use-a-configuration-file-to-specify-which-vba-modules-to-copy-between-documents-during-bat.cs`
   - Task: Use a configuration file to specify which VBA modules to copy between documents during batch processing.
   - Workflow: vba-workflow
@@ -155,37 +156,37 @@ Use the simplest workflow that satisfies the task.
   - Task: Import a VBA module from an external .bas file into a document's VbaProject and set its name.
   - Workflow: vba-workflow
   - Outputs: doc
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `import-macro-definitions-from-a-json-file-create-corresponding-vbamodules-and-assign-their.cs`
   - Task: Import macro definitions from a JSON file, create corresponding VbaModules, and assign their source code.
   - Workflow: vba-workflow
   - Outputs: json
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `export-all-vba-modules-from-a-document-to-a-zip-archive-maintaining-original-module-filena.cs`
   - Task: Export all VBA modules from a document to a ZIP archive, maintaining original module filenames.
   - Workflow: vba-workflow
   - Outputs: doc, zip
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `export-macro-source-code-to-json-format-including-module-names-and-code-strings-for-extern.cs`
   - Task: Export macro source code to JSON format, including module names and code strings, for external processing.
   - Workflow: vba-workflow
   - Outputs: json
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `load-multiple-docm-files-in-a-batch-extract-each-macro-s-source-code-and-store-them-in-sep.cs`
   - Task: Load multiple DOCM files in a batch, extract each macro's source code, and store them in separate files.
   - Workflow: vba-workflow
   - Outputs: docm, doc
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `batch-process-a-folder-of-docm-files-extracting-macro-names-and-writing-them-to-a-csv-summ.cs`
   - Task: Batch process a folder of DOCM files, extracting macro names and writing them to a CSV summary file.
   - Workflow: vba-workflow
   - Outputs: docm, doc, csv
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `compare-the-source-code-of-two-vbamodules-from-different-documents-and-generate-a-diff-rep.cs`
   - Task: Compare the source code of two VbaModules from different documents and generate a diff report.
   - Workflow: vba-workflow
   - Outputs: doc
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `generate-a-documentation-report-listing-each-vba-module-its-type-and-the-number-of-lines-o.cs`
   - Task: Generate a documentation report listing each VBA module, its type, and the number of lines of code.
   - Workflow: vba-workflow
@@ -195,7 +196,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Load a DOCX file, add a new VBA module that automates table formatting, and save the updated document.
   - Workflow: vba-workflow
   - Outputs: docx, doc
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `use-the-document-vbaproject-property-to-replace-an-existing-vba-project-with-a-pre-configu.cs`
   - Task: Use the Document.VbaProject property to replace an existing VBA project with a pre-configured project template.
   - Workflow: vba-workflow
@@ -204,59 +205,53 @@ Use the simplest workflow that satisfies the task.
 
 ## Common failure patterns and preferred agent fixes
 
-- **Invented API members**
-  - Symptom: Compilation fails with CS1501 or CS1061 because the code references constructors, properties, or enum values that do not exist in the selected Aspose.Words version.
-  - Root cause: The generator created calls to non-existent members such as VbaModule(string, string) or VbaReferenceType.COM.
-  - Preferred fix: Replace invented members with documented APIs: use the parameterless VbaModule constructor, set properties explicitly, and reference only enum members defined in the library.
-  - Prevention: Consult the official Aspose.Words VBA API reference for the exact member list before writing code.
+- **Unsupported API invention**
+  - Symptom: Compilation fails because the code references members that do not exist in the current Aspose.Words version.
+  - Root cause: The generator invented API members such as nonexistent constructors or enum values.
+  - Preferred fix: Replace invented members with documented Aspose.Words.Vba APIs that are available in version 26.11.0.
+  - Prevention: Consult the official API reference and limit code to members that appear in the generated documentation.
 
 - **Incorrect VbaModule construction**
   - Symptom: CS1729 errors indicate that VbaModule does not have a constructor accepting arguments.
-  - Root cause: VbaModule provides only a parameterless constructor in version 26.10.0.
-  - Preferred fix: Instantiate VbaModule with new VbaModule() and then assign Name, Type, and SourceCode properties.
-  - Prevention: Always use the default constructor and configure the object via its properties.
+  - Root cause: The code attempted to use overloaded constructors that are not provided by the library.
+  - Preferred fix: Instantiate VbaModule with the default constructor and assign Name, Type, and SourceCode properties explicitly.
+  - Prevention: Always create VbaModule objects using the parameter-less constructor and set properties after creation.
 
-- **Invalid Add overload usage**
-  - Symptom: CS1501 errors occur when collection.Add is called with two arguments instead of a single VbaModule instance.
-  - Root cause: VbaModuleCollection.Add expects exactly one VbaModule parameter.
-  - Preferred fix: Pass only the VbaModule object to Modules.Add.
-  - Prevention: Review method signatures and supply the correct number of arguments.
+- **Invalid VbaModuleType enumeration**
+  - Symptom: CS0117 errors show that VbaModuleType lacks members such as Standard or StandardModule.
+  - Root cause: The code referenced enum values that were renamed or removed in the current library version.
+  - Preferred fix: Use the correct enum members, e.g., VbaModuleType.ProceduralModule or VbaModuleType.ClassModule.
+  - Prevention: Reference the enum definition in the Aspose.Words.Vba namespace to select valid values.
 
-- **Incorrect enum/value usage**
-  - Symptom: CS0117 errors appear when referencing VbaReferenceType.COM or VbaReferenceType.Library, which are not defined.
-  - Root cause: The enum does not contain those members in the current library version.
-  - Preferred fix: Use only the enum values that exist, such as VbaReferenceType.Standard, or filter references by their Type property without relying on missing members.
-  - Prevention: Verify enum definitions in the documentation before using them.
+- **Incorrect VbaReference usage**
+  - Symptom: CS0117 and CS1061 errors arise when accessing non-existent VbaReference.Type values or Name property.
+  - Root cause: The code attempted to filter references using undefined enum members like VbaReferenceType.COM.
+  - Preferred fix: Filter references using the supported VbaReferenceType values (e.g., Project) and access available properties such as LibId.
+  - Prevention: Review the VbaReference class documentation to use only the properties and enum members that exist.
 
-- **Wrong member access on VbaReference**
-  - Symptom: CS1061 errors are raised when code attempts to read VbaReference.Name, a property that does not exist.
-  - Root cause: VbaReference exposes LibId and Type, not Name.
-  - Preferred fix: Replace reference.Name with reference.LibId for identification.
-  - Prevention: Use property names exactly as defined in the API spec.
-
-- **Missing namespace imports**
-  - Symptom: CS0246 errors indicate that types like VbaProject or VbaModule cannot be found.
-  - Root cause: The required Aspose.Words.Vba namespace is not imported or the assembly reference is missing.
-  - Preferred fix: Add using Aspose.Words.Vba; and ensure the Aspose.Words DLL is referenced by the project.
-  - Prevention: Include all namespaces listed in the category metadata at the top of the source file.
+- **Missing local bootstrap inputs**
+  - Symptom: Runtime failures occur because the example assumes external files or folders already exist.
+  - Root cause: The snippet does not create sample documents, modules, or output files before operating on them.
+  - Preferred fix: Create deterministic local inputs (e.g., a new Document, sample VbaModule, or temporary output file) within the example.
+  - Prevention: Never rely on pre-existing files; always generate required inputs programmatically.
 
 - **Over-broad validation**
-  - Symptom: Runtime failures occur because validation logic inspects unrelated document parts instead of the VBA project.
-  - Root cause: Validation code is not scoped to the specific macro task.
-  - Preferred fix: Validate only the presence of a VBA project and the required modules or references.
-  - Prevention: Keep validation narrow and task-specific as described in the workflow rules.
+  - Symptom: Runtime errors appear when the code validates unrelated document internals instead of the requested condition.
+  - Root cause: The validation logic checks properties that are irrelevant to the task, causing false negatives.
+  - Preferred fix: Validate only the specific condition required by the task, such as the presence of a VBA project or module count.
+  - Prevention: Scope validation to the exact prerequisite of the operation and avoid generic document checks.
 
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Primary package: `Aspose.Words` `26.10.0`
+- Primary package: `Aspose.Words` `26.11.0`
 
 ## Command reference
 
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.10.0
+dotnet add package Aspose.Words --version 26.11.0
 ```
 
 ```powershell
@@ -270,4 +265,4 @@ dotnet run --configuration Release --no-build
 
 ## Category update guidance
 
-- Review the Aspose.Words release notes periodically and update examples when new constructors, properties, or enum members are added.
+- Update examples whenever a new Aspose.Words version changes the VBA API surface to keep the documentation accurate.

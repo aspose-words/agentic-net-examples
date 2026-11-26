@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Text.Json;
 using Aspose.Words;
 using Aspose.Words.Vba;
@@ -12,57 +11,50 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Ensure the document has a VBA project.
-        if (doc.VbaProject == null)
-        {
-            doc.VbaProject = new VbaProject();
-        }
+        // Create a new VBA project and assign it to the document.
+        VbaProject project = new VbaProject();
+        project.Name = "ExportMacrosProject";
+        doc.VbaProject = project;
 
-        // Add a VBA module with sample code.
+        // Add a sample procedural module.
         VbaModule module1 = new VbaModule();
-        module1.Name = "Module1";
-        module1.SourceCode = @"Sub Hello()
-    MsgBox ""Hello from VBA!""
-End Sub";
+        module1.Name = "ModuleOne";
+        module1.Type = VbaModuleType.ProceduralModule;
+        module1.SourceCode = @"
+Sub HelloWorld()
+    MsgBox ""Hello, World!""
+End Sub
+";
         doc.VbaProject.Modules.Add(module1);
 
-        // Add another VBA module.
+        // Add another sample module.
         VbaModule module2 = new VbaModule();
-        module2.Name = "Module2";
-        module2.SourceCode = @"Function AddNumbers(a As Integer, b As Integer) As Integer
+        module2.Name = "ModuleTwo";
+        module2.Type = VbaModuleType.ProceduralModule;
+        module2.SourceCode = @"
+Function AddNumbers(a As Integer, b As Integer) As Integer
     AddNumbers = a + b
-End Function";
+End Function
+";
         doc.VbaProject.Modules.Add(module2);
 
         // Save the document as a macro-enabled file.
-        string filePath = Path.Combine(Path.GetTempPath(), "SampleMacroDocument.docm");
-        doc.Save(filePath, SaveFormat.Docm);
+        string docPath = "ExportMacros.docm";
+        doc.Save(docPath);
 
-        // Reload the document to demonstrate reading.
-        Document loadedDoc = new Document(filePath);
-
-        // Prepare a list to hold module information.
-        var modulesInfo = new List<Dictionary<string, string>>();
-
-        // Export each module's name and source code to the list.
-        if (loadedDoc.VbaProject != null)
+        // Extract macro information.
+        var macros = new List<object>();
+        foreach (VbaModule mod in doc.VbaProject.Modules)
         {
-            foreach (VbaModule mod in loadedDoc.VbaProject.Modules)
-            {
-                string source = mod.SourceCode ?? string.Empty;
-                var info = new Dictionary<string, string>
-                {
-                    { "Name", mod.Name },
-                    { "SourceCode", source }
-                };
-                modulesInfo.Add(info);
-            }
+            string source = mod.SourceCode ?? string.Empty;
+            macros.Add(new { Name = mod.Name, SourceCode = source });
         }
 
-        // Serialize the list to JSON.
-        string json = JsonSerializer.Serialize(modulesInfo, new JsonSerializerOptions { WriteIndented = true });
+        // Serialize to JSON.
+        var jsonOptions = new JsonSerializerOptions { WriteIndented = true };
+        string json = JsonSerializer.Serialize(macros, jsonOptions);
 
-        // Output the JSON.
+        // Output JSON.
         Console.WriteLine(json);
     }
 }

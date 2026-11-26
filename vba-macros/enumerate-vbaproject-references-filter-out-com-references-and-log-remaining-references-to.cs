@@ -7,7 +7,7 @@ public class Program
     public static void Main()
     {
         // Create a new blank document.
-        var doc = new Document();
+        Document doc = new Document();
 
         // Ensure the document has a VBA project.
         if (doc.VbaProject == null)
@@ -15,25 +15,22 @@ public class Program
             doc.VbaProject = new VbaProject();
         }
 
-        // Add a simple VBA module.
-        string moduleSource = "Sub HelloWorld()\n    MsgBox \"Hello from VBA!\"\nEnd Sub";
-        var module = new VbaModule
-        {
-            Name = "HelloModule",
-            SourceCode = moduleSource
-        };
-        doc.VbaProject.Modules.Add(module);
-
-        // Save the document as a macro‑enabled file.
+        // Save the document in a macro‑enabled format (DOCM).
         const string fileName = "Sample.docm";
         doc.Save(fileName, SaveFormat.Docm);
 
-        // Reload the document to work with the persisted VBA project.
-        var loadedDoc = new Document(fileName);
+        // Reload the document to work with the saved VBA project.
+        Document loadedDoc = new Document(fileName);
 
-        // Enumerate references and log them (no COM references are expected in this sample).
+        // Enumerate VBA references, filter out COM (type‑library) references,
+        // and log the remaining (project) references.
         foreach (VbaReference reference in loadedDoc.VbaProject.References)
         {
+            // Keep only non‑COM references (e.g., project references).
+            if (reference.Type != VbaReferenceType.Project)
+                continue;
+
+            // Log reference details to the console.
             Console.WriteLine($"Reference LibId: {reference.LibId}, Type: {reference.Type}");
         }
     }

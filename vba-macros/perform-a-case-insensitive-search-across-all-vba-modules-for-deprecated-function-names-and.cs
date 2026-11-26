@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Vba;
@@ -12,38 +13,43 @@ public class Program
         Document doc = new Document();
 
         // Ensure the document has a VBA project.
-        if (doc.VbaProject == null)
+        VbaProject vbaProject = new VbaProject { Name = "SampleProject" };
+        doc.VbaProject = vbaProject;
+
+        // Add sample VBA modules containing deprecated function names.
+        VbaModule module1 = new VbaModule
         {
-            doc.VbaProject = new VbaProject();
-        }
+            Name = "Module1",
+            Type = VbaModuleType.ProceduralModule,
+            SourceCode = @"Sub OldFunc()
+    MsgBox ""Hello from OldFunc""
+End Sub"
+        };
+        vbaProject.Modules.Add(module1);
 
-        // Add a sample VBA module if none exist.
-        VbaModuleCollection modules = doc.VbaProject.Modules;
-        if (modules.Count == 0)
+        VbaModule module2 = new VbaModule
         {
-            string sampleCode = @"
-Sub SampleMacro()
-    Call OldFunction()
-    Call LegacyCalc(5)
-End Sub
-";
+            Name = "Module2",
+            Type = VbaModuleType.ProceduralModule,
+            SourceCode = @"Function DeprecatedFunction(arg As String) As String
+    DeprecatedFunction = arg
+End Function"
+        };
+        vbaProject.Modules.Add(module2);
 
-            // VbaModule has a parameterless constructor in this version.
-            VbaModule sampleModule = new VbaModule();
-            sampleModule.Name = "Module1";
-            sampleModule.SourceCode = sampleCode;
-            modules.Add(sampleModule);
-        }
+        // Save the original document (optional, for inspection).
+        string originalPath = Path.Combine(Directory.GetCurrentDirectory(), "Original.docm");
+        doc.Save(originalPath);
 
-        // Define deprecated function names and their replacements (case‑insensitive).
+        // Define deprecated function names and their replacements.
         var replacements = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            { "OldFunction", "NewFunction" },
-            { "LegacyCalc", "ModernCalc" }
+            { "OldFunc", "NewFunc" },
+            { "DeprecatedFunction", "UpdatedFunction" }
         };
 
-        // Perform case‑insensitive search and replace in each module.
-        foreach (VbaModule module in modules)
+        // Perform case‑insensitive search and replace in each VBA module.
+        foreach (VbaModule module in vbaProject.Modules)
         {
             string source = module.SourceCode ?? string.Empty;
 
@@ -56,31 +62,12 @@ End Sub
             module.SourceCode = source;
         }
 
-        // Save the document in macro‑enabled format.
-        const string outputPath = "output.docm";
-        doc.Save(outputPath, SaveFormat.Docm);
+        // Save the modified document.
+        string modifiedPath = Path.Combine(Directory.GetCurrentDirectory(), "Modified.docm");
+        doc.Save(modifiedPath);
 
-        // Reload the document to verify changes.
-        Document loadedDoc = new Document(outputPath);
-        bool allReplaced = true;
-
-        if (loadedDoc.VbaProject != null)
-        {
-            foreach (VbaModule module in loadedDoc.VbaProject.Modules)
-            {
-                string source = module.SourceCode ?? string.Empty;
-                foreach (var kvp in replacements)
-                {
-                    if (source.IndexOf(kvp.Key, StringComparison.OrdinalIgnoreCase) >= 0)
-                    {
-                        allReplaced = false;
-                    }
-                }
-            }
-        }
-
-        Console.WriteLine(allReplaced
-            ? "All deprecated functions were successfully replaced."
-            : "Some deprecated functions were not replaced.");
+        // Output paths to confirm execution.
+        Console.WriteLine($"Original document saved to: {originalPath}");
+        Console.WriteLine($"Modified document saved to: {modifiedPath}");
     }
 }

@@ -2,50 +2,43 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
-public class Program
+namespace AsposeWordsVbaReferenceDemo
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-
-        // Ensure the document has a VBA project.
-        doc.VbaProject = new VbaProject();
-
-        // Access the references collection.
-        VbaReferenceCollection references = doc.VbaProject.References;
-
-        // Record the initial reference count.
-        int initialCount = references.Count;
-
-        // Find the first available reference to remove.
-        int indexToRemove = -1;
-        for (int i = 0; i < references.Count; i++)
+        public static void Main()
         {
-            VbaReference reference = references[i];
-            if (reference != null)
+            // Create a new blank document.
+            Document doc = new Document();
+
+            // Ensure the document has a VBA project.
+            if (doc.VbaProject == null)
             {
-                indexToRemove = i;
-                break;
+                doc.VbaProject = new VbaProject();
             }
+
+            // Record the reference count before removal.
+            int countBeforeRemove = doc.VbaProject.References.Count;
+
+            // Remove the first reference if any exist.
+            if (countBeforeRemove > 0)
+            {
+                doc.VbaProject.References.RemoveAt(0);
+            }
+
+            // Record the reference count after removal.
+            int countAfterRemove = doc.VbaProject.References.Count;
+
+            // Validate that the count decreased by one when a reference was present.
+            bool isDecreased = countAfterRemove == countBeforeRemove - 1;
+
+            // Output the validation result.
+            Console.WriteLine($"Reference count before remove: {countBeforeRemove}");
+            Console.WriteLine($"Reference count after remove: {countAfterRemove}");
+            Console.WriteLine($"Reference count decreased: {isDecreased}");
+
+            // Save the document in a macro-enabled format.
+            doc.Save("Result.docm", SaveFormat.Docm);
         }
-
-        // Remove the reference if one was found.
-        if (indexToRemove >= 0)
-        {
-            references.RemoveAt(indexToRemove);
-        }
-
-        // Record the final reference count.
-        int finalCount = references.Count;
-
-        // Validate that the count decreased by one.
-        bool success = finalCount == initialCount - 1;
-        Console.WriteLine(success
-            ? "Reference removed successfully. Count decreased."
-            : "Reference removal failed.");
-
-        // Save the document in macro-enabled format.
-        doc.Save("ReferenceTest.docm", SaveFormat.Docm);
     }
 }
