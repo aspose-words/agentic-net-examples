@@ -6,20 +6,21 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
 
-        // Add a paragraph containing mixed left‑to‑right and right‑to‑left text.
+        // Use DocumentBuilder to add paragraphs with mixed LTR and RTL text.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello world! שלום עולם!");
+        builder.Writeln("Hello, world!");   // LTR text.
+        builder.Writeln("שלום עולם!");      // RTL (Hebrew) text.
 
-        // Configure plain‑text save options to add bi‑directional marks.
+        // Configure plain‑text saving options to insert Bi‑directional marks.
         TxtSaveOptions saveOptions = new TxtSaveOptions
         {
             AddBidiMarks = true
         };
 
-        // Save the document as plain text with the configured options.
+        // Save the document as plain text using the configured options.
         doc.Save("output.txt", saveOptions);
     }
 }

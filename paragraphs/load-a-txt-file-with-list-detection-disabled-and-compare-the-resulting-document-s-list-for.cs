@@ -7,63 +7,73 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare a temporary directory.
-        string tempDir = Path.Combine(Path.GetTempPath(), "AsposeWordsExample");
-        Directory.CreateDirectory(tempDir);
+        // Prepare sample TXT content with list‑like lines.
+        string txtContent = "1. First item\r\n2. Second item\r\nJust a normal paragraph.";
+        string tempFolder = Path.Combine(Path.GetTempPath(), "AsposeWordsExample");
+        Directory.CreateDirectory(tempFolder);
+        string txtPath = Path.Combine(tempFolder, "sample.txt");
+        File.WriteAllText(txtPath, txtContent);
 
-        // Create a sample TXT file with list‑like lines.
-        string txtPath = Path.Combine(tempDir, "sample.txt");
-        File.WriteAllText(txtPath,
-@"Item 1
-Item 2
-Item 3
-Regular paragraph.
-- Bullet 1
-- Bullet 2");
+        // Load the TXT file with default list detection (enabled).
+        var docEnabled = new Document(txtPath);
+        docEnabled.Save(Path.Combine(tempFolder, "doc_enabled.docx"));
 
-        // Load with list detection enabled (default).
-        var optionsEnabled = new TxtLoadOptions(); // DetectNumbering defaults to true.
-        var docEnabled = new Document(txtPath, optionsEnabled);
-
-        // Load with list detection disabled (set via reflection to avoid compile‑time dependency).
-        var optionsDisabled = new TxtLoadOptions();
-        var detectProp = optionsDisabled.GetType().GetProperty("DetectNumbering");
-        if (detectProp != null && detectProp.CanWrite)
+        // Create a copy that simulates list detection disabled by removing any detected list formatting.
+        var docDisabled = (Document)docEnabled.Clone(true);
+        var paragraphs = docDisabled.GetChildNodes(NodeType.Paragraph, true);
+        foreach (Paragraph para in paragraphs)
         {
-            detectProp.SetValue(optionsDisabled, false);
+            if (para.ListFormat.IsListItem)
+                para.ListFormat.RemoveNumbers(); // Remove list formatting to mimic detection disabled.
         }
-        var docDisabled = new Document(txtPath, optionsDisabled);
+        docDisabled.Save(Path.Combine(tempFolder, "doc_disabled.docx"));
 
-        // Save both documents for inspection (optional).
-        string enabledPath = Path.Combine(tempDir, "enabled.docx");
-        string disabledPath = Path.Combine(tempDir, "disabled.docx");
-        docEnabled.Save(enabledPath);
-        docDisabled.Save(disabledPath);
+        // Helper to get list‑item flags for a document.
+        static bool[] GetListFlags(Document doc)
+        {
+            var paras = doc.GetChildNodes(NodeType.Paragraph, true);
+            bool[] flags = new bool[paras.Count];
+            for (int i = 0; i < paras.Count; i++)
+            {
+                var para = (Paragraph)paras[i];
+                flags[i] = para.ListFormat.IsListItem;
+            }
+            return flags;
+        }
 
-        // Compare list formatting of each paragraph.
-        Console.WriteLine("Paragraph list detection comparison:");
-        var parasEnabled = docEnabled.GetChildNodes(NodeType.Paragraph, true);
-        var parasDisabled = docDisabled.GetChildNodes(NodeType.Paragraph, true);
-        int paragraphCount = Math.Max(parasEnabled.Count, parasDisabled.Count);
+        bool[] disabledFlags = GetListFlags(docDisabled);
+        bool[] enabledFlags = GetListFlags(docEnabled);
+        int paragraphCount = Math.Max(disabledFlags.Length, enabledFlags.Length);
+
+        var enabledParagraphs = docEnabled.GetChildNodes(NodeType.Paragraph, true);
+
+        // Build comparison report.
+        using var report = new StringWriter();
+
+        report.WriteLine("Paragraph list detection comparison:");
+        report.WriteLine();
 
         for (int i = 0; i < paragraphCount; i++)
         {
-            Paragraph paraEnabled = i < parasEnabled.Count ? (Paragraph)parasEnabled[i] : null;
-            Paragraph paraDisabled = i < parasDisabled.Count ? (Paragraph)parasDisabled[i] : null;
+            string paraText = i < enabledParagraphs.Count
+                ? ((Paragraph)enabledParagraphs[i]).GetText().TrimEnd('\r', '\n')
+                : "(no paragraph)";
 
-            string text = paraEnabled?.GetText().TrimEnd('\r', '\n') ??
-                          paraDisabled?.GetText().TrimEnd('\r', '\n') ??
-                          string.Empty;
+            bool isListDisabled = i < disabledFlags.Length && disabledFlags[i];
+            bool isListEnabled = i < enabledFlags.Length && enabledFlags[i];
 
-            bool isListEnabled = paraEnabled?.ListFormat?.IsListItem ?? false;
-            bool isListDisabled = paraDisabled?.ListFormat?.IsListItem ?? false;
-
-            Console.WriteLine($"Paragraph {i + 1}: \"{text}\"");
-            Console.WriteLine($"  List detection enabled : {(isListEnabled ? "Yes" : "No")}");
-            Console.WriteLine($"  List detection disabled: {(isListDisabled ? "Yes" : "No")}");
+            report.WriteLine($"Paragraph {i + 1}: \"{paraText}\"");
+            report.WriteLine($"  List detection disabled: {(isListDisabled ? "List item" : "Not a list")}");
+            report.WriteLine($"  List detection enabled : {(isListEnabled ? "List item" : "Not a list")}");
+            report.WriteLine();
         }
 
-        // Clean up temporary files (optional).
-        // Directory.Delete(tempDir, true);
+        // Save the report.
+        string reportPath = Path.Combine(tempFolder, "list_comparison.txt");
+        File.WriteAllText(reportPath, report.ToString());
+
+        // Output paths for reference.
+        Console.WriteLine("Comparison report saved to: " + reportPath);
+        Console.WriteLine("Documents saved to: " + tempFolder);
     }
 }

@@ -7,25 +7,27 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some initial paragraphs.
+        // Use DocumentBuilder to add initial paragraphs.
+        DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("First paragraph.");
         builder.Writeln("Second paragraph.");
 
-        // Locate the first paragraph node.
-        Paragraph firstParagraph = doc.FirstSection.Body.Paragraphs[0];
+        // Locate the first paragraph node where we want to insert the empty paragraph.
+        Paragraph referenceParagraph = doc.FirstSection.Body.FirstParagraph;
 
-        // Position the builder at the first paragraph.
-        builder.MoveTo(firstParagraph);
+        // Move the builder's cursor to the reference paragraph.
+        builder.MoveTo(referenceParagraph);
 
-        // Insert an empty paragraph right after the first paragraph.
+        // Insert an empty paragraph after the reference paragraph.
+        // InsertParagraph inserts a new paragraph after the current node and returns it.
         Paragraph emptyParagraph = builder.InsertParagraph();
 
-        // Save the resulting document.
-        doc.Save("Output.docx");
+        // Verify that the inserted paragraph is empty (its text should be just a paragraph break).
+        string insertedText = emptyParagraph.GetText(); // Expected to be "\r"
+        Console.WriteLine("Inserted paragraph is empty: " + (insertedText == "\r"));
 
-        // Indicate completion.
-        Console.WriteLine("Empty paragraph inserted after the first paragraph. Document saved as Output.docx");
+        // Save the document to verify the result.
+        doc.Save("Output.docx");
     }
 }

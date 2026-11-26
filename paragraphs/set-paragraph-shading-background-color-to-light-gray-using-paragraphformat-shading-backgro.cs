@@ -10,16 +10,16 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a paragraph with some text.
+        // Insert a paragraph with sample text.
         builder.Writeln("This paragraph has a light gray background shading.");
 
-        // Retrieve the paragraph we just added.
-        Paragraph paragraph = doc.LastSection.Body.LastParagraph;
+        // Retrieve the paragraph that was just added.
+        Paragraph paragraph = (Paragraph)doc.GetChild(NodeType.Paragraph, 0, true);
 
         // Set the shading background color to light gray.
         paragraph.ParagraphFormat.Shading.BackgroundPatternColor = Color.LightGray;
 
         // Save the document to a file.
-        doc.Save("ParagraphShading.docx");
+        doc.Save("Output.docx");
     }
 }

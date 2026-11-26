@@ -5,7 +5,7 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
 
         // Use DocumentBuilder to add a paragraph.
@@ -13,10 +13,9 @@ public class Program
         builder.Writeln("This paragraph will be styled as Heading 1.");
 
         // Apply the built‑in Heading1 style to the current paragraph.
-        Paragraph currentParagraph = builder.CurrentParagraph;
-        currentParagraph.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.CurrentParagraph.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
 
-        // Save the document to a file.
+        // Save the document to the output file.
         doc.Save("Output.docx");
     }
 }

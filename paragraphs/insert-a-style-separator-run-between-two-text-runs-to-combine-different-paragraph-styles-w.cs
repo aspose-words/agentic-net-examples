@@ -5,22 +5,21 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First part of the paragraph uses the Heading1 style.
+        // First part of the paragraph with Heading1 style.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Write("This is heading style");
+        builder.Write("First part ");
 
-        // Insert a style separator run. Text after this run can have a different style
-        // while still belonging to the same paragraph.
+        // Insert a style separator run.
+        // This separates the paragraph into two runs that can have different styles.
         builder.InsertStyleSeparator();
 
-        // Second part of the paragraph should appear with the normal (default) character style.
-        // Use a character style because Normal is a paragraph style and cannot be applied to a run.
-        builder.Font.StyleIdentifier = StyleIdentifier.DefaultParagraphFont;
-        builder.Write(" and this is normal style.");
+        // Second part of the paragraph with Normal style.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Write("second part.");
 
         // Save the document to disk.
         doc.Save("StyleSeparator.docx");

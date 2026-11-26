@@ -1,32 +1,43 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Tables;
 
-public class Program
+namespace ParagraphLineCountDemo
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add sample paragraphs with varying line breaks.
-        builder.Writeln("First paragraph line one.");
-        builder.Writeln("Second paragraph line one.\r\nSecond line.\r\nThird line.");
-        builder.Writeln("Third paragraph with no line breaks.");
-
-        // Save the document (optional for debugging).
-        doc.Save("ParagraphLineCounts.docx");
-
-        // Traverse all paragraphs and log an approximate line count.
-        int paragraphIndex = 0;
-        foreach (Paragraph paragraph in doc.GetChildNodes(NodeType.Paragraph, true))
+        public static void Main()
         {
-            // Approximate line count by counting non‑empty lines in the paragraph text.
-            string text = paragraph.GetText(); // Includes paragraph mark.
-            int lineCount = text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).Length;
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            Console.WriteLine($"Paragraph {paragraphIndex}: {lineCount} line(s)");
-            paragraphIndex++;
+            // Add sample paragraphs with varying line breaks.
+            builder.Writeln("First line.\nSecond line.");          // 2 lines
+            builder.Writeln("Single line paragraph.");            // 1 line
+            builder.Writeln("Line1.\nLine2.\nLine3.");            // 3 lines
+            builder.Writeln("Line A.\r\nLine B.\r\nLine C.");    // 3 lines using CRLF
+
+            // Save the document (optional for visual verification).
+            doc.Save("Output.docx");
+
+            // Traverse all paragraphs in the document.
+            NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
+            int index = 1;
+            foreach (Paragraph paragraph in paragraphs)
+            {
+                // Approximate line count by counting line‑break characters in the paragraph text.
+                // Paragraph.GetText() returns the text including paragraph mark characters.
+                string text = paragraph.GetText();
+
+                // Split on both '\r' and '\n' and remove empty entries.
+                int lineCount = string.IsNullOrEmpty(text)
+                    ? 0
+                    : text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).Length;
+
+                Console.WriteLine($"Paragraph {index}: Approximate line count = {lineCount}");
+                index++;
+            }
         }
     }
 }

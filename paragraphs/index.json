@@ -4,43 +4,43 @@
     "slug": "paragraphs",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Prefer DocumentBuilder for simple paragraph insertion and formatting, and use direct DOM traversal for counting, filtering, and structural edits. When advanced options are required, configure the appropriate SaveOptions or LoadOptions objects and verify API availability for the target library version.",
+    "preferred_workflow": "Prefer DocumentBuilder for simple insertions and formatting; employ direct Paragraph DOM traversal for counting, filtering, and structural edits; rely on TxtSaveOptions and TxtLoadOptions for plain-text operations, and apply custom logic when a required API is unavailable.",
     "required_packages": [
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.10.0"
+      "Aspose.Words": "26.11.0"
     },
     "required_namespaces": [
       "System",
       "Aspose.Words",
       "System.Drawing",
-      "Aspose.Words.Fonts",
+      "Aspose.Words.Tables",
       "Aspose.Words.Saving",
       "System.IO",
       "Aspose.Words.Loading",
       "System.Text.RegularExpressions",
       "Aspose.Words.Lists",
+      "Aspose.Words.Drawing",
       "System.Collections.Generic",
-      "Aspose.Words.Tables",
-      "Aspose.Words.Fields",
-      "System.Text"
+      "Aspose.Words.Fields"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
       "Paragraph",
+      "NodeType",
       "StyleIdentifier",
       "Style",
       "Font",
-      "NodeType",
       "Run",
-      "Directory",
       "File",
-      "Path",
+      "Node",
       "Table",
       "FieldType",
-      "MemoryStream"
+      "MemoryStream",
+      "Directory",
+      "Path"
     ]
   },
   "stats": {
@@ -56,52 +56,63 @@
   },
   "rules_summary": {
     "strict_api_bans": [
-      "Never reference namespaces or members that are not part of the official Aspose.Words API.",
-      "Do not call Run.Replace; modify Run.Text directly to preserve formatting."
+      "Do not call Run.Replace; modify Run.Text directly.",
+      "Do not reference non-existent namespaces such as Aspose.Words.Building.",
+      "Do not use Paragraph.GetLinesCount or any layout-specific line-count API."
     ],
     "canonical_patterns": [
-      "Use Paragraph.ParagraphFormat for all alignment, spacing, indent, bidi, shading, outline level, and page-break settings.",
-      "Apply built-in styles via ParagraphFormat.StyleIdentifier and custom styles via ParagraphFormat.StyleName."
+      "Use Paragraph.ParagraphFormat to adjust alignment, spacing, indent, shading, and style.",
+      "Apply built-in styles via ParagraphFormat.StyleIdentifier and custom styles via ParagraphFormat.StyleName.",
+      "Insert empty paragraphs with DocumentBuilder.InsertParagraph() after moving the builder to the target node."
     ],
     "nullable_warning_prevention": [
-      "Validate only the specific paragraph or range required for the task, avoiding blanket paragraph-count assertions."
+      "Validate only the specific paragraph or node that a task targets instead of asserting global paragraph counts.",
+      "Check for the existence of a member before using it, and fall back to alternative logic when the API is unavailable.",
+      "When detecting style separators, compare Run.Text to the Unicode unit separator character (U+001F) if Run.IsStyleSeparator is not present."
     ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "Use of non-existent API members",
-      "symptom": "Compiler reports missing definitions for properties such as Document.AddBidiMarks, TxtSaveOptions.ExportHeadersFooters, or StyleIdentifier.StyleSeparator.",
-      "cause": "The code references members that were never implemented in the Aspose.Words library.",
-      "fix": "Replace the call with the supported alternative (e.g., configure TxtSaveOptions.AddBidiMarks, use the Unicode unit separator character for style separators, or omit unsupported options).",
-      "prevention": "Consult the official Aspose.Words API reference for the exact version before using a property or method."
+      "pattern": "Incorrect namespace reference",
+      "symptom": "Compiler reports CS0234 indicating that a referenced namespace such as Aspose.Words.Building does not exist.",
+      "cause": "The code imports a namespace that is not part of the Aspose.Words library for the targeted version.",
+      "fix": "Replace the invalid namespace with the correct one, e.g., Aspose.Words.Saving or Aspose.Words.Loading.",
+      "prevention": "Consult the official API reference for the exact namespace names before adding using directives."
     },
     {
-      "pattern": "Incorrect overload usage",
-      "symptom": "Build fails because DocumentBuilder.MoveTo or MoveToParagraph is called with an invalid number of arguments.",
-      "cause": "The code supplies parameters that do not match any overload defined in the library.",
-      "fix": "Use the overload signatures documented for the current version, providing both paragraph index and character index for MoveToParagraph, or call MoveTo with a Node argument.",
-      "prevention": "Review method signatures in the API docs and pass the required arguments exactly as specified."
+      "pattern": "Missing method overload",
+      "symptom": "Compiler error CS1501 shows that InsertParagraph does not accept the supplied number of arguments.",
+      "cause": "The code calls InsertParagraph with parameters that are not defined in the method signature.",
+      "fix": "Call InsertParagraph() without arguments after moving the builder to the desired node.",
+      "prevention": "Verify method signatures in the documentation or IntelliSense before passing arguments."
     },
     {
-      "pattern": "Applying paragraph style to a run",
-      "symptom": "Runtime throws ArgumentException stating that the style is not a character style when assigning a StyleIdentifier to Font.StyleIdentifier.",
-      "cause": "A paragraph-level style (e.g., Heading1) is being applied to a Run, which only accepts character styles.",
-      "fix": "Assign a character style such as StyleIdentifier.DefaultParagraphFont to the run, or leave the run with the document's default character formatting.",
-      "prevention": "Distinguish between paragraph and character styles; use Font.StyleIdentifier only for character styles."
+      "pattern": "Member not found on type",
+      "symptom": "CS1061 or CS0117 errors indicate that members like Document.AddBidiMarks, TxtSaveOptions.ExportHeadersFooters, Paragraph.IsInTable, or Run.IsStyleSeparator are unavailable.",
+      "cause": "The code uses properties or methods that are not implemented in the current Aspose.Words version.",
+      "fix": "Use supported alternatives such as TxtSaveOptions (which includes headers by default) or detect table membership via Paragraph.GetAncestor(NodeType.Table).",
+      "prevention": "Check the version-specific API list and guard against unavailable members with conditional compilation or runtime checks."
     },
     {
-      "pattern": "Assuming unsupported layout helpers",
-      "symptom": "Compiler errors appear for calls to Paragraph.GetLinesCount or other invented layout APIs.",
-      "cause": "The code attempts to use methods that are not part of the Aspose.Words API for line-count or layout information.",
-      "fix": "Remove the unsupported call and, if line count is needed, approximate it by measuring the rendered height or by using a custom layout engine outside Aspose.Words.",
-      "prevention": "Limit paragraph-related logic to properties and methods documented in the API reference."
+      "pattern": "Unsupported line-count API",
+      "symptom": "Compilation fails because Paragraph.GetLinesCount does not exist.",
+      "cause": "The code attempts to call a layout-specific helper that is not part of the public API.",
+      "fix": "Remove the call and, if needed, approximate line count using document layout services or omit the feature.",
+      "prevention": "Restrict code to documented APIs; avoid assumptions about internal layout calculations."
     },
     {
-      "pattern": "Over-broad paragraph count validation",
-      "symptom": "Runtime failures occur when the test asserts the total number of paragraphs instead of the targeted subset.",
-      "cause": "The validation logic checks the entire document rather than the specific paragraph(s) affected by the operation.",
-      "fix": "Validate only the paragraph(s) that the task modifies or queries, using precise node references.",
-      "prevention": "Scope assertions to the exact nodes involved in the operation."
+      "pattern": "Invalid run replacement",
+      "symptom": "CS1061 indicates that Run.Replace is missing.",
+      "cause": "The code tries to replace text via a non-existent method.",
+      "fix": "Assign the new string to Run.Text while preserving formatting.",
+      "prevention": "Use Run.Text property for text updates and keep formatting unchanged."
+    },
+    {
+      "pattern": "Over-broad paragraph validation",
+      "symptom": "Runtime failures occur when the test asserts the total number of paragraphs instead of the targeted one.",
+      "cause": "Validation logic checks the whole document rather than the specific paragraph affected by the operation.",
+      "fix": "Validate only the paragraph(s) directly involved in the task.",
+      "prevention": "Design assertions to target the exact nodes under test."
     }
   ],
   "examples": [
@@ -256,8 +267,8 @@
       "outputs": [
         "txt"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 15,
@@ -278,8 +289,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 17,
@@ -289,8 +300,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 18,
@@ -488,18 +499,22 @@
         "txt",
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     }
   ],
   "narrative": {
-    "overview": "The Paragraphs category covers insertion, formatting, traversal, and export of Word document paragraphs using Aspose.Words 26.10.0. Verified examples demonstrate safe DocumentBuilder usage, style-separator handling, bi-directional text options, TXT save options, and plain-text list detection.",
-    "purpose": "Provide concise, reliable guidance for an AI coding assistant to generate correct C# snippets that manipulate paragraphs with Aspose.Words, ensuring only documented APIs are used and document integrity is preserved.",
+    "overview": "The Paragraphs category addresses insertion, formatting, traversal, and export operations on Aspose.Words documents. Verified examples illustrate correct usage of DocumentBuilder for empty paragraph insertion, custom style application, style-separator handling, bi-directional mark saving, and plain-text loading with list detection.",
+    "purpose": "Assist developers in implementing paragraph-level manipulations with Aspose.Words by enforcing supported APIs, correct namespace usage, and precise validation while avoiding common compilation and runtime pitfalls.",
     "validation_priorities": [
-      "Check that every referenced type, property, and method exists in Aspose.Words 26.10.0 before compilation."
+      "Ensure that all required Aspose.Words namespaces are imported and that the project references the correct assembly version.",
+      "Confirm that every invoked member exists in the target version before compilation.",
+      "Scope assertions to the exact nodes affected by the operation."
     ],
     "maintenance_notes": [
-      "Update the examples whenever a new Aspose.Words version introduces or deprecates API members, and verify all referenced members against the official documentation."
+      "Update the documentation whenever a new Aspose.Words version introduces or deprecates members referenced in the examples.",
+      "Add unit tests for each verified workflow to detect regressions in API signatures.",
+      "Periodically review the rules summary to incorporate newly discovered best-practice patterns."
     ]
   }
 }

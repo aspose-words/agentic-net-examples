@@ -8,19 +8,23 @@ public class Program
     {
         // Create a new empty document.
         Document doc = new Document();
+
+        // Initialize DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set paragraph formatting that will affect the field result.
-        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-        builder.ParagraphFormat.SpaceAfter = 12; // points
+        // Insert a new paragraph.
+        builder.Writeln(); // Moves cursor to a new paragraph.
 
-        // Insert a DATE field; the field result will inherit the paragraph formatting.
+        // Insert a DATE field. The field will be updated automatically.
         builder.InsertField(FieldType.FieldDate, true);
 
-        // Add a line break after the field for clarity.
-        builder.Writeln();
+        // Apply paragraph formatting to the paragraph that contains the field.
+        // For example, center the paragraph and add some spacing.
+        Paragraph paragraph = builder.CurrentParagraph;
+        paragraph.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        paragraph.ParagraphFormat.SpaceAfter = 12; // 12 points after spacing.
 
-        // Save the document.
+        // Save the document to disk.
         doc.Save("Output.docx");
     }
 }
