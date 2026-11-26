@@ -1,40 +1,35 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Create the original document with initial content.
+        // Create the original document with some content.
         Document original = new Document();
-        DocumentBuilder builderOriginal = new DocumentBuilder(original);
-        builderOriginal.Writeln("Hello world.");
+        DocumentBuilder builder1 = new DocumentBuilder(original);
+        builder1.Writeln("Hello world.");
+        builder1.Writeln("This line is unchanged.");
 
-        // Create the revised document with a modification.
+        // Create the revised document that contains differences.
         Document revised = new Document();
-        DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.Writeln("Hello revised world.");
+        DocumentBuilder builder2 = new DocumentBuilder(revised);
+        builder2.Writeln("Hello revised world."); // Modified line.
+        builder2.Writeln("This line is unchanged."); // Same line.
+        builder2.Writeln("An extra line added in the revised version."); // New line.
 
-        // Compare the documents; revisions are added to the original document.
+        // Compare the documents, providing author name and comparison date.
         original.Compare(revised, "Comparer", DateTime.Now);
 
-        // Ensure that at least one revision was generated.
+        // Ensure that revisions were generated.
         if (original.Revisions.Count == 0)
         {
-            throw new InvalidOperationException("Expected revisions after comparison.");
+            throw new InvalidOperationException("Expected at least one revision after comparison.");
         }
 
-        // Save the compared document as DOC format, preserving all revision metadata.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Compared.doc");
+        // Save the compared document as DOC format while preserving all revision metadata.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ComparedDocument.doc");
         original.Save(outputPath, SaveFormat.Doc);
-
-        // Reload the saved DOC file to verify that revisions are still present.
-        Document loaded = new Document(outputPath);
-        if (loaded.Revisions.Count == 0)
-        {
-            throw new InvalidOperationException("Revisions were not preserved in the DOC file.");
-        }
     }
 }

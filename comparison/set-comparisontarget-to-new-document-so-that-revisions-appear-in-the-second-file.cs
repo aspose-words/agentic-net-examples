@@ -1,25 +1,23 @@
 using System;
+using System.IO;
 using Aspose.Words;
 
-public class ComparisonExample
+public class Program
 {
     public static void Main()
     {
         // Create the original document with some content.
         Document original = new Document();
         DocumentBuilder builderOriginal = new DocumentBuilder(original);
-        builderOriginal.Writeln("This is the original document.");
-        builderOriginal.Writeln("It contains a line that will be changed.");
+        builderOriginal.Writeln("Hello world.");
 
-        // Create the revised document with a modification.
+        // Create the revised document with different content.
         Document revised = new Document();
         DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.Writeln("This is the original document.");
-        // Changed line.
-        builderRevised.Writeln("It contains a line that has been modified.");
+        builderRevised.Writeln("Hello revised world.");
 
-        // Perform the comparison. Revisions will be added to the revised document
-        // because we invoke Compare on the revised document.
+        // Perform the comparison so that revisions are placed in the revised document.
+        // Revisions are added to the document on which Compare is called.
         revised.Compare(original, "Comparer", DateTime.Now);
 
         // Verify that revisions exist in the revised document.
@@ -28,8 +26,9 @@ public class ComparisonExample
             throw new InvalidOperationException("Expected revisions in the revised document, but none were found.");
         }
 
-        // Save both documents.
-        original.Save("Original.docx");
-        revised.Save("Revised_With_Revisions.docx");
+        // Save both documents to the current directory.
+        string outputDir = Directory.GetCurrentDirectory();
+        original.Save(Path.Combine(outputDir, "original.docx"));
+        revised.Save(Path.Combine(outputDir, "revised_with_revisions.docx"));
     }
 }

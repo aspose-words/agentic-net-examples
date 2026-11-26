@@ -3,71 +3,86 @@ using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 
-public class RevisionSummaryExample
+public class Program
 {
     public static void Main()
     {
-        // Create the original document with several paragraphs.
+        // Create the original document with three paragraphs.
         Document original = new Document();
         DocumentBuilder builder = new DocumentBuilder(original);
         builder.Writeln("Paragraph 1: unchanged.");
-        builder.Writeln("Paragraph 2: to be modified.");
-        builder.Writeln("Paragraph 3: to be deleted.");
-        builder.Writeln("Paragraph 4: unchanged.");
+        builder.Writeln("Paragraph 2: to be deleted.");
+        builder.Writeln("Paragraph 3: to be modified.");
 
-        // Save the original document (optional, just for reference).
-        string originalPath = Path.Combine(Directory.GetCurrentDirectory(), "Original.docx");
-        original.Save(originalPath);
-
-        // Create the revised document containing added, deleted, and modified paragraphs.
+        // Create the revised document with changes:
+        // - Paragraph 2 is omitted (deleted).
+        // - Paragraph 3 text is changed (modified).
+        // - A new paragraph is added.
         Document revised = new Document();
         DocumentBuilder builder2 = new DocumentBuilder(revised);
         builder2.Writeln("Paragraph 1: unchanged.");
-        builder2.Writeln("Paragraph 2: has been modified."); // Modified paragraph.
-        builder2.Writeln("Paragraph 4: unchanged."); // Paragraph 3 deleted, Paragraph 4 moved up.
-        builder2.Writeln("Paragraph 5: newly added."); // Added paragraph.
+        builder2.Writeln("Paragraph 3: modified content.");
+        builder2.Writeln("Paragraph 4: newly added.");
 
-        // Perform the comparison. Revisions will be stored in the original document.
-        original.Compare(revised, "Comparer", DateTime.Now);
+        // Perform comparison. The original document will contain revisions.
+        original.Compare(revised, "ComparisonAuthor", DateTime.Now);
 
-        // Save the compared document.
-        string comparedPath = Path.Combine(Directory.GetCurrentDirectory(), "Compared.docx");
-        original.Save(comparedPath);
+        // Save the compared document (optional artifact).
+        original.Save("Compared.docx");
 
-        // Analyze revisions to produce a summary of added, deleted, and modified paragraphs.
-        List<Revision> insertions = new List<Revision>();
-        List<Revision> deletions = new List<Revision>();
+        // Prepare a summary report of paragraph revisions.
+        int insertedCount = 0;
+        int deletedCount = 0;
+        int formatChangedCount = 0;
+
+        List<string> reportLines = new List<string>
+        {
+            "Revision Summary Report",
+            $"Generated on: {DateTime.Now}",
+            ""
+        };
 
         foreach (Revision rev in original.Revisions)
         {
-            // Consider only paragraph revisions.
-            if (rev.ParentNode is Paragraph)
+            // Consider only paragraph-level revisions.
+            if (rev.ParentNode is not Paragraph paragraph)
+                continue;
+
+            string revText = paragraph.GetText()?.Trim() ?? string.Empty;
+
+            switch (rev.RevisionType)
             {
-                if (rev.RevisionType == RevisionType.Insertion)
-                {
-                    insertions.Add(rev);
-                }
-                else if (rev.RevisionType == RevisionType.Deletion)
-                {
-                    deletions.Add(rev);
-                }
+                case RevisionType.Insertion:
+                    insertedCount++;
+                    reportLines.Add($"[Inserted] \"{revText}\"");
+                    break;
+                case RevisionType.Deletion:
+                    deletedCount++;
+                    reportLines.Add($"[Deleted] \"{revText}\"");
+                    break;
+                case RevisionType.FormatChange:
+                    formatChangedCount++;
+                    reportLines.Add($"[FormatChanged] \"{revText}\"");
+                    break;
+                default:
+                    // Other revision types are not part of this summary.
+                    break;
             }
         }
 
-        // Estimate modified paragraphs as paired insertion/deletion at the same location.
-        int pairedCount = Math.Min(insertions.Count, deletions.Count);
-        int modified = pairedCount;
-        int added = insertions.Count - pairedCount;
-        int deleted = deletions.Count - pairedCount;
+        reportLines.Add("");
+        reportLines.Add($"Inserted paragraphs: {insertedCount}");
+        reportLines.Add($"Deleted paragraphs: {deletedCount}");
+        reportLines.Add($"Format‑changed paragraphs: {formatChangedCount}");
 
-        // Build the summary report.
-        string report = $"Revision Summary:{Environment.NewLine}" +
-                        $"Added paragraphs: {added}{Environment.NewLine}" +
-                        $"Deleted paragraphs: {deleted}{Environment.NewLine}" +
-                        $"Modified paragraphs: {modified}{Environment.NewLine}";
+        // Write the report to a text file.
+        string reportPath = "RevisionSummary.txt";
+        File.WriteAllLines(reportPath, reportLines);
 
-        // Save the report to a text file.
-        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "RevisionSummary.txt");
-        File.WriteAllText(reportPath, report);
+        // Output the report to the console.
+        foreach (string line in reportLines)
+        {
+            Console.WriteLine(line);
+        }
     }
 }

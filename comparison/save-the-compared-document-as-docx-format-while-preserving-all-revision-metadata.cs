@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using Aspose.Words;
 
-public class Program
+public class ComparisonExample
 {
     public static void Main()
     {
@@ -10,25 +10,27 @@ public class Program
         Document original = new Document();
         DocumentBuilder builderOriginal = new DocumentBuilder(original);
         builderOriginal.Writeln("This is the original document.");
-        builderOriginal.Writeln("It contains two paragraphs.");
+        builderOriginal.Writeln("It contains several lines of text.");
+        builderOriginal.Writeln("The quick brown fox jumps over the lazy dog.");
 
-        // Create the revised document that has differences.
+        // Create the revised document with intentional differences.
         Document revised = new Document();
         DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.Writeln("This is the revised document."); // Modified first line.
-        builderRevised.Writeln("It contains two paragraphs.");   // Same as original.
-        builderRevised.Writeln("Additional paragraph added in revised version."); // New line.
+        builderRevised.Writeln("This is the original document."); // Same line.
+        builderRevised.Writeln("It contains several lines of modified text."); // Modified line.
+        builderRevised.Writeln("The quick brown fox jumps over the lazy dog."); // Same line.
+        builderRevised.Writeln("An additional line has been added."); // New line.
 
-        // Compare the documents, providing author name and comparison date.
-        original.Compare(revised, "ComparisonAuthor", DateTime.Now);
+        // Perform comparison. Revisions will be added to the original document.
+        original.Compare(revised, "Comparer", DateTime.Now);
 
-        // Ensure that revisions were generated.
+        // Verify that revisions were created.
         if (original.Revisions.Count == 0)
         {
-            throw new InvalidOperationException("Expected revisions after comparison, but none were found.");
+            throw new InvalidOperationException("Expected at least one revision after comparison.");
         }
 
-        // Save the compared document as DOCX, preserving all revision metadata.
+        // Save the compared document preserving all revision metadata.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ComparedDocument.docx");
         original.Save(outputPath, SaveFormat.Docx);
     }

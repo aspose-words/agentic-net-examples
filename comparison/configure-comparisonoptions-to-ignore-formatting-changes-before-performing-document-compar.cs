@@ -3,52 +3,46 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
-public class Program
+public class ComparisonExample
 {
     public static void Main()
     {
-        // Create the first version of a legal contract.
+        // Create the first version of the legal contract.
         Document contractV1 = new Document();
-        DocumentBuilder builder1 = new DocumentBuilder(contractV1);
-        builder1.Font.Size = 12;
-        builder1.Font.Name = "Times New Roman";
-        builder1.Writeln("CONFIDENTIAL LEGAL CONTRACT");
-        builder1.Font.Bold = true;
-        builder1.Writeln("This agreement is made on the 1st of January 2023.");
-        builder1.Font.Bold = false;
-        builder1.Writeln("The parties agree to the following terms and conditions...");
-        builder1.Font.Italic = true;
-        builder1.Writeln("Section 1: Definitions");
-        builder1.Font.Italic = false;
+        DocumentBuilder builderV1 = new DocumentBuilder(contractV1);
+        builderV1.Font.Size = 12;
+        builderV1.Font.Bold = false;
+        builderV1.Writeln("CONFIDENTIAL LEGAL AGREEMENT");
+        builderV1.Writeln("This agreement is made between Party A and Party B.");
+        builderV1.Writeln("All terms and conditions are binding.");
 
-        // Create the second version with text changes and formatting changes.
+        // Create the second version with different formatting only.
         Document contractV2 = new Document();
-        DocumentBuilder builder2 = new DocumentBuilder(contractV2);
-        builder2.Font.Size = 14; // Different size (formatting)
-        builder2.Font.Name = "Arial"; // Different font (formatting)
-        builder2.Writeln("CONFIDENTIAL LEGAL CONTRACT");
-        builder2.Font.Bold = true;
-        builder2.Writeln("This agreement is made on the 2nd of February 2023."); // Text change
-        builder2.Font.Bold = false;
-        builder2.Writeln("The parties agree to the following terms and conditions...");
-        builder2.Font.Italic = true;
-        builder2.Writeln("Section 1: Definitions and Interpretations"); // Text change
-        builder2.Font.Italic = false;
+        DocumentBuilder builderV2 = new DocumentBuilder(contractV2);
+        builderV2.Font.Size = 14;               // Different font size
+        builderV2.Font.Bold = true;             // Different bold setting
+        builderV2.Writeln("CONFIDENTIAL LEGAL AGREEMENT");
+        builderV2.Writeln("This agreement is made between Party A and Party B.");
+        builderV2.Writeln("All terms and conditions are binding.");
 
-        // Configure comparison to ignore formatting changes.
-        CompareOptions options = new CompareOptions
+        // Configure comparison options to ignore formatting changes.
+        CompareOptions compareOptions = new CompareOptions
         {
             IgnoreFormatting = true
         };
 
         // Perform the comparison.
-        contractV1.Compare(contractV2, "LegalTeam", DateTime.Now, options);
+        contractV1.Compare(contractV2, "LegalTeam", DateTime.Now, compareOptions);
 
-        // Save the comparison result.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "contract-comparison.docx");
+        // Verify that no revisions were generated because formatting differences are ignored.
+        if (contractV1.Revisions.Count != 0)
+        {
+            throw new InvalidOperationException(
+                $"Expected zero revisions, but found {contractV1.Revisions.Count}.");
+        }
+
+        // Save the comparison result (should be identical to the original content).
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ComparisonResult.docx");
         contractV1.Save(outputPath);
-
-        // Report the number of revisions detected (formatting changes are ignored).
-        Console.WriteLine($"Total revisions detected (ignoring formatting): {contractV1.Revisions.Count}");
     }
 }

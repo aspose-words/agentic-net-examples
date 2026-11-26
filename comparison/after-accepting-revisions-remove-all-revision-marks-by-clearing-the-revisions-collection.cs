@@ -1,40 +1,41 @@
 using System;
+using System.IO;
 using Aspose.Words;
 
-public class RevisionRemovalExample
+public class Program
 {
     public static void Main()
     {
-        // Create the original document.
+        // Create the original document with some content.
         Document original = new Document();
-        DocumentBuilder builderOriginal = new DocumentBuilder(original);
-        builderOriginal.Writeln("Hello world.");
+        DocumentBuilder originalBuilder = new DocumentBuilder(original);
+        originalBuilder.Writeln("This is the original text.");
 
-        // Create the revised document with a difference.
+        // Create the revised document with a modification.
         Document revised = new Document();
-        DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.Writeln("Hello revised world.");
+        DocumentBuilder revisedBuilder = new DocumentBuilder(revised);
+        revisedBuilder.Writeln("This is the revised text.");
 
-        // Compare the documents to generate revisions.
-        original.Compare(revised, "ExampleAuthor", DateTime.Now);
+        // Compare the documents; revisions are added to the original document.
+        original.Compare(revised, "Comparer", DateTime.Now);
 
-        // Verify that revisions were created.
+        // Ensure that revisions were generated.
         if (original.Revisions.Count == 0)
         {
             throw new InvalidOperationException("Expected at least one revision after comparison.");
         }
 
-        // Accept all revisions.
+        // Accept all revisions, which removes the revision markup.
         original.AcceptAllRevisions();
 
-        // Verify that all revisions have been accepted.
+        // Verify that the revisions collection is now empty.
         if (original.Revisions.Count != 0)
         {
-            throw new InvalidOperationException("All revisions should be accepted.");
+            throw new InvalidOperationException("Revisions collection should be empty after accepting.");
         }
 
         // Save the final document without any revision marks.
-        string outputPath = "final.docx";
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "final.docx");
         original.Save(outputPath);
     }
 }

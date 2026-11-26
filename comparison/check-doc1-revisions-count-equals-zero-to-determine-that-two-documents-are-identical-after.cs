@@ -8,25 +8,24 @@ public class Program
         // Create the first document with deterministic content.
         Document doc1 = new Document();
         DocumentBuilder builder1 = new DocumentBuilder(doc1);
-        builder1.Writeln("Identical line 1.");
-        builder1.Writeln("Identical line 2.");
+        builder1.Writeln("Sample text for comparison.");
 
-        // Create the second document with the same content.
+        // Create the second document with identical content.
         Document doc2 = new Document();
         DocumentBuilder builder2 = new DocumentBuilder(doc2);
-        builder2.Writeln("Identical line 1.");
-        builder2.Writeln("Identical line 2.");
+        builder2.Writeln("Sample text for comparison.");
 
-        // Compare the two documents. No differences should be detected.
+        // Perform comparison. Since the documents are identical, no revisions should be generated.
         doc1.Compare(doc2, "Comparer", DateTime.Now);
 
-        // Verify that the comparison produced zero revisions.
+        // Verify that the revisions collection is empty.
         if (doc1.Revisions.Count != 0)
         {
-            throw new InvalidOperationException("Expected zero revisions for identical documents.");
+            throw new InvalidOperationException(
+                $"Expected zero revisions, but found {doc1.Revisions.Count}.");
         }
 
-        // Save the (unchanged) document to demonstrate successful execution.
+        // Save the (unchanged) document to demonstrate that the process completed.
         doc1.Save("identical-comparison.docx");
     }
 }

@@ -1,65 +1,106 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 
 public class Program
 {
     public static void Main()
     {
-        // Create the original document with header, footer and body.
+        // ------------------------------------------------------------
+        // Create the original document with a header, footer and body.
+        // ------------------------------------------------------------
         Document original = new Document();
-        DocumentBuilder builderOrig = new DocumentBuilder(original);
+        DocumentBuilder builder = new DocumentBuilder(original);
 
         // Header
-        builderOrig.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builderOrig.Writeln("Original Header");
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        builder.Writeln("Original Header");
 
         // Footer
-        builderOrig.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builderOrig.Writeln("Original Footer");
+        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+        builder.Writeln("Original Footer");
 
         // Body
-        builderOrig.MoveToDocumentEnd();
-        builderOrig.Writeln("Body text.");
+        builder.MoveToDocumentEnd();
+        builder.Writeln("Body content.");
 
-        // Create the revised document with modified header and footer.
+        // ------------------------------------------------------------
+        // Create the revised document with modified header, footer and body.
+        // ------------------------------------------------------------
         Document revised = new Document();
-        DocumentBuilder builderRev = new DocumentBuilder(revised);
+        DocumentBuilder revBuilder = new DocumentBuilder(revised);
 
-        // Header (modified)
-        builderRev.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builderRev.Writeln("Revised Header");
+        // Modified Header
+        revBuilder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        revBuilder.Writeln("Modified Header");
 
-        // Footer (modified)
-        builderRev.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builderRev.Writeln("Revised Footer");
+        // Modified Footer
+        revBuilder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+        revBuilder.Writeln("Modified Footer");
 
-        // Body (unchanged)
-        builderRev.MoveToDocumentEnd();
-        builderRev.Writeln("Body text.");
+        // Modified Body
+        revBuilder.MoveToDocumentEnd();
+        revBuilder.Writeln("Body content changed.");
 
-        // Compare the documents to generate revisions.
+        // ------------------------------------------------------------
+        // Compare the documents. Revisions are added to the original.
+        // ------------------------------------------------------------
         original.Compare(revised, "Comparer", DateTime.Now);
 
-        // Process revisions: reject those in headers, accept all others.
-        List<Revision> revisions = new List<Revision>(original.Revisions);
-        foreach (Revision rev in revisions)
+        // ------------------------------------------------------------
+        // Process revisions:
+        //   - Reject any changes that belong to a header.
+        //   - Accept all other changes (including footer modifications).
+        // ------------------------------------------------------------
+        var revisionSnapshot = original.Revisions.Cast<Revision>().ToList(); // Snapshot to avoid collection modification issues.
+
+        foreach (Revision rev in revisionSnapshot)
         {
-            // Determine if the revision is inside a header.
-            HeaderFooter? headerFooter = rev.ParentNode?.GetAncestor(NodeType.HeaderFooter) as HeaderFooter;
-            if (headerFooter != null && headerFooter.IsHeader)
+            // Walk up the node hierarchy to find a HeaderFooter ancestor, if any.
+            Node current = rev.ParentNode;
+            HeaderFooter? headerFooter = null;
+
+            while (current != null && !(current is HeaderFooter))
             {
-                rev.Reject(); // Discard header changes.
+                current = current.ParentNode;
+            }
+
+            if (current is HeaderFooter hf)
+                headerFooter = hf;
+
+            if (headerFooter != null)
+            {
+                // Determine whether the revision is inside a header.
+                bool isHeader = headerFooter.HeaderFooterType == HeaderFooterType.HeaderPrimary ||
+                                headerFooter.HeaderFooterType == HeaderFooterType.HeaderFirst ||
+                                headerFooter.HeaderFooterType == HeaderFooterType.HeaderEven;
+
+                if (isHeader)
+                {
+                    rev.Reject(); // Discard header modifications.
+                }
+                else
+                {
+                    rev.Accept(); // Keep footer modifications.
+                }
             }
             else
             {
-                rev.Accept(); // Keep footer (and any other) changes.
+                // For revisions outside headers/footers (e.g., body), accept them.
+                rev.Accept();
             }
         }
 
-        // Save the final document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "final.docx");
-        original.Save(outputPath);
+        // ------------------------------------------------------------
+        // Save the final document where header changes are rejected
+        // and footer changes are preserved.
+        // ------------------------------------------------------------
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.docx");
+        original.Save(outputPath, SaveFormat.Docx);
+
+        // Optional console output to verify revision count after processing.
+        Console.WriteLine($"Final revision count: {original.Revisions.Count}");
+        Console.WriteLine($"Result document saved to: {outputPath}");
     }
 }
