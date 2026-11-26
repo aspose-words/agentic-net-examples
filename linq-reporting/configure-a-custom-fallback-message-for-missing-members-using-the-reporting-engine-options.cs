@@ -1,5 +1,4 @@
 using System;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,43 +6,64 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for Aspose.Words)
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Paths for the template and the generated report.
+        const string templatePath = "Template.docx";
+        const string reportPath = "Report.docx";
 
-        // Create a simple template document with a missing member tag.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // -----------------------------------------------------------------
+        // 1. Create the template document with LINQ Reporting tags.
+        // -----------------------------------------------------------------
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("Customer: <<[model.Name]>>");
+        // This tag references a missing member; we will enable inline error messages.
+        builder.Writeln("Missing: <<[model.MissingProp]>>");
+        doc.Save(templatePath);
 
-        builder.Writeln("Existing property: <<[model.ExistingProperty]>>");
-        builder.Writeln("Missing property: <<[model.MissingProperty]>>");
+        // -----------------------------------------------------------------
+        // 2. Load the template for reporting.
+        // -----------------------------------------------------------------
+        var template = new Document(templatePath);
 
-        // Prepare the data model (does not contain MissingProperty).
-        ReportModel model = new()
-        {
-            ExistingProperty = "Sample value"
-        };
+        // -----------------------------------------------------------------
+        // 3. Prepare the data model.
+        // -----------------------------------------------------------------
+        var model = new Model();
 
-        // Configure the reporting engine to show inline error messages.
-        ReportingEngine engine = new();
+        // -----------------------------------------------------------------
+        // 4. Configure the reporting engine.
+        // -----------------------------------------------------------------
+        var engine = new ReportingEngine();
+        // Enable inline error messages so that missing members are shown in the output.
         engine.Options = ReportBuildOptions.InlineErrorMessages;
-        // Note: In older versions of Aspose.Words the custom fallback message property
-        // may not be available. The inline error messages will indicate missing members.
 
-        // Build the report.
-        bool success = engine.BuildReport(doc, model, "model");
+        // NOTE: In newer versions of Aspose.Words a custom fallback message can be set
+        // via the ReportingEngine.FallbackMessage property. This property is not
+        // available in the version used for this example, so we rely on the default
+        // inline error message format.
 
-        // Save the generated document.
-        string outputPath = "output.docx";
-        doc.Save(outputPath);
+        // -----------------------------------------------------------------
+        // 5. Build the report.
+        // -----------------------------------------------------------------
+        bool success = engine.BuildReport(template, model, "model");
 
-        // Output result information.
+        // -----------------------------------------------------------------
+        // 6. Save the generated report.
+        // -----------------------------------------------------------------
+        template.Save(reportPath);
+
+        // Output the result status.
         Console.WriteLine($"Report generation success: {success}");
-        Console.WriteLine($"Document saved to: {outputPath}");
     }
+}
 
-    public class ReportModel
-    {
-        public string ExistingProperty { get; set; } = string.Empty;
-        // MissingProperty is intentionally omitted to trigger the fallback message.
-    }
+// ---------------------------------------------------------------------
+// Data model used by the template.
+// ---------------------------------------------------------------------
+public class Model
+{
+    // Existing property referenced by the template.
+    public string Name { get; set; } = "John Doe";
+
+    // MissingProp is intentionally omitted to trigger the inline error message.
 }

@@ -4,8 +4,6 @@ using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Loading;
-using Aspose.Words.Saving;
 using Newtonsoft.Json;
 
 public class Program
@@ -15,91 +13,80 @@ public class Program
         // Register code page provider for Aspose.Words.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare sample JSON data.
-        string jsonPath = "sampleData.json";
-        var sampleData = new ReportRoot
+        // Prepare folders.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
+
+        // 1. Create the template document.
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        CreateTemplate(templatePath);
+
+        // 2. Create sample JSON data.
+        string jsonPath = Path.Combine(outputDir, "Data.json");
+        CreateSampleJson(jsonPath);
+
+        // 3. Load JSON into the model.
+        ReportModel model = JsonConvert.DeserializeObject<ReportModel>(File.ReadAllText(jsonPath))!;
+
+        // 4. Load the template.
+        Document doc = new(templatePath);
+
+        // 5. Configure the reporting engine to remove empty paragraphs.
+        ReportingEngine engine = new();
+        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
+
+        // 6. Build the report.
+        engine.BuildReport(doc, model, "model");
+
+        // 7. Save the generated report.
+        string resultPath = Path.Combine(outputDir, "Report.docx");
+        doc.Save(resultPath);
+    }
+
+    private static void CreateTemplate(string path)
+    {
+        Document doc = new();
+        DocumentBuilder builder = new(doc);
+
+        // Static content – will remain untouched.
+        builder.Writeln("=== Report Title ===");
+        builder.Writeln("This paragraph is static and will stay even if empty.");
+
+        // Section generated from JSON data.
+        builder.Writeln("=== Items Section ===");
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("<<[item.Description]>>");
+        builder.Writeln("<</foreach>>");
+
+        doc.Save(path);
+    }
+
+    private static void CreateSampleJson(string path)
+    {
+        var sample = new ReportModel
         {
-            Sections = new List<ReportSection>
+            Items = new List<Item>
             {
-                new()
-                {
-                    Title = "Generated Section 1",
-                    Paragraphs = new List<string> { "First paragraph.", "", "Third paragraph." },
-                    Items = new List<ReportItem>
-                    {
-                        new() { Name = "Item A" },
-                        new() { Name = "" },
-                        new() { Name = "Item C" }
-                    }
-                },
-                new()
-                {
-                    Title = "Generated Section 2",
-                    Paragraphs = new List<string> { "", "Only paragraph with content." },
-                    Items = new List<ReportItem>()
-                }
+                new Item { Description = "First item description." },
+                new Item { Description = "" }, // Empty description – should be removed.
+                new Item { Description = "Third item description." },
+                new Item { Description = null } // Null description – also results in empty paragraph.
             }
         };
-        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(sampleData, Formatting.Indented));
 
-        // Create JSON-driven template.
-        string jsonTemplatePath = "jsonTemplate.docx";
-        var jsonTemplate = new Document();
-        var jsonBuilder = new DocumentBuilder(jsonTemplate);
-        jsonBuilder.Writeln("<<foreach [sec in Sections]>>");
-        jsonBuilder.Writeln("<<[sec.Title]>>");
-        jsonBuilder.Writeln("<<foreach [para in sec.Paragraphs]>>");
-        jsonBuilder.Writeln("<<[para]>>");
-        jsonBuilder.Writeln("<</foreach>>");
-        jsonBuilder.Writeln("<<foreach [it in sec.Items]>>");
-        jsonBuilder.Writeln("Item: <<[it.Name]>>");
-        jsonBuilder.Writeln("<</foreach>>");
-        jsonBuilder.Writeln("<</foreach>>");
-        jsonTemplate.Save(jsonTemplatePath);
-
-        // Build report for JSON sections with removal of empty paragraphs.
-        var jsonDoc = new Document(jsonTemplatePath);
-        var jsonEngine = new ReportingEngine();
-        jsonEngine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
-        jsonEngine.BuildReport(jsonDoc, sampleData, "root");
-        string jsonReportPath = "jsonReport.docx";
-        jsonDoc.Save(jsonReportPath);
-
-        // Create static content template.
-        string staticTemplatePath = "staticTemplate.docx";
-        var staticDoc = new Document();
-        var staticBuilder = new DocumentBuilder(staticDoc);
-        staticBuilder.Writeln("=== Static Content Section ===");
-        staticBuilder.Writeln("This paragraph should remain even if empty.");
-        staticBuilder.Writeln(""); // Intentionally empty paragraph that should stay.
-        staticBuilder.Writeln("End of static content.");
-        staticDoc.Save(staticTemplatePath);
-
-        // Load static document and append JSON report sections.
-        var finalDoc = new Document(staticTemplatePath);
-        var jsonReportDoc = new Document(jsonReportPath);
-        finalDoc.AppendDocument(jsonReportDoc, ImportFormatMode.KeepSourceFormatting);
-
-        // Save final combined document.
-        string outputPath = "finalReport.docx";
-        finalDoc.Save(outputPath);
+        string json = JsonConvert.SerializeObject(sample, Formatting.Indented);
+        File.WriteAllText(path, json);
     }
 }
 
-// Data model classes.
-public class ReportRoot
+// Root model for the report.
+public class ReportModel
 {
-    public List<ReportSection> Sections { get; set; } = new();
+    public List<Item> Items { get; set; } = new();
 }
 
-public class ReportSection
+// Item model used in the JSON data.
+public class Item
 {
-    public string Title { get; set; } = string.Empty;
-    public List<string> Paragraphs { get; set; } = new();
-    public List<ReportItem> Items { get; set; } = new();
-}
-
-public class ReportItem
-{
-    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
 }

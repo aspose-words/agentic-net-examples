@@ -1,57 +1,52 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class Model
+{
+    // Property that will hold the HTML snippet read from an external file.
+    public string HtmlSnippet { get; set; } = string.Empty;
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required by Aspose.Words for some encodings)
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Register code page provider for any encoding needs.
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        // Define file paths
-        string workingDir = Directory.GetCurrentDirectory();
-        string templatePath = Path.Combine(workingDir, "template.docx");
-        string htmlSnippetPath = Path.Combine(workingDir, "snippet.html");
-        string outputPath = Path.Combine(workingDir, "output.docx");
+        // Define file paths in the current working directory.
+        string workDir = Directory.GetCurrentDirectory();
+        string templatePath = Path.Combine(workDir, "Template.docx");
+        string htmlPath = Path.Combine(workDir, "snippet.html");
+        string outputPath = Path.Combine(workDir, "ReportWithHtml.docx");
 
-        // Create a simple HTML snippet file
-        File.WriteAllText(htmlSnippetPath,
-            "<h1>Welcome to Aspose.Words</h1><p>This is an <b>HTML</b> snippet inserted via LINQ Reporting.</p>");
+        // Create a sample HTML snippet file.
+        File.WriteAllText(htmlPath, "<p style=\"color:blue;\">This is <b>HTML</b> inserted from external file.</p>");
 
-        // Create the LINQ Reporting template programmatically
+        // Create the template document programmatically.
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        // Insert the HTML switch tag that will be replaced by the snippet content
+        builder.Writeln("Report Title");
+        // Insert the HTML switch that will be replaced by the model's HtmlSnippet property.
         builder.Writeln("<<[model.HtmlSnippet] -html>>");
-        // Save the template to disk
         templateDoc.Save(templatePath);
 
-        // Load the template for report generation
-        Document reportDoc = new Document(templatePath);
+        // Load the template document for reporting.
+        Document doc = new Document(templatePath);
 
-        // Read the HTML snippet content
-        string htmlContent = File.ReadAllText(htmlSnippetPath);
-
-        // Prepare the data model
-        ReportModel model = new()
+        // Prepare the data model, reading the HTML snippet from the file.
+        Model model = new Model
         {
-            HtmlSnippet = htmlContent
+            HtmlSnippet = File.ReadAllText(htmlPath)
         };
 
-        // Build the report using the LINQ Reporting engine
+        // Build the report using the LINQ Reporting engine.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+        engine.BuildReport(doc, model, "model");
 
-        // Save the generated document
-        reportDoc.Save(outputPath);
+        // Save the generated report.
+        doc.Save(outputPath);
     }
-}
-
-// Data model used by the LINQ Reporting template
-public class ReportModel
-{
-    public string HtmlSnippet { get; set; } = string.Empty;
 }

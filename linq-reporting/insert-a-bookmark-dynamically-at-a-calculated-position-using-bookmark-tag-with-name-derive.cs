@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
@@ -7,51 +8,70 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare sample data model.
-        var model = new ReportModel
-        {
-            Title = "Dynamic Bookmark Example",
-            // Bookmark name derived from data fields (e.g., title and timestamp).
-            BookmarkName = $"BM_{DateTime.Now:yyyyMMdd_HHmmss}"
-        };
+        // Prepare folders.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
 
-        // Create a template document programmatically.
-        var templatePath = "template.docx";
+        // Paths for template and result.
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        string resultPath = Path.Combine(outputDir, "result.docx");
+
+        // ---------- Create template ----------
         var templateDoc = new Document();
         var builder = new DocumentBuilder(templateDoc);
 
-        // Insert a title placeholder.
-        builder.Writeln("Report Title: <<[model.Title]>>");
+        builder.Writeln("Dynamic Bookmark Report");
+        builder.Writeln();
 
-        // Insert a bookmark tag with a name derived from the model.
-        builder.Writeln("<<bookmark [model.BookmarkName]>>");
-        builder.Writeln("This paragraph is inside the dynamically created bookmark.");
+        // Begin foreach over Items collection.
+        builder.Writeln("<<foreach [item in Items]>>");
+
+        // Insert a bookmark whose name is derived from the data field.
+        builder.Writeln("<<bookmark [item.BookmarkName]>>");
+        // Content that will be placed inside the bookmark.
+        builder.Writeln("<<[item.Content]>>");
+        // Close bookmark.
         builder.Writeln("<</bookmark>>");
+
+        // End foreach.
+        builder.Writeln("<</foreach>>");
 
         // Save the template to disk.
         templateDoc.Save(templatePath);
 
-        // Load the template for reporting.
-        var doc = new Document(templatePath);
+        // ---------- Prepare data ----------
+        var model = new ReportModel
+        {
+            Items = new List<Item>
+            {
+                new Item { Name = "Alpha", Content = "Content for Alpha" },
+                new Item { Name = "Beta", Content = "Content for Beta" },
+                new Item { Name = "Gamma", Content = "Content for Gamma" }
+            }
+        };
 
-        // Build the report using LINQ Reporting Engine.
+        // ---------- Build report ----------
+        var reportDoc = new Document(templatePath);
         var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        engine.BuildReport(doc, model, "model");
-
-        // Ensure output directory exists.
-        var outputDir = "output";
-        Directory.CreateDirectory(outputDir);
+        engine.BuildReport(reportDoc, model, "model");
 
         // Save the generated document.
-        var outputPath = Path.Combine(outputDir, "result.docx");
-        doc.Save(outputPath);
+        reportDoc.Save(resultPath);
     }
 }
 
-// Public data model class with required properties.
+// Root data model.
 public class ReportModel
 {
-    public string Title { get; set; } = string.Empty;
-    public string BookmarkName { get; set; } = string.Empty;
+    public List<Item> Items { get; set; } = new();
+}
+
+// Item model used in the foreach loop.
+public class Item
+{
+    public string Name { get; set; } = "";
+    public string Content { get; set; } = "";
+
+    // Bookmark name derived from the Name field.
+    public string BookmarkName => "bm_" + Name;
 }

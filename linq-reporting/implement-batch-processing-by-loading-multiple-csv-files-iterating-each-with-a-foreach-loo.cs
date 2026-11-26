@@ -4,89 +4,59 @@ using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
 
-namespace BatchCsvLinqReporting
+public class Record
 {
-    // Data model for a single CSV record.
-    public class Record
-    {
-        public int Id { get; set; } = 0;
-        public string Name { get; set; } = "";
-        public double Value { get; set; } = 0.0;
-    }
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public double Value { get; set; }
+}
 
-    // Wrapper model passed to the reporting engine.
-    public class ReportModel
-    {
-        public List<Record> Records { get; set; } = new();
-    }
+public class ReportModel
+{
+    public List<Record> Records { get; set; } = new();
+}
 
-    public class Program
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
+        // Register code page provider for CSV encoding support.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Prepare a folder for sample CSV files.
+        string dataFolder = Path.Combine(Directory.GetCurrentDirectory(), "Data");
+        Directory.CreateDirectory(dataFolder);
+
+        // Create sample CSV files.
+        for (int i = 1; i <= 3; i++)
         {
-            // Register code page provider for CSV reading (required for some encodings).
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            // Prepare folders.
-            string dataFolder = Path.Combine(Directory.GetCurrentDirectory(), "data");
-            string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "output");
-            Directory.CreateDirectory(dataFolder);
-            Directory.CreateDirectory(outputFolder);
-
-            // Create sample CSV files.
-            CreateSampleCsv(Path.Combine(dataFolder, "file1.csv"));
-            CreateSampleCsv(Path.Combine(dataFolder, "file2.csv"));
-
-            // Load and merge CSV data.
-            var allRecords = new List<Record>();
-            foreach (string csvPath in Directory.GetFiles(dataFolder, "*.csv"))
-            {
-                LoadCsvIntoList(csvPath, allRecords);
-            }
-
-            // Prepare the model.
-            var model = new ReportModel { Records = allRecords };
-
-            // Create the template document programmatically.
-            string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "template.docx");
-            CreateTemplate(templatePath);
-
-            // Load the template.
-            var doc = new Document(templatePath);
-
-            // Build the report.
-            var engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
-
-            // Save the final report.
-            string reportPath = Path.Combine(outputFolder, "MergedReport.docx");
-            doc.Save(reportPath);
-        }
-
-        // Writes a simple CSV file with a header and three rows.
-        private static void CreateSampleCsv(string path)
-        {
+            string csvPath = Path.Combine(dataFolder, $"File{i}.csv");
             var lines = new List<string>
             {
                 "Id,Name,Value",
-                "1,Alpha,10.5",
-                "2,Beta,20.75",
-                "3,Gamma,30.0"
+                $"1,ItemA{i},10.5",
+                $"2,ItemB{i},20.0",
+                $"3,ItemC{i},30.25"
             };
-            File.WriteAllLines(path, lines, Encoding.UTF8);
+            File.WriteAllLines(csvPath, lines, Encoding.UTF8);
         }
 
-        // Parses a CSV file and adds its records to the provided list.
-        private static void LoadCsvIntoList(string csvPath, List<Record> target)
+        // Load CSV files, parse them, and merge into a single collection.
+        var model = new ReportModel();
+        foreach (string csvFile in Directory.GetFiles(dataFolder, "*.csv"))
         {
-            var lines = File.ReadAllLines(csvPath, Encoding.UTF8);
-            if (lines.Length < 2) return; // No data.
+            string[] allLines = File.ReadAllLines(csvFile, Encoding.UTF8);
+            if (allLines.Length < 2) continue; // Skip if no data.
 
             // Assume first line is header.
-            for (int i = 1; i < lines.Length; i++)
+            for (int lineIndex = 1; lineIndex < allLines.Length; lineIndex++)
             {
-                var parts = lines[i].Split(',');
+                string line = allLines[lineIndex];
+                if (string.IsNullOrWhiteSpace(line)) continue;
+
+                string[] parts = line.Split(',');
                 if (parts.Length != 3) continue;
 
                 if (int.TryParse(parts[0], out int id) &&
@@ -98,23 +68,46 @@ namespace BatchCsvLinqReporting
                         Name = parts[1],
                         Value = value
                     };
-                    target.Add(record);
+                    model.Records.Add(record);
                 }
             }
         }
 
-        // Generates a Word template containing a foreach loop over Records.
-        private static void CreateTemplate(string path)
-        {
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
+        // Create a LINQ Reporting template programmatically.
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-            builder.Writeln("Merged CSV Report");
-            builder.Writeln("<<foreach [rec in Records]>>");
-            builder.Writeln("Id: <<[rec.Id]>>, Name: <<[rec.Name]>>, Value: <<[rec.Value]>>");
-            builder.Writeln("<</foreach>>");
+        builder.Writeln("Merged CSV Report");
+        builder.Writeln($"Generated on {DateTime.Now}");
 
-            doc.Save(path);
-        }
+        // Begin foreach loop over merged records.
+        builder.Writeln("<<foreach [rec in Records]>>");
+
+        // Create a simple table for each record.
+        Table table = builder.StartTable();
+        builder.InsertCell();
+        builder.Writeln("<<[rec.Id]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[rec.Name]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[rec.Value]>>");
+        builder.EndRow();
+        builder.EndTable();
+
+        // End foreach loop.
+        builder.Writeln("<</foreach>>");
+
+        // Save the template.
+        doc.Save(templatePath);
+
+        // Load the template and build the report.
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
+
+        // Save the final report.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        reportDoc.Save(outputPath);
     }
 }

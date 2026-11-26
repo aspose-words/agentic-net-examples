@@ -7,74 +7,69 @@ using Aspose.Words;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
 
+public class Person
+{
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
+}
+
+public class ReportModel
+{
+    // All persons loaded from JSON.
+    public List<Person> Persons { get; set; } = new();
+
+    // Value to filter by (case‑insensitive).
+    public string FilterName { get; set; } = "alice";
+
+    // Persons whose Name matches FilterName ignoring case.
+    public IEnumerable<Person> FilteredPersons => Persons
+        .Where(p => p.Name.Equals(FilterName, StringComparison.OrdinalIgnoreCase));
+}
+
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words (required for some encodings).
+        // Register code page provider (required by Aspose.Words for some encodings).
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare sample JSON data.
-        string jsonPath = "sampleData.json";
-        var sampleItems = new List<Item>
+        // 1. Create sample JSON data file.
+        string jsonPath = "people.json";
+        var sampleData = new[]
         {
-            new Item { Name = "Apple", Category = "Fruit" },
-            new Item { Name = "Carrot", Category = "Vegetable" },
-            new Item { Name = "Banana", Category = "fruit" },
-            new Item { Name = "Broccoli", Category = "Vegetable" }
+            new Person { Name = "Alice", Age = 30 },
+            new Person { Name = "Bob", Age = 25 },
+            new Person { Name = "alice", Age = 22 },
+            new Person { Name = "Charlie", Age = 35 }
         };
-        var wrapper = new Wrapper { Items = sampleItems };
-        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(wrapper, Formatting.Indented));
+        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(sampleData, Formatting.Indented));
 
-        // Load JSON into objects.
+        // 2. Load JSON into the model.
+        var model = new ReportModel();
         string jsonContent = File.ReadAllText(jsonPath);
-        var data = JsonConvert.DeserializeObject<Wrapper>(jsonContent) ?? new Wrapper();
+        model.Persons = JsonConvert.DeserializeObject<List<Person>>(jsonContent) ?? new List<Person>();
 
-        // Filter items where Category equals "fruit" (case‑insensitive).
-        var filtered = data.Items
-            .Where(i => string.Equals(i.Category, "fruit", StringComparison.OrdinalIgnoreCase))
-            .ToList();
-
-        // Use the filtered collection as the data source for the report.
-        var reportModel = new Wrapper { Items = filtered };
-
-        // Create a Word template with LINQ Reporting tags.
+        // 3. Create the LINQ Reporting template programmatically.
         string templatePath = "template.docx";
         var doc = new Document();
         var builder = new DocumentBuilder(doc);
 
-        builder.Writeln("Filtered Items:");
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln(" - <<[item.Name]>> (<<[item.Category]>>)");
+        builder.Writeln("Filtered Persons (Name = \"alice\", case‑insensitive):");
+        builder.Writeln("<<foreach [p in FilteredPersons]>>");
+        builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
         builder.Writeln("<</foreach>>");
 
         doc.Save(templatePath);
 
-        // Load the template for reporting.
+        // 4. Load the template for reporting.
         var templateDoc = new Document(templatePath);
 
-        // Build the report.
+        // 5. Build the report.
         var engine = new ReportingEngine();
-        engine.BuildReport(templateDoc, reportModel, "model");
+        engine.BuildReport(templateDoc, model, "model");
 
-        // Save the generated report.
-        string outputPath = "Report.docx";
+        // 6. Save the generated report.
+        string outputPath = "report.docx";
         templateDoc.Save(outputPath);
-
-        // Indicate completion (no interactive input).
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
     }
-}
-
-// Wrapper class exposing a collection of items.
-public class Wrapper
-{
-    public List<Item> Items { get; set; } = new();
-}
-
-// Data model for each JSON entry.
-public class Item
-{
-    public string Name { get; set; } = string.Empty;
-    public string Category { get; set; } = string.Empty;
 }

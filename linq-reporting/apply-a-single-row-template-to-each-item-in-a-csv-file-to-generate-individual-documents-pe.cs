@@ -15,81 +15,78 @@ public class Program
 
         // Prepare sample CSV data.
         string csvPath = "data.csv";
-        File.WriteAllText(csvPath, "Name,Age,Email\r\nAlice,30,alice@example.com\r\nBob,25,bob@example.com\r\nCharlie,35,charlie@example.com");
+        File.WriteAllText(csvPath, "FirstName,LastName,Age\nJohn,Doe,30\nJane,Smith,25");
 
-        // Create a simple template document with LINQ Reporting tags.
+        // Load CSV records into a list of strongly‑typed objects.
+        List<Record> records = LoadCsv(csvPath);
+
+        // Create a single‑row template programmatically.
         string templatePath = "template.docx";
         CreateTemplate(templatePath);
-
-        // Load the template once.
-        Document templateDoc = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine();
-
-        // Parse CSV into a list of Person objects.
-        List<Person> persons = LoadCsv(csvPath);
 
         // Ensure output directory exists.
         string outputDir = "output";
         Directory.CreateDirectory(outputDir);
 
-        // Generate an individual document for each person.
-        for (int i = 0; i < persons.Count; i++)
+        // Generate an individual document for each record.
+        for (int i = 0; i < records.Count; i++)
         {
-            Person person = persons[i];
-            Document doc = (Document)templateDoc.Clone();
-
-            // Build the report using the person object as the root.
-            engine.BuildReport(doc, person, "person");
-
-            string outputPath = Path.Combine(outputDir, $"Person_{i + 1}.docx");
-            doc.Save(outputPath);
+            Record record = records[i];
+            Document doc = new(templatePath);
+            ReportingEngine engine = new();
+            engine.BuildReport(doc, record, "record");
+            string outPath = Path.Combine(outputDir, $"Record_{i + 1}.docx");
+            doc.Save(outPath);
         }
     }
 
-    // Creates a Word template containing tags that reference the Person model.
-    private static void CreateTemplate(string path)
+    // Loads CSV file into a list of Record objects.
+    private static List<Record> LoadCsv(string path)
     {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        List<Record> list = new();
+        string[] lines = File.ReadAllLines(path);
+        if (lines.Length < 2)
+            return list; // No data.
 
-        builder.Writeln("Report for <<[person.Name]>>");
-        builder.Writeln("Age: <<[person.Age]>>");
-        builder.Writeln("Email: <<[person.Email]>>");
-
-        doc.Save(path);
-    }
-
-    // Reads the CSV file and returns a list of Person objects.
-    private static List<Person> LoadCsv(string path)
-    {
-        var persons = new List<Person>();
-        using var reader = new StreamReader(path);
-        string? headerLine = reader.ReadLine(); // Skip header.
-        while (!reader.EndOfStream)
+        // Assume first line contains headers.
+        for (int i = 1; i < lines.Length; i++)
         {
-            string? line = reader.ReadLine();
+            string line = lines[i];
             if (string.IsNullOrWhiteSpace(line))
                 continue;
 
             string[] parts = line.Split(',');
-            if (parts.Length < 3)
-                continue;
+            if (parts.Length != 3)
+                continue; // Skip malformed lines.
 
-            persons.Add(new Person
+            Record rec = new()
             {
-                Name = parts[0].Trim(),
-                Age = int.Parse(parts[1].Trim(), CultureInfo.InvariantCulture),
-                Email = parts[2].Trim()
-            });
+                FirstName = parts[0],
+                LastName = parts[1],
+                Age = int.TryParse(parts[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out int age) ? age : 0
+            };
+            list.Add(rec);
         }
-        return persons;
+        return list;
+    }
+
+    // Creates a Word template with LINQ Reporting tags.
+    private static void CreateTemplate(string path)
+    {
+        Document doc = new();
+        DocumentBuilder builder = new(doc);
+
+        builder.Writeln("Report for <<[record.FirstName]>> <<[record.LastName]>>");
+        builder.Writeln("Age: <<[record.Age]>>");
+
+        doc.Save(path);
     }
 }
 
-// Public data model matching the template tags.
-public class Person
+// Public data model representing a CSV row.
+public class Record
 {
-    public string Name { get; set; } = string.Empty;
+    public string FirstName { get; set; } = "";
+    public string LastName { get; set; } = "";
     public int Age { get; set; }
-    public string Email { get; set; } = string.Empty;
 }

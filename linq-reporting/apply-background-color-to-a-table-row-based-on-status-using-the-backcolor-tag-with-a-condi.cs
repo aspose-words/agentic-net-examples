@@ -4,6 +4,17 @@ using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Tables;
 
+public class Item
+{
+    public string Name { get; set; } = "";
+    public string Status { get; set; } = "";
+}
+
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
+
 public class Program
 {
     public static void Main()
@@ -20,30 +31,28 @@ public class Program
             }
         };
 
-        // Create template document.
-        const string templatePath = "Template.docx";
+        // Create the template document.
+        var templatePath = "Template.docx";
         var doc = new Document();
         var builder = new DocumentBuilder(doc);
 
-        // Begin foreach loop for data rows.
+        // Title.
+        builder.Writeln("Task Status Report");
+        builder.Writeln();
+
+        // Begin foreach loop over Items.
         builder.Writeln("<<foreach [item in Items]>>");
 
-        // Create a table for each item (header + data row).
+        // Table for each item (single row).
         Table table = builder.StartTable();
 
-        // Header row.
-        builder.InsertCell();
-        builder.Writeln("Name");
-        builder.InsertCell();
-        builder.Writeln("Status");
-        builder.EndRow();
-
-        // Data row with conditional background color.
+        // Name cell with conditional background color.
         builder.InsertCell();
         builder.Writeln(
             "<<if [item.Status == \"Completed\"]>><<backColor [\"LightGreen\"]>><<[item.Name]>> <</backColor>><</if>>" +
             "<<if [item.Status != \"Completed\"]>><<[item.Name]>> <</if>>");
 
+        // Status cell with conditional background color.
         builder.InsertCell();
         builder.Writeln(
             "<<if [item.Status == \"Completed\"]>><<backColor [\"LightGreen\"]>><<[item.Status]>> <</backColor>><</if>>" +
@@ -59,26 +68,15 @@ public class Program
         doc.Save(templatePath);
 
         // Load the template for reporting.
-        var reportDoc = new Document(templatePath);
-        var engine = new ReportingEngine();
+        var templateDoc = new Document(templatePath);
 
         // Build the report.
-        engine.BuildReport(reportDoc, model, "model");
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None;
+        engine.BuildReport(templateDoc, model, "model");
 
         // Save the generated report.
-        const string outputPath = "ReportOutput.docx";
-        reportDoc.Save(outputPath);
+        var outputPath = "ReportOutput.docx";
+        templateDoc.Save(outputPath);
     }
-}
-
-// Data model classes.
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
-
-public class Item
-{
-    public string Name { get; set; } = "";
-    public string Status { get; set; } = "";
 }

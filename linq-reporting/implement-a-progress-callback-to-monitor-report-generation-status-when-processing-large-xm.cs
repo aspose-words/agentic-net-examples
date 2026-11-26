@@ -5,132 +5,127 @@ using System.Text;
 using System.Xml;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words if needed
+        // Register code page provider for Aspose.Words
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(workDir);
-
-        string xmlPath = Path.Combine(workDir, "data.xml");
-        string templatePath = Path.Combine(workDir, "template.docx");
-        string reportPath = Path.Combine(workDir, "report.docx");
-
-        // Create sample large XML data set
-        CreateSampleXml(xmlPath, 200);
+        // Prepare sample XML data
+        const string xmlPath = "data.xml";
+        GenerateSampleXml(xmlPath, 500);
 
         // Load data with progress reporting
-        Order order = LoadProducts(xmlPath, (processed, total) =>
-        {
-            Console.WriteLine($"Loading XML: {processed}/{total} ({processed * 100 / total}%)");
-        });
+        var model = new ReportModel();
+        model.Items = LoadItemsWithProgress(xmlPath, percent => Console.WriteLine($"Loading XML: {percent}%"));
 
-        // Build template document programmatically
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-        builder.Writeln("Product Report");
-        builder.Writeln("<<foreach [p in Products]>>");
-        builder.Writeln("Name: <<[p.Name]>>");
-        builder.Writeln("Description: <<[p.Description]>>");
-        builder.Writeln("<</foreach>>");
-        template.Save(templatePath);
-
-        // Load template (optional, we already have it)
-        Document doc = new Document(templatePath);
-
-        // Configure reporting engine
-        ReportingEngine.UseReflectionOptimization = true;
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
+        // Create template document
+        const string templatePath = "template.docx";
+        CreateTemplate(templatePath);
 
         // Build report
-        engine.BuildReport(doc, order, "order");
+        var doc = new Document(templatePath);
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-        // Save final report
-        doc.Save(reportPath);
-        Console.WriteLine($"Report generated at: {reportPath}");
+        // Save output
+        const string outputPath = "Report.docx";
+        doc.Save(outputPath);
+        Console.WriteLine($"Report generated: {outputPath}");
     }
 
-    private static void CreateSampleXml(string filePath, int count)
+    private static void GenerateSampleXml(string path, int count)
     {
-        using (var writer = XmlWriter.Create(filePath, new XmlWriterSettings { Indent = true, Encoding = Encoding.UTF8 }))
+        var sb = new StringBuilder();
+        sb.AppendLine("<Items>");
+        for (int i = 1; i <= count; i++)
         {
-            writer.WriteStartDocument();
-            writer.WriteStartElement("Products");
-            for (int i = 1; i <= count; i++)
-            {
-                writer.WriteStartElement("Product");
-                writer.WriteElementString("Name", $"Product {i}");
-                writer.WriteElementString("Description", $"Description for product {i}");
-                writer.WriteEndElement(); // Product
-            }
-            writer.WriteEndElement(); // Products
-            writer.WriteEndDocument();
+            sb.AppendLine("  <Item>");
+            sb.AppendLine($"    <Name>Item {i}</Name>");
+            sb.AppendLine($"    <Value>{i * 10}</Value>");
+            sb.AppendLine("  </Item>");
         }
+        sb.AppendLine("</Items>");
+        File.WriteAllText(path, sb.ToString());
     }
 
-    private static Order LoadProducts(string xmlPath, Action<int, int> progressCallback)
+    private static List<Item> LoadItemsWithProgress(string xmlPath, Action<int> progress)
     {
+        var items = new List<Item>();
+
+        // First pass to count total items
         int total = 0;
-        using (var countReader = XmlReader.Create(xmlPath))
+        using (var reader = XmlReader.Create(xmlPath))
         {
-            while (countReader.Read())
+            while (reader.Read())
             {
-                if (countReader.NodeType == XmlNodeType.Element && countReader.Name == "Product")
+                if (reader.NodeType == XmlNodeType.Element && reader.Name == "Item")
                     total++;
             }
         }
 
-        var order = new Order();
+        if (total == 0)
+            return items;
+
+        // Second pass to read items and report progress
         int processed = 0;
         using (var reader = XmlReader.Create(xmlPath))
         {
             while (reader.Read())
             {
-                if (reader.NodeType == XmlNodeType.Element && reader.Name == "Product")
+                if (reader.NodeType == XmlNodeType.Element && reader.Name == "Item")
                 {
-                    var product = new Product();
+                    var item = new Item();
                     while (reader.Read())
                     {
+                        if (reader.NodeType == XmlNodeType.EndElement && reader.Name == "Item")
+                            break;
+
                         if (reader.NodeType == XmlNodeType.Element)
                         {
-                            switch (reader.Name)
+                            string elementName = reader.Name;
+                            if (reader.Read() && reader.NodeType == XmlNodeType.Text)
                             {
-                                case "Name":
-                                    product.Name = reader.ReadElementContentAsString();
-                                    break;
-                                case "Description":
-                                    product.Description = reader.ReadElementContentAsString();
-                                    break;
+                                if (elementName == "Name")
+                                    item.Name = reader.Value;
+                                else if (elementName == "Value" && int.TryParse(reader.Value, out int val))
+                                    item.Value = val;
                             }
                         }
-                        else if (reader.NodeType == XmlNodeType.EndElement && reader.Name == "Product")
-                        {
-                            break;
-                        }
                     }
-                    order.Products.Add(product);
+
+                    items.Add(item);
                     processed++;
-                    progressCallback?.Invoke(processed, total);
+                    int percent = (int)((processed / (double)total) * 100);
+                    progress(percent);
                 }
             }
         }
-        return order;
+
+        return items;
+    }
+
+    private static void CreateTemplate(string path)
+    {
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("Report generated with progress monitoring");
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("Name: <<[item.Name]>>, Value: <<[item.Value]>>");
+        builder.Writeln("<</foreach>>");
+        doc.Save(path);
     }
 }
 
-public class Order
+public class ReportModel
 {
-    public List<Product> Products { get; set; } = new();
+    public List<Item> Items { get; set; } = new();
 }
 
-public class Product
+public class Item
 {
-    public string Name { get; set; } = "";
-    public string Description { get; set; } = "";
+    public string Name { get; set; } = string.Empty;
+    public int Value { get; set; }
 }

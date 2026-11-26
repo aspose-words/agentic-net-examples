@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -8,59 +7,48 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Prepare sample XML data.
+        // Create sample XML data.
         string xmlContent = @"<?xml version=""1.0"" encoding=""UTF-8""?>
-<Products>
-  <Product>
-    <Name>Apple</Name>
-    <Price>1.20</Price>
-  </Product>
-  <Product>
-    <Name>Banana</Name>
-    <Price>0.80</Price>
-  </Product>
-  <Product>
-    <Name>Cherry</Name>
-    <Price>2.50</Price>
-  </Product>
-</Products>";
+<Persons>
+    <Person>
+        <Name>Alice</Name>
+        <Age>30</Age>
+    </Person>
+    <Person>
+        <Name>Bob</Name>
+        <Age>25</Age>
+    </Person>
+    <Person>
+        <Name>Charlie</Name>
+        <Age>35</Age>
+    </Person>
+</Persons>";
         string xmlPath = "data.xml";
-        File.WriteAllText(xmlPath, xmlContent, Encoding.UTF8);
+        File.WriteAllText(xmlPath, xmlContent);
 
         // Load XML data source.
-        var xmlData = new XmlDataSource(xmlPath);
+        XmlDataSource xmlData = new XmlDataSource(xmlPath);
 
         // Create a template document programmatically.
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        builder.Writeln("Product Report");
-        builder.Writeln();
-
-        // Iterate over the collection of Product nodes.
-        builder.Writeln("<<foreach [p in xmlData]>>");
-        builder.Writeln("Product: <<[p.Name]>>");
-        builder.Writeln("Price: $<<[p.Price]>>");
+        builder.Writeln("People Report");
+        // Iterate over the rows of the Persons table.
+        builder.Writeln("<<foreach [person in Persons]>>");
+        builder.Writeln("Name: <<[person.Name]>>");
+        builder.Writeln("Age: <<[person.Age]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template (optional, just for demonstration).
-        string templatePath = "template.docx";
-        templateDoc.Save(templatePath);
-
-        // Load the template for report generation.
-        var doc = new Document(templatePath);
-
         // Build the report using the XML data source.
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, xmlData, "xmlData");
+        ReportingEngine engine = new ReportingEngine();
+        bool success = engine.BuildReport(template, xmlData, "Persons");
 
         // Save the generated report.
-        string outputPath = "output.docx";
-        doc.Save(outputPath);
+        string outputPath = "report.docx";
+        template.Save(outputPath);
 
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+        // Indicate completion (no interactive input).
+        Console.WriteLine(success ? "Report generated successfully." : "Report generation failed.");
     }
 }

@@ -1,91 +1,96 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Saving;
 using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Ensure the output directory exists.
+        Directory.CreateDirectory("Output");
 
-        // Enable reflection optimization globally.
+        // 1. Create a LINQ Reporting template.
+        string templatePath = "Template.docx";
+        CreateTemplate(templatePath);
+
+        // 2. Prepare sample JSON data files.
+        string largeJsonPath = "large.json";
+        string smallJsonPath = "small.json";
+        CreateSampleJson(largeJsonPath, 100); // 100 items – considered large.
+        CreateSampleJson(smallJsonPath, 3);   // 3 items – considered small.
+
+        // 3. Deserialize JSON into model objects.
+        ReportModel largeModel = JsonConvert.DeserializeObject<ReportModel>(File.ReadAllText(largeJsonPath))!;
+        ReportModel smallModel = JsonConvert.DeserializeObject<ReportModel>(File.ReadAllText(smallJsonPath))!;
+
+        // 4. Enable reflection optimization globally.
         ReportingEngine.UseReflectionOptimization = true;
 
-        // Prepare sample data.
-        var largeData = new DataWrapper
+        // 5. Build report for large data (optimization stays enabled).
+        Document largeDoc = new Document(templatePath);
+        ReportingEngine largeEngine = new ReportingEngine();
+        largeEngine.BuildReport(largeDoc, largeModel, "model");
+        largeDoc.Save("Output/LargeReport.docx");
+
+        // 6. Disable reflection optimization for small data.
+        ReportingEngine.UseReflectionOptimization = false;
+        Document smallDoc = new Document(templatePath);
+        ReportingEngine smallEngine = new ReportingEngine();
+        smallEngine.BuildReport(smallDoc, smallModel, "model");
+        smallDoc.Save("Output/SmallReport.docx");
+
+        // 7. Re‑enable optimization if further processing is needed.
+        ReportingEngine.UseReflectionOptimization = true;
+    }
+
+    // Creates a simple Word template with LINQ Reporting tags.
+    private static void CreateTemplate(string path)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        builder.Writeln("Person List:");
+        builder.Writeln("<<foreach [p in Persons]>>");
+        builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
+        builder.Writeln("<</foreach>>");
+
+        doc.Save(path);
+    }
+
+    // Generates a JSON file containing a list of persons.
+    private static void CreateSampleJson(string path, int count)
+    {
+        var model = new ReportModel
         {
-            Items = new List<Item>()
+            Persons = new List<Person>()
         };
-        for (int i = 1; i <= 100; i++)
+
+        for (int i = 1; i <= count; i++)
         {
-            largeData.Items.Add(new Item { Id = i, Name = $"Item {i}" });
+            model.Persons.Add(new Person
+            {
+                Name = $"Person {i}",
+                Age = 20 + i % 30
+            });
         }
 
-        var smallData = new DataWrapper
-        {
-            Items = new List<Item>
-            {
-                new Item { Id = 1, Name = "First" },
-                new Item { Id = 2, Name = "Second" }
-            }
-        };
-
-        // Serialize data to JSON files (kept for demonstration purposes).
-        File.WriteAllText("large.json", JsonConvert.SerializeObject(largeData));
-        File.WriteAllText("small.json", JsonConvert.SerializeObject(smallData));
-
-        // Create a template for the large data report.
-        var largeTemplate = new Document();
-        var largeBuilder = new DocumentBuilder(largeTemplate);
-        largeBuilder.Writeln("Large Data Report");
-        largeBuilder.Writeln("<<foreach [item in json.Items]>>");
-        largeBuilder.Writeln("<<[item.Id]>> - <<[item.Name]>>");
-        largeBuilder.Writeln("<</foreach>>");
-        largeTemplate.Save("LargeTemplate.docx");
-
-        // Create a template for the small data report.
-        var smallTemplate = new Document();
-        var smallBuilder = new DocumentBuilder(smallTemplate);
-        smallBuilder.Writeln("Small Data Report");
-        smallBuilder.Writeln("<<foreach [item in json.Items]>>");
-        smallBuilder.Writeln("<<[item.Id]>> - <<[item.Name]>>");
-        smallBuilder.Writeln("<</foreach>>");
-        smallTemplate.Save("SmallTemplate.docx");
-
-        // Build report for large data (reflection optimization remains enabled).
-        var largeDoc = new Document("LargeTemplate.docx");
-        var largeEngine = new ReportingEngine();
-        largeEngine.BuildReport(largeDoc, largeData, "json");
-        largeDoc.Save("LargeReport.docx", SaveFormat.Docx);
-
-        // Disable reflection optimization for small data to balance performance.
-        ReportingEngine.UseReflectionOptimization = false;
-
-        // Build report for small data.
-        var smallDoc = new Document("SmallTemplate.docx");
-        var smallEngine = new ReportingEngine();
-        smallEngine.BuildReport(smallDoc, smallData, "json");
-        smallDoc.Save("SmallReport.docx", SaveFormat.Docx);
-
-        // Re‑enable reflection optimization for subsequent operations if needed.
-        ReportingEngine.UseReflectionOptimization = true;
+        string json = JsonConvert.SerializeObject(model, Formatting.Indented);
+        File.WriteAllText(path, json);
     }
 }
 
-// Data model used for JSON serialization and reporting.
-public class DataWrapper
+// Root data model for the report.
+public class ReportModel
 {
-    public List<Item> Items { get; set; } = new();
+    public List<Person> Persons { get; set; } = new();
 }
 
-public class Item
+// Simple person class referenced by the template.
+public class Person
 {
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
 }

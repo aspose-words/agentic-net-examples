@@ -5,10 +5,10 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class ReportModel
+public class Model
 {
-    public string BookmarkName { get; set; } = "";
-    public string Title { get; set; } = "";
+    public string BookmarkName { get; set; } = "SampleBookmark";
+    public string Title { get; set; } = "Hello World";
 }
 
 public class Program
@@ -19,48 +19,50 @@ public class Program
         string templatePath = "template.docx";
         string outputPath = "output.docx";
 
-        // 1. Create a template document with a bookmark tag.
+        // 1. Create the LINQ Reporting template programmatically.
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Insert a bookmark tag that will be filled from the model.
         builder.Writeln("<<bookmark [model.BookmarkName]>>");
         builder.Writeln("<<[model.Title]>>");
         builder.Writeln("<</bookmark>>");
+
+        // Save the template to disk.
         templateDoc.Save(templatePath);
 
-        // 2. Load the template for reporting.
+        // 2. Load the template for report generation.
         Document doc = new Document(templatePath);
 
         // 3. Prepare the data model.
-        ReportModel model = new ReportModel
+        Model model = new Model
         {
-            BookmarkName = "SampleBookmark",
-            Title = "Hello World"
+            BookmarkName = "MyBookmark",
+            Title = "Generated Title"
         };
 
-        // 4. Build the report using LINQ Reporting engine.
+        // 4. Build the report using the LINQ Reporting engine.
         ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
         // 5. Save the generated document.
         doc.Save(outputPath);
 
-        // 6. Extract bookmark names from the generated document.
-        List<string> actualBookmarks = doc.Range.Bookmarks
-            .Select(b => b.Name)
-            .ToList();
-
-        // 7. Define expected bookmark names.
-        List<string> expectedBookmarks = new() { "SampleBookmark" };
-
-        // 8. Verify that the actual bookmarks match the expected ones.
-        bool match = actualBookmarks.SequenceEqual(expectedBookmarks);
-        Console.WriteLine($"Bookmarks match: {match}");
-
-        // Optional: print the extracted bookmark names.
-        Console.WriteLine("Extracted bookmarks:");
-        foreach (string name in actualBookmarks)
+        // 6. Load the generated document and extract bookmark names.
+        Document resultDoc = new Document(outputPath);
+        List<string> extractedBookmarks = new();
+        foreach (Bookmark bm in resultDoc.Range.Bookmarks)
         {
-            Console.WriteLine($"- {name}");
+            extractedBookmarks.Add(bm.Name);
         }
+
+        // 7. Verify the extracted bookmark names against expected values.
+        List<string> expectedBookmarks = new() { "MyBookmark" };
+        bool match = extractedBookmarks.SequenceEqual(expectedBookmarks);
+
+        // 8. Output verification result.
+        Console.WriteLine(match
+            ? "All bookmarks match expected values."
+            : $"Bookmark mismatch. Expected: [{string.Join(", ", expectedBookmarks)}], Found: [{string.Join(", ", extractedBookmarks)}]");
     }
 }

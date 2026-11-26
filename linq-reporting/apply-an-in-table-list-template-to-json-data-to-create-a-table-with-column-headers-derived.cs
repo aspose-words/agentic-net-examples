@@ -1,87 +1,78 @@
 using System;
-using System.Data;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Tables;
-using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words.
+        // Register code page provider (required by Aspose.Words in some environments)
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // ---------- Step 1: Create sample JSON data ----------
-        string json = @"[
-            { ""Name"": ""Alice"", ""Age"": 30, ""City"": ""New York"" },
-            { ""Name"": ""Bob"",   ""Age"": 25, ""City"": ""Los Angeles"" },
-            { ""Name"": ""Carol"", ""Age"": 28, ""City"": ""Chicago"" }
-        ]";
+        // Prepare sample JSON data
+        string jsonPath = Path.Combine(Directory.GetCurrentDirectory(), "data.json");
+        string jsonContent = @"[
+  { ""Name"": ""Alice"", ""Age"": 30, ""City"": ""New York"" },
+  { ""Name"": ""Bob"",   ""Age"": 25, ""City"": ""Los Angeles"" },
+  { ""Name"": ""Charlie"", ""Age"": 28, ""City"": ""Chicago"" }
+]";
+        File.WriteAllText(jsonPath, jsonContent);
 
-        const string jsonPath = "data.json";
-        File.WriteAllText(jsonPath, json);
-
-        // ---------- Step 2: Load JSON into a DataTable ----------
-        DataTable table = JsonConvert.DeserializeObject<DataTable>(File.ReadAllText(jsonPath))!;
-
-        // Wrap the DataTable rows for the reporting engine.
-        var model = new ReportModel
+        // Parse JSON to obtain column headers (property names)
+        JArray jsonArray = JArray.Parse(File.ReadAllText(jsonPath));
+        List<string> headers = new();
+        if (jsonArray.Count > 0 && jsonArray[0] is JObject firstObj)
         {
-            TableRows = table.Rows
-        };
+            foreach (var prop in firstObj.Properties())
+                headers.Add(prop.Name);
+        }
 
-        // ---------- Step 3: Create the LINQ Reporting template ----------
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Create the template document
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Begin foreach loop over rows.
-        builder.Writeln("<<foreach [row in TableRows]>>");
+        // Begin foreach loop over JSON data rows
+        builder.Writeln("<<foreach [row in data]>>");
 
-        // Start the table.
-        Table reportTable = builder.StartTable();
+        // Start a table for each iteration (header will be repeated for simplicity)
+        Table table = builder.StartTable();
 
-        // Header row: column names derived from the DataTable schema.
-        foreach (DataColumn column in table.Columns)
+        // Header row
+        foreach (string header in headers)
         {
             builder.InsertCell();
-            builder.Writeln(column.ColumnName);
+            builder.Writeln(header);
         }
         builder.EndRow();
 
-        // Data row: each cell contains a field tag referencing the column name via indexer.
-        foreach (DataColumn column in table.Columns)
+        // Data row
+        foreach (string header in headers)
         {
             builder.InsertCell();
-            // Use the DataRow indexer syntax: row["ColumnName"]
-            builder.Writeln($"<<[row[\"{column.ColumnName}\"]]>>");
+            // Tag that will be replaced with the corresponding field value
+            builder.Writeln($"<<[row.{header}]>>");
         }
         builder.EndRow();
 
-        // End the table.
+        // End the table and the foreach block
         builder.EndTable();
-
-        // End foreach loop.
         builder.Writeln("<</foreach>>");
 
-        // Save the template (optional, for inspection).
-        const string templatePath = "template.docx";
-        doc.Save(templatePath);
+        // Build the report using the JSON data source
+        JsonDataSource jsonDataSource = new JsonDataSource(jsonPath);
+        ReportingEngine engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.None
+        };
+        engine.BuildReport(template, jsonDataSource, "data");
 
-        // ---------- Step 4: Build the report ----------
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
-
-        // ---------- Step 5: Save the generated report ----------
-        const string outputPath = "output.docx";
-        doc.Save(outputPath);
+        // Save the generated report
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        template.Save(outputPath);
     }
-}
-
-// Wrapper class exposing the rows collection to the template.
-public class ReportModel
-{
-    public DataRowCollection TableRows { get; set; } = null!;
 }

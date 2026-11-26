@@ -1,64 +1,71 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using Aspose.Words;
-using Aspose.Words.Reporting;
 using Aspose.Words.Drawing;
-
-public class ImageLoader
-{
-    // Downloads an image from the given URL and returns a fresh MemoryStream.
-    public static Stream LoadImage(string url)
-    {
-        using var httpClient = new HttpClient();
-        byte[] data = httpClient.GetByteArrayAsync(url).Result;
-        var stream = new MemoryStream(data);
-        stream.Position = 0;
-        return stream;
-    }
-}
+using Aspose.Words.Reporting;
 
 public class ReportModel
 {
-    // URL of the image to be loaded from a web service.
+    // URL of the image to fetch from a web service.
     public string ImageUrl { get; set; } = "https://via.placeholder.com/150";
 
-    // Returns a new Stream each time it is accessed.
-    public Stream ImageStream => ImageLoader.LoadImage(ImageUrl);
+    // Cached image bytes to avoid multiple HTTP calls.
+    private byte[]? _imageBytes;
+
+    // Returns a fresh Stream each time; LINQ Reporting will consume it.
+    public Stream ImageStream
+    {
+        get
+        {
+            if (_imageBytes == null)
+            {
+                using var http = new HttpClient();
+                // Synchronously fetch the image bytes.
+                _imageBytes = http.GetByteArrayAsync(ImageUrl).Result;
+            }
+            // Return a new MemoryStream positioned at the start.
+            return new MemoryStream(_imageBytes);
+        }
+    }
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document that will serve as the template.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Paths for the template and the generated report.
+        const string templatePath = "template.docx";
+        const string outputPath = "report.docx";
 
-        // Insert a textbox shape to host the image tag.
+        // -----------------------------------------------------------------
+        // 1. Create the template document programmatically.
+        // -----------------------------------------------------------------
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        builder.Writeln("Report with image loaded from a web service:");
+
+        // Insert a textbox that will host the image tag.
         Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
         builder.MoveTo(textBox.FirstParagraph);
-
-        // Write the LINQ Reporting image tag that uses the Stream property.
+        // LINQ Reporting image tag referencing the ImageStream property.
         builder.Write("<<image [model.ImageStream] -fitSize>>");
 
-        // Save the template to disk (required before building the report).
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        // Save the template to disk.
+        doc.Save(templatePath);
 
-        // Load the template back (simulating a real-world scenario).
-        Document doc = new Document(templatePath);
+        // -----------------------------------------------------------------
+        // 2. Load the template and build the report.
+        // -----------------------------------------------------------------
+        var template = new Document(templatePath);
+        var model = new ReportModel();
 
-        // Prepare the data model.
-        ReportModel model = new ReportModel();
+        var engine = new ReportingEngine();
+        // BuildReport processes the image tag and fetches the stream.
+        engine.BuildReport(template, model, "model");
 
-        // Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
-
-        // Save the generated report.
-        const string outputPath = "Report.docx";
-        doc.Save(outputPath);
+        // Save the final report.
+        template.Save(outputPath);
     }
 }

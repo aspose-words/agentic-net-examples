@@ -3,31 +3,34 @@ using System.Collections;
 using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
 
 namespace LinqReportingCustomDataSource
 {
-    // Simple data model representing a person.
-    public class Person
+    // Simple data item.
+    public class Item
     {
-        public string Name { get; set; } = "";
-        public int Age { get; set; }
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public double Value { get; set; }
     }
 
-    // Custom data source that streams a large number of Person objects lazily.
-    public class LargePersonDataSource : IEnumerable<Person>
+    // Custom enumerable data source that streams items lazily.
+    public class LargeDataSource : IEnumerable<Item>
     {
         private readonly int _count;
 
-        public LargePersonDataSource(int count) => _count = count;
+        public LargeDataSource(int count) => _count = count;
 
-        public IEnumerator<Person> GetEnumerator()
+        public IEnumerator<Item> GetEnumerator()
         {
-            for (int i = 0; i < _count; i++)
+            for (int i = 1; i <= _count; i++)
             {
-                yield return new Person
+                yield return new Item
                 {
-                    Name = $"Person {i + 1}",
-                    Age = 20 + (i % 30)
+                    Id = i,
+                    Name = $"Item {i}",
+                    Value = i * 1.1
                 };
             }
         }
@@ -35,51 +38,77 @@ namespace LinqReportingCustomDataSource
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
-    // Wrapper class used as the root object for the LINQ Reporting engine.
+    // Wrapper model required by the reporting engine.
     public class ReportModel
     {
-        public IEnumerable<Person> Persons { get; set; }
-
-        public ReportModel()
-        {
-            // Simulate a large dataset of 10,000 persons.
-            Persons = new LargePersonDataSource(10_000);
-        }
+        public IEnumerable<Item> Items { get; set; } = new List<Item>();
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Create a template document programmatically.
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
+            // Paths for the template and the generated report.
+            const string templatePath = "Template.docx";
+            const string outputPath = "Report.docx";
 
-            builder.Writeln("Person Report");
-            builder.Writeln("==============");
+            // -----------------------------------------------------------------
+            // Create the template document programmatically.
+            // -----------------------------------------------------------------
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+
+            builder.Writeln("Report generated from a custom IEnumerable data source");
             builder.Writeln();
-            // LINQ Reporting foreach tag to iterate over the Persons collection.
-            builder.Writeln("<<foreach [p in Persons]>>");
-            builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
+
+            // Begin foreach block.
+            builder.Writeln("<<foreach [item in Items]>>");
+
+            // Create a table that will be repeated for each item.
+            Table table = builder.StartTable();
+
+            // Header row.
+            builder.InsertCell();
+            builder.Writeln("Id");
+            builder.InsertCell();
+            builder.Writeln("Name");
+            builder.InsertCell();
+            builder.Writeln("Value");
+            builder.EndRow();
+
+            // Data row – placeholders will be replaced by the engine.
+            builder.InsertCell();
+            builder.Writeln("<<[item.Id]>>");
+            builder.InsertCell();
+            builder.Writeln("<<[item.Name]>>");
+            builder.InsertCell();
+            builder.Writeln("<<[item.Value]>>");
+            builder.EndRow();
+
+            // End the table.
+            builder.EndTable();
+
+            // End foreach block.
             builder.Writeln("<</foreach>>");
 
             // Save the template to disk.
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
+            doc.Save(templatePath);
 
-            // Load the template for report generation.
-            Document report = new Document(templatePath);
+            // -----------------------------------------------------------------
+            // Load the template and generate the report.
+            // -----------------------------------------------------------------
+            var reportDoc = new Document(templatePath);
 
-            // Prepare the root data model.
-            ReportModel model = new ReportModel();
+            // Prepare the large data source and wrapper model.
+            var dataSource = new LargeDataSource(1000);
+            var model = new ReportModel { Items = dataSource };
 
             // Build the report using the LINQ Reporting engine.
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(report, model, "model");
+            var engine = new ReportingEngine();
+            engine.BuildReport(reportDoc, model, "model");
 
             // Save the generated report.
-            const string outputPath = "Report.docx";
-            report.Save(outputPath);
+            reportDoc.Save(outputPath);
         }
     }
 }

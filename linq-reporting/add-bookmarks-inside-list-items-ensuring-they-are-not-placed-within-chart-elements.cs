@@ -1,69 +1,61 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for any legacy encodings.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Create a template document programmatically.
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // Create the LINQ Reporting template.
-        const string templatePath = "Template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Begin a foreach loop over Items.
+        builder.Writeln("Report with Bookmarks in List Items");
         builder.Writeln("<<foreach [item in Items]>>");
-        // Apply numbering to each list item.
-        builder.ListFormat.ApplyNumberDefault();
-        // Insert a bookmark around the item title.
-        builder.Writeln("<<bookmark [item.BookmarkName]>><<[item.Title]>><</bookmark>>");
-        // Remove numbering formatting for subsequent paragraphs.
-        builder.ListFormat.RemoveNumbers();
-        // End the foreach loop.
+        // Bookmark tag placed inside the list item (paragraph).
+        builder.Writeln("<<bookmark [item.BookmarkName]>>");
+        builder.Writeln("<<[item.Title]>>");
+        builder.Writeln("<</bookmark>>");
         builder.Writeln("<</foreach>>");
 
         // Save the template to disk.
+        const string templatePath = "Template.docx";
         templateDoc.Save(templatePath);
 
-        // Load the template for report generation.
-        Document reportDoc = new Document(templatePath);
+        // Load the template for reporting.
+        var doc = new Document(templatePath);
 
         // Prepare sample data.
-        ReportModel model = new ReportModel
+        var model = new ReportModel
         {
             Items = new List<Item>
             {
-                new Item { Title = "First item", BookmarkName = "bm1" },
-                new Item { Title = "Second item", BookmarkName = "bm2" },
-                new Item { Title = "Third item", BookmarkName = "bm3" }
+                new Item { Title = "First Item", BookmarkName = "bm1" },
+                new Item { Title = "Second Item", BookmarkName = "bm2" },
+                new Item { Title = "Third Item", BookmarkName = "bm3" }
             }
         };
 
-        // Build the report using LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+        // Build the report using LINQ Reporting Engine.
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None;
+        bool success = engine.BuildReport(doc, model, "model");
 
         // Save the generated report.
-        const string outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+        const string outputPath = "ReportWithBookmarks.docx";
+        doc.Save(outputPath);
     }
+}
 
-    // Root data model for the report.
-    public class ReportModel
-    {
-        public List<Item> Items { get; set; } = new();
-    }
+// Data model classes.
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
 
-    // Item model representing each list entry.
-    public class Item
-    {
-        public string Title { get; set; } = "";
-        public string BookmarkName { get; set; } = "";
-    }
+public class Item
+{
+    public string Title { get; set; } = "";
+    public string BookmarkName { get; set; } = "";
 }

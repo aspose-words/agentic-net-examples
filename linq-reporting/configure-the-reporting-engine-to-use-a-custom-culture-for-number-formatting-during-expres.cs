@@ -1,62 +1,58 @@
 using System;
 using System.Globalization;
 using System.IO;
-using System.Text;
-using System.Threading;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using System.Text;
 
-namespace LinqReportingCustomCulture
+public class Product
 {
-    // Simple data model used as the root object for the report.
-    public class ProductModel
+    public decimal Price { get; set; } = 0m;
+    public string Name { get; set; } = string.Empty;
+}
+
+public class Program
+{
+    public static void Main()
     {
-        public string Description { get; set; } = "Sample product";
-        public decimal Price { get; set; } = 1234.56m;
-    }
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    public class Program
-    {
-        public static void Main()
+        // Prepare sample data.
+        var product = new Product
         {
-            // Register code page provider for Aspose.Words (required in .NET Core).
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            Name = "Sample Product",
+            Price = 1234.56m
+        };
 
-            // Prepare the template document programmatically.
-            string templatePath = "Template.docx";
-            CreateTemplate(templatePath);
+        // Create a template document with a LINQ Reporting tag.
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Product: <<[model.Name]>>");
+        builder.Writeln("Price (formatted with culture): <<[model.Price]>>");
+        // Save the template (optional, just for demonstration).
+        const string templatePath = "template.docx";
+        templateDoc.Save(templatePath);
 
-            // Load the template.
-            Document doc = new Document(templatePath);
+        // Load the template for reporting.
+        var reportDoc = new Document(templatePath);
 
-            // Prepare sample data.
-            ProductModel model = new ProductModel();
+        // Configure a custom culture (e.g., French) for number formatting.
+        var customCulture = new CultureInfo("fr-FR");
+        System.Threading.Thread.CurrentThread.CurrentCulture = customCulture;
+        System.Threading.Thread.CurrentThread.CurrentUICulture = customCulture;
 
-            // Set the thread culture to French for number formatting during expression evaluation.
-            Thread.CurrentThread.CurrentCulture = new CultureInfo("fr-FR");
+        // Build the report using the custom culture.
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None; // default options
+        bool success = engine.BuildReport(reportDoc, product, "model");
 
-            // Configure the reporting engine.
-            ReportingEngine engine = new ReportingEngine();
+        // Save the generated report.
+        Directory.CreateDirectory("output");
+        const string outputPath = "output/report.docx";
+        reportDoc.Save(outputPath);
 
-            // Build the report.
-            engine.BuildReport(doc, model, "model");
-
-            // Save the generated report.
-            string outputPath = "Report.docx";
-            doc.Save(outputPath);
-        }
-
-        private static void CreateTemplate(string path)
-        {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Insert LINQ Reporting tags.
-            builder.Writeln("Product: <<[model.Description]>>");
-            builder.Writeln("Price: <<[model.Price]>>");
-
-            // Save the template.
-            doc.Save(path);
-        }
+        // Indicate completion (no interactive input).
+        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Saved to '{outputPath}'.");
     }
 }

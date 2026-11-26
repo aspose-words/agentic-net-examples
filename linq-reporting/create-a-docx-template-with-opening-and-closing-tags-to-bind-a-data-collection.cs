@@ -1,67 +1,78 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using System.Text;
 
-namespace LinqReportingExample
+public class Program
 {
-    // Data model classes
-    public class Item
+    public static void Main()
     {
-        public string Name { get; set; } = string.Empty;
-        public int Quantity { get; set; }
-    }
+        // Register code page provider (required for some encodings)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    public class Model
-    {
-        public List<Item> Items { get; set; } = new();
-    }
+        // Paths for template and output
+        string templatePath = "Template.docx";
+        string outputPath = "Report.docx";
 
-    public class Program
-    {
-        public static void Main()
+        // -------------------------------------------------
+        // Create the DOCX template with LINQ Reporting tags
+        // -------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Title
+        builder.Writeln("Person Report");
+        builder.Writeln();
+
+        // Begin foreach loop over the collection "Persons"
+        builder.Writeln("<<foreach [p in Persons]>>");
+        // Output each person's name and age
+        builder.Writeln("Name: <<[p.Name]>>");
+        builder.Writeln("Age: <<[p.Age]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk
+        templateDoc.Save(templatePath);
+
+        // -------------------------------------------------
+        // Load the template for report generation
+        // -------------------------------------------------
+        Document reportDoc = new Document(templatePath);
+
+        // -------------------------------------------------
+        // Prepare sample data
+        // -------------------------------------------------
+        ReportModel model = new()
         {
-            // Register code page provider (required for some encodings)
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            // Prepare sample data
-            Model model = new()
+            Persons = new()
             {
-                Items = new()
-                {
-                    new Item { Name = "Apple", Quantity = 5 },
-                    new Item { Name = "Banana", Quantity = 3 },
-                    new Item { Name = "Cherry", Quantity = 12 }
-                }
-            };
+                new Person { Name = "Alice", Age = 30 },
+                new Person { Name = "Bob", Age = 25 },
+                new Person { Name = "Charlie", Age = 35 }
+            }
+        };
 
-            // Create template document with LINQ Reporting tags
-            string templatePath = "Template.docx";
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // -------------------------------------------------
+        // Build the report using LINQ Reporting Engine
+        // -------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
 
-            builder.Writeln("Items Report");
-            builder.Writeln("<<foreach [item in Items]>>");
-            builder.Writeln("- <<[item.Name]>>: <<[item.Quantity]>>");
-            builder.Writeln("<</foreach>>");
-
-            templateDoc.Save(templatePath);
-
-            // Load the template for report generation
-            Document reportDoc = new Document(templatePath);
-
-            // Build the report using the model as the root object named "model"
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(reportDoc, model, "model");
-
-            // Save the generated report
-            string outputPath = "Report.docx";
-            reportDoc.Save(outputPath);
-
-            // Indicate completion (no interactive input)
-            Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
-        }
+        // Save the generated report
+        reportDoc.Save(outputPath);
     }
+}
+
+// Public data model classes
+public class ReportModel
+{
+    public List<Person> Persons { get; set; } = new();
+}
+
+public class Person
+{
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
 }

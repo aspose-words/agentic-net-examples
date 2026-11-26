@@ -1,45 +1,63 @@
 using System;
+using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Fields;
 
 public class ReportModel
 {
-    // No data needed for the footer.
+    // No data needed for this example.
+    public ReportModel() { }
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words.
+        // Register code page provider (required for Aspose.Words).
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create a new document and add a primary footer with DATE and PAGE fields.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Paths for template and output documents.
+        string templatePath = "Template.docx";
+        string outputPath = "Report.docx";
 
-        // Move to the primary footer of the first (and only) section.
+        // -------------------------------------------------
+        // Create the template document programmatically.
+        // -------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Add a footer with dynamic date and page number using Word field codes.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.Write("Generated on ");
-        builder.InsertField(FieldType.FieldDate, true);
-        builder.Write(" - Page ");
-        builder.InsertField(FieldType.FieldPage, true);
+        builder.Write("Generated on: ");
+        builder.InsertField(@"DATE \@ ""MMMM d, yyyy"""); // Current date.
+        builder.Write("   Page: ");
+        builder.InsertField("PAGE");          // Current page number.
+        builder.Write(" of ");
+        builder.InsertField("NUMPAGES");      // Total pages.
+
+        // Return to the main body and add sample content to generate multiple pages.
+        builder.MoveToDocumentEnd();
+        builder.Writeln("This is a sample report generated with Aspose.Words LINQ Reporting.");
+        builder.Writeln("The footer above displays the current date and page number dynamically.");
+        // Insert enough text to create a second page.
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("Second page content. The footer should continue to show the correct page number.");
 
         // Save the template to disk.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        templateDoc.Save(templatePath);
 
-        // Load the template for reporting.
+        // -------------------------------------------------
+        // Load the template and build the report.
+        // -------------------------------------------------
         Document doc = new Document(templatePath);
+        ReportModel model = new ReportModel();
 
-        // Build the report using LINQ Reporting Engine (no data needed).
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, new ReportModel(), "model");
+        // No special options needed for this simple example.
+        engine.BuildReport(doc, model, "model");
 
-        // Save the final report.
-        const string outputPath = "Report.docx";
+        // Save the generated report.
         doc.Save(outputPath);
     }
 }

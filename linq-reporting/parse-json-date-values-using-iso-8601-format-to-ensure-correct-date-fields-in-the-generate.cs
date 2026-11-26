@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Aspose.Words;
@@ -12,44 +13,65 @@ public class Program
         // Register code page provider for Aspose.Words.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare sample JSON data with ISO 8601 date.
-        string jsonPath = "order.json";
-        string jsonContent = @"{
-            ""OrderDate"": ""2023-08-15T14:30:00Z"",
-            ""CustomerName"": ""John Doe""
-        }";
-        File.WriteAllText(jsonPath, jsonContent);
+        // Sample JSON data with ISO 8601 date strings.
+        string json = @"
+        [
+            { ""Name"": ""Alice"", ""BirthDate"": ""1990-05-15T00:00:00Z"" },
+            { ""Name"": ""Bob"",   ""BirthDate"": ""1985-12-03T00:00:00Z"" },
+            { ""Name"": ""Carol"", ""BirthDate"": ""2000-07-21T00:00:00Z"" }
+        ]";
 
-        // Deserialize JSON into a strongly‑typed model.
-        Order order = JsonConvert.DeserializeObject<Order>(jsonContent) ?? new Order();
+        // Deserialize JSON into a list of Person objects.
+        List<Person> persons = JsonConvert.DeserializeObject<List<Person>>(json) ?? new List<Person>();
 
-        // Create the LINQ Reporting template programmatically.
-        string templatePath = "template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Prepare the data model for the report.
+        ReportModel model = new()
+        {
+            Persons = persons
+        };
 
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("Order Date: <<[order.OrderDate.ToString(\"yyyy-MM-dd HH:mm:ss\")]>>");
+        // Create a Word template programmatically.
+        Document template = new();
+        DocumentBuilder builder = new(template);
+
+        builder.Writeln("People Report");
+        builder.Writeln("==============");
+        builder.Writeln();
+
+        // Begin a foreach loop over the Persons collection.
+        builder.Writeln("<<foreach [person in Persons]>>");
+        // Output name and formatted birth date.
+        builder.Writeln("Name: <<[person.Name]>>");
+        builder.Writeln("Birth Date: <<[person.BirthDate.ToString(\"yyyy-MM-dd\")]>>");
+        builder.Writeln(); // Blank line between entries.
+        builder.Writeln("<</foreach>>");
 
         // Save the template to disk.
-        templateDoc.Save(templatePath);
+        string templatePath = "Template.docx";
+        template.Save(templatePath);
 
         // Load the template for report generation.
-        Document reportDoc = new Document(templatePath);
+        Document doc = new(templatePath);
 
         // Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, order, "order");
+        ReportingEngine engine = new();
+        engine.BuildReport(doc, model, "model");
 
         // Save the generated report.
-        string outputPath = "report.docx";
-        reportDoc.Save(outputPath);
+        string reportPath = "Report.docx";
+        doc.Save(reportPath);
     }
 }
 
-// Public data model matching the JSON structure.
-public class Order
+// Wrapper class that matches the root name used in BuildReport ("model").
+public class ReportModel
 {
-    public DateTime OrderDate { get; set; } = DateTime.MinValue;
-    public string CustomerName { get; set; } = string.Empty;
+    public List<Person> Persons { get; set; } = new();
+}
+
+// Data model representing a person with a name and a birth date.
+public class Person
+{
+    public string Name { get; set; } = string.Empty;
+    public DateTime BirthDate { get; set; }
 }

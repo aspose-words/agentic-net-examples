@@ -4,17 +4,29 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
+public class Section
+{
+    public string Title { get; set; } = "";
+    public int Level { get; set; }
+    public string Bookmark { get; set; } = "";
+}
+
+public class ReportModel
+{
+    public List<Section> Sections { get; set; } = new();
+}
+
 public class Program
 {
     public static void Main()
     {
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        // Ensure output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
         Directory.CreateDirectory(outputDir);
 
-        // Paths for the template and the final report.
+        // Paths for template and result.
         string templatePath = Path.Combine(outputDir, "Template.docx");
-        string reportPath = Path.Combine(outputDir, "Report.docx");
+        string resultPath = Path.Combine(outputDir, "Report.docx");
 
         // -----------------------------------------------------------------
         // 1. Create the template document programmatically.
@@ -22,66 +34,73 @@ public class Program
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Insert a Table of Contents field at the beginning.
-        builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
-        builder.Writeln(); // Add a blank line after TOC.
+        // Title page.
+        builder.Writeln("Sample Report");
+        builder.Writeln();
 
-        // Begin a foreach block that will repeat for each section.
-        builder.Writeln("<<foreach [section in Model.Sections]>>");
+        // -----------------------------------------------------------------
+        // 2. Insert Table of Contents placeholder using LINQ Reporting tags.
+        // -----------------------------------------------------------------
+        builder.Writeln("Table of Contents");
+        builder.Writeln("<<foreach [sec in Sections]>>");
+        // Indent based on heading level (simple 2 spaces per level).
+        builder.Writeln("<<if [sec.Level == 1]>>");
+        builder.Writeln("<<bookmark [sec.Bookmark]>><<[sec.Title]>> <</bookmark>>");
+        builder.Writeln("<</if>>");
+        builder.Writeln("<<if [sec.Level == 2]>>");
+        builder.Writeln("  <<bookmark [sec.Bookmark]>><<[sec.Title]>> <</bookmark>>");
+        builder.Writeln("<</if>>");
+        builder.Writeln("<</foreach>>");
+        builder.Writeln();
 
-        // Insert a heading for the section title. Use Heading 1 style.
+        // Page break before the actual content.
+        builder.InsertBreak(BreakType.PageBreak);
+
+        // -----------------------------------------------------------------
+        // 3. Insert headings placeholder using LINQ Reporting tags.
+        // -----------------------------------------------------------------
+        builder.Writeln("<<foreach [sec in Sections]>>");
+        // Apply Heading 1 style for all sections (simplified).
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("<<[section.Title]>>");
-
-        // Insert the section content as normal paragraph text.
+        builder.Writeln("<<bookmark [sec.Bookmark]>><<[sec.Title]>> <</bookmark>>");
+        // Reset style to Normal after heading.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("<<[section.Content]>>");
-        builder.Writeln(); // Blank line between sections.
-
-        // End the foreach block.
+        builder.Writeln();
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
+        // Save the template.
         templateDoc.Save(templatePath);
 
         // -----------------------------------------------------------------
-        // 2. Load the template and build the report using LINQ Reporting.
+        // 4. Load the template for report generation.
         // -----------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
+        Document doc = new Document(templatePath);
 
-        // Sample data model.
+        // -----------------------------------------------------------------
+        // 5. Prepare sample data model.
+        // -----------------------------------------------------------------
         ReportModel model = new()
         {
             Sections = new()
             {
-                new Section { Title = "Introduction", Content = "This is the introduction section." },
-                new Section { Title = "Usage", Content = "Details on how to use the application." },
-                new Section { Title = "Conclusion", Content = "Final thoughts and summary." }
+                new Section { Title = "Introduction", Level = 1, Bookmark = "Intro" },
+                new Section { Title = "Background", Level = 1, Bookmark = "Background" },
+                new Section { Title = "Details", Level = 1, Bookmark = "Details" },
+                new Section { Title = "Subsection A", Level = 2, Bookmark = "SubA" },
+                new Section { Title = "Subsection B", Level = 2, Bookmark = "SubB" },
+                new Section { Title = "Conclusion", Level = 1, Bookmark = "Conclusion" }
             }
         };
 
-        // Build the report.
+        // -----------------------------------------------------------------
+        // 6. Build the report using LINQ Reporting Engine.
+        // -----------------------------------------------------------------
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "Model");
+        engine.BuildReport(doc, model, "model");
 
-        // Update fields to generate the Table of Contents.
-        reportDoc.UpdateFields();
-
-        // Save the final report.
-        reportDoc.Save(reportPath);
+        // -----------------------------------------------------------------
+        // 7. Save the generated report.
+        // -----------------------------------------------------------------
+        doc.Save(resultPath);
     }
-}
-
-// ---------------------------------------------------------------------
-// Data model classes.
-// ---------------------------------------------------------------------
-public class ReportModel
-{
-    public List<Section> Sections { get; set; } = new();
-}
-
-public class Section
-{
-    public string Title { get; set; } = string.Empty;
-    public string Content { get; set; } = string.Empty;
 }

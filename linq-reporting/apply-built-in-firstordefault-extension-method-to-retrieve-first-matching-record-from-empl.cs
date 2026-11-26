@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -9,6 +10,7 @@ public class Employee
 {
     public string Name { get; set; } = "";
     public int Age { get; set; }
+    public string Position { get; set; } = "";
 }
 
 public class ReportModel
@@ -20,33 +22,35 @@ public class Program
 {
     public static void Main()
     {
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
         // Prepare sample data.
         var model = new ReportModel
         {
             Employees = new List<Employee>
             {
-                new Employee { Name = "Alice", Age = 28 },
-                new Employee { Name = "Bob", Age = 35 },
-                new Employee { Name = "Charlie", Age = 42 }
+                new() { Name = "Alice", Age = 28, Position = "Developer" },
+                new() { Name = "Bob", Age = 35, Position = "Manager" },
+                new() { Name = "Charlie", Age = 42, Position = "Director" }
             }
         };
 
         // Create a template document with a LINQ Reporting tag that uses FirstOrDefault.
-        string templatePath = "Template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("First employee over 30: <<[Employees.FirstOrDefault(e => e.Age > 30).Name]>>");
-        templateDoc.Save(templatePath);
+        var templatePath = "Template.docx";
+        var builder = new DocumentBuilder();
+        builder.Writeln("First employee over 30: <<[Employees.FirstOrDefault(p => p.Age > 30).Name]>>");
+        builder.Document.Save(templatePath);
 
-        // Load the template for report generation.
+        // Load the template.
         var doc = new Document(templatePath);
 
-        // Build the report using the model as the root object named "model".
+        // Build the report.
         var engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
         // Save the generated report.
-        string outputPath = "Report.docx";
+        var outputPath = "Report.docx";
         doc.Save(outputPath);
     }
 }

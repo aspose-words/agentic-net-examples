@@ -1,73 +1,73 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-public class ReportExample
+namespace LinqReportingConversionExample
 {
-    public static void Main()
+    // Custom type with an explicit conversion operator to decimal.
+    public class Price
     {
-        // Create a template document programmatically.
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        public decimal Value { get; set; }
 
-        // Insert a foreach block that iterates over Items.
-        builder.Writeln("<<foreach [item in Items]>>");
-        // Explicitly cast the custom type to string inside the expression.
-        builder.Writeln("<<[(string)item.Value]>>");
-        builder.Writeln("<</foreach>>");
+        public Price(decimal value) => Value = value;
 
-        // Save the template to a local file.
-        const string templatePath = "template.docx";
-        templateDoc.Save(templatePath);
+        // Explicit conversion from Price to decimal.
+        public static explicit operator decimal(Price p) => p.Value;
 
-        // Load the template back for report generation.
-        Document loadedTemplate = new Document(templatePath);
-
-        // Prepare sample data.
-        ReportModel model = new()
-        {
-            Items = new()
-            {
-                new Item { Value = new CustomValue(10) },
-                new Item { Value = new CustomValue(20) },
-                new Item { Value = new CustomValue(30) }
-            }
-        };
-
-        // Build the report.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(loadedTemplate, model, "model");
-
-        // Save the generated report.
-        const string outputPath = "output.docx";
-        loadedTemplate.Save(outputPath);
+        // Optional: provide a string representation.
+        public override string ToString() => Value.ToString("C");
     }
-}
 
-// Wrapper class for the root data source.
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
+    // Model class used as the root data source for the report.
+    public class Order
+    {
+        public int Id { get; set; }
 
-// Sample item class containing the custom type.
-public class Item
-{
-    public CustomValue Value { get; set; } = new();
-}
+        // Initialize to avoid nullable warnings.
+        public Price Price { get; set; } = null!;
+    }
 
-// Custom type with an explicit conversion operator to string.
-public struct CustomValue
-{
-    public int Number { get; set; }
+    class Program
+    {
+        static void Main()
+        {
+            // Paths for the template and the generated report.
+            const string templatePath = "Template.docx";
+            const string reportPath = "Report.docx";
 
-    public CustomValue(int number) => Number = number;
+            // -------------------------------------------------
+            // Create the template document programmatically.
+            // -------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-    // Explicit conversion to string.
-    public static explicit operator string(CustomValue value) => $"CustomValue: {value.Number}";
+            // Insert simple text and LINQ Reporting tags.
+            builder.Writeln("Order ID: <<[order.Id]>>");
+            // Explicitly cast the custom type to decimal within the expression.
+            builder.Writeln("Order Price: <<[(decimal)order.Price]>>");
+
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
+
+            // -------------------------------------------------
+            // Load the template and prepare the data source.
+            // -------------------------------------------------
+            Document doc = new Document(templatePath);
+
+            Order order = new Order
+            {
+                Id = 1001,
+                Price = new Price(199.99m)
+            };
+
+            // -------------------------------------------------
+            // Build the report using Aspose.Words LINQ Reporting.
+            // -------------------------------------------------
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(doc, order, "order");
+
+            // Save the generated report.
+            doc.Save(reportPath);
+        }
+    }
 }

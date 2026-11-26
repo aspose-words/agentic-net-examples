@@ -8,51 +8,47 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some environments)
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Create output directory
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Prepare sample data model
-        var model = new ReportModel
-        {
-            Title = "Sample Report",
-            JsonData = JObject.Parse("{\"Name\":\"John Doe\",\"Age\":30}")
-        };
-        // Populate convenient properties from JSON
-        model.Name = model.JsonData["Name"]?.ToString() ?? string.Empty;
-        model.Age = model.JsonData["Age"]?.ToObject<int>() ?? 0;
+        // Build the template document with LINQ Reporting tags
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Create a template document with LINQ Reporting tags
-        const string templatePath = "Template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Value of Math.PI: <<[model.MathPI]>>");
+        builder.Writeln("JSON value (JObject.Parse): <<[model.JsonValue]>>");
 
-        builder.Writeln("<<[model.Title]>>");
-        builder.Writeln("Current Date: <<[model.CurrentDate]>>");
-        builder.Writeln("Name from JSON: <<[model.Name]>>");
-        builder.Writeln("Age from JSON: <<[model.Age]>>");
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        template.Save(templatePath);
 
-        templateDoc.Save(templatePath);
+        // Prepare the model that supplies the data for the template
+        ReportModel model = new ReportModel();
 
         // Load the template for report generation
-        var reportDoc = new Document(templatePath);
-        var engine = new ReportingEngine();
+        Document reportDoc = new Document(templatePath);
 
         // Build the report
+        ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(reportDoc, model, "model");
 
         // Save the generated report
-        const string outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+        string reportPath = Path.Combine(outputDir, "Report.docx");
+        reportDoc.Save(reportPath);
 
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+        Console.WriteLine($"Report generated at: {reportPath}");
     }
 
+    // Model class exposing the values used in the template
     public class ReportModel
     {
-        public string Title { get; set; } = string.Empty;
-        public JObject JsonData { get; set; } = new();
-        public string Name { get; set; } = string.Empty;
-        public int Age { get; set; }
-        public DateTime CurrentDate => DateTime.Now;
+        public double MathPI { get; set; } = Math.PI;
+        public int JsonValue { get; set; }
+
+        public ReportModel()
+        {
+            JObject obj = JObject.Parse("{\"value\":123}");
+            JsonValue = (int)obj["value"]!;
+        }
     }
 }

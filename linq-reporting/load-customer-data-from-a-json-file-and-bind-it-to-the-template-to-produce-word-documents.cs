@@ -4,22 +4,25 @@ using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
 using Newtonsoft.Json;
 
 namespace LinqReportingExample
 {
-    // Data model classes
+    // Data models
     public class Customer
     {
         public string Name { get; set; } = "";
         public string Email { get; set; } = "";
-        public List<Order> Orders { get; set; } = new();
+        public string Phone { get; set; } = "";
+        public Address Address { get; set; } = new();
     }
 
-    public class Order
+    public class Address
     {
-        public string Product { get; set; } = "";
-        public int Quantity { get; set; }
+        public string Street { get; set; } = "";
+        public string City { get; set; } = "";
+        public string Country { get; set; } = "";
     }
 
     public class ReportModel
@@ -31,11 +34,11 @@ namespace LinqReportingExample
     {
         public static void Main()
         {
-            // Register code page provider for Aspose.Words if needed
+            // Register code page provider (required by Aspose.Words for some encodings)
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            // Create sample JSON data file
-            const string jsonFileName = "customers.json";
+            // Prepare sample JSON data
+            string jsonPath = "customers.json";
             var sampleData = new ReportModel
             {
                 Customers = new List<Customer>
@@ -44,56 +47,81 @@ namespace LinqReportingExample
                     {
                         Name = "Alice Johnson",
                         Email = "alice@example.com",
-                        Orders = new List<Order>
+                        Phone = "+1-555-0100",
+                        Address = new Address
                         {
-                            new Order { Product = "Laptop", Quantity = 1 },
-                            new Order { Product = "Mouse", Quantity = 2 }
+                            Street = "123 Maple St",
+                            City = "Springfield",
+                            Country = "USA"
                         }
                     },
                     new Customer
                     {
                         Name = "Bob Smith",
                         Email = "bob@example.com",
-                        Orders = new List<Order>
+                        Phone = "+1-555-0200",
+                        Address = new Address
                         {
-                            new Order { Product = "Keyboard", Quantity = 1 }
+                            Street = "456 Oak Ave",
+                            City = "Rivertown",
+                            Country = "USA"
                         }
                     }
                 }
             };
-            File.WriteAllText(jsonFileName, JsonConvert.SerializeObject(sampleData, Formatting.Indented));
+            File.WriteAllText(jsonPath, JsonConvert.SerializeObject(sampleData, Formatting.Indented));
 
-            // Create the LINQ Reporting template programmatically
-            const string templateFileName = "Template.docx";
+            // Load JSON data into model
+            string jsonContent = File.ReadAllText(jsonPath);
+            var model = JsonConvert.DeserializeObject<ReportModel>(jsonContent) ?? new ReportModel();
+
+            // Create template document with LINQ Reporting tags
+            string templatePath = "template.docx";
             var templateDoc = new Document();
             var builder = new DocumentBuilder(templateDoc);
 
             builder.Writeln("Customer Report");
+            builder.Writeln();
+
+            // Begin foreach block
             builder.Writeln("<<foreach [c in Customers]>>");
-            builder.Writeln("Name: <<[c.Name]>>");
-            builder.Writeln("Email: <<[c.Email]>>");
-            builder.Writeln("Orders:");
-            builder.Writeln("<<foreach [o in c.Orders]>>");
-            builder.Writeln("- <<[o.Product]>> (Qty: <<[o.Quantity]>>)");
+
+            // Table definition inside foreach
+            Table table = builder.StartTable();
+
+            // Header row
+            builder.InsertCell(); builder.Writeln("Name");
+            builder.InsertCell(); builder.Writeln("Email");
+            builder.InsertCell(); builder.Writeln("Phone");
+            builder.InsertCell(); builder.Writeln("City");
+            builder.EndRow();
+
+            // Data row (will be repeated for each customer)
+            builder.InsertCell(); builder.Writeln("<<[c.Name]>>");
+            builder.InsertCell(); builder.Writeln("<<[c.Email]>>");
+            builder.InsertCell(); builder.Writeln("<<[c.Phone]>>");
+            builder.InsertCell(); builder.Writeln("<<[c.Address.City]>>");
+            builder.EndRow();
+
+            // End of table
+            builder.EndTable();
+
+            // End foreach block
             builder.Writeln("<</foreach>>");
-            builder.Writeln("<</foreach>>");
 
-            templateDoc.Save(templateFileName);
+            // Save the template
+            templateDoc.Save(templatePath);
 
-            // Load JSON data into the model
-            var jsonContent = File.ReadAllText(jsonFileName);
-            var model = JsonConvert.DeserializeObject<ReportModel>(jsonContent) ?? new ReportModel();
+            // Load the template for reporting
+            var reportDoc = new Document(templatePath);
 
-            // Load the template document
-            var doc = new Document(templateFileName);
-
-            // Build the report using LINQ Reporting Engine
+            // Build the report
             var engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
+            engine.BuildReport(reportDoc, model, "model");
 
-            // Save the generated report
-            const string outputFileName = "Report.docx";
-            doc.Save(outputFileName);
+            // Save the final report
+            string outputPath = "CustomerReport.docx";
+            reportDoc.Save(outputPath);
         }
     }
 }

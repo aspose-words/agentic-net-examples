@@ -1,19 +1,20 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
+using System.Text;
 
-namespace AsposeWordsLinqReportingExample
+namespace LinqReportingNumberedList
 {
-    // Root data model matching the JSON structure.
+    // Root data model for the instruction manual.
     public class Manual
     {
         public List<Step> Steps { get; set; } = new();
     }
 
+    // Individual step model.
     public class Step
     {
         public string Description { get; set; } = string.Empty;
@@ -23,59 +24,54 @@ namespace AsposeWordsLinqReportingExample
     {
         public static void Main()
         {
-            // Register code page provider (required for some encodings).
+            // Register code page provider for Aspose.Words (required for some encodings).
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
             // Prepare sample JSON data.
-            string jsonContent = @"{
-  ""Steps"": [
-    { ""Description"": ""Gather all necessary materials."" },
-    { ""Description"": ""Prepare the workspace and tools."" },
-    { ""Description"": ""Assemble the components in order."" },
-    { ""Description"": ""Test the assembled product."" },
-    { ""Description"": ""Clean up the area."" }
-  ]
-}";
-            // Write JSON to a local file.
-            const string jsonPath = "steps.json";
-            File.WriteAllText(jsonPath, jsonContent, Encoding.UTF8);
+            string jsonPath = "steps.json";
+            var sampleSteps = new Manual
+            {
+                Steps = new List<Step>
+                {
+                    new Step { Description = "Gather all required materials." },
+                    new Step { Description = "Set up the workspace safely." },
+                    new Step { Description = "Follow the assembly instructions step by step." },
+                    new Step { Description = "Verify the final product for quality." }
+                }
+            };
+            File.WriteAllText(jsonPath, JsonConvert.SerializeObject(sampleSteps, Formatting.Indented));
 
-            // Deserialize JSON into the data model.
-            Manual manual = JsonConvert.DeserializeObject<Manual>(jsonContent)!;
+            // Load JSON data into the model.
+            Manual manual = JsonConvert.DeserializeObject<Manual>(File.ReadAllText(jsonPath))!;
 
-            // Create the LINQ Reporting template programmatically.
-            const string templatePath = "template.docx";
-            Document templateDoc = new();
-            DocumentBuilder builder = new(templateDoc);
+            // Create the template document programmatically.
+            string templatePath = "template.docx";
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
             // Title.
             builder.Writeln("Instruction Manual");
-            builder.Writeln(); // Blank line.
+            builder.Writeln();
 
-            // Begin foreach block over the Steps collection.
+            // Begin foreach loop over Steps.
             builder.Writeln("<<foreach [step in Steps]>>");
-
-            // Apply numbering to each step description.
-            builder.ListFormat.ApplyNumberDefault();
-            builder.Writeln("<<[step.Description]>>");
-            builder.ListFormat.RemoveNumbers();
-
-            // End foreach block.
+            // Numbered paragraph with restartNum to start numbering at 1 for each item.
+            builder.Writeln("1. <<restartNum>><<[step.Description]>>");
             builder.Writeln("<</foreach>>");
 
-            // Save the template to disk.
+            // Save the template.
             templateDoc.Save(templatePath);
 
-            // Load the template for report generation.
-            Document reportDoc = new(templatePath);
+            // Load the template for reporting.
+            Document doc = new Document(templatePath);
 
             // Build the report using the LINQ Reporting engine.
-            ReportingEngine engine = new();
-            engine.BuildReport(reportDoc, manual, "manual");
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(doc, manual, "manual");
 
             // Save the final document.
-            const string outputPath = "InstructionManual.docx";
-            reportDoc.Save(outputPath);
+            string outputPath = "InstructionManual.docx";
+            doc.Save(outputPath);
         }
     }
 }

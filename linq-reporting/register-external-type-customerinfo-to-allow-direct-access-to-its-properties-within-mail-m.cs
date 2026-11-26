@@ -6,43 +6,42 @@ using Aspose.Words.Reporting;
 public class CustomerInfo
 {
     public string Name { get; set; } = "John Doe";
-    public string Email { get; set; } = "john.doe@example.com";
+    public string Email { get; set; } = "john@example.com";
+}
+
+// Wrapper model that exposes the external type as a property.
+public class ReportModel
+{
+    public CustomerInfo CustomerInfo { get; set; } = new CustomerInfo();
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output directory
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        string resultPath = Path.Combine(outputDir, "Result.docx");
+        // Ensure output folder exists.
+        Directory.CreateDirectory("Output");
 
-        // Create template document with LINQ Reporting tags
+        // Create a template document with LINQ Reporting tags that reference the wrapper model.
+        string templatePath = "Template.docx";
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Customer Report");
-        builder.Writeln("Name : <<[model.Name]>>");
-        builder.Writeln("Email: <<[model.Email]>>");
+        builder.Writeln("Customer Name: <<[model.CustomerInfo.Name]>>");
+        builder.Writeln("Customer Email: <<[model.CustomerInfo.Email]>>");
         templateDoc.Save(templatePath);
 
-        // Load the template for reporting
-        Document doc = new Document(templatePath);
+        // Load the template for reporting.
+        Document loadedTemplate = new Document(templatePath);
 
-        // Prepare model data
-        CustomerInfo model = new CustomerInfo();
-
-        // Configure ReportingEngine
+        // Initialize the reporting engine.
         ReportingEngine engine = new ReportingEngine();
 
-        // Build the report (root object is the model, root name is "model")
-        bool success = engine.BuildReport(doc, model, "model");
+        // Build the report using the wrapper model as the root object.
+        ReportModel model = new ReportModel();
+        engine.BuildReport(loadedTemplate, model, "model");
 
-        // Save the generated report
-        doc.Save(resultPath);
-
-        // Indicate completion
-        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to: {resultPath}");
+        // Save the generated report.
+        string outputPath = Path.Combine("Output", "Report.docx");
+        loadedTemplate.Save(outputPath);
     }
 }

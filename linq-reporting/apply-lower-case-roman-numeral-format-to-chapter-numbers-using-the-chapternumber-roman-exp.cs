@@ -3,29 +3,17 @@ using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using System.Text;
 
 namespace LinqReportingRomanNumerals
 {
-    public class Chapter
-    {
-        public int ChapterNumber { get; set; } = 0;
-        public string Title { get; set; } = string.Empty;
-    }
-
-    public class ReportModel
-    {
-        public List<Chapter> Chapters { get; set; } = new();
-    }
-
     public class Program
     {
         public static void Main()
         {
-            // Register code page provider for any legacy encodings.
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            // Register code page provider (required for some encodings)
+            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-            // Prepare sample data.
+            // Sample data model
             var model = new ReportModel
             {
                 Chapters = new List<Chapter>
@@ -36,33 +24,38 @@ namespace LinqReportingRomanNumerals
                 }
             };
 
-            // Create a template document programmatically.
-            var templatePath = "Template.docx";
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
+            // Create the template document
+            string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
 
-            builder.Writeln("Book Chapters");
-            builder.Writeln();
-
-            // LINQ Reporting tags.
+            builder.Writeln("Book Report");
             builder.Writeln("<<foreach [c in Chapters]>>");
-            // Apply lower‑case Roman numeral format to the chapter number.
+            // Apply lower‑case Roman numeral format using the field code expression
             builder.Writeln("{=c.ChapterNumber:roman}. <<[c.Title]>>");
             builder.Writeln("<</foreach>>");
 
-            // Save the template.
-            doc.Save(templatePath);
+            templateDoc.Save(templatePath);
 
-            // Load the template for reporting.
+            // Load the template and build the report
             var reportDoc = new Document(templatePath);
             var engine = new ReportingEngine();
-
-            // Build the report using the model as the root object named "model".
             engine.BuildReport(reportDoc, model, "model");
 
-            // Save the generated report.
-            var outputPath = "Report.docx";
+            // Save the generated report
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
             reportDoc.Save(outputPath);
         }
+    }
+
+    public class ReportModel
+    {
+        public List<Chapter> Chapters { get; set; } = new();
+    }
+
+    public class Chapter
+    {
+        public int ChapterNumber { get; set; }
+        public string Title { get; set; } = "";
     }
 }

@@ -10,18 +10,19 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words (required on .NET Core/5+)
+        // Register code page provider for Aspose.Words if needed.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare sample JSON data
-        var model = new ReportModel
+        // Prepare sample JSON data.
+        string jsonPath = "data.json";
+        var sampleData = new Root
         {
             Categories = new List<Category>
             {
                 new Category
                 {
                     Name = "Fruits",
-                    Items = new List<string> { "Apple", "Banana", "Cherry" }
+                    Items = new List<string> { "Apple", "Banana", "Orange" }
                 },
                 new Category
                 {
@@ -30,56 +31,58 @@ public class Program
                 }
             }
         };
+        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(sampleData, Formatting.Indented));
 
-        // Serialize to a local JSON file (optional, demonstrates JSON source)
-        const string jsonPath = "data.json";
-        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(model, Formatting.Indented));
-
-        // Create the LINQ Reporting template programmatically
-        const string templatePath = "template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Create the LINQ Reporting template programmatically.
+        string templatePath = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
         // Title
         builder.Writeln("Category Report");
         builder.Writeln();
 
-        // Outer foreach for categories
+        // Outer foreach for categories.
         builder.Writeln("<<foreach [cat in Categories]>>");
-        // Category name as a bullet (using a dash)
-        builder.Writeln("- <<[cat.Name]>>");
-        // Inner foreach for items within a category
-        builder.Writeln("<<foreach [itm in cat.Items]>>");
-        // Item bullet, indented with a tab for visual nesting
-        builder.Writeln("\t- <<[itm]>>");
+        // Category name as a heading.
+        builder.Writeln("<<[cat.Name]>>");
+        // Inner foreach for items.
+        builder.Writeln("<<foreach [item in cat.Items]>>");
+        // Bullet point for each item.
+        builder.Writeln("• <<[item]>>");
         builder.Writeln("<</foreach>>");
+        // End of outer foreach.
         builder.Writeln("<</foreach>>");
 
-        // Save the template
-        templateDoc.Save(templatePath);
+        // Save the template.
+        doc.Save(templatePath);
 
-        // Load the template for report generation
-        var doc = new Document(templatePath);
+        // Load the template for reporting.
+        var reportDoc = new Document(templatePath);
 
-        // Build the report using the model as the root object named "model"
+        // Load JSON data into the model.
+        var jsonContent = File.ReadAllText(jsonPath);
+        var model = JsonConvert.DeserializeObject<Root>(jsonContent)!;
+
+        // Build the report using LINQ Reporting Engine.
         var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        engine.BuildReport(reportDoc, model, "root");
 
-        // Save the final document
-        const string outputPath = "output.docx";
-        doc.Save(outputPath);
+        // Save the generated report.
+        string outputPath = "report.docx";
+        reportDoc.Save(outputPath);
     }
 }
 
-// Root model class
-public class ReportModel
+// Root data model.
+public class Root
 {
     public List<Category> Categories { get; set; } = new();
 }
 
-// Category class with a collection of items
+// Category model.
 public class Category
 {
-    public string Name { get; set; } = "";
+    public string Name { get; set; } = string.Empty;
     public List<string> Items { get; set; } = new();
 }

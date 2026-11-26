@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Tables;
@@ -8,87 +9,94 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the template and the generated report.
-        const string templatePath = "Template.docx";
-        const string reportPath = "Report.docx";
+        // Prepare output folder
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
         // -----------------------------------------------------------------
-        // Create the template document programmatically.
+        // Create the template document with a table and LINQ Reporting tags
         // -----------------------------------------------------------------
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Begin the foreach loop over Items.
+        // Begin foreach loop over Items
         builder.Writeln("<<foreach [item in Items]>>");
 
-        // Start the table that will be repeated for each item.
+        // Table that will be repeated for each item
         Table table = builder.StartTable();
 
-        // Header row.
-        builder.InsertCell();
-        builder.Writeln("Index");
+        // Header row (appears for each item – acceptable for this simple example)
         builder.InsertCell();
         builder.Writeln("Name");
+        builder.InsertCell();
+        builder.Writeln("Value");
         builder.EndRow();
 
-        // Data row – will be generated for each item.
+        // Data row with conditional background color
         builder.InsertCell();
-        builder.Writeln("<<[item.Index]>>");
-        builder.InsertCell();
-
-        // Conditional background color: yellow when IsHighlighted is true.
         builder.Writeln(
-            "<<if [item.IsHighlighted]>>" +
+            "<<if [item.IsImportant]>>" +
             "<<backColor [\"Yellow\"]>><<[item.Name]>> <</backColor>><</if>>" +
-            "<<if [!item.IsHighlighted]>>" +
+            "<<if [item.IsImportant == false]>>" +
             "<<[item.Name]>>" +
             "<</if>>");
 
-        builder.EndRow();
+        builder.InsertCell();
+        builder.Writeln(
+            "<<if [item.IsImportant]>>" +
+            "<<backColor [\"Yellow\"]>><<[item.Value]>> <</backColor>><</if>>" +
+            "<<if [item.IsImportant == false]>>" +
+            "<<[item.Value]>>" +
+            "<</if>>");
 
-        // End the table and the foreach block.
+        builder.EndRow();
         builder.EndTable();
+
+        // End foreach loop
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
-        doc.Save(templatePath);
+        // Save the template
+        templateDoc.Save(templatePath);
 
         // -----------------------------------------------------------------
-        // Load the template and build the report.
+        // Load the template and build the report
         // -----------------------------------------------------------------
-        var templateDoc = new Document(templatePath);
+        Document reportDoc = new Document(templatePath);
 
-        var model = new ReportModel
+        // Sample data model
+        ReportModel model = new()
         {
             Items = new()
             {
-                new Item { Index = 1, Name = "Alice",   IsHighlighted = false },
-                new Item { Index = 2, Name = "Bob",     IsHighlighted = true  },
-                new Item { Index = 3, Name = "Charlie", IsHighlighted = false },
-                new Item { Index = 4, Name = "Diana",   IsHighlighted = true  },
-                new Item { Index = 5, Name = "Eve",     IsHighlighted = false }
+                new Item { Name = "Alpha",   Value = 100, IsImportant = true },
+                new Item { Name = "Beta",    Value = 200, IsImportant = false },
+                new Item { Name = "Gamma",   Value = 300, IsImportant = true },
+                new Item { Name = "Delta",   Value = 400, IsImportant = false },
+                new Item { Name = "Epsilon", Value = 500, IsImportant = true }
             }
         };
 
-        var engine = new ReportingEngine();
-        engine.BuildReport(templateDoc, model, "model");
+        // Build the report
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Save the generated report.
-        templateDoc.Save(reportPath);
+        // Save the final document
+        string outputPath = Path.Combine(outputDir, "output.docx");
+        reportDoc.Save(outputPath);
     }
 }
 
-// ---------------------------------------------------------------------
-// Data model classes.
-// ---------------------------------------------------------------------
+// Root data model
 public class ReportModel
 {
     public List<Item> Items { get; set; } = new();
 }
 
+// Item data class
 public class Item
 {
-    public int Index { get; set; }
     public string Name { get; set; } = string.Empty;
-    public bool IsHighlighted { get; set; }
+    public int Value { get; set; }
+    public bool IsImportant { get; set; }
 }

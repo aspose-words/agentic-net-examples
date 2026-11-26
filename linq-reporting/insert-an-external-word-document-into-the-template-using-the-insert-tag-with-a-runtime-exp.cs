@@ -1,61 +1,68 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using System.Text;
 
-namespace InsertExternalDocExample
+public class ReportModel
 {
-    public class ReportModel
-    {
-        // Path to the external document to be inserted.
-        public string ExternalDocPath { get; set; } = string.Empty;
-    }
+    // Path to the external Word document to be inserted.
+    public string ExternalDocPath { get; set; } = string.Empty;
+}
 
-    public class Program
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
+        // Register code page provider for any encoding needs.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Prepare file names.
+        string externalDocPath = "external.docx";
+        string templatePath = "template.docx";
+        string outputPath = "output.docx";
+
+        // -----------------------------------------------------------------
+        // Create the external document that will be inserted into the report.
+        // -----------------------------------------------------------------
+        var externalDoc = new Document();
+        var externalBuilder = new DocumentBuilder(externalDoc);
+        externalBuilder.Writeln("This is the content of the external document.");
+        externalDoc.Save(externalDocPath);
+
+        // ---------------------------------------------------------------
+        // Create the template document containing the <<doc>> insert tag.
+        // ---------------------------------------------------------------
+        var templateDoc = new Document();
+        var templateBuilder = new DocumentBuilder(templateDoc);
+        templateBuilder.Writeln("Template start.");
+        // Insert tag with a runtime expression that resolves to the external document path.
+        templateBuilder.Writeln("<<doc [model.ExternalDocPath]>>");
+        templateBuilder.Writeln("Template end.");
+        templateDoc.Save(templatePath);
+
+        // -------------------------------------------------
+        // Load the template for report generation.
+        // -------------------------------------------------
+        var loadedTemplate = new Document(templatePath);
+
+        // -------------------------------------------------
+        // Prepare the root data model.
+        // -------------------------------------------------
+        var model = new ReportModel
         {
-            // Register code page provider (required for Aspose.Words).
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            ExternalDocPath = externalDocPath
+        };
 
-            // Prepare directories.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-            Directory.CreateDirectory(outputDir);
+        // -------------------------------------------------
+        // Build the report using the LINQ Reporting engine.
+        // -------------------------------------------------
+        var engine = new ReportingEngine();
+        engine.BuildReport(loadedTemplate, model, "model");
 
-            // Create an external Word document.
-            string externalDocPath = Path.Combine(outputDir, "External.docx");
-            Document externalDoc = new Document();
-            DocumentBuilder extBuilder = new DocumentBuilder(externalDoc);
-            extBuilder.Writeln("This is the content of the external document.");
-            externalDoc.Save(externalDocPath);
-
-            // Create a template document with an insert tag that references the external document at runtime.
-            string templatePath = Path.Combine(outputDir, "Template.docx");
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-            builder.Writeln("Report Start");
-            // Insert tag using a runtime expression.
-            builder.Writeln("<<doc [model.ExternalDocPath]>>");
-            builder.Writeln("Report End");
-            templateDoc.Save(templatePath);
-
-            // Load the template for reporting.
-            Document loadedTemplate = new Document(templatePath);
-
-            // Prepare the data model.
-            ReportModel model = new ReportModel
-            {
-                ExternalDocPath = externalDocPath
-            };
-
-            // Build the report.
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(loadedTemplate, model, "model");
-
-            // Save the final report.
-            string resultPath = Path.Combine(outputDir, "ReportOutput.docx");
-            loadedTemplate.Save(resultPath);
-        }
+        // -------------------------------------------------
+        // Save the final document.
+        // -------------------------------------------------
+        loadedTemplate.Save(outputPath);
     }
 }

@@ -5,69 +5,62 @@ using Aspose.Words.Drawing;
 using Aspose.Words.Reporting;
 using System.Text;
 
-public class Program
+namespace LinqReportingImageExample
 {
-    public static void Main()
+    public class Program
     {
-        // Register code page provider (required for Aspose.Words).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Prepare output directories.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
-
-        // Create a sample PNG image (1x1 pixel, red).
-        string imagePath = Path.Combine(outputDir, "sample.png");
-        byte[] pngBytes = Convert.FromBase64String(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BAQAE/wJ" +
-            "Zc6cAAAAASUVORK5CYII=");
-        File.WriteAllBytes(imagePath, pngBytes);
-
-        // -----------------------------------------------------------------
-        // Step 1: Create the LINQ Reporting template with an image tag.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Insert a textbox that will hold the image tag.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
-        builder.MoveTo(textBox.FirstParagraph);
-        builder.Write("<<image [model.ImagePath] -fitSize>>");
-
-        // Save the template to disk.
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // Step 2: Load the template for report generation.
-        // -----------------------------------------------------------------
-        Document doc = new Document(templatePath);
-
-        // -----------------------------------------------------------------
-        // Step 3: Prepare the data model.
-        // -----------------------------------------------------------------
-        ReportModel model = new ReportModel
+        public static void Main()
         {
-            ImagePath = imagePath
-        };
+            // Register code page provider (required for Aspose.Words).
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // -----------------------------------------------------------------
-        // Step 4: Build the report using LINQ Reporting Engine.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+            // Prepare a folder for generated files.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+            Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // Step 5: Save the generated report.
-        // -----------------------------------------------------------------
-        string resultPath = Path.Combine(outputDir, "report.docx");
-        doc.Save(resultPath);
+            // Create a sample PNG image (1x1 pixel, red) and save it.
+            string imagePath = Path.Combine(outputDir, "sample.png");
+            byte[] pngBytes = Convert.FromBase64String(
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK2cAAAAASUVORK5CYII=");
+            File.WriteAllBytes(imagePath, pngBytes);
+
+            // Define the data model.
+            ReportModel model = new()
+            {
+                ImagePath = imagePath
+            };
+
+            // Create the template document with an image tag inside a textbox.
+            string templatePath = Path.Combine(outputDir, "Template.docx");
+            Document templateDoc = new();
+            DocumentBuilder builder = new(templateDoc);
+
+            // Insert a textbox shape to host the image tag.
+            Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
+            builder.MoveTo(textBox.FirstParagraph);
+            builder.Write("<<image [model.ImagePath] -fitSize>>");
+
+            // Save the template.
+            templateDoc.Save(templatePath);
+
+            // Load the template for reporting.
+            Document reportDoc = new(templatePath);
+
+            // Build the report using LINQ Reporting Engine.
+            ReportingEngine engine = new();
+            engine.Options = ReportBuildOptions.None;
+            engine.BuildReport(reportDoc, model, "model");
+
+            // Save the final report.
+            string reportPath = Path.Combine(outputDir, "Report.docx");
+            reportDoc.Save(reportPath);
+        }
     }
-}
 
-// Data model used by the template.
-public class ReportModel
-{
-    // Path to the image file that will be inserted.
-    public string ImagePath { get; set; } = string.Empty;
+    // Public data model class.
+    public class ReportModel
+    {
+        // Path to the image file to be inserted.
+        public string ImagePath { get; set; } = string.Empty;
+    }
 }

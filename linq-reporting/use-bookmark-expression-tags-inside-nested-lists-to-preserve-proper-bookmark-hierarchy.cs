@@ -1,99 +1,120 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace LinqReportingBookmarkExample
 {
-    public static void Main()
+    // Root data model
+    public class ReportModel
     {
-        // Register code page provider (required by Aspose.Words for some encodings)
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        public List<Section> Sections { get; set; } = new();
+    }
 
-        // Prepare sample data model
-        ReportModel model = new()
+    // Section with a bookmark name and nested subsections
+    public class Section
+    {
+        public string Title { get; set; } = "";
+        public string BookmarkName { get; set; } = "";
+        public List<SubSection> SubSections { get; set; } = new();
+    }
+
+    // Subsection with its own bookmark name
+    public class SubSection
+    {
+        public string Title { get; set; } = "";
+        public string BookmarkName { get; set; } = "";
+    }
+
+    class Program
+    {
+        static void Main()
         {
-            Categories = new()
+            // Paths for template and output
+            string templatePath = "Template.docx";
+            string outputPath = "Report.docx";
+
+            // -------------------------------------------------
+            // Create the template document with LINQ Reporting tags
+            // -------------------------------------------------
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
+
+            // Title
+            builder.Writeln("Report with Nested Bookmarks");
+            builder.Writeln();
+
+            // Begin outer foreach over sections
+            builder.Writeln("<<foreach [section in Model.Sections]>>");
+
+            // Outer bookmark for each section
+            builder.Writeln("<<bookmark [section.BookmarkName]>>");
+            builder.Writeln("Section: <<[section.Title]>>");
+            builder.Writeln("<</bookmark>>");
+            builder.Writeln();
+
+            // Begin inner foreach over subsections
+            builder.Writeln("<<foreach [sub in section.SubSections]>>");
+
+            // Inner bookmark for each subsection
+            builder.Writeln("<<bookmark [sub.BookmarkName]>>");
+            builder.Writeln(" - Subsection: <<[sub.Title]>>");
+            builder.Writeln("<</bookmark>>");
+            builder.Writeln();
+
+            // End inner foreach
+            builder.Writeln("<</foreach>>");
+
+            // End outer foreach
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk
+            templateDoc.Save(templatePath);
+
+            // -------------------------------------------------
+            // Load the template for report generation
+            // -------------------------------------------------
+            var doc = new Document(templatePath);
+
+            // -------------------------------------------------
+            // Prepare sample data
+            // -------------------------------------------------
+            var model = new ReportModel
             {
-                new()
+                Sections = new List<Section>
                 {
-                    Name = "Fruits",
-                    Bookmark = "Bookmark_Fruits",
-                    Products = new()
+                    new Section
                     {
-                        new() { Name = "Apple", Bookmark = "Bookmark_Apple" },
-                        new() { Name = "Banana", Bookmark = "Bookmark_Banana" }
-                    }
-                },
-                new()
-                {
-                    Name = "Vegetables",
-                    Bookmark = "Bookmark_Vegetables",
-                    Products = new()
+                        Title = "Introduction",
+                        BookmarkName = "Intro",
+                        SubSections = new List<SubSection>
+                        {
+                            new SubSection { Title = "Background", BookmarkName = "Intro_Background" },
+                            new SubSection { Title = "Scope", BookmarkName = "Intro_Scope" }
+                        }
+                    },
+                    new Section
                     {
-                        new() { Name = "Carrot", Bookmark = "Bookmark_Carrot" },
-                        new() { Name = "Lettuce", Bookmark = "Bookmark_Lettuce" }
+                        Title = "Details",
+                        BookmarkName = "Details",
+                        SubSections = new List<SubSection>
+                        {
+                            new SubSection { Title = "Specifications", BookmarkName = "Details_Specs" },
+                            new SubSection { Title = "Requirements", BookmarkName = "Details_Reqs" }
+                        }
                     }
                 }
-            }
-        };
+            };
 
-        // Create template document programmatically
-        string templatePath = "template.docx";
-        Document templateDoc = new();
-        DocumentBuilder builder = new(templateDoc);
+            // -------------------------------------------------
+            // Build the report using LINQ Reporting Engine
+            // -------------------------------------------------
+            var engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "Model");
 
-        builder.Writeln("Report with nested bookmarks:");
-        builder.Writeln();
-
-        // Outer foreach for categories
-        builder.Writeln("<<foreach [cat in Model.Categories]>>");
-        // Category bookmark
-        builder.Writeln("<<bookmark [cat.Bookmark]>>");
-        builder.Writeln("<<[cat.Name]>>");
-        builder.Writeln("<</bookmark>>");
-
-        // Inner foreach for products
-        builder.Writeln("<<foreach [prod in cat.Products]>>");
-        builder.Writeln("    - <<bookmark [prod.Bookmark]>><<[prod.Name]>> <</bookmark>>");
-        builder.Writeln("<</foreach>>");
-
-        // End outer foreach
-        builder.Writeln("<</foreach>>");
-
-        // Save the template
-        templateDoc.Save(templatePath);
-
-        // Load the template for reporting
-        Document reportDoc = new(templatePath);
-
-        // Build the report using LINQ Reporting Engine
-        ReportingEngine engine = new();
-        engine.BuildReport(reportDoc, model, "Model");
-
-        // Save the generated report
-        string outputPath = "output.docx";
-        reportDoc.Save(outputPath);
+            // Save the generated report
+            doc.Save(outputPath);
+        }
     }
-}
-
-// Data model classes
-public class ReportModel
-{
-    public List<Category> Categories { get; set; } = new();
-}
-
-public class Category
-{
-    public string Name { get; set; } = "";
-    public string Bookmark { get; set; } = "";
-    public List<Product> Products { get; set; } = new();
-}
-
-public class Product
-{
-    public string Name { get; set; } = "";
-    public string Bookmark { get; set; } = "";
 }

@@ -1,14 +1,13 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
 
 public class Product
 {
-    public int Id { get; set; }
-    public string Name { get; set; } = "";
+    public string Name { get; set; } = string.Empty;
     public decimal Price { get; set; }
 }
 
@@ -21,68 +20,64 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for Aspose.Words)
+        // Register code page provider for Aspose.Words.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare sample data
+        // Sample data.
         var model = new ReportModel
         {
             Products = new List<Product>
             {
-                new Product { Id = 1, Name = "Apple", Price = 0.99m },
-                new Product { Id = 2, Name = "Banana", Price = 0.59m },
-                new Product { Id = 3, Name = "Cherry", Price = 2.49m }
+                new() { Name = "Apple", Price = 0.50m },
+                new() { Name = "Banana", Price = 0.30m },
+                new() { Name = "Cherry", Price = 0.20m }
             }
         };
 
-        // Create template document
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
+        // Create template document.
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("Product Report");
-        builder.Writeln();
+        builder.Writeln("Product List");
+        builder.StartTable();
 
-        // Header row (outside foreach)
-        var headerTable = builder.StartTable();
-        builder.InsertCell();
-        builder.Writeln("Id");
+        // Header row.
         builder.InsertCell();
         builder.Writeln("Name");
         builder.InsertCell();
         builder.Writeln("Price");
         builder.EndRow();
+
         builder.EndTable();
 
-        // Begin foreach over Products collection
-        builder.Writeln("<<foreach [p in Products]>>");
+        // Data rows using LINQ Reporting foreach tag.
+        builder.Writeln("<<foreach [p in model.Products]>>");
+        Table table = builder.StartTable();
 
-        // Table row for each product
-        var dataTable = builder.StartTable();
-        builder.InsertCell();
-        builder.Writeln("<<[p.Id]>>");
         builder.InsertCell();
         builder.Writeln("<<[p.Name]>>");
         builder.InsertCell();
         builder.Writeln("<<[p.Price]>>");
         builder.EndRow();
-        builder.EndTable();
 
-        // End foreach
+        builder.EndTable();
         builder.Writeln("<</foreach>>");
 
-        // Save the template
+        // Save the template.
         const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        templateDoc.Save(templatePath);
 
-        // Load the template for report generation
+        // Load the template for report generation.
         var reportDoc = new Document(templatePath);
 
-        // Build the report
+        // Build the report.
         var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+        bool success = engine.BuildReport(reportDoc, model, "model");
 
-        // Save the final report
-        const string reportPath = "Report.docx";
-        reportDoc.Save(reportPath);
+        // Save the generated report.
+        const string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
+
+        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to {outputPath}");
     }
 }

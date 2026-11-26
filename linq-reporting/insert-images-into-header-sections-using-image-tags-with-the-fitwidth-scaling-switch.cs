@@ -8,59 +8,56 @@ public class Program
 {
     public static void Main()
     {
-        // Ensure the output directory exists.
-        Directory.CreateDirectory("Output");
+        // Prepare output folder.
+        string outputDir = "output";
+        Directory.CreateDirectory(outputDir);
 
-        // Create a simple 1x1 PNG image and save it locally.
-        byte[] pngBytes = Convert.FromBase64String(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK0cAAAAASUVORK5CYII=");
-        string imagePath = Path.Combine("Output", "sample.png");
-        File.WriteAllBytes(imagePath, pngBytes);
+        // Create a small red dot PNG image from a Base64 string.
+        string imagePath = Path.Combine(outputDir, "sample.png");
+        const string base64Png =
+            "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFklEQVQoU2NkYGD4z0AEYBxVSFIAAQAA//8DAF6cB6cAAAAASUVORK5CYII=";
+        byte[] imageBytes = Convert.FromBase64String(base64Png);
+        File.WriteAllBytes(imagePath, imageBytes);
 
-        // Define the data model.
-        ReportModel model = new ReportModel
+        // Build the data model. Use a full absolute path so the engine can locate the image.
+        ReportModel model = new()
         {
             ImagePath = Path.GetFullPath(imagePath)
         };
 
-        // Create the template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Create the template document with a header that contains an image tag inside a textbox.
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
 
-        // Insert a header.
+        // Move to the primary header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
 
-        // Insert a textbox shape that will contain the image tag.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 50);
+        // Insert a textbox shape that will hold the image tag.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 100);
         builder.MoveTo(textBox.FirstParagraph);
-        // Image tag with fitWidth scaling switch.
+        // Image tag with -fitWidth scaling switch.
         builder.Write("<<image [model.ImagePath] -fitWidth>>");
 
-        // Add some body content (optional).
-        builder.MoveToDocumentEnd();
-        builder.Writeln("Report generated with header image.");
-
-        // Save the template to disk.
-        string templatePath = Path.Combine("Output", "Template.docx");
-        template.Save(templatePath);
+        // Save the template.
+        templateDoc.Save(templatePath);
 
         // Load the template for reporting.
-        Document report = new Document(templatePath);
+        Document reportDoc = new(templatePath);
 
-        // Build the report using LINQ Reporting Engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        bool success = engine.BuildReport(report, model, "model");
+        // Build the report using the LINQ Reporting Engine.
+        ReportingEngine engine = new();
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Save the generated report.
-        string reportPath = Path.Combine("Output", "Report.docx");
-        report.Save(reportPath);
+        // Save the final document.
+        string outputPath = Path.Combine(outputDir, "report.docx");
+        reportDoc.Save(outputPath);
     }
 }
 
-// Data model used by the LINQ Reporting template.
+// Public data model class.
 public class ReportModel
 {
-    // Path to the image file that will be inserted into the header.
+    // Absolute path to the image file to be inserted.
     public string ImagePath { get; set; } = string.Empty;
 }

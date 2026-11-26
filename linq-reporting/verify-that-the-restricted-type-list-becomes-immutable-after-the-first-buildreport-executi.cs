@@ -1,95 +1,78 @@
 using System;
-using System.IO;
-using System.Text;
-using System.Reflection;
 using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingImmutableRestrictedTypes
+public class Program
 {
-    // Simple data model used in the template.
+    public static void Main()
+    {
+        // Register code page provider (required by Aspose.Words for some encodings)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Create a simple template document with a LINQ Reporting tag.
+        string templatePath = "template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Report for: <<[model.Name]>>");
+        templateDoc.Save(templatePath);
+
+        // Define a simple data model.
+        ReportModel model = new ReportModel { Name = "John Doe" };
+
+        // Create the reporting engine.
+        ReportingEngine engine = new ReportingEngine();
+
+        // Access the (possibly non‑public) RestrictedTypes collection via reflection.
+        PropertyInfo restrictedProp = typeof(ReportingEngine).GetProperty(
+            "RestrictedTypes",
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+        if (restrictedProp == null)
+        {
+            Console.WriteLine("Unable to locate RestrictedTypes property on ReportingEngine.");
+            return;
+        }
+
+        // The collection is expected to implement IList<Type>.
+        if (restrictedProp.GetValue(engine) is not IList<Type> restrictedTypes)
+        {
+            Console.WriteLine("RestrictedTypes property does not return IList<Type>.");
+            return;
+        }
+
+        // Add the model type to the restricted list before building the report.
+        restrictedTypes.Add(typeof(ReportModel));
+
+        // Build the report for the first time.
+        bool firstBuildSuccess = engine.BuildReport(templateDoc, model, "model");
+        Console.WriteLine($"First BuildReport succeeded: {firstBuildSuccess}");
+
+        // Save the generated report.
+        string outputPath = "output.docx";
+        templateDoc.Save(outputPath);
+        Console.WriteLine($"Report saved to: {Path.GetFullPath(outputPath)}");
+
+        // Verify that the restricted types list becomes immutable after the first BuildReport.
+        try
+        {
+            // Attempt to modify the list after the report has been built.
+            restrictedTypes.Add(typeof(string));
+            Console.WriteLine("ERROR: RestrictedTypes list was modified after BuildReport – immutability test failed.");
+        }
+        catch (Exception ex)
+        {
+            // Expected path: an exception should be thrown.
+            Console.WriteLine($"RestrictedTypes list is immutable after BuildReport. Caught exception: {ex.GetType().Name} - {ex.Message}");
+        }
+    }
+
+    // Simple public data model class.
     public class ReportModel
     {
         public string Name { get; set; } = string.Empty;
-    }
-
-    public class Program
-    {
-        public static void Main()
-        {
-            // Register code page provider (required by Aspose.Words for some encodings)
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            // Prepare output folder.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-            Directory.CreateDirectory(outputDir);
-
-            // -----------------------------------------------------------------
-            // Create a template document that contains a LINQ Reporting tag.
-            // -----------------------------------------------------------------
-            string templatePath = Path.Combine(outputDir, "template.docx");
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-            builder.Writeln("<<[model.Name]>>");
-            templateDoc.Save(templatePath);
-
-            // Load the template for reporting.
-            Document doc = new Document(templatePath);
-
-            // Prepare the root data object.
-            ReportModel model = new ReportModel { Name = "Aspose Test" };
-
-            // -----------------------------------------------------------------
-            // Configure the ReportingEngine.
-            // -----------------------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
-
-            // The ReportingEngine class provides a RestrictedTypes collection that
-            // becomes read‑only after the first BuildReport call.  The property may be
-            // non‑public in some library versions, so we obtain it via reflection.
-            PropertyInfo? restrictedProp = typeof(ReportingEngine).GetProperty(
-                "RestrictedTypes",
-                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
-            if (restrictedProp == null)
-            {
-                Console.WriteLine("RestrictedTypes property not found on ReportingEngine.");
-                return;
-            }
-
-            // The property is expected to be an IList<Type>.
-            if (restrictedProp.GetValue(engine) is not IList<Type> restrictedTypes)
-            {
-                Console.WriteLine("Unable to retrieve RestrictedTypes collection.");
-                return;
-            }
-
-            // Add a type before building the report.
-            restrictedTypes.Add(typeof(ReportModel));
-
-            // Build the report.
-            bool success = engine.BuildReport(doc, model, "model");
-            Console.WriteLine($"BuildReport success: {success}");
-
-            // Save the generated report.
-            string resultPath = Path.Combine(outputDir, "result.docx");
-            doc.Save(resultPath);
-            Console.WriteLine($"Report saved to: {resultPath}");
-
-            // -----------------------------------------------------------------
-            // Verify that the RestrictedTypes collection becomes immutable after
-            // the first BuildReport execution.
-            // -----------------------------------------------------------------
-            try
-            {
-                restrictedTypes.Add(typeof(string));
-                Console.WriteLine("RestrictedTypes is still mutable (unexpected).");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"RestrictedTypes immutable as expected: {ex.GetType().Name}");
-            }
-        }
     }
 }

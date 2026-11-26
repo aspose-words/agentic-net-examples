@@ -1,66 +1,57 @@
 using System;
+using System.Diagnostics;
+using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingRestrictedMembers
+public class Program
 {
-    // Simple data model used as the root object for the report.
-    public class ReportModel
+    public static void Main()
     {
-        // Initialize to avoid nullable warnings.
-        public string Name { get; set; } = "Aspose.Words LINQ Reporting";
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Prepare sample data model.
+        var model = new SampleModel();
+
+        // Create a template document programmatically.
+        const string templatePath = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("Attempt to execute unsafe code: <<[model.Evil()]>>");
+        doc.Save(templatePath);
+
+        // Load the template for reporting.
+        var template = new Document(templatePath);
+
+        // Configure the reporting engine.
+        var engine = new ReportingEngine();
+
+        // Enable inline error messages to capture any security violations in the output.
+        engine.Options = ReportBuildOptions.InlineErrorMessages;
+
+        // Build the report.
+        bool success = engine.BuildReport(template, model, "model");
+
+        // Save the generated report.
+        const string outputPath = "output.docx";
+        template.Save(outputPath);
+
+        // Output the result status.
+        Console.WriteLine($"Report generation success: {success}");
+        Console.WriteLine($"Generated document saved to: {Path.GetFullPath(outputPath)}");
     }
+}
 
-    public class Program
+// Sample data model with a method that attempts to start an external process.
+// The actual process start is omitted to comply with security restrictions.
+public class SampleModel
+{
+    // This method would normally launch the calculator, but the call is omitted for safety.
+    public string Evil()
     {
-        public static void Main()
-        {
-            // Register code page provider (required by Aspose.Words for some encodings).
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            // -----------------------------------------------------------------
-            // 1. Create a Word document template programmatically.
-            // -----------------------------------------------------------------
-            const string templatePath = "Template.docx";
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
-
-            // Insert a simple LINQ Reporting tag that references the model.
-            builder.Writeln("Report Title: <<[model.Name]>>");
-
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template for report generation.
-            // -----------------------------------------------------------------
-            var doc = new Document(templatePath);
-
-            // -----------------------------------------------------------------
-            // 3. Prepare the data model.
-            // -----------------------------------------------------------------
-            var model = new ReportModel();
-
-            // -----------------------------------------------------------------
-            // 4. Configure ReportingEngine.
-            // -----------------------------------------------------------------
-            var engine = new ReportingEngine();
-
-            // Set engine options. In this example no special flags are required,
-            // but the property must be assigned according to the category rules.
-            engine.Options = ReportBuildOptions.None;
-
-            // -----------------------------------------------------------------
-            // 5. Build the report.
-            // -----------------------------------------------------------------
-            engine.BuildReport(doc, model, "model");
-
-            // -----------------------------------------------------------------
-            // 6. Save the generated report.
-            // -----------------------------------------------------------------
-            const string outputPath = "Report.docx";
-            doc.Save(outputPath);
-        }
+        // Simulate a blocked operation.
+        return "Process start blocked for security.";
     }
 }

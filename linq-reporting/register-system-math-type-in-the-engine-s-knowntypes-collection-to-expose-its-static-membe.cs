@@ -7,37 +7,36 @@ public class Program
 {
     public static void Main()
     {
-        // Create a template document with LINQ Reporting tags that use System.Math static members.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Prepare folders
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        builder.Writeln("Value of PI: <<[Math.PI]>>");
-        builder.Writeln("Sin(0.5): <<[Math.Sin(0.5)]>>");
+        // Create a template document with a LINQ Reporting tag that uses System.Math
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("The sine of 0.5 is <<[Math.Sin(0.5)]>>.");
+        templateDoc.Save(templatePath);
 
-        // Save the template to disk.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        // Load the template for reporting
+        Document doc = new Document(templatePath);
 
-        // Load the template for reporting.
-        Document reportDoc = new Document(templatePath);
-
-        // Dummy root model (not used in the template).
-        var model = new Model();
-
-        // Configure the reporting engine and register System.Math type.
+        // Create the reporting engine and register System.Math type
         ReportingEngine engine = new ReportingEngine();
-        engine.KnownTypes.Add(typeof(Math));
+        engine.KnownTypes.Add(typeof(System.Math));
 
-        // Build the report.
-        engine.BuildReport(reportDoc, model, "model");
+        // Build the report (no root data needed, but a wrapper object is required)
+        EmptyModel model = new EmptyModel();
+        engine.BuildReport(doc, model, "model");
 
-        // Save the generated report.
-        const string outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+        // Save the generated report
+        string reportPath = Path.Combine(outputDir, "Report.docx");
+        doc.Save(reportPath);
     }
+}
 
-    // Empty model class required by the engine.
-    public class Model
-    {
-    }
+// Empty wrapper class required by the reporting engine
+public class EmptyModel
+{
+    // No members needed; the template only uses static Math members
 }

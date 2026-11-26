@@ -7,127 +7,107 @@ using Aspose.Words;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
 
-public class Category
-{
-    public string Name { get; set; } = "";
-}
-
-public class Product
-{
-    public string CategoryName { get; set; } = "";
-    public string Name { get; set; } = "";
-    public decimal Price { get; set; }
-}
-
-public class ReportModel
-{
-    public List<Category> Categories { get; set; } = new();
-    public List<Product> Products { get; set; } = new();
-}
-
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for any legacy encodings.
+        // Register code page provider for any encoding needs.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // -----------------------------------------------------------------
-        // Create sample XML data (categories).
-        // -----------------------------------------------------------------
-        const string xmlPath = "categories.xml";
-        var xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<Categories>
-    <Category><Name>Electronics</Name></Category>
-    <Category><Name>Books</Name></Category>
-    <Category><Name>Clothing</Name></Category>
-</Categories>";
-        File.WriteAllText(xmlPath, xmlContent, Encoding.UTF8);
+        // Create sample XML file.
+        const string xmlPath = "customers.xml";
+        File.WriteAllText(
+            xmlPath,
+            @"<Customers>
+  <Customer>
+    <Id>C001</Id>
+    <Name>Alice</Name>
+  </Customer>
+  <Customer>
+    <Id>C002</Id>
+    <Name>Bob</Name>
+  </Customer>
+</Customers>",
+            Encoding.UTF8);
 
-        // -----------------------------------------------------------------
-        // Create sample JSON data (products).
-        // -----------------------------------------------------------------
-        const string jsonPath = "products.json";
-        var jsonContent = @"[
-    { ""CategoryName"": ""Electronics"", ""Name"": ""Smartphone"", ""Price"": 699.99 },
-    { ""CategoryName"": ""Electronics"", ""Name"": ""Laptop"", ""Price"": 1199.50 },
-    { ""CategoryName"": ""Books"", ""Name"": ""C# Programming"", ""Price"": 39.99 },
-    { ""CategoryName"": ""Clothing"", ""Name"": ""T-Shirt"", ""Price"": 19.95 },
-    { ""CategoryName"": ""Clothing"", ""Name"": ""Jeans"", ""Price"": 49.99 }
-]";
-        File.WriteAllText(jsonPath, jsonContent, Encoding.UTF8);
+        // Create sample JSON file.
+        const string jsonPath = "orders.json";
+        File.WriteAllText(
+            jsonPath,
+            @"[
+  { ""CustomerId"": ""C001"", ""Product"": ""Widget"", ""Quantity"": 5 },
+  { ""CustomerId"": ""C001"", ""Product"": ""Gadget"", ""Quantity"": 2 },
+  { ""CustomerId"": ""C002"", ""Product"": ""Thingamajig"", ""Quantity"": 1 }
+]",
+            Encoding.UTF8);
 
-        // -----------------------------------------------------------------
-        // Load XML into Category objects.
-        // -----------------------------------------------------------------
-        var xDoc = XDocument.Load(xmlPath);
-        var categories = new List<Category>();
-        foreach (var elem in xDoc.Root?.Elements("Category") ?? [])
+        // Load XML data into model.
+        var xmlDoc = XDocument.Load(xmlPath);
+        var customers = new List<Customer>();
+        foreach (var elem in xmlDoc.Root?.Elements("Customer") ?? new List<XElement>())
         {
-            var nameElem = elem.Element("Name");
-            if (nameElem != null)
+            customers.Add(new Customer
             {
-                categories.Add(new Category { Name = nameElem.Value });
-            }
+                Id = elem.Element("Id")?.Value ?? string.Empty,
+                Name = elem.Element("Name")?.Value ?? string.Empty
+            });
         }
 
-        // -----------------------------------------------------------------
-        // Load JSON into Product objects.
-        // -----------------------------------------------------------------
-        var products = JsonConvert.DeserializeObject<List<Product>>(jsonContent) ?? new List<Product>();
+        // Load JSON data into model.
+        var orders = JsonConvert.DeserializeObject<List<Order>>(File.ReadAllText(jsonPath)) ?? new List<Order>();
 
-        // -----------------------------------------------------------------
-        // Assemble the root model.
-        // -----------------------------------------------------------------
+        // Prepare the root model.
         var model = new ReportModel
         {
-            Categories = categories,
-            Products = products
+            Customers = customers,
+            Orders = orders
         };
 
-        // -----------------------------------------------------------------
         // Create the template document programmatically.
-        // -----------------------------------------------------------------
         const string templatePath = "template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // Title section.
-        builder.Writeln("Multi‑Section Report");
-        builder.Writeln();
-
-        // Start a new section for the data.
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
-
-        // Outer foreach over categories (using the root model name).
-        builder.Writeln("<<foreach [cat in model.Categories]>>");
-        builder.Writeln("Category: <<[cat.Name]>>");
-        builder.Writeln();
-
-        // Inner foreach over products, filtered by the current category.
-        builder.Writeln("<<foreach [prod in model.Products]>>");
-        builder.Writeln("<<if [prod.CategoryName == cat.Name]>>");
-        builder.Writeln("- Product: <<[prod.Name]>> (Price: $<<[prod.Price]>>)");
-        builder.Writeln("<</if>>");
+        builder.Writeln("=== Customers and Their Orders ===");
+        builder.Writeln("<<foreach [cust in Customers]>>");
+        builder.Writeln("Customer: <<[cust.Name]>> (ID: <<[cust.Id]>>)");
+        builder.Writeln("Orders:");
+        // Use the root model name to access Orders collection.
+        builder.Writeln("<<foreach [ord in model.Orders]>>");
+        builder.Writeln("<<if [ord.CustomerId == cust.Id]>>- <<[ord.Product]>> x <<[ord.Quantity]>> <</if>>");
+        builder.Writeln("<</foreach>>");
         builder.Writeln("<</foreach>>");
 
-        // Close the outer foreach.
-        builder.Writeln("<</foreach>>");
+        templateDoc.Save(templatePath);
 
-        // Save the template to disk.
-        doc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // Load the template and build the report.
-        // -----------------------------------------------------------------
-        var templateDoc = new Document(templatePath);
+        // Load the template for reporting.
+        var doc = new Document(templatePath);
         var engine = new ReportingEngine();
 
-        // Build the report using the model and the root name "model".
-        engine.BuildReport(templateDoc, model, "model");
+        const string outputPath = "report.docx";
+        engine.BuildReport(doc, model, "model");
+        doc.Save(outputPath);
 
-        // Save the final document.
-        const string outputPath = "output.docx";
-        templateDoc.Save(outputPath);
+        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
     }
+}
+
+// Data model classes.
+public class ReportModel
+{
+    public List<Customer> Customers { get; set; } = new();
+    public List<Order> Orders { get; set; } = new();
+}
+
+public class Customer
+{
+    public string Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+}
+
+public class Order
+{
+    public string CustomerId { get; set; } = string.Empty;
+    public string Product { get; set; } = string.Empty;
+    public int Quantity { get; set; }
 }

@@ -1,64 +1,59 @@
 using System;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class Order
-{
-    // Public properties that will be accessed from the template.
-    public string CustomerName { get; set; } = "John Doe";
-    public int OrderId { get; set; } = 12345;
-
-    // Private member – not exposed to the reporting engine.
-    private string SecretCode { get; set; } = "XYZ";
-}
+using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create a template document containing LINQ Reporting tags.
-        // -----------------------------------------------------------------
+        // Register code pages (required for some Aspose.Words features)
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
+        // Prepare sample data model
+        Person person = new()
+        {
+            Name = "John Doe",
+            Age = 30,
+            Secret = "TopSecret"
+        };
+
+        // Create a template document programmatically
         const string templatePath = "Template.docx";
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
 
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Person Report");
+        builder.Writeln("Name: <<[person.Name]>>");
+        builder.Writeln("Age: <<[person.Age]>>");
+        // The secret field is intentionally omitted to demonstrate restricted access.
+        // builder.Writeln("Secret (should be restricted): <<[person.Secret]>>");
 
-        // Insert tags that reference the public properties of the Order class.
-        builder.Writeln("Customer: <<[model.CustomerName]>>");
-        builder.Writeln("Order ID: <<[model.OrderId]>>");
-
-        // Save the template to disk.
         templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the template for report generation.
-        // -----------------------------------------------------------------
-        var reportDoc = new Document(templatePath);
+        // Load the template for reporting
+        Document reportDoc = new(templatePath);
 
-        // -----------------------------------------------------------------
-        // 3. Prepare the data source.
-        // -----------------------------------------------------------------
-        var order = new Order();
+        // Configure the ReportingEngine (no special restrictions needed; only public members are accessible)
+        ReportingEngine engine = new();
 
-        // -----------------------------------------------------------------
-        // 4. Configure the reporting engine.
-        // -----------------------------------------------------------------
-        var engine = new ReportingEngine();
+        // Build the report
+        bool success = engine.BuildReport(reportDoc, person, "person");
 
-        // No need to add any restricted members – the engine already
-        // limits access to public members only. Removing the invalid
-        // RestrictedMembers calls fixes the compilation error.
-
-        // -----------------------------------------------------------------
-        // 5. Build the report.
-        // -----------------------------------------------------------------
-        engine.BuildReport(reportDoc, order, "model");
-
-        // -----------------------------------------------------------------
-        // 6. Save the generated report.
-        // -----------------------------------------------------------------
+        // Save the generated report
         const string outputPath = "Report.docx";
         reportDoc.Save(outputPath);
+
+        // Output result status
+        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to '{outputPath}'.");
     }
+}
+
+// Public data model with public properties
+public class Person
+{
+    public string Name { get; set; } = string.Empty;
+    public int Age { get; set; }
+    public string Secret { get; set; } = string.Empty;
 }

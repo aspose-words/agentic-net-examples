@@ -1,53 +1,72 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Person
+namespace LinqReportingFallbackExample
 {
-    public string? Name { get; set; }
-    public int Age { get; set; }
-
-    public Person(string? name, int age)
+    // Data model used by the LINQ Reporting engine.
+    public class ReportModel
     {
-        Name = name;
-        Age = age;
+        // Non‑nullable property – initialized to avoid warnings.
+        public string Name { get; set; } = "John Doe";
+
+        // Nullable property that may be null.
+        public string? Notes { get; set; }
     }
-}
 
-public class ReportModel
-{
-    public List<Person> Persons { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main()
+    public class Program
     {
-        // Sample data: one person with a null Name to trigger the fallback.
-        var model = new ReportModel();
-        model.Persons.Add(new Person(null, 30));
-        model.Persons.Add(new Person("Alice", 25));
+        public static void Main()
+        {
+            // Register code page provider required by Aspose.Words.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create the template document programmatically.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+            // Paths for the template and the generated report.
+            const string templatePath = "template.docx";
+            const string outputPath = "report.docx";
 
-        builder.Writeln("Person Report");
-        builder.Writeln();
+            // -------------------------------------------------
+            // 1. Create the template document programmatically.
+            // -------------------------------------------------
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
 
-        // Begin a foreach loop over the Persons collection.
-        builder.Writeln("<<foreach [p in Persons]>>");
-        // Use null‑coalescing to substitute default text when Name is null.
-        builder.Writeln("Name: <<[p.Name ?? \"(no name)\"]>>");
-        builder.Writeln("Age: <<[p.Age]>>");
-        builder.Writeln("<</foreach>>");
+            builder.Writeln("Customer Report");
+            builder.Writeln("Name: <<[model.Name]>>");
 
-        // Build the report using the LINQ Reporting engine.
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+            // Expression that may be null – use conditional tags to provide a fallback.
+            builder.Writeln("Notes: <<if [model.Notes != null]>><<[model.Notes]>><</if>>");
+            builder.Writeln("<<if [model.Notes == null]>>No notes provided.<</if>>");
 
-        // Save the generated report.
-        doc.Save("Report.docx");
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
+
+            // -------------------------------------------------
+            // 2. Load the template for report generation.
+            // -------------------------------------------------
+            var doc = new Document(templatePath);
+
+            // -------------------------------------------------
+            // 3. Prepare the data model (Notes is null to trigger fallback).
+            // -------------------------------------------------
+            var model = new ReportModel
+            {
+                // Name is already set by default.
+                Notes = null // Simulate missing data.
+            };
+
+            // -------------------------------------------------
+            // 4. Build the report using the LINQ Reporting engine.
+            // -------------------------------------------------
+            var engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
+
+            // -------------------------------------------------
+            // 5. Save the generated report.
+            // -------------------------------------------------
+            doc.Save(outputPath);
+        }
     }
 }

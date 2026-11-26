@@ -6,115 +6,66 @@ using Aspose.Words;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
 
-// Register code pages (required by Aspose.Words on some platforms)
-Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-public partial class Program
+public class Program
 {
-    public static void Main()
+    public static void Main(string[] args)
     {
-        // Prepare sample data model (used only for JSON serialization)
-        var model = new ReportModel
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Prepare sample data model.
+        var order = new Order
         {
-            Orders = new()
+            CustomerName = "John Doe",
+            Items = new List<Item>
             {
-                new Order
-                {
-                    CustomerName = "Alice",
-                    Items = new()
-                    {
-                        new Item { Name = "Apple", Quantity = 3 },
-                        new Item { Name = "Banana", Quantity = 5 }
-                    }
-                },
-                new Order
-                {
-                    CustomerName = "Bob",
-                    Items = new()
-                    {
-                        new Item { Name = "Orange", Quantity = 2 },
-                        new Item { Name = "Grapes", Quantity = 7 }
-                    }
-                }
+                new Item { Name = "Apple", Quantity = 3 },
+                new Item { Name = "Banana", Quantity = 5 },
+                new Item { Name = "Cherry", Quantity = 2 }
             }
         };
 
-        // Create working directory
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "work");
-        Directory.CreateDirectory(workDir);
+        // Serialize model to JSON file.
+        const string jsonFilePath = "data.json";
+        File.WriteAllText(jsonFilePath, JsonConvert.SerializeObject(new { order }, Formatting.Indented));
 
-        // 1. Create the template document programmatically
-        string templatePath = Path.Combine(workDir, "template.docx");
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("=== Orders Report ===");
-        // Use the root name "model" in the LINQ tags
-        builder.Writeln("<<foreach [order in model.Orders]>>");
+        // Create a Word template with LINQ Reporting tags.
+        const string templatePath = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
         builder.Writeln("Customer: <<[order.CustomerName]>>");
         builder.Writeln("Items:");
         builder.Writeln("<<foreach [item in order.Items]>>");
-        builder.Writeln("- <<[item.Name]>>: <<[item.Quantity]>>");
+        builder.Writeln("- <<[item.Name]>> (Qty: <<[item.Quantity]>>)");
         builder.Writeln("<</foreach>>");
-        builder.Writeln("<</foreach>>");
-        templateDoc.Save(templatePath);
 
-        // 2. Serialize sample data to JSON file
-        string jsonPath = Path.Combine(workDir, "data.json");
-        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(model, Formatting.Indented));
+        doc.Save(templatePath);
 
-        // 3. Load the template document
-        var doc = new Document(templatePath);
+        // Load the template.
+        var templateDoc = new Document(templatePath);
 
-        // 4. Create JsonDataSource from file stream and build the report
-        using (FileStream jsonStream = new FileStream(jsonPath, FileMode.Open, FileAccess.Read))
+        // Load JSON data from a file stream and build the report.
+        using (FileStream jsonStream = new FileStream(jsonFilePath, FileMode.Open, FileAccess.Read))
         {
             var jsonDataSource = new JsonDataSource(jsonStream);
             var engine = new ReportingEngine();
-            // Build the report using root name "model"
-            engine.BuildReport(doc, jsonDataSource, "model");
+
+            // Build the report using the root name "order".
+            engine.BuildReport(templateDoc, jsonDataSource, "order");
         }
 
-        // 5. Save the generated report
-        string reportPath = Path.Combine(workDir, "report.docx");
-        doc.Save(reportPath);
+        // Save the generated report.
+        const string reportPath = "report.docx";
+        templateDoc.Save(reportPath);
 
-        // 6. (Optional) Upload the report to Azure Blob Storage
-        // Uncomment and add the Azure.Storage.Blobs NuGet package to enable.
-        /*
-        string connectionString = Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTION_STRING")
-                                  ?? "UseDevelopmentStorage=true";
-        string containerName = "reports";
-
-        try
-        {
-            var blobServiceClient = new Azure.Storage.Blobs.BlobServiceClient(connectionString);
-            var containerClient = blobServiceClient.GetBlobContainerClient(containerName);
-            containerClient.CreateIfNotExists();
-
-            var blobClient = containerClient.GetBlobClient("report.docx");
-            using (FileStream uploadStream = File.OpenRead(reportPath))
-            {
-                blobClient.Upload(uploadStream, overwrite: true);
-            }
-
-            Console.WriteLine("Report uploaded successfully to Azure Blob Storage.");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Azure Blob upload failed: {ex.Message}");
-        }
-        */
-
-        Console.WriteLine($"Report generated at: {reportPath}");
+        // NOTE: Azure Blob Storage upload requires the Azure.Storage.Blobs package.
+        // The example omits the upload step to keep the project self‑contained and compilable.
+        Console.WriteLine($"Report generated and saved to '{reportPath}'.");
     }
 }
 
-// Data model classes (public, non‑nullable properties initialized)
-public class ReportModel
-{
-    public List<Order> Orders { get; set; } = new();
-}
-
+// Data model classes.
 public class Order
 {
     public string CustomerName { get; set; } = string.Empty;

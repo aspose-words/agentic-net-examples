@@ -6,86 +6,84 @@ using System.Threading.Tasks;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingAsyncExample
+class Program
 {
-    // Sample data model
-    public class Order
+    // Entry point – asynchronous to allow awaiting the report generation.
+    static async Task Main(string[] args)
     {
-        public string CustomerName { get; set; } = "John Doe";
-        public List<Item> Items { get; set; } = new();
-    }
+        // Register code page provider for any legacy encodings used by Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    public class Item
-    {
-        public int Index { get; set; }
-        public string Name { get; set; } = string.Empty;
-    }
+        // Prepare file paths.
+        string templatePath = "template.docx";
+        string outputPath = "report.docx";
 
-    public class Program
-    {
-        public static async Task Main()
+        // -----------------------------------------------------------------
+        // 1. Create the LINQ Reporting template programmatically.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Simple header with a data field.
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln();
+
+        // Loop over the collection of items.
+        builder.Writeln("<<foreach [item in order.Items]>>");
+        builder.Writeln("- <<[item.Name]>>: <<[item.Quantity]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template for report generation.
+        // -----------------------------------------------------------------
+        Document reportDoc = new Document(templatePath);
+
+        // -----------------------------------------------------------------
+        // 3. Prepare sample data model.
+        // -----------------------------------------------------------------
+        Order order = new Order
         {
-            // Register code page provider for possible encoding needs
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            await GenerateReportAsync();
-        }
-
-        private static async Task GenerateReportAsync()
-        {
-            // Paths for template and output
-            string templatePath = "ReportTemplate.docx";
-            string outputPath = "ReportResult.docx";
-
-            // -------------------------------------------------
-            // Create the template document programmatically
-            // -------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-            // Write a title and a placeholder for the customer name
-            builder.Writeln("Order Report");
-            builder.Writeln("Customer: <<[model.CustomerName]>>");
-            builder.Writeln();
-
-            // Begin foreach loop over Items
-            builder.Writeln("<<foreach [item in model.Items]>>");
-            builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
-            builder.Writeln("<</foreach>>");
-
-            // Save the template to disk
-            templateDoc.Save(templatePath);
-
-            // -------------------------------------------------
-            // Load the template for reporting
-            // -------------------------------------------------
-            Document doc = new Document(templatePath);
-
-            // Prepare sample data
-            Order order = new()
+            CustomerName = "John Doe",
+            Items = new List<Item>
             {
-                CustomerName = "Acme Corp",
-                Items = new()
-                {
-                    new Item { Index = 1, Name = "Widget A" },
-                    new Item { Index = 2, Name = "Widget B" },
-                    new Item { Index = 3, Name = "Widget C" }
-                }
-            };
-
-            // -------------------------------------------------
-            // Build the report asynchronously (wrapped in Task.Run)
-            // -------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.None;
-
-            bool success = await Task.Run(() => engine.BuildReport(doc, order, "model"));
-
-            // Save the generated report if successful
-            if (success)
-            {
-                doc.Save(outputPath);
+                new Item { Name = "Apple", Quantity = 3 },
+                new Item { Name = "Banana", Quantity = 5 },
+                new Item { Name = "Cherry", Quantity = 12 }
             }
-        }
+        };
+
+        // -----------------------------------------------------------------
+        // 4. Build the report asynchronously.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
+
+        // Wrap the synchronous BuildReport call in Task.Run to avoid blocking.
+        bool success = await Task.Run(() => engine.BuildReport(reportDoc, order, "order"));
+
+        // -----------------------------------------------------------------
+        // 5. Save the generated report.
+        // -----------------------------------------------------------------
+        reportDoc.Save(outputPath);
+
+        // Indicate the result.
+        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to '{outputPath}'.");
     }
+}
+
+// ---------------------------------------------------------------------
+// Data model classes – must be public with public properties.
+// ---------------------------------------------------------------------
+public class Order
+{
+    public string CustomerName { get; set; } = string.Empty;
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    public string Name { get; set; } = string.Empty;
+    public int Quantity { get; set; }
 }

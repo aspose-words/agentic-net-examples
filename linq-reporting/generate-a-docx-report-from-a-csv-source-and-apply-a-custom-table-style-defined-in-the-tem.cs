@@ -1,89 +1,83 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Tables;
 
-public class CsvReportExample
+public class Program
 {
     public static void Main()
     {
-        // Working directory.
+        // Register code page provider for CSV encoding.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
         string workDir = Directory.GetCurrentDirectory();
-
-        // 1. Create a sample CSV file.
         string csvPath = Path.Combine(workDir, "data.csv");
-        File.WriteAllLines(csvPath, new[]
-        {
-            "Id,Name,Quantity,Price",
-            "1,Apple,10,0.5",
-            "2,Banana,5,0.3",
-            "3,Carrot,7,0.2"
-        });
+        string templatePath = Path.Combine(workDir, "template.docx");
+        string outputPath = Path.Combine(workDir, "report.docx");
 
-        // 2. Build the template document with LINQ Reporting tags.
-        string templatePath = Path.Combine(workDir, "Template.docx");
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Create sample CSV data.
+        File.WriteAllText(csvPath,
+            "Id,Name,Quantity,Price\n" +
+            "1,Apple,10,0.5\n" +
+            "2,Banana,20,0.3\n" +
+            "3,Cherry,15,1.2");
 
-        // Title.
-        builder.Writeln("Report generated from CSV data");
-        builder.Writeln();
+        // -------------------------------------------------
+        // Create the template document programmatically.
+        // -------------------------------------------------
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Begin foreach block.
-        builder.Writeln("<<foreach [row in data]>>");
+        // Define a custom table style (simple placeholder style).
+        Style tableStyle = doc.Styles.Add(StyleType.Table, "MyTableStyle");
 
-        // Start table.
+        // Insert the foreach tag that will iterate over CSV rows.
+        builder.Writeln("<<foreach [row in csv]>>");
+
+        // Start the table inside the foreach block.
         Table table = builder.StartTable();
 
-        // Insert a temporary row so that the table is not empty.
-        builder.InsertCell();
-        builder.Writeln(string.Empty);
+        // Header row (will be repeated for each row, but acceptable for this simple example).
+        builder.InsertCell(); builder.Write("Id");
+        builder.InsertCell(); builder.Write("Name");
+        builder.InsertCell(); builder.Write("Quantity");
+        builder.InsertCell(); builder.Write("Price");
         builder.EndRow();
 
-        // Now the table has at least one row – apply the style.
-        table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
-        table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
-
-        // Header row (will appear once, outside the data rows).
-        builder.InsertCell(); builder.Writeln("Id");
-        builder.InsertCell(); builder.Writeln("Name");
-        builder.InsertCell(); builder.Writeln("Quantity");
-        builder.InsertCell(); builder.Writeln("Price");
-        builder.EndRow();
-
-        // Data row – each cell contains a tag that reads a field from the current CSV record.
+        // Data row.
         builder.InsertCell(); builder.Writeln("<<[row.Id]>>");
         builder.InsertCell(); builder.Writeln("<<[row.Name]>>");
         builder.InsertCell(); builder.Writeln("<<[row.Quantity]>>");
         builder.InsertCell(); builder.Writeln("<<[row.Price]>>");
         builder.EndRow();
 
-        // Close the table and the foreach block.
+        // End the table.
         builder.EndTable();
+
+        // Close the foreach block.
         builder.Writeln("<</foreach>>");
 
+        // Apply the custom style to the table.
+        table.Style = tableStyle;
+
         // Save the template.
-        template.Save(templatePath);
+        doc.Save(templatePath);
 
-        // 3. Load the template and bind the CSV data source.
-        Document report = new Document(templatePath);
+        // -------------------------------------------------
+        // Generate the report using the LINQ Reporting engine.
+        // -------------------------------------------------
+        var reportDoc = new Document(templatePath);
 
-        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true)
-        {
-            HasHeaders = true
-        };
-        CsvDataSource csvSource = new CsvDataSource(csvPath, loadOptions);
+        // Load CSV data source.
+        var csvDataSource = new CsvDataSource(csvPath, new CsvDataLoadOptions { HasHeaders = true });
 
-        // Build the report using the ReportingEngine.
-        ReportingEngine engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.None
-        };
-        engine.BuildReport(report, csvSource, "data");
+        // Build the report.
+        var engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, csvDataSource, "csv");
 
-        // 4. Save the final report.
-        string reportPath = Path.Combine(workDir, "Report.docx");
-        report.Save(reportPath);
+        // Save the final report.
+        reportDoc.Save(outputPath);
     }
 }

@@ -7,19 +7,16 @@ using Aspose.Words.Reporting;
 
 public class Item
 {
-    public string Name { get; set; } = "";
     public string Category { get; set; } = "";
-}
-
-public class GroupModel
-{
-    public string Key { get; set; } = "";
-    public List<Item> Items { get; set; } = new();
+    public string Name { get; set; } = "";
 }
 
 public class ReportModel
 {
-    public List<GroupModel> Groups { get; set; } = new();
+    public List<Item> Items { get; set; } = new();
+
+    // Groups items by Category for the report.
+    public IEnumerable<IGrouping<string, Item>> Groups => Items.GroupBy(i => i.Category);
 }
 
 public class Program
@@ -27,60 +24,58 @@ public class Program
     public static void Main()
     {
         // Prepare sample data.
-        var items = new List<Item>
+        var model = new ReportModel
         {
-            new() { Name = "Apple", Category = "Fruits" },
-            new() { Name = "Banana", Category = "Fruits" },
-            new() { Name = "Carrot", Category = "Vegetables" },
-            new() { Name = "Broccoli", Category = "Vegetables" },
-            new() { Name = "Chicken", Category = "Meat" }
+            Items =
+            {
+                new Item { Category = "Fruits", Name = "Apple" },
+                new Item { Category = "Fruits", Name = "Banana" },
+                new Item { Category = "Fruits", Name = "Orange" },
+                new Item { Category = "Vegetables", Name = "Carrot" },
+                new Item { Category = "Vegetables", Name = "Broccoli" },
+                new Item { Category = "Grains", Name = "Rice" },
+                new Item { Category = "Grains", Name = "Wheat" }
+            }
         };
 
-        // Group items by Category.
-        var groups = items
-            .GroupBy(i => i.Category)
-            .Select(g => new GroupModel { Key = g.Key, Items = g.ToList() })
-            .ToList();
-
-        var model = new ReportModel { Groups = groups };
-
         // Create the LINQ Reporting template.
-        string templatePath = "Template.docx";
+        var templatePath = "Template.docx";
         var doc = new Document();
         var builder = new DocumentBuilder(doc);
 
         builder.Writeln("Report:");
         builder.Writeln();
 
-        // Begin group foreach.
-        builder.Writeln("<<foreach [group in Groups]>>");
-
-        // Group bullet.
+        // Start a bulleted list.
         builder.ListFormat.ApplyBulletDefault();
-        builder.Writeln("<<[group.Key]>>");
 
-        // Nested items bullet.
-        builder.ListFormat.ListIndent();
-        builder.Writeln("<<foreach [item in group.Items]>>");
-        builder.Writeln("<<[item.Name]>>");
-        builder.Writeln("<</foreach>>");
-        builder.ListFormat.ListOutdent();
+        // Outer foreach: groups.
+        builder.Writeln("<<foreach [g in model.Groups]>><<[g.Key]>>");
 
-        // End group foreach.
+        // Inner foreach: items within each group (second-level bullet).
+        builder.ListFormat.ListLevelNumber = 2;
+        builder.Writeln("<<foreach [item in g]>><<[item.Name]>>");
         builder.Writeln("<</foreach>>");
+
+        // Reset to first-level bullet for the next group.
+        builder.ListFormat.ListLevelNumber = 1;
+        builder.Writeln("<</foreach>>");
+
+        // End list formatting.
+        builder.ListFormat.RemoveNumbers();
 
         // Save the template.
         doc.Save(templatePath);
 
-        // Load the template for reporting.
+        // Load the template for report generation.
         var templateDoc = new Document(templatePath);
 
         // Build the report.
         var engine = new ReportingEngine();
         engine.BuildReport(templateDoc, model, "model");
 
-        // Save the generated report.
-        string outputPath = "ReportOutput.docx";
+        // Save the final report.
+        var outputPath = "Report.docx";
         templateDoc.Save(outputPath);
     }
 }

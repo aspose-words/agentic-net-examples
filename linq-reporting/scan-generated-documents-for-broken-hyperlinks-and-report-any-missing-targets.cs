@@ -3,95 +3,76 @@ using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
+using Aspose.Words.Reporting;
 
-public class HyperlinkScanner
+public class LinkInfo
+{
+    public string Text { get; set; } = "";
+    public string Url { get; set; } = "";
+}
+
+public class ReportModel
+{
+    public List<LinkInfo> Links { get; set; } = new();
+}
+
+public class Program
 {
     public static void Main()
     {
-        // Ensure output directory exists.
-        string outputDir = "output";
-        Directory.CreateDirectory(outputDir);
+        // Register code page provider (required for some encodings).
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        // Create a sample file that will be linked correctly.
-        string existingFilePath = Path.Combine(outputDir, "existing.txt");
-        File.WriteAllText(existingFilePath, "This is an existing file.");
+        // Prepare sample files.
+        string existingFile = "existing.txt";
+        File.WriteAllText(existingFile, "This file exists.");
 
-        // Path for the Word template.
-        string templatePath = Path.Combine(outputDir, "template.docx");
+        // Prepare data model.
+        var model = new ReportModel
+        {
+            Links = new List<LinkInfo>
+            {
+                new LinkInfo { Text = "Existing File", Url = Path.GetFullPath(existingFile) },
+                new LinkInfo { Text = "Missing File", Url = Path.GetFullPath("missing.txt") }
+            }
+        };
 
-        // Build a Word document with several hyperlinks.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Create template document with LINQ Reporting tags.
+        var templatePath = "template.docx";
+        var builder = new DocumentBuilder();
+        builder.Writeln("<<foreach [link in Links]>>");
+        builder.Writeln("<<link [link.Url] [link.Text]>>");
+        builder.Writeln("<</foreach>>");
+        builder.Document.Save(templatePath);
 
-        builder.Writeln("Hyperlink scanning example:");
-        builder.Writeln();
+        // Load template and build report.
+        var doc = new Document(templatePath);
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
+        var outputPath = "output.docx";
+        doc.Save(outputPath);
 
-        // Hyperlink to an existing file (relative path).
-        builder.InsertHyperlink("Existing File", "existing.txt", true);
-        builder.Writeln();
+        // Update fields to ensure hyperlink results are current.
+        doc.UpdateFields();
 
-        // Hyperlink to a missing file (relative path).
-        builder.InsertHyperlink("Missing File", "missing.txt", true);
-        builder.Writeln();
-
-        // Hyperlink to a web URL.
-        builder.InsertHyperlink("Web Link", "https://example.com", true);
-        builder.Writeln();
-
-        // Save the template document.
-        doc.Save(templatePath);
-
-        // Load the document for scanning.
-        var loadedDoc = new Document(templatePath);
-
-        // Scan for broken file hyperlinks.
-        var brokenLinks = new List<string>();
-        foreach (Field field in loadedDoc.Range.Fields)
+        // Scan for broken hyperlinks.
+        foreach (Field field in doc.Range.Fields)
         {
             if (field.Type == FieldType.FieldHyperlink)
             {
                 var hyperlink = (FieldHyperlink)field;
-                string address = hyperlink.Address;
+                string address = hyperlink.Address ?? string.Empty;
 
-                // Skip empty addresses.
-                if (string.IsNullOrEmpty(address))
-                    continue;
+                // Simple check: treat non‑HTTP addresses as file paths.
+                bool isHttp = address.StartsWith("http", StringComparison.OrdinalIgnoreCase);
+                bool targetExists = isHttp || File.Exists(address);
 
-                // Treat HTTP/HTTPS links as valid without checking.
-                if (address.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
-                    address.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                if (!targetExists)
                 {
-                    continue;
-                }
-
-                // Resolve the address relative to the document folder.
-                string resolvedPath = Path.GetFullPath(Path.Combine(outputDir, address));
-
-                // If the target file does not exist, record it.
-                if (!File.Exists(resolvedPath))
-                {
-                    brokenLinks.Add(address);
+                    string displayText = hyperlink.Result ?? string.Empty;
+                    Console.WriteLine($"Broken hyperlink detected: Text=\"{displayText}\", Address=\"{address}\"");
                 }
             }
         }
-
-        // Report results.
-        Console.WriteLine("Hyperlink scan completed.");
-        if (brokenLinks.Count == 0)
-        {
-            Console.WriteLine("No broken file hyperlinks were found.");
-        }
-        else
-        {
-            Console.WriteLine("Broken file hyperlinks:");
-            foreach (string link in brokenLinks)
-            {
-                Console.WriteLine($"- {link}");
-            }
-        }
-
-        // Optionally, save a copy of the scanned document.
-        string resultPath = Path.Combine(outputDir, "scanned.docx");
-        loadedDoc.Save(resultPath);
     }
 }

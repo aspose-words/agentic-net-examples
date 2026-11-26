@@ -1,88 +1,78 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Reporting;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
-using Aspose.Words.Reporting;
 
 public class Program
 {
     public static void Main()
     {
-        // Working directory and file paths.
-        string workDir = Directory.GetCurrentDirectory();
-        string templatePath = Path.Combine(workDir, "template.docx");
-        string outputPath = Path.Combine(workDir, "output.docx");
-        string imagePath = Path.Combine(workDir, "sample.png");
+        // Prepare output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
 
-        // Create a simple 1x1 red PNG image for the report.
-        byte[] pngBytes = Convert.FromBase64String(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK2cAAAAASUVORK5CYII=");
-        File.WriteAllBytes(imagePath, pngBytes);
+        // Paths for template and result documents.
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        string resultPath = Path.Combine(outputDir, "report.docx");
 
         // -----------------------------------------------------------------
-        // Step 1: Create the LINQ Reporting template programmatically.
+        // Create the template document programmatically.
         // -----------------------------------------------------------------
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Insert a chart shape.
-        Shape chartShape = builder.InsertChart(ChartType.Column, 400, 300);
-        // Intentionally place an image tag inside the chart title to simulate an invalid template.
-        chartShape.Chart.Title.Text = "<<image [model.ImagePath]>>";
+        // Insert a chart shape (the element we want to protect).
+        builder.InsertChart(ChartType.Column, 400, 300);
 
-        // Add a textbox containing a valid image tag outside the chart.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
-        builder.MoveTo(textBox.FirstParagraph);
-        builder.Write("<<image [model.ImagePath] -fitSize>>");
+        // Insert a simple placeholder outside the chart.
+        builder.Writeln("<<[model.Title]>>");
 
-        // Save the template to disk.
-        doc.Save(templatePath);
+        // Save the template.
+        templateDoc.Save(templatePath);
 
         // -----------------------------------------------------------------
-        // Step 2: Load the template for validation.
+        // Load the template for validation.
         // -----------------------------------------------------------------
-        var templateDoc = new Document(templatePath);
+        Document doc = new Document(templatePath);
 
-        // Validate that no image tags are placed inside chart elements.
-        bool invalidFound = false;
-        foreach (Shape shape in templateDoc.GetChildNodes(NodeType.Shape, true))
+        // Validate that no image tags are placed inside chart shapes.
+        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
         {
+            // Chart shapes expose a Chart object; check for its presence.
             if (shape.HasChart)
             {
-                string title = shape.Chart.Title.Text ?? string.Empty;
-                if (title.Contains("<<image"))
+                // Get any text inside the chart shape.
+                string innerText = shape.GetText();
+
+                if (!string.IsNullOrEmpty(innerText) && innerText.Contains("<<image"))
                 {
-                    invalidFound = true;
-                    Console.WriteLine("Validation error: Image tag found inside a chart title.");
-                    break;
+                    Console.WriteLine("Invalid template: image tag found inside a chart element.");
+                    return;
                 }
             }
         }
 
-        if (invalidFound)
+        // -----------------------------------------------------------------
+        // Build the report using LINQ Reporting Engine.
+        // -----------------------------------------------------------------
+        ReportModel model = new()
         {
-            // Abort report generation due to invalid template structure.
-            Console.WriteLine("Report generation aborted due to template validation failure.");
-            return;
-        }
+            Title = "Sales Overview"
+        };
 
-        // -----------------------------------------------------------------
-        // Step 3: Build the report (template is valid).
-        // -----------------------------------------------------------------
-        var model = new ReportModel { ImagePath = imagePath };
-        var engine = new ReportingEngine();
-        engine.BuildReport(templateDoc, model, "model");
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
         // Save the generated report.
-        templateDoc.Save(outputPath);
-        Console.WriteLine($"Report generated successfully: {outputPath}");
+        doc.Save(resultPath);
+        Console.WriteLine($"Report generated successfully at: {resultPath}");
     }
 }
 
-// Simple data model used by the LINQ Reporting engine.
+// Simple data model aligned with the template.
 public class ReportModel
 {
-    // Path to the image file used in the template.
-    public string ImagePath { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
 }

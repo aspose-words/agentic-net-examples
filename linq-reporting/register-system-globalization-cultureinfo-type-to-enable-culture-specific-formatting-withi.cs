@@ -8,54 +8,53 @@ public class Program
 {
     public static void Main()
     {
-        // Set French culture for formatting
-        CultureInfo.CurrentCulture = new CultureInfo("fr-FR");
-        CultureInfo.CurrentUICulture = new CultureInfo("fr-FR");
-
         // Ensure output directory exists
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
         Directory.CreateDirectory(outputDir);
 
-        // Create a template document with LINQ Reporting tags
+        // Create a template document with culture‑specific formatting tags
         string templatePath = Path.Combine(outputDir, "template.docx");
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("Customer: <<[model.CustomerName]>>");
-        builder.Writeln("Date (French format): <<[model.OrderDate.ToString(\"d\")]>>");
-        builder.Writeln("Amount (French format): <<[model.Amount.ToString(\"C\")]>>");
+        builder.Writeln("Report Date (fr‑FR): <<[model.FormattedReportDate]>>");
+        builder.Writeln("Total Amount (fr‑FR): <<[model.FormattedTotalAmount]>>");
 
         templateDoc.Save(templatePath);
 
-        // Load the template
+        // Load the template for reporting
         Document doc = new Document(templatePath);
 
         // Prepare the data model
-        OrderReport model = new OrderReport
+        ReportModel model = new()
         {
-            CustomerName = "Jean Dupont",
-            OrderDate = new DateTime(2023, 12, 15),
-            Amount = 1234.56m
+            ReportDate = new DateTime(2023, 12, 31),
+            TotalAmount = 12345.67
         };
 
-        // Configure the reporting engine
-        ReportingEngine engine = new ReportingEngine();
-
         // Build the report
+        ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
         // Save the generated report
-        string reportPath = Path.Combine(outputDir, "report.docx");
-        doc.Save(reportPath);
+        string resultPath = Path.Combine(outputDir, "report.docx");
+        doc.Save(resultPath);
 
-        Console.WriteLine($"Report generated at: {reportPath}");
+        // Indicate completion (no interactive input)
+        Console.WriteLine($"Report generated: {resultPath}");
     }
 }
 
-// Data model class
-public class OrderReport
+// Data model used by the template
+public class ReportModel
 {
-    public string CustomerName { get; set; } = "";
-    public DateTime OrderDate { get; set; }
-    public decimal Amount { get; set; }
+    public DateTime ReportDate { get; set; } = DateTime.MinValue;
+    public double TotalAmount { get; set; }
+
+    // Culture‑specific formatted properties
+    public string FormattedReportDate =>
+        ReportDate.ToString("d", CultureInfo.GetCultureInfo("fr-FR"));
+
+    public string FormattedTotalAmount =>
+        TotalAmount.ToString("N2", CultureInfo.GetCultureInfo("fr-FR"));
 }

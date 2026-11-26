@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -6,65 +9,58 @@ public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create the template document programmatically.
-        // -----------------------------------------------------------------
-        const string templatePath = "template.docx";
-        var builder = new DocumentBuilder();
+        // Register code page provider (required for some Aspose.Words features)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        builder.Writeln("Order Report");
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        // Prepare output directory
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // The -format switch forces a conversion; the value returned below cannot be formatted as a number,
-        // so the ReportingEngine will insert an <<error>> tag when InlineErrorMessages is enabled.
-        builder.Writeln("Faulty Value: <<[order.FaultyValue] -format \"N2\">>");
+        // Create a template document programmatically
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        builder.Document.Save(templatePath);
+        builder.Writeln("=== Customer Report ===");
+        builder.Writeln("Name: <<[model.Name]>>");
+        builder.Writeln("Age: <<[model.Age]>>");
+        // This tag references a non‑existent property and will trigger an inline error message
+        builder.Writeln("Missing Property: <<[model.NonExistent]>>");
+        builder.Writeln("=== End of Report ===");
 
-        // -----------------------------------------------------------------
-        // 2. Load the template for reporting.
-        // -----------------------------------------------------------------
-        var doc = new Document(templatePath);
+        templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 3. Prepare the data model.
-        // -----------------------------------------------------------------
-        var order = new Order
+        // Load the template (simulating a real scenario where the template is read from disk)
+        Document doc = new Document(templatePath);
+
+        // Prepare the data model
+        ReportModel model = new ReportModel
         {
-            CustomerName = "John Doe"
-            // FaultyValue is intentionally invalid for numeric formatting.
+            Name = "John Doe",
+            Age = 30
         };
 
-        // -----------------------------------------------------------------
-        // 4. Build the report with inline error messages.
-        // -----------------------------------------------------------------
-        var engine = new ReportingEngine();
+        // Configure the reporting engine to embed inline error messages
+        ReportingEngine engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-        bool success = engine.BuildReport(doc, order, "order");
+        // Build the report
+        bool success = engine.BuildReport(doc, model, "model");
 
-        // -----------------------------------------------------------------
-        // 5. Save the generated report.
-        // -----------------------------------------------------------------
-        const string outputPath = "report.docx";
-        doc.Save(outputPath);
+        // Save the generated report
+        string resultPath = Path.Combine(outputDir, "output.docx");
+        doc.Save(resultPath);
 
-        // -----------------------------------------------------------------
-        // 6. Output the result status.
-        // -----------------------------------------------------------------
+        // Output the result status
         Console.WriteLine($"Report generation success: {success}");
+        Console.WriteLine($"Template saved to: {templatePath}");
+        Console.WriteLine($"Report saved to: {resultPath}");
     }
 }
 
-// ---------------------------------------------------------------------
-// Data model.
-// ---------------------------------------------------------------------
-public class Order
+// Data model used by the report
+public class ReportModel
 {
-    // Non‑nullable property initialized to avoid warnings.
-    public string CustomerName { get; set; } = string.Empty;
-
-    // This property returns a value that cannot be formatted as a number,
-    // causing a conversion error that will be shown inline as <<error>>.
-    public string FaultyValue => "NotANumber";
+    public string Name { get; set; } = string.Empty;
+    public int Age { get; set; }
 }

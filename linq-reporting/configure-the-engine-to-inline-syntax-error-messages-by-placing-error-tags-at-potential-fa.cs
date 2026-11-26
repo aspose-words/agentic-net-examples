@@ -5,72 +5,71 @@ using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingInlineErrorExample
+public class Program
 {
-    // Sample data model
+    public static void Main()
+    {
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Prepare folders.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // Create a template document with LINQ Reporting tags.
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        CreateTemplate(templatePath);
+
+        // Load the template document.
+        Document templateDoc = new Document(templatePath);
+
+        // Prepare the data model.
+        ReportModel model = new()
+        {
+            Name = "John Doe",
+            Items = new() { "Item A", "Item B", "Item C" }
+        };
+
+        // Configure the reporting engine to inline error messages.
+        ReportingEngine engine = new();
+        engine.Options = ReportBuildOptions.InlineErrorMessages;
+
+        // Build the report.
+        bool success = engine.BuildReport(templateDoc, model, "model");
+
+        // Save the generated report.
+        string resultPath = Path.Combine(outputDir, "output.docx");
+        templateDoc.Save(resultPath);
+
+        // Indicate the result.
+        Console.WriteLine($"Report build success: {success}");
+        Console.WriteLine($"Output saved to: {resultPath}");
+    }
+
+    private static void CreateTemplate(string filePath)
+    {
+        Document doc = new();
+        DocumentBuilder builder = new(doc);
+
+        // Simple property tag (valid).
+        builder.Writeln("Customer Name: <<[model.Name]>>");
+
+        // Invalid property tag (will trigger an inline error).
+        builder.Writeln("Missing Property: <<[model.Unknown]>>");
+
+        // Loop over a collection.
+        builder.Writeln("<<foreach [item in model.Items]>>");
+        builder.Writeln("- <<[item]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template.
+        doc.Save(filePath);
+    }
+
+    // Data model used by the report.
     public class ReportModel
     {
-        public string Name { get; set; } = "John Doe";
-
-        // This property does NOT exist intentionally to trigger an inline error.
-        // public string MissingProperty { get; set; }
-
-        public List<Item> Items { get; set; } = new();
-
-        public ReportModel()
-        {
-            Items.Add(new Item { Index = 1, Description = "First item" });
-            Items.Add(new Item { Index = 2, Description = "Second item" });
-        }
-    }
-
-    public class Item
-    {
-        public int Index { get; set; }
-        public string Description { get; set; } = string.Empty;
-    }
-
-    public class Program
-    {
-        public static void Main()
-        {
-            // Register code page provider for Aspose.Words if needed.
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Build the LINQ Reporting template with tags.
-            builder.Writeln("Customer: <<[model.Name]>>");
-            // This tag references a non‑existent property and will produce an inline error.
-            builder.Writeln("Missing: <<[model.MissingProperty]>>");
-            builder.Writeln("<<foreach [item in model.Items]>>");
-            builder.Writeln("- <<[item.Index]>>: <<[item.Description]>>");
-            builder.Writeln("<</foreach>>");
-
-            // Save the template (optional, just for inspection).
-            string templatePath = "template.docx";
-            doc.Save(templatePath);
-
-            // Prepare the data model.
-            ReportModel model = new ReportModel();
-
-            // Configure the reporting engine to inline error messages.
-            ReportingEngine engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.InlineErrorMessages;
-
-            // Build the report.
-            bool success = engine.BuildReport(doc, model, "model");
-
-            // Save the generated report.
-            string outputPath = Path.Combine("output", "report.docx");
-            Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
-            doc.Save(outputPath);
-
-            // Output the result status.
-            Console.WriteLine($"Report generation success: {success}");
-            Console.WriteLine($"Report saved to: {outputPath}");
-        }
+        public string Name { get; set; } = string.Empty;
+        public List<string> Items { get; set; } = new();
     }
 }

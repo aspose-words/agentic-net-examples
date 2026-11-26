@@ -1,46 +1,49 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace LinqReportingIfConditionExample
 {
-    public static void Main()
+    // Sample data model.
+    public class Order
     {
-        // Register code page provider (required for Aspose.Words).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Prepare sample data.
-        var order = new Order
-        {
-            CustomerName = "John Doe",
-            Discount = 15.5m // Set to 0 to test the false branch.
-        };
-
-        // Create a template document programmatically.
-        var templatePath = "Template.docx";
-        var builder = new DocumentBuilder();
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("<<if [order.Discount > 0]>>Discount: <<[order.Discount]>>%<</if>>");
-        builder.Document.Save(templatePath);
-
-        // Load the template for reporting.
-        var doc = new Document(templatePath);
-
-        // Build the report using LINQ Reporting Engine.
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, order, "order");
-
-        // Save the generated report.
-        var outputPath = "Report.docx";
-        doc.Save(outputPath);
+        public string CustomerName { get; set; } = "John Doe";
+        public decimal Discount { get; set; } = 15.5m;
     }
-}
 
-// Public data model aligned with the template.
-public class Order
-{
-    public string CustomerName { get; set; } = "";
-    public decimal Discount { get; set; }
+    public class Program
+    {
+        public static void Main()
+        {
+            // Paths for the template and the generated report.
+            string templatePath = "Template.docx";
+            string reportPath = "Report.docx";
+
+            // -----------------------------------------------------------------
+            // 1. Create the template document with a conditional block.
+            // -----------------------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            // Write static text and LINQ Reporting tags.
+            builder.Writeln("Customer: <<[order.CustomerName]>>");
+            builder.Writeln("<<if [order.Discount > 0]>>Discount: $<<[order.Discount]>> <</if>>");
+
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 2. Load the template and build the report.
+            // -----------------------------------------------------------------
+            Document loadedTemplate = new Document(templatePath);
+            Order order = new Order(); // Sample data.
+
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(loadedTemplate, order, "order");
+
+            // Save the generated report.
+            loadedTemplate.Save(reportPath);
+        }
+    }
 }

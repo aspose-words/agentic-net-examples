@@ -4,7 +4,6 @@ using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Newtonsoft.Json;
 
 public class Customer
 {
@@ -20,47 +19,44 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some Aspose.Words features)
+        // Register code page provider for Aspose.Words.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Paths for template and output
-        string templatePath = "Template.docx";
-        string outputPath = "Report.docx";
-
-        // Create the template document with LINQ Reporting tags
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("Customer Report");
-        builder.Writeln("<<foreach [c in Customers]>>");
-        // Use an expression that converts the name to upper case directly
-        builder.Writeln("<<[c.Name.ToUpper()]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk
-        templateDoc.Save(templatePath);
-
-        // Load the template (simulating a separate load step)
-        Document doc = new Document(templatePath);
-
-        // Prepare sample data
-        ReportModel model = new()
+        // Prepare sample data.
+        var model = new ReportModel
         {
-            Customers = new()
+            Customers = new List<Customer>
             {
-                new Customer { Name = "Alice" },
-                new Customer { Name = "Bob" },
-                new Customer { Name = "Charlie" }
+                new Customer { Name = "Alice Johnson" },
+                new Customer { Name = "Bob Smith" },
+                new Customer { Name = "Charlie Davis" }
             }
         };
 
-        // Build the report
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        // Create a template document programmatically.
+        var templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Save the generated report
-        doc.Save(outputPath);
+        builder.Writeln("Customer Names:");
+        builder.Writeln("<<foreach [c in Customers]>>");
+        builder.Writeln(" - <<[c.Name]>>");
+        builder.Writeln("<</foreach>>");
 
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+        doc.Save(templatePath);
+
+        // Load the template (optional, demonstrates load step).
+        var loadedDoc = new Document(templatePath);
+
+        // Build the report using LINQ Reporting engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(loadedDoc, model, "model");
+
+        // Save the generated report.
+        var reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        loadedDoc.Save(reportPath);
+
+        // Indicate completion (no interactive input).
+        Console.WriteLine($"Report generated: {reportPath}");
     }
 }

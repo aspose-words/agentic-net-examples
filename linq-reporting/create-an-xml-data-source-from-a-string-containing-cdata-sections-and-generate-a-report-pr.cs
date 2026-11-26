@@ -8,52 +8,51 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some encodings)
+        // Register code page provider for UTF‑8 support.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // XML data source with CDATA sections
-        string xmlData = @"<?xml version=""1.0"" encoding=""UTF-8""?>
-<Report>
-  <Title><![CDATA[Report <b>Title</b>]]></Title>
-  <Items>
+        // XML string that contains CDATA sections.
+        string xml = @"<?xml version=""1.0"" encoding=""UTF-8""?>
+<root>
     <Item>
-      <Name><![CDATA[Item &amp; One]]></Name>
-      <Description><![CDATA[Description with <i>HTML</i> content]]></Description>
+        <Content><![CDATA[Some <b>bold</b> text]]></Content>
     </Item>
     <Item>
-      <Name><![CDATA[Second Item]]></Name>
-      <Description><![CDATA[Another description]]></Description>
+        <Content><![CDATA[Another & special <i>italic</i> text]]></Content>
     </Item>
-  </Items>
-</Report>";
+</root>";
 
-        // Create XML data source from a memory stream (XmlDataSource expects a file path or stream)
-        using var xmlStream = new MemoryStream(Encoding.UTF8.GetBytes(xmlData));
-        XmlDataSource dataSource = new XmlDataSource(xmlStream);
+        // Load the XML into a memory stream and create an XmlDataSource.
+        using var xmlStream = new MemoryStream(Encoding.UTF8.GetBytes(xml));
+        var xmlDataSource = new XmlDataSource(xmlStream);
 
-        // Create a template document programmatically
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // -----------------------------------------------------------------
+        // Create the template document programmatically.
+        // -----------------------------------------------------------------
+        const string templatePath = "Template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // Title (preserve CDATA content as plain text)
-        builder.Writeln("<<[report.Title]>>");
-        builder.Writeln();
-
-        // Begin foreach over items
-        builder.Writeln("<<foreach [item in report.Items.Item]>>");
-        builder.Writeln("Name: <<[item.Name]>>");
-        builder.Writeln("Description: <<[item.Description]>>");
+        builder.Writeln("Report generated from XML with CDATA values:");
+        // Iterate over the rows that represent <Item> elements.
+        builder.Writeln("<<foreach [item in root]>>");
+        builder.Writeln("Content: <<[item.Content]>>");
         builder.Writeln("<</foreach>>");
 
-        // Build the report
-        ReportingEngine engine = new ReportingEngine();
-        bool success = engine.BuildReport(template, dataSource, "report");
+        // Save the template so it can be loaded for reporting.
+        templateDoc.Save(templatePath);
 
-        // Save the result
-        string outputPath = "ReportOutput.docx";
-        template.Save(outputPath);
+        // -----------------------------------------------------------------
+        // Load the template and build the report.
+        // -----------------------------------------------------------------
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
 
-        // Indicate completion (no interactive input)
-        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Saved to {outputPath}");
+        // BuildReport uses the XML data source; the root name is "root".
+        engine.BuildReport(reportDoc, xmlDataSource, "root");
+
+        // Save the final report.
+        const string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
 }

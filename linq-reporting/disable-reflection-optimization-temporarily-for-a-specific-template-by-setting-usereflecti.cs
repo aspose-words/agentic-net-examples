@@ -1,5 +1,6 @@
 using System;
-using System.IO;
+using System.Collections.Generic;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,44 +8,65 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some environments)
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Register code page provider for any encoding needs.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create a simple template with a LINQ Reporting tag
-        string templatePath = "Template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Hello <<[model.Name]>>!");
-        templateDoc.Save(templatePath);
+        // Create sample data.
+        var order = new Order
+        {
+            CustomerName = "John Doe",
+            Items = new List<Item>
+            {
+                new Item { Name = "Apple", Quantity = 3 },
+                new Item { Name = "Banana", Quantity = 5 }
+            }
+        };
 
-        // Load the template for report generation
-        Document reportDoc = new Document(templatePath);
+        // Build the template document programmatically.
+        var templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Prepare the data model
-        ReportModel model = new ReportModel { Name = "Aspose" };
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Items:");
+        builder.Writeln("<<foreach [item in order.Items]>>");
+        builder.Writeln("- <<[item.Name]>>: <<[item.Quantity]>>");
+        builder.Writeln("<</foreach>>");
 
-        // Temporarily disable reflection optimization for this report
-        bool originalOptimization = ReportingEngine.UseReflectionOptimization;
+        doc.Save(templatePath);
+
+        // Load the template for reporting.
+        var reportDoc = new Document(templatePath);
+
+        // Temporarily disable reflection optimization.
+        bool previousOptimization = ReportingEngine.UseReflectionOptimization;
         ReportingEngine.UseReflectionOptimization = false;
         try
         {
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(reportDoc, model, "model");
+            var engine = new ReportingEngine();
+            engine.BuildReport(reportDoc, order, "order");
         }
         finally
         {
-            // Restore the original setting
-            ReportingEngine.UseReflectionOptimization = originalOptimization;
+            // Restore the original setting.
+            ReportingEngine.UseReflectionOptimization = previousOptimization;
         }
 
-        // Save the generated report
-        string outputPath = "Report.docx";
+        // Save the generated report.
+        var outputPath = "Report.docx";
         reportDoc.Save(outputPath);
     }
+}
 
-    // Simple public data model
-    public class ReportModel
-    {
-        public string Name { get; set; } = "";
-    }
+// Public data model classes.
+public class Order
+{
+    public string CustomerName { get; set; } = "";
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    public string Name { get; set; } = "";
+    public int Quantity { get; set; }
 }

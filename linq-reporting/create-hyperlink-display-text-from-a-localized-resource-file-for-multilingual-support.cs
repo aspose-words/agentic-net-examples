@@ -1,11 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Globalization;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class ReportModel
 {
+    // Initialize properties to avoid nullable warnings.
     public string Url { get; set; } = "";
     public string LinkText { get; set; } = "";
 }
@@ -14,43 +15,67 @@ public class Program
 {
     public static void Main()
     {
-        // Ensure the output folder exists.
-        Directory.CreateDirectory("output");
+        // Set the UI culture to Spanish to demonstrate localization.
+        CultureInfo.CurrentUICulture = new CultureInfo("es");
 
-        // 1. Prepare localized link texts.
-        var resources = new Dictionary<string, string>
-        {
-            { "LinkText_en", "Visit Aspose" },
-            { "LinkText_es", "Visitar Aspose" }
-        };
+        // Retrieve the localized display text for the hyperlink.
+        string linkText = GetLocalizedString("LinkText");
 
-        // 2. Choose a culture (e.g., Spanish) and obtain the localized display text.
-        string cultureCode = "es"; // Change to "en" for English.
-        string resourceKey = $"LinkText_{cultureCode}";
-        string localizedLinkText = resources.TryGetValue(resourceKey, out var txt) ? txt : "Default Link";
-
-        // 3. Prepare the data model.
+        // Prepare the data model for the report.
         var model = new ReportModel
         {
-            Url = "https://www.aspose.com",
-            LinkText = localizedLinkText
+            Url = "https://example.com",
+            LinkText = linkText
         };
 
-        // 4. Create the LINQ Reporting template programmatically.
-        string templatePath = Path.Combine("output", "Template.docx");
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        // Insert a link tag where the first expression is the URL and the second is the display text.
-        builder.Writeln("<<link [model.Url] [model.LinkText]>>");
-        templateDoc.Save(templatePath);
+        // Build the LINQ Reporting template.
+        const string templatePath = "template.docx";
+        CreateTemplate(templatePath);
 
-        // 5. Load the template and build the report.
+        // Load the template document.
         var doc = new Document(templatePath);
+
+        // Generate the report using the LINQ Reporting engine.
         var engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
-        // 6. Save the generated document.
-        string outputPath = Path.Combine("output", "Result.docx");
+        // Save the resulting document.
+        const string outputPath = "output.docx";
         doc.Save(outputPath);
+    }
+
+    // Simple in‑memory localization dictionary (replaces runtime .resx handling).
+    private static string GetLocalizedString(string key)
+    {
+        // Define resources for each culture (empty key = invariant/default).
+        var resources = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "", new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { { "LinkText", "Click here" } } },
+            { "es", new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { { "LinkText", "Haga clic aquí" } } }
+        };
+
+        // Use the two‑letter ISO language name (e.g., "es") for lookup.
+        string culture = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+
+        // Try to get the value for the specific culture; fall back to invariant.
+        if (resources.TryGetValue(culture, out var dict) && dict.TryGetValue(key, out var value))
+            return value;
+
+        // Fallback to invariant resources.
+        if (resources[""].TryGetValue(key, out var defaultValue))
+            return defaultValue;
+
+        return string.Empty;
+    }
+
+    private static void CreateTemplate(string path)
+    {
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        // Insert a hyperlink where the display text comes from the model.
+        builder.Writeln("<<link [model.Url] [model.LinkText]>>");
+
+        doc.Save(path);
     }
 }

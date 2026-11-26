@@ -1,54 +1,50 @@
 using System;
-using System.IO;
 using Aspose.Words;
-using Aspose.Words.Reporting;
 using Aspose.Words.Drawing;
+using Aspose.Words.Reporting;
 
 public class ReportModel
 {
-    // Base64 string of a 1x1 pixel PNG image.
-    public string ImageBase64 { get; set; } = "";
+    // Base64 string without the data URI prefix.
+    public string ImageBase64 { get; set; } =
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK9cAAAAASUVORK5CYII=";
+
+    public string Title { get; set; } = "Sample Report with Embedded Image";
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for template and output documents.
-        const string templatePath = "template.docx";
-        const string outputPath = "output.docx";
-
-        // -----------------------------------------------------------------
-        // Create the template document with an image tag inside a textbox.
-        // -----------------------------------------------------------------
+        // ---------- Create the template document ----------
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Insert a textbox shape that will hold the image.
+        // Insert the title placeholder.
+        builder.Writeln("<<[model.Title]>>");
+        builder.Writeln();
+
+        // Insert a textbox that will hold the image tag.
         Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
         builder.MoveTo(textBox.FirstParagraph);
-        // LINQ Reporting image tag referencing the model's Base64 string.
         builder.Write("<<image [model.ImageBase64] -fitSize>>");
 
         // Save the template to disk.
+        const string templatePath = "Template.docx";
         templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // Load the template for report generation.
-        // -----------------------------------------------------------------
-        Document doc = new Document(templatePath);
+        // ---------- Load the template and build the report ----------
+        Document reportDoc = new Document(templatePath);
 
-        // Sample data model with a Base64-encoded PNG image.
-        ReportModel model = new ReportModel
-        {
-            ImageBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BFwAE/wJ/lK5XAAAAAElFTkSuQmCC"
-        };
+        // Prepare the data model.
+        ReportModel model = new ReportModel();
 
-        // Build the report using the LINQ Reporting engine.
+        // Build the report using the LINQ Reporting Engine.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Save the generated document.
-        doc.Save(outputPath);
+        // Save the final report.
+        const string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
 }

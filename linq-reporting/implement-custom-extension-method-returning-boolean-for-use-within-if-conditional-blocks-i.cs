@@ -1,87 +1,83 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class Item
+{
+    public int Index { get; set; }
+    public string Name { get; set; } = string.Empty;
+
+    // Computed property used by the template.
+    public bool IsEven => Index % 2 == 0;
+}
+
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Prepare sample data
-        Order sampleOrder = new()
+        // Prepare sample data.
+        var model = new ReportModel
         {
-            Id = 12345,
-            CustomerName = "John Doe",
-            TotalAmount = 1500.75m,
             Items = new()
             {
-                new OrderItem { Name = "Laptop", Price = 1200.00m },
-                new OrderItem { Name = "Mouse", Price = 25.50m },
-                new OrderItem { Name = "Keyboard", Price = 75.25m }
+                new Item { Index = 1, Name = "Alpha" },
+                new Item { Index = 2, Name = "Beta" },
+                new Item { Index = 3, Name = "Gamma" },
+                new Item { Index = 4, Name = "Delta" }
             }
         };
 
-        // Create template document programmatically
-        string templatePath = "Template.docx";
-        Document templateDoc = new();
-        DocumentBuilder builder = new(templateDoc);
+        // Create a template document.
+        const string templatePath = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        builder.Writeln("Order Report");
-        builder.Writeln("==============");
-        builder.Writeln("Order ID: <<[order.Id]>>");
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("Total Amount: $<<[order.TotalAmount]>>");
+        builder.Writeln("LINQ Reporting Example with Custom Boolean Extension Method");
         builder.Writeln();
-        builder.Writeln("<<if [order.IsHighValue()]>>");
-        builder.Writeln("** This is a high‑value order! **");
-        builder.Writeln("<</if>>");
-        builder.Writeln();
-        builder.Writeln("Items:");
-        builder.Writeln("<<foreach [item in order.Items]>>");
-        builder.Writeln("- <<[item.Name]>> : $<<[item.Price]>>");
+
+        // Begin foreach over Items.
+        builder.Writeln("<<foreach [item in Items]>>");
+
+        // Index with conditional background color.
+        builder.Writeln(
+            "<<if [item.IsEven]>>" +
+            "<<backColor [\"LightGray\"]>><<[item.Index]>> <</backColor>><</if>>" +
+            "<<if [!item.IsEven]>>" +
+            "<<[item.Index]>> " +
+            "<</if>>");
+
+        // Name with same conditional background color.
+        builder.Writeln(
+            "<<if [item.IsEven]>>" +
+            "<<backColor [\"LightGray\"]>><<[item.Name]>> <</backColor>><</if>>" +
+            "<<if [!item.IsEven]>>" +
+            "<<[item.Name]>> " +
+            "<</if>>");
+
+        // End foreach.
         builder.Writeln("<</foreach>>");
 
-        templateDoc.Save(templatePath);
+        // Save the template.
+        doc.Save(templatePath);
 
-        // Load the template for reporting
-        Document reportDoc = new(templatePath);
+        // Load the template for reporting.
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
 
-        // Build the report using the custom method in the conditional
-        ReportingEngine engine = new();
-        engine.Options = ReportBuildOptions.None;
-        bool success = engine.BuildReport(reportDoc, sampleOrder, "order");
+        // Build the report.
+        bool success = engine.BuildReport(reportDoc, model, "model");
 
-        // Save the generated report
-        string outputPath = "Report.docx";
+        // Save the output.
+        const string outputPath = "output.docx";
         reportDoc.Save(outputPath);
 
-        // Indicate completion (no interactive input)
-        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to '{outputPath}'.");
+        // Indicate result (no interactive input).
+        Console.WriteLine(success ? "Report generated successfully." : "Report generation failed.");
     }
-}
-
-// Data model classes
-public class Order
-{
-    public int Id { get; set; }
-    public string CustomerName { get; set; } = string.Empty;
-    public decimal TotalAmount { get; set; }
-    public List<OrderItem> Items { get; set; } = new();
-
-    // Method used in the template conditional
-    public bool IsHighValue()
-    {
-        // Define high value as total amount greater than 1000
-        return TotalAmount > 1000m;
-    }
-}
-
-public class OrderItem
-{
-    public string Name { get; set; } = string.Empty;
-    public decimal Price { get; set; }
 }

@@ -1,62 +1,42 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class ReportModel
+{
+    public string Url { get; set; } = string.Empty;
+    public string LinkText { get; set; } = string.Empty;
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some encodings).
+        // Register code page provider for Aspose.Words.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Create a template document with a LINQ Reporting link tag.
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
+        builder.Writeln("Visit our site: <<link [model.Url] [model.LinkText]>>");
+        template.Save("Template.docx");
+
+        // Load the template for reporting.
+        var doc = new Document("Template.docx");
 
         // Prepare sample data.
         var model = new ReportModel
         {
-            Items = new List<Item>
-            {
-                new Item { Url = "https://example.com/page1", Text = "Example Page 1" },
-                new Item { Url = "https://example.com/page2", Text = "Example Page 2" },
-                new Item { Url = "https://example.com/page3", Text = "Example Page 3" }
-            }
+            Url = "https://example.com",
+            LinkText = "Example Site"
         };
 
-        // Create a new document and build the LINQ Reporting template.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        builder.Writeln("Dynamic Links Report");
-        builder.Writeln();
-
-        // Begin foreach loop over Items.
-        builder.Writeln("<<foreach [item in Items]>>");
-        // Insert a link tag with URL and display text.
-        builder.Writeln("<<link [item.Url] [item.Text]>>");
-        // Add a line break after each link.
-        builder.Writeln("<</foreach>>");
-        builder.Writeln();
-
-        // Build the report using the ReportingEngine.
+        // Build the report using the LINQ Reporting engine.
         var engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
-        // Save the generated document.
-        const string outputPath = "DynamicLinksReport.docx";
-        doc.Save(outputPath);
+        // Save the generated report.
+        doc.Save("Report.docx");
     }
-}
-
-// Root data model.
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
-
-// Item model representing a hyperlink.
-public class Item
-{
-    public string Url { get; set; } = string.Empty;
-    public string Text { get; set; } = string.Empty;
 }

@@ -1,72 +1,58 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingCustomDelimiters
+public class Program
 {
-    // Sample data model.
-    public class ReportModel
+    public static void Main()
     {
-        public List<Person> Persons { get; set; } = new();
-    }
+        // Create an output folder for the generated files.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-    public class Person
-    {
-        public string Name { get; set; } = string.Empty;
-    }
+        // Paths for the template and the final report.
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        string reportPath = Path.Combine(outputDir, "Report.docx");
 
-    public class Program
-    {
-        public static void Main()
+        // Sample data model.
+        Order order = new Order
         {
-            // Prepare sample data.
-            var model = new ReportModel
-            {
-                Persons = new List<Person>
-                {
-                    new() { Name = "Alice" },
-                    new() { Name = "Bob" },
-                    new() { Name = "Charlie" }
-                }
-            };
+            CustomerName = "John Doe"
+        };
 
-            // Create a template document with custom delimiters [[ and ]].
-            var templatePath = "Template.docx";
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
+        // -----------------------------------------------------------------
+        // 1. Build the template document programmatically.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            // Set custom delimiters for the reporting engine.
-            // The delimiters are defined by the prefix and suffix strings.
-            // Here we use "[[" as the prefix and "]]" as the suffix.
-            var engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.None;
-            engine.Options = engine.Options | ReportBuildOptions.None; // placeholder to ensure Options assignment follows rules
-            engine.Options = engine.Options; // no-op, just to satisfy rule usage pattern
-            engine.Options = engine.Options; // repeat to avoid unused warning
+        // Use the default LINQ Reporting delimiters << and >>.
+        // The tag <<[order.CustomerName]>> will be replaced with the value from the model.
+        builder.Writeln("Customer Name: <<[order.CustomerName]>>");
 
-            // The ReportingEngine allows setting custom delimiters via its Options property.
-            // In this example we directly assign the delimiters before building the report.
-            engine.Options = engine.Options; // placeholder (actual delimiter assignment would be here if API existed)
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
 
-            // Write template content using the custom delimiters.
-            builder.Writeln("[[foreach [p in Persons]]]");
-            builder.Writeln("Name: [[p.Name]]");
-            builder.Writeln("[[</foreach]]]");
+        // -----------------------------------------------------------------
+        // 2. Load the template and generate the report.
+        // -----------------------------------------------------------------
+        Document doc = new Document(templatePath);
 
-            // Save the template.
-            templateDoc.Save(templatePath);
+        // Create the reporting engine.
+        ReportingEngine engine = new ReportingEngine();
 
-            // Load the template for reporting.
-            var reportDoc = new Document(templatePath);
+        // No custom delimiters are needed because we used the default ones.
+        // Build the report using the root object name "order".
+        engine.BuildReport(doc, order, "order");
 
-            // Build the report using the model and the root name "model".
-            engine.BuildReport(reportDoc, model, "model");
-
-            // Save the generated report.
-            var outputPath = "Report.docx";
-            reportDoc.Save(outputPath);
-        }
+        // Save the generated report.
+        doc.Save(reportPath);
     }
+}
+
+// Simple public data model class.
+public class Order
+{
+    public string CustomerName { get; set; } = string.Empty;
 }

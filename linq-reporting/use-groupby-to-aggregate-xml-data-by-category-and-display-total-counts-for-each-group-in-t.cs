@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
@@ -21,12 +22,15 @@ public class Program
 {
     public static void Main()
     {
-        // Ensure output directory exists.
-        string outputDir = "output";
-        Directory.CreateDirectory(outputDir);
+        // Register code page provider for any encoding needs.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create sample XML data file.
-        string xmlPath = Path.Combine(outputDir, "data.xml");
+        // Prepare working directories.
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(workDir);
+
+        // 1. Create sample XML data file.
+        string xmlPath = Path.Combine(workDir, "data.xml");
         File.WriteAllText(xmlPath,
 @"<Items>
     <Item><Category>Fruit</Category></Item>
@@ -37,9 +41,9 @@ public class Program
     <Item><Category>Fruit</Category></Item>
 </Items>");
 
-        // Load XML and aggregate by category using LINQ GroupBy.
+        // 2. Load XML and aggregate by category using LINQ GroupBy.
         XDocument xdoc = XDocument.Load(xmlPath);
-        List<CategoryGroup> groups = xdoc.Root?
+        List<CategoryGroup> groups = xdoc.Root!
             .Elements("Item")
             .GroupBy(item => (string?)item.Element("Category") ?? "")
             .Select(g => new CategoryGroup
@@ -47,33 +51,36 @@ public class Program
                 Category = g.Key,
                 Count = g.Count()
             })
-            .ToList() ?? new List<CategoryGroup>();
+            .ToList();
 
-        // Prepare the root model for the report.
-        ReportModel model = new() { Groups = groups };
-
-        // Create the LINQ Reporting template programmatically.
-        string templatePath = Path.Combine(outputDir, "template.docx");
+        // 3. Create the LINQ Reporting template programmatically.
+        string templatePath = Path.Combine(workDir, "Template.docx");
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
         builder.Writeln("Category Report");
+        builder.Writeln("==============");
         builder.Writeln("<<foreach [g in Groups]>>");
-        builder.Writeln("Category: <<[g.Category]>>, Count: <<[g.Count]>>");
+        builder.Writeln("Category: <<[g.Category]>> - Total Items: <<[g.Count]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template.
         templateDoc.Save(templatePath);
 
-        // Load the template for report generation.
+        // 4. Load the template for report generation.
         Document reportDoc = new Document(templatePath);
 
-        // Build the report using Aspose.Words LINQ Reporting engine.
+        // 5. Prepare the root model object.
+        ReportModel model = new ReportModel { Groups = groups };
+
+        // 6. Build the report using Aspose.Words ReportingEngine.
         ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(reportDoc, model, "model");
 
-        // Save the generated report.
-        string reportPath = Path.Combine(outputDir, "report.docx");
+        // 7. Save the generated report.
+        string reportPath = Path.Combine(workDir, "Report.docx");
         reportDoc.Save(reportPath);
+
+        // Indicate completion (no interactive input).
+        Console.WriteLine($"Report generated at: {reportPath}");
     }
 }

@@ -1,78 +1,78 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Create reusable header fragment.
-        var headerDoc = new Document();
-        var headerBuilder = new DocumentBuilder(headerDoc);
-        headerBuilder.Writeln("<<[model.Title]>>");
-        headerBuilder.Writeln("Report Date: <<[model.ReportDate]>>");
+        // Register code page provider (required by Aspose.Words for some encodings)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create main template and insert the header fragment.
-        var mainDoc = new Document();
-        var builder = new DocumentBuilder(mainDoc);
-        builder.InsertDocument(headerDoc, ImportFormatMode.KeepSourceFormatting);
-        builder.Writeln(); // Add a blank line after the header.
+        // Prepare folders
+        string templateFolder = Path.Combine(Directory.GetCurrentDirectory(), "Templates");
+        Directory.CreateDirectory(templateFolder);
 
-        builder.Writeln("Items:");
+        // Create header fragment file
+        string headerPath = Path.Combine(templateFolder, "header.txt");
+        File.WriteAllText(headerPath, "=== Report Header ===\nTitle: <<[model.Title]>>\n");
+
+        // Create main template document
+        string templatePath = Path.Combine(templateFolder, "report_template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Insert header fragment content
+        string headerContent = File.ReadAllText(headerPath);
+        builder.Writeln(headerContent);
+
+        // Add a blank line
+        builder.Writeln();
+
+        // Insert a foreach loop over Items
         builder.Writeln("<<foreach [item in Items]>>");
-
-        // Table header.
-        Table table = builder.StartTable();
-        builder.InsertCell(); builder.Writeln("Name");
-        builder.InsertCell(); builder.Writeln("Quantity");
-        builder.EndRow();
-
-        // Table row (repeated for each item).
-        builder.InsertCell(); builder.Writeln("<<[item.Name]>>");
-        builder.InsertCell(); builder.Writeln("<<[item.Quantity]>>");
-        builder.EndRow();
-        builder.EndTable();
-
+        builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template (optional, just for demonstration).
-        mainDoc.Save("MainTemplate.docx");
+        // Save the template
+        templateDoc.Save(templatePath);
 
-        // Sample data model.
-        var model = new ReportModel
+        // Load the template for reporting
+        Document reportDoc = new Document(templatePath);
+
+        // Prepare sample data
+        ReportModel model = new()
         {
-            Title = "Sales Report",
-            ReportDate = DateTime.Now.ToString("yyyy-MM-dd"),
+            Title = "Sample Report",
             Items = new List<Item>
             {
-                new Item { Name = "Apple", Quantity = 10 },
-                new Item { Name = "Banana", Quantity = 20 },
-                new Item { Name = "Cherry", Quantity = 15 }
+                new Item { Index = 1, Name = "Alpha" },
+                new Item { Index = 2, Name = "Beta" },
+                new Item { Index = 3, Name = "Gamma" }
             }
         };
 
-        // Build the report.
-        var engine = new ReportingEngine();
-        engine.BuildReport(mainDoc, model, "model");
+        // Build the report
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Save the generated report.
-        mainDoc.Save("ReportOutput.docx");
-        Console.WriteLine("Report generated: ReportOutput.docx");
+        // Save the generated report
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "report_output.docx");
+        reportDoc.Save(outputPath);
     }
 }
 
-// Data model classes.
 public class ReportModel
 {
     public string Title { get; set; } = string.Empty;
-    public string ReportDate { get; set; } = string.Empty;
     public List<Item> Items { get; set; } = new();
 }
 
 public class Item
 {
+    public int Index { get; set; }
     public string Name { get; set; } = string.Empty;
-    public int Quantity { get; set; }
 }

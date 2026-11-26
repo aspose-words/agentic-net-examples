@@ -6,52 +6,58 @@ using Aspose.Words.Reporting;
 
 public class ReportModel
 {
-    // Image data that will be inserted into the report.
-    public byte[] ImageData { get; set; } = Array.Empty<byte>();
+    // Image data as a byte array – supported by the LINQ Reporting image tag.
+    public byte[] Photo { get; set; }
+
+    public ReportModel(byte[] photo)
+    {
+        Photo = photo;
+    }
 }
 
 public class Program
 {
     public static void Main()
     {
-        // File names used in the example.
-        const string templatePath = "Template.docx";
-        const string outputPath = "Report.docx";
-        const string imagePath = "sample.png";
+        // Working directory.
+        string workDir = Directory.GetCurrentDirectory();
+        string templatePath = Path.Combine(workDir, "template.docx");
+        string outputPath = Path.Combine(workDir, "report.docx");
+        string imagePath = Path.Combine(workDir, "sample.png");
 
-        // Create a tiny PNG image (1x1 pixel) from a Base64 string.
-        // This avoids the need for System.Drawing dependencies.
-        byte[] pngBytes = Convert.FromBase64String(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=");
+        // Create a minimal PNG image (1x1 pixel) and save it.
+        // Base64 for a transparent 1x1 PNG.
+        string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BFwAE/wJ/6V9sAAAAAElFTkSuQmCC";
+        byte[] pngBytes = Convert.FromBase64String(base64Png);
         File.WriteAllBytes(imagePath, pngBytes);
 
-        // Build the LINQ Reporting template.
+        // Load the image bytes for the model.
+        byte[] imgData = File.ReadAllBytes(imagePath);
+        ReportModel model = new ReportModel(imgData);
+
+        // -----------------------------------------------------------------
+        // Create the LINQ Reporting template.
+        // -----------------------------------------------------------------
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Insert a textbox to host the image tag.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 200);
+        // Insert a textbox that will contain the image.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
         builder.MoveTo(textBox.FirstParagraph);
-        // Image tag with -fitWidth switch to limit the image width.
-        builder.Write("<<image [model.ImageData] -fitWidth>>");
+        // Image tag with -fitWidth switch to limit image width to the textbox width.
+        builder.Write("<<image [model.Photo] -fitWidth>>");
 
-        // Save the template to disk.
+        // Save the template.
         templateDoc.Save(templatePath);
 
         // Load the template for report generation.
         Document reportDoc = new Document(templatePath);
 
-        // Prepare the model with the image data.
-        ReportModel model = new ReportModel { ImageData = File.ReadAllBytes(imagePath) };
-
         // Build the report using the LINQ Reporting engine.
         ReportingEngine engine = new ReportingEngine();
-        bool success = engine.BuildReport(reportDoc, model, "model");
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Save the generated report.
+        // Save the final report.
         reportDoc.Save(outputPath);
-
-        // Optionally, you could check the success flag here.
-        // The program ends here.
     }
 }

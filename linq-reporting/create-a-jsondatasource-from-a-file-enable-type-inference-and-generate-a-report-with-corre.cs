@@ -3,58 +3,63 @@ using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words (required for some encodings).
+        // Register code page provider (required by Aspose.Words for some encodings)
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // --------------------------------------------------------------------
-        // Create sample JSON data file.
-        // --------------------------------------------------------------------
-        string jsonPath = Path.Combine(Directory.GetCurrentDirectory(), "data.json");
-        string jsonContent = @"{
-            ""Persons"": [
-                { ""Name"": ""Alice"", ""Age"": 30, ""IsMember"": true },
-                { ""Name"": ""Bob"",   ""Age"": 25, ""IsMember"": false }
-            ]
-        }";
-        File.WriteAllText(jsonPath, jsonContent);
+        // Prepare sample data model
+        var customer = new Customer
+        {
+            Name = "John Doe",
+            Age = 30,
+            IsMember = true,
+            Balance = 1234.56m
+        };
 
-        // --------------------------------------------------------------------
-        // Build the template document with LINQ Reporting tags.
-        // --------------------------------------------------------------------
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Serialize model to JSON and write to a file
+        string jsonPath = "data.json";
+        string jsonContent = JsonConvert.SerializeObject(customer, Formatting.Indented);
+        File.WriteAllText(jsonPath, jsonContent, Encoding.UTF8);
 
-        builder.Writeln("Person Report");
-        // The JSON root is a table named "Persons". When using JsonDataSource,
-        // the root name supplied to BuildReport ("data") refers directly to that table,
-        // so we iterate over the root collection itself.
-        builder.Writeln("<<foreach [p in data]>>");
-        builder.Writeln("Name: <<[p.Name]>>");
-        builder.Writeln("Age: <<[p.Age]>>");
-        builder.Writeln("Member: <<[p.IsMember]>>");
-        builder.Writeln("<</foreach>>");
+        // Create a Word template programmatically
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        template.Save(templatePath);
+        builder.Writeln("Customer Report");
+        builder.Writeln("Name: <<[root.Name]>>");
+        builder.Writeln("Age: <<[root.Age]>>");
+        builder.Writeln("Member: <<[root.IsMember]>>");
+        builder.Writeln("Balance: $<<[root.Balance]>>");
 
-        // --------------------------------------------------------------------
-        // Load the template and generate the report.
-        // --------------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
+        string templatePath = "template.docx";
+        templateDoc.Save(templatePath);
 
-        // JsonDataSource performs type inference automatically.
-        JsonDataSource jsonDataSource = new JsonDataSource(jsonPath);
+        // Load the template
+        var doc = new Document(templatePath);
 
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, jsonDataSource, "data");
+        // Configure JSON data source (type inference is enabled by default in recent versions)
+        var jsonDataSource = new JsonDataSource(jsonPath);
 
-        // Save the generated report.
-        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        reportDoc.Save(reportPath);
+        // Build the report
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, jsonDataSource, "root");
+
+        // Save the generated report
+        string outputPath = "report.docx";
+        doc.Save(outputPath);
     }
+}
+
+// Data model used only for JSON generation; the report uses JsonDataSource directly.
+public class Customer
+{
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
+    public bool IsMember { get; set; }
+    public decimal Balance { get; set; }
 }

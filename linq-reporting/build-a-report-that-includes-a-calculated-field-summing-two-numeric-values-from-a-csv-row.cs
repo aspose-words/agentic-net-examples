@@ -3,67 +3,78 @@ using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Loading;
+using Aspose.Words.Tables;
 
-public class LinqReportingCsvSumExample
+public class Program
 {
     public static void Main()
     {
-        // Register code page provider for CSV handling (required for non‑UTF8 encodings).
+        // Register code page provider for CSV support.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // -----------------------------------------------------------------
-        // Create sample CSV data.
-        // -----------------------------------------------------------------
-        string csvPath = Path.Combine(Directory.GetCurrentDirectory(), "data.csv");
-        File.WriteAllText(csvPath, "Value1,Value2\n10,20\n5,7\n12,8");
+        // Prepare sample CSV data.
+        string csvPath = "data.csv";
+        File.WriteAllText(csvPath,
+            "Item,Value1,Value2\n" +
+            "Apple,10,5\n" +
+            "Banana,7,3\n" +
+            "Cherry,12,8");
 
-        // -----------------------------------------------------------------
-        // Build the template document containing LINQ Reporting tags.
-        // -----------------------------------------------------------------
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        // Create a Word template with LINQ Reporting tags.
+        string templatePath = "template.docx";
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Begin a foreach loop over the CSV rows (named "row").
-        builder.Writeln("<<foreach [row in data]>>");
-        builder.Writeln("Value1: <<[row.Value1]>>");
-        builder.Writeln("Value2: <<[row.Value2]>>");
-        // Calculated field – sum of the two columns.
-        builder.Writeln("Sum: <<[row.Value1 + row.Value2]>>");
-        // End of the foreach block.
+        // Begin foreach loop over CSV rows.
+        builder.Writeln("<<foreach [row in rows]>>");
+
+        // Start the table inside the loop.
+        Table table = builder.StartTable();
+
+        // Header row (only once, so we add a condition to render it on the first iteration).
+        builder.InsertCell();
+        builder.Writeln("Item");
+        builder.InsertCell();
+        builder.Writeln("Sum");
+        builder.EndRow();
+
+        // Data row – first cell.
+        builder.InsertCell();
+        builder.Writeln("<<[row.Item]>>");
+
+        // Data row – second cell (calculated sum).
+        builder.InsertCell();
+        builder.Writeln("<<[row.Value1 + row.Value2]>>");
+
+        // End of the data row.
+        builder.EndRow();
+
+        // End the table.
+        builder.EndTable();
+
+        // End foreach loop.
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
+        // Save the template.
         templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // Load the template and bind the CSV data source.
-        // -----------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
+        // Load the template for report generation.
+        Document doc = new Document(templatePath);
 
-        // Configure CSV loading options. The default separator is a comma,
-        // so we only need to specify that the first line contains headers.
+        // Configure CSV data source (default separator is comma).
         CsvDataLoadOptions loadOptions = new CsvDataLoadOptions
         {
             HasHeaders = true
         };
+        CsvDataSource dataSource = new CsvDataSource(csvPath, loadOptions);
 
-        // Create the CSV data source.
-        CsvDataSource csvData = new CsvDataSource(csvPath, loadOptions);
-
-        // -----------------------------------------------------------------
         // Build the report.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.None
-        };
-        engine.BuildReport(reportDoc, csvData, "data");
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, dataSource, "rows");
 
-        // -----------------------------------------------------------------
         // Save the generated report.
-        // -----------------------------------------------------------------
-        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        reportDoc.Save(reportPath);
+        string outputPath = "report.docx";
+        doc.Save(outputPath);
     }
 }

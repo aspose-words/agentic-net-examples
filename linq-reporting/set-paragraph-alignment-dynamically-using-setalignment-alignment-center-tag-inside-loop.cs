@@ -1,73 +1,91 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Tables;
 
-public class Program
+namespace LinqReportingAlignmentExample
 {
-    public static void Main()
+    // Data model classes
+    public class ReportItem
     {
-        // Prepare sample data.
-        var model = new ReportModel
+        public int Index { get; set; } = 0;
+        public string Text { get; set; } = "";
+        public string Alignment { get; set; } = "Left"; // Left, Center, Right, Justify
+    }
+
+    public class ReportModel
+    {
+        public List<ReportItem> Items { get; set; } = new();
+    }
+
+    public class Program
+    {
+        public static void Main()
         {
-            Items = new List<Item>
+            // Register code page provider for any encoding needs
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Prepare sample data
+            var model = new ReportModel
             {
-                new Item { Name = "First Item" },
-                new Item { Name = "Second Item" },
-                new Item { Name = "Third Item" }
-            }
-        };
+                Items = new List<ReportItem>
+                {
+                    new ReportItem { Index = 0, Text = "First paragraph, left aligned.", Alignment = "Left" },
+                    new ReportItem { Index = 1, Text = "Second paragraph, centered.", Alignment = "Center" },
+                    new ReportItem { Index = 2, Text = "Third paragraph, right aligned.", Alignment = "Right" }
+                }
+            };
 
-        // Create a template document programmatically.
-        var templatePath = "Template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+            // Create template document programmatically
+            const string templatePath = "template.docx";
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
 
-        // Write a heading.
-        builder.Writeln("Dynamic Alignment Report");
-        builder.Writeln();
+            // Insert a foreach loop with a bookmark for each item
+            builder.Writeln("<<foreach [item in Items]>>");
+            builder.Writeln("<<bookmark [\"bm_\" + item.Index]>>");
+            builder.Writeln("<<[item.Text]>>");
+            builder.Writeln("<</bookmark>>");
+            builder.Writeln("<</foreach>>");
 
-        // Start a foreach loop over Items.
-        builder.Writeln("<<foreach [item in Items]>>");
-        // Each item will be placed in its own paragraph.
-        builder.Writeln("<<[item.Name]>>");
-        builder.Writeln("<</foreach>>");
+            // Save the template
+            doc.Save(templatePath);
 
-        // Save the template.
-        doc.Save(templatePath);
+            // Load the template for reporting
+            var reportDoc = new Document(templatePath);
+            var engine = new ReportingEngine();
 
-        // Load the template for reporting.
-        var reportDoc = new Document(templatePath);
-        var engine = new ReportingEngine();
+            // Build the report
+            engine.BuildReport(reportDoc, model, "model");
 
-        // Build the report.
-        engine.BuildReport(reportDoc, model, "model");
-
-        // After the report is built, set paragraph alignment dynamically.
-        // Here we center all paragraphs that contain item names.
-        foreach (Paragraph para in reportDoc.GetChildNodes(NodeType.Paragraph, true))
-        {
-            string text = para.GetText().Trim();
-            if (model.Items.Exists(i => i.Name == text))
+            // After report generation, adjust paragraph alignment based on each item's Alignment property
+            foreach (var item in model.Items)
             {
-                para.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+                string bookmarkName = $"bm_{item.Index}";
+                var bookmark = reportDoc.Range.Bookmarks[bookmarkName];
+                if (bookmark != null && bookmark.BookmarkStart?.ParentNode is Paragraph paragraph)
+                {
+                    paragraph.ParagraphFormat.Alignment = GetParagraphAlignment(item.Alignment);
+                }
             }
+
+            // Save the final document
+            const string outputPath = "output.docx";
+            reportDoc.Save(outputPath);
         }
 
-        // Save the final report.
-        var outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+        // Helper to map string alignment to Aspose.Words ParagraphAlignment
+        private static ParagraphAlignment GetParagraphAlignment(string alignment)
+        {
+            return alignment?.ToLower() switch
+            {
+                "center" => ParagraphAlignment.Center,
+                "right" => ParagraphAlignment.Right,
+                "justify" => ParagraphAlignment.Justify,
+                _ => ParagraphAlignment.Left,
+            };
+        }
     }
-}
-
-// Data model classes.
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
-
-public class Item
-{
-    public string Name { get; set; } = string.Empty;
 }

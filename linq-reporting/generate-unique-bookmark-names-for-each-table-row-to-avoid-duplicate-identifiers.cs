@@ -1,95 +1,95 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Tables;
 
-namespace LinqReportingBookmarkExample
+public class Program
 {
-    // Data model for the report.
-    public class ReportModel
+    public static void Main()
     {
-        public List<RowData> Rows { get; set; } = new();
-    }
+        // Register code page provider (required for some Aspose.Words features)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    public class RowData
-    {
-        public int Index { get; set; }
-        public string Name { get; set; } = "";
-        // Unique bookmark name for this row.
-        public string BookmarkName { get; set; } = "";
-    }
-
-    public class Program
-    {
-        public static void Main()
+        // Prepare sample data with unique bookmark names
+        var model = new ReportModel
         {
-            // Prepare sample data.
-            var model = new ReportModel();
-            for (int i = 1; i <= 5; i++)
+            Items = new()
+        };
+
+        for (int i = 1; i <= 5; i++)
+        {
+            model.Items.Add(new Row
             {
-                model.Rows.Add(new RowData
-                {
-                    Index = i,
-                    Name = $"Item {i}",
-                    BookmarkName = $"Row_{i}"
-                });
-            }
-
-            // Create the LINQ Reporting template programmatically.
-            var templatePath = "Template.docx";
-            CreateTemplate(templatePath);
-
-            // Load the template.
-            var doc = new Document(templatePath);
-
-            // Build the report.
-            var engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "Model");
-
-            // Save the generated report.
-            var outputPath = "Report.docx";
-            doc.Save(outputPath);
+                Name = $"Item {i}",
+                Description = $"Description for item {i}",
+                BookmarkName = $"Row_{i}"
+            });
         }
 
-        private static void CreateTemplate(string filePath)
-        {
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
+        // Create a template document programmatically
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-            // Title.
-            builder.Writeln("Table of Rows with Unique Bookmarks:");
-            builder.Writeln();
+        // Title
+        builder.Writeln("Report with Unique Bookmarks");
+        builder.Writeln();
 
-            // Begin foreach loop over rows.
-            builder.Writeln("<<foreach [row in Model.Rows]>>");
+        // Begin foreach loop over Items
+        builder.Writeln("<<foreach [item in Items]>>");
 
-            // Start table inside the loop.
-            Table table = builder.StartTable();
+        // Start table inside the foreach block
+        Table table = builder.StartTable();
 
-            // Header row (added only once, before the first data row).
-            builder.InsertCell();
-            builder.Writeln("Index");
-            builder.InsertCell();
-            builder.Writeln("Name");
-            builder.EndRow();
+        // Header row
+        builder.InsertCell();
+        builder.Writeln("Name (Bookmark)");
+        builder.InsertCell();
+        builder.Writeln("Description");
+        builder.EndRow();
 
-            // Data row.
-            builder.InsertCell();
-            // Bookmark around the index value.
-            builder.Writeln("<<bookmark [row.BookmarkName]>> <<[row.Index]>> <</bookmark>>");
-            builder.InsertCell();
-            builder.Writeln("<<[row.Name]>>");
-            builder.EndRow();
+        // Data row (template)
+        builder.InsertCell();
+        builder.Writeln("<<bookmark [item.BookmarkName]>> <<[item.Name]>> <</bookmark>>");
+        builder.InsertCell();
+        builder.Writeln("<<[item.Description]>>");
+        builder.EndRow();
 
-            // End table.
-            builder.EndTable();
+        // End table
+        builder.EndTable();
 
-            // End foreach loop.
-            builder.Writeln("<</foreach>>");
+        // End foreach loop
+        builder.Writeln("<</foreach>>");
 
-            // Save the template.
-            doc.Save(filePath);
-        }
+        // Build the report
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
+
+        // Ensure output directory exists
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
+
+        // Save the generated document
+        string outputPath = Path.Combine(outputDir, "ReportWithBookmarks.docx");
+        doc.Save(outputPath);
+
+        // Indicate completion (no interactive input)
+        Console.WriteLine($"Report generated: {outputPath}");
     }
+}
+
+// Root data model
+public class ReportModel
+{
+    public List<Row> Items { get; set; } = new();
+}
+
+// Row data model
+public class Row
+{
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string BookmarkName { get; set; } = string.Empty;
 }

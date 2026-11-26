@@ -1,69 +1,86 @@
 using System;
 using System.IO;
-using System.Text;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace LinqReportingRemoveEmptyParagraphsTest
 {
-    public static void Main()
-    {
-        // Register code page provider for Aspose.Words if needed.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Create a simple template document.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-
-        // Header paragraph.
-        builder.Writeln("Header");
-
-        // Conditional paragraph that will be empty when IncludeDetail is false.
-        builder.Writeln("<<if [model.IncludeDetail]>>Detail <<[model.Detail]>> <</if>>");
-
-        // Footer paragraph.
-        builder.Writeln("Footer");
-
-        // Save the template (optional, for inspection).
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "template.docx");
-        template.Save(templatePath);
-
-        // Prepare the data model with IncludeDetail = false.
-        ReportModel model = new()
-        {
-            IncludeDetail = false,
-            Detail = "Some detail"
-        };
-
-        // Configure the reporting engine to remove empty paragraphs.
-        ReportingEngine engine = new();
-        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
-
-        // Build the report.
-        bool success = engine.BuildReport(template, model, "model");
-
-        // Verify that empty paragraphs were removed.
-        // Expected paragraphs: Header and Footer only (2 paragraphs).
-        int expectedParagraphCount = 2;
-        int actualParagraphCount = template.FirstSection.Body.Paragraphs.Count;
-
-        if (success && actualParagraphCount == expectedParagraphCount)
-        {
-            Console.WriteLine("Test passed: Empty paragraphs were removed.");
-        }
-        else
-        {
-            Console.WriteLine($"Test failed: Expected {expectedParagraphCount} paragraphs, but found {actualParagraphCount}.");
-        }
-
-        // Save the resulting document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
-        template.Save(outputPath);
-    }
-
+    // Simple data model used as the root object for the report.
     public class ReportModel
     {
-        public bool IncludeDetail { get; set; } = false;
-        public string Detail { get; set; } = string.Empty;
+        public string Title { get; set; } = "Sample Report";
+    }
+
+    public class Program
+    {
+        public static void Main()
+        {
+            // Prepare file paths.
+            string templatePath = "template.docx";
+            string outputPath = "output.docx";
+
+            // -----------------------------------------------------------------
+            // 1. Create the template document programmatically.
+            // -----------------------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            // Paragraph with static text.
+            builder.Writeln("=== Report Start ===");
+
+            // Empty paragraph that should be removed.
+            builder.Writeln(string.Empty);
+
+            // LINQ Reporting tag that will be replaced with model data.
+            builder.Writeln("Title: <<[model.Title]>>");
+
+            // Another empty paragraph.
+            builder.Writeln();
+
+            // Paragraph with static text.
+            builder.Writeln("=== Report End ===");
+
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 2. Load the template and build the report with RemoveEmptyParagraphs enabled.
+            // -----------------------------------------------------------------
+            Document docToReport = new Document(templatePath);
+            ReportModel model = new ReportModel();
+
+            ReportingEngine engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
+
+            bool success = engine.BuildReport(docToReport, model, "model");
+            if (!success)
+            {
+                Console.WriteLine("Report generation failed.");
+                return;
+            }
+
+            // Save the generated report.
+            docToReport.Save(outputPath);
+
+            // -----------------------------------------------------------------
+            // 3. Verify that no empty paragraphs remain in the generated document.
+            // -----------------------------------------------------------------
+            Document resultDoc = new Document(outputPath);
+            var paragraphs = resultDoc.GetChildNodes(NodeType.Paragraph, true)
+                                     .Cast<Paragraph>()
+                                     .ToList();
+
+            int emptyParagraphCount = paragraphs.Count(p => string.IsNullOrWhiteSpace(p.GetText()));
+
+            if (emptyParagraphCount == 0)
+            {
+                Console.WriteLine("Test passed: No empty paragraphs remain.");
+            }
+            else
+            {
+                Console.WriteLine($"Test failed: {emptyParagraphCount} empty paragraph(s) found.");
+            }
+        }
     }
 }

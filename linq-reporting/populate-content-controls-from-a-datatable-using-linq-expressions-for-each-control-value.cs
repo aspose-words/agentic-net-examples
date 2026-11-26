@@ -8,60 +8,76 @@ public class Program
 {
     public static void Main()
     {
-        // Create sample DataTable.
-        DataTable table = new DataTable("People");
-        table.Columns.Add("FirstName", typeof(string));
-        table.Columns.Add("LastName", typeof(string));
-        table.Columns.Add("Age", typeof(int));
-        table.Rows.Add("John", "Doe", 30);
-        table.Rows.Add("Jane", "Smith", 25);
-        table.Rows.Add("Bob", "Johnson", 40);
+        // Prepare sample data in a DataTable.
+        DataTable table = new()
+        {
+            TableName = "Data"
+        };
+        table.Columns.Add("Id", typeof(int));
+        table.Columns.Add("Name", typeof(string));
+        table.Columns.Add("Amount", typeof(decimal));
 
-        // Build the LINQ Reporting template programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        table.Rows.Add(1, "Alice", 123.45m);
+        table.Rows.Add(2, "Bob", 678.90m);
+        table.Rows.Add(3, "Charlie", 234.56m);
 
-        // Begin foreach over the DataTable rows.
-        builder.Writeln("<<foreach [row in Data]>>");
+        // Create a template document programmatically.
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
 
-        // Create a table with a header row.
-        Table tbl = builder.StartTable();
+        // Insert a heading.
+        builder.Writeln("Report generated from DataTable");
+        builder.Writeln();
 
+        // Insert a table header.
+        Table headerTable = builder.StartTable();
         builder.InsertCell();
-        builder.Writeln("First Name");
+        builder.Writeln("Id");
         builder.InsertCell();
-        builder.Writeln("Last Name");
+        builder.Writeln("Name");
         builder.InsertCell();
-        builder.Writeln("Age");
-        builder.EndRow();
-
-        // Data row with LINQ Reporting tags bound to each column.
-        builder.InsertCell();
-        builder.Writeln("<<[row.FirstName]>>");
-
-        builder.InsertCell();
-        builder.Writeln("<<[row.LastName]>>");
-
-        builder.InsertCell();
-        builder.Writeln("<<[row.Age]>>");
-
+        builder.Writeln("Amount");
         builder.EndRow();
         builder.EndTable();
 
-        // End foreach.
+        // Begin the foreach block that iterates over the DataTable rows.
+        builder.Writeln("<<foreach [row in Data]>>");
+
+        // Create a table for each row.
+        Table dataTable = builder.StartTable();
+
+        // Id cell.
+        builder.InsertCell();
+        builder.Writeln("<<[row.Id]>>");
+
+        // Name cell.
+        builder.InsertCell();
+        builder.Writeln("<<[row.Name]>>");
+
+        // Amount cell.
+        builder.InsertCell();
+        builder.Writeln("<<[row.Amount]>>");
+
+        // Finish the row and the table.
+        builder.EndRow();
+        builder.EndTable();
+
+        // End the foreach block.
         builder.Writeln("<</foreach>>");
 
-        // Save the template.
+        // Save the template to disk.
         const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        templateDoc.Save(templatePath);
 
-        // Load the template and generate the report.
-        Document report = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(report, table, "Data");
+        // Load the template for reporting.
+        Document reportDoc = new(templatePath);
 
-        // Save the final document.
+        // Build the report using the DataTable as the root data source.
+        ReportingEngine engine = new();
+        engine.BuildReport(reportDoc, table, "Data");
+
+        // Save the generated report.
         const string outputPath = "Report.docx";
-        report.Save(outputPath);
+        reportDoc.Save(outputPath);
     }
 }

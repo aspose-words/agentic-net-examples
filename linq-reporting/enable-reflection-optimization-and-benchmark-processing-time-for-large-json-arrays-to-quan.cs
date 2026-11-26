@@ -7,92 +7,102 @@ using Aspose.Words.Reporting;
 using Newtonsoft.Json;
 using System.Text;
 
-namespace LinqReportingReflectionOptimization
+namespace LinqReportingReflectionBenchmark
 {
     public class Item
     {
-        public int Id { get; set; }
+        public int Id { get; set; } = 0;
         public string Name { get; set; } = string.Empty;
-        public double Value { get; set; }
+        public double Value { get; set; } = 0.0;
     }
 
-    public class Root
+    public class DataRoot
     {
         public List<Item> Items { get; set; } = new();
     }
 
     public class Program
     {
-        private const string TemplateFileName = "template.docx";
-        private const string JsonFileName = "data.json";
-        private const string OutputNonOptimized = "output_nonoptimized.docx";
-        private const string OutputOptimized = "output_optimized.docx";
-
-        public static void Main()
+        static void Main()
         {
-            // Register code page provider for Aspose.Words.
+            // Ensure code page support for Aspose.Words if needed.
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            // Prepare large JSON data.
-            Root data = GenerateSampleData(10000);
-            string json = JsonConvert.SerializeObject(data);
-            File.WriteAllText(JsonFileName, json);
+            // Paths for files.
+            const string templatePath = "template.docx";
+            const string jsonPath = "data.json";
+            const string outputNoOpt = "output_no_optimization.docx";
+            const string outputOpt = "output_optimization.docx";
 
-            // Load data back from JSON.
-            Root root = JsonConvert.DeserializeObject<Root>(File.ReadAllText(JsonFileName))!;
+            // Generate large JSON data.
+            GenerateJsonData(jsonPath, itemCount: 5000);
 
-            // Create and save the template document.
-            CreateTemplate();
+            // Create LINQ Reporting template.
+            CreateTemplate(templatePath);
+
+            // Load data from JSON.
+            var dataRoot = LoadData(jsonPath);
 
             // Benchmark without reflection optimization.
-            TimeSpan nonOptimizedTime = RunReport(root, false, OutputNonOptimized);
-            Console.WriteLine($"Report without reflection optimization: {nonOptimizedTime.TotalMilliseconds} ms");
+            ReportingEngine.UseReflectionOptimization = false;
+            var timeNoOpt = BuildReport(templatePath, dataRoot, "dataRoot", outputNoOpt);
 
             // Benchmark with reflection optimization.
-            TimeSpan optimizedTime = RunReport(root, true, OutputOptimized);
-            Console.WriteLine($"Report with reflection optimization: {optimizedTime.TotalMilliseconds} ms");
+            ReportingEngine.UseReflectionOptimization = true;
+            var timeOpt = BuildReport(templatePath, dataRoot, "dataRoot", outputOpt);
+
+            // Output benchmark results.
+            Console.WriteLine($"BuildReport without reflection optimization: {timeNoOpt.TotalMilliseconds} ms");
+            Console.WriteLine($"BuildReport with reflection optimization:    {timeOpt.TotalMilliseconds} ms");
         }
 
-        private static Root GenerateSampleData(int count)
+        private static void GenerateJsonData(string filePath, int itemCount)
         {
-            var root = new Root();
-            for (int i = 1; i <= count; i++)
+            var root = new DataRoot();
+            for (int i = 1; i <= itemCount; i++)
             {
                 root.Items.Add(new Item
                 {
                     Id = i,
                     Name = $"Item {i}",
-                    Value = i * 0.1
+                    Value = i * 1.1
                 });
             }
-            return root;
+
+            var json = JsonConvert.SerializeObject(root, Formatting.Indented);
+            File.WriteAllText(filePath, json, Encoding.UTF8);
         }
 
-        private static void CreateTemplate()
+        private static void CreateTemplate(string filePath)
         {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
 
+            builder.Writeln("Report generated from large JSON data:");
             builder.Writeln("<<foreach [item in Items]>>");
             builder.Writeln("Id: <<[item.Id]>>, Name: <<[item.Name]>>, Value: <<[item.Value]>>");
             builder.Writeln("<</foreach>>");
 
-            doc.Save(TemplateFileName);
+            doc.Save(filePath);
         }
 
-        private static TimeSpan RunReport(Root data, bool useOptimization, string outputPath)
+        private static DataRoot LoadData(string jsonPath)
         {
-            ReportingEngine.UseReflectionOptimization = useOptimization;
+            var json = File.ReadAllText(jsonPath, Encoding.UTF8);
+            return JsonConvert.DeserializeObject<DataRoot>(json) ?? new DataRoot();
+        }
 
-            Document template = new Document(TemplateFileName);
-            ReportingEngine engine = new ReportingEngine();
+        private static TimeSpan BuildReport(string templatePath, DataRoot data, string rootName, string outputPath)
+        {
+            var doc = new Document(templatePath);
+            var engine = new ReportingEngine();
 
-            Stopwatch sw = Stopwatch.StartNew();
-            engine.BuildReport(template, data, "root");
-            sw.Stop();
+            var stopwatch = Stopwatch.StartNew();
+            engine.BuildReport(doc, data, rootName);
+            stopwatch.Stop();
 
-            template.Save(outputPath);
-            return sw.Elapsed;
+            doc.Save(outputPath);
+            return stopwatch.Elapsed;
         }
     }
 }

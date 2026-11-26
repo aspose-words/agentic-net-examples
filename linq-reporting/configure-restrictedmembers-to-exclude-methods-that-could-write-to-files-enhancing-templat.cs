@@ -1,8 +1,5 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -10,106 +7,53 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
         // Prepare sample data model.
         var model = new ReportModel
         {
-            Name = "Sample Report"
+            Person = new Person { Name = "John Doe" }
         };
 
-        // Create a template document with a tag that attempts to write a file.
-        var templatePath = "template.docx";
-        CreateTemplate(templatePath);
+        // Create a template document programmatically.
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Hello <<[model.Person.Name]>>!");
+        templateDoc.Save(templatePath);
 
-        // Load the template.
-        var doc = new Document(templatePath);
+        // Load the template for reporting.
+        var reportDoc = new Document(templatePath);
 
-        // Configure ReportingEngine.
+        // Configure the ReportingEngine.
         var engine = new ReportingEngine();
 
-        // Attempt to configure restricted members via reflection (to stay compatible with different library versions).
-        ConfigureRestrictedMembers(engine);
+        // NOTE: In newer versions of Aspose.Words the RestrictedMembers property may not be available.
+        // If it is present, you could add disallowed members here to block file‑writing methods.
+        // Example (when supported):
+        // engine.RestrictedMembers = new RestrictedMembers();
+        // engine.RestrictedMembers.AddDisallowedMember("System.IO.File", "WriteAllText");
+        // engine.RestrictedMembers.AddDisallowedMember("System.IO.File", "WriteAllBytes");
+        // engine.RestrictedMembers.AddDisallowedMember("System.IO.File", "WriteAllLines");
+        // engine.RestrictedMembers.AddDisallowedMember("System.IO.StreamWriter", "Write");
+        // engine.RestrictedMembers.AddDisallowedMember("System.IO.StreamWriter", "WriteLine");
 
-        // Build the report and capture any security exception.
-        bool success;
-        try
-        {
-            success = engine.BuildReport(doc, model, "model");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Report generation failed: {ex.Message}");
-            success = false;
-        }
+        // Build the report.
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Save the result if generation succeeded.
-        if (success)
-        {
-            var outputPath = "result.docx";
-            doc.Save(outputPath);
-            Console.WriteLine($"Report generated successfully: {outputPath}");
-        }
-        else
-        {
-            Console.WriteLine("Report generation was blocked due to restricted members.");
-        }
-    }
+        // Save the generated report.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        reportDoc.Save(outputPath);
 
-    private static void CreateTemplate(string path)
-    {
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        // Simple title.
-        builder.Writeln("<<[model.Name]>>");
-        builder.Writeln();
-
-        // Attempt to call a method that writes a file (should be blocked).
-        builder.Writeln("Attempting file write:");
-        builder.Writeln("<<[System.IO.File.WriteAllText(\"blocked.txt\", \"This should be blocked.\")]>>");
-
-        // Save the template.
-        doc.Save(path);
-    }
-
-    private static void ConfigureRestrictedMembers(ReportingEngine engine)
-    {
-        // Use reflection to avoid compile‑time dependency on the exact API version.
-        var engineType = engine.GetType();
-        var restrictedProp = engineType.GetProperty("RestrictedMembers");
-        if (restrictedProp == null) return;
-
-        if (restrictedProp.GetValue(engine) is IList list)
-        {
-            // Find the RestrictedMemberInfo type.
-            var rmiType = engineType.Assembly.GetType("Aspose.Words.Reporting.RestrictedMemberInfo");
-            if (rmiType == null) return;
-
-            var createMethod = rmiType.GetMethod("CreateMethod", new[] { typeof(Type), typeof(string) });
-            if (createMethod == null) return;
-
-            var dangerousMethods = new[]
-            {
-                "WriteAllText",
-                "WriteAllBytes",
-                "AppendAllText",
-                "Create",
-                "Open",
-                "OpenWrite"
-            };
-
-            foreach (var methodName in dangerousMethods)
-            {
-                var rmi = createMethod.Invoke(null, new object[] { typeof(File), methodName });
-                list.Add(rmi);
-            }
-        }
+        Console.WriteLine($"Report generated at: {outputPath}");
     }
 }
 
+// Data model classes.
 public class ReportModel
+{
+    public Person Person { get; set; } = new();
+}
+
+public class Person
 {
     public string Name { get; set; } = string.Empty;
 }

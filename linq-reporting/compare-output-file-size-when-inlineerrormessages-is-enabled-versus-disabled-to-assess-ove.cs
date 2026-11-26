@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,60 +8,68 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Register code page provider (required for Aspose.Words).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Paths for template and reports.
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        string reportNoInlinePath = Path.Combine(outputDir, "report_no_inline.docx");
-        string reportInlinePath = Path.Combine(outputDir, "report_inline.docx");
+        // Prepare sample data model.
+        var model = new ReportModel
+        {
+            Name = "John Doe"
+        };
 
-        // Create the template document with a valid tag and a missing tag.
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Create a template document programmatically.
+        const string templatePath = "Template.docx";
+        var builder = new DocumentBuilder();
         builder.Writeln("Customer Name: <<[model.Name]>>");
-        builder.Writeln("Missing Field: <<[model.MissingProperty]>>"); // This property does not exist.
-        templateDoc.Save(templatePath);
+        builder.Writeln("This line contains an invalid tag to trigger an error:");
+        builder.Writeln("<<[model.NonExistent]>>"); // Invalid expression.
+        builder.Document.Save(templatePath);
 
-        // Sample data model (MissingProperty is intentionally omitted).
-        var model = new ReportModel { Name = "John Doe" };
+        // Load the template for reporting.
+        var template = new Document(templatePath);
 
-        // Generate report without InlineErrorMessages.
-        var reportNoInline = new Document(templatePath);
-        var engineNoInline = new ReportingEngine();
-        engineNoInline.Options = ReportBuildOptions.None;
+        // ---------- Report without InlineErrorMessages ----------
+        var reportNoInline = (Document)template.Clone();
+        var engineNoInline = new ReportingEngine(); // Default options.
+
         bool successNoInline;
         try
         {
             successNoInline = engineNoInline.BuildReport(reportNoInline, model, "model");
         }
-        catch (InvalidOperationException)
+        catch (Exception ex)
         {
-            // BuildReport throws when a missing property is encountered and InlineErrorMessages is disabled.
+            // BuildReport throws when an expression cannot be resolved and InlineErrorMessages is disabled.
+            Console.WriteLine($"BuildReport (no inline) threw an exception: {ex.Message}");
             successNoInline = false;
         }
-        reportNoInline.Save(reportNoInlinePath);
 
-        // Generate report with InlineErrorMessages.
-        var reportInline = new Document(templatePath);
+        const string outputNoInline = "Report_NoInline.docx";
+        reportNoInline.Save(outputNoInline);
+
+        // ---------- Report with InlineErrorMessages ----------
+        var reportInline = (Document)template.Clone();
         var engineInline = new ReportingEngine();
-        engineInline.Options = ReportBuildOptions.InlineErrorMessages;
+        engineInline.Options = ReportBuildOptions.InlineErrorMessages; // Enable inline error messages.
+
         bool successInline = engineInline.BuildReport(reportInline, model, "model");
-        reportInline.Save(reportInlinePath);
+        const string outputInline = "Report_Inline.docx";
+        reportInline.Save(outputInline);
 
         // Compare file sizes.
-        long sizeNoInline = new FileInfo(reportNoInlinePath).Length;
-        long sizeInline = new FileInfo(reportInlinePath).Length;
+        long sizeNoInline = new FileInfo(outputNoInline).Length;
+        long sizeInline = new FileInfo(outputInline).Length;
 
-        Console.WriteLine($"Report without InlineErrorMessages size: {sizeNoInline} bytes (Success: {successNoInline})");
-        Console.WriteLine($"Report with InlineErrorMessages size:    {sizeInline} bytes (Success: {successInline})");
+        Console.WriteLine($"Report without InlineErrorMessages size: {sizeNoInline} bytes");
+        Console.WriteLine($"Report with InlineErrorMessages size:    {sizeInline} bytes");
         Console.WriteLine($"Size overhead: {sizeInline - sizeNoInline} bytes");
+        Console.WriteLine($"Build success without inline: {successNoInline}");
+        Console.WriteLine($"Build success with inline:    {successInline}");
     }
 }
 
-// Data model used for the report.
+// Public data model class.
 public class ReportModel
 {
-    public string Name { get; set; } = "";
+    public string Name { get; set; } = string.Empty;
 }

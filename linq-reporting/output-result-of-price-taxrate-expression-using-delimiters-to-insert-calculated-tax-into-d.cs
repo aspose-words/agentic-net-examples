@@ -1,38 +1,46 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Invoice
+namespace LinqReportingExample
 {
-    public decimal Price { get; set; } = 100m;
-    public decimal TaxRate { get; set; } = 0.07m;
-}
-
-public class Program
-{
-    public static void Main()
+    // Simple data model with price and tax rate.
+    public class Invoice
     {
-        // Create template document with LINQ Reporting tags.
-        var templatePath = "template.docx";
-        var builder = new DocumentBuilder();
-        builder.Writeln("Price: <<[model.Price]>>");
-        builder.Writeln("Tax Rate: <<[model.TaxRate]>>");
-        builder.Writeln("Tax Amount: <<[model.Price * model.TaxRate]>>");
-        builder.Document.Save(templatePath);
+        public decimal Price { get; set; } = 123.45m;
+        public decimal TaxRate { get; set; } = 0.08m; // 8%
+    }
 
-        // Load the template.
-        var doc = new Document(templatePath);
+    public class Program
+    {
+        public static void Main()
+        {
+            // Create a template document programmatically.
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Prepare data model.
-        var invoice = new Invoice();
+            // Insert LINQ Reporting tags with delimiters.
+            builder.Writeln("Price: <<[Price]>>");
+            builder.Writeln("Tax Rate: <<[TaxRate]>>");
+            builder.Writeln("Tax Amount (Price * TaxRate): <<[Price * TaxRate]>>");
 
-        // Build the report.
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, invoice, "model");
+            // Save the template to disk (required before building the report).
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
 
-        // Save the generated document.
-        var outputPath = "output.docx";
-        doc.Save(outputPath);
+            // Load the template (simulating a separate load step).
+            Document loadedTemplate = new Document(templatePath);
+
+            // Prepare the data source.
+            Invoice model = new Invoice();
+
+            // Build the report using the LINQ Reporting engine.
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(loadedTemplate, model, "model");
+
+            // Save the generated report.
+            const string reportPath = "Report.docx";
+            loadedTemplate.Save(reportPath);
+        }
     }
 }

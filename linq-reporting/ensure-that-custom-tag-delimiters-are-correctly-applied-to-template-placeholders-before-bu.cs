@@ -1,63 +1,56 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Replacing;
 
-public class Program
+namespace LinqReportingCustomDelimiters
 {
-    public static void Main()
+    // Sample data model
+    public class Customer
     {
-        // Prepare working directories.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
-
-        // Create a template document using the default LINQ Reporting delimiters << >>.
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Write a foreach block.
-        builder.Writeln("<<foreach [p in Persons]>>");
-        builder.Writeln("Name: <<[p.Name]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template.
-        templateDoc.Save(templatePath);
-
-        // Load the template for reporting.
-        Document reportDoc = new Document(templatePath);
-
-        // Prepare sample data.
-        ReportModel model = new()
-        {
-            Persons = new List<Person>
-            {
-                new() { Name = "Alice" },
-                new() { Name = "Bob" },
-                new() { Name = "Charlie" }
-            }
-        };
-
-        // Configure the reporting engine (no custom delimiters needed).
-        ReportingEngine engine = new();
-
-        // Build the report.
-        engine.BuildReport(reportDoc, model, "model");
-
-        // Save the generated report.
-        string reportPath = Path.Combine(outputDir, "report.docx");
-        reportDoc.Save(reportPath);
+        public string CustomerName { get; set; } = "John Doe";
     }
-}
 
-// Public data model classes.
-public class ReportModel
-{
-    public List<Person> Persons { get; set; } = new();
-}
+    public class Program
+    {
+        public static void Main()
+        {
+            // Register code page provider for Aspose.Words
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-public class Person
-{
-    public string Name { get; set; } = string.Empty;
+            // Prepare working directories
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
+
+            // 1. Create a template with custom delimiters {{...}}
+            string templatePath = Path.Combine(outputDir, "template.docx");
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
+            builder.Writeln("Hello {{CustomerName}}!"); // Custom delimiters
+            templateDoc.Save(templatePath);
+
+            // 2. Load the template and replace custom delimiters with LINQ Reporting delimiters
+            var doc = new Document(templatePath);
+            var replaceOptions = new FindReplaceOptions
+            {
+                MatchCase = false
+                // FindWholeWords property does not exist in current API version; default behavior is sufficient.
+            };
+            doc.Range.Replace("{{", "<<[", replaceOptions);
+            doc.Range.Replace("}}", "]>>", replaceOptions);
+
+            // 3. Prepare the data model
+            var model = new Customer { CustomerName = "Alice Smith" };
+
+            // 4. Build the report
+            var engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
+
+            // 5. Save the generated report
+            string reportPath = Path.Combine(outputDir, "report.docx");
+            doc.Save(reportPath);
+        }
+    }
 }

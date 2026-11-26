@@ -2,51 +2,52 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using System.Text;
 
-namespace AsposeWordsLinqReportingHtmlInsert
+public class ReportModel
 {
-    // Model class exposing the HTML snippet.
-    public class ReportModel
+    // HTML snippet that will be inserted into the document at runtime.
+    public string HtmlSnippet { get; set; } = "<p><b>Bold Text</b> and <i>Italic Text</i></p>";
+}
+
+public class Program
+{
+    public static void Main()
     {
-        public string HtmlSnippet { get; set; } = "<p style=\"color:blue;\">This is <strong>HTML</strong> inserted at runtime.</p>";
-    }
+        // Prepare folders.
+        string workDir = Directory.GetCurrentDirectory();
+        string outputDir = Path.Combine(workDir, "Output");
+        Directory.CreateDirectory(outputDir);
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // Register code page provider for any encoding needs.
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Paths for the template and the generated report.
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        string reportPath = Path.Combine(outputDir, "Report.docx");
 
-            // Paths for the template and the generated report.
-            string templatePath = "template.docx";
-            string outputPath = "output.docx";
+        // -----------------------------------------------------------------
+        // Create the LINQ Reporting template programmatically.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            // -------------------------------------------------
-            // Create the template document with an HTML placeholder.
-            // -------------------------------------------------
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Report with HTML snippet:");
+        // Insert the LINQ Reporting HTML tag placeholder.
+        builder.Writeln("<<html [model.HtmlSnippet]>>");
 
-            // Insert a simple paragraph with the LINQ Reporting HTML tag.
-            builder.Writeln("<<html [model.HtmlSnippet]>>");
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
+        // -----------------------------------------------------------------
+        // Load the template and build the report.
+        // -----------------------------------------------------------------
+        Document reportDoc = new Document(templatePath);
+        ReportModel model = new ReportModel();
 
-            // -------------------------------------------------
-            // Load the template and build the report.
-            // -------------------------------------------------
-            var doc = new Document(templatePath);
-            var model = new ReportModel();
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None; // default options
 
-            var engine = new ReportingEngine();
-            // Build the report using the model as the root object named "model".
-            engine.BuildReport(doc, model, "model");
+        // Build the report using the model as the root object named "model".
+        engine.BuildReport(reportDoc, model, "model");
 
-            // Save the generated document.
-            doc.Save(outputPath);
-        }
+        // Save the generated report.
+        reportDoc.Save(reportPath);
     }
 }

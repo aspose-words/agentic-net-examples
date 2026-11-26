@@ -1,84 +1,61 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Product
+namespace LinqReportingExample
 {
-    public string Name { get; set; } = "";
-    public decimal Price { get; set; }
-}
-
-public class ProductDto
-{
-    public string Name { get; set; } = "";
-    public decimal Price { get; set; }
-}
-
-public class ReportModel
-{
-    public List<ProductDto> Items { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main()
+    public class Person
     {
-        // Ensure output directory exists
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        public string Name { get; set; } = "";
+        public int Age { get; set; }
+    }
 
-        // Create a Word template with LINQ Reporting tags
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+    public class ReportModel
+    {
+        public List<Person> Persons { get; set; } = new();
+    }
 
-        builder.Writeln("Product Report");
-        builder.Writeln("==============");
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("<<[item.Name]>> - $<<[item.Price]>>");
-        builder.Writeln("<</foreach>>");
-
-        templateDoc.Save(templatePath);
-
-        // Load the template (demonstrates load rule)
-        Document doc = new Document(templatePath);
-
-        // Sample data source
-        List<Product> products = new()
+    class Program
+    {
+        static void Main()
         {
-            new Product { Name = "Apple", Price = 5m },
-            new Product { Name = "Banana", Price = 12m },
-            new Product { Name = "Cherry", Price = 15m },
-            new Product { Name = "Date", Price = 8m },
-            new Product { Name = "Elderberry", Price = 20m }
-        };
-
-        // Combine Where, Select, and OrderBy in a single LINQ expression
-        List<ProductDto> filteredSorted = products
-            .Where(p => p.Price > 10)                     // Filter
-            .Select(p => new ProductDto                    // Project
+            // Sample data
+            var persons = new List<Person>
             {
-                Name = p.Name,
-                Price = p.Price
-            })
-            .OrderBy(p => p.Name)                         // Sort
-            .ToList();
+                new() { Name = "Alice", Age = 28 },
+                new() { Name = "Bob", Age = 35 },
+                new() { Name = "Charlie", Age = 32 },
+                new() { Name = "Diana", Age = 24 },
+                new() { Name = "Eve", Age = 40 }
+            };
 
-        // Prepare the root model for the report
-        ReportModel model = new()
-        {
-            Items = filteredSorted
-        };
+            // LINQ: filter Age >= 30, order by Name, select same objects
+            var filteredSorted = persons
+                .Where(p => p.Age >= 30)
+                .OrderBy(p => p.Name)
+                .Select(p => new Person { Name = p.Name, Age = p.Age })
+                .ToList();
 
-        // Build the report using Aspose.Words ReportingEngine
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+            var model = new ReportModel { Persons = filteredSorted };
 
-        // Save the generated report
-        string reportPath = Path.Combine(outputDir, "Report.docx");
-        doc.Save(reportPath);
+            // Create template document
+            var templatePath = "Template.docx";
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+            builder.Writeln("Filtered and Sorted Persons:");
+            builder.Writeln("<<foreach [p in Persons]>>");
+            builder.Writeln("<<[p.Name]>> - <<[p.Age]>>");
+            builder.Writeln("<</foreach>>");
+            doc.Save(templatePath);
+
+            // Load template and build report
+            var loadedDoc = new Document(templatePath);
+            var engine = new ReportingEngine();
+            engine.BuildReport(loadedDoc, model, "model");
+            var outputPath = "Report.docx";
+            loadedDoc.Save(outputPath);
+        }
     }
 }

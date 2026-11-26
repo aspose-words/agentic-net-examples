@@ -1,88 +1,110 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Xml.Serialization;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReporting
+public class Program
 {
-    // Helper class whose static members can be used inside the template.
-    public static class MyHelper
+    public static void Main()
     {
-        // Returns the input string in upper‑case.
-        public static string Upper(string value) => value?.ToUpperInvariant() ?? string.Empty;
+        // Register code page provider for Aspose.Words (required for some encodings)
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
+        // 1. Generate sample XML data
+        string xmlPath = "Orders.xml";
+        GenerateSampleXml(xmlPath, 5000);
+
+        // 2. Load data into the model
+        ReportModel model = LoadModelFromXml(xmlPath);
+
+        // 3. Create a Word template programmatically
+        string templatePath = "Template.docx";
+        CreateTemplate(templatePath);
+
+        // 4. Enable reflection optimization
+        ReportingEngine.UseReflectionOptimization = true;
+        ReportingEngine engine = new ReportingEngine();
+
+        // 5. Load the template and build the report
+        Document doc = new Document(templatePath);
+        bool success = engine.BuildReport(doc, model, "model");
+
+        // 6. Save the generated report
+        string outputPath = "Report.docx";
+        doc.Save(outputPath);
+
+        // 7. Indicate completion
+        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to '{outputPath}'.");
     }
 
-    class Program
+    private static void GenerateSampleXml(string filePath, int count)
     {
-        static void Main()
+        var orders = new List<Order>();
+        DateTime start = new DateTime(2023, 1, 1);
+        for (int i = 1; i <= count; i++)
         {
-            // Ensure the working directory exists.
-            string workDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-            Directory.CreateDirectory(workDir);
-
-            // 1. Create a sample XML file representing a large data set.
-            string xmlPath = Path.Combine(workDir, "Persons.xml");
-            CreateSampleXml(xmlPath, 5000); // 5 000 records for demonstration.
-
-            // 2. Build a template document programmatically.
-            string templatePath = Path.Combine(workDir, "Template.docx");
-            CreateTemplateDocument(templatePath);
-
-            // 3. Load the template (required before building the report).
-            Document template = new Document(templatePath);
-
-            // 4. Enable reflection optimization (static property).
-            ReportingEngine.UseReflectionOptimization = true;
-
-            // 5. Create the reporting engine and register the external type.
-            ReportingEngine engine = new ReportingEngine();
-            engine.KnownTypes.Add(typeof(MyHelper));
-
-            // 6. Create an XML data source.
-            XmlDataSource dataSource = new XmlDataSource(xmlPath);
-
-            // 7. Build the report. The data source name must match the tag used in the template.
-            engine.BuildReport(template, dataSource, "persons");
-
-            // 8. Save the generated report.
-            string outputPath = Path.Combine(workDir, "ReportOutput.docx");
-            template.Save(outputPath);
-        }
-
-        // Generates a simple XML file with the specified number of Person elements.
-        private static void CreateSampleXml(string filePath, int count)
-        {
-            using StreamWriter writer = new StreamWriter(filePath);
-            writer.WriteLine("<Persons>");
-            for (int i = 1; i <= count; i++)
+            orders.Add(new Order
             {
-                writer.WriteLine($"  <Person>");
-                writer.WriteLine($"    <Name>Person {i}</Name>");
-                writer.WriteLine($"    <Age>{20 + (i % 30)}</Age>");
-                writer.WriteLine($"  </Person>");
-            }
-            writer.WriteLine("</Persons>");
+                Id = i,
+                Date = start.AddDays(i)
+            });
         }
 
-        // Creates a Word template containing LINQ Reporting tags.
-        private static void CreateTemplateDocument(string filePath)
-        {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Header.
-            builder.Writeln("Persons Report");
-            builder.Writeln("----------------");
-
-            // Use a foreach loop over the XML data source named 'persons'.
-            builder.Writeln("<<foreach [p in persons]>>");
-            // Demonstrate usage of a registered external type.
-            builder.Writeln("Name: <<[MyHelper.Upper(p.Name)]>>");
-            builder.Writeln("Age: <<[p.Age]>>");
-            builder.Writeln("<</foreach>>");
-
-            // Save the template.
-            doc.Save(filePath);
-        }
+        var wrapper = new XmlOrdersWrapper { Orders = orders };
+        var serializer = new XmlSerializer(typeof(XmlOrdersWrapper));
+        using var writer = new StreamWriter(filePath);
+        serializer.Serialize(writer, wrapper);
     }
+
+    private static ReportModel LoadModelFromXml(string filePath)
+    {
+        var serializer = new XmlSerializer(typeof(XmlOrdersWrapper));
+        using var reader = new StreamReader(filePath);
+        var wrapper = (XmlOrdersWrapper)serializer.Deserialize(reader)!;
+        return new ReportModel { Orders = wrapper.Orders };
+    }
+
+    private static void CreateTemplate(string filePath)
+    {
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        builder.Writeln("Orders Report");
+        builder.Writeln("==============");
+        builder.Writeln();
+
+        // Begin foreach over Orders collection
+        builder.Writeln("<<foreach [order in Orders]>>");
+        builder.Writeln("Order ID: <<[order.Id]>>");
+        builder.Writeln("Date: <<[order.FormattedDate]>>");
+        builder.Writeln("<</foreach>>");
+
+        doc.Save(filePath);
+    }
+}
+
+// Wrapper used for XML serialization (matches the XML file structure)
+[XmlRoot("Orders")]
+public class XmlOrdersWrapper
+{
+    [XmlElement("Order")]
+    public List<Order> Orders { get; set; } = new();
+}
+
+// Public data model used by the reporting engine
+public class ReportModel
+{
+    public List<Order> Orders { get; set; } = new();
+}
+
+// Simple order class
+public class Order
+{
+    public int Id { get; set; }
+    public DateTime Date { get; set; }
+
+    // Helper property for formatted date (used in the template)
+    public string FormattedDate => Date.ToString("yyyy-MM-dd");
 }

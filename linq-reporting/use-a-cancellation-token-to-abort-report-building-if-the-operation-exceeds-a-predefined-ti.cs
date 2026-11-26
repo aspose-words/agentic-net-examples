@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Aspose.Words;
@@ -7,85 +8,76 @@ using Aspose.Words.Reporting;
 
 public class Program
 {
-    public static void Main()
+    public static async Task Main()
     {
-        // Register code page provider required by Aspose.Words.
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Ensure output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Sample data model.
-        var order = new Order
+        // Create a simple LINQ Reporting template.
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Report for <<[order.CustomerName]>>");
+        builder.Writeln("Items:");
+        builder.Writeln("<<foreach [item in order.Items]>>");
+        builder.Writeln("- <<[item.Name]>>: <<[item.Quantity]>>");
+        builder.Writeln("<</foreach>>");
+        templateDoc.Save(templatePath);
+
+        // Load the template back.
+        Document doc = new Document(templatePath);
+
+        // Prepare sample data.
+        Order order = new Order
         {
             CustomerName = "John Doe",
             Items = new List<Item>
             {
-                new Item { Index = 1, Name = "Apple" },
-                new Item { Index = 2, Name = "Banana" },
-                new Item { Index = 3, Name = "Cherry" }
+                new Item { Name = "Apple", Quantity = 3 },
+                new Item { Name = "Banana", Quantity = 5 },
+                new Item { Name = "Cherry", Quantity = 7 }
             }
         };
 
-        // Create and save the template document.
-        const string templatePath = "Template.docx";
-        CreateTemplate(templatePath);
+        // Set up a cancellation token that triggers after 2 seconds.
+        using CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        ReportingEngine engine = new ReportingEngine();
 
-        // Load the template.
-        var doc = new Document(templatePath);
-
-        // Prepare the reporting engine.
-        var engine = new ReportingEngine();
-
-        // Cancellation token that triggers after a predefined time limit.
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
-        CancellationToken token = cts.Token;
-
-        // Run the report building in a separate task.
-        Task<bool> buildTask = Task.Run(() => engine.BuildReport(doc, order, "order"));
-
-        // A task that completes when the cancellation token is triggered.
-        Task delayTask = Task.Delay(Timeout.Infinite, token);
-
-        // Wait for either the report to finish or the timeout to occur.
-        Task completed = Task.WhenAny(buildTask, delayTask).Result;
-
-        if (completed == buildTask && buildTask.IsCompletedSuccessfully)
+        bool success = false;
+        try
         {
-            // Report built within the time limit – save the result.
-            const string outputPath = "Report.docx";
-            doc.Save(outputPath);
-            Console.WriteLine($"Report generated: {outputPath}");
+            // Run BuildReport in a separate task so we can apply the timeout.
+            Task<bool> buildTask = Task.Run(() => engine.BuildReport(doc, order, "order"), cts.Token);
+            success = await buildTask;
         }
-        else
+        catch (OperationCanceledException)
         {
-            // Timeout reached – abort the operation.
             Console.WriteLine("Report generation was cancelled due to timeout.");
         }
-    }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Report generation failed: {ex.Message}");
+        }
 
-    private static void CreateTemplate(string path)
-    {
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        // Insert LINQ Reporting tags.
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("Items:");
-        builder.Writeln("<<foreach [item in order.Items]>>");
-        builder.Writeln(" - <<[item.Index]>>: <<[item.Name]>>");
-        builder.Writeln("<</foreach>>");
-
-        doc.Save(path);
+        if (success)
+        {
+            string resultPath = Path.Combine(outputDir, "Report.docx");
+            doc.Save(resultPath);
+            Console.WriteLine($"Report generated successfully: {resultPath}");
+        }
     }
 }
 
 // Public data model classes.
 public class Order
 {
-    public string CustomerName { get; set; } = "";
+    public string CustomerName { get; set; } = string.Empty;
     public List<Item> Items { get; set; } = new();
 }
 
 public class Item
 {
-    public int Index { get; set; }
-    public string Name { get; set; } = "";
+    public string Name { get; set; } = string.Empty;
+    public int Quantity { get; set; }
 }

@@ -1,76 +1,55 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class Customer
+{
+    public string Name { get; set; } = string.Empty;
+    public bool IsLoyal { get; set; }
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
-        var model = new ReportModel
-        {
-            Customers = new List<Customer>
-            {
-                new Customer
-                {
-                    Name = "Alice Johnson",
-                    IsLoyal = true,
-                    PromoBanner = "Exclusive 20% Discount for Loyal Customers!"
-                },
-                new Customer
-                {
-                    Name = "Bob Smith",
-                    IsLoyal = false,
-                    PromoBanner = "Exclusive 20% Discount for Loyal Customers!"
-                }
-            }
-        };
+        // Prepare output folder.
+        string outputDir = "output";
+        Directory.CreateDirectory(outputDir);
 
-        // Create the LINQ Reporting template programmatically.
-        var templatePath = "Template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Create the LINQ Reporting template.
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("Customer Report");
-        builder.Writeln("<<foreach [c in Customers]>>");
-        builder.Writeln("Name: <<[c.Name]>>");
-        // Conditional block: display promotional banner only for loyal customers.
-        builder.Writeln("<<if [c.IsLoyal]>>");
-        builder.Writeln("<<[c.PromoBanner]>>");
+        builder.Writeln("Dear <<[customer.Name]>>,");
+        builder.Writeln();
+        builder.Writeln("<<if [customer.IsLoyal]>>");
+        builder.Writeln("We appreciate your loyalty! Enjoy a special 20% discount on your next purchase.");
         builder.Writeln("<</if>>");
-        builder.Writeln("<</foreach>>");
+        builder.Writeln();
+        builder.Writeln("Thank you for being with us.");
 
-        // Save the template to disk.
-        doc.Save(templatePath);
+        templateDoc.Save(templatePath);
 
-        // Load the template for report generation.
-        var reportDoc = new Document(templatePath);
+        // Sample data: a loyal customer and a non‑loyal customer.
+        var loyalCustomer = new Customer { Name = "Alice", IsLoyal = true };
+        var nonLoyalCustomer = new Customer { Name = "Bob", IsLoyal = false };
 
-        // Build the report using the LINQ Reporting engine.
+        // Build report for the loyal customer.
+        var docForLoyal = new Document(templatePath);
         var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+        engine.BuildReport(docForLoyal, loyalCustomer, "customer");
+        string loyalReportPath = Path.Combine(outputDir, "report_loyal.docx");
+        docForLoyal.Save(loyalReportPath);
 
-        // Save the generated report.
-        var outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+        // Build report for the non‑loyal customer.
+        var docForNonLoyal = new Document(templatePath);
+        engine.BuildReport(docForNonLoyal, nonLoyalCustomer, "customer");
+        string nonLoyalReportPath = Path.Combine(outputDir, "report_nonloyal.docx");
+        docForNonLoyal.Save(nonLoyalReportPath);
 
-        // Optionally, indicate completion (no interactive input).
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+        // Indicate completion.
+        Console.WriteLine($"Reports generated:{Environment.NewLine}{loyalReportPath}{Environment.NewLine}{nonLoyalReportPath}");
     }
-}
-
-// Wrapper class for the root data source.
-public class ReportModel
-{
-    public List<Customer> Customers { get; set; } = new();
-}
-
-// Customer data model.
-public class Customer
-{
-    public string Name { get; set; } = "";
-    public bool IsLoyal { get; set; }
-    public string PromoBanner { get; set; } = "";
 }

@@ -1,60 +1,65 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Person
+public class Order
 {
     public string Id { get; set; } = "";
-    public string Name { get; set; } = "";
-    public string Age { get; set; } = "";
+    public string Customer { get; set; } = "";
+    public decimal Total { get; set; }
 }
 
-public class ReportModel
+public class OrdersModel
 {
-    public List<Person> Persons { get; set; } = new();
+    public List<Order> Orders { get; set; } = new();
 }
 
 public class Program
 {
     public static void Main()
     {
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
         // Prepare sample data.
-        ReportModel model = new()
+        var model = new OrdersModel
         {
-            Persons =
+            Orders =
             {
-                new Person { Id = "1", Name = "Alice", Age = "30" },
-                new Person { Id = "2", Name = "Bob",   Age = "25" }
+                new Order { Id = "1", Customer = "Alice", Total = 123.45m },
+                new Order { Id = "2", Customer = "Bob",   Total =  67.89m }
             }
         };
 
-        // Create the LINQ Reporting template.
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Create a Word template programmatically.
+        Document template = new();
+        DocumentBuilder builder = new(template);
 
-        // Insert a foreach loop that iterates over the Persons collection.
-        builder.Writeln("<<foreach [p in Persons]>>");
-        builder.Writeln("ID: <<[p.Id]>>, Name: <<[p.Name]>>, Age: <<[p.Age]>>");
+        builder.Writeln("Orders Report");
+        builder.Writeln("==============");
+        builder.Writeln();
+        builder.Writeln("<<foreach [order in Orders]>>");
+        builder.Writeln("Order Id: <<[order.Id]>>, Customer: <<[order.Customer]>>, Total: <<[order.Total]>>");
         builder.Writeln("<</foreach>>");
 
         // Save the template.
+        const string templatePath = "Template.docx";
         template.Save(templatePath);
 
-        // Load the template for report generation.
-        Document reportDoc = new Document(templatePath);
+        // Load the template for reporting.
+        Document reportDoc = new(templatePath);
 
-        // Build the report using the model as the data source.
-        ReportingEngine engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.None
-        };
+        // Build the report.
+        ReportingEngine engine = new();
         engine.BuildReport(reportDoc, model, "model");
 
         // Save the generated report.
-        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        const string reportPath = "Report.docx";
         reportDoc.Save(reportPath);
+
+        Console.WriteLine($"Report generated: {Path.GetFullPath(reportPath)}");
     }
 }

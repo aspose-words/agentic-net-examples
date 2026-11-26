@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Aspose.Words;
@@ -10,53 +9,53 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for Aspose.Words)
+        // Register code page provider for Aspose.Words (required for some encodings)
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare sample JSON data
-        var products = new List<Product>
+        // ---------- Create sample JSON data ----------
+        var people = new[]
         {
-            new Product { Name = "Apple", Price = 0.99 },
-            new Product { Name = "Banana", Price = 0.59 },
-            new Product { Name = "Cherry", Price = 2.49 }
+            new { Name = "Alice", Age = 28 },
+            new { Name = "Bob", Age = 35 },
+            new { Name = "Charlie", Age = 22 }
         };
-        string jsonPath = "products.json";
-        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(products, Formatting.Indented));
+        string json = JsonConvert.SerializeObject(people, Formatting.Indented);
+        // Save JSON to a temporary file (optional, can also use a stream directly)
+        string jsonPath = "people.json";
+        File.WriteAllText(jsonPath, json, Encoding.UTF8);
 
-        // Create a Word template with LINQ Reporting tags
-        string templatePath = "template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // ---------- Create the template document ----------
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("Product List:");
-        builder.Writeln("<<foreach [p in jsonData]>>");
-        builder.Writeln(" - <<[p.Name]>> : $<<[p.Price]>>");
+        builder.Writeln("People Report");
+        builder.Writeln("==============");
+        // LINQ Reporting foreach tag iterating over the JSON root collection named "jsonData"
+        builder.Writeln("<<foreach [person in jsonData]>>");
+        builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
         builder.Writeln("<</foreach>>");
 
-        doc.Save(templatePath);
+        // Save the template to disk
+        string templatePath = "Template.docx";
+        templateDoc.Save(templatePath);
 
-        // Load the template
-        var reportDoc = new Document(templatePath);
+        // ---------- Load the template ----------
+        var doc = new Document(templatePath);
 
-        // Load JSON data source
-        var jsonDataSource = new JsonDataSource(jsonPath);
+        // ---------- Load JSON data source ----------
+        using var jsonStream = new MemoryStream(Encoding.UTF8.GetBytes(json));
+        var jsonDataSource = new JsonDataSource(jsonStream);
 
-        // Build the report
+        // ---------- Build the report ----------
         var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, jsonDataSource, "jsonData");
+        // The root name used in the template tags is "jsonData"
+        engine.BuildReport(doc, jsonDataSource, "jsonData");
 
-        // Save the generated report
-        string outputPath = "report.docx";
-        reportDoc.Save(outputPath);
+        // ---------- Save the generated report ----------
+        string outputPath = "Report.docx";
+        doc.Save(outputPath);
 
-        // Clean up temporary files (optional)
-        // File.Delete(jsonPath);
-        // File.Delete(templatePath);
-    }
-
-    public class Product
-    {
-        public string Name { get; set; } = "";
-        public double Price { get; set; }
+        // Optionally, indicate completion (no interactive input)
+        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
     }
 }

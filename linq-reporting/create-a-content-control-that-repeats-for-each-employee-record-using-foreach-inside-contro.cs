@@ -1,21 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Tables;
-
-public class Employee
-{
-    public string Name { get; set; } = "";
-    public int Age { get; set; }
-    public string Position { get; set; } = "";
-}
-
-public class ReportModel
-{
-    public List<Employee> Employees { get; set; } = new();
-}
 
 public class Program
 {
@@ -24,66 +13,74 @@ public class Program
         // Register code page provider for Aspose.Words.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Sample data.
-        var model = new ReportModel
+        // Sample employee data.
+        var employees = new List<Employee>
         {
-            Employees = new List<Employee>
-            {
-                new Employee { Name = "Alice Johnson", Age = 30, Position = "Developer" },
-                new Employee { Name = "Bob Smith", Age = 45, Position = "Manager" },
-                new Employee { Name = "Carol Lee", Age = 28, Position = "Designer" }
-            }
+            new Employee { Id = 1, Name = "John Doe", Position = "Developer" },
+            new Employee { Id = 2, Name = "Jane Smith", Position = "Designer" },
+            new Employee { Id = 3, Name = "Bob Johnson", Position = "Manager" }
         };
 
-        // Create template document.
-        const string templatePath = "EmployeeReportTemplate.docx";
+        var reportData = new ReportData { Employees = employees };
+
+        // Create the template document.
         var doc = new Document();
         var builder = new DocumentBuilder(doc);
 
-        builder.Writeln("Employee Report");
-        builder.Writeln();
+        builder.Writeln("Employee List:");
 
         // Begin foreach block.
-        builder.Writeln("<<foreach [emp in Employees]>>");
+        builder.Writeln("<<foreach [emp in model.Employees]>>");
 
-        // Start table inside foreach.
+        // Table that will be repeated for each employee.
         Table table = builder.StartTable();
 
         // Header row.
         builder.InsertCell();
-        builder.Writeln("Name");
+        builder.Writeln("ID");
         builder.InsertCell();
-        builder.Writeln("Age");
+        builder.Writeln("Name");
         builder.InsertCell();
         builder.Writeln("Position");
         builder.EndRow();
 
-        // Data row (repeated for each employee).
+        // Data row.
+        builder.InsertCell();
+        builder.Writeln("<<[emp.Id]>>");
         builder.InsertCell();
         builder.Writeln("<<[emp.Name]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[emp.Age]>>");
         builder.InsertCell();
         builder.Writeln("<<[emp.Position]>>");
         builder.EndRow();
 
-        // End table.
+        // End the table.
         builder.EndTable();
 
-        // Close foreach block.
+        // End foreach block.
         builder.Writeln("<</foreach>>");
 
-        // Save the template.
-        doc.Save(templatePath);
-
-        // Load the template and build the report.
-        var reportDoc = new Document(templatePath);
+        // Build the report.
         var engine = new ReportingEngine();
-
-        engine.BuildReport(reportDoc, model, "model");
+        bool success = engine.BuildReport(doc, reportData, "model");
 
         // Save the generated report.
         const string outputPath = "EmployeeReport.docx";
-        reportDoc.Save(outputPath);
+        doc.Save(outputPath);
+
+        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Saved to {Path.GetFullPath(outputPath)}");
     }
+}
+
+// Wrapper class for the root object.
+public class ReportData
+{
+    public List<Employee> Employees { get; set; } = new();
+}
+
+// Employee data model.
+public class Employee
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Position { get; set; } = string.Empty;
 }

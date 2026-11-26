@@ -4,72 +4,95 @@ using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
 using Newtonsoft.Json;
 
-public class ReportData
+public class ReportModel
 {
-    public string Header { get; set; } = string.Empty;
-    public string Footer { get; set; } = string.Empty;
-    public string Body { get; set; } = string.Empty;
-    public List<string> Items { get; set; } = new();
+    public string Title { get; set; } = "Sample Report";
+    public string HeaderText { get; set; } = "Report Header";
+    public string FooterText { get; set; } = "Report Footer";
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    public string Name { get; set; } = "";
+    public string Value { get; set; } = "";
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words if needed.
+        // Register code page provider for Aspose.Words.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
         // Prepare sample JSON data.
-        var json = @"{
-            ""Header"": ""Custom Header Text"",
-            ""Footer"": ""Custom Footer Text"",
-            ""Body"": ""This is the body of the report."",
-            ""Items"": [""Item 1"", ""Item 2"", ""Item 3""]
-        }";
+        string jsonPath = "data.json";
+        var sampleData = new ReportModel
+        {
+            Title = "Quarterly Sales Report",
+            HeaderText = "Company XYZ - Confidential",
+            FooterText = "Generated on " + DateTime.Now.ToString("yyyy-MM-dd"),
+            Items = new List<Item>
+            {
+                new Item { Name = "Product A", Value = "$1,200" },
+                new Item { Name = "Product B", Value = "$3,450" },
+                new Item { Name = "Product C", Value = "$2,780" }
+            }
+        };
+        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(sampleData, Formatting.Indented));
 
-        // Write JSON to a local file.
-        var jsonPath = "data.json";
-        File.WriteAllText(jsonPath, json, Encoding.UTF8);
+        // Load JSON into model.
+        string json = File.ReadAllText(jsonPath);
+        ReportModel model = JsonConvert.DeserializeObject<ReportModel>(json)!;
 
-        // Deserialize JSON into the data model.
-        var model = JsonConvert.DeserializeObject<ReportData>(File.ReadAllText(jsonPath, Encoding.UTF8))!;
+        // Create template document.
+        string templatePath = "template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Create a template document programmatically.
-        var templatePath = "template.docx";
-        var builder = new DocumentBuilder();
-
-        // Header with custom field.
+        // Header with LINQ Reporting tag.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Writeln("<<[model.Header]>>");
+        builder.Writeln("<<[model.HeaderText]>>");
 
-        // Footer with custom field.
+        // Footer with LINQ Reporting tag.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.Writeln("<<[model.Footer]>>");
+        builder.Writeln("<<[model.FooterText]>>");
 
-        // Main body content.
+        // Return to main body.
         builder.MoveToDocumentEnd();
-        builder.Writeln("Report Body:");
-        builder.Writeln("<<[model.Body]>>");
+
+        // Title.
+        builder.Writeln("<<[model.Title]>>");
         builder.Writeln();
-        builder.Writeln("Items:");
+
+        // Table of items using foreach.
         builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("- <<[item]>>");
+        Table table = builder.StartTable();
+        builder.InsertCell();
+        builder.Writeln("<<[item.Name]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[item.Value]>>");
+        builder.EndRow();
+        builder.EndTable();
         builder.Writeln("<</foreach>>");
 
         // Save the template.
-        builder.Document.Save(templatePath);
+        templateDoc.Save(templatePath);
 
-        // Load the template for report generation.
-        var doc = new Document(templatePath);
+        // Load the template for reporting.
+        Document reportDoc = new Document(templatePath);
 
-        // Build the report using LINQ Reporting Engine.
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        // Build the report.
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None;
+        engine.BuildReport(reportDoc, model, "model");
 
         // Save the generated report.
-        var outputPath = "report.docx";
-        doc.Save(outputPath);
+        string outputPath = Path.Combine("output", "report.docx");
+        Directory.CreateDirectory("output");
+        reportDoc.Save(outputPath);
     }
 }

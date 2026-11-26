@@ -4,49 +4,46 @@ using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Register code page provider required by Aspose.Words.
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Register code pages for Aspose.Words if needed.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            // Paths for the template and the generated report.
-            string templatePath = "Template.docx";
-            string outputPath = "Report.docx";
+        // Prepare sample data.
+        var order = new Order { CustomerName = "John Doe" };
 
-            // Create a DOCX template with LINQ Reporting tags.
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-            builder.Writeln("Customer Report");
-            builder.Writeln("Name: <<[model.Name]>>");
-            builder.Writeln("Age: <<[model.Age]>>");
-            templateDoc.Save(templatePath);
+        // Create a DOCX template with a LINQ Reporting tag.
+        const string templatePath = "template.docx";
+        CreateTemplate(templatePath);
 
-            // Load the template.
-            Document doc = new Document(templatePath);
+        // Load the template document.
+        var doc = new Document(templatePath);
 
-            // Sample data model.
-            var model = new Customer
-            {
-                Name = "John Doe",
-                Age = 30
-            };
+        // Build the report using the ReportingEngine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, order, "order");
 
-            // Build the report using the ReportingEngine.
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
+        // Save the generated report.
+        const string outputPath = "report.docx";
+        doc.Save(outputPath);
 
-            // Save the generated report.
-            doc.Save(outputPath);
-        }
+        // Indicate completion.
+        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
     }
 
-    public class Customer
+    private static void CreateTemplate(string path)
     {
-        public string Name { get; set; } = "";
-        public int Age { get; set; }
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("Customer Report");
+        builder.Writeln("Name: <<[order.CustomerName]>>");
+        doc.Save(path);
+    }
+
+    public class Order
+    {
+        public string CustomerName { get; set; } = string.Empty;
     }
 }

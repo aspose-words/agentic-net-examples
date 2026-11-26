@@ -3,72 +3,71 @@ using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
 
-public class Program
+class Program
 {
-    public static void Main()
+    static void Main()
     {
         // Register code page provider for CSV encoding support.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create sample CSV data.
-        string csvPath = Path.Combine(Directory.GetCurrentDirectory(), "Data.csv");
-        File.WriteAllText(csvPath, "Name,Age\nAlice,30\nBob,25\nCharlie,35");
+        // Prepare sample CSV data.
+        const string csvFileName = "sample.csv";
+        File.WriteAllText(csvFileName,
+            "Id,Name,Quantity\r\n" +
+            "1,Apple,10\r\n" +
+            "2,Banana,20\r\n" +
+            "3,Cherry,15\r\n");
 
-        // -----------------------------------------------------------------
-        // Create the LINQ Reporting template programmatically.
-        // -----------------------------------------------------------------
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Create the Word template with a pre‑formatted table and LINQ Reporting tags.
+        const string templateFileName = "template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // Begin foreach over CSV rows (named "data").
-        builder.Writeln("<<foreach [row in data]>>");
-
-        // Start the table that will contain a header row and data rows.
-        Table table = builder.StartTable();
-
-        // Header row (static, appears once).
+        // Table header.
+        var headerTable = builder.StartTable();
+        builder.InsertCell();
+        builder.Writeln("Id");
         builder.InsertCell();
         builder.Writeln("Name");
         builder.InsertCell();
-        builder.Writeln("Age");
+        builder.Writeln("Quantity");
         builder.EndRow();
+        builder.EndTable();
 
-        // Data row (repeated for each CSV record).
+        // Begin foreach over CSV rows (root name: Data).
+        builder.Writeln("<<foreach [row in Data]>>");
+
+        // Table rows – each iteration creates a new row.
+        var dataTable = builder.StartTable();
+        builder.InsertCell();
+        builder.Writeln("<<[row.Id]>>");
         builder.InsertCell();
         builder.Writeln("<<[row.Name]>>");
         builder.InsertCell();
-        builder.Writeln("<<[row.Age]>>");
+        builder.Writeln("<<[row.Quantity]>>");
         builder.EndRow();
-
-        // End the table and the foreach block.
         builder.EndTable();
+
+        // End foreach.
         builder.Writeln("<</foreach>>");
 
         // Save the template.
-        templateDoc.Save(templatePath);
+        templateDoc.Save(templateFileName);
 
-        // -----------------------------------------------------------------
-        // Load the template and generate the report.
-        // -----------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
+        // Load the template for reporting.
+        var doc = new Document(templateFileName);
 
-        // Configure CSV data source.
-        CsvDataLoadOptions csvOptions = new CsvDataLoadOptions
-        {
-            HasHeaders = true
-            // The default separator is a comma, so no explicit Separator property is needed.
-        };
-        CsvDataSource csvData = new CsvDataSource(csvPath, csvOptions);
+        // Load CSV data source (first row contains headers).
+        var csvOptions = new CsvDataLoadOptions { HasHeaders = true };
+        var csvData = new CsvDataSource(csvFileName, csvOptions);
 
         // Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, csvData, "data");
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, csvData, "Data");
 
-        // Save the final report.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        reportDoc.Save(outputPath);
+        // Save the generated report.
+        const string outputFileName = "output.docx";
+        doc.Save(outputFileName);
     }
 }

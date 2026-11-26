@@ -2,59 +2,57 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Newtonsoft.Json;
-using System.Text;
-
-public class ReportModel
-{
-    // Property used in a normal paragraph.
-    public string Name { get; set; } = "";
-
-    // Property used in a paragraph that contains only a tag.
-    public string EmptyTag { get; set; } = "";
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare folders.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
-        // Create a template document programmatically.
+        // Paths for the template and the generated report.
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        string reportPath = Path.Combine(outputDir, "Report.docx");
+
+        // Create a simple template document.
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Paragraph with regular text and a tag.
-        builder.Writeln("Hello <<[model.Name]>>!");
+        // Paragraph with regular text.
+        builder.Writeln("Customer Report");
+        builder.Writeln();
 
-        // Paragraph that contains only a tag – should be removed if the tag resolves to empty.
-        builder.Writeln("<<[model.EmptyTag]>>");
+        // Paragraph that contains only a LINQ Reporting tag.
+        // This paragraph should be removed when RemoveEmptyParagraphs is enabled.
+        builder.Writeln("<<[model.Name]>>");
 
-        // Save the template.
-        string templatePath = Path.Combine(outputDir, "template.docx");
+        // Save the template to disk.
         templateDoc.Save(templatePath);
 
         // Load the template for reporting.
-        Document reportDoc = new Document(templatePath);
+        Document doc = new Document(templatePath);
 
-        // Prepare the data model with empty values.
+        // Sample data model.
         ReportModel model = new ReportModel
         {
-            Name = "",          // Empty string – the tag will render nothing but the paragraph stays because it has other text.
-            EmptyTag = ""       // Empty string – the whole paragraph should be removed.
+            Name = "Acme Corporation"
         };
 
-        // Configure the reporting engine to remove empty paragraphs.
+        // Configure the reporting engine with RemoveEmptyParagraphs option.
         ReportingEngine engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
 
         // Build the report.
-        engine.BuildReport(reportDoc, model, "model");
+        engine.BuildReport(doc, model, "model");
 
         // Save the generated report.
-        string resultPath = Path.Combine(outputDir, "result.docx");
-        reportDoc.Save(resultPath);
+        doc.Save(reportPath);
     }
+}
+
+// Simple public data model used by the template.
+public class ReportModel
+{
+    public string Name { get; set; } = string.Empty;
 }

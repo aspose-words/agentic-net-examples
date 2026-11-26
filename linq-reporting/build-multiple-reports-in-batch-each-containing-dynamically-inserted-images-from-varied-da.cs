@@ -1,68 +1,127 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Drawing;
-
-public class ReportItem
-{
-    public string Title { get; set; } = string.Empty;
-    public string ImagePath { get; set; } = string.Empty;
-}
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare directories.
-        string imagesDir = "images";
-        string outputDir = "output";
+        // Register code page provider for Aspose.Words (required for some encodings).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Prepare working folders.
+        string baseDir = Directory.GetCurrentDirectory();
+        string templateDir = Path.Combine(baseDir, "Template");
+        string imagesDir = Path.Combine(baseDir, "Images");
+        string outputDir = Path.Combine(baseDir, "Output");
+        Directory.CreateDirectory(templateDir);
         Directory.CreateDirectory(imagesDir);
         Directory.CreateDirectory(outputDir);
 
-        // Create sample PNG images from Base64 strings.
-        var redPngBase64 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAAFklEQVR42mNk+M9Qz0AEYBxVSFIAABcAAf+XKc8AAAAASUVORK5CYII="; // 16x16 red square
-        var bluePngBase64 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAAFklEQVR42mNkYGBg+M+ABYwMDAwAAJcAAf+K6V8AAAAASUVORK5CYII="; // 16x16 blue square
+        // Create sample PNG images.
+        CreateSampleImage(Path.Combine(imagesDir, "image1.png"));
+        CreateSampleImage(Path.Combine(imagesDir, "image2.png"));
+        CreateSampleImage(Path.Combine(imagesDir, "image3.png"));
 
-        string redImagePath = Path.Combine(imagesDir, "red.png");
-        string blueImagePath = Path.Combine(imagesDir, "blue.png");
-        File.WriteAllBytes(redImagePath, Convert.FromBase64String(redPngBase64));
-        File.WriteAllBytes(blueImagePath, Convert.FromBase64String(bluePngBase64));
+        // Build the LINQ Reporting template and save it to disk.
+        string templatePath = Path.Combine(templateDir, "ReportTemplate.docx");
+        BuildTemplate(templatePath);
 
-        // Sample data for batch reports.
-        var reports = new List<ReportItem>
+        // Prepare batch data – a list of report models.
+        var batchModels = new List<ReportModel>
         {
-            new() { Title = "Red Image Report", ImagePath = redImagePath },
-            new() { Title = "Blue Image Report", ImagePath = blueImagePath }
+            new()
+            {
+                Items =
+                {
+                    new() { Title = "First Item", ImagePath = Path.Combine(imagesDir, "image1.png") },
+                    new() { Title = "Second Item", ImagePath = Path.Combine(imagesDir, "image2.png") }
+                }
+            },
+            new()
+            {
+                Items =
+                {
+                    new() { Title = "Third Item", ImagePath = Path.Combine(imagesDir, "image3.png") },
+                    new() { Title = "Fourth Item", ImagePath = Path.Combine(imagesDir, "image1.png") }
+                }
+            }
         };
 
-        // Create a reusable template document.
-        string templatePath = "template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-
-        // Title placeholder.
-        builder.Writeln("Report for: <<[item.Title]>>");
-
-        // Insert a textbox that will hold the image.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 200);
-        builder.MoveTo(textBox.FirstParagraph);
-        builder.Write("<<image [item.ImagePath] -fitSize>>");
-
-        // Save the template.
-        templateDoc.Save(templatePath);
-
-        // Build each report using the template.
-        var engine = new ReportingEngine();
-
-        foreach (var report in reports)
+        // Generate each report in the batch.
+        for (int i = 0; i < batchModels.Count; i++)
         {
+            // Load a fresh copy of the template for each report.
             var doc = new Document(templatePath);
-            engine.BuildReport(doc, report, "item");
 
-            string outputPath = Path.Combine(outputDir, $"{report.Title.Replace(' ', '_')}.docx");
+            // Build the report using LINQ Reporting Engine.
+            var engine = new ReportingEngine();
+            engine.BuildReport(doc, batchModels[i], "model");
+
+            // Save the generated report.
+            string outputPath = Path.Combine(outputDir, $"Report_{i + 1}.docx");
             doc.Save(outputPath);
         }
     }
+
+    // Creates a minimal 1x1 PNG image from a Base64 string.
+    private static void CreateSampleImage(string filePath)
+    {
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
+        byte[] imageBytes = Convert.FromBase64String(base64Png);
+        File.WriteAllBytes(filePath, imageBytes);
+    }
+
+    // Builds the Word template with LINQ Reporting tags.
+    private static void BuildTemplate(string templatePath)
+    {
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        builder.Writeln("Batch Report");
+        builder.Writeln("<<foreach [item in Items]>>");
+
+        // Table header.
+        Table table = builder.StartTable();
+        builder.InsertCell();
+        builder.Writeln("Title");
+        builder.InsertCell();
+        builder.Writeln("Image");
+        builder.EndRow();
+
+        // Data row.
+        builder.InsertCell();
+        builder.Writeln("<<[item.Title]>>");
+        builder.InsertCell();
+
+        // Insert a textbox to host the image tag.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
+        builder.MoveTo(textBox.FirstParagraph);
+        builder.Write("<<image [item.ImagePath] -fitSize>>");
+
+        builder.EndRow();
+        builder.EndTable();
+
+        builder.Writeln("<</foreach>>");
+
+        doc.Save(templatePath);
+    }
+}
+
+// Data model for a single report item.
+public class ReportItem
+{
+    public string Title { get; set; } = "";
+    public string ImagePath { get; set; } = "";
+}
+
+// Root data model for a report.
+public class ReportModel
+{
+    public List<ReportItem> Items { get; set; } = new();
 }

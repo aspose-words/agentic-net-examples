@@ -4,45 +4,69 @@ using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace LinqReportingConditionalExample
 {
-    public static void Main()
+    // Data model for the report.
+    public class Product
     {
-        // Register code page provider for Aspose.Words.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Prepare paths.
-        string templatePath = "template.docx";
-        string outputPath = "output.docx";
-
-        // Create the template document with a conditional block.
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Product Stock Status:");
-        builder.Writeln("<<if [product.Stock > 0]>>In stock<</if>>");
-        builder.Writeln("<<if [product.Stock <= 0]>>Out of stock<</if>>");
-        templateDoc.Save(templatePath);
-
-        // Load the template for reporting.
-        Document doc = new Document(templatePath);
-
-        // Prepare the data model.
-        Product product = new Product { Stock = 5 };
-
-        // Build the report.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, product, "product");
-
-        // Save the generated report.
-        doc.Save(outputPath);
-
-        // Indicate completion.
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+        // Initialize non‑nullable reference types to avoid warnings.
+        public string Name { get; set; } = "";
+        public int Stock { get; set; }
     }
-}
 
-// Public data model class.
-public class Product
-{
-    public int Stock { get; set; } = 0;
+    class Program
+    {
+        static void Main()
+        {
+            // Register code page provider (required for some Aspose.Words features).
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Paths for the template and the generated report.
+            const string templatePath = "template.docx";
+            const string reportPath = "report.docx";
+
+            // -----------------------------------------------------------------
+            // Create the template document programmatically.
+            // -----------------------------------------------------------------
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
+
+            // Insert a simple title.
+            builder.Writeln("Product Report");
+            builder.Writeln();
+
+            // Insert product name placeholder.
+            builder.Writeln("Product: <<[model.Name]>>");
+
+            // Conditional block: show "In stock" when Stock > 0.
+            builder.Writeln("<<if [model.Stock > 0]>>In stock<</if>>");
+            // Optional else block to demonstrate the false case.
+            builder.Writeln("<<if [model.Stock <= 0]>>Out of stock<</if>>");
+
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // Load the template for report generation.
+            // -----------------------------------------------------------------
+            var reportDoc = new Document(templatePath);
+
+            // Prepare sample data.
+            var product = new Product
+            {
+                Name = "Widget",
+                Stock = 5 // Change this value to 0 to see the "Out of stock" message.
+            };
+
+            // Build the report using the LINQ Reporting engine.
+            var engine = new ReportingEngine();
+            engine.BuildReport(reportDoc, product, "model");
+
+            // Save the generated report.
+            reportDoc.Save(reportPath);
+
+            // Indicate completion.
+            Console.WriteLine($"Report generated: {Path.GetFullPath(reportPath)}");
+        }
+    }
 }

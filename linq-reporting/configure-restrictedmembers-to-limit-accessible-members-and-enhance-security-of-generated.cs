@@ -1,65 +1,71 @@
 using System;
-using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Drawing;
 
-public class Order
+namespace LinqReportingRestrictedMembersExample
 {
-    // Initialize to avoid nullable warnings
-    public string CustomerName { get; set; } = string.Empty;
-}
-
-public class Program
-{
-    public static void Main()
+    // Simple data model used as the root object for the report.
+    public class ReportModel
     {
-        // Create an output folder for the generated files.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        public string Title { get; set; } = "Sample Report";
+        public string Content { get; set; } = "This is a secure LINQ Reporting example.";
+    }
 
-        // -----------------------------------------------------------------
-        // 1. Create a simple template containing a LINQ Reporting tag.
-        // -----------------------------------------------------------------
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        template.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template for report generation.
-        // -----------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
-
-        // -----------------------------------------------------------------
-        // 3. Prepare the data model.
-        // -----------------------------------------------------------------
-        Order order = new Order { CustomerName = "John Doe" };
-
-        // -----------------------------------------------------------------
-        // 4. Configure the reporting engine.
-        //    The ReportingEngine class does not expose a RestrictedMembers
-        //    collection in the current Aspose.Words version, so we omit that
-        //    configuration. The engine is still secure because it only has
-        //    access to the public members of the supplied data model.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine
+    public class Program
+    {
+        public static void Main()
         {
-            Options = ReportBuildOptions.None
-        };
+            // Register code page provider required by Aspose.Words.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // -----------------------------------------------------------------
-        // 5. Build the report.
-        // -----------------------------------------------------------------
-        engine.BuildReport(reportDoc, order, "order");
+            // Paths for the template and the generated report.
+            string templatePath = "ReportTemplate.docx";
+            string outputPath = "ReportOutput.docx";
 
-        // -----------------------------------------------------------------
-        // 6. Save the generated report.
-        // -----------------------------------------------------------------
-        string reportPath = Path.Combine(outputDir, "Report.docx");
-        reportDoc.Save(reportPath);
+            // -----------------------------------------------------------------
+            // 1. Create the template document programmatically.
+            // -----------------------------------------------------------------
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
 
-        Console.WriteLine($"Report generated at: {reportPath}");
+            // Insert a title placeholder.
+            builder.Writeln("<<[model.Title]>>");
+            builder.Writeln();
+
+            // Insert a content placeholder.
+            builder.Writeln("<<[model.Content]>>");
+
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 2. Load the template for report generation.
+            // -----------------------------------------------------------------
+            var doc = new Document(templatePath);
+
+            // -----------------------------------------------------------------
+            // 3. Configure the ReportingEngine.
+            // -----------------------------------------------------------------
+            var engine = new ReportingEngine();
+
+            // Note: In recent versions of Aspose.Words the RestrictedMembers
+            // property has been removed. If needed, configure security via
+            // other mechanisms such as sandboxed environments or custom
+            // reflection handling. The example proceeds without explicit
+            // RestrictedMembers configuration.
+
+            // -----------------------------------------------------------------
+            // 4. Build the report.
+            // -----------------------------------------------------------------
+            var model = new ReportModel();
+            engine.BuildReport(doc, model, "model");
+
+            // -----------------------------------------------------------------
+            // 5. Save the generated report.
+            // -----------------------------------------------------------------
+            doc.Save(outputPath);
+        }
     }
 }

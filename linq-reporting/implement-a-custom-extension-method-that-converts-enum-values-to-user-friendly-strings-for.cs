@@ -1,94 +1,105 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingEnumExtension
+namespace LinqReportingEnumExtensionExample
 {
     // Enum representing order status.
     public enum OrderStatus
     {
         Pending,
-        Shipped,
-        Delivered,
-        Cancelled
+        InProgress,
+        Completed
     }
 
-    // Extension/helper class that provides a user‑friendly string for the enum.
+    // Extension method to convert enum values to user‑friendly strings.
     public static class EnumExtensions
     {
-        public static string ToFriendlyString(OrderStatus status) => status switch
-        {
-            OrderStatus.Pending => "Pending Approval",
-            OrderStatus.Shipped => "Shipped to Customer",
-            OrderStatus.Delivered => "Delivered Successfully",
-            OrderStatus.Cancelled => "Order Cancelled",
-            _ => status.ToString()
-        };
+        public static string ToFriendlyString(this OrderStatus status) =>
+            status switch
+            {
+                OrderStatus.Pending => "Pending Approval",
+                OrderStatus.InProgress => "In Progress",
+                OrderStatus.Completed => "Completed Successfully",
+                _ => status.ToString()
+            };
     }
 
-    // Data model for an order.
+    // Model class for a single order.
     public class Order
     {
-        public int Id { get; set; } = 0;
-        public string CustomerName { get; set; } = "";
-        public OrderStatus Status { get; set; } = OrderStatus.Pending;
-        public List<Item> Items { get; set; } = new();
+        public int Id { get; set; }
+        public OrderStatus Status { get; set; }
 
-        // Computed property used by the LINQ Reporting template.
-        public string StatusFriendly => EnumExtensions.ToFriendlyString(Status);
+        // Expose a user‑friendly status string for the template.
+        public string StatusFriendly => Status.ToFriendlyString();
+
+        // Parameterless constructor to satisfy nullable warnings.
+        public Order() { }
     }
 
-    // Data model for an order item.
-    public class Item
+    // Root model passed to the reporting engine.
+    public class ReportModel
     {
-        public string Name { get; set; } = "";
-        public int Quantity { get; set; } = 0;
+        public List<Order> Orders { get; set; } = new();
+
+        // Parameterless constructor.
+        public ReportModel() { }
     }
 
-    public class Program
+    class Program
     {
-        public static void Main()
+        static void Main()
         {
             // Prepare sample data.
-            var order = new Order
+            var model = new ReportModel
             {
-                Id = 1001,
-                CustomerName = "Acme Corp",
-                Status = OrderStatus.Shipped,
-                Items = new List<Item>
+                Orders = new List<Order>
                 {
-                    new Item { Name = "Widget", Quantity = 5 },
-                    new Item { Name = "Gadget", Quantity = 2 }
+                    new() { Id = 101, Status = OrderStatus.Pending },
+                    new() { Id = 102, Status = OrderStatus.InProgress },
+                    new() { Id = 103, Status = OrderStatus.Completed }
                 }
             };
 
-            // Create a template document programmatically.
-            var templatePath = "Template.docx";
-            var builder = new DocumentBuilder();
+            // Paths for template and output documents.
+            string templatePath = "template.docx";
+            string outputPath = "report.docx";
 
-            builder.Writeln("Order Report");
+            // -------------------------------------------------
+            // Create the template document programmatically.
+            // -------------------------------------------------
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
+
+            builder.Writeln("Orders Report");
+            builder.Writeln(); // Empty line.
+
+            // Begin foreach loop over Orders collection.
+            builder.Writeln("<<foreach [order in model.Orders]>>");
             builder.Writeln("Order ID: <<[order.Id]>>");
-            builder.Writeln("Customer: <<[order.CustomerName]>>");
             builder.Writeln("Status: <<[order.StatusFriendly]>>");
-            builder.Writeln();
-            builder.Writeln("Items:");
-            builder.Writeln("<<foreach [item in order.Items]>>");
-            builder.Writeln("- <<[item.Name]>> (Qty: <<[item.Quantity]>>)");
             builder.Writeln("<</foreach>>");
 
-            builder.Document.Save(templatePath);
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
 
-            // Load the template.
+            // -------------------------------------------------
+            // Load the template and build the report.
+            // -------------------------------------------------
             var doc = new Document(templatePath);
-
-            // Build the report using LINQ Reporting Engine.
             var engine = new ReportingEngine();
-            engine.BuildReport(doc, order, "order");
+
+            // Build the report using the model as the root object named "model".
+            engine.BuildReport(doc, model, "model");
 
             // Save the generated report.
-            var outputPath = "Report.docx";
             doc.Save(outputPath);
+
+            // Indicate completion (no interactive prompts).
+            Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
         }
     }
 }

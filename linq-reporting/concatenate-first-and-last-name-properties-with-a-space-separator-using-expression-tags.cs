@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -12,17 +14,24 @@ public class Program
 {
     public static void Main()
     {
-        // Create the template document with a LINQ Reporting expression that concatenates first and last name.
-        const string templatePath = "Template.docx";
+        // Register code page provider for Aspose.Words if needed.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Prepare folders.
+        string outputDir = "output";
+        Directory.CreateDirectory(outputDir);
+
+        // Create a template document with a LINQ Reporting expression that concatenates first and last name.
+        string templatePath = Path.Combine(outputDir, "template.docx");
         var templateDoc = new Document();
         var builder = new DocumentBuilder(templateDoc);
         builder.Writeln("Full Name: <<[person.FirstName + \" \" + person.LastName]>>");
         templateDoc.Save(templatePath);
 
-        // Load the template for report generation.
-        var reportDoc = new Document(templatePath);
+        // Load the template for reporting.
+        var doc = new Document(templatePath);
 
-        // Prepare sample data.
+        // Create sample data.
         var person = new Person
         {
             FirstName = "John",
@@ -31,10 +40,13 @@ public class Program
 
         // Build the report.
         var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, person, "person");
+        engine.BuildReport(doc, person, "person");
 
         // Save the generated report.
-        const string outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+        string resultPath = Path.Combine(outputDir, "result.docx");
+        doc.Save(resultPath);
+
+        // Indicate completion.
+        Console.WriteLine($"Report generated: {resultPath}");
     }
 }

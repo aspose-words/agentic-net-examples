@@ -1,49 +1,47 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Saving;
+using Newtonsoft.Json;
+
+public class Person
+{
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
+}
+
+public class Model
+{
+    public List<Person> Persons { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some encodings)
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
         // Sample JSON data
-        string json = @"{
-            ""people"": [
-                { ""Name"": ""Alice"", ""Age"": 30 },
-                { ""Name"": ""Bob"", ""Age"": 25 }
-            ]
-        }";
+        string json = @"{ ""Persons"": [ { ""Name"": ""Alice"", ""Age"": 30 }, { ""Name"": ""Bob"", ""Age"": 25 } ] }";
 
-        // Create a Word document template programmatically
+        // Deserialize JSON into the strongly‑typed model
+        Model model = JsonConvert.DeserializeObject<Model>(json) ?? new Model();
+
+        // Build the template document programmatically
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        builder.Writeln("People Report");
-        builder.Writeln("<<foreach [p in people]>>");
-        builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
+        builder.Writeln("Persons Report:");
+        builder.Writeln("<<foreach [person in model.Persons]>>");
+        builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
         builder.Writeln("<</foreach>>");
 
-        // Load JSON data source from a memory stream (JsonDataSource expects a path or stream)
-        using (MemoryStream jsonStream = new MemoryStream(Encoding.UTF8.GetBytes(json)))
-        {
-            JsonDataSource jsonDataSource = new JsonDataSource(jsonStream);
+        // Build the report using the LINQ Reporting engine
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-            // Build the report
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(doc, jsonDataSource, "people");
-
-            // Write the generated report to a memory stream
-            using (MemoryStream output = new MemoryStream())
-            {
-                doc.Save(output, SaveFormat.Docx);
-                Console.WriteLine($"Report generated, size: {output.Length} bytes");
-            }
-        }
+        // Save the generated report to a memory stream
+        using MemoryStream ms = new MemoryStream();
+        doc.Save(ms, SaveFormat.Docx);
+        Console.WriteLine($"Report generated, size: {ms.Length} bytes");
     }
 }

@@ -1,50 +1,64 @@
 using System;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using System.Text;
+
+public class Order
+{
+    public string CustomerName { get; set; } = "John Doe";
+    public List<Service> Services { get; set; } = new()
+    {
+        new Service { Name = "Consulting" },
+        new Service { Name = "Support" },
+        new Service { Name = "Implementation" }
+    };
+}
+
+public class Service
+{
+    public string Name { get; set; } = string.Empty;
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider required by Aspose.Words.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Create a template document containing a LINQ Reporting tag.
+        // Create a template document with LINQ Reporting tags.
         Document template = new Document();
         DocumentBuilder builder = new DocumentBuilder(template);
-        builder.Writeln("Customer: <<[model.Name]>>");
 
-        // Save and reload the template to ensure it is fully created before building the report.
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Services:");
+        builder.Writeln("<<foreach [service in order.Services]>>");
+        builder.Writeln("- <<[service.Name]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
         const string templatePath = "Template.docx";
         template.Save(templatePath);
+
+        // Load the template for report generation.
         Document doc = new Document(templatePath);
 
         // Prepare the data model.
-        ReportModel model = new ReportModel { Name = "John Doe" };
+        Order order = new();
 
-        // Disable reflection optimization for this scoped operation.
-        bool previousSetting = ReportingEngine.UseReflectionOptimization;
+        // Disable reflection optimization within this scoped block.
+        bool previousOptimization = ReportingEngine.UseReflectionOptimization;
         ReportingEngine.UseReflectionOptimization = false;
         try
         {
             ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
+            engine.BuildReport(doc, order, "order");
         }
         finally
         {
             // Restore the original setting.
-            ReportingEngine.UseReflectionOptimization = previousSetting;
+            ReportingEngine.UseReflectionOptimization = previousOptimization;
         }
 
         // Save the generated report.
         const string outputPath = "Report.docx";
         doc.Save(outputPath);
-    }
-
-    // Public data model class.
-    public class ReportModel
-    {
-        public string Name { get; set; } = "";
     }
 }

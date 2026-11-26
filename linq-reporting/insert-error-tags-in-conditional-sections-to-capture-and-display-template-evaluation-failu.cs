@@ -3,58 +3,57 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingErrorDemo
+public class ReportModel
 {
-    // Simple data model.
-    public class Order
+    // Sample property; the template will reference a non‑existent property to trigger an error.
+    public string Title { get; set; } = "Sample Report";
+}
+
+public class Program
+{
+    public static void Main()
     {
-        public string CustomerName { get; set; } = string.Empty;
-    }
+        // Prepare working directories.
+        string workDir = Directory.GetCurrentDirectory();
+        string templatePath = Path.Combine(workDir, "template.docx");
+        string outputPath = Path.Combine(workDir, "output.docx");
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // Prepare sample data.
-            var order = new Order { CustomerName = "John Doe" };
+        // -----------------------------------------------------------------
+        // Create the template document with a conditional section that
+        // references a missing property. Inside the conditional we place
+        // an <<error>> tag to capture evaluation failures.
+        // -----------------------------------------------------------------
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-            // Create a template document programmatically.
-            var templatePath = "Template.docx";
-            var builder = new DocumentBuilder();
-            builder.Writeln("Order Report");
-            builder.Writeln(); // Blank line.
+        builder.Writeln("=== Report Start ===");
+        builder.Writeln("<<if [model.MissingProperty]>>"); // This property does not exist.
+        builder.Writeln("<<error>>");                     // Will display the evaluation error.
+        builder.Writeln("<</if>>");
+        builder.Writeln("=== Report End ===");
 
-            // Conditional that references a non‑existent property – will cause an evaluation error.
-            builder.Writeln("<<if [order.NonExisting]>>");
-            builder.Writeln("<<error>>"); // Tag to display the error message.
-            builder.Writeln("<</if>>");
+        // Save the template to disk (optional but satisfies the rule of saving before loading).
+        template.Save(templatePath);
 
-            // Valid conditional section.
-            builder.Writeln("<<if [order.CustomerName != null]>>");
-            builder.Writeln("Customer: <<[order.CustomerName]>>");
-            builder.Writeln("<</if>>");
+        // Load the template back for reporting.
+        Document doc = new Document(templatePath);
 
-            // Save the template.
-            builder.Document.Save(templatePath);
+        // Create the root data model.
+        ReportModel model = new ReportModel();
 
-            // Load the template for reporting.
-            var doc = new Document(templatePath);
+        // Configure the reporting engine to emit inline error messages.
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-            // Configure the reporting engine to embed inline error messages.
-            var engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.InlineErrorMessages;
+        // Build the report. The returned flag indicates overall success.
+        bool success = engine.BuildReport(doc, model, "model");
 
-            // Build the report.
-            bool success = engine.BuildReport(doc, order, "order");
+        // Save the generated report.
+        doc.Save(outputPath);
 
-            // Save the generated report.
-            var outputPath = "Report.docx";
-            doc.Save(outputPath);
-
-            // Output the result status.
-            Console.WriteLine($"Report generated. Success: {success}");
-            Console.WriteLine($"Template: {Path.GetFullPath(templatePath)}");
-            Console.WriteLine($"Report:   {Path.GetFullPath(outputPath)}");
-        }
+        // Output the result status.
+        Console.WriteLine($"Report generation success: {success}");
+        Console.WriteLine($"Template path: {templatePath}");
+        Console.WriteLine($"Output path: {outputPath}");
     }
 }

@@ -1,53 +1,57 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Reporting;
+
+public class ReportModel
+{
+    // Byte array containing PNG image data.
+    public byte[] ImageData { get; set; } = Array.Empty<byte>();
+
+    public ReportModel()
+    {
+        // A 1x1 pixel red PNG image encoded in base64.
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
+        ImageData = Convert.FromBase64String(base64Png);
+    }
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare a simple PNG image as a byte array (a 1x1 red pixel).
-        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK7cAAAAASUVORK5CYII=";
-        byte[] imageBytes = Convert.FromBase64String(base64Png);
+        // Register code page provider for Aspose.Words if needed.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create the data model with a public byte[] property.
-        var model = new ReportModel
-        {
-            ImageBytes = imageBytes
-        };
+        // Create template document.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Build the template document.
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
-
-        // Insert a textbox that will contain the image tag.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 200);
+        // Insert a textbox to host the image.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 200);
         builder.MoveTo(textBox.FirstParagraph);
-        // LINQ Reporting image tag with -fitSize switch to preserve aspect ratio.
-        builder.Write("<<image [model.ImageBytes] -fitSize>>");
 
-        // Save the template (optional, demonstrates lifecycle).
+        // Image tag using a byte array expression with -fitSize switch to preserve aspect ratio.
+        builder.Write("<<image [model.ImageData] -fitSize>>");
+
+        // Save the template.
         const string templatePath = "Template.docx";
         template.Save(templatePath);
 
-        // Load the template back (simulating a real scenario).
-        var loadedTemplate = new Document(templatePath);
+        // Load the template for reporting.
+        Document report = new Document(templatePath);
 
-        // Build the report using the LINQ Reporting engine.
-        var engine = new ReportingEngine();
-        engine.BuildReport(loadedTemplate, model, "model");
+        // Prepare the data model.
+        ReportModel model = new ReportModel();
+
+        // Build the report.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(report, model, "model");
 
         // Save the final report.
         const string outputPath = "Report.docx";
-        loadedTemplate.Save(outputPath);
-    }
-
-    // Public data model class required by the reporting engine.
-    public class ReportModel
-    {
-        // Image data supplied as a byte array.
-        public byte[] ImageBytes { get; set; } = Array.Empty<byte>();
+        report.Save(outputPath);
     }
 }

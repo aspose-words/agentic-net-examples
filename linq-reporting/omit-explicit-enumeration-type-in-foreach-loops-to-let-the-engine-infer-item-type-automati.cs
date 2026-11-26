@@ -1,54 +1,71 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 namespace LinqReportingDemo
 {
-    public class Person
+    // Sample data model.
+    public class Product
     {
         public string Name { get; set; } = "";
-        public int Age { get; set; }
+        public decimal Price { get; set; }
     }
 
     public class ReportModel
     {
-        public List<Person> Persons { get; set; } = new();
+        public List<Product> Products { get; set; } = new();
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Create the template document with LINQ Reporting tags.
-            var templatePath = "Template.docx";
-            var builder = new DocumentBuilder();
-            builder.Writeln("<<foreach [p in Persons]>>");
-            builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
-            builder.Writeln("<</foreach>>");
-            builder.Document.Save(templatePath);
+            // Register code page provider (required for some encodings).
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
+            // Paths for template and output.
+            string templatePath = "Template.docx";
+            string reportPath = "Report.docx";
+
+            // -----------------------------------------------------------------
+            // Create the template document with LINQ Reporting tags.
+            // -----------------------------------------------------------------
+            Document templateDoc = new();
+            DocumentBuilder builder = new(templateDoc);
+
+            builder.Writeln("Product List:");
+            builder.Writeln("<<foreach [p in Products]>>");
+            builder.Writeln("- <<[p.Name]>>: $<<[p.Price]>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
             // Load the template for report generation.
-            var doc = new Document(templatePath);
+            // -----------------------------------------------------------------
+            Document reportDoc = new(templatePath);
 
             // Prepare sample data.
-            var model = new ReportModel
+            ReportModel model = new()
             {
-                Persons = new()
+                Products = new()
                 {
-                    new Person { Name = "Alice", Age = 30 },
-                    new Person { Name = "Bob", Age = 25 },
-                    new Person { Name = "Charlie", Age = 35 }
+                    new Product { Name = "Apple", Price = 0.99m },
+                    new Product { Name = "Banana", Price = 0.59m },
+                    new Product { Name = "Cherry", Price = 2.49m }
                 }
             };
 
             // Build the report using the LINQ Reporting engine.
-            var engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
+            ReportingEngine engine = new();
+            engine.BuildReport(reportDoc, model, "model");
 
             // Save the generated report.
-            var outputPath = "Report.docx";
-            doc.Save(outputPath);
+            reportDoc.Save(reportPath);
         }
     }
 }

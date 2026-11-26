@@ -7,67 +7,67 @@ using Aspose.Words;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
 
+public class Item
+{
+    public string Name { get; set; } = "";
+    public bool IsImportant { get; set; }
+}
+
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
+
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words if needed.
+        // Register code page provider for any legacy encodings.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // 1. Create sample JSON data.
-        string jsonPath = "data.json";
-        var sampleData = new List<Item>
-        {
-            new Item { Title = "Review project plan", Category = "Important" },
-            new Item { Title = "Buy office supplies", Category = "Routine" },
-            new Item { Title = "Prepare presentation", Category = "Important" },
-            new Item { Title = "Team lunch", Category = "Social" }
-        };
-        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(sampleData, Formatting.Indented));
+        // Sample JSON data.
+        string json = @"[
+            { ""Name"": ""Item A"", ""IsImportant"": true },
+            { ""Name"": ""Item B"", ""IsImportant"": false },
+            { ""Name"": ""Item C"", ""IsImportant"": true }
+        ]";
 
-        // 2. Load JSON and filter.
-        var allItems = JsonConvert.DeserializeObject<List<Item>>(File.ReadAllText(jsonPath)) ?? new List<Item>();
-        var filteredItems = allItems.Where(i => i.Category == "Important").ToList();
+        // Deserialize JSON into a list of items.
+        List<Item> allItems = JsonConvert.DeserializeObject<List<Item>>(json) ?? new();
 
-        // 3. Prepare the model for reporting.
-        var model = new ReportModel
+        // Filter items that are marked as important.
+        List<Item> filteredItems = allItems.Where(i => i.IsImportant).ToList();
+
+        // Prepare the model for the report.
+        ReportModel model = new()
         {
             Items = filteredItems
         };
 
-        // 4. Create the LINQ Reporting template programmatically.
-        string templatePath = "template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Bullet‑point Summary:");
+        // Create the LINQ Reporting template programmatically.
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
+
+        builder.Writeln("Important Items Summary:");
         builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("• <<[item.Title]>>");
+        builder.Writeln("• <<[item.Name]>>");
         builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        string templatePath = "Template.docx";
         templateDoc.Save(templatePath);
 
-        // 5. Load the template and build the report.
-        var reportDoc = new Document(templatePath);
-        var engine = new ReportingEngine();
+        // Load the template for report generation.
+        Document reportDoc = new(templatePath);
+
+        // Build the report using the LINQ Reporting engine.
+        ReportingEngine engine = new();
         engine.BuildReport(reportDoc, model, "model");
 
-        // 6. Save the generated report.
-        string outputPath = "output.docx";
+        // Save the generated report.
+        string outputPath = "Report.docx";
         reportDoc.Save(outputPath);
 
-        // Indicate completion (no interactive input).
         Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
     }
-}
-
-// Data model for individual items.
-public class Item
-{
-    public string Title { get; set; } = string.Empty;
-    public string Category { get; set; } = string.Empty;
-}
-
-// Wrapper model used as the root object for the report.
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
 }
