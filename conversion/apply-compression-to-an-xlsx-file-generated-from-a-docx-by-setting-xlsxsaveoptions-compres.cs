@@ -11,7 +11,7 @@ public class Program
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
         builder.Writeln("Sample content for XLSX conversion.");
-        string inputPath = "input.docx";
+        const string inputPath = "input.docx";
         sourceDoc.Save(inputPath, SaveFormat.Docx);
 
         // Load the DOCX document.
@@ -20,11 +20,11 @@ public class Program
         // Configure XLSX save options with fast compression.
         XlsxSaveOptions xlsxOptions = new XlsxSaveOptions
         {
-            CompressionLevel = CompressionLevel.Fast
+            CompressionLevel = Aspose.Words.Saving.CompressionLevel.Fast
         };
 
         // Save the document as XLSX using the configured options.
-        string outputPath = "output.xlsx";
+        const string outputPath = "output.xlsx";
         doc.Save(outputPath, xlsxOptions);
 
         // Validate that the XLSX file was created.

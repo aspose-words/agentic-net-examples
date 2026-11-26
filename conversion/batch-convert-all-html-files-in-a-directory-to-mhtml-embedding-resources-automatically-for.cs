@@ -1,52 +1,49 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
-public class Program
+public class BatchHtmlToMhtmlConverter
 {
     public static void Main()
     {
-        // Define input and output folders.
-        string inputFolder = "InputHtml";
-        string outputFolder = "OutputMhtml";
+        // Define input and output directories.
+        string inputDir = Path.Combine(Directory.GetCurrentDirectory(), "InputHtml");
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "OutputMhtml");
 
-        // Ensure the folders exist.
-        Directory.CreateDirectory(inputFolder);
-        Directory.CreateDirectory(outputFolder);
+        // Ensure directories exist.
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(outputDir);
 
-        // Create sample HTML files in the input folder.
-        string sampleHtml1 = Path.Combine(inputFolder, "sample1.html");
-        string sampleHtml2 = Path.Combine(inputFolder, "sample2.html");
+        // Seed sample HTML files.
+        CreateSampleHtmlFile(Path.Combine(inputDir, "sample1.html"), "<html><body><h1>Sample 1</h1><p>Hello World!</p></body></html>");
+        CreateSampleHtmlFile(Path.Combine(inputDir, "sample2.html"), "<html><body><h1>Sample 2</h1><p>Another document.</p></body></html>");
 
-        File.WriteAllText(sampleHtml1,
-            "<html><head><title>Sample 1</title></head><body><h1>First Sample</h1><p>This is the first HTML file.</p></body></html>");
-        File.WriteAllText(sampleHtml2,
-            "<html><head><title>Sample 2</title></head><body><h1>Second Sample</h1><p>This is the second HTML file with an image.</p><img src='https://via.placeholder.com/150' alt='Placeholder'></body></html>");
-
-        // Process each HTML file and convert it to MHTML.
-        foreach (string htmlPath in Directory.GetFiles(inputFolder, "*.html"))
+        // Process each HTML file in the input directory.
+        foreach (string htmlPath in Directory.GetFiles(inputDir, "*.html"))
         {
             // Load the HTML document.
             Document doc = new Document(htmlPath);
 
-            // Determine the output MHTML file path.
-            string outputFileName = Path.ChangeExtension(Path.GetFileName(htmlPath), ".mhtml");
-            string outputPath = Path.Combine(outputFolder, outputFileName);
+            // Determine output MHTML path.
+            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(htmlPath);
+            string mhtmlPath = Path.Combine(outputDir, fileNameWithoutExt + ".mhtml");
 
-            // Save as MHTML, which embeds resources automatically.
-            doc.Save(outputPath, SaveFormat.Mhtml);
+            // Save as MHTML (resources are embedded automatically).
+            doc.Save(mhtmlPath, SaveFormat.Mhtml);
 
-            // Verify that the output file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException($"Expected output MHTML was not created: {outputPath}");
+            // Validate that the output file was created.
+            if (!File.Exists(mhtmlPath))
+                throw new InvalidOperationException($"MHTML file was not created: {mhtmlPath}");
         }
 
-        // Optional: confirm that at least one file was processed.
-        int outputCount = Directory.GetFiles(outputFolder, "*.mhtml").Length;
-        if (outputCount == 0)
-            throw new InvalidOperationException("No MHTML files were generated.");
+        // Optional: indicate completion.
+        Console.WriteLine("Batch conversion completed successfully.");
+    }
 
-        // Example completed successfully.
-        Console.WriteLine($"Batch conversion completed. {outputCount} MHTML file(s) created in '{outputFolder}'.");
+    private static void CreateSampleHtmlFile(string path, string content)
+    {
+        // Write deterministic HTML content to the specified file.
+        File.WriteAllText(path, content);
     }
 }

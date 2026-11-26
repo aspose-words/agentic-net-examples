@@ -7,33 +7,32 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample DOCX document.
+        // Step 1: Create a sample DOCX document locally.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("This is a sample document that will be converted to MHTML.");
+        builder.Writeln("This is a sample document for DOCX to MHTML conversion.");
         sourceDoc.Save("input.docx", SaveFormat.Docx);
 
-        // Load the DOCX document.
+        // Step 2: Load the DOCX document that was just created.
         Document doc = new Document("input.docx");
 
-        // Save the document as MHTML. The default behavior embeds linked CSS files.
-        string outputPath = "output.mhtml";
-        doc.Save(outputPath, SaveFormat.Mhtml);
+        // Step 3: Save the document as MHTML.
+        // Aspose.Words automatically embeds linked CSS when saving to MHTML.
+        doc.Save("output.mhtml", SaveFormat.Mhtml);
 
-        // Validate that the output file was created.
-        if (!File.Exists(outputPath))
+        // Step 4: Validate that the MHTML file was created and is not empty.
+        if (!File.Exists("output.mhtml"))
         {
-            throw new InvalidOperationException("The MHTML output file was not created.");
+            throw new InvalidOperationException("Expected output MHTML file was not created.");
         }
 
-        // Verify that the file is not empty.
-        FileInfo info = new FileInfo(outputPath);
-        if (info.Length == 0)
+        FileInfo fileInfo = new FileInfo("output.mhtml");
+        if (fileInfo.Length == 0)
         {
-            throw new InvalidOperationException("The MHTML output file is empty.");
+            throw new InvalidOperationException("The generated MHTML file is empty.");
         }
 
         // Indicate successful completion.
-        Console.WriteLine("Conversion completed successfully.");
+        Console.WriteLine("DOCX successfully converted to MHTML with embedded CSS.");
     }
 }

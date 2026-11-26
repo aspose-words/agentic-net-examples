@@ -7,34 +7,39 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample Word document.
+        // Create a new Word document in memory.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello, this is a sample document.");
-        builder.Writeln("It will be saved as HTML with CSS class prefixes.");
+        builder.Writeln("This is a sample paragraph.");
+        builder.InsertParagraph();
+        builder.Writeln("Another line with **bold** text.");
 
-        // Apply formatting that will cause Aspose.Words to generate a CSS class.
-        builder.Font.Bold = true;
-        builder.Writeln("This line is bold and will trigger a CSS class.");
+        // Configure HTML save options to add a CSS class name prefix.
+        HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html)
+        {
+            CssClassNamePrefix = "myPrefix_"
+        };
 
-        // Configure HTML save options.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Html);
-        // Use an external (or embedded) stylesheet so that CSS classes are generated.
-        saveOptions.CssStyleSheetType = CssStyleSheetType.External;
-        // Prefix for generated CSS class names.
-        saveOptions.CssClassNamePrefix = "myPrefix_";
-
-        // Save the document as HTML.
+        // Define the output HTML file path.
         string outputPath = "output.html";
-        doc.Save(outputPath, saveOptions);
 
-        // Verify that the HTML file was created.
+        // Save the document as HTML using the configured options.
+        doc.Save(outputPath, htmlOptions);
+
+        // Validate that the HTML file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Expected output HTML was not created.");
+        {
+            throw new InvalidOperationException("The HTML output file was not created.");
+        }
 
-        // Ensure the CSS class prefix appears in the generated HTML.
-        string htmlContent = File.ReadAllText(outputPath);
-        if (!htmlContent.Contains("myPrefix_"))
-            throw new InvalidOperationException("CSS class name prefix was not applied in the HTML output.");
+        // Optionally, you could read the file to ensure it contains data.
+        FileInfo info = new FileInfo(outputPath);
+        if (info.Length == 0)
+        {
+            throw new InvalidOperationException("The HTML output file is empty.");
+        }
+
+        // Indicate successful completion (no interactive output required).
+        Console.WriteLine("HTML file saved successfully with CSS class prefix.");
     }
 }

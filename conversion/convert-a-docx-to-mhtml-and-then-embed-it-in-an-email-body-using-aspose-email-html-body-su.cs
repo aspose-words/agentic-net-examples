@@ -1,56 +1,59 @@
 using System;
 using System.IO;
-
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a sample DOCX document.
-        Document sampleDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-        builder.Writeln("This is a sample document for DOCX to MHTML conversion.");
+        // Step 1: Create a sample DOCX document locally.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("Hello, this is a sample DOCX content.");
         const string docxPath = "sample.docx";
-        sampleDoc.Save(docxPath, SaveFormat.Docx);
+        sourceDoc.Save(docxPath, SaveFormat.Docx);
 
-        // Verify DOCX creation.
+        // Verify the DOCX file was created.
         if (!File.Exists(docxPath))
             throw new InvalidOperationException("The sample DOCX file was not created.");
 
         // Step 2: Load the DOCX document.
-        Document loadedDoc = new Document(docxPath);
+        Document doc = new Document(docxPath);
 
-        // Step 3: Convert the document to MHTML and save it.
-        const string mhtmlPath = "sample.mhtml";
-        loadedDoc.Save(mhtmlPath, SaveFormat.Mhtml);
+        // Step 3: Convert the document to MHTML and capture the output in a memory stream.
+        using MemoryStream mhtmlStream = new MemoryStream();
+        doc.Save(mhtmlStream, SaveFormat.Mhtml);
 
-        // Verify MHTML creation.
-        if (!File.Exists(mhtmlPath))
-            throw new InvalidOperationException("The MHTML file was not created.");
+        // Ensure the stream contains data.
+        if (mhtmlStream.Length == 0)
+            throw new InvalidOperationException("MHTML conversion produced no data.");
 
-        // Step 4: Read the MHTML content.
-        string mhtmlContent = File.ReadAllText(mhtmlPath);
+        // Reset the stream position and read the MHTML content as a string.
+        mhtmlStream.Position = 0;
+        string mhtmlContent;
+        using (StreamReader reader = new StreamReader(mhtmlStream))
+        {
+            mhtmlContent = reader.ReadToEnd();
+        }
 
-        // Step 5: Create a simple .eml file with the MHTML as the HTML body.
-        const string emlPath = "email.eml";
-        string emlContent =
+        // Step 4: Build a simple .eml file with the MHTML content as the HTML body.
+        const string emlPath = "output.eml";
+        string emailHeaders =
             "From: sender@example.com\r\n" +
             "To: recipient@example.com\r\n" +
-            "Subject: Document converted to MHTML\r\n" +
+            "Subject: DOCX converted to MHTML\r\n" +
             "MIME-Version: 1.0\r\n" +
             "Content-Type: text/html; charset=utf-8\r\n" +
-            "\r\n" +
-            mhtmlContent;
+            "\r\n";
 
-        File.WriteAllText(emlPath, emlContent);
+        File.WriteAllText(emlPath, emailHeaders + mhtmlContent);
 
-        // Verify email file creation.
+        // Verify the email file was created.
         if (!File.Exists(emlPath))
             throw new InvalidOperationException("The email file was not created.");
 
-        // All steps completed successfully.
-        Console.WriteLine("DOCX converted to MHTML and embedded in email successfully.");
+        // Optional cleanup (commented out to keep files for inspection).
+        // File.Delete(docxPath);
+        // File.Delete(emlPath);
     }
 }

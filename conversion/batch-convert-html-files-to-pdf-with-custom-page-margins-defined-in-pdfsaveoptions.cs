@@ -3,67 +3,64 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+public class BatchHtmlToPdfConverter
 {
     public static void Main()
     {
-        // Prepare input and output folders
-        string inputFolder = "HtmlInput";
-        string outputFolder = "PdfOutput";
+        // Define folders for input HTML files and output PDF files.
+        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputHtml");
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputPdf");
 
+        // Ensure the folders exist.
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Create sample HTML files
-        string html1Path = Path.Combine(inputFolder, "sample1.html");
-        string html2Path = Path.Combine(inputFolder, "sample2.html");
+        // Create sample HTML files.
+        CreateSampleHtmlFile(Path.Combine(inputFolder, "sample1.html"),
+            "<html><body><h1>Sample 1</h1><p>This is the first sample.</p></body></html>");
+        CreateSampleHtmlFile(Path.Combine(inputFolder, "sample2.html"),
+            "<html><body><h1>Sample 2</h1><p>This is the second sample.</p></body></html>");
 
-        File.WriteAllText(html1Path,
-            "<html><body><h1>First Document</h1><p>This is the first sample HTML.</p></body></html>");
-        File.WriteAllText(html2Path,
-            "<html><body><h2>Second Document</h2><p>This is the second sample HTML.</p></body></html>");
+        // Configure PDF save options (no special page info needed here).
+        PdfSaveOptions pdfOptions = new PdfSaveOptions();
 
-        // Define custom margins (in points; 1 inch = 72 points)
-        const double leftMargin = 72;   // 1 inch
-        const double rightMargin = 72;  // 1 inch
-        const double topMargin = 72;    // 1 inch
-        const double bottomMargin = 72; // 1 inch
-
-        // Batch convert each HTML file to PDF with the custom margins
-        foreach (string htmlPath in Directory.GetFiles(inputFolder, "*.html"))
+        // Process each HTML file in the input folder.
+        string[] htmlFiles = Directory.GetFiles(inputFolder, "*.html");
+        foreach (string htmlPath in htmlFiles)
         {
-            // Load HTML document
+            // Load the HTML document.
             Document doc = new Document(htmlPath);
 
-            // Apply custom margins to every section in the document
+            // Set custom page margins (1 inch = 72 points) for every section.
             foreach (Section section in doc.Sections)
             {
-                section.PageSetup.LeftMargin = leftMargin;
-                section.PageSetup.RightMargin = rightMargin;
-                section.PageSetup.TopMargin = topMargin;
-                section.PageSetup.BottomMargin = bottomMargin;
+                section.PageSetup.TopMargin = 72;
+                section.PageSetup.BottomMargin = 72;
+                section.PageSetup.LeftMargin = 72;
+                section.PageSetup.RightMargin = 72;
             }
 
-            // Use default PDF save options (no special options required for margins)
-            PdfSaveOptions pdfOptions = new PdfSaveOptions();
-
-            // Determine output PDF path
+            // Determine the output PDF path.
             string pdfFileName = Path.GetFileNameWithoutExtension(htmlPath) + ".pdf";
             string pdfPath = Path.Combine(outputFolder, pdfFileName);
 
-            // Save as PDF
+            // Save the document as PDF using the custom options.
             doc.Save(pdfPath, pdfOptions);
 
-            // Validate that the PDF was created
+            // Verify that the PDF was created.
             if (!File.Exists(pdfPath))
                 throw new InvalidOperationException($"PDF file was not created: {pdfPath}");
         }
 
-        // Final validation: ensure at least one PDF exists
-        string[] pdfFiles = Directory.GetFiles(outputFolder, "*.pdf");
-        if (pdfFiles.Length == 0)
+        // Verify that at least one PDF was generated.
+        if (Directory.GetFiles(outputFolder, "*.pdf").Length == 0)
             throw new InvalidOperationException("No PDF files were generated in the output folder.");
+    }
 
-        Console.WriteLine("Batch HTML to PDF conversion completed successfully.");
+    private static void CreateSampleHtmlFile(string path, string htmlContent)
+    {
+        File.WriteAllText(path, htmlContent);
+        if (!File.Exists(path))
+            throw new InvalidOperationException($"Failed to create sample HTML file: {path}");
     }
 }

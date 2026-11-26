@@ -2,44 +2,48 @@ using System;
 using System.IO;
 using Aspose.Words;
 
-public class HtmlToPdfConverter
+public class Program
 {
     public static void Main()
     {
-        // Prepare a sample HTML file with CSS styling.
-        const string htmlFileName = "input.html";
-        const string htmlContent = @"
+        // Define paths for the input HTML and output PDF files.
+        string htmlPath = "input.html";
+        string pdfPath = "output.pdf";
+
+        // Create a simple HTML file with embedded CSS styles.
+        string htmlContent = @"
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset='utf-8'>
     <style>
-        body { font-family: Arial, sans-serif; margin: 40px; }
-        h1 { color: #2E86C1; }
-        p { font-size: 14pt; line-height: 1.5; }
-        .highlight { background-color: #FFF9C4; padding: 5px; }
+        h1 { color: blue; font-family: Arial; }
+        p { font-size: 14pt; font-family: Times New Roman; }
     </style>
 </head>
 <body>
-    <h1>Sample Heading</h1>
-    <p>This is a paragraph with <span class='highlight'>highlighted text</span> to demonstrate CSS styling preservation.</p>
+    <h1>Sample Title</h1>
+    <p>This paragraph demonstrates CSS styling in the converted PDF.</p>
 </body>
 </html>";
-        File.WriteAllText(htmlFileName, htmlContent);
+        File.WriteAllText(htmlPath, htmlContent);
 
-        // Load the HTML document.
-        Document document = new Document(htmlFileName);
+        // Load the HTML document. Aspose.Words automatically applies the CSS styles.
+        Document doc = new Document(htmlPath);
 
-        // Convert and save the document as PDF.
-        const string pdfFileName = "output.pdf";
-        document.Save(pdfFileName, SaveFormat.Pdf);
+        // Save the loaded document as PDF.
+        doc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Validate that the PDF was created.
-        if (!File.Exists(pdfFileName))
-        {
-            throw new InvalidOperationException("Expected output PDF was not created.");
-        }
+        // Validate that the PDF file was created and contains data.
+        if (!File.Exists(pdfPath))
+            throw new InvalidOperationException("The expected PDF output file was not created.");
 
-        // Optional: clean up the temporary HTML file.
-        // File.Delete(htmlFileName);
+        FileInfo pdfInfo = new FileInfo(pdfPath);
+        if (pdfInfo.Length == 0)
+            throw new InvalidOperationException("The generated PDF file is empty.");
+
+        // Clean up temporary files (optional).
+        // File.Delete(htmlPath);
+        // File.Delete(pdfPath);
     }
 }

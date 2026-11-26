@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
@@ -9,43 +8,48 @@ public class Program
 {
     public static void Main()
     {
-        // Define file names
-        string pngPath = "sample.png";
+        // Paths for the input PNG and output PDF
+        string imagePath = "sample.png";
         string pdfPath = "output.pdf";
 
         // Create a sample PNG image using Aspose.Drawing
-        using (Bitmap bitmap = new Bitmap(200, 200, PixelFormat.Format32bppArgb))
+        using (Bitmap bitmap = new Bitmap(400, 200))
         {
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                // Fill background
-                graphics.Clear(Color.LightBlue);
-                // Draw a simple ellipse
-                using (Pen pen = new Pen(Color.DarkBlue, 3))
+                // Fill background with a light gray color
+                graphics.Clear(Color.LightGray);
+
+                // Prepare a drawing font
+                Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 24);
+                try
                 {
-                    graphics.DrawEllipse(pen, 20, 20, 160, 160);
+                    // Draw text onto the image
+                    using (SolidBrush brush = new SolidBrush(Color.DarkBlue))
+                    {
+                        graphics.DrawString("Sample PNG", font, brush, new PointF(50, 80));
+                    }
+                }
+                finally
+                {
+                    font.Dispose();
                 }
             }
 
-            // Save the bitmap as PNG
-            bitmap.Save(pngPath, ImageFormat.Png);
+            // Save the bitmap as a PNG file
+            bitmap.Save(imagePath, ImageFormat.Png);
         }
 
-        // Verify the PNG was created
-        if (!File.Exists(pngPath))
-            throw new InvalidOperationException("The PNG image was not created.");
-
         // Load the PNG image into an Aspose.Words Document
-        Document doc = new Document(pngPath);
+        Document doc = new Document(imagePath);
 
         // Save the document as PDF
         doc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Validate that the PDF was created
+        // Verify that the PDF file was created
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("The PDF file was not created.");
-
-        // Optionally, clean up the sample PNG (comment out if you want to keep it)
-        // File.Delete(pngPath);
+        {
+            throw new InvalidOperationException("Expected output PDF was not created.");
+        }
     }
 }

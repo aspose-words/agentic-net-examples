@@ -6,30 +6,35 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a sample document.
+        // Create a sample document.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("This is a sample EPUB document created for conversion to MHTML.");
-        // Save the document as EPUB (input file).
-        const string epubPath = "input.epub";
+        builder.Writeln("This is a sample EPUB document.");
+        builder.Writeln("It will be converted to MHTML with embedded resources.");
+
+        // Save the document as EPUB.
+        string epubPath = "sample.epub";
         sourceDoc.Save(epubPath, SaveFormat.Epub);
 
-        // Verify the EPUB file was created.
-        if (!File.Exists(epubPath))
-            throw new InvalidOperationException("The input EPUB file was not created.");
+        if (!File.Exists(epubPath) || new FileInfo(epubPath).Length == 0)
+        {
+            throw new InvalidOperationException("Failed to create the sample EPUB file.");
+        }
 
-        // Step 2: Load the EPUB file.
+        // Load the EPUB file.
         Document epubDoc = new Document(epubPath);
 
-        // Step 3: Convert and save as MHTML with embedded resources.
-        const string mhtmlPath = "output.mht";
+        // Convert and save as MHTML (embedded resources).
+        string mhtmlPath = "output.mhtml";
         epubDoc.Save(mhtmlPath, SaveFormat.Mhtml);
 
-        // Verify the MHTML file was created.
-        if (!File.Exists(mhtmlPath))
-            throw new InvalidOperationException("The output MHTML file was not created.");
+        // Validate the output.
+        if (!File.Exists(mhtmlPath) || new FileInfo(mhtmlPath).Length == 0)
+        {
+            throw new InvalidOperationException("MHTML conversion failed; output file is missing or empty.");
+        }
 
-        // Optional: Indicate success (no interactive wait).
-        Console.WriteLine("EPUB successfully converted to MHTML.");
+        // Optionally, clean up the intermediate EPUB file.
+        // File.Delete(epubPath);
     }
 }

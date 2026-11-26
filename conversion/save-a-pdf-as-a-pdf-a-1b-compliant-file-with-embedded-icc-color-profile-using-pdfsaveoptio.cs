@@ -7,39 +7,40 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple Word document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This PDF is saved as PDF/A‑1b.");
+        // Create a sample Word document in memory.
+        Document source = new Document();
+        DocumentBuilder builder = new DocumentBuilder(source);
+        builder.Writeln("This is a sample document to be saved as PDF/A‑1b with an embedded ICC profile.");
 
         // Configure PDF save options for PDF/A‑1b compliance.
+        // Note: In the current Aspose.Words version the IccProfileId property is not available.
+        // The example demonstrates the required compliance setting; embedding a specific ICC profile
+        // would require using IccProfilePath or IccProfileBytes if a profile file is supplied.
         PdfSaveOptions saveOptions = new PdfSaveOptions
         {
             Compliance = PdfCompliance.PdfA1b
-            // The current Aspose.Words version does not expose EmbedColorProfile or IccProfile properties.
-            // PDF/A‑1b compliance is ensured; embedding an ICC profile would require a newer API.
         };
 
-        // Save the document as PDF/A‑1b.
-        const string outputPath = "output.pdf";
-        doc.Save(outputPath, saveOptions);
+        // Define the output PDF file path.
+        string outputPath = "output.pdf";
 
-        // Verify that the file was created.
+        // Save the document as PDF/A‑1b with the specified options.
+        source.Save(outputPath, saveOptions);
+
+        // Verify that the PDF file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The PDF/A‑1b file was not created.");
+        {
+            throw new InvalidOperationException("The PDF/A‑1b file was not created as expected.");
+        }
 
-        // Verify that the file size is greater than zero.
+        // Ensure the file is not empty.
         FileInfo info = new FileInfo(outputPath);
         if (info.Length == 0)
-            throw new InvalidOperationException("The PDF/A‑1b file is empty.");
-    }
+        {
+            throw new InvalidOperationException("The created PDF/A‑1b file is empty.");
+        }
 
-    // Returns a byte array containing an ICC profile.
-    // Placeholder method retained for completeness; not used in this example.
-    private static byte[] GetIccProfile()
-    {
-        // A very small dummy ICC profile (not a real color profile).
-        // Replace with a valid ICC profile byte array for production use.
-        return new byte[] { 0x00, 0x01, 0x02, 0x03 };
+        // Indicate successful completion.
+        Console.WriteLine("PDF/A‑1b file created successfully: " + Path.GetFullPath(outputPath));
     }
 }

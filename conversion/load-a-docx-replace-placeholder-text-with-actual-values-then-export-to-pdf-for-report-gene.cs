@@ -7,32 +7,33 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a sample DOCX with a placeholder.
+        // Create a sample DOCX with placeholders.
         Document sampleDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sampleDoc);
         builder.Writeln("Report for {{Name}}");
-        const string inputPath = "input.docx";
+        builder.Writeln("Date: {{Date}}");
+
+        string inputPath = "input.docx";
         sampleDoc.Save(inputPath, SaveFormat.Docx);
 
-        // Step 2: Load the DOCX.
+        // Load the DOCX.
         Document doc = new Document(inputPath);
 
-        // Step 3: Replace the placeholder with actual value.
-        const string placeholder = "{{Name}}";
-        const string actualValue = "John Doe";
-        doc.Range.Replace(placeholder, actualValue, new FindReplaceOptions(FindReplaceDirection.Forward));
+        // Replace placeholders with actual values.
+        doc.Range.Replace("{{Name}}", "John Doe", new FindReplaceOptions());
+        doc.Range.Replace("{{Date}}", DateTime.Today.ToString("yyyy-MM-dd"), new FindReplaceOptions());
 
-        // Step 4: Export to PDF.
-        const string outputPath = "output.pdf";
+        // Export to PDF.
+        string outputPath = "output.pdf";
         doc.Save(outputPath, SaveFormat.Pdf);
 
-        // Step 5: Validate that the PDF was created.
+        // Validate that the PDF was created.
         if (!File.Exists(outputPath))
         {
             throw new InvalidOperationException("Expected output PDF was not created.");
         }
 
-        // Optional: Clean up sample input file (not required, but keeps the folder tidy).
+        // Optional cleanup (commented out to keep files for inspection).
         // File.Delete(inputPath);
     }
 }

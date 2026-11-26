@@ -4,60 +4,57 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+public class ExportFontsExample
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Create a simple document with a specific font.
+        // Create a sample document with a common font.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Font.Name = "Arial";
-        builder.Writeln("This text uses the Arial font and will trigger font export.");
+        builder.Font.Size = 14;
+        builder.Writeln("This is a sample paragraph using Arial font.");
 
-        // Configure HTML save options to export fonts as separate files.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions
+        // Define output HTML path.
+        string htmlPath = "output.html";
+
+        // Configure HTML save options to export font resources.
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Html)
         {
             ExportFontResources = true,
-            FontsFolder = outputDir,               // Folder where font files will be written.
-            FontSavingCallback = new HandleFontSaving()
+            ExportImagesAsBase64 = false
         };
 
-        // Save the document as HTML.
-        string htmlPath = Path.Combine(outputDir, "sample.html");
+        // Save the document to HTML.
         doc.Save(htmlPath, saveOptions);
 
-        // Validate that the HTML file was created.
+        // Verify that the HTML file was created.
         if (!File.Exists(htmlPath))
-            throw new InvalidOperationException("HTML output file was not created.");
+            throw new InvalidOperationException($"HTML file '{htmlPath}' was not created.");
 
-        // Validate that at least one font file (e.g., .ttf) was exported.
-        string[] exportedFonts = Directory.GetFiles(outputDir, "*.ttf");
-        if (exportedFonts.Length == 0)
-            throw new InvalidOperationException("No font files were exported.");
+        // Determine the folder that should contain exported font files.
+        string fontFolder = Path.Combine(
+            Path.GetDirectoryName(htmlPath) ?? string.Empty,
+            Path.GetFileNameWithoutExtension(htmlPath) + "_files");
 
-        // Output the locations of the generated files.
-        Console.WriteLine($"HTML file saved to: {htmlPath}");
-        foreach (string fontFile in exportedFonts)
+        // The folder is created only when the document contains fonts that need to be exported.
+        // If the folder does not exist, it simply means there were no font resources to export.
+        if (Directory.Exists(fontFolder))
         {
-            Console.WriteLine($"Exported font: {fontFile}");
-        }
-    }
+            // Check for at least one font file (e.g., .woff, .woff2, .ttf, .eot, .svg).
+            string[] fontExtensions = new[] { ".woff", ".woff2", ".ttf", ".eot", ".svg" };
+            bool fontFileExists = Directory.EnumerateFiles(fontFolder)
+                .Any(file => fontExtensions.Contains(Path.GetExtension(file), StringComparer.OrdinalIgnoreCase));
 
-    // Callback that controls how each font resource is saved.
-    private class HandleFontSaving : IFontSavingCallback
-    {
-        void IFontSavingCallback.FontSaving(FontSavingArgs args)
+            if (!fontFileExists)
+                throw new InvalidOperationException("No font files were exported to the resources folder.");
+        }
+        else
         {
-            // Use the original font file name (without path) for the exported file.
-            args.FontFileName = args.OriginalFileName.Split(Path.DirectorySeparatorChar).Last();
-
-            // Optionally, you could provide a custom stream:
-            // args.FontStream = new FileStream(Path.Combine(Directory.GetCurrentDirectory(), "Output", args.FontFileName), FileMode.Create);
-            // args.KeepFontStreamOpen = false;
+            Console.WriteLine("Font resources folder was not created because the document does not contain fonts that need exporting.");
         }
+
+        // Indicate success.
+        Console.WriteLine("HTML export completed successfully.");
     }
 }

@@ -10,25 +10,21 @@ public class Program
         // Create a sample DOC file.
         Document source = new Document();
         DocumentBuilder builder = new DocumentBuilder(source);
-        builder.Writeln("Sample DOC content for PDF/A-1b conversion.");
-        string inputPath = "input.doc";
-        source.Save(inputPath, SaveFormat.Doc);
+        builder.Writeln("Sample DOC content.");
+        source.Save("input.doc", SaveFormat.Doc);
 
         // Load the DOC file.
-        Document doc = new Document(inputPath);
+        Document doc = new Document("input.doc");
 
         // Configure PDF/A-1b compliance.
-        PdfSaveOptions saveOptions = new PdfSaveOptions
-        {
-            Compliance = PdfCompliance.PdfA1b
-        };
+        PdfSaveOptions saveOptions = new PdfSaveOptions();
+        saveOptions.Compliance = PdfCompliance.PdfA1b;
 
-        // Save as PDF/A-1b.
-        string outputPath = "output.pdf";
-        doc.Save(outputPath, saveOptions);
+        // Save the document as PDF/A-1b.
+        doc.Save("output.pdf", saveOptions);
 
         // Verify that the output file was created.
-        if (!File.Exists(outputPath))
+        if (!File.Exists("output.pdf"))
         {
             throw new InvalidOperationException("Expected output PDF/A-1b was not created.");
         }

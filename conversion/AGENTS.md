@@ -10,14 +10,13 @@ product: Aspose.Words
 
 ## Purpose
 
-Provide concise, version-aware code snippets that load a source document or image, apply the appropriate Aspose.Words SaveFormat or SaveOptions, validate the generated output, and terminate without external dependencies, enabling an AI coding agent to generate reliable conversion solutions.
+Supply an AI coding assistant with concise, self-contained patterns for loading a source, selecting the appropriate Aspose.Words SaveFormat or specialized SaveOptions, performing the conversion, and validating the result without external dependencies.
 
 ## Non-negotiable conventions
 
-- Do not use System.Drawing in this category.
-- Do not assume input files already exist; bootstrap them locally when needed.
-- Do not start a real web server or HTTP listener for response-stream tasks.
-- Do not use an incorrect SaveFormat for the requested output extension.
+- Do not reference System.Drawing types; use Aspose.Drawing exclusively.
+- Do not assume that input files already exist; generate them locally when needed.
+- Do not start a real HTTP listener; simulate response streams with MemoryStream.
 - Bootstrap local sample inputs for existing-file, folder, stream, image, and data workflows.
 - Prefer simple, verifiable workflows over speculative formatting shortcuts.
 
@@ -33,7 +32,7 @@ Use the simplest workflow that satisfies the task.
 
 ## Validation priorities
 
-1. Confirm that the output file or stream is created and non-empty before the program terminates.
+1. Confirm that the output file or stream exists and its length is greater than zero before exiting.
 
 ## File-to-task reference
 
@@ -81,12 +80,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Convert a PDF document to high-quality JPG images by setting JpegSaveOptions.Quality before saving.
   - Workflow: save-options
   - Outputs: pdf, jpeg
-  - Selected engine: mcp
+  - Selected engine: llm
 - `save-a-pdf-as-pdf-ua-compliant-file-by-configuring-pdfsaveoptions-compliance-to-pdfcomplia.cs`
   - Task: Save a PDF as PDF/UA compliant file by configuring PdfSaveOptions.Compliance to PdfCompliance.Ua.
   - Workflow: save-options
   - Outputs: pdf
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `load-a-pdf-and-export-it-to-docx-format-for-further-editing-using-saveformat-docx.cs`
   - Task: Load a PDF and export it to DOCX format for further editing using SaveFormat.Docx.
   - Workflow: save-options
@@ -106,7 +105,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Batch convert all DOCX files in a directory to HTML with round-trip information enabled.
   - Workflow: batch-bootstrap
   - Outputs: docx, html
-  - Selected engine: mcp
+  - Selected engine: llm
 - `save-a-word-document-as-html-with-embedded-fonts-exported-as-base64-using-htmlsaveoptions.cs`
   - Task: Save a Word document as HTML with embedded fonts exported as Base64 using HtmlSaveOptions.
   - Workflow: input-bootstrap
@@ -116,12 +115,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Enable ExportRoundTripInfo when saving DOCX to HTML to retain editing capabilities after round-trip.
   - Workflow: input-bootstrap
   - Outputs: docx, html
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `export-fonts-as-separate-files-while-saving-a-document-to-html-by-setting-exportfontresour.cs`
   - Task: Export fonts as separate files while saving a document to HTML by setting ExportFontResources true.
   - Workflow: input-bootstrap
   - Outputs: html
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `convert-a-docx-file-to-mhtml-format-automatically-embedding-images-and-fonts-within-the-ou.cs`
   - Task: Convert a DOCX file to MHTML format, automatically embedding images and fonts within the output.
   - Workflow: input-bootstrap
@@ -156,7 +155,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Stream a large PDF directly to a MemoryStream as PDF/A-2b without loading the entire file into memory.
   - Workflow: stream-response
   - Outputs: pdf
-  - Selected engine: llm
+  - Selected engine: mcp
 - `convert-multiple-image-files-png-jpeg-into-a-single-pdf-document-using-documentbuilder-and.cs`
   - Task: Convert multiple image files (PNG, JPEG) into a single PDF document using DocumentBuilder and InsertImage.
   - Workflow: batch-bootstrap
@@ -176,7 +175,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Convert an XPS document to PDF by loading XPS and saving with SaveFormat.Pdf.
   - Workflow: native-conversion-api
   - Outputs: pdf, xps
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `batch-convert-all-html-files-in-a-directory-to-mhtml-embedding-resources-automatically-for.cs`
   - Task: Batch convert all HTML files in a directory to MHTML, embedding resources automatically for each file.
   - Workflow: batch-bootstrap
@@ -251,7 +250,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Convert a PDF to multiple image formats (JPG and PNG) in a single operation using separate save calls.
   - Workflow: batch-bootstrap
   - Outputs: pdf, png
-  - Selected engine: mcp
+  - Selected engine: llm
 - `export-a-word-document-as-html-with-external-javascript-files-disabled-by-setting-exportja.cs`
   - Task: Export a Word document as HTML with external JavaScript files disabled by setting ExportJavaScript false.
   - Workflow: input-bootstrap
@@ -301,7 +300,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Convert a DOCX to MHTML and automatically embed all linked CSS files within the output.
   - Workflow: input-bootstrap
   - Outputs: docx, mhtml
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `save-a-pdf-as-an-image-sequence-in-png-format-with-transparent-background-using-pngsaveopt.cs`
   - Task: Save a PDF as an image sequence in PNG format with transparent background using PngSaveOptions.
   - Workflow: save-options
@@ -311,7 +310,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply a custom page size when converting a DOC to PDF by setting PdfSaveOptions.PageSize.
   - Workflow: save-options
   - Outputs: pdf
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `convert-a-pdf-to-an-xps-file-for-printing-on-windows-printers-that-require-xps-input.cs`
   - Task: Convert a PDF to an XPS file for printing on Windows printers that require XPS input.
   - Workflow: native-conversion-api
@@ -321,12 +320,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Batch convert multiple PDFs to HTML files, preserving original layout and fonts using HtmlSaveOptions.
   - Workflow: batch-bootstrap
   - Outputs: pdf, html
-  - Selected engine: mcp
+  - Selected engine: llm
 - `load-an-epub-and-convert-it-to-mhtml-embedding-all-resources-for-offline-viewing.cs`
   - Task: Load an EPUB and convert it to MHTML, embedding all resources for offline viewing.
   - Workflow: input-bootstrap
   - Outputs: epub, mhtml
-  - Selected engine: mcp
+  - Selected engine: llm
 - `save-a-docx-as-pdf-with-image-compression-level-set-to-high-to-reduce-file-size.cs`
   - Task: Save a DOCX as PDF with image compression level set to High to reduce file size.
   - Workflow: native-conversion-api
@@ -336,7 +335,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Convert a PDF to a searchable PDF/A-2b by enabling OCR during the save operation.
   - Workflow: save-options
   - Outputs: pdf
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `batch-process-a-folder-of-doc-files-converting-each-to-pdf-and-logging-conversion-status.cs`
   - Task: Batch process a folder of DOC files, converting each to PDF and logging conversion status.
   - Workflow: batch-bootstrap
@@ -361,7 +360,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Save a PDF as a PDF/A-1b compliant file with embedded ICC color profile using PdfSaveOptions.
   - Workflow: save-options
   - Outputs: pdf
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `load-a-docx-from-a-cloud-storage-stream-and-convert-it-to-pdf-for-client-download.cs`
   - Task: Load a DOCX from a cloud storage stream and convert it to PDF for client download.
   - Workflow: stream-response
@@ -401,12 +400,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Convert a PDF to HTML with embedded fonts as Base64 and images as external files for web use.
   - Workflow: input-bootstrap
   - Outputs: pdf, html
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `save-a-pdf-as-a-pdf-a-3u-document-and-embed-an-associated-xml-file-for-enhanced-metadata.cs`
   - Task: Save a PDF as a PDF/A-3u document and embed an associated XML file for enhanced metadata.
   - Workflow: input-bootstrap
   - Outputs: pdf, xml
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `batch-convert-a-collection-of-html-files-to-mhtml-ensuring-all-linked-resources-are-embedd.cs`
   - Task: Batch convert a collection of HTML files to MHTML, ensuring all linked resources are embedded automatically.
   - Workflow: batch-bootstrap
@@ -441,12 +440,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Convert a PDF to an XLSX spreadsheet, extracting any tabular data into separate worksheets.
   - Workflow: native-conversion-api
   - Outputs: pdf
-  - Selected engine: mcp
+  - Selected engine: llm
 - `batch-process-docx-files-applying-a-company-wide-header-before-converting-each-to-pdf-for.cs`
   - Task: Batch process DOCX files, applying a company-wide header before converting each to PDF for distribution.
   - Workflow: batch-bootstrap
   - Outputs: pdf, docx
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `save-a-pdf-as-an-image-sequence-in-png-format-with-lossless-compression-for-archival-purpo.cs`
   - Task: Save a PDF as an image sequence in PNG format with lossless compression for archival purposes.
   - Workflow: native-conversion-api
@@ -456,7 +455,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Convert a PDF to HTML with external CSS files and separate image folder for optimized web delivery.
   - Workflow: batch-bootstrap
   - Outputs: pdf, html
-  - Selected engine: mcp
+  - Selected engine: llm
 - `load-a-docx-from-a-sharepoint-stream-and-convert-it-to-pdf-for-on-demand-download.cs`
   - Task: Load a DOCX from a SharePoint stream and convert it to PDF for on-demand download.
   - Workflow: stream-response
@@ -471,12 +470,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply a custom PDF/A-2b compliance level when converting DOC to PDF using PdfSaveOptions.
   - Workflow: save-options
   - Outputs: pdf
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `convert-a-pdf-to-a-searchable-pdf-a-1a-by-enabling-ocr-and-setting-appropriate-compliance.cs`
   - Task: Convert a PDF to a searchable PDF/A-1a by enabling OCR and setting appropriate compliance.
   - Workflow: save-options
   - Outputs: pdf
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `save-a-docx-as-html-with-external-javascript-disabled-to-improve-security-of-the-generated.cs`
   - Task: Save a DOCX as HTML with external JavaScript disabled to improve security of the generated page.
   - Workflow: input-bootstrap
@@ -491,7 +490,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Load a PDF and convert it to an XPS document while preserving annotations for review.
   - Workflow: native-conversion-api
   - Outputs: pdf, xps
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `convert-a-docx-to-mhtml-and-then-embed-it-in-an-email-body-using-aspose-email-html-body-su.cs`
   - Task: Convert a DOCX to MHTML and then embed it in an email body using Aspose.Email HTML body support.
   - Workflow: input-bootstrap
@@ -536,7 +535,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Load a PDF with password protection, provide password via PdfLoadOptions, and convert to PNG without errors.
   - Workflow: save-options
   - Outputs: pdf, png
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `load-multiple-pdf-files-from-a-list-convert-each-to-docx-and-write-results-to-an-output-fo.cs`
   - Task: Load multiple PDF files from a list, convert each to DOCX, and write results to an output folder.
   - Workflow: batch-bootstrap
@@ -551,7 +550,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Export a PDF to a single high-quality JPEG image using MultiPageLayout.Horizontal and custom JpegQuality.
   - Workflow: save-options
   - Outputs: pdf, jpeg
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `export-a-pdf-as-a-series-of-png-files-using-pageset-to-export-only-even-numbered-pages.cs`
   - Task: Export a PDF as a series of PNG files, using PageSet to export only even-numbered pages.
   - Workflow: save-options
@@ -561,12 +560,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Export selected pages 1,4,7 of a PDF as separate PNG images with custom resolution settings.
   - Workflow: save-options
   - Outputs: pdf, png
-  - Selected engine: llm
+  - Selected engine: mcp
 - `save-a-pdf-as-markdown-extracting-images-to-a-temporary-folder-and-embedding-relative-path.cs`
   - Task: Save a PDF as Markdown, extracting images to a temporary folder and embedding relative paths in the output.
   - Workflow: batch-bootstrap
   - Outputs: pdf, md
-  - Selected engine: llm
+  - Selected engine: mcp
 - `convert-a-pdf-to-markdown-ensuring-that-all-extracted-images-are-saved-in-a-subfolder-name.cs`
   - Task: Convert a PDF to Markdown, ensuring that all extracted images are saved in a subfolder named "assets".
   - Workflow: batch-bootstrap
@@ -580,53 +579,53 @@ Use the simplest workflow that satisfies the task.
 
 ## Common failure patterns and preferred agent fixes
 
-- **Missing API member**
-  - Symptom: Compilation fails because the referenced type, property, or enum value does not exist in the installed Aspose.Words version.
-  - Root cause: The code targets an API that was removed, renamed, or introduced in a different version of the library.
-  - Preferred fix: Reference the correct member available in the installed version or upgrade the package to a version that provides the member.
-  - Prevention: Consult the official Aspose.Words documentation for the exact version and avoid hard-coding members that may not exist.
+- **Missing LoadOptions or incorrect Document.Load usage**
+  - Symptom: Compilation fails with CS0246 for LoadOptions and CS0117 indicating Document.Load does not exist.
+  - Root cause: The code references LoadOptions or the overload Document.Load(string) that is unavailable in the referenced Aspose.Words version.
+  - Preferred fix: Remove the LoadOptions parameter and use the constructor new Document(stringPath) or new Document(stream) that matches the library version.
+  - Prevention: Consult the current API reference for the correct Document loading signatures and avoid assuming older overloads are present.
 
-- **Enum ambiguity**
-  - Symptom: The compiler reports an ambiguous reference between System.IO.Compression.CompressionLevel and Aspose.Words.Saving.CompressionLevel.
-  - Root cause: Both namespaces define a CompressionLevel enum and the code does not qualify the intended one.
-  - Preferred fix: Fully qualify the enum with its namespace or create an alias for the Aspose.Words enum.
-  - Prevention: Always reference Aspose.Words.Saving.CompressionLevel when configuring compression options for Aspose.Words.
+- **Incorrect SaveFormat or unavailable enum value**
+  - Symptom: Compilation errors such as CS0117 for PdfCompliance.Ua or PdfA3b, indicating the enum member does not exist.
+  - Root cause: Enum members have been renamed or removed in newer Aspose.Words releases.
+  - Preferred fix: Use the enum value that exists in the target version, e.g., PdfCompliance.PdfUa1 for PDF/UA compliance.
+  - Prevention: Reference the version-specific documentation or use reflection to verify enum members before coding.
 
-- **System.Drawing conflict**
-  - Symptom: Compilation errors arise from ambiguous Font types between Aspose.Drawing.Font and System.Drawing.Font.
-  - Root cause: The example imports System.Drawing while also using Aspose.Drawing, causing type collisions.
-  - Preferred fix: Remove System.Drawing usage and declare fonts explicitly as Aspose.Drawing.Font.
-  - Prevention: Do not import System.Drawing in conversion samples; rely solely on Aspose.Drawing for graphics.
+- **Unavailable type or property (e.g., JpegSaveOptions, HtmlSaveOptions properties)**
+  - Symptom: Compilation fails with CS0246 for missing types or CS0117 for properties like ExportEmbeddedCss, ExportRoundTripInformation, ExportEmbeddedFonts.
+  - Root cause: The referenced type or property is not part of the installed Aspose.Words package version.
+  - Preferred fix: Replace the missing type with the supported alternative (e.g., use ImageSaveOptions with appropriate settings) and conditionally set properties only when they exist.
+  - Prevention: Check the API surface of the installed package and guard property assignments with reflection if backward compatibility is required.
 
-- **Missing input bootstrap**
-  - Symptom: Runtime throws a file-not-found exception because the example assumes a source file already exists.
-  - Root cause: The sample does not create the required input document or image before loading it.
-  - Preferred fix: Generate the input file locally within the example prior to loading.
-  - Prevention: Always bootstrap required input files in the code to make the example self-contained.
+- **Ambiguous type references**
+  - Symptom: Compilation error CS0104 indicating CompressionLevel is ambiguous between System.IO.Compression and Aspose.Words.Saving.
+  - Root cause: Both namespaces define a type named CompressionLevel and the code does not qualify which one to use.
+  - Preferred fix: Fully qualify the enum, e.g., Aspose.Words.Saving.CompressionLevel.Default, or add an alias for the desired namespace.
+  - Prevention: Always use explicit namespace qualifiers for types that exist in multiple referenced assemblies.
 
-- **Stream position or disposal issue**
-  - Symptom: Reading from a MemoryStream after saving fails because the stream position is at the end or the stream has been disposed.
-  - Root cause: The stream is not reset to position 0 or is disposed before validation.
-  - Preferred fix: Reset MemoryStream.Position to 0 and keep the stream alive until after validation is complete.
-  - Prevention: Validate stream length after resetting position and dispose the stream only after all checks are finished.
+- **Runtime missing output files**
+  - Symptom: InvalidOperationException stating that the expected output file (e.g., JPEG image, CSS file) was not created.
+  - Root cause: The conversion code did not reset stream positions, disposed streams prematurely, or used incorrect page indices.
+  - Preferred fix: Ensure MemoryStream.Position is set to 0 before reading, keep the stream alive until after validation, and verify page indices are within the document's PageCount.
+  - Prevention: Add explicit stream position resets and lifetime checks, and validate page indices against Document.PageCount before saving.
 
-- **Incorrect SaveFormat pairing**
-  - Symptom: The generated file has an extension that does not match the SaveFormat used, leading to invalid output or runtime errors.
-  - Root cause: The code selects a SaveFormat that does not correspond to the desired output type.
-  - Preferred fix: Use the SaveFormat or specialized SaveOptions that exactly matches the target file extension.
-  - Prevention: Map each target format to its corresponding SaveFormat constant before saving.
+- **Unsupported input format (e.g., XPS)**
+  - Symptom: Aspose.Words.UnsupportedFileFormatException thrown at runtime when loading an XPS file.
+  - Root cause: The installed Aspose.Words version does not include a loader for the XPS format.
+  - Preferred fix: Either upgrade to a version that supports XPS or convert the XPS to a supported format (e.g., PDF) using a different library before invoking Aspose.Words.
+  - Prevention: Verify supported LoadFormat values for the target Aspose.Words version before attempting to load a file.
 
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Primary package: `Aspose.Words` `26.10.0`
+- Primary package: `Aspose.Words` `26.11.0`
 
 ## Command reference
 
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.10.0
+dotnet add package Aspose.Words --version 26.11.0
 dotnet add package Aspose.Drawing.Common --version 26.10.0
 ```
 
@@ -641,6 +640,4 @@ dotnet run --configuration Release --no-build
 
 ## Category update guidance
 
-- Upgrade to newer Aspose.Words releases when additional API members become available and adjust code accordingly.
-- After each code change, recompile and verify that all referenced types and members exist in the current package version.
-- Keep the input-bootstrap logic synchronized with the conversion workflow to ensure examples remain self-contained.
+- Periodically review Aspose.Words release notes to update enum names, property availability, and supported formats, ensuring code stays compatible with the installed package version.

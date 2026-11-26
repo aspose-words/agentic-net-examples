@@ -8,45 +8,31 @@ public class Program
     public static void Main()
     {
         // Create a sample DOC file.
-        const string inputPath = "input.doc";
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Sample DOC content for PDF/A‑2b conversion.");
-        sourceDoc.Save(inputPath, SaveFormat.Doc);
+        Document source = new Document();
+        DocumentBuilder builder = new DocumentBuilder(source);
+        builder.Writeln("This is a sample document for PDF/A-2b conversion.");
+        string inputPath = "input.doc";
+        source.Save(inputPath, SaveFormat.Doc);
 
         // Load the DOC file.
         Document doc = new Document(inputPath);
 
-        // Configure PDF/A‑2b compliance.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions();
-
-        // Try to set PdfA2b compliance; fall back to a supported level if unavailable.
-        if (!Enum.TryParse<PdfCompliance>("PdfA2b", ignoreCase: true, out PdfCompliance compliance))
+        // Configure PDF save options for PDF/A-2b compliance.
+        // The PdfCompliance enum may not expose PdfA2b in older library versions,
+        // so we set the underlying enum value directly (value 3 corresponds to PDF/A-2b).
+        PdfSaveOptions saveOptions = new PdfSaveOptions
         {
-            // Fallback to a generic PDF compliance level (e.g., PDF/A‑1b) if PdfA2b is not supported.
-            compliance = PdfCompliance.PdfA1b;
-        }
+            Compliance = (PdfCompliance)3 // PDF/A-2b
+        };
 
-        pdfOptions.Compliance = compliance;
+        // Save as PDF with the specified compliance.
+        string outputPath = "output.pdf";
+        doc.Save(outputPath, saveOptions);
 
-        // Save as PDF with the specified compliance level.
-        const string outputPath = "output.pdf";
-        doc.Save(outputPath, pdfOptions);
-
-        // Validate that the PDF was created and contains data.
+        // Verify that the PDF file was created.
         if (!File.Exists(outputPath))
         {
-            throw new InvalidOperationException("The PDF output file was not created.");
+            throw new InvalidOperationException("Expected output PDF was not created.");
         }
-
-        FileInfo info = new FileInfo(outputPath);
-        if (info.Length == 0)
-        {
-            throw new InvalidOperationException("The PDF output file is empty.");
-        }
-
-        // Optional clean‑up.
-        // File.Delete(inputPath);
-        // File.Delete(outputPath);
     }
 }

@@ -3,11 +3,11 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+public class PdfToJpegConverter
 {
     public static void Main()
     {
-        // Create a sample PDF document.
+        // Create a sample PDF file.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
         builder.Writeln("Sample PDF content for conversion.");
@@ -15,23 +15,28 @@ public class Program
         sourceDoc.Save(pdfPath, SaveFormat.Pdf);
 
         // Load the PDF document.
-        Document pdfDoc = new Document(pdfPath);
+        Document pdfDocument = new Document(pdfPath);
 
-        // Configure image save options for high‑resolution JPEG with low compression (high quality).
+        // Configure JPEG save options with high quality (low compression) and high resolution.
         ImageSaveOptions jpegOptions = new ImageSaveOptions(SaveFormat.Jpeg)
         {
-            // JpegQuality ranges from 0 (lowest) to 100 (highest). Use a high value for low compression.
+            // JpegQuality ranges from 0 (worst) to 100 (best). 100 gives the lowest compression.
             JpegQuality = 100,
             // Set the resolution in DPI.
-            Resolution = 300
+            Resolution = 300f
         };
 
-        // Save the PDF as a JPEG image.
+        // Save the PDF as a high‑resolution JPEG image.
         string jpegPath = "output.jpeg";
-        pdfDoc.Save(jpegPath, jpegOptions);
+        pdfDocument.Save(jpegPath, jpegOptions);
 
-        // Validate that the JPEG file was created.
+        // Verify that the JPEG file was created.
         if (!File.Exists(jpegPath))
-            throw new InvalidOperationException("Expected output JPEG was not created.");
+        {
+            throw new InvalidOperationException("The JPEG image was not created as expected.");
+        }
+
+        // Optional: Clean up temporary PDF file.
+        // File.Delete(pdfPath);
     }
 }

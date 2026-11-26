@@ -4,79 +4,62 @@ using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
-using Aspose.Drawing.Drawing2D;
-using Aspose.Drawing.Text;
 
 public class Program
 {
     public static void Main()
     {
         // Prepare a folder for sample PNG images.
-        string imagesFolder = Path.Combine(Directory.GetCurrentDirectory(), "Images");
+        string imagesFolder = "SampleImages";
         Directory.CreateDirectory(imagesFolder);
 
-        // Create three sample PNG images using Aspose.Drawing.
-        for (int i = 1; i <= 3; i++)
+        // Create a few PNG images using Aspose.Drawing.
+        int imageCount = 3;
+        string[] imagePaths = new string[imageCount];
+        for (int i = 0; i < imageCount; i++)
         {
-            string imagePath = Path.Combine(imagesFolder, $"image{i}.png");
-            using (Bitmap bitmap = new Bitmap(400, 300, PixelFormat.Format32bppArgb))
+            string filePath = Path.Combine(imagesFolder, $"Image{i + 1}.png");
+            using (Bitmap bitmap = new Bitmap(600, 800))
             {
                 using (Graphics graphics = Graphics.FromImage(bitmap))
                 {
-                    // Fill background.
-                    using (SolidBrush backgroundBrush = new SolidBrush(Color.LightBlue))
-                    {
-                        graphics.FillRectangle(backgroundBrush, 0, 0, bitmap.Width, bitmap.Height);
-                    }
-
-                    // Draw text.
-                    using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 24))
-                    {
-                        using (SolidBrush textBrush = new SolidBrush(Color.Black))
-                        {
-                            string text = $"Image {i}";
-                            SizeF textSize = graphics.MeasureString(text, font);
-                            PointF location = new PointF((bitmap.Width - textSize.Width) / 2, (bitmap.Height - textSize.Height) / 2);
-                            graphics.DrawString(text, font, textBrush, location);
-                        }
-                    }
+                    // Fill background with a distinct color.
+                    Color background = i % 2 == 0 ? Color.LightBlue : Color.LightGreen;
+                    graphics.Clear(background);
                 }
 
-                // Save as PNG.
-                bitmap.Save(imagePath, ImageFormat.Png);
+                // Save the bitmap as PNG.
+                bitmap.Save(filePath, ImageFormat.Png);
             }
 
-            if (!File.Exists(imagePath))
-                throw new InvalidOperationException($"Failed to create sample image: {imagePath}");
+            imagePaths[i] = filePath;
         }
 
-        // Create a new empty Word document.
-        Document pdfDocument = new Document();
-        DocumentBuilder builder = new DocumentBuilder(pdfDocument);
+        // Create a new Word document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert each PNG image on a separate page.
-        string[] pngFiles = Directory.GetFiles(imagesFolder, "*.png");
-        for (int index = 0; index < pngFiles.Length; index++)
+        // Insert each PNG on a separate page.
+        for (int i = 0; i < imagePaths.Length; i++)
         {
-            if (index > 0)
+            if (i > 0)
+            {
+                // Add a page break before the next image.
                 builder.InsertBreak(BreakType.PageBreak);
+            }
 
-            // Center the image on the page.
-            builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-
-            // Insert the image.
-            builder.InsertImage(pngFiles[index]);
+            // Insert the image; let Aspose.Words scale it to fit the page.
+            builder.InsertImage(imagePaths[i]);
         }
 
-        // Save the document as a single PDF file.
-        string outputPdfPath = Path.Combine(Directory.GetCurrentDirectory(), "ImagesCombined.pdf");
-        pdfDocument.Save(outputPdfPath, SaveFormat.Pdf);
+        // Save the document as a single PDF.
+        string outputPdf = "CombinedImages.pdf";
+        doc.Save(outputPdf, SaveFormat.Pdf);
 
         // Validate that the PDF was created.
-        if (!File.Exists(outputPdfPath))
-            throw new InvalidOperationException("The combined PDF file was not created.");
-
-        // Optionally, clean up the temporary images folder.
-        // Directory.Delete(imagesFolder, true);
+        if (!File.Exists(outputPdf))
+        {
+            throw new InvalidOperationException("Expected output PDF was not created.");
+        }
     }
 }

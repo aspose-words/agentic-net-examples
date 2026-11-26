@@ -4,13 +4,16 @@ using Aspose.Words;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static void Main()
     {
-        // Create a sample PDF file as input.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("This is a sample PDF document.");
-        sourceDoc.Save("input.pdf", SaveFormat.Pdf);
+        // Create a sample PDF file.
+        Document source = new Document();
+        DocumentBuilder builder = new DocumentBuilder(source);
+        builder.Writeln("Hello Aspose.Words PDF extraction example.");
+        source.Save("input.pdf", SaveFormat.Pdf);
+
+        if (!File.Exists("input.pdf"))
+            throw new InvalidOperationException("Input PDF was not created.");
 
         // Load the PDF document.
         Document pdfDoc = new Document("input.pdf");
@@ -19,19 +22,12 @@ public class Program
         string extractedText = pdfDoc.GetText();
 
         // Save the extracted text to a TXT file.
-        string outputPath = "output.txt";
-        File.WriteAllText(outputPath, extractedText);
+        File.WriteAllText("output.txt", extractedText);
 
-        // Validate that the output file was created.
-        if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException("Expected output TXT file was not created.");
-        }
+        if (!File.Exists("output.txt"))
+            throw new InvalidOperationException("Output TXT was not created.");
 
-        // Optionally, you could verify that the file is not empty.
-        if (new FileInfo(outputPath).Length == 0)
-        {
-            throw new InvalidOperationException("The extracted text file is empty.");
-        }
+        if (new FileInfo("output.txt").Length == 0)
+            throw new InvalidOperationException("Extracted text file is empty.");
     }
 }

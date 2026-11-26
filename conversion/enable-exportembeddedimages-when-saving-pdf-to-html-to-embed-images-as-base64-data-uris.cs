@@ -9,54 +9,55 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with some text.
+        // Create a sample document with an image.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample document with an embedded image.");
+        builder.Writeln("Sample document with an image.");
 
-        // Generate a simple red square image using Aspose.Drawing.
-        using (MemoryStream imageStream = new MemoryStream())
+        // Create a simple bitmap using Aspose.Drawing.
+        string imagePath = "sample.png";
+        using (Bitmap bitmap = new Bitmap(100, 100))
         {
-            using (Bitmap bitmap = new Bitmap(100, 100))
+            using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                // Fill the bitmap with red color.
-                for (int x = 0; x < bitmap.Width; x++)
-                {
-                    for (int y = 0; y < bitmap.Height; y++)
-                    {
-                        bitmap.SetPixel(x, y, Color.Red);
-                    }
-                }
-
-                // Save the bitmap as PNG into the memory stream.
-                bitmap.Save(imageStream, ImageFormat.Png);
+                graphics.Clear(Color.Blue);
             }
-
-            // Reset the stream position before inserting.
-            imageStream.Position = 0;
-
-            // Insert the image into the document.
-            builder.InsertImage(imageStream);
+            bitmap.Save(imagePath, ImageFormat.Png);
         }
 
+        // Insert the image into the document.
+        builder.InsertImage(imagePath);
+
+        // Save the document as PDF (input.pdf).
+        string pdfPath = "input.pdf";
+        doc.Save(pdfPath, SaveFormat.Pdf);
+
+        // Verify that the PDF was created.
+        if (!File.Exists(pdfPath))
+            throw new InvalidOperationException("PDF file was not created.");
+
+        // Load the PDF document.
+        Document pdfDoc = new Document(pdfPath);
+
         // Configure HTML save options to embed images as Base64 data URIs.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions
+        HtmlSaveOptions htmlOptions = new HtmlSaveOptions
         {
             ExportImagesAsBase64 = true
         };
 
-        string outputPath = "output.html";
-        doc.Save(outputPath, saveOptions);
+        // Save the PDF as HTML.
+        string htmlPath = "output.html";
+        pdfDoc.Save(htmlPath, htmlOptions);
 
-        // Validate that the HTML file was created and contains data.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The HTML output file was not created.");
+        // Verify that the HTML file exists and contains embedded image data.
+        if (!File.Exists(htmlPath))
+            throw new InvalidOperationException("HTML file was not created.");
 
-        FileInfo info = new FileInfo(outputPath);
-        if (info.Length == 0)
-            throw new InvalidOperationException("The HTML output file is empty.");
+        string htmlContent = File.ReadAllText(htmlPath);
+        if (!htmlContent.Contains("data:image"))
+            throw new InvalidOperationException("Embedded image data URI not found in HTML.");
 
-        // Indicate success.
-        Console.WriteLine("HTML file with embedded images created successfully.");
+        // Clean up temporary image file.
+        File.Delete(imagePath);
     }
 }

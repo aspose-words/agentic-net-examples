@@ -7,35 +7,40 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample PDF document.
+        // Create a sample document with two pages.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("This is a sample PDF document generated for conversion.");
-        string pdfPath = "sample.pdf";
+        builder.Writeln("Sample PDF content - Page 1.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("Sample PDF content - Page 2.");
+
+        // Save the document as PDF.
+        const string pdfPath = "sample.pdf";
         sourceDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Verify that the PDF was created.
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("The PDF file was not created.");
+            throw new InvalidOperationException("Failed to create the sample PDF file.");
 
         // Load the PDF document.
         Document pdfDoc = new Document(pdfPath);
 
-        // Convert each page of the PDF to a high‑quality JPG image.
-        int pageCount = pdfDoc.PageCount;
-        for (int i = 0; i < pageCount; i++)
+        // Convert each page of the PDF to a high‑quality JPEG image.
+        for (int pageIndex = 0; pageIndex < pdfDoc.PageCount; pageIndex++)
         {
-            // Set JPEG quality to the maximum (100) using ImageSaveOptions.
-            ImageSaveOptions jpegOptions = new ImageSaveOptions(SaveFormat.Jpeg);
-            jpegOptions.JpegQuality = 100;
-            jpegOptions.PageSet = new PageSet(i);
+            ImageSaveOptions jpegOptions = new ImageSaveOptions(SaveFormat.Jpeg)
+            {
+                JpegQuality = 100, // Set maximum quality.
+                PageSet = new PageSet(pageIndex) // Convert only the current page.
+            };
 
-            string jpgPath = $"page_{i + 1}.jpg";
-            pdfDoc.Save(jpgPath, jpegOptions);
+            string jpegPath = $"page_{pageIndex + 1}.jpg";
+            pdfDoc.Save(jpegPath, jpegOptions);
 
-            // Verify that the JPG image was created.
-            if (!File.Exists(jpgPath))
-                throw new InvalidOperationException($"The JPG file '{jpgPath}' was not created.");
+            if (!File.Exists(jpegPath))
+                throw new InvalidOperationException($"Failed to create JPEG image for page {pageIndex + 1}.");
         }
+
+        // Optional cleanup of the temporary PDF.
+        // File.Delete(pdfPath);
     }
 }

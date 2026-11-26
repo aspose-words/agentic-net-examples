@@ -2,34 +2,54 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
+using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample DOCX document.
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
-        builder.Writeln("This is a sample DOCX document that will be converted to PDF with high image compression.");
+        // Create a sample DOCX document with some text and an embedded image.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("Sample DOCX content with an embedded image.");
 
-        // Save the sample document as DOCX.
-        string inputPath = "input.docx";
-        source.Save(inputPath, SaveFormat.Docx);
+        // Create a simple bitmap using Aspose.Drawing.
+        using (MemoryStream imageStream = new MemoryStream())
+        {
+            using (Bitmap bitmap = new Bitmap(100, 100))
+            {
+                using (Graphics graphics = Graphics.FromImage(bitmap))
+                {
+                    graphics.Clear(Color.Blue);
+                }
 
-        // Load the DOCX document.
+                // Save the bitmap to the memory stream as PNG.
+                bitmap.Save(imageStream, ImageFormat.Png);
+            }
+
+            // Reset the stream position before inserting the image.
+            imageStream.Position = 0;
+            builder.InsertImage(imageStream);
+        }
+
+        // Save the document as DOCX (input file).
+        const string inputPath = "input.docx";
+        sourceDoc.Save(inputPath, SaveFormat.Docx);
+
+        // Load the DOCX document for conversion.
         Document doc = new Document(inputPath);
 
-        // Configure PDF save options for high image compression.
+        // Configure PDF save options with high image compression.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            // Use JPEG compression for images.
+            // Use JPEG compression for images and set a lower quality to increase compression.
             ImageCompression = PdfImageCompression.Jpeg,
-            // Lower JPEG quality results in higher compression (0-100, lower = higher compression).
             JpegQuality = 50
         };
 
         // Save the document as PDF with the specified options.
-        string outputPath = "output.pdf";
+        const string outputPath = "output.pdf";
         doc.Save(outputPath, pdfOptions);
 
         // Validate that the PDF file was created.
@@ -37,9 +57,5 @@ public class Program
         {
             throw new InvalidOperationException("Expected output PDF was not created.");
         }
-
-        // Optionally, you could also check the file size to confirm compression.
-        long fileSize = new FileInfo(outputPath).Length;
-        Console.WriteLine($"PDF saved successfully. File size: {fileSize} bytes.");
     }
 }

@@ -7,37 +7,38 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document.
+        // Create a sample document in memory.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("This is a sample document saved as compressed PDF/A‑2u.");
 
-        // Configure PDF save options for PDF/A‑2u compliance with image compression and output optimization.
+        // Configure PDF/A‑2u save options.
+        // Enable JPEG image compression with a quality setting.
         PdfSaveOptions saveOptions = new PdfSaveOptions
         {
             Compliance = PdfCompliance.PdfA2u,
             ImageCompression = PdfImageCompression.Jpeg,
-            JpegQuality = 80,
-            OptimizeOutput = true
+            JpegQuality = 80
+            // The older properties RemoveUnusedObjects and CompressContentStreams are no longer
+            // available in recent Aspose.Words versions; the default behavior already optimizes the PDF.
         };
 
-        // Define output file path.
+        // Save the document to a PDF/A‑2u file.
         string outputPath = "compressed_pdfa2u.pdf";
-
-        // Save the document as a compressed PDF/A‑2u file.
         doc.Save(outputPath, saveOptions);
 
-        // Verify that the output file was created.
+        // Verify that the file was created and is not empty.
         if (!File.Exists(outputPath))
         {
-            throw new InvalidOperationException($"Expected output file '{outputPath}' was not created.");
+            throw new InvalidOperationException($"The expected output file '{outputPath}' was not created.");
         }
 
-        // Verify that the file size is greater than zero.
         FileInfo info = new FileInfo(outputPath);
         if (info.Length == 0)
         {
-            throw new InvalidOperationException("The generated PDF file is empty.");
+            throw new InvalidOperationException("The output PDF file is empty.");
         }
+
+        Console.WriteLine($"PDF/A‑2u file saved successfully: {outputPath} (size: {info.Length} bytes)");
     }
 }

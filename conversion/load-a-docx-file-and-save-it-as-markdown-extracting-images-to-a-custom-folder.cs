@@ -9,63 +9,62 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for temporary files and output
-        const string docxPath = "input.docx";
-        const string markdownPath = "output.md";
-        const string imagePath = "sample.png";
-        const string imagesFolder = "output_images";
+        // Define file and folder paths
+        string inputDocxPath = "input.docx";
+        string outputMarkdownPath = "output.md";
+        string imagesFolder = "output_images";
+        string tempImagePath = "temp_image.png";
 
-        // Ensure a clean environment
-        if (File.Exists(docxPath)) File.Delete(docxPath);
-        if (File.Exists(markdownPath)) File.Delete(markdownPath);
-        if (File.Exists(imagePath)) File.Delete(imagePath);
-        if (Directory.Exists(imagesFolder)) Directory.Delete(imagesFolder, true);
+        // Ensure the images folder exists
+        Directory.CreateDirectory(imagesFolder);
 
-        // Create a simple PNG image using Aspose.Drawing
-        using (Bitmap bitmap = new Bitmap(100, 100, PixelFormat.Format32bppArgb))
+        // Create a sample DOCX document with text and an image
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("This is a sample document with an image.");
+
+        // Create a simple bitmap using Aspose.Drawing
+        using (Bitmap bitmap = new Bitmap(100, 100))
         {
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
                 graphics.Clear(Color.Blue);
             }
-            bitmap.Save(imagePath, ImageFormat.Png);
+
+            // Save the bitmap to a temporary PNG file
+            bitmap.Save(tempImagePath, ImageFormat.Png);
         }
 
-        // Create a sample DOCX document containing text and the image
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("This is a sample document with an image:");
-        builder.InsertImage(imagePath);
-        sourceDoc.Save(docxPath, SaveFormat.Docx);
+        // Insert the temporary image into the document
+        builder.InsertImage(tempImagePath);
+
+        // Save the source document as DOCX
+        sourceDoc.Save(inputDocxPath, SaveFormat.Docx);
 
         // Load the DOCX document
-        Document doc = new Document(docxPath);
+        Document doc = new Document(inputDocxPath);
 
-        // Prepare Markdown save options with a custom images folder
-        MarkdownSaveOptions markdownOptions = new MarkdownSaveOptions
+        // Configure Markdown save options with a custom images folder
+        MarkdownSaveOptions mdOptions = new MarkdownSaveOptions
         {
             ImagesFolder = imagesFolder,
-            ImagesFolderAlias = imagesFolder // Use the same folder name in the markdown links
+            ImagesFolderAlias = imagesFolder
         };
 
-        // Ensure the images folder exists
-        Directory.CreateDirectory(imagesFolder);
+        // Save the document as Markdown
+        doc.Save(outputMarkdownPath, mdOptions);
 
-        // Save as Markdown, extracting images to the custom folder
-        doc.Save(markdownPath, markdownOptions);
-
-        // Validation: check that the markdown file was created
-        if (!File.Exists(markdownPath))
+        // Validate that the Markdown file was created
+        if (!File.Exists(outputMarkdownPath))
             throw new InvalidOperationException("The Markdown file was not created.");
 
-        // Validation: check that at least one image was extracted
+        // Validate that at least one image was extracted to the images folder
         string[] extractedImages = Directory.GetFiles(imagesFolder);
         if (extractedImages.Length == 0)
-            throw new InvalidOperationException("No images were extracted to the custom folder.");
+            throw new InvalidOperationException("No images were extracted to the images folder.");
 
-        // Optional: clean up temporary files (comment out if inspection is needed)
-        // File.Delete(docxPath);
-        // File.Delete(imagePath);
-        // Directory.Delete(imagesFolder, true);
+        // Clean up the temporary image file used for insertion
+        if (File.Exists(tempImagePath))
+            File.Delete(tempImagePath);
     }
 }

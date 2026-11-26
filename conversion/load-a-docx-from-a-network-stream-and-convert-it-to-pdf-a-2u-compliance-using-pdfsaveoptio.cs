@@ -7,42 +7,35 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample DOCX document.
+        // Step 1: Create a sample DOCX file.
         Document sampleDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-        builder.Writeln("This is a sample document for PDF/A-2u conversion.");
+        builder.Writeln("Sample content for PDF/A-2u conversion.");
+        const string inputPath = "input.docx";
+        sampleDoc.Save(inputPath, SaveFormat.Docx);
 
-        // Save the sample document to a memory stream (simulating a network stream).
-        using MemoryStream networkStream = new MemoryStream();
-        sampleDoc.Save(networkStream, SaveFormat.Docx);
-
-        // Reset the stream position before loading.
-        networkStream.Position = 0;
-
-        // Load the DOCX from the simulated network stream.
-        Document loadedDoc = new Document(networkStream);
-
-        // Configure PDF/A-2u compliance options.
-        PdfSaveOptions saveOptions = new PdfSaveOptions
+        // Step 2: Simulate loading the DOCX from a network stream.
+        using (FileStream fileStream = new FileStream(inputPath, FileMode.Open, FileAccess.Read))
+        using (MemoryStream networkStream = new MemoryStream())
         {
-            Compliance = PdfCompliance.PdfA2u
-        };
+            fileStream.CopyTo(networkStream);
+            networkStream.Position = 0; // Reset before loading.
 
-        // Save the document as PDF/A-2u to a file.
-        string outputPath = "output.pdf";
-        loadedDoc.Save(outputPath, saveOptions);
+            Document docFromStream = new Document(networkStream);
 
-        // Validate that the output file was created.
-        if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException("The PDF/A-2u output file was not created.");
+            // Step 3: Convert to PDF/A‑2u using PdfSaveOptions.
+            PdfSaveOptions pdfOptions = new PdfSaveOptions
+            {
+                Compliance = PdfCompliance.PdfA2u
+            };
+            const string outputPath = "output.pdf";
+            docFromStream.Save(outputPath, pdfOptions);
         }
 
-        // Verify that the file size is greater than zero.
-        FileInfo info = new FileInfo(outputPath);
-        if (info.Length == 0)
+        // Step 4: Validate that the PDF/A‑2u file was created.
+        if (!File.Exists("output.pdf"))
         {
-            throw new InvalidOperationException("The PDF/A-2u output file is empty.");
+            throw new InvalidOperationException("Expected output PDF/A‑2u file was not created.");
         }
     }
 }

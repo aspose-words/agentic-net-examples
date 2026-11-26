@@ -6,55 +6,47 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample DOCX document.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Sample content for SharePoint stream conversion.");
+        // Step 1: Create a sample DOCX file that would represent a document stored in SharePoint.
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        builder.Writeln("This is a sample document that simulates content retrieved from SharePoint.");
+        const string inputPath = "sample.docx";
+        sampleDoc.Save(inputPath, SaveFormat.Docx);
 
-        // Save the sample DOCX to a temporary file.
-        string tempDocxPath = Path.Combine(Path.GetTempPath(), "sample_input.docx");
-        sourceDoc.Save(tempDocxPath, SaveFormat.Docx);
+        // Verify the input file was created.
+        if (!File.Exists(inputPath))
+            throw new InvalidOperationException("The sample DOCX file was not created.");
 
-        // Simulate obtaining a SharePoint stream by reading the file into a MemoryStream.
-        using (FileStream fileStream = new FileStream(tempDocxPath, FileMode.Open, FileAccess.Read))
-        using (MemoryStream sharePointStream = new MemoryStream())
+        // Step 2: Simulate obtaining a SharePoint stream containing the DOCX.
+        using (MemoryStream sharepointStream = new MemoryStream(File.ReadAllBytes(inputPath)))
         {
-            fileStream.CopyTo(sharePointStream);
-            sharePointStream.Position = 0; // Reset before loading.
+            // Ensure the stream is positioned at the beginning before loading.
+            sharepointStream.Position = 0;
 
-            // Load the DOCX from the simulated SharePoint stream.
-            Document docFromStream = new Document(sharePointStream);
+            // Step 3: Load the document from the simulated SharePoint stream.
+            Document docFromSharePoint = new Document(sharepointStream);
 
-            // Convert to PDF and write to a simulated response stream.
+            // Step 4: Convert the document to PDF and write it to a simulated response stream.
             using (MemoryStream responseStream = new MemoryStream())
             {
-                docFromStream.Save(responseStream, SaveFormat.Pdf);
+                docFromSharePoint.Save(responseStream, SaveFormat.Pdf);
 
                 // Validate that PDF data was written.
                 if (responseStream.Length == 0)
-                {
                     throw new InvalidOperationException("No PDF data was written to the simulated response stream.");
+
+                // Optional: Save the PDF to a file for verification.
+                const string outputPath = "output.pdf";
+                responseStream.Position = 0;
+                using (FileStream fileStream = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
+                {
+                    responseStream.CopyTo(fileStream);
                 }
 
-                // Optionally, write the PDF to a file to verify on disk.
-                string outputPdfPath = Path.Combine(Path.GetTempPath(), "output.pdf");
-                responseStream.Position = 0; // Reset before copying to file.
-                using (FileStream outFile = new FileStream(outputPdfPath, FileMode.Create, FileAccess.Write))
-                {
-                    responseStream.CopyTo(outFile);
-                }
-
-                if (!File.Exists(outputPdfPath))
-                {
-                    throw new InvalidOperationException("Expected output PDF was not created.");
-                }
+                // Verify that the PDF file was created.
+                if (!File.Exists(outputPath))
+                    throw new InvalidOperationException("The output PDF file was not created.");
             }
-        }
-
-        // Clean up temporary files.
-        if (File.Exists(tempDocxPath))
-        {
-            File.Delete(tempDocxPath);
         }
     }
 }

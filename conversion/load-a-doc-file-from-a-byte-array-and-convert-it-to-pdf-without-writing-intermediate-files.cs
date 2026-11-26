@@ -6,34 +6,37 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample DOC document in memory.
+        // Step 1: Create a sample DOC document in memory.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Sample DOC content.");
+        builder.Writeln("This is a sample DOC document created in memory.");
 
-        // Save the DOC document to a memory stream (no file is written).
+        // Step 2: Save the DOC document to a MemoryStream (no file is written).
+        byte[] docBytes;
         using (MemoryStream docStream = new MemoryStream())
         {
             sourceDoc.Save(docStream, SaveFormat.Doc);
-            // Ensure the stream position is at the beginning for reading.
-            docStream.Position = 0;
-
-            // Load a Document from the byte array contained in the memory stream.
-            byte[] docBytes = docStream.ToArray();
-            using (MemoryStream loadStream = new MemoryStream(docBytes))
-            {
-                Document loadedDoc = new Document(loadStream);
-
-                // Convert the loaded DOC document to PDF and save to a file.
-                const string pdfPath = "output.pdf";
-                loadedDoc.Save(pdfPath, SaveFormat.Pdf);
-
-                // Validate that the PDF file was created.
-                if (!File.Exists(pdfPath))
-                {
-                    throw new InvalidOperationException("Expected output PDF was not created.");
-                }
-            }
+            docBytes = docStream.ToArray(); // Capture the byte array.
         }
+
+        // Step 3: Load a new Document from the byte array.
+        Document loadedDoc;
+        using (MemoryStream loadStream = new MemoryStream(docBytes))
+        {
+            loadedDoc = new Document(loadStream);
+        }
+
+        // Step 4: Convert the loaded DOC document to PDF and save to a file.
+        const string outputPdfPath = "output.pdf";
+        loadedDoc.Save(outputPdfPath, SaveFormat.Pdf);
+
+        // Step 5: Validate that the PDF file was created.
+        if (!File.Exists(outputPdfPath))
+        {
+            throw new InvalidOperationException("Expected output PDF was not created.");
+        }
+
+        // Optional: Output a simple confirmation (no interactive wait).
+        Console.WriteLine("PDF conversion completed successfully.");
     }
 }

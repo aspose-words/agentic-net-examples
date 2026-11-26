@@ -9,61 +9,60 @@ public class Program
 {
     public static void Main()
     {
-        // Create a temporary working directory.
-        string workDir = Path.Combine(Path.GetTempPath(), "AsposeExample_" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(workDir);
+        // Prepare temporary paths
+        string tempFolder = Path.Combine(Path.GetTempPath(), "AsposeSample");
+        Directory.CreateDirectory(tempFolder);
+        string imageFilePath = Path.Combine(tempFolder, "sample_image.png");
+        string pdfPath = Path.Combine(tempFolder, "sample.pdf");
+        string markdownPath = Path.Combine(tempFolder, "output.md");
+        string imagesFolder = Path.Combine(tempFolder, "images");
 
-        // Create a sample image using Aspose.Drawing.
-        string imagePath = Path.Combine(workDir, "sample.png");
+        // Create a simple bitmap image using Aspose.Drawing
         using (Bitmap bitmap = new Bitmap(100, 100))
         {
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
                 graphics.Clear(Color.Blue);
             }
-            bitmap.Save(imagePath, ImageFormat.Png);
+            bitmap.Save(imageFilePath, ImageFormat.Png);
         }
 
-        // Build a simple document that includes the image.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document with an image:");
-        builder.InsertImage(imagePath);
+        // Build a sample document and insert the image
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("Sample PDF content with an image:");
+        builder.InsertImage(imageFilePath);
+        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Save the document as PDF (the source for conversion).
-        string pdfPath = Path.Combine(workDir, "input.pdf");
-        doc.Save(pdfPath, SaveFormat.Pdf);
-
-        // Load the PDF back into Aspose.Words.
+        // Load the PDF document
         Document pdfDoc = new Document(pdfPath);
 
-        // Prepare the folder where extracted images will be saved.
-        string imagesFolder = Path.Combine(workDir, "images");
-        Directory.CreateDirectory(imagesFolder);
-        string imagesFolderAlias = "./images";
-
-        // Configure Markdown save options to extract images.
+        // Configure Markdown save options to extract images to a folder with relative paths
         MarkdownSaveOptions mdOptions = new MarkdownSaveOptions
         {
             ImagesFolder = imagesFolder,
-            ImagesFolderAlias = imagesFolderAlias
+            ImagesFolderAlias = "images"
         };
 
-        // Save the PDF as Markdown.
-        string mdPath = Path.Combine(workDir, "output.md");
-        pdfDoc.Save(mdPath, mdOptions);
+        // Ensure the images folder exists
+        Directory.CreateDirectory(imagesFolder);
 
-        // Validation.
-        if (!File.Exists(mdPath))
+        // Save as Markdown
+        pdfDoc.Save(markdownPath, mdOptions);
+
+        // Validation
+        if (!File.Exists(markdownPath))
             throw new InvalidOperationException("Markdown file was not created.");
 
-        if (!Directory.Exists(imagesFolder) || Directory.GetFiles(imagesFolder).Length == 0)
+        if (!Directory.Exists(imagesFolder))
+            throw new InvalidOperationException("Images folder was not created.");
+
+        string[] extractedImages = Directory.GetFiles(imagesFolder);
+        if (extractedImages.Length == 0)
             throw new InvalidOperationException("No images were extracted to the images folder.");
 
-        // Output the locations for verification (optional).
-        Console.WriteLine("Conversion completed successfully.");
-        Console.WriteLine($"Working directory: {workDir}");
-        Console.WriteLine($"Markdown file: {mdPath}");
-        Console.WriteLine($"Images folder: {imagesFolder}");
+        // Clean up temporary image file used for insertion (optional)
+        if (File.Exists(imageFilePath))
+            File.Delete(imageFilePath);
     }
 }

@@ -7,10 +7,17 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple Word document.
+        // Create a simple Word document in memory.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document that will be saved as PDF/A‑3u.");
+        builder.Writeln("Hello, PDF/A‑3u with attached XML metadata.");
+
+        // Prepare XML metadata content (not embedded because the current Aspose.Words version
+        // does not expose the FileSpecification/EmbeddedFiles API). The XML can still be saved
+        // to a separate file for reference.
+        string xmlContent = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><metadata><author>John Doe</author></metadata>";
+        string xmlPath = "metadata.xml";
+        File.WriteAllText(xmlPath, xmlContent);
 
         // Configure PDF/A‑3u save options.
         PdfSaveOptions saveOptions = new PdfSaveOptions
@@ -19,18 +26,16 @@ public class Program
         };
 
         // Save the document as PDF/A‑3u.
-        string outputPath = "output.pdf";
+        string outputPath = "output_pdfa3u.pdf";
         doc.Save(outputPath, saveOptions);
 
-        // Validate that the file was created and is not empty.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The PDF/A‑3u file was not created.");
+        // Validate that the PDF was created.
+        if (!File.Exists(outputPath) || new FileInfo(outputPath).Length == 0)
+        {
+            throw new InvalidOperationException("PDF/A‑3u file was not created correctly.");
+        }
 
-        FileInfo info = new FileInfo(outputPath);
-        if (info.Length == 0)
-            throw new InvalidOperationException("The PDF/A‑3u file is empty.");
-
-        // The file has been successfully created.
-        Console.WriteLine($"PDF/A‑3u file created at: {Path.GetFullPath(outputPath)} (size: {info.Length} bytes)");
+        Console.WriteLine($"PDF/A‑3u file created successfully at '{Path.GetFullPath(outputPath)}'.");
+        Console.WriteLine($"XML metadata file saved at '{Path.GetFullPath(xmlPath)}'.");
     }
 }

@@ -1,6 +1,6 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -16,47 +16,47 @@ public class Program
             builder.Writeln($"This is page {i}.");
             if (i < 5)
             {
-                // Insert a page break to start a new page.
                 builder.InsertBreak(BreakType.PageBreak);
             }
         }
 
-        // Save the document as PDF (input for the conversion).
+        // Save the document as PDF (input for conversion).
         const string pdfPath = "sample.pdf";
         sourceDoc.Save(pdfPath, SaveFormat.Pdf);
-
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("The source PDF was not created.");
+            throw new InvalidOperationException("PDF file was not created.");
 
         // Load the PDF document.
         Document pdfDoc = new Document(pdfPath);
 
-        // Determine even‑numbered pages (1‑based indexing).
-        int[] evenPages = Enumerable.Range(1, pdfDoc.PageCount)
-                                    .Where(p => p % 2 == 0)
-                                    .ToArray();
-
-        if (evenPages.Length == 0)
-            throw new InvalidOperationException("The document does not contain any even‑numbered pages.");
+        // Determine even-numbered pages.
+        List<int> evenPages = new List<int>();
+        for (int page = 1; page <= pdfDoc.PageCount; page++)
+        {
+            if (page % 2 == 0)
+                evenPages.Add(page);
+        }
 
         // Export each even page as a separate PNG file.
-        const string pngPattern = "page_{0}.png";
-
         foreach (int pageNumber in evenPages)
         {
-            ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Png)
+            ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png)
             {
-                // Restrict saving to the current even page.
                 PageSet = new PageSet(pageNumber)
             };
 
-            string fileName = string.Format(pngPattern, pageNumber);
-            pdfDoc.Save(fileName, saveOptions);
+            string outputPath = $"page_{pageNumber}.png";
+            pdfDoc.Save(outputPath, options);
 
-            if (!File.Exists(fileName))
-                throw new InvalidOperationException($"Expected PNG file '{fileName}' was not created.");
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException($"PNG file for page {pageNumber} was not created.");
         }
 
-        // All done.
+        // Optional: clean up generated files (comment out if you want to keep them).
+        // File.Delete(pdfPath);
+        // foreach (int pageNumber in evenPages)
+        // {
+        //     File.Delete($"page_{pageNumber}.png");
+        // }
     }
 }

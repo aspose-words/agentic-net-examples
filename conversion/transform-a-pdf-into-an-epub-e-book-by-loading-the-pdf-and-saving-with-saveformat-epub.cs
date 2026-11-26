@@ -6,19 +6,17 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple Word document.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("This is a sample document that will be converted from PDF to EPUB.");
-
-        // Save the document as PDF (input for conversion).
+        // Create a sample document and save it as PDF (input for conversion).
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        builder.Writeln("Sample PDF content generated for conversion to EPUB.");
         string pdfPath = "sample.pdf";
-        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
+        sampleDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Load the PDF file.
+        // Load the PDF document.
         Document pdfDocument = new Document(pdfPath);
 
-        // Convert and save as EPUB.
+        // Convert the PDF to EPUB.
         string epubPath = "output.epub";
         pdfDocument.Save(epubPath, SaveFormat.Epub);
 
@@ -28,8 +26,10 @@ public class Program
             throw new InvalidOperationException("Expected output EPUB was not created.");
         }
 
-        // Optional cleanup (comment out if you want to keep the files).
-        // File.Delete(pdfPath);
-        // File.Delete(epubPath);
+        // Optional cleanup of the temporary PDF file.
+        if (File.Exists(pdfPath))
+        {
+            File.Delete(pdfPath);
+        }
     }
 }
