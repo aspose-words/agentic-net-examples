@@ -1,80 +1,82 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingExample
+public class Program
 {
-    public static class FilterSettings
+    public static void Main()
     {
-        // External static property used for filtering
-        public static string Category { get; set; } = "Electronics";
-    }
+        // Ensure the output directory exists.
+        Directory.CreateDirectory("output");
 
-    public class Product
-    {
-        public string Name { get; set; } = "";
-        public string Category { get; set; } = "";
-        public decimal Price { get; set; }
-    }
-
-    public class ReportModel
-    {
-        public List<Product> Products { get; set; } = new();
-    }
-
-    public class Program
-    {
-        public static void Main()
+        // 1. Create sample data.
+        var model = new ReportModel
         {
-            // Prepare sample data
-            var allProducts = new List<Product>
+            People = new List<Person>
             {
-                new() { Name = "Smartphone", Category = "Electronics", Price = 699.99m },
-                new() { Name = "Laptop", Category = "Electronics", Price = 1199.49m },
-                new() { Name = "Desk Chair", Category = "Furniture", Price = 149.00m },
-                new() { Name = "Coffee Table", Category = "Furniture", Price = 89.99m },
-                new() { Name = "Headphones", Category = "Electronics", Price = 199.95m }
-            };
+                new Person { Name = "Alice", Age = 28 },
+                new Person { Name = "Bob", Age = 35 },
+                new Person { Name = "Charlie", Age = 42 },
+                new Person { Name = "Diana", Age = 31 }
+            }
+        };
 
-            // Advanced filtering using Where and external static property
-            var filteredProducts = allProducts
-                .Where(p => p.Category == FilterSettings.Category)
+        // 2. Create a Word template programmatically.
+        var templatePath = Path.Combine("output", "template.docx");
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        builder.Writeln("People older than 30 (filtered using ExternalHelper.IsActive):");
+        builder.Writeln("<<foreach [p in People]>>");
+        builder.Writeln("- <<[p.Name]>> (Age: <<[p.Age]>>)");
+        builder.Writeln("<</foreach>>");
+
+        doc.Save(templatePath);
+
+        // 3. Load the template.
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
+
+        // 4. Apply advanced filtering using Where with a lambda that references the external type.
+        // The lambda checks ExternalHelper.IsActive and filters by Age > 30.
+        if (ExternalHelper.IsActive)
+        {
+            model.People = model.People
+                .Where(p => p.Age > 30)
                 .ToList();
-
-            var model = new ReportModel { Products = filteredProducts };
-
-            // Create template document programmatically
-            string templatePath = "ReportTemplate.docx";
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-            builder.Writeln("Product Report - Category: " + FilterSettings.Category);
-            builder.Writeln();
-            builder.Writeln("<<foreach [p in Products]>>");
-            builder.Writeln("Name: <<[p.Name]>>");
-            builder.Writeln("Category: <<[p.Category]>>");
-            builder.Writeln("Price: $<<[p.Price]>>");
-            builder.Writeln("<</foreach>>");
-
-            templateDoc.Save(templatePath);
-
-            // Load the template for reporting
-            Document doc = new Document(templatePath);
-
-            // Configure reporting engine
-            ReportingEngine engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.None;
-
-            // Build the report
-            bool success = engine.BuildReport(doc, model, "model");
-
-            // Save the generated report
-            string outputPath = "ProductReport.docx";
-            doc.Save(outputPath);
-
-            // Simple verification output (no interactive input)
-            Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to '{outputPath}'.");
         }
+
+        // 5. Build the report.
+        engine.BuildReport(reportDoc, model, "model");
+
+        // 6. Save the generated report.
+        var outputPath = Path.Combine("output", "report.docx");
+        reportDoc.Save(outputPath);
+
+        // Indicate completion (no interactive input).
+        Console.WriteLine($"Report generated at: {outputPath}");
     }
+}
+
+// External helper class whose static property is used in filtering.
+public static class ExternalHelper
+{
+    // This could be toggled to enable/disable filtering globally.
+    public static bool IsActive { get; set; } = true;
+}
+
+// Root data model.
+public class ReportModel
+{
+    public List<Person> People { get; set; } = new();
+}
+
+// Simple data class.
+public class Person
+{
+    public string Name { get; set; } = string.Empty;
+    public int Age { get; set; }
 }

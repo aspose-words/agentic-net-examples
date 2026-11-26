@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class Item
 {
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; set; } = "";
 }
 
 public class ReportModel
@@ -19,39 +19,39 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for Aspose.Words)
+        // Register code page provider for Aspose.Words if needed.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare sample data with at least five items
+        // Prepare sample data with at least five items.
         var model = new ReportModel
         {
             Items = new List<Item>
             {
-                new() { Name = "Item 1" },
-                new() { Name = "Item 2" },
-                new() { Name = "Item 3" },
-                new() { Name = "Item 4" },
-                new() { Name = "Item 5" },
-                new() { Name = "Item 6" }
+                new Item { Name = "Alpha" },
+                new Item { Name = "Bravo" },
+                new Item { Name = "Charlie" },
+                new Item { Name = "Delta" },
+                new Item { Name = "Echo" },      // Fifth item (index 4)
+                new Item { Name = "Foxtrot" }
             }
         };
 
-        // Create a template document programmatically
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Fifth item using ElementAt: <<[model.Items.ElementAt(4).Name]>>");
-        const string templatePath = "Template.docx";
-        templateDoc.Save(templatePath);
+        // Create a template document programmatically.
+        var templatePath = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("Fifth item: <<[model.Items.ElementAt(4).Name]>>");
+        doc.Save(templatePath);
 
-        // Load the template for reporting
-        var doc = new Document(templatePath);
+        // Load the template for report generation.
+        var templateDoc = new Document(templatePath);
 
-        // Build the report using LINQ Reporting Engine
+        // Build the report using LINQ Reporting Engine.
         var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        engine.BuildReport(templateDoc, model, "model");
 
-        // Save the generated report
-        const string outputPath = "Report.docx";
-        doc.Save(outputPath);
+        // Save the generated report.
+        var outputPath = "output.docx";
+        templateDoc.Save(outputPath);
     }
 }

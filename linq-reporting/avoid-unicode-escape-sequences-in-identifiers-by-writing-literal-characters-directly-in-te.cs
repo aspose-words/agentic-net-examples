@@ -2,47 +2,51 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using System.Text;
 
-public class Person
+namespace LinqReportingUnicodeExample
 {
-    public string Имя { get; set; } = "";
-    public int Возраст { get; set; }
-}
-
-public class Program
-{
-    public static void Main()
+    // Model class with a Unicode character in the property name.
+    public class ReportModel
     {
-        // Prepare sample data with Unicode property names.
-        var person = new Person
+        // Property name contains the character 'é'.
+        public string Café { get; set; } = "Café au lait";
+    }
+
+    public class Program
+    {
+        public static void Main()
         {
-            Имя = "Иван Иванов",
-            Возраст = 30
-        };
+            // Register code page provider for Aspose.Words (required for some environments).
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Define file paths.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        string reportPath = Path.Combine(outputDir, "Report.docx");
+            // Prepare sample data.
+            ReportModel model = new();
 
-        // Create the template document programmatically.
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Имя клиента: <<[person.Имя]>>");
-        builder.Writeln("Возраст: <<[person.Возраст]>>");
-        templateDoc.Save(templatePath);
+            // Create a template document programmatically.
+            Document templateDoc = new();
+            DocumentBuilder builder = new(templateDoc);
 
-        // Load the template for report generation.
-        var reportDoc = new Document(templatePath);
+            // Insert a paragraph with a LINQ Reporting tag that references the Unicode property directly.
+            builder.Writeln("<<[model.Café]>>");
 
-        // Build the report using LINQ Reporting Engine.
-        var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, person, "person");
+            // Save the template to disk.
+            const string templatePath = "Template.docx";
+            templateDoc.Save(templatePath);
 
-        // Save the generated report.
-        reportDoc.Save(reportPath);
+            // Load the template back (simulating a separate load step).
+            Document loadedTemplate = new(templatePath);
 
-        Console.WriteLine($"Report generated at: {reportPath}");
+            // Build the report using the ReportingEngine.
+            ReportingEngine engine = new();
+            engine.BuildReport(loadedTemplate, model, "model");
+
+            // Save the generated report.
+            const string reportPath = "Report.docx";
+            loadedTemplate.Save(reportPath);
+
+            // Indicate completion.
+            Console.WriteLine($"Report generated: {Path.GetFullPath(reportPath)}");
+        }
     }
 }

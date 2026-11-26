@@ -1,141 +1,173 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
-using System.Linq;
-using System.Xml.Linq;
+using System.Text;
+using System.Xml.Serialization;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
-
-#nullable enable
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for sample files.
-        const string xmlPath = "Customers.xml";
-        const string csvPath = "Products.csv";
-        const string templatePath = "Template.docx";
-        const string outputPath = "Report.docx";
+        // Register code page provider for CSV parsing if needed.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create sample XML file.
-        File.WriteAllText(xmlPath,
-@"<Customers>
-    <Customer>
-        <Name>John Doe</Name>
-        <City>New York</City>
-    </Customer>
-    <Customer>
-        <Name>Jane Smith</Name>
-        <City>London</City>
-    </Customer>
-</Customers>");
+        // Prepare sample data files.
+        string xmlPath = "customers.xml";
+        string csvPath = "orders.csv";
+        CreateSampleXml(xmlPath);
+        CreateSampleCsv(csvPath);
 
-        // Create sample CSV file (header + rows).
-        File.WriteAllText(csvPath,
-@"Name,Price
-Laptop,1200
-Smartphone,800");
+        // Load data from XML.
+        List<Customer> customers = LoadCustomersFromXml(xmlPath);
 
-        // Load customers from XML.
-        var customers = XDocument.Load(xmlPath)
-            .Root?
-            .Elements("Customer")
-            .Select(x => new Customer
-            {
-                Name = (string?)x.Element("Name") ?? string.Empty,
-                City = (string?)x.Element("City") ?? string.Empty
-            })
-            .ToList() ?? new List<Customer>();
+        // Load data from CSV.
+        List<OrderCsvRow> orders = LoadOrdersFromCsv(csvPath);
 
-        // Load products from CSV.
-        var products = File.ReadAllLines(csvPath)
-            .Skip(1) // Skip header.
-            .Select(line => line.Split(','))
-            .Where(parts => parts.Length >= 2)
-            .Select(parts => new Product
-            {
-                Name = parts[0],
-                Price = parts[1]
-            })
-            .ToList();
-
-        // Assemble the root model.
-        var model = new ReportModel
+        // Combine data into a single model.
+        ReportModel model = new ReportModel
         {
             Customers = customers,
-            Products = products
+            Orders = orders
         };
 
-        // -------------------- Create template document --------------------
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Create the template document.
+        string templatePath = "template.docx";
+        CreateTemplateDocument(templatePath);
+
+        // Load the template.
+        Document doc = new Document(templatePath);
+
+        // Build the report.
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None;
+        bool success = engine.BuildReport(doc, model, "model");
+
+        // Save the generated report.
+        string outputPath = Path.Combine("output", "CompositeReport.docx");
+        Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
+        doc.Save(outputPath);
+
+        // Indicate completion.
+        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to: {outputPath}");
+    }
+
+    private static void CreateSampleXml(string path)
+    {
+        var customers = new CustomersRoot
+        {
+            CustomerList = new List<Customer>
+            {
+                new Customer { Name = "John Doe", Email = "john.doe@example.com" },
+                new Customer { Name = "Jane Smith", Email = "jane.smith@example.com" }
+            }
+        };
+
+        XmlSerializer serializer = new XmlSerializer(typeof(CustomersRoot));
+        using (var writer = new StreamWriter(path, false, Encoding.UTF8))
+        {
+            serializer.Serialize(writer, customers);
+        }
+    }
+
+    private static void CreateSampleCsv(string path)
+    {
+        var lines = new List<string>
+        {
+            "OrderId,Product,Quantity",
+            "1001,Widget A,5",
+            "1002,Widget B,3",
+            "1003,Widget C,7"
+        };
+        File.WriteAllLines(path, lines, Encoding.UTF8);
+    }
+
+    private static List<Customer> LoadCustomersFromXml(string path)
+    {
+        XmlSerializer serializer = new XmlSerializer(typeof(CustomersRoot));
+        using (var stream = File.OpenRead(path))
+        {
+            var root = (CustomersRoot)serializer.Deserialize(stream)!;
+            return root.CustomerList ?? new List<Customer>();
+        }
+    }
+
+    private static List<OrderCsvRow> LoadOrdersFromCsv(string path)
+    {
+        var orders = new List<OrderCsvRow>();
+        var lines = File.ReadAllLines(path, Encoding.UTF8);
+        if (lines.Length < 2)
+            return orders; // No data.
+
+        // Assume first line is header.
+        for (int i = 1; i < lines.Length; i++)
+        {
+            var parts = lines[i].Split(',');
+            if (parts.Length != 3)
+                continue;
+
+            orders.Add(new OrderCsvRow
+            {
+                OrderId = parts[0].Trim(),
+                Product = parts[1].Trim(),
+                Quantity = int.TryParse(parts[2].Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int qty) ? qty : 0
+            });
+        }
+
+        return orders;
+    }
+
+    private static void CreateTemplateDocument(string path)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        builder.Writeln("Composite Report");
+        builder.Writeln();
 
         // Customers section.
-        builder.Writeln("Customer List");
-        builder.Writeln("<<foreach [c in Customers]>>");
-        builder.Writeln("Name: <<[c.Name]>>, City: <<[c.City]>>");
+        builder.Writeln("Customers:");
+        builder.Writeln("<<foreach [cust in Customers]>>");
+        builder.Writeln("- <<[cust.Name]>> (<<[cust.Email]>>)");
         builder.Writeln("<</foreach>>");
         builder.Writeln();
 
-        // Products section – table inside a foreach loop.
-        builder.Writeln("Product List");
-        builder.Writeln("<<foreach [p in Products]>>");
-
-        Table table = builder.StartTable();
-        // Header row.
-        builder.InsertCell();
-        builder.Writeln("Product Name");
-        builder.InsertCell();
-        builder.Writeln("Price");
-        builder.EndRow();
-
-        // Data row (repeated for each product).
-        builder.InsertCell();
-        builder.Writeln("<<[p.Name]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[p.Price]>>");
-        builder.EndRow();
-
-        builder.EndTable();
-
+        // Orders section.
+        builder.Writeln("Orders:");
+        builder.Writeln("<<foreach [ord in Orders]>>");
+        builder.Writeln("- Order ID: <<[ord.OrderId]>>, Product: <<[ord.Product]>>, Qty: <<[ord.Quantity]>>");
         builder.Writeln("<</foreach>>");
-        // ------------------------------------------------------------------
 
-        // Save the template.
-        templateDoc.Save(templatePath);
-
-        // Load the template for reporting.
-        var doc = new Document(templatePath);
-
-        // Build the report.
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        engine.BuildReport(doc, model, "model");
-
-        // Save the final report.
-        doc.Save(outputPath);
+        doc.Save(path);
     }
 }
 
-// Root model containing both data sources.
-public class ReportModel
+// Data model classes.
+
+public class CustomersRoot
 {
-    public List<Customer> Customers { get; set; } = new();
-    public List<Product> Products { get; set; } = new();
+    [XmlArray("Customers")]
+    [XmlArrayItem("Customer")]
+    public List<Customer> CustomerList { get; set; } = new();
 }
 
-// Simple customer POCO.
 public class Customer
 {
     public string Name { get; set; } = string.Empty;
-    public string City { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
 }
 
-// Simple product POCO.
-public class Product
+public class OrderCsvRow
 {
-    public string Name { get; set; } = string.Empty;
-    public string Price { get; set; } = string.Empty;
+    public string OrderId { get; set; } = string.Empty;
+    public string Product { get; set; } = string.Empty;
+    public int Quantity { get; set; }
+}
+
+public class ReportModel
+{
+    public List<Customer> Customers { get; set; } = new();
+    public List<OrderCsvRow> Orders { get; set; } = new();
 }

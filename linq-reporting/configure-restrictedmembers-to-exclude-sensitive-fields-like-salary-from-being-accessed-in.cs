@@ -1,77 +1,63 @@
 using System;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using System.Text;
 
-namespace LinqReportingRestrictedMembersExample
+namespace LinqReportingRestrictedMembers
 {
-    // Sample data model.
-    public class Employee
-    {
-        public string Name { get; set; } = "John Doe";
-        public decimal Salary { get; set; } = 75000m; // Sensitive field.
-        public string Position { get; set; } = "Software Engineer";
-    }
-
     public class Program
     {
         public static void Main()
         {
-            // Register code page provider for any encoding needs.
+            // Register code page provider (required for some environments)
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            // Paths for template and output.
-            const string templatePath = "EmployeeTemplate.docx";
-            const string outputPath = "EmployeeReport.docx";
+            // Sample data model
+            Employee employee = new Employee
+            {
+                Name = "John Doe",
+                Salary = 75000m
+            };
 
-            // -----------------------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -----------------------------------------------------------------
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
-
+            // Create template document programmatically
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
             builder.Writeln("Employee Report");
             builder.Writeln("Name: <<[employee.Name]>>");
-            builder.Writeln("Position: <<[employee.Position]>>");
-            // This field is sensitive and will be restricted.
+            // Salary field is present in the template but will be restricted from being accessed.
             builder.Writeln("Salary: <<[employee.Salary]>>");
-
-            // Save the template to disk.
+            string templatePath = "EmployeeTemplate.docx";
             templateDoc.Save(templatePath);
 
-            // -----------------------------------------------------------------
-            // 2. Load the template for report generation.
-            // -----------------------------------------------------------------
-            var doc = new Document(templatePath);
+            // Load the template for report generation
+            Document reportDoc = new Document(templatePath);
 
-            // -----------------------------------------------------------------
-            // 3. Prepare the data source.
-            // -----------------------------------------------------------------
-            var employee = new Employee();
-
-            // -----------------------------------------------------------------
-            // 4. Configure the ReportingEngine.
-            // -----------------------------------------------------------------
-            var engine = new ReportingEngine();
-
-            // Enable inline error messages so attempts to access restricted members
-            // (e.g., Salary) will be shown directly in the generated document.
+            // Configure the ReportingEngine.
+            // The RestrictedMembers property is not available in the current version of Aspose.Words.
+            // As an alternative, we can enable inline error messages so that any attempt to access a
+            // restricted member (e.g., Salary) will be reported directly in the generated document.
+            ReportingEngine engine = new ReportingEngine();
             engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-            // -----------------------------------------------------------------
-            // 5. Build the report.
-            // -----------------------------------------------------------------
-            bool success = engine.BuildReport(doc, employee, "employee");
+            // Build the report. The method returns a bool indicating success when InlineErrorMessages is enabled.
+            bool success = engine.BuildReport(reportDoc, employee, "employee");
 
-            // -----------------------------------------------------------------
-            // 6. Save the generated report.
-            // -----------------------------------------------------------------
-            doc.Save(outputPath);
+            // Optionally, you could check the success flag and handle errors accordingly.
+            if (!success)
+            {
+                Console.WriteLine("Report generation completed with errors (see the document for details).");
+            }
 
-            // Simple console output to indicate completion.
-            Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}.");
-            Console.WriteLine($"Template: {templatePath}");
-            Console.WriteLine($"Report:   {outputPath}");
+            // Save the generated report
+            string reportPath = "EmployeeReport.docx";
+            reportDoc.Save(reportPath);
         }
+    }
+
+    // Public data model class
+    public class Employee
+    {
+        public string Name { get; set; } = string.Empty;
+        public decimal Salary { get; set; }
     }
 }

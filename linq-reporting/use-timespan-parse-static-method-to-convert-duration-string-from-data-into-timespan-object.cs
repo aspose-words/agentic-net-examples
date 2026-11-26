@@ -1,10 +1,17 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
+
+public class Order
+{
+    // Original duration string from data source.
+    public string DurationString { get; set; } = "02:30:45";
+
+    // Parsed TimeSpan using TimeSpan.Parse.
+    public TimeSpan Duration => TimeSpan.Parse(DurationString);
+}
 
 public class Program
 {
@@ -13,80 +20,35 @@ public class Program
         // Register code page provider for Aspose.Words.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare sample data.
-        ReportModel model = new()
-        {
-            Items = new()
-            {
-                new Item { DurationString = "02:30:00" }, // 2 hours 30 minutes
-                new Item { DurationString = "00:45:15" }, // 45 minutes 15 seconds
-                new Item { DurationString = "01:15:30" }  // 1 hour 15 minutes 30 seconds
-            }
-        };
+        // Paths for template and output documents.
+        string templatePath = "Template.docx";
+        string outputPath = "Report.docx";
 
-        // Create a template document programmatically.
-        Document doc = new();
-        DocumentBuilder builder = new(doc);
+        // -------------------------------------------------
+        // Create the LINQ Reporting template programmatically.
+        // -------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Write a heading.
-        builder.Writeln("Duration Report");
-        builder.Writeln();
+        // Insert a simple line that will display the parsed TimeSpan.
+        builder.Writeln("Duration: <<[order.Duration]>>");
 
-        // Begin foreach loop over Items.
-        builder.Writeln("<<foreach [item in Items]>>");
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
 
-        // Create a table with two columns: original string and parsed TimeSpan.
-        Table table = builder.StartTable();
+        // -------------------------------------------------
+        // Load the template and prepare the data source.
+        // -------------------------------------------------
+        Document reportDoc = new Document(templatePath);
+        Order order = new Order(); // DurationString is already set.
 
-        // Header row.
-        builder.InsertCell();
-        builder.Writeln("Original String");
-        builder.InsertCell();
-        builder.Writeln("Parsed TimeSpan");
-        builder.EndRow();
-
-        // Data row.
-        builder.InsertCell();
-        builder.Writeln("<<[item.DurationString]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[item.Duration]>>");
-        builder.EndRow();
-
-        // End the table.
-        builder.EndTable();
-
-        // End foreach loop.
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to a temporary file.
-        string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
-        doc.Save(templatePath);
-
-        // Load the template for reporting.
-        Document templateDoc = new(templatePath);
-
-        // Build the report.
-        ReportingEngine engine = new();
-        engine.BuildReport(templateDoc, model, "model");
+        // -------------------------------------------------
+        // Build the report using Aspose.Words LINQ Reporting Engine.
+        // -------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, order, "order");
 
         // Save the generated report.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "Report.docx");
-        templateDoc.Save(outputPath);
+        reportDoc.Save(outputPath);
     }
-}
-
-// Root data model.
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
-
-// Item model with duration parsing.
-public class Item
-{
-    // Original duration string from data source.
-    public string DurationString { get; set; } = string.Empty;
-
-    // Parsed TimeSpan using TimeSpan.Parse.
-    public TimeSpan Duration => TimeSpan.Parse(DurationString);
 }

@@ -1,52 +1,65 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 using Aspose.Words.Reporting;
-
-public class ReportModel
-{
-    // Sample PNG image (1x1 pixel, transparent) encoded as Base64.
-    private static readonly string Base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
-
-    // Byte array containing the image data.
-    public byte[] ImageBytes { get; set; } = Convert.FromBase64String(Base64Png);
-
-    // Returns a fresh stream for each access, as required by the image tag.
-    public Stream ImageStream => new MemoryStream(ImageBytes);
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Create the template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Prepare a simple PNG image as a byte array (1x1 pixel, transparent).
+        byte[] pngBytes = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X0ZcAAAAASUVORK5CYII=");
+
+        // Create a MemoryStream that will be used as the image source.
+        MemoryStream imageStream = new MemoryStream(pngBytes);
+        // Ensure the stream is positioned at the beginning.
+        imageStream.Position = 0;
+
+        // Build the data model.
+        ReportModel model = new()
+        {
+            ImageStream = imageStream
+        };
+
+        // -----------------------------------------------------------------
+        // Create the LINQ Reporting template programmatically.
+        // -----------------------------------------------------------------
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
 
         // Insert a textbox to host the image.
-        var textBox = builder.InsertShape(Aspose.Words.Drawing.ShapeType.TextBox, 200, 120);
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
         builder.MoveTo(textBox.FirstParagraph);
 
-        // Write the image tag with the -fitSizeLim switch.
+        // Write the image tag using a Stream source and the -fitSizeLim switch.
         builder.Write("<<image [model.ImageStream] -fitSizeLim>>");
 
-        // Save the template to a memory stream and reload it (required by the workflow).
-        using (var templateStream = new MemoryStream())
-        {
-            template.Save(templateStream, SaveFormat.Docx);
-            templateStream.Position = 0;
-            Document loadedTemplate = new Document(templateStream);
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
+        templateDoc.Save(templatePath);
 
-            // Prepare the data model.
-            var model = new ReportModel();
+        // -----------------------------------------------------------------
+        // Load the template and generate the report.
+        // -----------------------------------------------------------------
+        Document reportDoc = new(templatePath);
 
-            // Build the report.
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(loadedTemplate, model, "model");
+        // Reset the stream before the engine reads it.
+        model.ImageStream.Position = 0;
 
-            // Save the generated report.
-            loadedTemplate.Save("output.docx");
-        }
+        ReportingEngine engine = new();
+        engine.BuildReport(reportDoc, model, "model");
+
+        // Save the generated report.
+        const string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
+}
+
+// Data model used by the LINQ Reporting engine.
+public class ReportModel
+{
+    // The image source stream. Must be reset before each use.
+    public Stream ImageStream { get; set; } = Stream.Null;
 }

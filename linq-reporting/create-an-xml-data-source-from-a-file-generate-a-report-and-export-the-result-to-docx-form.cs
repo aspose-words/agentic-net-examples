@@ -1,54 +1,85 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Text;
+using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class Order
+{
+    public string CustomerName { get; set; } = string.Empty;
+    public decimal Amount { get; set; }
+}
+
+public class ReportModel
+{
+    public List<Order> Orders { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample XML data file.
-        const string xmlFileName = "data.xml";
-        string xmlContent =
-@"<Orders>
-    <Order>
-        <CustomerName>John Doe</CustomerName>
-        <Total>123.45</Total>
-    </Order>
-    <Order>
-        <CustomerName>Jane Smith</CustomerName>
-        <Total>67.89</Total>
-    </Order>
-</Orders>";
-        File.WriteAllText(xmlFileName, xmlContent);
+        // Register code page provider (required for some encodings)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create the LINQ Reporting template programmatically.
-        const string templateFileName = "template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // -----------------------------------------------------------------
+        // Create sample XML data file (data.xml)
+        // -----------------------------------------------------------------
+        string xmlPath = "data.xml";
+        var xmlDoc = new XDocument(
+            new XElement("Orders",
+                new XElement("Order",
+                    new XElement("CustomerName", "John Doe"),
+                    new XElement("Amount", "123.45")),
+                new XElement("Order",
+                    new XElement("CustomerName", "Jane Smith"),
+                    new XElement("Amount", "678.90"))
+            )
+        );
+        xmlDoc.Save(xmlPath);
+
+        // -----------------------------------------------------------------
+        // Load XML data into strongly‑typed model
+        // -----------------------------------------------------------------
+        var model = new ReportModel();
+        foreach (var orderElem in XDocument.Load(xmlPath).Root?.Elements("Order") ?? [])
+        {
+            var order = new Order
+            {
+                CustomerName = (string?)orderElem.Element("CustomerName") ?? string.Empty,
+                Amount = decimal.TryParse((string?)orderElem.Element("Amount"), out var amt) ? amt : 0m
+            };
+            model.Orders.Add(order);
+        }
+
+        // -----------------------------------------------------------------
+        // Create a template document with LINQ Reporting tags (template.docx)
+        // -----------------------------------------------------------------
+        string templatePath = "template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
         builder.Writeln("Orders Report");
-        // Iterate over the collection of Order elements.
         builder.Writeln("<<foreach [order in Orders]>>");
         builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("Total: $<<[order.Total]>>");
+        builder.Writeln("Amount: <<[order.Amount]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
-        templateDoc.Save(templateFileName);
+        templateDoc.Save(templatePath);
 
-        // Load the template for report generation.
-        Document doc = new Document(templateFileName);
+        // -----------------------------------------------------------------
+        // Load the template document
+        // -----------------------------------------------------------------
+        var doc = new Document(templatePath);
 
-        // Load XML data source.
-        XmlDataSource xmlDataSource = new XmlDataSource(xmlFileName);
+        // Build the report using the strongly‑typed model
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-        // Build the report.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, xmlDataSource, "Orders");
-
-        // Save the generated report.
-        const string outputFileName = "report.docx";
-        doc.Save(outputFileName);
+        // Save the generated report
+        string outputPath = "Report.docx";
+        doc.Save(outputPath);
     }
 }

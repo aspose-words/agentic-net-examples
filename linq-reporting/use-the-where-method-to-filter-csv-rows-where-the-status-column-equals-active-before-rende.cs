@@ -2,83 +2,80 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class Record
-{
-    public int Id { get; set; }
-    public string Name { get; set; } = "";
-    public string Status { get; set; } = "";
-}
-
-public class Model
-{
-    public List<Record> Records { get; set; } = new();
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for CSV reading.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Prepare working directories
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(workDir);
 
-        // Prepare sample CSV data.
-        string csvPath = "data.csv";
+        // Create sample CSV file
+        string csvPath = Path.Combine(workDir, "sample.csv");
         File.WriteAllText(csvPath,
             "Id,Name,Status\n" +
-            "1,Alpha,Active\n" +
-            "2,Beta,Inactive\n" +
-            "3,Gamma,Active\n" +
-            "4,Delta,Inactive\n");
+            "1,John Doe,Active\n" +
+            "2,Jane Smith,Inactive\n" +
+            "3,Bob Johnson,Active\n");
 
-        // Load CSV rows into a list of Record objects.
-        List<Record> allRecords = new();
-        foreach (var line in File.ReadAllLines(csvPath).Skip(1))
+        // Load CSV rows into objects
+        List<CsvRow> allRows = new();
+        foreach (var line in File.ReadAllLines(csvPath).Skip(1)) // skip header
         {
             var parts = line.Split(',');
-            if (parts.Length != 3) continue;
-            if (!int.TryParse(parts[0], out int id)) continue;
-            allRecords.Add(new Record
+            if (parts.Length >= 3)
             {
-                Id = id,
-                Name = parts[1],
-                Status = parts[2]
-            });
+                allRows.Add(new CsvRow
+                {
+                    Id = parts[0],
+                    Name = parts[1],
+                    Status = parts[2]
+                });
+            }
         }
 
-        // Filter rows where Status equals "Active".
-        List<Record> activeRecords = allRecords
-            .Where(r => r.Status.Equals("Active", StringComparison.OrdinalIgnoreCase))
+        // Filter rows where Status == "Active" using LINQ Where
+        List<CsvRow> activeRows = allRows
+            .Where(r => string.Equals(r.Status, "Active", StringComparison.OrdinalIgnoreCase))
             .ToList();
 
-        // Create the model with filtered records.
-        Model model = new() { Records = activeRecords };
+        // Prepare the model for reporting
+        ReportModel model = new()
+        {
+            Rows = activeRows
+        };
 
-        // Build the LINQ Reporting template programmatically.
-        string templatePath = "template.docx";
-        Document templateDoc = new();
-        DocumentBuilder builder = new(templateDoc);
+        // Create a Word template programmatically
+        Document doc = new();
+        DocumentBuilder builder = new(doc);
 
-        // Insert a simple foreach loop to list records.
-        builder.Writeln("<<foreach [rec in Records]>>");
-        builder.Writeln("Id: <<[rec.Id]>>, Name: <<[rec.Name]>>, Status: <<[rec.Status]>>");
+        builder.Writeln("Active Users Report");
+        builder.Writeln("<<foreach [row in Rows]>>");
+        builder.Writeln("Id: <<[row.Id]>>, Name: <<[row.Name]>>, Status: <<[row.Status]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template.
-        templateDoc.Save(templatePath);
-
-        // Load the template for reporting.
-        Document reportDoc = new(templatePath);
-
-        // Build the report using the filtered model.
+        // Build the report
         ReportingEngine engine = new();
-        engine.BuildReport(reportDoc, model, "model");
+        engine.BuildReport(doc, model, "model");
 
-        // Save the final report.
-        string outputPath = "report.docx";
-        reportDoc.Save(outputPath);
+        // Save the generated report
+        string outputPath = Path.Combine(workDir, "Report.docx");
+        doc.Save(outputPath);
     }
+}
+
+// Data model classes
+public class ReportModel
+{
+    public List<CsvRow> Rows { get; set; } = new();
+}
+
+public class CsvRow
+{
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "";
+    public string Status { get; set; } = "";
 }

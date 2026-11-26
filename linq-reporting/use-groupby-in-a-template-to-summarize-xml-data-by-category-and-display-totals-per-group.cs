@@ -12,7 +12,7 @@ public class Item
     public decimal Amount { get; set; }
 }
 
-public class ReportData
+public class ReportModel
 {
     public List<Item> Items { get; set; } = new();
 }
@@ -21,12 +21,8 @@ public class Program
 {
     public static void Main()
     {
-        // Ensure the working directories exist.
-        string outputDir = "output";
-        Directory.CreateDirectory(outputDir);
-
-        // 1. Create sample XML data.
-        string xmlPath = Path.Combine(outputDir, "data.xml");
+        // Prepare sample XML data.
+        string xmlPath = "Data.xml";
         File.WriteAllText(xmlPath,
 @"<Items>
     <Item><Category>Food</Category><Amount>12.5</Amount></Item>
@@ -36,39 +32,41 @@ public class Program
     <Item><Category>Electronics</Category><Amount>199.99</Amount></Item>
 </Items>");
 
-        // 2. Load XML into objects.
-        XDocument xdoc = XDocument.Load(xmlPath);
-        var items = xdoc.Root!
-            .Elements("Item")
-            .Select(x => new Item
-            {
-                Category = (string?)x.Element("Category") ?? "",
-                Amount = decimal.TryParse((string?)x.Element("Amount"), out var a) ? a : 0m
-            })
-            .ToList();
+        // Load XML into model.
+        XDocument doc = XDocument.Load(xmlPath);
+        ReportModel model = new()
+        {
+            Items = doc.Root!
+                .Elements("Item")
+                .Select(x => new Item
+                {
+                    Category = (string?)x.Element("Category") ?? "",
+                    Amount = decimal.TryParse((string?)x.Element("Amount"), out var v) ? v : 0m
+                })
+                .ToList()
+        };
 
-        var data = new ReportData { Items = items };
-
-        // 3. Create the LINQ Reporting template.
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Create template document.
+        string templatePath = "Template.docx";
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
 
         builder.Writeln("Category Summary Report");
-        builder.Writeln("<<foreach [g in data.Items.GroupBy(i => i.Category)]>>");
-        builder.Writeln("Category: <<[g.Key]>>");
-        builder.Writeln("Total: <<[g.Sum(i => i.Amount)]>>");
+        builder.Writeln("<<foreach [g in Items.GroupBy(i => i.Category)]>>");
+        builder.Writeln("Category: <<[g.Key]>>   Total Amount: <<[g.Sum(i => i.Amount)]>>");
         builder.Writeln("<</foreach>>");
 
         templateDoc.Save(templatePath);
 
-        // 4. Load the template and build the report.
-        var reportDoc = new Document(templatePath);
-        var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, data, "data");
+        // Load template for reporting.
+        Document loadDoc = new(templatePath);
 
-        // 5. Save the generated report.
-        string resultPath = Path.Combine(outputDir, "output.docx");
-        reportDoc.Save(resultPath);
+        // Build report.
+        ReportingEngine engine = new();
+        engine.BuildReport(loadDoc, model, "model");
+
+        // Save final report.
+        string outputPath = "Report.docx";
+        loadDoc.Save(outputPath);
     }
 }

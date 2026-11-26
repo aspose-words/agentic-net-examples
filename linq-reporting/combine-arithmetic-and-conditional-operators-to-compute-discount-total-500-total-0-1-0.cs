@@ -1,12 +1,11 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class ReportModel
+public class Order
 {
-    // Total amount for which discount will be calculated.
+    // Total amount of the order.
     public double Total { get; set; } = 0;
 }
 
@@ -14,32 +13,29 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Prepare a simple template with LINQ Reporting tags.
+        // Prepare a simple template document with LINQ Reporting tags.
         string templatePath = "Template.docx";
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Write total amount.
-        builder.Writeln("Total: <<[model.Total]>>");
+        // Write the total amount.
+        builder.Writeln("Total: <<[order.Total]>>");
 
-        // Compute discount using conditional and arithmetic operators.
-        builder.Writeln("Discount: <<[model.Total > 500 ? model.Total * 0.1 : 0]>>");
+        // Compute discount using conditional operator.
+        builder.Writeln("Discount: <<[order.Total > 500 ? order.Total * 0.1 : 0]>>");
 
-        // Save the template.
+        // Save the template to disk.
         templateDoc.Save(templatePath);
 
         // Load the template for report generation.
         Document reportDoc = new Document(templatePath);
 
-        // Create sample data where total exceeds 500 to trigger discount.
-        ReportModel model = new ReportModel { Total = 600 };
+        // Create sample data.
+        Order order = new Order { Total = 620.0 };
 
-        // Build the report using LINQ Reporting engine.
+        // Build the report using the LINQ Reporting engine.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+        engine.BuildReport(reportDoc, order, "order");
 
         // Save the generated report.
         string outputPath = "Report.docx";

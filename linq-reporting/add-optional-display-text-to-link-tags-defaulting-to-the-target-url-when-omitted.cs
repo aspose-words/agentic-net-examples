@@ -1,65 +1,51 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class LinkModel
+public class ReportModel
 {
-    // URL to link to – required.
-    public string Url { get; set; } = "https://example.com";
+    public string Url { get; set; } = "";
+    public string? LinkText { get; set; }
+}
 
-    // Optional display text – can be null or empty.
-    public string? LinkText { get; set; } = "Visit Example";
+public class ReportData
+{
+    public List<ReportModel> Items { get; set; } = new();
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare folders.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Paths for template and result.
-        string templatePath = Path.Combine(outputDir, "LinkTemplate.docx");
-        string resultPath = Path.Combine(outputDir, "LinkReport.docx");
-
-        // -----------------------------------------------------------------
-        // 1. Create the template document with LINQ Reporting tags.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Paragraph with link that provides explicit display text.
-        builder.Writeln("Link with custom text:");
-        builder.Writeln("<<link [model.Url] [model.LinkText]>>");
-
-        // Paragraph with link that omits display text – engine should use URL as text.
-        builder.Writeln("Link with default text (URL will be shown):");
-        builder.Writeln("<<link [model.Url]>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template and build the report.
-        // -----------------------------------------------------------------
-        Document doc = new Document(templatePath);
-
-        // Sample data: first instance has custom text, second will use default.
-        LinkModel model = new LinkModel
+        // Prepare sample data: one link with custom text, one without.
+        var data = new ReportData
         {
-            Url = "https://www.openai.com",
-            LinkText = "OpenAI Homepage"
+            Items = new()
+            {
+                new ReportModel { Url = "https://example.com/page1", LinkText = "Visit Page 1" },
+                new ReportModel { Url = "https://example.com/page2", LinkText = null }
+            }
         };
 
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        // Create a template document programmatically.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // -----------------------------------------------------------------
-        // 3. Save the generated report.
-        // -----------------------------------------------------------------
-        doc.Save(resultPath);
+        builder.Writeln("Link Report");
+        builder.Writeln();
+
+        // Begin foreach loop over Items.
+        builder.Writeln("<<foreach [item in Items]>>");
+        // Link tag with optional display text.
+        builder.Writeln("<<link [item.Url] [item.LinkText]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Build the report.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, data, "model");
+
+        // Save the generated report.
+        doc.Save("Report.docx");
     }
 }

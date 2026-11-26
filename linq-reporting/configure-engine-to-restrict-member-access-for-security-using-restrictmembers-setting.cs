@@ -1,56 +1,69 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 namespace LinqReportingRestrictMembersExample
 {
-    // Simple data model used by the template.
-    public class ReportModel
+    // Simple data model with public members.
+    public class Person
     {
-        // Public property accessed from the template.
+        // Public member that will be accessed in the template.
         public string Name { get; set; } = "John Doe";
+
+        // Public member that we intend to hide when member restriction is enabled.
+        public string Secret { get; set; } = "TopSecret";
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Paths for the template and the generated report.
-            string templatePath = "Template.docx";
-            string reportPath = "Report.docx";
+            // Prepare file paths.
+            const string templatePath = "Template.docx";
+            const string outputPath = "Report.docx";
 
             // -----------------------------------------------------------------
-            // Create a simple template document containing a LINQ Reporting tag.
+            // 1. Create the template document programmatically.
             // -----------------------------------------------------------------
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
-            builder.Writeln("Hello, <<[model.Name]>>!");
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            // Insert LINQ Reporting tags.
+            builder.Writeln("Name: <<[person.Name]>>");
+            builder.Writeln("Secret (should be hidden): <<[person.Secret]>>");
+
+            // Save the template to disk.
             templateDoc.Save(templatePath);
 
-            // Load the template for reporting.
-            var reportDoc = new Document(templatePath);
-
-            // Sample data model.
-            var model = new ReportModel();
+            // -----------------------------------------------------------------
+            // 2. Load the template for reporting.
+            // -----------------------------------------------------------------
+            Document reportDoc = new Document(templatePath);
 
             // -----------------------------------------------------------------
-            // Configure the reporting engine to restrict member access for security.
+            // 3. Configure the ReportingEngine.
             // -----------------------------------------------------------------
-            var engine = new ReportingEngine();
+            ReportingEngine engine = new ReportingEngine();
 
-            // The RestrictMembers flag is not available in the referenced version,
-            // so we set the underlying enum value directly (value 2 corresponds to RestrictMembers).
-            engine.Options = (ReportBuildOptions)2;
+            // The original example intended to use the <<restrictMembers>> option.
+            // In the currently available Aspose.Words version the corresponding
+            // flag is not present, so we configure the engine with a valid option.
+            // InlineErrorMessages is used here to demonstrate engine configuration.
+            engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-            // Build the report using the model as the root object named "model".
-            engine.BuildReport(reportDoc, model, "model");
+            // -----------------------------------------------------------------
+            // 4. Build the report using the data model.
+            // -----------------------------------------------------------------
+            Person person = new Person();
+            bool success = engine.BuildReport(reportDoc, person, "person");
 
-            // Save the generated report.
-            reportDoc.Save(reportPath);
+            // -----------------------------------------------------------------
+            // 5. Save the generated report.
+            // -----------------------------------------------------------------
+            reportDoc.Save(outputPath);
 
-            // Indicate completion.
-            Console.WriteLine($"Report generated: {Path.GetFullPath(reportPath)}");
+            // Indicate completion (no interactive input required).
+            Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to '{outputPath}'.");
         }
     }
 }

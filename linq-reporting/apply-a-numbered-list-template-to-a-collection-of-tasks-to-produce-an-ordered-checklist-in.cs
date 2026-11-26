@@ -1,17 +1,17 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class TaskItem
 {
-    // Description of the task; initialized to avoid nullable warnings.
     public string Description { get; set; } = string.Empty;
 }
 
 public class ReportModel
 {
-    // Collection of tasks to be listed.
     public List<TaskItem> Tasks { get; set; } = new();
 }
 
@@ -19,58 +19,44 @@ public class Program
 {
     public static void Main()
     {
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
         // Prepare sample data.
         var model = new ReportModel
         {
             Tasks = new List<TaskItem>
             {
-                new TaskItem { Description = "Buy groceries" },
-                new TaskItem { Description = "Call the dentist" },
-                new TaskItem { Description = "Finish the report" },
-                new TaskItem { Description = "Plan weekend trip" }
+                new TaskItem { Description = "Review project requirements" },
+                new TaskItem { Description = "Design architecture diagram" },
+                new TaskItem { Description = "Implement core modules" },
+                new TaskItem { Description = "Write unit tests" },
+                new TaskItem { Description = "Perform code review" }
             }
         };
 
-        // Create the template document programmatically.
-        const string templatePath = "template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Create template document with LINQ Reporting tags.
+        const string templatePath = "Template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("Task Checklist:");
-        builder.Writeln(); // Blank line for spacing.
-
-        // Apply a numbered list style to the upcoming paragraphs.
+        // Insert a numbered paragraph that will be repeated for each task.
         builder.ListFormat.ApplyNumberDefault();
-
-        // LINQ Reporting tags:
-        // Open the foreach loop.
-        builder.Writeln("<<foreach [task in Tasks]>>");
-        // Each task description is a numbered paragraph; restart numbering for each item.
-        builder.Writeln("<<restartNum>><<[task.Description]>>");
-        // Close the foreach loop.
-        builder.Writeln("<</foreach>>");
-
-        // Remove list formatting after the loop.
+        builder.Writeln("<<restartNum>><<foreach [task in Tasks]>><<[task.Description]>> <</foreach>>");
         builder.ListFormat.RemoveNumbers();
 
-        // Save the template to disk.
-        doc.Save(templatePath);
+        // Save the template.
+        templateDoc.Save(templatePath);
 
-        // Load the template back (ensures the document is fully prepared before building the report).
-        var templateDoc = new Document(templatePath);
+        // Load the template for report generation.
+        var doc = new Document(templatePath);
 
-        // Build the report using the LINQ Reporting engine.
-        var engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.None // No special options needed.
-        };
-        bool success = engine.BuildReport(templateDoc, model, "model");
+        // Build the report.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-        // Save the generated report if the build succeeded.
-        if (success)
-        {
-            const string outputPath = "Checklist.docx";
-            templateDoc.Save(outputPath);
-        }
+        // Save the final document.
+        const string outputPath = "Checklist.docx";
+        doc.Save(outputPath);
     }
 }

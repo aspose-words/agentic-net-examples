@@ -1,86 +1,80 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Text;
-using System.Text.Encodings.Web;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
+
+public class Person
+{
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
+}
+
+public class ReportModel
+{
+    public string HtmlTable { get; set; } = "";
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for any legacy encodings.
+        // Register the code page provider required by Aspose.Words for certain encodings.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare sample JSON data file.
-        const string jsonPath = "data.json";
-        var sampleData = new List<Product>
-        {
-            new Product { Name = "Apple", Price = 0.99m },
-            new Product { Name = "Banana", Price = 0.59m },
-            new Product { Name = "Cherry", Price = 2.99m }
-        };
-        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(sampleData, Formatting.Indented));
+        // Sample JSON data.
+        string json = @"[
+            { ""Name"": ""Alice"", ""Age"": 30 },
+            { ""Name"": ""Bob"",   ""Age"": 25 },
+            { ""Name"": ""Charlie"", ""Age"": 28 }
+        ]";
 
-        // Load JSON data.
-        var json = File.ReadAllText(jsonPath);
-        var products = JsonConvert.DeserializeObject<List<Product>>(json) ?? new List<Product>();
+        // Deserialize JSON into a list of Person objects.
+        List<Person> persons = JsonConvert.DeserializeObject<List<Person>>(json) ?? new();
 
-        // Generate styled HTML table from the data.
-        var htmlBuilder = new StringBuilder();
-        htmlBuilder.AppendLine("<table style=\"border-collapse:collapse;width:100%;font-family:Arial;\">");
-        htmlBuilder.AppendLine("<tr>");
-        htmlBuilder.AppendLine("<th style=\"border:1px solid #dddddd;padding:8px;background:#f2f2f2;\">Product</th>");
-        htmlBuilder.AppendLine("<th style=\"border:1px solid #dddddd;padding:8px;background:#f2f2f2;\">Price (USD)</th>");
-        htmlBuilder.AppendLine("</tr>");
-        foreach (var p in products)
+        // Build an HTML table string with simple styling.
+        var sb = new StringBuilder();
+        sb.Append("<table style='border:1px solid black; border-collapse:collapse;'>");
+        sb.Append("<tr>");
+        sb.Append("<th style='border:1px solid black; padding:5px;'>Name</th>");
+        sb.Append("<th style='border:1px solid black; padding:5px;'>Age</th>");
+        sb.Append("</tr>");
+
+        foreach (var p in persons)
         {
-            htmlBuilder.AppendLine("<tr>");
-            htmlBuilder.AppendLine($"<td style=\"border:1px solid #dddddd;padding:8px;\">{HtmlEncoder.Default.Encode(p.Name)}</td>");
-            htmlBuilder.AppendLine($"<td style=\"border:1px solid #dddddd;padding:8px;text-align:right;\">{p.Price:F2}</td>");
-            htmlBuilder.AppendLine("</tr>");
+            sb.Append("<tr>");
+            sb.Append($"<td style='border:1px solid black; padding:5px;'>{WebUtility.HtmlEncode(p.Name)}</td>");
+            sb.Append($"<td style='border:1px solid black; padding:5px;'>{p.Age}</td>");
+            sb.Append("</tr>");
         }
-        htmlBuilder.AppendLine("</table>");
 
-        // Prepare the model for LINQ Reporting.
-        var model = new ReportModel
-        {
-            HtmlTable = htmlBuilder.ToString()
-        };
+        sb.Append("</table>");
 
-        // Create the template document programmatically.
-        const string templatePath = "Template.docx";
+        // Prepare the model for the LINQ Reporting engine.
+        var model = new ReportModel { HtmlTable = sb.ToString() };
+
+        // Create a Word template programmatically.
         var templateDoc = new Document();
         var builder = new DocumentBuilder(templateDoc);
         builder.Writeln("Report generated from JSON data:");
+        // Insert the HTML expression tag.
         builder.Writeln("<<[model.HtmlTable] -html>>");
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
         templateDoc.Save(templatePath);
 
         // Load the template for reporting.
         var doc = new Document(templatePath);
 
-        // Build the report using LINQ Reporting Engine.
+        // Build the report using the LINQ Reporting engine.
         var engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
-        // Save the final report.
+        // Save the final document.
         const string outputPath = "Report.docx";
         doc.Save(outputPath);
     }
-}
-
-// Root model class used by the reporting engine.
-public class ReportModel
-{
-    // HTML snippet that will be inserted into the document.
-    public string HtmlTable { get; set; } = string.Empty;
-}
-
-// Simple data class representing a product.
-public class Product
-{
-    public string Name { get; set; } = string.Empty;
-    public decimal Price { get; set; }
 }

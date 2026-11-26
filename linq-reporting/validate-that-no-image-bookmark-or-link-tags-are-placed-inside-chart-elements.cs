@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
@@ -10,83 +8,89 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words if needed.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Register code page provider for Aspose.Words.
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        // Prepare a temporary folder for the example files.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
+        const string templatePath = "Template.docx";
 
-        // Create a Word document template with a chart.
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        CreateTemplateWithChart(templatePath);
-
-        // Validate the template: ensure no image, bookmark, or link tags are inside chart elements.
-        bool isValid = ValidateChartTags(templatePath, out List<string> foundTags);
-
-        // Output the validation result.
-        if (isValid)
-        {
-            Console.WriteLine("Validation passed: No prohibited tags inside chart elements.");
-        }
-        else
-        {
-            Console.WriteLine("Validation failed: Prohibited tags found inside chart elements:");
-            foreach (string tag in foundTags)
-            {
-                Console.WriteLine($"- {tag}");
-            }
-        }
-    }
-
-    private static void CreateTemplateWithChart(string filePath)
-    {
-        // Create a new empty document.
+        // -------------------- Create template --------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a chart shape.
+        // Insert a chart into the document.
         Shape chartShape = builder.InsertChart(ChartType.Column, 400, 300);
 
-        // The chart shape does not contain paragraphs, so we cannot move the builder inside it.
-        // Instead, we add a regular paragraph after the chart that (incorrectly) contains prohibited tags.
-        // This demonstrates that the validation logic only inspects the text inside chart shapes.
-        builder.Writeln();
-        builder.Write("Quarterly Sales <<image [model.ImagePath]>>");
-        builder.Writeln();
-        builder.Write("Details <<bookmark [model.BookmarkName]>>");
-        builder.Writeln();
-        builder.Write("More info <<link [model.Url] [model.LinkText]>>");
+        // Intentionally place an invalid image tag inside the chart title to demonstrate validation.
+        if (chartShape.HasChart && chartShape.Chart.Title != null)
+        {
+            chartShape.Chart.Title.Text = "<<image [model.ImagePath]>>";
+        }
 
-        // Save the template.
-        doc.Save(filePath);
+        // Save the template to disk.
+        doc.Save(templatePath);
+
+        // -------------------- Load template and validate --------------------
+        Document loadedDoc = new Document(templatePath);
+        bool hasInvalidTags = ValidateChartTags(loadedDoc, out List<string> messages);
+
+        // Output validation result.
+        if (hasInvalidTags)
+        {
+            Console.WriteLine("Invalid tags found inside chart elements:");
+            foreach (string msg in messages)
+            {
+                Console.WriteLine(msg);
+            }
+        }
+        else
+        {
+            Console.WriteLine("No invalid image, bookmark, or link tags inside chart elements.");
+        }
     }
 
-    private static bool ValidateChartTags(string docPath, out List<string> foundTags)
+    private static bool ValidateChartTags(Document doc, out List<string> messages)
     {
-        foundTags = new List<string>();
-        Document doc = new Document(docPath);
+        messages = new List<string>();
 
-        // Retrieve all shapes in the document.
-        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
-        foreach (Shape shape in shapes)
+        // Find all shape nodes in the document.
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+        foreach (Shape shape in shapeNodes)
         {
-            // Process only chart shapes.
             if (shape.HasChart)
             {
-                // Get the inner text of the shape; for chart shapes this is typically empty.
-                string innerText = shape.GetText() ?? string.Empty;
+                // Check the chart title for invalid tags.
+                Chart chart = shape.Chart;
+                if (chart.Title != null && ContainsInvalidTag(chart.Title.Text))
+                {
+                    messages.Add($"Chart '{shape.Name}' contains invalid tag in title: {chart.Title.Text.Trim()}");
+                }
 
-                // Check for prohibited tags.
-                if (innerText.Contains("<<image"))
-                    foundTags.Add("<<image>>");
-                if (innerText.Contains("<<bookmark"))
-                    foundTags.Add("<<bookmark>>");
-                if (innerText.Contains("<<link"))
-                    foundTags.Add("<<link>>");
+                // Examine all paragraphs inside the chart shape.
+                NodeCollection paragraphs = shape.GetChildNodes(NodeType.Paragraph, true);
+                foreach (Paragraph para in paragraphs)
+                {
+                    foreach (Run run in para.Runs)
+                    {
+                        string text = run.Text;
+                        if (ContainsInvalidTag(text))
+                        {
+                            messages.Add($"Chart '{shape.Name}' contains invalid tag: {text.Trim()}");
+                        }
+                    }
+                }
             }
         }
 
-        return foundTags.Count == 0;
+        return messages.Count > 0;
+    }
+
+    private static bool ContainsInvalidTag(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+            return false;
+
+        return text.Contains("<<image") ||
+               text.Contains("<<bookmark") ||
+               text.Contains("<<link");
     }
 }

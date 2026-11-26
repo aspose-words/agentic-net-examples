@@ -1,65 +1,57 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public static class KnownExternalTypes
+namespace Aspose.Words.Reporting
 {
-    // Dummy implementation to satisfy compilation when the Aspose class is unavailable.
-    public static void Add(Type type) { /* No operation – Aspose would handle this internally. */ }
+    // Minimal stub to allow registration of external types when the real class is unavailable.
+    public static class KnownExternalTypes
+    {
+        public static void Add(Type type)
+        {
+            // In a full Aspose.Words environment this would register the type.
+            // For this standalone example the method is intentionally left empty.
+        }
+    }
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Register the custom external type so the reporting engine can access it without reflection.
-        KnownExternalTypes.Add(typeof(MyExternalType));
-        ReportingEngine.UseReflectionOptimization = true;
+        // Register the external type so that the reporting engine can access it without reflection.
+        KnownExternalTypes.Add(typeof(MyExternalClass));
 
-        // Create a simple template document with a tag that accesses the external type.
-        const string templatePath = "Template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("External value: <<[model.Data.Ext.Value]>>");
-        templateDoc.Save(templatePath);
+        // Create a simple template with a LINQ Reporting tag that accesses the external type.
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+        builder.Writeln("Hello, <<[model.External.Greeting]>>!");
+        template.Save(templatePath);
 
-        // Prepare the data model.
-        var model = new ReportModel
-        {
-            Data = new DataWrapper
-            {
-                Ext = new MyExternalType { Value = "Hello from external type!" }
-            }
-        };
+        // Create the model that contains an instance of the external type.
+        ReportModel model = new ReportModel();
 
-        // Load the template and build the report.
-        var reportDoc = new Document(templatePath);
-        var engine = new ReportingEngine();
-        bool success = engine.BuildReport(reportDoc, model, "model");
+        // Build the report.
+        Document report = new Document(templatePath);
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(report, model, "model");
 
         // Save the generated report.
-        const string outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
-
-        // Indicate completion.
-        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Saved to '{outputPath}'.");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        report.Save(outputPath);
     }
+}
 
-    // Root model class.
-    public class ReportModel
-    {
-        public DataWrapper Data { get; set; } = new();
-    }
+// The model passed to the reporting engine.
+public class ReportModel
+{
+    public MyExternalClass External { get; set; } = new MyExternalClass();
+}
 
-    // Wrapper class exposing the external type.
-    public class DataWrapper
-    {
-        public MyExternalType Ext { get; set; } = new();
-    }
-
-    // Custom external type that will be registered with KnownExternalTypes.
-    public class MyExternalType
-    {
-        public string Value { get; set; } = string.Empty;
-    }
+// A custom external type that we want to expose to the template without reflection.
+public class MyExternalClass
+{
+    public string Greeting => "World from an external type";
 }

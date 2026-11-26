@@ -5,27 +5,19 @@ using Aspose.Words.Reporting;
 
 public class ReportModel
 {
-    public string Category { get; set; } = string.Empty;
+    // Category determines which HTML fragment file to load.
+    public string Category { get; set; } = "A";
 
-    public string IncludePath
+    // Returns the full path to the HTML fragment based on the Category value.
+    public string HtmlFilePath => Path.Combine(Directory.GetCurrentDirectory(), $"{Category}.html");
+
+    // Returns the content of the HTML fragment file.
+    public string HtmlContent
     {
         get
         {
-            return Category switch
-            {
-                "A" => Path.Combine(Directory.GetCurrentDirectory(), "categoryA.html"),
-                "B" => Path.Combine(Directory.GetCurrentDirectory(), "categoryB.html"),
-                _ => Path.Combine(Directory.GetCurrentDirectory(), "default.html")
-            };
-        }
-    }
-
-    public string HtmlFragment
-    {
-        get
-        {
-            // Load the HTML fragment file based on the category.
-            return File.ReadAllText(IncludePath);
+            // Ensure the file exists; if not, return an empty string to avoid null issues.
+            return File.Exists(HtmlFilePath) ? File.ReadAllText(HtmlFilePath) : string.Empty;
         }
     }
 }
@@ -34,36 +26,43 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare sample HTML fragments.
-        File.WriteAllText("categoryA.html", "<p><b>Category A</b> specific content.</p>");
-        File.WriteAllText("categoryB.html", "<p><i>Category B</i> specific content.</p>");
-        File.WriteAllText("default.html", "<p>Default content.</p>");
+        // Working directory.
+        string workDir = Directory.GetCurrentDirectory();
 
-        // Create the LINQ Reporting template.
-        var templatePath = "template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Create sample HTML fragments.
+        File.WriteAllText(Path.Combine(workDir, "A.html"), "<p><b>Category A Content</b></p>");
+        File.WriteAllText(Path.Combine(workDir, "B.html"), "<p><i>Category B Content</i></p>");
 
-        // Write a title and the category value.
-        builder.Writeln("Report for category: <<[model.Category]>>");
-        // Dynamically include the HTML fragment based on the model.
-        builder.Writeln("<<[model.HtmlFragment] -html>>");
+        // -----------------------------------------------------------------
+        // Create the LINQ Reporting template programmatically.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Save the template.
-        doc.Save(templatePath);
+        builder.Writeln("Report Header");
+        // Insert the HTML fragment dynamically using the -html switch.
+        builder.Writeln("<<[model.HtmlContent] -html>>");
+        builder.Writeln("Report Footer");
+
+        // Save the template to disk.
+        string templatePath = Path.Combine(workDir, "template.docx");
+        templateDoc.Save(templatePath);
 
         // Load the template for reporting.
-        var templateDoc = new Document(templatePath);
+        Document loadedTemplate = new Document(templatePath);
 
-        // Create the root data model.
-        var model = new ReportModel { Category = "A" };
+        // Prepare the data model.
+        ReportModel model = new()
+        {
+            Category = "B" // Change to "A" or "B" to select different fragments.
+        };
 
         // Build the report.
-        var engine = new ReportingEngine();
-        engine.BuildReport(templateDoc, model, "model");
+        ReportingEngine engine = new();
+        engine.BuildReport(loadedTemplate, model, "model");
 
         // Save the generated report.
-        var outputPath = "output.docx";
-        templateDoc.Save(outputPath);
+        string outputPath = Path.Combine(workDir, "output.docx");
+        loadedTemplate.Save(outputPath);
     }
 }

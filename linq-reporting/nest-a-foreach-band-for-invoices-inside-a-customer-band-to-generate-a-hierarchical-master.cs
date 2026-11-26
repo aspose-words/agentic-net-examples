@@ -8,99 +8,85 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare paths.
-        string templatePath = "Template.docx";
-        string reportPath = "Report.docx";
+        // Create the LINQ Reporting template programmatically.
+        var templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // -----------------------------------------------------------------
-        // 1. Create the LINQ Reporting template programmatically.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Title.
-        builder.Writeln("Master‑Detail Report");
-        builder.Writeln();
-
-        // Outer foreach band for customers.
-        builder.Writeln("<<foreach [customer in Customers]>>");
+        // Master band: iterate over customers.
+        builder.Writeln("<<foreach [customer in model.Customers]>>");
         builder.Writeln("Customer: <<[customer.Name]>>");
-        builder.Writeln();
+        builder.Writeln("");
 
-        // Inner foreach band for invoices of the current customer.
+        // Detail band: iterate over invoices for each customer.
+        builder.Writeln("Invoices:");
         builder.Writeln("<<foreach [invoice in customer.Invoices]>>");
-        builder.Writeln("Invoice #: <<[invoice.Number]>> | Date: <<[invoice.Date]>> | Amount: $<<[invoice.Amount]>>");
-        builder.Writeln("<</foreach>>"); // End inner foreach.
+        builder.Writeln("- Invoice #: <<[invoice.Number]>>, Date: <<[invoice.Date]>>, Amount: $<<[invoice.Amount]>>");
+        builder.Writeln("<</foreach>>");
 
-        builder.Writeln("<</foreach>>"); // End outer foreach.
+        // End of master band.
+        builder.Writeln("<</foreach>>");
 
         // Save the template to disk.
-        templateDoc.Save(templatePath);
+        doc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the template for report generation.
-        // -----------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
+        // Load the template for report generation.
+        var template = new Document(templatePath);
 
-        // -----------------------------------------------------------------
-        // 3. Create sample data model.
-        // -----------------------------------------------------------------
-        ReportModel model = new()
+        // Prepare sample data.
+        var model = new ReportModel
         {
-            Customers = new()
+            Customers = new List<Customer>
             {
                 new Customer
                 {
                     Name = "Acme Corp",
-                    Invoices = new()
+                    Invoices = new List<Invoice>
                     {
-                        new Invoice { Number = "INV-001", Date = new DateTime(2023, 1, 15), Amount = 1234.56m },
-                        new Invoice { Number = "INV-002", Date = new DateTime(2023, 2, 20), Amount = 789.00m }
+                        new Invoice { Number = "INV-001", Date = "2023-01-15", Amount = 1500.00 },
+                        new Invoice { Number = "INV-002", Date = "2023-02-20", Amount = 2750.50 }
                     }
                 },
                 new Customer
                 {
                     Name = "Globex Ltd",
-                    Invoices = new()
+                    Invoices = new List<Invoice>
                     {
-                        new Invoice { Number = "INV-101", Date = new DateTime(2023, 3, 5), Amount = 2500.00m },
-                        new Invoice { Number = "INV-102", Date = new DateTime(2023, 4, 12), Amount = 1750.75m },
-                        new Invoice { Number = "INV-103", Date = new DateTime(2023, 5, 30), Amount = 320.40m }
+                        new Invoice { Number = "INV-101", Date = "2023-03-05", Amount = 3200.75 },
+                        new Invoice { Number = "INV-102", Date = "2023-04-12", Amount = 4100.00 },
+                        new Invoice { Number = "INV-103", Date = "2023-05-30", Amount = 1250.25 }
                     }
                 }
             }
         };
 
-        // -----------------------------------------------------------------
-        // 4. Build the report using LINQ Reporting Engine.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+        // Build the report.
+        var engine = new ReportingEngine();
+        engine.BuildReport(template, model, "model");
 
-        // -----------------------------------------------------------------
-        // 5. Save the generated report.
-        // -----------------------------------------------------------------
-        reportDoc.Save(reportPath);
+        // Save the generated report.
+        var outputPath = "Report.docx";
+        template.Save(outputPath);
     }
 }
 
-// ---------------------------------------------------------------------
-// Data model classes.
-// ---------------------------------------------------------------------
+// Root wrapper class.
 public class ReportModel
 {
     public List<Customer> Customers { get; set; } = new();
 }
 
+// Customer (master) class.
 public class Customer
 {
     public string Name { get; set; } = "";
     public List<Invoice> Invoices { get; set; } = new();
 }
 
+// Invoice (detail) class.
 public class Invoice
 {
     public string Number { get; set; } = "";
-    public DateTime Date { get; set; }
-    public decimal Amount { get; set; }
+    public string Date { get; set; } = "";
+    public double Amount { get; set; }
 }

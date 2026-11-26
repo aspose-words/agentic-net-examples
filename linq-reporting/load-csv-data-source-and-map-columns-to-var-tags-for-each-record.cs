@@ -12,41 +12,36 @@ public class Program
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
         // Prepare sample CSV data.
-        const string csvPath = "data.csv";
-        File.WriteAllText(csvPath,
-            "Id,Name,Age\r\n" +
-            "1,John Doe,30\r\n" +
-            "2,Jane Smith,25\r\n" +
-            "3,Bob Johnson,40");
+        string csvPath = "data.csv";
+        File.WriteAllText(csvPath, "Id,Name,Age\n1,John Doe,30\n2,Jane Smith,25\n3,Bob Johnson,40");
 
         // Create a Word template with LINQ Reporting tags.
-        const string templatePath = "Template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        string templatePath = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Begin foreach over the CSV records (named "Records").
-        builder.Writeln("<<foreach [rec in Records]>>");
-        // Map CSV columns to <<var>> tags.
+        builder.Writeln("Customer Report");
+        builder.Writeln("<<foreach [rec in csv]>>");
         builder.Writeln("Id: <<[rec.Id]>>");
         builder.Writeln("Name: <<[rec.Name]>>");
         builder.Writeln("Age: <<[rec.Age]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template.
-        templateDoc.Save(templatePath);
+        doc.Save(templatePath);
 
-        // Load the template for report generation.
-        var doc = new Document(templatePath);
+        // Load the template for reporting.
+        var reportDoc = new Document(templatePath);
 
         // Load CSV data source with headers.
-        var csvData = new CsvDataSource(csvPath, new CsvDataLoadOptions { HasHeaders = true });
+        var csvOptions = new CsvDataLoadOptions { HasHeaders = true };
+        var csvData = new CsvDataSource(csvPath, csvOptions);
 
         // Build the report.
         var engine = new ReportingEngine();
-        engine.BuildReport(doc, csvData, "Records");
+        engine.BuildReport(reportDoc, csvData, "csv");
 
         // Save the generated report.
-        const string outputPath = "Report.docx";
-        doc.Save(outputPath);
+        string outputPath = "report.docx";
+        reportDoc.Save(outputPath);
     }
 }

@@ -8,84 +8,94 @@ using Aspose.Words.Reporting;
 
 public class Item
 {
-    public int Id { get; set; } = 0;
     public string Name { get; set; } = "";
     public string Category { get; set; } = "";
 }
 
-public class ItemGroup
+public class Group
 {
-    public string Key { get; set; } = "";
+    public string Category { get; set; } = "";
     public List<Item> Items { get; set; } = new();
 }
 
 public class ReportModel
 {
-    public List<ItemGroup> Groups { get; set; } = new();
+    // Root collection of groups.
+    public List<Group> Groups { get; set; } = new();
+
+    // Current date/time for the report header.
+    public DateTime ReportDate { get; set; } = DateTime.Now;
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample XML data.
+        // ---------- Sample XML data ----------
         string xmlContent = @"
 <Items>
-    <Item Id='1' Name='Apple' Category='Fruit' />
-    <Item Id='2' Name='Banana' Category='Fruit' />
-    <Item Id='3' Name='Carrot' Category='Vegetable' />
-    <Item Id='4' Name='Broccoli' Category='Vegetable' />
-    <Item Id='5' Name='Chicken' Category='Meat' />
+    <Item Category='Fruits' Name='Apple' />
+    <Item Category='Fruits' Name='Banana' />
+    <Item Category='Vegetables' Name='Carrot' />
+    <Item Category='Fruits' Name='Orange' />
+    <Item Category='Vegetables' Name='Lettuce' />
 </Items>";
+
+        // Parse XML into Item objects.
         XDocument xDoc = XDocument.Parse(xmlContent);
         List<Item> items = xDoc.Root!
             .Elements("Item")
             .Select(e => new Item
             {
-                Id = (int)e.Attribute("Id")!,
-                Name = (string)e.Attribute("Name")!,
-                Category = (string)e.Attribute("Category")!
+                Category = (string?)e.Attribute("Category") ?? "",
+                Name = (string?)e.Attribute("Name") ?? ""
             })
             .ToList();
 
         // Group items by Category.
-        var groups = items
-            .GroupBy(i => i.Category)
-            .Select(g => new ItemGroup
-            {
-                Key = g.Key,
-                Items = g.ToList()
-            })
-            .ToList();
-
-        // Build the model.
-        ReportModel model = new()
+        ReportModel model = new ReportModel
         {
-            Groups = groups
+            Groups = items
+                .GroupBy(i => i.Category)
+                .Select(g => new Group
+                {
+                    Category = g.Key,
+                    Items = g.ToList()
+                })
+                .ToList()
         };
 
-        // Create the template document.
+        // ---------- Create template document ----------
         string templatePath = "template.docx";
-        Document templateDoc = new();
-        DocumentBuilder builder = new(templateDoc);
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("Items grouped by Category:");
+        // Header with current date.
+        builder.Writeln("Report generated on: <<[ReportDate]>>");
+        builder.Writeln();
+
+        // Group header.
         builder.Writeln("<<foreach [group in Groups]>>");
-        builder.Writeln("Category: <<[group.Key]>>");
-        builder.Writeln("<<foreach [item in group.Items]>>");
-        builder.Writeln("- Id: <<[item.Id]>>, Name: <<[item.Name]>>");
-        builder.Writeln("<</foreach>>");
-        builder.Writeln("<</foreach>>");
+        builder.Writeln("Category: <<[group.Category]>>");
 
+        // Items within each group.
+        builder.Writeln("<<foreach [item in group.Items]>>");
+        builder.Writeln("- <<[item.Name]>>");
+        builder.Writeln("<</foreach>>"); // end inner foreach
+        builder.Writeln("<</foreach>>"); // end outer foreach
+
+        // Save the template.
         templateDoc.Save(templatePath);
 
-        // Load the template and generate the report.
-        Document doc = new(templatePath);
-        ReportingEngine engine = new();
-        engine.BuildReport(doc, model, "model");
+        // ---------- Load template and build report ----------
+        Document reportDoc = new Document(templatePath);
+        ReportingEngine engine = new ReportingEngine();
+
+        // Build the report using the model as the root data source named "model".
+        engine.BuildReport(reportDoc, model, "model");
 
         // Save the final report.
-        string outputPath = "output.docx";
-        doc.Save(outputPath);
+        string outputPath = "report.docx";
+        reportDoc.Save(outputPath);
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
@@ -12,53 +13,68 @@ public class Order
     public decimal Amount { get; set; }
 }
 
+public class CustomerGroup
+{
+    public int CustomerId { get; set; }
+    public string CustomerName { get; set; } = "";
+    public List<Order> Orders { get; set; } = new();
+}
+
 public class ReportModel
 {
-    public List<Order> Orders { get; set; } = new();
+    public List<CustomerGroup> CustomerGroups { get; set; } = new();
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Sample data.
-        var model = new ReportModel
+        // Prepare sample data.
+        var orders = new List<Order>
         {
-            Orders = new List<Order>
-            {
-                new Order { OrderId = 1, CustomerId = 100, CustomerName = "Alice", Amount = 250.00m },
-                new Order { OrderId = 2, CustomerId = 101, CustomerName = "Bob",   Amount = 150.50m },
-                new Order { OrderId = 3, CustomerId = 100, CustomerName = "Alice", Amount = 99.99m },
-                new Order { OrderId = 4, CustomerId = 102, CustomerName = "Carol", Amount = 300.00m },
-                new Order { OrderId = 5, CustomerId = 101, CustomerName = "Bob",   Amount = 75.25m }
-            }
+            new Order { OrderId = 1, CustomerId = 101, CustomerName = "Alice",   Amount = 120.50m },
+            new Order { OrderId = 2, CustomerId = 102, CustomerName = "Bob",     Amount = 75.00m },
+            new Order { OrderId = 3, CustomerId = 101, CustomerName = "Alice",   Amount = 200.00m },
+            new Order { OrderId = 4, CustomerId = 103, CustomerName = "Charlie", Amount = 50.25m },
+            new Order { OrderId = 5, CustomerId = 102, CustomerName = "Bob",     Amount = 180.75m }
         };
 
-        // Create template.
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
+        // Group orders by CustomerId.
+        var model = new ReportModel
+        {
+            CustomerGroups = orders
+                .GroupBy(o => new { o.CustomerId, o.CustomerName })
+                .Select(g => new CustomerGroup
+                {
+                    CustomerId = g.Key.CustomerId,
+                    CustomerName = g.Key.CustomerName,
+                    Orders = g.ToList()
+                })
+                .ToList()
+        };
 
-        // Group orders by CustomerId using LINQ GroupBy inside the template.
-        builder.Writeln("<<foreach [g in model.Orders.GroupBy(o => o.CustomerId)]>>");
-        builder.Writeln("Customer ID: <<[g.Key]>>");
-        builder.Writeln("Customer Name: <<[g.First().CustomerName]>>");
-        builder.Writeln("Orders:");
-        builder.Writeln("<<foreach [o in g]>>");
-        builder.Writeln("- Order ID: <<[o.OrderId]>>, Amount: $<<[o.Amount]>>");
+        // Create template document.
+        string templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        builder.Writeln("Orders Report");
+        builder.Writeln("<<foreach [c in CustomerGroups]>>");
+        builder.Writeln("Customer: <<[c.CustomerName]>> (ID: <<[c.CustomerId]>>)");
+        builder.Writeln("<<foreach [o in c.Orders]>>");
+        builder.Writeln("- Order ID: <<[o.OrderId]>>, Amount: <<[o.Amount]>>");
         builder.Writeln("<</foreach>>");
         builder.Writeln("<</foreach>>");
 
-        // Save and reload the template.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
-        var doc = new Document(templatePath);
+        doc.Save(templatePath);
 
-        // Build the report.
+        // Load template and build report.
+        var reportDoc = new Document(templatePath);
         var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        engine.BuildReport(reportDoc, model, "model");
 
         // Save the generated report.
-        const string outputPath = "Report.docx";
-        doc.Save(outputPath);
+        string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
 }

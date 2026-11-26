@@ -1,7 +1,18 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class Item
+{
+    public string Name { get; set; } = "";
+}
+
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
 
 public class Program
 {
@@ -10,48 +21,38 @@ public class Program
         // Enable reflection optimization globally.
         ReportingEngine.UseReflectionOptimization = true;
 
-        // Create a template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-
-        // Simple header showing the report title.
-        builder.Writeln("Report Title: <<[model.Title]>>");
-        builder.Writeln();
-
-        // Iterate over a collection named Items.
+        // Create a simple LINQ Reporting template.
+        var templatePath = "Template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Report of Items:");
         builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln(" - Item: <<[item.Name]>>");
+        builder.Writeln("Item: <<[item.Name]>>");
         builder.Writeln("<</foreach>>");
+        templateDoc.Save(templatePath);
 
-        // Save the template to disk.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
-
-        // ---------- Large data source (uses global reflection optimization) ----------
-        var largeData = new ReportModel
+        // Prepare a large data source.
+        var largeModel = new ReportModel
         {
-            Title = "Large Data Report",
             Items = new List<Item>()
         };
-
         for (int i = 1; i <= 100; i++)
         {
-            largeData.Items.Add(new Item { Name = $"LargeItem{i}" });
+            largeModel.Items.Add(new Item { Name = $"LargeItem{i}" });
         }
 
-        // Load the template and build the report for the large data source.
-        Document largeDoc = new Document(templatePath);
-        ReportingEngine largeEngine = new ReportingEngine();
-        largeEngine.BuildReport(largeDoc, largeData, "model");
-        largeDoc.Save("LargeReport.docx");
+        // Build report for the large data source (global optimization is true).
+        var largeReportDoc = new Document(templatePath);
+        var engineLarge = new ReportingEngine();
+        engineLarge.BuildReport(largeReportDoc, largeModel, "model");
+        largeReportDoc.Save("LargeReport.docx");
 
-        // ---------- Small data source (override reflection optimization) ----------
-        // Temporarily disable reflection optimization for this small data source.
+        // Override reflection optimization for a small data source.
         ReportingEngine.UseReflectionOptimization = false;
 
-        var smallData = new ReportModel
+        // Prepare a small data source.
+        var smallModel = new ReportModel
         {
-            Title = "Small Data Report",
             Items = new List<Item>
             {
                 new Item { Name = "SmallItemA" },
@@ -59,26 +60,13 @@ public class Program
             }
         };
 
-        // Load the template and build the report for the small data source.
-        Document smallDoc = new Document(templatePath);
-        ReportingEngine smallEngine = new ReportingEngine();
-        smallEngine.BuildReport(smallDoc, smallData, "model");
-        smallDoc.Save("SmallReport.docx");
+        // Build report for the small data source (optimization disabled).
+        var smallReportDoc = new Document(templatePath);
+        var engineSmall = new ReportingEngine();
+        engineSmall.BuildReport(smallReportDoc, smallModel, "model");
+        smallReportDoc.Save("SmallReport.docx");
 
-        // Restore the global setting if needed.
+        // Reset global setting if needed.
         ReportingEngine.UseReflectionOptimization = true;
     }
-}
-
-// Root data model used by both reports.
-public class ReportModel
-{
-    public string Title { get; set; } = string.Empty;
-    public List<Item> Items { get; set; } = new();
-}
-
-// Simple item class.
-public class Item
-{
-    public string Name { get; set; } = string.Empty;
 }

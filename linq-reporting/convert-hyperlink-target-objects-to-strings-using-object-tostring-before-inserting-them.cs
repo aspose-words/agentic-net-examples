@@ -1,54 +1,51 @@
 using System;
-using System.Text;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingHyperlinkExample
+public class ReportModel
 {
-    public class HyperlinkTarget
+    // Hyperlink target stored as an object (e.g., Uri)
+    public object HyperlinkTarget { get; set; } = new Uri("https://example.com");
+
+    // Display text for the link
+    public string LinkText { get; set; } = "Visit Example";
+
+    // Convert the object to string before inserting into the template
+    public string HyperlinkTargetString => HyperlinkTarget?.ToString() ?? string.Empty;
+}
+
+public class Program
+{
+    public static void Main()
     {
-        public string Url { get; set; } = "";
-        public override string ToString() => Url;
-    }
+        // Prepare folders
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
 
-    public class Order
-    {
-        public string Title { get; set; } = "";
-        public HyperlinkTarget Url { get; set; } = new();
-    }
+        // Create template document
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // Register code page provider required by Aspose.Words.
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Insert a link tag that uses the string-converted property
+        builder.Writeln("Link: <<link [model.HyperlinkTargetString] [model.LinkText]>>");
 
-            // Create a template document with a LINQ Reporting link tag.
-            string templatePath = "Template.docx";
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-            // Convert the Url object to string using ToString() before inserting.
-            builder.Writeln("<<link [order.Url.ToString()] [order.Title]>>");
-            templateDoc.Save(templatePath);
+        // Save the template
+        templateDoc.Save(templatePath);
 
-            // Load the template for report generation.
-            Document reportDoc = new Document(templatePath);
+        // Load the template for reporting
+        Document doc = new Document(templatePath);
 
-            // Prepare sample data.
-            Order order = new Order
-            {
-                Title = "Visit Aspose",
-                Url = new HyperlinkTarget { Url = "https://www.aspose.com" }
-            };
+        // Prepare model data
+        ReportModel model = new ReportModel();
 
-            // Build the report.
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(reportDoc, order, "order");
+        // Build the report
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-            // Save the generated report.
-            string outputPath = "Report.docx";
-            reportDoc.Save(outputPath);
-        }
+        // Save the generated report
+        string outputPath = Path.Combine(outputDir, "report.docx");
+        doc.Save(outputPath);
     }
 }

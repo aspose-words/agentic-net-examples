@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -9,68 +10,102 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare sample XML data (not used directly by the reporting engine in this example,
-        // but kept to illustrate the original source).
+        // Ensure code page support (required by Aspose.Words for some encodings)
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
+        // 1. Create sample XML data file
         string xmlPath = "orders.xml";
-        File.WriteAllText(xmlPath,
-@"<Orders>
-    <Order>
-        <CustomerName>John Doe</CustomerName>
-        <Total>1234.56</Total>
-    </Order>
-    <Order>
-        <CustomerName>Jane Smith</CustomerName>
-        <Total>7890.12</Total>
-    </Order>
-</Orders>");
+        string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<Orders>
+  <Order>
+    <CustomerName>John Doe</CustomerName>
+    <Total>1234.56</Total>
+  </Order>
+  <Order>
+    <CustomerName>Jane Smith</CustomerName>
+    <Total>789.00</Total>
+  </Order>
+</Orders>";
+        File.WriteAllText(xmlPath, xmlContent);
 
-        // Create a template document programmatically.
-        string templatePath = "template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // 2. Load XML and map to model objects
+        XDocument xDoc = XDocument.Load(xmlPath);
+        var model = new ReportModel
+        {
+            Orders = new List<Order>()
+        };
+        foreach (var elem in xDoc.Root!.Elements("Order"))
+        {
+            var order = new Order
+            {
+                CustomerName = (string)elem.Element("CustomerName")!,
+                Total = decimal.Parse((string)elem.Element("Total")!)
+            };
+            model.Orders.Add(order);
+        }
 
-        builder.Writeln("Customer Report");
-        builder.Writeln("==============");
-        builder.Writeln();
-        builder.Writeln("<<foreach [order in Orders]>>");
+        // 3. Create a Word template with LINQ Reporting tags
+        string templatePath = "Template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Order Report");
+        builder.Writeln("<<foreach [order in model.Orders]>>");
         builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("Total: <<[order.TotalFormatted]>>");
+        builder.Writeln("Total: <<[order.FormattedTotal]>>");
         builder.Writeln("<</foreach>>");
-
         templateDoc.Save(templatePath);
 
-        // Load the template.
-        Document doc = new Document(templatePath);
+        // 4. Load the template and build the report
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Create a custom number format provider (custom currency symbol).
-        NumberFormatInfo customNfi = (NumberFormatInfo)CultureInfo.InvariantCulture.NumberFormat.Clone();
-        customNfi.CurrencySymbol = "€";
-        customNfi.CurrencyDecimalDigits = 2;
-        CultureInfo customCulture = (CultureInfo)CultureInfo.InvariantCulture.Clone();
-        customCulture.NumberFormat = customNfi;
-        CultureInfo.CurrentCulture = customCulture;
+        // 5. Save the generated report
+        string reportPath = "Report.docx";
+        reportDoc.Save(reportPath);
 
-        // Build the data model.
-        ReportModel model = new ReportModel
-        {
-            Orders = new List<Order>
-            {
-                new Order { CustomerName = "John Doe", Total = 1234.56 },
-                new Order { CustomerName = "Jane Smith", Total = 7890.12 }
-            }
-        };
-
-        // Build the report using the data model.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
-
-        // Save the generated report.
-        string outputPath = "report.docx";
-        doc.Save(outputPath);
+        // Output file locations (no interactive prompts)
+        Console.WriteLine($"Template saved to: {Path.GetFullPath(templatePath)}");
+        Console.WriteLine($"Report generated at: {Path.GetFullPath(reportPath)}");
     }
 }
 
-// Data model classes.
+// Custom format provider for currency formatting
+public class CustomCurrencyFormatProvider : IFormatProvider, ICustomFormatter
+{
+    private readonly string _currencySymbol;
+
+    public CustomCurrencyFormatProvider(string currencySymbol = "¤")
+    {
+        _currencySymbol = currencySymbol;
+    }
+
+    public object GetFormat(Type? formatType)
+    {
+        return formatType == typeof(ICustomFormatter) ? this : null!;
+    }
+
+    public string Format(string? format, object? arg, IFormatProvider? formatProvider)
+    {
+        if (string.IsNullOrEmpty(format) || arg == null)
+            return string.Empty;
+
+        // Handle custom currency format "C"
+        if (format.Equals("C", StringComparison.OrdinalIgnoreCase) && arg is IFormattable formattable)
+        {
+            // Use invariant culture for number formatting, then prepend custom symbol
+            return $"{_currencySymbol} {formattable.ToString("N2", CultureInfo.InvariantCulture)}";
+        }
+
+        // Fallback to default formatting
+        if (arg is IFormattable defaultFormattable)
+            return defaultFormattable.ToString(format, CultureInfo.CurrentCulture);
+
+        return arg.ToString() ?? string.Empty;
+    }
+}
+
+// Data model classes
 public class ReportModel
 {
     public List<Order> Orders { get; set; } = new();
@@ -79,8 +114,8 @@ public class ReportModel
 public class Order
 {
     public string CustomerName { get; set; } = string.Empty;
-    public double Total { get; set; }
+    public decimal Total { get; set; }
 
-    // Returns the total formatted as currency using the current culture.
-    public string TotalFormatted => Total.ToString("C", CultureInfo.CurrentCulture);
+    // Formatted total using the custom currency format provider
+    public string FormattedTotal => Total.ToString("C", new CustomCurrencyFormatProvider("USD"));
 }

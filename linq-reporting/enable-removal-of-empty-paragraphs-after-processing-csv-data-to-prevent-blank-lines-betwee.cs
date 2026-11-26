@@ -1,67 +1,84 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for CSV reading.
+        // Register code page provider for CSV encoding support.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
+        // Prepare sample CSV data.
+        string csvPath = "sample.csv";
+        File.WriteAllText(csvPath, "Column1,Column2\nJohn,\n,Smith\nAlice,Johnson\n");
 
-        // Create sample CSV file (includes an empty line that should be ignored).
-        string csvPath = Path.Combine(outputDir, "data.csv");
-        File.WriteAllText(csvPath, "Name,Age\r\nAlice,30\r\nBob,25\r\n\r\nCharlie,35\r\n");
+        // Load CSV data into a list of Row objects.
+        List<Row> rows = new();
+        foreach (var line in File.ReadAllLines(csvPath))
+        {
+            // Skip header.
+            if (line.StartsWith("Column1")) continue;
+            var parts = line.Split(',');
+            rows.Add(new Row
+            {
+                Column1 = parts.Length > 0 ? parts[0] : string.Empty,
+                Column2 = parts.Length > 1 ? parts[1] : string.Empty
+            });
+        }
 
-        // Build a template document with LINQ Reporting tags.
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Wrap data for LINQ Reporting.
+        ReportModel model = new() { Rows = rows };
 
-        // Heading.
-        builder.Writeln("People Report");
-        builder.Writeln();
-
-        // Begin foreach over rows.
-        builder.Writeln("<<foreach [row in rows]>>");
-        // Write data fields.
-        builder.Writeln("Name: <<[row.Name]>>");
-        builder.Writeln("Age: <<[row.Age]>>");
-        // Blank line (may become an empty paragraph after processing).
-        builder.Writeln();
-        // End foreach.
+        // Create the template document programmatically.
+        string templatePath = "template.docx";
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
+        builder.Writeln("<<foreach [row in Rows]>>");
+        // Each row will be placed in its own paragraph.
+        builder.Writeln("<<[row.Column1]>> <<[row.Column2]>>");
         builder.Writeln("<</foreach>>");
-
-        // Save the template.
         templateDoc.Save(templatePath);
 
-        // Load the template for reporting.
-        Document doc = new Document(templatePath);
+        // Load the template for report generation.
+        Document doc = new(templatePath);
 
-        // Configure CSV data source (first row contains headers).
-        var csvOptions = new CsvDataLoadOptions { HasHeaders = true };
-        CsvDataSource csvData = new CsvDataSource(csvPath, csvOptions);
+        // Build the report using LINQ Reporting Engine.
+        ReportingEngine engine = new();
+        engine.BuildReport(doc, model, "model");
 
-        // Build the report.
-        ReportingEngine engine = new ReportingEngine();
-        bool success = engine.BuildReport(doc, csvData, "rows");
-
-        // Remove any empty paragraphs that may have been generated.
-        for (int i = doc.GetChildNodes(NodeType.Paragraph, true).Count - 1; i >= 0; i--)
+        // Remove empty paragraphs that may have been generated.
+        var paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
+        for (int i = paragraphs.Count - 1; i >= 0; i--)
         {
-            Paragraph para = (Paragraph)doc.GetChildNodes(NodeType.Paragraph, true)[i];
-            if (string.IsNullOrWhiteSpace(para.GetText()))
+            Paragraph para = (Paragraph)paragraphs[i];
+            // Trim whitespace and line breaks.
+            string text = para.GetText().Trim();
+            if (string.IsNullOrEmpty(text))
+            {
                 para.Remove();
+            }
         }
 
         // Save the final document.
-        string outputPath = Path.Combine(outputDir, "PeopleReport.docx");
+        string outputPath = "output.docx";
         doc.Save(outputPath);
     }
+}
+
+// Root model class for the report.
+public class ReportModel
+{
+    public List<Row> Rows { get; set; } = new();
+}
+
+// Data row class representing each CSV record.
+public class Row
+{
+    public string Column1 { get; set; } = string.Empty;
+    public string Column2 { get; set; } = string.Empty;
 }

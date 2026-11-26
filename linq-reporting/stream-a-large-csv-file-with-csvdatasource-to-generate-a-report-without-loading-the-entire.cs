@@ -8,53 +8,64 @@ public class Program
 {
     public static void Main()
     {
-        // Enable code page support for CSV encoding.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Paths for the template, CSV data, and output report.
+        const string templatePath = "template.docx";
+        const string csvPath = "data.csv";
+        const string outputPath = "report.docx";
 
-        // Create an output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
-
-        // Generate a sample CSV file.
-        string csvPath = Path.Combine(outputDir, "sample.csv");
+        // -----------------------------------------------------------------
+        // 1. Create a sample large CSV file with headers and many rows.
+        // -----------------------------------------------------------------
         using (var writer = new StreamWriter(csvPath, false, Encoding.UTF8))
         {
-            writer.WriteLine("Id,Name,Amount");
+            writer.WriteLine("Id,Name,Age");
             for (int i = 1; i <= 1000; i++)
             {
-                writer.WriteLine($"{i},Item {i},{i * 10.5}");
+                writer.WriteLine($"{i},Person {i},{20 + (i % 30)}");
             }
         }
 
-        // Build a template document with LINQ Reporting tags.
-        string templatePath = Path.Combine(outputDir, "template.docx");
+        // -----------------------------------------------------------------
+        // 2. Build the Word template containing LINQ Reporting tags.
+        // -----------------------------------------------------------------
         var templateDoc = new Document();
         var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Report generated from CSV data:");
-        builder.Writeln("<<foreach [row in rows]>>");
-        builder.Writeln("<<[row.Id]>> - <<[row.Name]>> - <<[row.Amount]>>");
+
+        builder.Writeln("CSV Data Report");
+        builder.Writeln("<<foreach [row in CsvData]>>");
+        builder.Writeln("Id: <<[row.Id]>>, Name: <<[row.Name]>>, Age: <<[row.Age]>>");
         builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
         templateDoc.Save(templatePath);
 
-        // Load the template.
+        // -----------------------------------------------------------------
+        // 3. Load the template back for report generation.
+        // -----------------------------------------------------------------
         var doc = new Document(templatePath);
 
-        // Configure CSV loading options (default separator is comma).
-        var csvLoadOptions = new CsvDataLoadOptions
-        {
-            HasHeaders = true
-        };
-
-        // Stream the CSV without loading it entirely into memory.
+        // -----------------------------------------------------------------
+        // 4. Create a CsvDataSource that streams the CSV file.
+        // -----------------------------------------------------------------
         using (var csvStream = new FileStream(csvPath, FileMode.Open, FileAccess.Read, FileShare.Read))
         {
-            var csvDataSource = new CsvDataSource(csvStream, csvLoadOptions);
+            var csvOptions = new CsvDataLoadOptions
+            {
+                HasHeaders = true // Use default separator (comma), quote and comment characters.
+            };
+
+            var csvDataSource = new CsvDataSource(csvStream, csvOptions);
+
+            // -----------------------------------------------------------------
+            // 5. Build the report using the ReportingEngine.
+            // -----------------------------------------------------------------
             var engine = new ReportingEngine();
-            engine.BuildReport(doc, csvDataSource, "rows");
+            engine.BuildReport(doc, csvDataSource, "CsvData");
         }
 
-        // Save the generated report.
-        string outputPath = Path.Combine(outputDir, "ReportFromCsv.docx");
+        // -----------------------------------------------------------------
+        // 6. Save the generated report.
+        // -----------------------------------------------------------------
         doc.Save(outputPath);
     }
 }

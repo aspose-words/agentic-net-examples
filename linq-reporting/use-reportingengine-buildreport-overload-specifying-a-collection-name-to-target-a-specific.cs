@@ -3,24 +3,40 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Customer
+public class Order
 {
-    public string Name { get; set; } = "";
-    public int Age { get; set; }
+    public int Id { get; set; }
+    public string CustomerName { get; set; } = "";
+}
+
+public class ReportData
+{
+    public List<Order> Orders { get; set; } = new();
 }
 
 public class Program
 {
     public static void Main()
     {
+        // Prepare sample data.
+        var data = new ReportData
+        {
+            Orders = new List<Order>
+            {
+                new Order { Id = 1, CustomerName = "Alice" },
+                new Order { Id = 2, CustomerName = "Bob" }
+            }
+        };
+
         // Create a template document with LINQ Reporting tags.
         string templatePath = "Template.docx";
         var templateDoc = new Document();
         var builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("Customer List:");
-        builder.Writeln("<<foreach [c in customers]>>");
-        builder.Writeln("Name: <<[c.Name]>>, Age: <<[c.Age]>>");
+        builder.Writeln("Order Report");
+        builder.Writeln("<<foreach [order in Orders]>>");
+        builder.Writeln("Order ID: <<[order.Id]>>");
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
         builder.Writeln("<</foreach>>");
 
         templateDoc.Save(templatePath);
@@ -28,17 +44,10 @@ public class Program
         // Load the template for report generation.
         var doc = new Document(templatePath);
 
-        // Prepare a collection of customers.
-        var customers = new List<Customer>
-        {
-            new() { Name = "Alice", Age = 30 },
-            new() { Name = "Bob", Age = 25 },
-            new() { Name = "Charlie", Age = 28 }
-        };
-
-        // Build the report, specifying the collection name "customers".
+        // Build the report using the collection name overload.
+        // Pass the collection itself (data.Orders) and the collection name "Orders".
         var engine = new ReportingEngine();
-        engine.BuildReport(doc, customers, "customers");
+        engine.BuildReport(doc, data.Orders, "Orders");
 
         // Save the generated report.
         string outputPath = "Report.docx";

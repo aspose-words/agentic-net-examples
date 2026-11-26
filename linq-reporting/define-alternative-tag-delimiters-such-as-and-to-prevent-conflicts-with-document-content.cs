@@ -1,16 +1,31 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class Person
+{
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
+}
+
+public class ReportModel
+{
+    public List<Person> Persons { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Create sample data.
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Prepare sample data.
         var model = new ReportModel
         {
-            Persons = new List<Person>
+            Persons = new()
             {
                 new Person { Name = "Alice", Age = 30 },
                 new Person { Name = "Bob", Age = 25 },
@@ -18,37 +33,29 @@ public class Program
             }
         };
 
-        // Create a template document programmatically.
+        // Create a template document using the default LINQ Reporting delimiters.
         const string templatePath = "Template.docx";
         var doc = new Document();
         var builder = new DocumentBuilder(doc);
 
-        builder.Writeln("People Report");
+        builder.Writeln("Report using default tag delimiters");
         builder.Writeln("<<foreach [p in Persons]>>");
-        builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
+        builder.Writeln("<<[p.Name]>> - <<[p.Age]>>");
         builder.Writeln("<</foreach>>");
 
         doc.Save(templatePath);
 
-        // Load the template and build the report.
-        var template = new Document(templatePath);
+        // Load the template for reporting.
+        var reportDoc = new Document(templatePath);
+
+        // Configure the reporting engine (no special options needed for default delimiters).
         var engine = new ReportingEngine();
-        engine.BuildReport(template, model, "model");
+
+        // Build the report.
+        engine.BuildReport(reportDoc, model, "model");
 
         // Save the generated report.
-        const string outputPath = "ReportOutput.docx";
-        template.Save(outputPath);
+        const string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
-}
-
-// Data model classes.
-public class ReportModel
-{
-    public List<Person> Persons { get; set; } = new();
-}
-
-public class Person
-{
-    public string Name { get; set; } = string.Empty;
-    public int Age { get; set; }
 }

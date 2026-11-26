@@ -7,16 +7,17 @@ using Aspose.Words.Tables;
 
 namespace LinqReportingExample
 {
-    // Sample data model
+    // Root data model
     public class ReportModel
     {
         public List<Item> Items { get; set; } = new();
     }
 
+    // Item model used in the foreach loop
     public class Item
     {
         public int Index { get; set; }
-        public string Name { get; set; } = "";
+        public string Name { get; set; } = string.Empty;
     }
 
     public class Program
@@ -26,56 +27,56 @@ namespace LinqReportingExample
             // Register code page provider for Aspose.Words
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            // Create a template document programmatically
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
+            // Sample data
+            var model = new ReportModel
+            {
+                Items = new()
+                {
+                    new Item { Index = 1, Name = "Apple" },
+                    new Item { Index = 2, Name = "Banana" },
+                    new Item { Index = 3, Name = "Cherry" }
+                }
+            };
 
-            // Write the foreach tag that iterates over Items
+            // -----------------------------------------------------------------
+            // Create the template document programmatically
+            // -----------------------------------------------------------------
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
+
+            // Begin the foreach data band
             builder.Writeln("<<foreach [item in Items]>>");
 
-            // Start a table inside the foreach block
+            // Create a table that will be repeated for each item
             Table table = builder.StartTable();
 
-            // Header row (optional, will appear for each iteration if placed inside foreach)
+            // Header row (appears for each item in this simple example)
             builder.InsertCell();
             builder.Writeln("Index");
             builder.InsertCell();
             builder.Writeln("Name");
             builder.EndRow();
 
-            // Data row bound to the current item
+            // Data row – values are taken from the current item
             builder.InsertCell();
-            // Display item.Index
             builder.Writeln("<<[item.Index]>>");
             builder.InsertCell();
-            // Display item.Name
             builder.Writeln("<<[item.Name]>>");
             builder.EndRow();
 
-            // End the table and foreach block
+            // End the table and the foreach block
             builder.EndTable();
             builder.Writeln("<</foreach>>");
 
-            // Save the template to disk
+            // Save the template
             const string templatePath = "Template.docx";
-            template.Save(templatePath);
+            templateDoc.Save(templatePath);
 
-            // Load the template for report generation
-            Document doc = new Document(templatePath);
-
-            // Prepare sample data
-            ReportModel model = new()
-            {
-                Items = new()
-                {
-                    new Item { Index = 1, Name = "Alpha" },
-                    new Item { Index = 2, Name = "Beta" },
-                    new Item { Index = 3, Name = "Gamma" }
-                }
-            };
-
-            // Build the report using LINQ Reporting Engine
-            ReportingEngine engine = new ReportingEngine();
+            // -----------------------------------------------------------------
+            // Load the template and build the report
+            // -----------------------------------------------------------------
+            var doc = new Document(templatePath);
+            var engine = new ReportingEngine();
             engine.BuildReport(doc, model, "model");
 
             // Save the generated report

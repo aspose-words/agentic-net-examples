@@ -3,67 +3,71 @@ using System.Globalization;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Order
+namespace LinqReportingDateFormatting
 {
-    public DateTime OrderDate { get; set; } = DateTime.Now;
-}
-
-// Helper class exposing the date‑formatting method as an instance member.
-public class ExtensionsHelper
-{
-    public string FormatDate(DateTime date, string locale)
+    // Data model with a DateTime property and a helper method for formatting.
+    public class Order
     {
-        var culture = new CultureInfo(locale);
-        return date.ToString(culture);
+        public DateTime OrderDate { get; set; } = DateTime.Now;
+
+        // Wrapper method that forwards to the extension method.
+        public string GetFormattedDate(string locale) => OrderDate.FormatDate(locale);
     }
-}
 
-public class Program
-{
-    public static void Main()
+    // Extension method to format dates according to a locale string.
+    public static class DateTimeExtensions
     {
-        // Paths for the temporary template and the final report.
-        const string templatePath = "Template.docx";
-        const string outputPath = "Report.docx";
-
-        // -----------------------------------------------------------------
-        // 1. Create the template document with a LINQ Reporting expression.
-        // -----------------------------------------------------------------
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        // The expression calls the helper instance (named "ext") to format the date.
-        builder.Writeln("Order date (en-US): <<[ext.FormatDate(order.OrderDate, \"en-US\")]>>");
-
-        // Save the template to disk.
-        doc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template for reporting.
-        // -----------------------------------------------------------------
-        var template = new Document(templatePath);
-
-        // -----------------------------------------------------------------
-        // 3. Prepare sample data.
-        // -----------------------------------------------------------------
-        var order = new Order
+        public static string FormatDate(this DateTime date, string locale)
         {
-            OrderDate = new DateTime(2023, 12, 31, 15, 45, 0)
-        };
+            if (string.IsNullOrWhiteSpace(locale))
+                return date.ToString(CultureInfo.InvariantCulture);
 
-        var ext = new ExtensionsHelper();
+            try
+            {
+                var culture = new CultureInfo(locale);
+                return date.ToString(culture);
+            }
+            catch (CultureNotFoundException)
+            {
+                // Fallback to invariant culture if the locale is invalid.
+                return date.ToString(CultureInfo.InvariantCulture);
+            }
+        }
+    }
 
-        // -----------------------------------------------------------------
-        // 4. Build the report using the LINQ Reporting engine.
-        // -----------------------------------------------------------------
-        var engine = new ReportingEngine();
+    public class Program
+    {
+        public static void Main()
+        {
+            // Sample data.
+            var order = new Order
+            {
+                OrderDate = new DateTime(2023, 12, 25, 14, 30, 0)
+            };
 
-        // Pass both the data source ("order") and the helper ("ext").
-        engine.BuildReport(template, new object[] { order, ext }, new[] { "order", "ext" });
+            // Create a template document programmatically.
+            const string templatePath = "Template.docx";
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
 
-        // -----------------------------------------------------------------
-        // 5. Save the generated report.
-        // -----------------------------------------------------------------
-        template.Save(outputPath);
+            // Insert LINQ Reporting tags that call the wrapper method.
+            builder.Writeln("Order Date (en-US): <<[order.GetFormattedDate(\"en-US\")]>>");
+            builder.Writeln("Order Date (fr-FR): <<[order.GetFormattedDate(\"fr-FR\")]>>");
+            builder.Writeln("Order Date (invalid locale): <<[order.GetFormattedDate(\"invalid-locale\")]>>");
+
+            // Save the template.
+            doc.Save(templatePath);
+
+            // Load the template for reporting.
+            var reportDoc = new Document(templatePath);
+
+            // Build the report.
+            var engine = new ReportingEngine();
+            engine.BuildReport(reportDoc, order, "order");
+
+            // Save the generated report.
+            const string outputPath = "Report.docx";
+            reportDoc.Save(outputPath);
+        }
     }
 }

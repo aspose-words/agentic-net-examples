@@ -1,50 +1,105 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
+using Newtonsoft.Json;
 
-public class Program
+// Register code page provider for potential encoding needs.
+Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+public partial class Program
 {
     public static void Main()
     {
-        // Create a simple template with a mail‑merge field and a LINQ Reporting tag.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Prepare working directories.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Mail‑merge field $customer$
-        builder.Writeln("Mail‑Merge Customer: $customer$");
-        // LINQ Reporting tag that will be filled from the same data source.
-        builder.Writeln("LINQ Reporting Customer: <<[model.Customer]>>");
+        // -----------------------------------------------------------------
+        // 1. Create the template document programmatically.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Simple paragraph with a mail‑merge placeholder.
+        builder.Writeln("Customer: $customer$");
+
+        // LINQ Reporting foreach block for a collection of orders.
+        builder.Writeln("<<foreach [order in Orders]>>");
+
+        // Table header.
+        Table table = builder.StartTable();
+        builder.InsertCell();
+        builder.Writeln("Order ID");
+        builder.InsertCell();
+        builder.Writeln("Amount");
+        builder.EndRow();
+
+        // Table row that will be repeated for each order.
+        builder.InsertCell();
+        builder.Writeln("<<[order.Id]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[order.Amount]>>");
+        builder.EndRow();
+
+        builder.EndTable();
+
+        // Close the foreach block.
+        builder.Writeln("<</foreach>>");
 
         // Save the template to disk.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        templateDoc.Save(templatePath);
 
-        // Load the template back for processing.
+        // -----------------------------------------------------------------
+        // 2. Load the template and prepare the data model.
+        // -----------------------------------------------------------------
         Document doc = new Document(templatePath);
 
-        // Prepare the data model.
         ReportModel model = new()
         {
-            Customer = "John Doe"
+            Customer = "Acme Corp",
+            Orders = new()
+            {
+                new Order { Id = 1, Amount = 100.0 },
+                new Order { Id = 2, Amount = 250.5 },
+                new Order { Id = 3, Amount = 75.25 }
+            }
         };
 
-        // Execute mail‑merge to replace $customer$ fields.
+        // -----------------------------------------------------------------
+        // 3. Execute mail merge to replace $customer$ fields.
+        // -----------------------------------------------------------------
         doc.MailMerge.Execute(new[] { "customer" }, new object[] { model.Customer });
 
-        // Build the LINQ Reporting part.
-        ReportingEngine engine = new ReportingEngine();
+        // -----------------------------------------------------------------
+        // 4. Build the LINQ Reporting sections.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new();
         engine.BuildReport(doc, model, "model");
 
-        // Save the final report.
-        const string outputPath = "Report.docx";
-        doc.Save(outputPath);
+        // -----------------------------------------------------------------
+        // 5. Save the final report.
+        // -----------------------------------------------------------------
+        string reportPath = Path.Combine(outputDir, "Report.docx");
+        doc.Save(reportPath);
     }
 }
 
-// Public data model used by both mail‑merge and LINQ Reporting.
+// ---------------------------------------------------------------------
+// Public data model classes.
+// ---------------------------------------------------------------------
 public class ReportModel
 {
     public string Customer { get; set; } = string.Empty;
+    public List<Order> Orders { get; set; } = new();
+}
+
+public class Order
+{
+    public int Id { get; set; }
+    public double Amount { get; set; }
 }

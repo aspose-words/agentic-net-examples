@@ -1,53 +1,54 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
+
+public class ReportModel
+{
+    // No properties needed for this example.
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Create a simple data model.
-        ReportModel model = new()
-        {
-            Title = "Sample Report"
-        };
+        // Paths for the template and the generated report.
+        const string templatePath = "Template.docx";
+        const string outputPath = "Report.docx";
 
         // -----------------------------------------------------------------
-        // Step 1: Create the template document programmatically.
+        // Step 1: Create a Word document template with a footer containing
+        // the page number field {=PageNumber}.
         // -----------------------------------------------------------------
-        Document template = new();
-        DocumentBuilder builder = new(template);
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
 
-        // Insert a LINQ Reporting tag that will be replaced with the title.
-        builder.Writeln("<<[model.Title]>>");
-
-        // Add a footer with the dynamic page number expression tag.
+        // Move the builder to the primary footer of the first (and only) section.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.Write("{=PageNumber}");
+
+        // Write the footer text and insert the page number field.
+        builder.Write("Page ");
+        // Insert a formula field that evaluates to the current page number.
+        builder.InsertField("=PageNumber", null);
+        builder.Writeln();
 
         // Save the template to disk.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        templateDoc.Save(templatePath);
 
         // -----------------------------------------------------------------
-        // Step 2: Load the template and build the report.
+        // Step 2: Load the template and build the report using LINQ Reporting.
         // -----------------------------------------------------------------
-        Document report = new(templatePath);
+        Document reportDoc = new(templatePath);
+
+        // Create a simple data model (empty in this case).
+        ReportModel model = new();
+
+        // Build the report. The root object name in the template is "model".
         ReportingEngine engine = new();
-        engine.BuildReport(report, model, "model");
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Update fields (e.g., the page number field) so they display correct values.
-        report.UpdateFields();
-
-        // Save the generated report.
-        const string outputPath = "Report.docx";
-        report.Save(outputPath);
+        // -----------------------------------------------------------------
+        // Step 3: Save the generated report.
+        // -----------------------------------------------------------------
+        reportDoc.Save(outputPath);
     }
-}
-
-// Public data model class required by the LINQ Reporting engine.
-public class ReportModel
-{
-    public string Title { get; set; } = "";
 }

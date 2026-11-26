@@ -1,53 +1,78 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
+public class TaskItem
+{
+    public string Title { get; set; } = string.Empty;
+}
+
+public class TaskModel
+{
+    public List<TaskItem> Task { get; set; } = new();
+}
+
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for XML handling.
+        // Register code page provider for encoding support.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare sample XML data.
-        string xmlPath = "tasks.xml";
-        File.WriteAllText(xmlPath, @"<?xml version=""1.0"" encoding=""utf-8""?>
-<Tasks>
-    <Task><Title>Review project proposal</Title></Task>
-    <Task><Title>Design architecture diagram</Title></Task>
-    <Task><Title>Implement core module</Title></Task>
-    <Task><Title>Write unit tests</Title></Task>
-    <Task><Title>Prepare release notes</Title></Task>
-</Tasks>");
+        // -----------------------------------------------------------------
+        // 1. Prepare sample data.
+        // -----------------------------------------------------------------
+        var model = new TaskModel
+        {
+            Task =
+            {
+                new TaskItem { Title = "Review project requirements" },
+                new TaskItem { Title = "Design database schema" },
+                new TaskItem { Title = "Implement authentication module" },
+                new TaskItem { Title = "Write unit tests" }
+            }
+        };
 
-        // Create the template document programmatically.
-        string templatePath = "template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // -----------------------------------------------------------------
+        // 2. Create the LINQ Reporting template programmatically.
+        // -----------------------------------------------------------------
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // Insert a paragraph that will become a bulleted list via LINQ Reporting.
-        builder.Writeln("<<foreach [task in Tasks]>>• <<[task.Title]>> <</foreach>>");
+        // Title paragraph.
+        builder.Writeln("Task List:");
+        builder.Writeln();
 
-        // Save the template.
+        // Apply bullet formatting to the paragraph that will contain the foreach block.
+        builder.ListFormat.ApplyBulletDefault();
+
+        // Begin foreach loop over Task items.
+        builder.Writeln("<<foreach [t in Task]>>");
+        // Write the task title.
+        builder.Writeln("<<[t.Title]>>");
+        // End foreach loop.
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        const string templatePath = "TaskTemplate.docx";
         templateDoc.Save(templatePath);
 
-        // Load the template for reporting.
-        Document reportDoc = new Document(templatePath);
+        // -----------------------------------------------------------------
+        // 3. Load the template and generate the report using the data model.
+        // -----------------------------------------------------------------
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
 
-        // Create XML data source.
-        XmlDataSource xmlData = new XmlDataSource(xmlPath);
-
-        // Build the report.
-        ReportingEngine engine = new ReportingEngine();
-        bool success = engine.BuildReport(reportDoc, xmlData, "Tasks");
+        // Build the report; "model" is the name of the root data source.
+        engine.BuildReport(reportDoc, model, "model");
 
         // Save the generated report.
-        string outputPath = "output.docx";
+        const string outputPath = "TaskReport.docx";
         reportDoc.Save(outputPath);
 
-        // Indicate completion.
-        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to '{outputPath}'.");
+        Console.WriteLine($"Report generated: {outputPath}");
     }
 }

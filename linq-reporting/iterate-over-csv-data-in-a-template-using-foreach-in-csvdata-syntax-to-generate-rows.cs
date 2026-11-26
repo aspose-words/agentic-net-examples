@@ -1,66 +1,80 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class Person
-{
-    public string Name { get; set; } = "";
-    public int Age { get; set; }
-}
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for CSV encoding support.
+        // Register code page provider for CSV handling.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare sample CSV data.
-        string csvPath = "data.csv";
-        File.WriteAllText(csvPath, "Name,Age\r\nAlice,30\r\nBob,25\r\nCharlie,35");
+        string workDir = Directory.GetCurrentDirectory();
+        string dataPath = Path.Combine(workDir, "data.csv");
+        string templatePath = Path.Combine(workDir, "Template.docx");
+        string reportPath = Path.Combine(workDir, "Report.docx");
 
-        // Load CSV data into a strongly‑typed collection.
-        var persons = new List<Person>();
-        foreach (var line in File.ReadAllLines(csvPath))
-        {
-            // Skip header line.
-            if (line.StartsWith("Name", StringComparison.OrdinalIgnoreCase))
-                continue;
+        // Create sample CSV file.
+        File.WriteAllText(dataPath,
+            "Name,Age,Country\n" +
+            "Alice,30,USA\n" +
+            "Bob,25,Canada\n" +
+            "Charlie,35,UK");
 
-            var parts = line.Split(',');
-            if (parts.Length >= 2 &&
-                int.TryParse(parts[1], out int age))
-            {
-                persons.Add(new Person
-                {
-                    Name = parts[0],
-                    Age = age
-                });
-            }
-        }
+        // Build the template document.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Create a Word template with LINQ Reporting tags.
-        string templatePath = "template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-        builder.Writeln("People Report");
-        builder.Writeln("<<foreach [person in csvData]>>");
-        builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
+        // Begin foreach over CSV data.
+        builder.Writeln("<<foreach [row in csvData]>>");
+
+        // Start table inside the foreach block.
+        Table table = builder.StartTable();
+
+        // Header row.
+        builder.InsertCell();
+        builder.Writeln("Name");
+        builder.InsertCell();
+        builder.Writeln("Age");
+        builder.InsertCell();
+        builder.Writeln("Country");
+        builder.EndRow();
+
+        // Data row – use LINQ Reporting tags.
+        builder.InsertCell();
+        builder.Writeln("<<[row.Name]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[row.Age]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[row.Country]>>");
+        builder.EndRow();
+
+        // End table and foreach.
+        builder.EndTable();
         builder.Writeln("<</foreach>>");
-        doc.Save(templatePath);
 
-        // Load the template.
-        var template = new Document(templatePath);
+        // Save the template.
+        template.Save(templatePath);
 
-        // Build the report using the strongly‑typed collection as the data source.
-        var engine = new ReportingEngine();
-        engine.BuildReport(template, persons, "csvData");
+        // Load the template for reporting.
+        Document reportDoc = new Document(templatePath);
 
-        // Save the generated report.
-        string outputPath = "output.docx";
-        template.Save(outputPath);
+        // Configure CSV data source.
+        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions
+        {
+            HasHeaders = true
+            // Default separator is ','; no need to set explicitly.
+        };
+        CsvDataSource csvData = new CsvDataSource(dataPath, loadOptions);
+
+        // Build the report.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, csvData, "csvData");
+
+        // Save the final report.
+        reportDoc.Save(reportPath);
     }
 }

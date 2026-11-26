@@ -2,58 +2,63 @@ using System;
 using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using System.Text;
+
+public class Item
+{
+    public int Value { get; set; }
+}
 
 public class ReportModel
 {
     public List<Item> Items { get; set; } = new();
 }
 
-public class Item
-{
-    public int Value { get; set; }
-    public string Description { get; set; } = "";
-}
-
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some encodings)
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Create a template document with LINQ Reporting tags.
+        var templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Paths for template and output
-        const string templatePath = "Template.docx";
-        const string outputPath = "Report.docx";
-
-        // Create the template document with LINQ Reporting tags
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
         builder.Writeln("Dynamic Text Color Report");
+        builder.Writeln();
+
+        // Begin foreach loop over Items.
         builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("<<textColor [item.Value > 100 ? \"Red\" : \"Green\"]>>Item <<[item.Description]>>: <<[item.Value]>> <</textColor>>");
+
+        // Apply textColor based on numeric thresholds.
+        // >80 => Red, >50 => Orange, otherwise Green.
+        builder.Writeln(
+            "<<textColor [item.Value > 80 ? \"Red\" : item.Value > 50 ? \"Orange\" : \"Green\"]>><<[item.Value]>> <</textColor>>");
+
+        // End foreach loop.
         builder.Writeln("<</foreach>>");
-        templateDoc.Save(templatePath);
 
-        // Load the template (simulating a separate load step)
-        var doc = new Document(templatePath);
+        // Save the template.
+        doc.Save(templatePath);
 
-        // Prepare sample data
+        // Load the template for report generation.
+        var reportDoc = new Document(templatePath);
+
+        // Prepare sample data.
         var model = new ReportModel
         {
-            Items = new()
+            Items = new List<Item>
             {
-                new Item { Value = 45, Description = "Low" },
-                new Item { Value = 120, Description = "High" },
-                new Item { Value = 100, Description = "Medium" }
+                new Item { Value = 30 },
+                new Item { Value = 55 },
+                new Item { Value = 90 }
             }
         };
 
-        // Build the report using the LINQ Reporting engine
+        // Build the report.
         var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Save the generated report
-        doc.Save(outputPath);
+        // Save the generated report.
+        var outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
 }

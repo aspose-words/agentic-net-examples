@@ -1,111 +1,118 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsLinqReportingCellMerge
 {
-    public static void Main()
+    // Data model classes
+    public class ReportModel
     {
-        // Register code page provider for Aspose.Words.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        public List<HeaderGroup> Groups { get; set; } = new();
+        public List<Item> Items { get; set; } = new();
+    }
 
-        // Sample data.
-        var model = new ReportModel
+    public class HeaderGroup
+    {
+        public string Name { get; set; } = "";
+        public int ColumnCount { get; set; }
+    }
+
+    public class Item
+    {
+        public string Col1 { get; set; } = "";
+        public string Col2 { get; set; } = "";
+        public string Col3 { get; set; } = "";
+        public string Col4 { get; set; } = "";
+    }
+
+    public class Program
+    {
+        public static void Main()
         {
-            Sections = new List<Section>
+            // Prepare sample data
+            var model = new ReportModel
             {
-                new Section
+                Groups = new List<HeaderGroup>
                 {
-                    HeaderGroup = "Fruits",
-                    Items = new List<Item>
-                    {
-                        new Item { Name = "Apple", Quantity = 10 },
-                        new Item { Name = "Banana", Quantity = 20 }
-                    }
+                    new HeaderGroup { Name = "Group A", ColumnCount = 2 },
+                    new HeaderGroup { Name = "Group B", ColumnCount = 2 }
                 },
-                new Section
+                Items = new List<Item>
                 {
-                    HeaderGroup = "Vegetables",
-                    Items = new List<Item>
-                    {
-                        new Item { Name = "Carrot", Quantity = 15 },
-                        new Item { Name = "Tomato", Quantity = 25 }
-                    }
+                    new Item { Col1 = "A1", Col2 = "A2", Col3 = "B1", Col4 = "B2" },
+                    new Item { Col1 = "A3", Col2 = "A4", Col3 = "B3", Col4 = "B4" }
+                }
+            };
+
+            // Create template document
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
+
+            // ---------- Header table ----------
+            Table headerTable = builder.StartTable();
+
+            // First header row – merged group names
+            foreach (var group in model.Groups)
+            {
+                for (int i = 0; i < group.ColumnCount; i++)
+                {
+                    builder.InsertCell();
+                    builder.Write($"<<cellMerge>>{group.Name}");
                 }
             }
-        };
+            builder.EndRow();
 
-        // Create template.
-        const string templatePath = "template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+            // Second header row – column titles
+            int colIndex = 1;
+            foreach (var group in model.Groups)
+            {
+                for (int i = 0; i < group.ColumnCount; i++)
+                {
+                    builder.InsertCell();
+                    builder.Write($"Col {colIndex}");
+                    colIndex++;
+                }
+            }
+            builder.EndRow();
 
-        // Outer foreach – one table per section.
-        builder.Writeln("<<foreach [section in Sections]>>");
+            builder.EndTable(); // finish header table
 
-        // Table for the section header and column titles.
-        builder.StartTable();
+            // ---------- Data table inside foreach ----------
+            builder.Writeln("<<foreach [item in Items]>>");
 
-        // Header row with merged cells.
-        builder.InsertCell();
-        builder.Writeln("<<cellMerge>><<[section.HeaderGroup]>>");
-        builder.InsertCell();
-        builder.Writeln("<<cellMerge>><<[section.HeaderGroup]>>");
-        builder.EndRow();
+            Table dataTable = builder.StartTable();
 
-        // Column titles row.
-        builder.InsertCell();
-        builder.Writeln("Item");
-        builder.InsertCell();
-        builder.Writeln("Quantity");
-        builder.EndRow();
+            // Data row
+            builder.InsertCell();
+            builder.Writeln("<<[item.Col1]>>");
+            builder.InsertCell();
+            builder.Writeln("<<[item.Col2]>>");
+            builder.InsertCell();
+            builder.Writeln("<<[item.Col3]>>");
+            builder.InsertCell();
+            builder.Writeln("<<[item.Col4]>>");
 
-        builder.EndTable();
+            builder.EndRow();
+            builder.EndTable();
 
-        // Inner foreach – rows for each item.
-        builder.Writeln("<<foreach [item in section.Items]>>");
-        builder.StartTable();
-        builder.InsertCell();
-        builder.Writeln("<<[item.Name]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[item.Quantity]>>");
-        builder.EndRow();
-        builder.EndTable();
-        builder.Writeln("<</foreach>>");
+            builder.Writeln("<</foreach>>");
 
-        // End outer foreach.
-        builder.Writeln("<</foreach>>");
+            // Save the template
+            const string templatePath = "Template.docx";
+            templateDoc.Save(templatePath);
 
-        // Save the template.
-        doc.Save(templatePath);
+            // Load the template for reporting
+            var doc = new Document(templatePath);
 
-        // Build the report.
-        var reportDoc = new Document(templatePath);
-        var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+            // Build the report
+            var engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
 
-        // Save the generated report.
-        const string outputPath = "report.docx";
-        reportDoc.Save(outputPath);
+            // Save the final report
+            const string outputPath = "Report.docx";
+            doc.Save(outputPath);
+        }
     }
-}
-
-// Data model classes.
-public class ReportModel
-{
-    public List<Section> Sections { get; set; } = new();
-}
-
-public class Section
-{
-    public string HeaderGroup { get; set; } = string.Empty;
-    public List<Item> Items { get; set; } = new();
-}
-
-public class Item
-{
-    public string Name { get; set; } = string.Empty;
-    public int Quantity { get; set; }
 }

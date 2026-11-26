@@ -1,85 +1,79 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Newtonsoft.Json;
 
-public class Product
+public class Item
 {
+    public string Category { get; set; } = "";
     public string Name { get; set; } = "";
-    public string Category { get; set; } = "";
-    public double Price { get; set; }
-}
-
-public class CategoryGroup
-{
-    public string Category { get; set; } = "";
-    public List<Product> Items { get; set; } = new();
+    public int Value { get; set; }
 }
 
 public class ReportModel
 {
-    public List<CategoryGroup> Groups { get; set; } = new();
+    public List<Item> Items { get; set; } = new();
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Working directory.
-        string workDir = Directory.GetCurrentDirectory();
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // 1. Prepare sample data.
-        var products = new List<Product>
+        // Prepare sample JSON data.
+        string jsonPath = "data.json";
+        var sampleData = new List<Item>
         {
-            new() { Name = "Apple",    Category = "Fruit",      Price = 1.20 },
-            new() { Name = "Banana",   Category = "Fruit",      Price = 0.80 },
-            new() { Name = "Carrot",   Category = "Vegetable", Price = 0.50 },
-            new() { Name = "Broccoli", Category = "Vegetable", Price = 0.90 }
+            new() { Category = "Fruits", Name = "Apple", Value = 10 },
+            new() { Category = "Fruits", Name = "Banana", Value = 20 },
+            new() { Category = "Vegetables", Name = "Carrot", Value = 15 },
+            new() { Category = "Vegetables", Name = "Lettuce", Value = 5 },
+            new() { Category = "Beverages", Name = "Coffee", Value = 30 }
         };
+        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(sampleData, Formatting.Indented));
 
-        // 2. Group products by Category.
+        // Create the LINQ Reporting template.
+        string templatePath = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        builder.Writeln("Report grouped by Category");
+        builder.Writeln();
+
+        // Begin grouping loop.
+        builder.Writeln("<<foreach [catGroup in Items.GroupBy(i => i.Category)]>>");
+        builder.Writeln("Category: <<[catGroup.Key]>>");
+        builder.Writeln();
+
+        // Items within each category.
+        builder.Writeln("<<foreach [item in catGroup]>>");
+        builder.Writeln("- <<[item.Name]>>: <<[item.Value]>>");
+        builder.Writeln("<</foreach>>");
+        builder.Writeln();
+        builder.Writeln("<</foreach>>");
+
+        doc.Save(templatePath);
+
+        // Load the template for reporting.
+        var templateDoc = new Document(templatePath);
+
+        // Deserialize JSON into the model.
         var model = new ReportModel
         {
-            Groups = products
-                .GroupBy(p => p.Category)
-                .Select(g => new CategoryGroup
-                {
-                    Category = g.Key,
-                    Items = g.ToList()
-                })
-                .ToList()
+            Items = JsonConvert.DeserializeObject<List<Item>>(File.ReadAllText(jsonPath)) ?? new()
         };
 
-        // 3. Create the LINQ Reporting template.
-        string templatePath = Path.Combine(workDir, "Template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Build the report.
+        var engine = new ReportingEngine();
+        engine.BuildReport(templateDoc, model, "model");
 
-        // Outer foreach over groups.
-        builder.Writeln("<<foreach [group in data.Groups]>>");
-        builder.Writeln("Category: <<[group.Category]>>");
-        // Inner foreach over items in each group.
-        builder.Writeln("<<foreach [item in group.Items]>>");
-        builder.Writeln("- <<[item.Name]>> : $<<[item.Price]>>");
-        builder.Writeln("<</foreach>>");
-        builder.Writeln("<</foreach>>");
-
-        templateDoc.Save(templatePath);
-
-        // 4. Load the template for report generation.
-        Document reportDoc = new Document(templatePath);
-
-        // 5. Build the report.
-        ReportingEngine engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.None
-        };
-        engine.BuildReport(reportDoc, model, "data");
-
-        // 6. Save the generated report.
-        string outputPath = Path.Combine(workDir, "Report.docx");
-        reportDoc.Save(outputPath);
+        // Save the generated report.
+        string outputPath = "report.docx";
+        templateDoc.Save(outputPath);
     }
 }

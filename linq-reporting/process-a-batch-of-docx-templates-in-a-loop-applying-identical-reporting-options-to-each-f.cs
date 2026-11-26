@@ -4,86 +4,90 @@ using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Newtonsoft.Json;
 
-Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-public partial class Program
+namespace BatchLinqReporting
 {
-    // Sample data model
+    // Sample data model.
     public class ReportModel
     {
-        public string Title { get; set; } = "Sample Report";
-        public List<Person> Persons { get; set; } = new();
+        public List<Item> Items { get; set; } = new();
     }
 
-    public class Person
+    public class Item
     {
-        public string Name { get; set; } = "";
-        public int Age { get; set; }
+        public int Index { get; set; }
+        public string Name { get; set; } = string.Empty;
     }
 
-    public static void Main()
+    public class Program
     {
-        // Prepare sample data
-        var model = new ReportModel
+        public static void Main()
         {
-            Persons = new()
+            // Register code page provider for Aspose.Words.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Prepare sample data.
+            var model = new ReportModel
             {
-                new Person { Name = "Alice", Age = 30 },
-                new Person { Name = "Bob", Age = 25 },
-                new Person { Name = "Charlie", Age = 35 }
+                Items = new()
+                {
+                    new Item { Index = 1, Name = "Alpha" },
+                    new Item { Index = 2, Name = "Beta" },
+                    new Item { Index = 3, Name = "Gamma" }
+                }
+            };
+
+            // Serialize sample data to JSON (demonstrates required package usage).
+            string jsonSample = JsonConvert.SerializeObject(model, Formatting.Indented);
+            File.WriteAllText("sampleData.json", jsonSample);
+
+            // Create folders for templates and generated reports.
+            string templatesDir = "Templates";
+            string reportsDir = "Reports";
+            Directory.CreateDirectory(templatesDir);
+            Directory.CreateDirectory(reportsDir);
+
+            // Create identical template files.
+            const int templateCount = 3;
+            for (int i = 1; i <= templateCount; i++)
+            {
+                string templatePath = Path.Combine(templatesDir, $"Template{i}.docx");
+                CreateTemplate(templatePath);
             }
-        };
 
-        // Create folders for templates and generated reports
-        string templatesFolder = Path.Combine(Directory.GetCurrentDirectory(), "Templates");
-        string reportsFolder = Path.Combine(Directory.GetCurrentDirectory(), "Reports");
-        Directory.CreateDirectory(templatesFolder);
-        Directory.CreateDirectory(reportsFolder);
+            // Process each template in the batch.
+            foreach (string templatePath in Directory.GetFiles(templatesDir, "*.docx"))
+            {
+                // Load the template.
+                Document doc = new(templatePath);
 
-        // Create a few identical template files
-        for (int i = 1; i <= 3; i++)
-        {
-            string templatePath = Path.Combine(templatesFolder, $"Template{i}.docx");
-            CreateTemplate(templatePath);
+                // Configure the reporting engine.
+                ReportingEngine engine = new();
+                engine.Options = ReportBuildOptions.InlineErrorMessages;
+
+                // Build the report.
+                bool success = engine.BuildReport(doc, model, "model");
+
+                // Save the generated report.
+                string reportFileName = $"Report_{Path.GetFileName(templatePath)}";
+                string reportPath = Path.Combine(reportsDir, reportFileName);
+                doc.Save(reportPath);
+            }
         }
 
-        // Process each template in the folder
-        foreach (string templateFile in Directory.GetFiles(templatesFolder, "*.docx"))
+        // Creates a simple LINQ Reporting template with a foreach loop.
+        private static void CreateTemplate(string filePath)
         {
-            // Load the template document
-            var doc = new Document(templateFile);
+            Document doc = new();
+            DocumentBuilder builder = new(doc);
 
-            // Configure the reporting engine
-            var engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.None; // identical options for all files
+            builder.Writeln("Items Report");
+            builder.Writeln("<<foreach [item in Items]>>");
+            builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
+            builder.Writeln("<</foreach>>");
 
-            // Build the report using the same model and root name "model"
-            engine.BuildReport(doc, model, "model");
-
-            // Save the generated report
-            string outputFileName = Path.GetFileNameWithoutExtension(templateFile) + "_Report.docx";
-            string outputPath = Path.Combine(reportsFolder, outputFileName);
-            doc.Save(outputPath);
+            doc.Save(filePath);
         }
-    }
-
-    // Creates a simple LINQ Reporting template and saves it to the specified path
-    private static void CreateTemplate(string path)
-    {
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        // Title paragraph
-        builder.Writeln("<<[Title]>>");
-        builder.Writeln();
-
-        // Foreach loop over Persons collection
-        builder.Writeln("<<foreach [p in Persons]>>");
-        builder.Writeln("- <<[p.Name]>> is <<[p.Age]>> years old.");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template
-        doc.Save(path);
     }
 }

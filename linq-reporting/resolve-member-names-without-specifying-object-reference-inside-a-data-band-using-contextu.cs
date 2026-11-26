@@ -4,61 +4,56 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
+public class Item
+{
+    public string Name { get; set; } = "";
+    public int Quantity { get; set; }
+}
+
+public class Order
+{
+    public List<Item> Items { get; set; } = new();
+    public string Customer { get; set; } = "";
+}
+
 public class Program
 {
     public static void Main()
     {
         // Prepare sample data.
-        var model = new ReportModel
+        var order = new Order
         {
-            Persons = new List<Person>
+            Customer = "John Doe",
+            Items = new List<Item>
             {
-                new Person { Name = "Alice Johnson", Age = 28 },
-                new Person { Name = "Bob Smith", Age = 35 },
-                new Person { Name = "Carol Davis", Age = 42 }
+                new Item { Name = "Apple", Quantity = 5 },
+                new Item { Name = "Banana", Quantity = 3 },
+                new Item { Name = "Orange", Quantity = 7 }
             }
         };
 
         // Create a template document programmatically.
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
+        var templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        builder.Writeln("People Report");
-        builder.Writeln("==============");
-        builder.Writeln();
-        // Data band: foreach over Persons collection.
-        builder.Writeln("<<foreach [person in Persons]>>");
-        // Inside the band we refer to members without object reference.
-        builder.Writeln("Name: <<[Name]>>, Age: <<[Age]>>");
+        builder.Writeln("Order Report for <<[order.Customer]>>");
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("Product: <<[Name]>> - Qty: <<[Quantity]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template to a file.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        // Save the template.
+        doc.Save(templatePath);
 
-        // Load the template for report generation.
-        var doc = new Document(templatePath);
-
-        // Build the report using the LINQ Reporting engine.
+        // Load the template for reporting.
+        var reportDoc = new Document(templatePath);
         var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+
+        // Build the report using contextual member access inside the data band.
+        engine.BuildReport(reportDoc, order, "order");
 
         // Save the generated report.
-        Directory.CreateDirectory("Output");
-        const string outputPath = "Output/Report.docx";
-        doc.Save(outputPath);
+        var outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
-}
-
-// Root data model.
-public class ReportModel
-{
-    public List<Person> Persons { get; set; } = new();
-}
-
-// Item class used in the data band.
-public class Person
-{
-    public string Name { get; set; } = string.Empty;
-    public int Age { get; set; }
 }

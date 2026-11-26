@@ -1,106 +1,85 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Ensure output directory exists.
-        string outputDir = "output";
+        // Prepare output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
         Directory.CreateDirectory(outputDir);
 
-        // Paths for template and generated reports.
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        string reportPathTrue = Path.Combine(outputDir, "report_remove_true.docx");
-        string reportPathFalse = Path.Combine(outputDir, "report_remove_false.docx");
+        // Create a large document with many paragraphs, including empty ones.
+        string templatePath = Path.Combine(outputDir, "LargeDocument.docx");
+        CreateLargeDocument(templatePath, paragraphCount: 5000, emptyParagraphInterval: 10);
 
-        // Create a large data model.
-        ReportModel model = new();
-        const int itemCount = 5000;
-        for (int i = 1; i <= itemCount; i++)
+        // Benchmark with empty paragraph removal disabled.
+        string savedWithoutRemoval = Path.Combine(outputDir, "SavedWithoutRemoval.docx");
+        long timeWithoutRemoval = SaveDocument(templatePath, savedWithoutRemoval, removeEmptyParagraphs: false);
+
+        // Benchmark with empty paragraph removal enabled.
+        string savedWithRemoval = Path.Combine(outputDir, "SavedWithRemoval.docx");
+        long timeWithRemoval = SaveDocument(templatePath, savedWithRemoval, removeEmptyParagraphs: true);
+
+        // Output results.
+        Console.WriteLine($"Save time without removing empty paragraphs: {timeWithoutRemoval} ms");
+        Console.WriteLine($"Save time with removing empty paragraphs:    {timeWithRemoval} ms");
+    }
+
+    private static void CreateLargeDocument(string filePath, int paragraphCount, int emptyParagraphInterval)
+    {
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        for (int i = 1; i <= paragraphCount; i++)
         {
-            model.Items.Add(new Item
+            if (i % emptyParagraphInterval == 0)
             {
-                Index = i,
-                Name = $"Item {i}"
-            });
+                // Insert an empty paragraph.
+                builder.Writeln();
+            }
+            else
+            {
+                builder.Writeln($"Paragraph {i}: The quick brown fox jumps over the lazy dog.");
+            }
         }
 
-        // Create the LINQ Reporting template programmatically.
-        CreateTemplate(templatePath);
-
-        // Load the template once.
-        Document templateDoc = new(templatePath);
-
-        // Benchmark with RemoveEmptyParagraphs enabled via ReportingEngine options.
-        Document docTrue = (Document)templateDoc.Clone();
-        ReportingEngine engineTrue = new();
-        engineTrue.Options = ReportBuildOptions.RemoveEmptyParagraphs;
-        Stopwatch swTrue = Stopwatch.StartNew();
-        bool successTrue = engineTrue.BuildReport(docTrue, model, "model");
-        swTrue.Stop();
-        docTrue.Save(reportPathTrue);
-        Console.WriteLine($"RemoveEmptyParagraphs = true: Success={successTrue}, Time={swTrue.ElapsedMilliseconds} ms");
-
-        // Benchmark with RemoveEmptyParagraphs disabled (default options).
-        Document docFalse = (Document)templateDoc.Clone();
-        ReportingEngine engineFalse = new();
-        // No special options set; default behavior keeps empty paragraphs.
-        Stopwatch swFalse = Stopwatch.StartNew();
-        bool successFalse = engineFalse.BuildReport(docFalse, model, "model");
-        swFalse.Stop();
-        docFalse.Save(reportPathFalse);
-        Console.WriteLine($"RemoveEmptyParagraphs = false: Success={successFalse}, Time={swFalse.ElapsedMilliseconds} ms");
+        doc.Save(filePath, SaveFormat.Docx);
     }
 
-    private static void CreateTemplate(string filePath)
+    private static long SaveDocument(string sourcePath, string destinationPath, bool removeEmptyParagraphs)
     {
-        Document doc = new();
-        DocumentBuilder builder = new(doc);
+        var doc = new Document(sourcePath);
 
-        // Insert a heading.
-        builder.Writeln("Large Report");
+        // Remove empty paragraphs only when requested.
+        if (removeEmptyParagraphs)
+        {
+            RemoveEmptyParagraphs(doc);
+        }
 
-        // Begin foreach tag.
-        builder.Writeln("<<foreach [item in Items]>>");
+        var stopwatch = Stopwatch.StartNew();
+        doc.Save(destinationPath, SaveFormat.Docx);
+        stopwatch.Stop();
 
-        // Create a table header.
-        Table table = builder.StartTable();
-        builder.InsertCell();
-        builder.Writeln("Index");
-        builder.InsertCell();
-        builder.Writeln("Name");
-        builder.EndRow();
-
-        // Table row with data placeholders.
-        builder.InsertCell();
-        builder.Writeln("<<[item.Index]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[item.Name]>>");
-        builder.EndRow();
-
-        // End table and foreach.
-        builder.EndTable();
-        builder.Writeln("<</foreach>>");
-
-        // Save the template.
-        doc.Save(filePath);
+        return stopwatch.ElapsedMilliseconds;
     }
-}
 
-// Data model classes.
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
-
-public class Item
-{
-    public int Index { get; set; }
-    public string Name { get; set; } = "";
+    // Custom implementation to remove empty paragraphs from a document.
+    private static void RemoveEmptyParagraphs(Document doc)
+    {
+        // Iterate through all paragraphs in reverse order to safely remove them.
+        for (int i = doc.FirstSection.Body.Paragraphs.Count - 1; i >= 0; i--)
+        {
+            var paragraph = doc.FirstSection.Body.Paragraphs[i];
+            // Get the paragraph text without the paragraph break.
+            string text = paragraph.GetText().Replace("\r", string.Empty).Replace("\a", string.Empty);
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                paragraph.Remove();
+            }
+        }
+    }
 }

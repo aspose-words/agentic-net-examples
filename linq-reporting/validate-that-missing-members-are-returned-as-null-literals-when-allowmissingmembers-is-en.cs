@@ -7,56 +7,50 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare working directories.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "LinqReportingExample");
-        Directory.CreateDirectory(workDir);
-        string templatePath = Path.Combine(workDir, "template.docx");
-        string outputPath = Path.Combine(workDir, "output.docx");
-
-        // -----------------------------------------------------------------
-        // 1. Create the template document with a missing member tag.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Existing: <<[model.Existing]>>; Missing: <<[model.Missing]>>.");
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Define the data model (Missing property is intentionally absent).
-        // -----------------------------------------------------------------
-        var model = new ReportModel
+        // Create a simple data model with only one existing member.
+        var model = new SampleModel
         {
-            Existing = "Value"
-            // No Missing property.
+            ExistingMember = "Hello World"
         };
 
-        // -----------------------------------------------------------------
-        // 3. Load the template and build the report with AllowMissingMembers.
-        // -----------------------------------------------------------------
-        Document doc = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine();
+        // Create the template document programmatically.
+        var templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        // Write a tag that references an existing member.
+        builder.Writeln("Existing: <<[model.ExistingMember]>>");
+        // Write a tag that references a missing member.
+        builder.Writeln("Missing: <<[model.MissingMember]>>");
+
+        // Save the template to disk.
+        doc.Save(templatePath);
+
+        // Load the template for report generation.
+        var reportDoc = new Document(templatePath);
+
+        // Configure the reporting engine to allow missing members.
+        var engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.AllowMissingMembers;
-        engine.BuildReport(doc, model, "model");
+
+        // Build the report.
+        engine.BuildReport(reportDoc, model, "model");
 
         // Save the generated report.
-        doc.Save(outputPath);
+        var reportPath = "Report.docx";
+        reportDoc.Save(reportPath);
 
-        // -----------------------------------------------------------------
-        // 4. Verify that the missing member was rendered as an empty string.
-        // -----------------------------------------------------------------
-        string resultText = doc.GetText();
-        Console.WriteLine("Generated document text:");
-        Console.WriteLine(resultText.Trim());
+        // Verify that the missing member was rendered as a null literal.
+        string reportText = reportDoc.GetText();
+        bool containsNullLiteral = reportText.Contains("null", StringComparison.OrdinalIgnoreCase);
 
-        bool testPassed = resultText.Contains("Existing: Value") && resultText.Contains("Missing: .");
-        Console.WriteLine(testPassed ? "Test passed: missing member rendered as null literal." : "Test failed.");
+        Console.WriteLine($"Missing member rendered as null literal: {containsNullLiteral}");
     }
+}
 
-    // Public data model class.
-    public class ReportModel
-    {
-        // Existing member used in the template.
-        public string Existing { get; set; } = string.Empty;
-        // No Missing property – this is intentional for the test.
-    }
+// Public data model class.
+public class SampleModel
+{
+    // Existing member initialized to avoid nullable warnings.
+    public string ExistingMember { get; set; } = string.Empty;
 }

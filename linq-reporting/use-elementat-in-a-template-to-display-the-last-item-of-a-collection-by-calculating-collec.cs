@@ -6,8 +6,7 @@ using Aspose.Words.Reporting;
 
 public class Item
 {
-    public string Name { get; set; } = "";
-    public int Value { get; set; }
+    public string Name { get; set; } = string.Empty;
 }
 
 public class ReportModel
@@ -19,34 +18,35 @@ public class Program
 {
     public static void Main()
     {
+        // Create a template document with a LINQ Reporting tag that uses ElementAt to get the last item.
+        var templatePath = "Template.docx";
+        var outputPath = "Report.docx";
+
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Last item: <<[Items.ElementAt(Items.Count - 1).Name]>>");
+        templateDoc.Save(templatePath);
+
+        // Load the template for reporting.
+        var doc = new Document(templatePath);
+
         // Prepare sample data.
         var model = new ReportModel
         {
             Items = new List<Item>
             {
-                new Item { Name = "Alpha", Value = 10 },
-                new Item { Name = "Beta", Value = 20 },
-                new Item { Name = "Gamma", Value = 30 }
+                new Item { Name = "Alpha" },
+                new Item { Name = "Beta" },
+                new Item { Name = "Gamma" } // This should be displayed as the last item.
             }
         };
 
-        // Create the template document.
-        var templatePath = "template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-        builder.Writeln("LINQ Reporting Example");
-        builder.Writeln("Last item in collection: <<[model.Items.ElementAt(model.Items.Count - 1).Name]>>");
-        doc.Save(templatePath);
-
-        // Load the template for reporting.
-        var templateDoc = new Document(templatePath);
-
         // Build the report.
         var engine = new ReportingEngine();
-        engine.BuildReport(templateDoc, model, "model");
+        engine.BuildReport(doc, model, "model");
 
         // Save the generated report.
-        var outputPath = "output.docx";
-        templateDoc.Save(outputPath);
+        doc.Save(outputPath);
+        Console.WriteLine($"Report generated: {outputPath}");
     }
 }

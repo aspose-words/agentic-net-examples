@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -8,38 +7,67 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Working directory.
+        string workDir = Directory.GetCurrentDirectory();
 
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
+        // Paths for the template and the final report.
+        string templatePath = Path.Combine(workDir, "Template.docx");
+        string reportPath = Path.Combine(workDir, "Report.docx");
 
-        // Create a template document with an <<include>> tag that points to a non‑existent file.
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Path to the optional include document (do NOT create it – it may be missing).
+        string optionalIncludePath = Path.Combine(workDir, "OptionalInclude.docx");
+
+        // -----------------------------------------------------------------
+        // Build the template document.
+        // -----------------------------------------------------------------
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+
         builder.Writeln("Report start");
-        // The include file does not exist; we will configure the engine to treat it as optional.
-        builder.Writeln("<<include file=\"missing_file.txt\">>");
+
+        // Conditional inclusion – the document will be inserted only if the file exists.
+        builder.Writeln("<<if [model.IncludeFileExists]>>");
+        builder.Writeln("<<doc [model.IncludePath]>>");
+        builder.Writeln("<</if>>");
+
         builder.Writeln("Report end");
-        templateDoc.Save(templatePath);
+
+        template.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // Prepare the model.
+        // -----------------------------------------------------------------
+        ReportModel model = new ReportModel
+        {
+            IncludePath = optionalIncludePath,
+            IncludeFileExists = File.Exists(optionalIncludePath)
+        };
 
         // Load the template for reporting.
-        Document doc = new Document(templatePath);
+        Document reportDoc = new Document(templatePath);
 
-        // Configure the reporting engine to embed inline error messages (missing includes will be ignored).
+        // Configure the reporting engine (no special options needed for this scenario).
         ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-        // Build the report. No data model is required for this example.
-        bool success = engine.BuildReport(doc, new object(), "model");
+        // Build the report.
+        bool success = engine.BuildReport(reportDoc, model, "model");
 
         // Save the generated report.
-        string resultPath = Path.Combine(outputDir, "result.docx");
-        doc.Save(resultPath);
+        reportDoc.Save(reportPath);
 
-        // Indicate completion (no interactive input).
-        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to: {resultPath}");
+        // Output the result.
+        Console.WriteLine($"Report generated successfully: {success}");
+        Console.WriteLine($"Template path: {templatePath}");
+        Console.WriteLine($"Report path:   {reportPath}");
+    }
+
+    // Model class used by the reporting engine.
+    public class ReportModel
+    {
+        // Path to the optional include document.
+        public string IncludePath { get; set; } = string.Empty;
+
+        // Indicates whether the include file exists; if false the <<doc>> tag is skipped.
+        public bool IncludeFileExists { get; set; }
     }
 }

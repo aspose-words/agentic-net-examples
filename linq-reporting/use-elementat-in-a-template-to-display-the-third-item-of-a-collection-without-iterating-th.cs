@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using System.Text;
 
 namespace LinqReportingElementAtExample
 {
@@ -19,58 +18,41 @@ namespace LinqReportingElementAtExample
         public string Name { get; set; } = string.Empty;
     }
 
-    public class Program
+    class Program
     {
-        public static void Main()
+        static void Main()
         {
-            // Register code page provider for Aspose.Words (required for some encodings)
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            // Paths for template and output
-            string templatePath = "Template.docx";
-            string outputPath = "Report.docx";
-
-            // -------------------------------------------------
-            // Create the template document programmatically
-            // -------------------------------------------------
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
-
-            // Write a simple paragraph that uses ElementAt to fetch the third item (index 2)
-            builder.Writeln("Third item name: <<[model.Items.ElementAt(2).Name]>>");
-
-            // Save the template to disk
-            templateDoc.Save(templatePath);
-
-            // -------------------------------------------------
-            // Load the template for report generation
-            // -------------------------------------------------
-            var doc = new Document(templatePath);
-
-            // -------------------------------------------------
-            // Prepare sample data
-            // -------------------------------------------------
+            // Prepare sample data with at least three items
             var model = new ReportModel
             {
                 Items = new List<Item>
                 {
-                    new() { Name = "Alpha" },
-                    new() { Name = "Beta" },
-                    new() { Name = "Gamma" },   // This is the third item (index 2)
-                    new() { Name = "Delta" }
+                    new() { Name = "First Item" },
+                    new() { Name = "Second Item" },
+                    new() { Name = "Third Item" },
+                    new() { Name = "Fourth Item" }
                 }
             };
 
-            // -------------------------------------------------
-            // Build the report using LINQ Reporting Engine
-            // -------------------------------------------------
+            // Create a template document programmatically
+            var templatePath = "Template.docx";
+            var builder = new DocumentBuilder();
+            // Insert a LINQ Reporting tag that uses ElementAt to get the third item (index 2)
+            builder.Writeln("Third item name: <<[model.Items.ElementAt(2).Name]>>");
+            builder.Document.Save(templatePath);
+
+            // Load the template for reporting
+            var doc = new Document(templatePath);
+
+            // Build the report using the LINQ Reporting engine
             var engine = new ReportingEngine();
             engine.BuildReport(doc, model, "model");
 
             // Save the generated report
+            var outputPath = "Report.docx";
             doc.Save(outputPath);
 
-            // Indicate completion (no interactive input)
+            // Indicate completion
             Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
         }
     }

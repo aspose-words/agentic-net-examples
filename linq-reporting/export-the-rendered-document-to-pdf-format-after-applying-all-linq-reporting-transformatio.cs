@@ -1,68 +1,101 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
+using Newtonsoft.Json;
 
-public class Program
+namespace LinqReportingPdfExport
 {
-    public static void Main()
+    // Sample data model classes
+    public class Order
     {
-        // Register code page provider (required for some Aspose.Words features)
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Create sample data model
-        ReportModel model = new()
-        {
-            Title = "Product Report",
-            Products = new()
-            {
-                new Product { Name = "Apple", Price = 0.99m },
-                new Product { Name = "Banana", Price = 0.59m },
-                new Product { Name = "Cherry", Price = 2.49m }
-            }
-        };
-
-        // Build the template document programmatically
-        string templatePath = "template.docx";
-        Document templateDoc = new();
-        DocumentBuilder builder = new(templateDoc);
-
-        // Title
-        builder.Writeln("<<[model.Title]>>");
-        builder.Writeln();
-
-        // Foreach over Products
-        builder.Writeln("<<foreach [p in Products]>>");
-        builder.Writeln("- <<[p.Name]>>: $<<[p.Price]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template
-        templateDoc.Save(templatePath);
-
-        // Load the template for reporting
-        Document reportDoc = new(templatePath);
-
-        // Build the report using LINQ Reporting Engine
-        ReportingEngine engine = new();
-        engine.BuildReport(reportDoc, model, "model");
-
-        // Export the rendered document to PDF
-        string pdfPath = "report.pdf";
-        reportDoc.Save(pdfPath, SaveFormat.Pdf);
+        public string CustomerName { get; set; } = string.Empty;
+        public List<Item> Items { get; set; } = new();
     }
-}
 
-// Data model classes
-public class ReportModel
-{
-    public string Title { get; set; } = string.Empty;
-    public List<Product> Products { get; set; } = new();
-}
+    public class Item
+    {
+        public int Index { get; set; }
+        public string Name { get; set; } = string.Empty;
+    }
 
-public class Product
-{
-    public string Name { get; set; } = string.Empty;
-    public decimal Price { get; set; }
+    public class Program
+    {
+        public static void Main()
+        {
+            // Register code page provider for any required encodings.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Paths for template and output files.
+            const string templatePath = "template.docx";
+            const string pdfOutputPath = "report.pdf";
+
+            // -----------------------------------------------------------------
+            // 1. Create the LINQ Reporting template programmatically.
+            // -----------------------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            // Title.
+            builder.Writeln("Order Report");
+            builder.Writeln();
+
+            // Customer name placeholder.
+            builder.Writeln("Customer: <<[order.CustomerName]>>");
+            builder.Writeln();
+
+            // Begin foreach block.
+            builder.Writeln("<<foreach [item in order.Items]>>");
+
+            // Table header.
+            Table table = builder.StartTable();
+            builder.InsertCell();
+            builder.Writeln("Index");
+            builder.InsertCell();
+            builder.Writeln("Name");
+            builder.EndRow();
+
+            // Data row (will be repeated for each item).
+            builder.InsertCell();
+            builder.Writeln("<<[item.Index]>>");
+            builder.InsertCell();
+            builder.Writeln("<<[item.Name]>>");
+            builder.EndRow();
+
+            // End table and foreach block.
+            builder.EndTable();
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 2. Load the template and build the report using LINQ Reporting.
+            // -----------------------------------------------------------------
+            Document reportDoc = new Document(templatePath);
+
+            // Sample data to bind.
+            Order order = new Order
+            {
+                CustomerName = "John Doe",
+                Items = new List<Item>
+                {
+                    new Item { Index = 1, Name = "Item A" },
+                    new Item { Index = 2, Name = "Item B" },
+                    new Item { Index = 3, Name = "Item C" }
+                }
+            };
+
+            // Build the report.
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(reportDoc, order, "order");
+
+            // -----------------------------------------------------------------
+            // 3. Export the rendered document to PDF.
+            // -----------------------------------------------------------------
+            reportDoc.Save(pdfOutputPath, SaveFormat.Pdf);
+        }
+    }
 }

@@ -7,87 +7,98 @@ using Aspose.Words.Reporting;
 using Aspose.Words.Tables;
 using Newtonsoft.Json;
 
-public class Program
+namespace AsposeWordsLinqReportingExample
 {
-    public static void Main()
+    // Root data model for the report.
+    public class ReportModel
     {
-        // Register code page provider for Aspose.Words.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Prepare sample JSON data.
-        var jsonData = new ReportData
-        {
-            Persons = new List<Person>
-            {
-                new Person { Index = 1, Name = "Alice" },
-                new Person { Index = 2, Name = "Bob" },
-                new Person { Index = 3, Name = "Charlie" }
-            }
-        };
-        string jsonString = JsonConvert.SerializeObject(jsonData, Formatting.Indented);
-        const string jsonPath = "data.json";
-        File.WriteAllText(jsonPath, jsonString, Encoding.UTF8);
-
-        // Create the template document programmatically.
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-
-        // Begin foreach loop over Persons collection.
-        builder.Writeln("<<foreach [person in Persons]>>");
-
-        // Create a table that will be repeated for each person.
-        Table table = builder.StartTable();
-
-        // Header row.
-        builder.InsertCell();
-        builder.Writeln("Index");
-        builder.InsertCell();
-        builder.Writeln("Name");
-        builder.EndRow();
-
-        // Data row.
-        builder.InsertCell();
-        builder.Writeln("<<[person.Index]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[person.Name]>>");
-        builder.EndRow();
-
-        // End the table.
-        builder.EndTable();
-
-        // End foreach loop.
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        const string templatePath = "template.docx";
-        templateDoc.Save(templatePath);
-
-        // Load the template back for report generation.
-        var doc = new Document(templatePath);
-
-        // Deserialize JSON data into a strongly typed model.
-        var model = JsonConvert.DeserializeObject<ReportData>(File.ReadAllText(jsonPath, Encoding.UTF8))!;
-
-        // Build the report using LINQ Reporting Engine.
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        engine.BuildReport(doc, model, "model");
-
-        // Save the generated report.
-        const string outputPath = "output.docx";
-        doc.Save(outputPath);
+        public List<Item> Items { get; set; } = new();
     }
-}
 
-// Root data model.
-public class ReportData
-{
-    public List<Person> Persons { get; set; } = new();
-}
+    // Item model representing each row in the table.
+    public class Item
+    {
+        public string Name { get; set; } = string.Empty;
+        public int Quantity { get; set; }
+        public double Price { get; set; }
+    }
 
-// Person item model.
-public class Person
-{
-    public int Index { get; set; }
-    public string Name { get; set; } = string.Empty;
+    public class Program
+    {
+        public static void Main()
+        {
+            // Register code page provider for Aspose.Words.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Prepare sample JSON data.
+            string jsonPath = "data.json";
+            string jsonContent = @"{
+  ""Items"": [
+    { ""Name"": ""Apple"",  ""Quantity"": 10, ""Price"": 0.5 },
+    { ""Name"": ""Banana"", ""Quantity"": 5,  ""Price"": 0.3 },
+    { ""Name"": ""Cherry"", ""Quantity"": 20, ""Price"": 0.2 }
+  ]
+}";
+            File.WriteAllText(jsonPath, jsonContent, Encoding.UTF8);
+
+            // Deserialize JSON into the data model.
+            ReportModel model = JsonConvert.DeserializeObject<ReportModel>(File.ReadAllText(jsonPath, Encoding.UTF8))!;
+
+            // Create the template document programmatically.
+            string templatePath = "Template.docx";
+            Document templateDoc = new();
+            DocumentBuilder builder = new(templateDoc);
+
+            // Insert a title.
+            builder.Writeln("Product Report");
+            builder.Writeln();
+
+            // Begin foreach loop over Items.
+            builder.Writeln("<<foreach [item in Items]>>");
+
+            // Start the table inside the loop.
+            Table table = builder.StartTable();
+
+            // Header row.
+            builder.InsertCell();
+            builder.Writeln("Product");
+            builder.InsertCell();
+            builder.Writeln("Quantity");
+            builder.InsertCell();
+            builder.Writeln("Price");
+            builder.EndRow();
+
+            // Data row for each item.
+            builder.InsertCell();
+            builder.Writeln("<<[item.Name]>>");
+            builder.InsertCell();
+            builder.Writeln("<<[item.Quantity]>>");
+            builder.InsertCell();
+            builder.Writeln("<<[item.Price]>>");
+            builder.EndRow();
+
+            // End the table.
+            builder.EndTable();
+
+            // End foreach loop.
+            builder.Writeln("<</foreach>>");
+
+            // Save the template.
+            templateDoc.Save(templatePath);
+
+            // Load the template for reporting.
+            Document reportDoc = new(templatePath);
+
+            // Build the report using the LINQ Reporting engine.
+            ReportingEngine engine = new();
+            engine.BuildReport(reportDoc, model, "model");
+
+            // Save the generated report.
+            string outputPath = "Report.docx";
+            reportDoc.Save(outputPath);
+
+            // Indicate completion.
+            Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+        }
+    }
 }

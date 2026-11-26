@@ -1,13 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class Person
 {
-    public string Name { get; set; } = "";
-    public int Age { get; set; }
+    public string Name { get; set; } = string.Empty;
 }
 
 public class ReportModel
@@ -19,43 +17,50 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
+        // Paths for template and output documents.
+        const string templatePath = "template.docx";
+        const string outputPath = "output.docx";
+
+        // -----------------------------------------------------------------
+        // Create the LINQ Reporting template programmatically.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        builder.Writeln("Report of Persons:");
+        builder.Writeln("<<foreach [p in Persons]>>");
+        // This paragraph may become empty if p.Name is empty.
+        builder.Writeln("<<[p.Name]>>");
+        builder.Writeln("<</foreach>>");
+
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // Load the template for report generation.
+        // -----------------------------------------------------------------
+        Document doc = new Document(templatePath);
+
+        // Sample data: one empty name to produce an empty paragraph.
         var model = new ReportModel
         {
             Persons = new List<Person>
             {
-                new Person { Name = "Alice", Age = 28 },
-                new Person { Name = "Bob", Age = 35 },
-                new Person { Name = "Charlie", Age = 22 }
+                new Person { Name = "Alice" },
+                new Person { Name = "" },      // Will generate an empty paragraph.
+                new Person { Name = "Bob" }
             }
         };
 
-        // Create template document.
-        var templatePath = "Template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        builder.Writeln("People Report");
-        builder.Writeln("<<foreach [p in Persons]>>");
-        builder.Writeln("Name: <<[p.Name]>>");
-        // This paragraph may become empty if condition is false.
-        builder.Writeln("<<if [p.Age > 30]>>Senior<</if>>");
-        builder.Writeln("<</foreach>>");
-
-        doc.Save(templatePath);
-
-        // Load template for reporting.
-        var template = new Document(templatePath);
-
-        // Configure reporting engine to remove empty paragraphs.
-        var engine = new ReportingEngine();
+        // -----------------------------------------------------------------
+        // Configure the ReportingEngine to remove empty paragraphs.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
 
         // Build the report.
-        engine.BuildReport(template, model, "model");
+        engine.BuildReport(doc, model, "model");
 
         // Save the final document.
-        var outputPath = "Result.docx";
-        template.Save(outputPath);
+        doc.Save(outputPath);
     }
 }

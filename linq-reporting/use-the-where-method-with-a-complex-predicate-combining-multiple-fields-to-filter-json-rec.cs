@@ -7,7 +7,7 @@ using Aspose.Words;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
 
-public class Record
+public class Person
 {
     public string Name { get; set; } = "";
     public int Age { get; set; }
@@ -17,7 +17,7 @@ public class Record
 
 public class ReportModel
 {
-    public List<Record> FilteredRecords { get; set; } = new();
+    public List<Person> FilteredPersons { get; set; } = new();
 }
 
 public class Program
@@ -29,49 +29,46 @@ public class Program
 
         // Prepare sample JSON data.
         string jsonPath = "data.json";
-        var sampleData = new List<Record>
+        var sampleData = new List<Person>
         {
-            new Record { Name = "Alice", Age = 28, City = "London", IsActive = true },
-            new Record { Name = "Bob", Age = 35, City = "London", IsActive = false },
-            new Record { Name = "Charlie", Age = 42, City = "London", IsActive = true },
-            new Record { Name = "Diana", Age = 31, City = "Paris", IsActive = true },
-            new Record { Name = "Ethan", Age = 45, City = "London", IsActive = true }
+            new() { Name = "Alice", Age = 28, City = "New York", IsActive = true },
+            new() { Name = "Bob", Age = 35, City = "New York", IsActive = false },
+            new() { Name = "Charlie", Age = 42, City = "Los Angeles", IsActive = true },
+            new() { Name = "Diana", Age = 31, City = "New York", IsActive = true }
         };
         File.WriteAllText(jsonPath, JsonConvert.SerializeObject(sampleData, Formatting.Indented));
 
-        // Load JSON data.
-        var allRecords = JsonConvert.DeserializeObject<List<Record>>(File.ReadAllText(jsonPath)) ?? new List<Record>();
+        // Load JSON into objects.
+        var allPersons = JsonConvert.DeserializeObject<List<Person>>(File.ReadAllText(jsonPath)) ?? new();
 
-        // Apply complex predicate: Age > 30, City == "London", and IsActive == true.
-        var filtered = allRecords
-            .Where(r => r.Age > 30 && r.City == "London" && r.IsActive)
+        // Apply complex predicate: Age > 30, City == "New York", and IsActive == true.
+        var filtered = allPersons
+            .Where(p => p.Age > 30 && p.City == "New York" && p.IsActive)
             .ToList();
 
         // Prepare the model for the report.
         var model = new ReportModel
         {
-            FilteredRecords = filtered
+            FilteredPersons = filtered
         };
 
-        // Create the template document programmatically.
-        var templatePath = "template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        builder.Writeln("Filtered Records (Age > 30, City = London, Active):");
-        builder.Writeln("<<foreach [rec in FilteredRecords]>>");
-        builder.Writeln("Name: <<[rec.Name]>>, Age: <<[rec.Age]>>, City: <<[rec.City]>>");
+        // Create the LINQ Reporting template programmatically.
+        string templatePath = "template.docx";
+        var builder = new DocumentBuilder();
+        builder.Writeln("Filtered Persons:");
+        builder.Writeln("<<foreach [p in FilteredPersons]>>");
+        builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>, City: <<[p.City]>>");
         builder.Writeln("<</foreach>>");
-
-        doc.Save(templatePath);
+        var templateDoc = builder.Document;
+        templateDoc.Save(templatePath);
 
         // Load the template and build the report.
-        var templateDoc = new Document(templatePath);
+        var doc = new Document(templatePath);
         var engine = new ReportingEngine();
-        engine.BuildReport(templateDoc, model, "model");
+        engine.BuildReport(doc, model, "model");
 
         // Save the generated report.
-        var outputPath = "report.docx";
-        templateDoc.Save(outputPath);
+        string outputPath = "output.docx";
+        doc.Save(outputPath);
     }
 }

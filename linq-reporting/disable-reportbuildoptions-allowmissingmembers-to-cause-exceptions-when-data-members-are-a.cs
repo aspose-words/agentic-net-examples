@@ -5,58 +5,45 @@ using Aspose.Words.Reporting;
 
 public class Model
 {
-    // This property exists, but the template will request a missing one.
-    public string ExistingProperty { get; set; } = "Existing Value";
+    // Existing property; the template will reference a non‑existent one.
+    public string Name { get; set; } = string.Empty;
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the template and the generated report.
+        // Create a template document with a tag that refers to a missing member.
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
+        builder.Writeln("Customer: <<[model.Name]>>");
+        builder.Writeln("Missing: <<[model.MissingProperty]>>"); // This member does not exist.
+
+        // Save and reload the template to simulate a real file scenario.
         const string templatePath = "Template.docx";
-        const string reportPath = "Report.docx";
+        template.Save(templatePath);
+        var loadedTemplate = new Document(templatePath);
 
-        // -----------------------------------------------------------------
-        // 1. Create a template document with a tag that references a missing member.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Prepare the data model (does not contain MissingProperty).
+        var model = new Model { Name = "John Doe" };
 
-        // The tag <<[model.MissingProperty]>> does NOT exist in the Model class.
-        builder.Writeln("<<[model.MissingProperty]>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template back for reporting.
-        // -----------------------------------------------------------------
-        Document loadedTemplate = new Document(templatePath);
-
-        // Prepare the data model (does NOT contain MissingProperty).
-        Model model = new Model();
-
-        // -----------------------------------------------------------------
-        // 3. Configure ReportingEngine without AllowMissingMembers.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None; // Disables AllowMissingMembers.
+        // Configure the reporting engine without AllowMissingMembers.
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None; // Disallow missing members.
 
         try
         {
-            // Attempt to build the report. This should throw because the member is missing.
+            // Attempt to build the report; should throw because of the missing member.
             engine.BuildReport(loadedTemplate, model, "model");
-
             // If no exception, save the generated report.
-            loadedTemplate.Save(reportPath);
-            Console.WriteLine($"Report generated successfully: {reportPath}");
+            const string outputPath = "Report.docx";
+            loadedTemplate.Save(outputPath);
+            Console.WriteLine($"Report generated successfully: {outputPath}");
         }
         catch (Exception ex)
         {
-            // Expected path: an exception indicating the missing member.
-            Console.WriteLine("An exception occurred during report generation:");
-            Console.WriteLine(ex.Message);
+            // Expected path: report generation fails due to missing member.
+            Console.WriteLine($"Report generation failed: {ex.Message}");
         }
     }
 }

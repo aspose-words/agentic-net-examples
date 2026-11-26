@@ -4,57 +4,60 @@ using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class LinqReportingMissingElementsExample
+public class Program
 {
     public static void Main()
     {
-        // Create a folder for output files.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Register code page provider (required for some Aspose.Words features)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // -------------------------------------------------
-        // 1. Create the template document with LINQ Reporting tags.
-        // -------------------------------------------------
+        // Prepare sample XML with a missing element (lastName for the first person)
+        string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<root>
+    <person>
+        <firstName>John</firstName>
+        <!-- lastName element is missing -->
+    </person>
+    <person>
+        <firstName>Jane</firstName>
+        <lastName>Doe</lastName>
+    </person>
+</root>";
+        string xmlPath = Path.Combine(Directory.GetCurrentDirectory(), "sample.xml");
+        File.WriteAllText(xmlPath, xmlContent, Encoding.UTF8);
+
+        // Create a template document programmatically
         Document template = new Document();
         DocumentBuilder builder = new DocumentBuilder(template);
 
-        builder.Writeln("Order Report");
-        builder.Writeln("Order ID: <<[order.OrderId]>>");
-        // The CustomerName element may be missing in the XML data.
-        builder.Writeln("Customer Name: <<[order.CustomerName]>>");
-        builder.Writeln("End of Report");
+        // Add a foreach loop over the person nodes
+        builder.Writeln("<<foreach [p in data.root.person]>>");
+        builder.Writeln("First Name: <<[p.firstName]>>");
+        // Missing lastName will be treated as empty string (or inline error message)
+        builder.Writeln("Last Name: <<[p.lastName]>>");
+        builder.Writeln("<</foreach>>");
 
-        string templatePath = Path.Combine(outputDir, "Template.docx");
+        // Save the template
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
         template.Save(templatePath);
 
-        // -------------------------------------------------
-        // 2. Prepare XML data source.
-        //    To treat a missing element as an empty string we add an empty <CustomerName> element.
-        // -------------------------------------------------
-        string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<order>
-    <OrderId>12345</OrderId>
-    <CustomerName></CustomerName> <!-- Empty element to avoid missing-field errors -->
-</order>";
-        using MemoryStream xmlStream = new MemoryStream(Encoding.UTF8.GetBytes(xmlContent));
-        xmlStream.Position = 0;
-        XmlDataSource xmlDataSource = new XmlDataSource(xmlStream);
+        // Load the template for reporting
+        Document reportDoc = new Document(templatePath);
 
-        // -------------------------------------------------
-        // 3. Configure the ReportingEngine (default options are sufficient).
-        // -------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
+        // Load XML data source
+        XmlDataSource xmlDataSource = new XmlDataSource(xmlPath);
 
-        // -------------------------------------------------
-        // 4. Build the report.
-        // -------------------------------------------------
-        Document report = new Document(templatePath);
-        engine.BuildReport(report, xmlDataSource, "order");
+        // Configure the reporting engine to treat missing XML elements as empty strings
+        ReportingEngine engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.InlineErrorMessages
+        };
 
-        // -------------------------------------------------
-        // 5. Save the generated report.
-        // -------------------------------------------------
-        string reportPath = Path.Combine(outputDir, "Report.docx");
-        report.Save(reportPath);
+        // Build the report
+        engine.BuildReport(reportDoc, xmlDataSource, "data");
+
+        // Save the generated report
+        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        reportDoc.Save(reportPath);
     }
 }

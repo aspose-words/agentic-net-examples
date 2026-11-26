@@ -1,6 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -8,56 +8,50 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
+        // Register code page provider (required for some encodings).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create a template document with LINQ Reporting tags, including an intentional syntax error
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Correct tag
-        builder.Writeln("Customer: <<[model.CustomerName]>>");
-
-        // Incorrect tag (missing closing bracket) to trigger an error
-        builder.Writeln("Bad tag: <<[model.Missing>>");
-
-        // Placeholder for inline error messages
-        builder.Writeln("Error message: <<error>>");
-
-        // Save the template
-        templateDoc.Save(templatePath);
-
-        // Load the template for reporting
-        Document reportDoc = new Document(templatePath);
-
-        // Prepare the data model
-        ReportModel model = new ReportModel
+        // Prepare sample data model.
+        Order order = new Order
         {
             CustomerName = "John Doe"
         };
 
-        // Configure the reporting engine to inline error messages
+        // Create a template document programmatically.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+
+        // Insert LINQ Reporting tags, including a deliberate error and the <<error>> placeholder.
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Invalid: <<[order.NonExisting]>>"); // This property does not exist.
+        builder.Writeln("<<error>>"); // Placeholder for inline error messages.
+
+        // Save the template to disk.
+        string templatePath = "Template.docx";
+        template.Save(templatePath);
+
+        // Load the template back for report generation.
+        Document doc = new Document(templatePath);
+
+        // Configure the reporting engine to inline error messages.
         ReportingEngine engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-        // Build the report; the returned bool indicates success (true) or failure (false)
-        bool success = engine.BuildReport(reportDoc, model, "model");
+        // Build the report. The method returns false because there is a syntax error.
+        bool success = engine.BuildReport(doc, order, "order");
 
-        // Save the generated report
-        string outputPath = Path.Combine(outputDir, "output.docx");
-        reportDoc.Save(outputPath);
+        // Save the resulting document.
+        string outputPath = "ReportWithInlineErrors.docx";
+        doc.Save(outputPath);
 
-        // Output the result status
-        Console.WriteLine($"Report generation success: {success}");
-        Console.WriteLine($"Template saved to: {templatePath}");
-        Console.WriteLine($"Report saved to: {outputPath}");
+        // Output the success flag.
+        Console.WriteLine($"Report build success: {success}");
+        Console.WriteLine($"Output saved to: {Path.GetFullPath(outputPath)}");
     }
 }
 
-// Public data model aligned with the template root name "model"
-public class ReportModel
+// Public data model class.
+public class Order
 {
     public string CustomerName { get; set; } = string.Empty;
 }

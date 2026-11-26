@@ -1,53 +1,65 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Order
+namespace LinqReportingReflectionOptimization
 {
-    public string CustomerName { get; set; } = string.Empty;
-    public List<Item> Items { get; set; } = new();
-}
-
-public class Item
-{
-    public string Name { get; set; } = string.Empty;
-    public decimal Price { get; set; }
-}
-
-public class Program
-{
-    public static void Main()
+    // Sample data model.
+    public class Person
     {
-        // Create a simple template document with a LINQ Reporting tag.
-        var templatePath = "Template.docx";
-        var builder = new DocumentBuilder();
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Document.Save(templatePath);
+        public string Name { get; set; } = "";
+        public int Age { get; set; }
+    }
 
-        // Load the template for reporting.
-        var doc = new Document(templatePath);
+    // Wrapper model for the report.
+    public class ReportModel
+    {
+        public List<Person> Persons { get; set; } = new();
+    }
 
-        // Prepare sample data with fewer than 1000 records.
-        var order = new Order
+    public class Program
+    {
+        public static void Main()
         {
-            CustomerName = "John Doe",
-            Items = new()
-        };
-        for (int i = 1; i <= 5; i++)
-        {
-            order.Items.Add(new Item { Name = $"Item {i}", Price = i * 10m });
+            // Register code page provider for potential encoding needs.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Prepare sample data with fewer than 1000 records.
+            var model = new ReportModel();
+            for (int i = 1; i <= 5; i++)
+            {
+                model.Persons.Add(new Person { Name = $"Person {i}", Age = 20 + i });
+            }
+
+            // Create a template document programmatically.
+            var templatePath = "template.docx";
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+
+            // Insert a simple foreach loop to list persons.
+            builder.Writeln("<<foreach [p in Persons]>>");
+            builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template.
+            doc.Save(templatePath);
+
+            // Load the template for report generation.
+            var reportDoc = new Document(templatePath);
+
+            // Disable reflection optimization because we have fewer than 1000 records.
+            ReportingEngine.UseReflectionOptimization = false;
+
+            // Build the report.
+            var engine = new ReportingEngine();
+            engine.BuildReport(reportDoc, model, "model");
+
+            // Save the generated report.
+            var outputPath = "report.docx";
+            reportDoc.Save(outputPath);
         }
-
-        // Disable reflection optimization when processing fewer than 1000 records.
-        ReportingEngine.UseReflectionOptimization = order.Items.Count >= 1000;
-
-        // Build the report.
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, order, "order");
-
-        // Save the generated report.
-        var outputPath = "Report.docx";
-        doc.Save(outputPath);
     }
 }

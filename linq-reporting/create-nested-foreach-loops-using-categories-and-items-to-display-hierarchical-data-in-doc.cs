@@ -1,15 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 namespace LinqReportingNestedLoops
 {
     // Data model classes
-    public class Item
+    public class ReportModel
     {
-        public string Name { get; set; } = "";
-        public int Quantity { get; set; }
+        public List<Category> Categories { get; set; } = new();
     }
 
     public class Category
@@ -18,17 +18,46 @@ namespace LinqReportingNestedLoops
         public List<Item> Items { get; set; } = new();
     }
 
-    public class ReportModel
+    public class Item
     {
-        public List<Category> Categories { get; set; } = new();
+        public string Name { get; set; } = "";
+        public string Description { get; set; } = "";
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Prepare sample hierarchical data
-            var model = new ReportModel
+            // Paths for template and output documents
+            string templatePath = "Template.docx";
+            string outputPath = "Report.docx";
+
+            // -----------------------------------------------------------------
+            // Step 1: Create the template document with nested foreach tags
+            // -----------------------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            // Outer foreach over categories
+            builder.Writeln("<<foreach [cat in Categories]>>");
+            builder.Writeln("Category: <<[cat.Name]>>");
+            builder.Writeln("");
+
+            // Inner foreach over items within a category
+            builder.Writeln("<<foreach [item in cat.Items]>>");
+            builder.Writeln("- <<[item.Name]>>: <<[item.Description]>>");
+            builder.Writeln("<</foreach>>");
+
+            // Close outer foreach
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // Step 2: Prepare sample hierarchical data
+            // -----------------------------------------------------------------
+            ReportModel model = new ReportModel
             {
                 Categories = new List<Category>
                 {
@@ -37,8 +66,8 @@ namespace LinqReportingNestedLoops
                         Name = "Fruits",
                         Items = new List<Item>
                         {
-                            new Item { Name = "Apple", Quantity = 10 },
-                            new Item { Name = "Banana", Quantity = 20 }
+                            new Item { Name = "Apple", Description = "Red or green fruit" },
+                            new Item { Name = "Banana", Description = "Long yellow fruit" }
                         }
                     },
                     new Category
@@ -46,31 +75,24 @@ namespace LinqReportingNestedLoops
                         Name = "Vegetables",
                         Items = new List<Item>
                         {
-                            new Item { Name = "Carrot", Quantity = 15 },
-                            new Item { Name = "Tomato", Quantity = 12 }
+                            new Item { Name = "Carrot", Description = "Orange root vegetable" },
+                            new Item { Name = "Lettuce", Description = "Leafy green" }
                         }
                     }
                 }
             };
 
-            // Create a new blank document and a builder for the template
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
+            // -----------------------------------------------------------------
+            // Step 3: Load the template and build the report
+            // -----------------------------------------------------------------
+            Document reportDoc = new Document(templatePath);
+            ReportingEngine engine = new ReportingEngine();
 
-            // Build the LINQ Reporting template with nested foreach loops
-            builder.Writeln("<<foreach [category in Categories]>>");
-            builder.Writeln("Category: <<[category.Name]>>");
-            builder.Writeln("<<foreach [item in category.Items]>>");
-            builder.Writeln("- <<[item.Name]>> (Qty: <<[item.Quantity]>>)");
-            builder.Writeln("<</foreach>>");
-            builder.Writeln("<</foreach>>");
+            // Build the report using the model as the root object named "model"
+            engine.BuildReport(reportDoc, model, "model");
 
-            // Generate the report using the ReportingEngine
-            var engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
-
-            // Save the generated document
-            doc.Save("Report.docx");
+            // Save the generated report
+            reportDoc.Save(outputPath);
         }
     }
 }

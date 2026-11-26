@@ -1,60 +1,54 @@
 using System;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class Model
 {
-    // Sample properties used in the template
-    public string Name { get; set; } = "John Doe";
-    public int Age { get; set; } = 30;
-    // This property does NOT exist in the template on purpose to trigger an error
-    // (No need to define it; the missing reference will cause the inline error.)
+    // Sample property used in the template.
+    public string Name { get; set; } = "World";
+    // No property named MissingProperty – it will trigger an inline error.
 }
 
 public class Program
 {
     public static void Main()
     {
-        // File names for the temporary template and the generated report
-        const string templatePath = "template.docx";
-        const string outputPath = "output.docx";
+        // Register code page provider (required for some Aspose.Words features).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // -------------------------------------------------
-        // 1. Create a template document with a deliberate reference error
-        // -------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Paths for the template and the generated report.
+        string templatePath = "template.docx";
+        string outputPath = "output.docx";
 
-        // Correct tag – will be processed normally
-        builder.Writeln("Hello <<[model.Name]>>!");
+        // -----------------------------------------------------------------
+        // Create a template document programmatically.
+        // The second line references a non‑existent property to cause a
+        // runtime error that will be reported inline.
+        // -----------------------------------------------------------------
+        var builder = new DocumentBuilder();
+        builder.Writeln("Hello <<[model.Name]>>!");                         // Correct tag.
+        builder.Writeln("This line has an error: <<[model.MissingProperty]>>"); // Missing property.
+        builder.Document.Save(templatePath);
 
-        // Intentional error: reference a non‑existent property
-        builder.Writeln("This line has an error: <<[model.NonExistentProperty]>>");
+        // Load the template for reporting.
+        var doc = new Document(templatePath);
 
-        // Save the template to disk
-        templateDoc.Save(templatePath);
+        // Prepare the data model.
+        var model = new Model();
 
-        // -------------------------------------------------
-        // 2. Load the template document for reporting
-        // -------------------------------------------------
-        Document doc = new Document(templatePath);
+        // Configure the reporting engine to embed error messages inline.
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-        // Sample data model
-        Model model = new Model();
-
-        // Configure the reporting engine to embed inline error messages
-        ReportingEngine engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.InlineErrorMessages
-        };
-
-        // Build the report and capture the success flag
+        // Build the report. The method returns false because of the error above.
         bool success = engine.BuildReport(doc, model, "model");
 
-        // Output the success flag – expected to be false because of the error above
-        Console.WriteLine($"Report build success: {success}");
-
-        // Save the generated report (contains the inline error message)
+        // Save the generated report (it will contain the inline error message).
         doc.Save(outputPath);
+
+        // Output the success flag.
+        Console.WriteLine($"Report build success: {success}");
     }
 }

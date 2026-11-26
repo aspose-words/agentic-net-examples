@@ -1,63 +1,52 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class ReportModel
 {
-    public int Value { get; set; } = 10;
-    public int Divisor { get; set; } = 0; // Will cause divide by zero
+    public double Value { get; set; } = 10;
+    public double Divisor { get; set; } = 0; // This will cause a divide‑by‑zero exception in the template
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Create output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        // Register code page provider (required for Aspose.Words)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Prepare folders
+        string outputDir = "Output";
         Directory.CreateDirectory(outputDir);
 
-        // 1. Create the LINQ Reporting template.
+        // Create template document with a faulty expression
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+        builder.Writeln("Result: <<[model.Value / model.Divisor]>>"); // Division by zero will trigger an error
         string templatePath = Path.Combine(outputDir, "Template.docx");
-        Document templateDoc = new();
-        DocumentBuilder builder = new(templateDoc);
+        template.Save(templatePath);
 
-        // Expression that will throw an exception (division by zero).
-        builder.Writeln("Result of division: <<[model.Value / model.Divisor]>>");
+        // Load the template for reporting
+        Document doc = new Document(templatePath);
 
-        // Save the template.
-        templateDoc.Save(templatePath);
+        // Prepare data model
+        ReportModel model = new ReportModel();
 
-        // 2. Load the template for report generation.
-        Document reportDoc = new(templatePath);
-
-        // 3. Prepare the data model.
-        ReportModel model = new();
-
-        // 4. Configure the reporting engine.
-        ReportingEngine engine = new();
-        // Enable inline error messages; the engine will replace faulty output with placeholder text.
+        // Configure reporting engine to show inline error placeholders
+        ReportingEngine engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-        // 5. Build the report. The method returns false if there were evaluation errors.
-        bool success;
-        try
-        {
-            success = engine.BuildReport(reportDoc, model, "model");
-        }
-        catch (Exception ex)
-        {
-            // Unexpected exception handling – treat as failure.
-            Console.WriteLine($"Unexpected error: {ex.Message}");
-            success = false;
-        }
+        // Build the report
+        bool success = engine.BuildReport(doc, model, "model");
 
-        // 6. Save the generated report.
-        string reportPath = Path.Combine(outputDir, "Report.docx");
-        reportDoc.Save(reportPath);
+        // Save the generated report
+        string resultPath = Path.Combine(outputDir, "Result.docx");
+        doc.Save(resultPath);
 
-        // 7. Output the result status.
+        // Output status (no interactive prompts)
         Console.WriteLine($"Report generation success: {success}");
-        Console.WriteLine($"Report saved to: {reportPath}");
+        Console.WriteLine($"Result saved to: {resultPath}");
     }
 }

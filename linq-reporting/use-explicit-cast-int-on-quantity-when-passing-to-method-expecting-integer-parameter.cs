@@ -1,45 +1,54 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class Order
-{
-    public string CustomerName { get; set; } = "";
-    public double Quantity { get; set; }
-
-    public string GetQuantityMessage(int qty)
-    {
-        return $"Quantity is {qty}";
-    }
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Create sample data.
-        var order = new Order
+        // Prepare sample data.
+        Order order = new()
         {
-            CustomerName = "Acme Corp",
-            Quantity = 7.9 // Non‑integer quantity.
+            Quantity = 7.9 // Non‑integer quantity to demonstrate casting.
         };
 
-        // Create a template document with LINQ Reporting tags.
-        var templatePath = "Template.docx";
-        var builder = new DocumentBuilder();
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("Message: <<[order.GetQuantityMessage((int)order.Quantity)]>>");
-        builder.Document.Save(templatePath);
+        // Create a template document programmatically.
+        string templatePath = "template.docx";
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
+        builder.Writeln("Report for Order");
+        // Use explicit cast (int) on Quantity when calling a method that expects an integer.
+        builder.Writeln("<<[order.GetQuantityString((int)order.Quantity)]>>");
+        templateDoc.Save(templatePath);
 
-        // Load the template.
-        var doc = new Document(templatePath);
+        // Load the template for reporting.
+        Document doc = new(templatePath);
 
         // Build the report.
-        var engine = new ReportingEngine();
+        ReportingEngine.UseReflectionOptimization = true;
+        ReportingEngine engine = new();
         engine.BuildReport(doc, order, "order");
 
         // Save the generated report.
-        var outputPath = "Report.docx";
+        string outputPath = Path.Combine("output", "report.docx");
+        Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
         doc.Save(outputPath);
+
+        // Indicate completion (no interactive input).
+        Console.WriteLine($"Report generated: {outputPath}");
+    }
+}
+
+// Public data model aligned with the template.
+public class Order
+{
+    // Non‑integer quantity to require casting.
+    public double Quantity { get; set; } = 0;
+
+    // Method that expects an integer parameter.
+    public string GetQuantityString(int qty)
+    {
+        return $"Quantity (as int): {qty}";
     }
 }

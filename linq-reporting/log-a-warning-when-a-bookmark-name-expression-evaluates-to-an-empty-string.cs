@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -8,72 +7,55 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Paths for template and output documents.
-        const string templatePath = "template.docx";
-        const string outputPath = "output.docx";
+        // Create the template document programmatically.
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
 
-        // -------------------------------------------------
-        // Create the LINQ Reporting template programmatically.
-        // -------------------------------------------------
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("Document with a conditional bookmark generated via LINQ Reporting:");
-
-        // Conditional bookmark tag – will be processed only when the name is not empty.
-        builder.Writeln("<<if [model.BookmarkName != \"\"]>>");
+        // Insert a bookmark tag that uses a model expression for the bookmark name.
         builder.Writeln("<<bookmark [model.BookmarkName]>>");
-        builder.Writeln("This is the bookmarked content.");
+        builder.Writeln("<<[model.Title]>>");
         builder.Writeln("<</bookmark>>");
-        builder.Writeln("<</if>>");
 
-        // Save the template to disk.
+        // Save the template.
         templateDoc.Save(templatePath);
 
-        // -------------------------------------------------
-        // Load the template for report generation.
-        // -------------------------------------------------
-        var doc = new Document(templatePath);
+        // Load the template for reporting.
+        Document doc = new(templatePath);
 
-        // -------------------------------------------------
         // Prepare the data model.
-        // -------------------------------------------------
-        var model = new ReportModel
+        ReportModel model = new()
         {
-            // Intentionally set to empty to trigger the warning.
-            BookmarkName = ""
+            BookmarkName = "", // Intentionally empty to trigger the warning.
+            Title = "Sample Report Title"
         };
 
-        // Log a warning if the bookmark name evaluates to an empty string.
+        // Log a warning if the bookmark name evaluates to an empty string and provide a fallback name.
         if (string.IsNullOrEmpty(model.BookmarkName))
         {
             Console.WriteLine("Warning: Bookmark name expression evaluated to an empty string.");
+            model.BookmarkName = "DefaultBookmark";
         }
 
-        // -------------------------------------------------
         // Build the report using the LINQ Reporting engine.
-        // -------------------------------------------------
-        var engine = new ReportingEngine
-        {
-            // Inline error messages will be inserted into the document instead of throwing.
-            Options = ReportBuildOptions.InlineErrorMessages
-        };
+        ReportingEngine engine = new();
         engine.BuildReport(doc, model, "model");
 
         // Save the generated report.
-        doc.Save(outputPath);
+        string resultPath = Path.Combine(outputDir, "output.docx");
+        doc.Save(resultPath);
+
+        Console.WriteLine($"Report generated: {resultPath}");
     }
-}
 
-// Public data model class used by the template.
-public class ReportModel
-{
-    // Bookmark name used in the <<bookmark>> tag.
-    public string BookmarkName { get; set; } = string.Empty;
-
-    // Additional sample property (not used in this example but kept for completeness).
-    public string Title { get; set; } = "Sample Title";
+    // Public data model class required by the LINQ Reporting engine.
+    public class ReportModel
+    {
+        public string BookmarkName { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+    }
 }

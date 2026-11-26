@@ -1,59 +1,63 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class Person
 {
     public string Name { get; set; } = "";
-    public DateTime BirthDate { get; set; }
+    public int Age { get; set; }
 }
 
-public class Model
+public class ReportModel
 {
-    public Person Person { get; set; } = new();
+    public List<Person> Persons { get; set; } = new();
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Sample data.
-        var model = new Model
+        // Register code page provider (required for some Aspose.Words features)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Prepare sample data
+        var model = new ReportModel
         {
-            Person = new Person
+            Persons = new()
             {
-                Name = "John Doe",
-                BirthDate = new DateTime(1990, 5, 23)
+                new Person { Name = "Alice", Age = 30 },
+                new Person { Name = "Bob", Age = 25 },
+                new Person { Name = "Charlie", Age = 35 }
             }
         };
 
-        // Create the template document.
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        // Create template document programmatically
+        var templatePath = "Template.docx";
         var doc = new Document();
         var builder = new DocumentBuilder(doc);
 
-        // Insert LINQ Reporting tags.
-        builder.Writeln("Name: <<[model.Person.Name]>>");
-        builder.Writeln("Year of Birth: <<[model.Person.BirthDate.Year]>>");
+        builder.Writeln("Person Report");
+        builder.Writeln("<<foreach [p in Persons]>>");
+        builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
+        builder.Writeln("<</foreach>>");
 
-        // Save the template.
         doc.Save(templatePath);
 
-        // Load the template for reporting.
+        // Load the template for reporting
         var reportDoc = new Document(templatePath);
 
-        // Configure the reporting engine to allow safe access to DateTime members.
+        // Configure ReportingEngine with known external type
         var engine = new ReportingEngine();
+        engine.KnownTypes.Add(typeof(Person));
 
-        // Add DateTime as a known external type (new API uses KnownTypes collection).
-        engine.KnownTypes.Add(typeof(DateTime));
-
-        // Build the report.
+        // Build the report
         engine.BuildReport(reportDoc, model, "model");
 
-        // Save the generated report.
-        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        reportDoc.Save(reportPath);
+        // Save the generated report
+        var outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
 }

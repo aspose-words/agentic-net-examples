@@ -1,70 +1,75 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
 
-public class ReportingConfig
-{
-    public bool InlineErrorMessages { get; set; }
-    public bool UseReflectionOptimization { get; set; }
-}
-
-public class Order
-{
-    public string CustomerName { get; set; } = "";
-}
-
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words if needed.
+        // Register code page provider (required for Aspose.Words)
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare JSON configuration file.
-        string configPath = "reportConfig.json";
-        string configJson = @"{
-            ""InlineErrorMessages"": true,
-            ""UseReflectionOptimization"": true
-        }";
-        File.WriteAllText(configPath, configJson);
+        // Prepare folders
+        string outputDir = "output";
+        Directory.CreateDirectory(outputDir);
 
-        // Load configuration.
-        ReportingConfig config = JsonConvert.DeserializeObject<ReportingConfig>(File.ReadAllText(configPath));
+        // Create a simple JSON configuration file with reporting options
+        string configPath = Path.Combine(outputDir, "reportConfig.json");
+        File.WriteAllText(configPath, @"{ ""Options"": [ ""InlineErrorMessages"" ] }");
 
-        // Create a simple template document with a LINQ Reporting tag.
-        string templatePath = "template.docx";
+        // Create a simple Word template with LINQ Reporting tags
+        string templatePath = Path.Combine(outputDir, "template.docx");
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Report generated for: <<[model.Name]>>");
+        builder.Writeln("Current date: <<[model.Date]>>");
         templateDoc.Save(templatePath);
 
-        // Load the template for reporting.
+        // Load the template document
         Document doc = new Document(templatePath);
 
-        // Sample data model.
-        Order order = new Order { CustomerName = "John Doe" };
+        // Load reporting options from JSON configuration
+        string json = File.ReadAllText(configPath);
+        ReportConfig config = JsonConvert.DeserializeObject<ReportConfig>(json) ?? new ReportConfig();
 
-        // Configure the reporting engine based on JSON options.
+        ReportBuildOptions options = 0;
+        foreach (string opt in config.Options)
+        {
+            if (Enum.TryParse(opt, out ReportBuildOptions flag))
+                options |= flag;
+        }
+
+        // Prepare the data model
+        ReportModel model = new ReportModel
+        {
+            Name = "Alice Johnson",
+            Date = DateTime.Now.ToString("D")
+        };
+
+        // Configure and run the reporting engine
         ReportingEngine engine = new ReportingEngine();
-        if (config.InlineErrorMessages)
-            engine.Options = ReportBuildOptions.InlineErrorMessages;
-        else
-            engine.Options = ReportBuildOptions.None;
+        engine.Options = options;
+        engine.BuildReport(doc, model, "model");
 
-        if (config.UseReflectionOptimization)
-            ReportingEngine.UseReflectionOptimization = true;
-
-        // Build the report.
-        bool success = engine.BuildReport(doc, order, "order");
-
-        // Save the generated report.
-        string outputPath = "output.docx";
-        doc.Save(outputPath);
-
-        // Indicate completion (no interactive input).
-        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to {outputPath}");
+        // Save the generated report
+        string resultPath = Path.Combine(outputDir, "report.docx");
+        doc.Save(resultPath);
     }
+}
+
+// Configuration class matching the JSON structure
+public class ReportConfig
+{
+    public List<string> Options { get; set; } = new();
+}
+
+// Simple data model used by the template
+public class ReportModel
+{
+    public string Name { get; set; } = string.Empty;
+    public string Date { get; set; } = string.Empty;
 }

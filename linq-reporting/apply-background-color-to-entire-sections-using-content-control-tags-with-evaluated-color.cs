@@ -1,86 +1,78 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace LinqReportingBackgroundColor
 {
-    public static void Main()
+    // Model classes
+    public class ReportModel
     {
-        // Register code page provider for Aspose.Words.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Prepare the template document with LINQ Reporting tags.
-        var templatePath = "template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-
-        // Begin foreach over Sections collection.
-        builder.Writeln("<<foreach [sec in Sections]>>");
-        // Apply background color to the whole section using backColor tag.
-        builder.Writeln("<<backColor [sec.BgColor]>>");
-        // Section title.
-        builder.Writeln("<<[sec.Title]>>");
-        // Section body.
-        builder.Writeln("<<[sec.Body]>>");
-        // Close backColor tag.
-        builder.Writeln("<</backColor>>");
-        // End foreach.
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // Load the template for report generation.
-        var doc = new Document(templatePath);
-
-        // Create sample data model.
-        var model = new ReportModel
-        {
-            Sections = new()
-            {
-                new Section
-                {
-                    Title = "Section 1",
-                    Body = "Content of section 1.",
-                    BgColor = "LightYellow"
-                },
-                new Section
-                {
-                    Title = "Section 2",
-                    Body = "Content of section 2.",
-                    BgColor = "#FFCCCC"
-                },
-                new Section
-                {
-                    Title = "Section 3",
-                    Body = "Content of section 3.",
-                    BgColor = "LightGreen"
-                }
-            }
-        };
-
-        // Build the report using LINQ Reporting engine.
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
-
-        // Save the generated report.
-        var outputPath = "output.docx";
-        doc.Save(outputPath);
+        public List<Section> Sections { get; set; } = new();
     }
-}
 
-// Data model classes.
-public class ReportModel
-{
-    public List<Section> Sections { get; set; } = new();
-}
+    public class Section
+    {
+        public string Title { get; set; } = "";
+        public string Content { get; set; } = "";
+        public string BgColor { get; set; } = "";
+    }
 
-public class Section
-{
-    public string Title { get; set; } = string.Empty;
-    public string Body { get; set; } = string.Empty;
-    public string BgColor { get; set; } = string.Empty;
+    public class Program
+    {
+        public static void Main()
+        {
+            // Register code page provider (required for some encodings)
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Prepare sample data
+            var model = new ReportModel
+            {
+                Sections = new List<Section>
+                {
+                    new Section
+                    {
+                        Title = "Introduction",
+                        Content = "This is the introduction section.",
+                        BgColor = "LightYellow"
+                    },
+                    new Section
+                    {
+                        Title = "Conclusion",
+                        Content = "This is the conclusion section.",
+                        BgColor = "#ADD8E6" // LightBlue
+                    }
+                }
+            };
+
+            // Create template document
+            var template = new Document();
+            var builder = new DocumentBuilder(template);
+
+            // Insert LINQ Reporting tags
+            builder.Writeln("<<foreach [sec in Sections]>>");
+            builder.Writeln("<<backColor [sec.BgColor]>>");
+            builder.Writeln("<<[sec.Title]>>");
+            builder.Writeln("<br/>");
+            builder.Writeln("<<[sec.Content]>>");
+            builder.Writeln("<</backColor>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save template (optional, can be omitted)
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
+
+            // Load template for reporting (demonstrates load step)
+            var doc = new Document(templatePath);
+
+            // Build report
+            var engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
+
+            // Save final report
+            const string outputPath = "Report.docx";
+            doc.Save(outputPath);
+        }
+    }
 }

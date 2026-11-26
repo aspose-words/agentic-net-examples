@@ -4,127 +4,97 @@ using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
 
-public class Program
+namespace LinqReportingRetryExample
 {
-    public static void Main()
+    // Data model classes
+    public class Order
     {
-        // Register code page provider (required for some Aspose.Words features)
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        public string CustomerName { get; set; } = string.Empty;
+        public List<Item> Items { get; set; } = new();
+    }
 
-        // Paths for template and output
-        string templatePath = "Template.docx";
-        string outputPath = "Report.docx";
+    public class Item
+    {
+        public string Name { get; set; } = string.Empty;
+        public double Price { get; set; }
+    }
 
-        // Create the template document programmatically
-        CreateTemplate(templatePath);
-
-        // Load the template
-        Document templateDoc = new Document(templatePath);
-
-        // Prepare sample data
-        Order order = new Order
+    public class Program
+    {
+        public static void Main()
         {
-            CustomerName = "John Doe",
-            Items = new List<Item>
-            {
-                new Item { Index = 1, Name = "Apple" },
-                new Item { Index = 2, Name = "Banana" }
-            }
-        };
+            // Register code page provider for Aspose.Words
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Initialize the reporting engine
-        ReportingEngine engine = new ReportingEngine();
+            // Create template document programmatically
+            var templatePath = "Template.docx";
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
+            builder.Writeln("Customer: <<[order.CustomerName]>>");
+            builder.Writeln("Items:");
+            builder.Writeln("<<foreach [item in order.Items]>>");
+            builder.Writeln("- <<[item.Name]>>: $<<[item.Price]>>");
+            builder.Writeln("<</foreach>>");
+            templateDoc.Save(templatePath);
 
-        bool success = false;
-        const int maxAttempts = 3;
+            // Load the template for report generation
+            var doc = new Document(templatePath);
 
-        for (int attempt = 1; attempt <= maxAttempts && !success; attempt++)
-        {
-            try
+            // Prepare sample data
+            var order = new Order
             {
-                // Build the report
-                engine.BuildReport(templateDoc, order, "order");
-                success = true;
-            }
-            catch (Exception ex) when (IsTransient(ex))
-            {
-                // Transient error encountered; log and retry
-                Console.WriteLine($"Attempt {attempt} failed with a transient error: {ex.Message}");
-                if (attempt == maxAttempts)
+                CustomerName = "John Doe",
+                Items = new()
                 {
-                    Console.WriteLine("Maximum retry attempts reached. Report generation failed.");
+                    new Item { Name = "Apple", Price = 1.20 },
+                    new Item { Name = "Banana", Price = 0.80 },
+                    new Item { Name = "Cherry", Price = 2.50 }
+                }
+            };
+
+            // Reporting engine instance
+            var engine = new ReportingEngine();
+
+            // Retry logic: up to three attempts for transient errors
+            const int maxAttempts = 3;
+            bool success = false;
+            for (int attempt = 1; attempt <= maxAttempts; attempt++)
+            {
+                try
+                {
+                    // Build the report
+                    engine.BuildReport(doc, order, "order");
+                    success = true;
+                    break; // Exit loop on success
+                }
+                catch (Exception ex) when (IsTransient(ex) && attempt < maxAttempts)
+                {
+                    // Log transient error and retry
+                    Console.WriteLine($"Transient error on attempt {attempt}: {ex.Message}. Retrying...");
+                }
+                catch (Exception ex)
+                {
+                    // Non‑transient error or final attempt failure
+                    Console.WriteLine($"Report generation failed: {ex.Message}");
+                    break;
                 }
             }
+
+            if (success)
+            {
+                // Save the generated report
+                var outputPath = "Report.docx";
+                doc.Save(outputPath);
+                Console.WriteLine($"Report generated successfully: {outputPath}");
+            }
         }
 
-        if (success)
+        // Simple heuristic to decide if an exception is transient
+        private static bool IsTransient(Exception ex)
         {
-            // Save the generated report
-            templateDoc.Save(outputPath);
-            Console.WriteLine($"Report generated successfully: {outputPath}");
+            // For demonstration, treat all IO and network related exceptions as transient
+            return ex is IOException;
         }
     }
-
-    // Determines whether an exception is considered transient.
-    private static bool IsTransient(Exception ex)
-    {
-        // For demonstration, treat all IOExceptions as transient.
-        // Extend this method to include other transient scenarios as needed.
-        return ex is IOException;
-    }
-
-    // Creates a simple Word template with LINQ Reporting tags.
-    private static void CreateTemplate(string path)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Write a heading
-        builder.Writeln("Order Report");
-        builder.Writeln();
-
-        // Insert a tag for the customer's name
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln();
-
-        // Begin foreach loop for items
-        builder.Writeln("<<foreach [item in Items]>>");
-
-        // Create a table header
-        Table table = builder.StartTable();
-        builder.InsertCell();
-        builder.Writeln("Index");
-        builder.InsertCell();
-        builder.Writeln("Product");
-        builder.EndRow();
-
-        // Table row for each item
-        builder.InsertCell();
-        builder.Writeln("<<[item.Index]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[item.Name]>>");
-        builder.EndRow();
-
-        // End table and foreach
-        builder.EndTable();
-        builder.Writeln("<</foreach>>");
-
-        // Save the template
-        doc.Save(path);
-    }
-}
-
-// Data model classes
-public class Order
-{
-    public string CustomerName { get; set; } = string.Empty;
-    public List<Item> Items { get; set; } = new();
-}
-
-public class Item
-{
-    public int Index { get; set; }
-    public string Name { get; set; } = string.Empty;
 }

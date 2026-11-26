@@ -1,24 +1,22 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
+using System.Text;
 
 namespace LinqReportingJsonAddress
 {
-    // Root wrapper for JSON data.
-    public class DataRoot
+    // Root model for the report.
+    public class ReportModel
     {
-        public List<Person> Persons { get; set; } = new();
+        public List<AddressItem> Addresses { get; set; } = new();
     }
 
-    // Model representing a person.
-    public class Person
+    // Individual address item.
+    public class AddressItem
     {
-        public string FirstName { get; set; } = "";
-        public string LastName { get; set; } = "";
         public string Street { get; set; } = "";
         public string City { get; set; } = "";
         public string State { get; set; } = "";
@@ -33,55 +31,41 @@ namespace LinqReportingJsonAddress
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
             // Create sample JSON data file.
-            string jsonContent = @"{
-  ""Persons"": [
-    {
-      ""FirstName"": ""John"",
-      ""LastName"": ""Doe"",
-      ""Street"": ""123 Main St"",
-      ""City"": ""Springfield"",
-      ""State"": ""IL"",
-      ""Zip"": ""62704""
-    },
-    {
-      ""FirstName"": ""Jane"",
-      ""LastName"": ""Smith"",
-      ""Street"": ""456 Oak Ave"",
-      ""City"": ""Metropolis"",
-      ""State"": ""NY"",
-      ""Zip"": ""10001""
-    }
-  ]
-}";
-            const string jsonPath = "data.json";
-            File.WriteAllText(jsonPath, jsonContent, Encoding.UTF8);
+            const string jsonFile = "addresses.json";
+            var sampleJson = @"[
+  { ""Street"": ""123 Main St"", ""City"": ""Springfield"", ""State"": ""IL"", ""Zip"": ""62704"" },
+  { ""Street"": ""456 Oak Ave"", ""City"": ""Metropolis"", ""State"": ""NY"", ""Zip"": ""10001"" },
+  { ""Street"": ""789 Pine Rd"", ""City"": ""Gotham"", ""State"": ""NJ"", ""Zip"": ""07097"" }
+]";
+            File.WriteAllText(jsonFile, sampleJson);
+
+            // Load JSON into C# objects.
+            var addressList = JsonConvert.DeserializeObject<List<AddressItem>>(File.ReadAllText(jsonFile)) ?? new();
+            var model = new ReportModel { Addresses = addressList };
 
             // Create the template document programmatically.
+            const string templateFile = "Template.docx";
             var templateDoc = new Document();
             var builder = new DocumentBuilder(templateDoc);
 
             builder.Writeln("Address Report");
-            builder.Writeln("<<foreach [person in Persons]>>");
-            // Build address line using separate tags (no inline concatenation).
-            builder.Writeln("<<[person.FirstName]>> <<[person.LastName]>>: <<[person.Street]>>, <<[person.City]>>, <<[person.State]>> <<[person.Zip]>>");
+            builder.Writeln("<<foreach [addr in model.Addresses]>>");
+            // Inline string concatenation to build full address line.
+            builder.Writeln("<<[addr.Street + \", \" + addr.City + \", \" + addr.State + \" \" + addr.Zip]>>");
             builder.Writeln("<</foreach>>");
 
-            const string templatePath = "Template.docx";
-            templateDoc.Save(templatePath);
+            templateDoc.Save(templateFile);
 
             // Load the template for report generation.
-            var doc = new Document(templatePath);
+            var reportDoc = new Document(templateFile);
 
-            // Deserialize JSON into strongly‑typed model.
-            var dataRoot = JsonConvert.DeserializeObject<DataRoot>(jsonContent) ?? new DataRoot();
-
-            // Build the report.
+            // Build the report using LINQ Reporting engine.
             var engine = new ReportingEngine();
-            engine.BuildReport(doc, dataRoot, "root");
+            engine.BuildReport(reportDoc, model, "model");
 
-            // Save the generated report.
-            const string outputPath = "Report.docx";
-            doc.Save(outputPath);
+            // Save the final report.
+            const string outputFile = "Report.docx";
+            reportDoc.Save(outputFile);
         }
     }
 }

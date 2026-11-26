@@ -1,72 +1,62 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class ReportModel
+{
+    public string BookmarkName { get; set; } = "";
+    public string Title { get; set; } = "";
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Create the template document with LINQ Reporting tags.
-        var templatePath = "Template.docx";
-        var outputPath = "Report.docx";
+        // Register code page provider (required for some environments)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Create a template document with a conditional bookmark.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Begin foreach over Items collection.
-        builder.Writeln("<<foreach [item in Items]>>");
-
-        // If BookmarkName is not empty, create a bookmark around the title.
-        builder.Writeln("<<if [item.BookmarkName != \"\"]>>");
-        builder.Writeln("<<bookmark [item.BookmarkName]>>");
-        builder.Writeln("<<[item.Title]>>");
+        // Conditional block: create bookmark only if BookmarkName is not empty.
+        builder.Writeln("<<if [model.BookmarkName != \"\"]>>");
+        builder.Writeln("<<bookmark [model.BookmarkName]>>");
+        builder.Writeln("<<[model.Title]>>");
         builder.Writeln("<</bookmark>>");
         builder.Writeln("<</if>>");
 
-        // If BookmarkName is empty, just write the title without a bookmark.
-        builder.Writeln("<<if [item.BookmarkName == \"\"]>>");
-        builder.Writeln("<<[item.Title]>>");
-        builder.Writeln("<</if>>");
-
-        // End foreach.
-        builder.Writeln("<</foreach>>");
-
-        // Save the template.
-        doc.Save(templatePath);
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
 
         // Load the template for report generation.
-        var template = new Document(templatePath);
+        Document docWithBookmark = new Document(templatePath);
+        Document docWithoutBookmark = new Document(templatePath);
 
-        // Prepare sample data.
-        var model = new ReportModel
+        // Prepare data models.
+        ReportModel modelWith = new ReportModel
         {
-            Items = new()
-            {
-                new Item { Title = "First Item", BookmarkName = "FirstBookmark" },
-                new Item { Title = "Second Item", BookmarkName = "" },
-                new Item { Title = "Third Item", BookmarkName = "ThirdBookmark" }
-            }
+            BookmarkName = "MyBookmark",
+            Title = "Report with bookmark"
         };
 
-        // Build the report.
-        var engine = new ReportingEngine();
-        engine.BuildReport(template, model, "model");
+        ReportModel modelWithout = new ReportModel
+        {
+            BookmarkName = "", // Empty name – bookmark should be skipped.
+            Title = "Report without bookmark"
+        };
 
-        // Save the generated report.
-        template.Save(outputPath);
+        // Build reports.
+        ReportingEngine engine = new ReportingEngine();
+
+        engine.BuildReport(docWithBookmark, modelWith, "model");
+        engine.BuildReport(docWithoutBookmark, modelWithout, "model");
+
+        // Save the generated reports.
+        docWithBookmark.Save("ReportWithBookmark.docx");
+        docWithoutBookmark.Save("ReportWithoutBookmark.docx");
     }
-}
-
-// Root data model.
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
-
-// Item model used in the foreach loop.
-public class Item
-{
-    public string Title { get; set; } = "";
-    public string BookmarkName { get; set; } = "";
 }

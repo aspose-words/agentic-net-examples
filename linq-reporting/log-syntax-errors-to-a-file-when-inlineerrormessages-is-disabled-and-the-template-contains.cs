@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -8,78 +7,50 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Prepare output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Prepare sample data model.
-        var model = new SampleModel
-        {
-            Name = "John Doe"
-        };
+        // Create a template with an invalid expression (property does not exist).
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Report Header");
+        builder.Writeln("<<[model.NonExistentProperty]>>"); // Invalid expression.
+        templateDoc.Save(templatePath);
 
-        // Create a template document with a valid and an invalid expression.
-        var templatePath = "template.docx";
-        CreateTemplate(templatePath);
+        // Load the template for reporting.
+        Document reportDoc = new Document(templatePath);
 
-        // Load the template.
-        var doc = new Document(templatePath);
+        // Sample data model.
+        Model model = new Model { Name = "Sample Name" };
 
         // Configure the reporting engine without InlineErrorMessages.
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None; // InlineErrorMessages disabled.
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None;
 
-        bool success;
+        // Path for the error log.
+        string logPath = Path.Combine(outputDir, "ErrorLog.txt");
+
         try
         {
-            // Build the report.
-            success = engine.BuildReport(doc, model, "model");
+            // Attempt to build the report. This will throw because of the invalid expression.
+            engine.BuildReport(reportDoc, model, "model");
         }
         catch (Exception ex)
         {
-            // When InlineErrorMessages is disabled, errors are thrown as exceptions.
-            success = false;
-            LogError(ex);
+            // Log the error details to a file.
+            File.WriteAllText(logPath, ex.ToString());
         }
 
-        // If the build failed, log syntax errors to a file.
-        if (!success)
-        {
-            var logPath = "error.log";
-            var logMessage = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Report generation failed due to syntax errors in the template.";
-            File.WriteAllText(logPath, logMessage);
-        }
-        else
-        {
-            // Save the generated report when successful.
-            doc.Save("output.docx");
-        }
-    }
-
-    private static void CreateTemplate(string path)
-    {
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        // Valid expression.
-        builder.Writeln("Customer Name: <<[model.Name]>>");
-
-        // Invalid expression (syntax error – property does not exist).
-        builder.Writeln("Invalid Field: <<[model.NonExistent]>>");
-
-        doc.Save(path);
-    }
-
-    private static void LogError(Exception ex)
-    {
-        var errorLogPath = "exception.log";
-        var sb = new StringBuilder();
-        sb.AppendLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Exception during report generation:");
-        sb.AppendLine(ex.ToString());
-        File.WriteAllText(errorLogPath, sb.ToString());
+        // Save the (possibly incomplete) report.
+        string reportPath = Path.Combine(outputDir, "Report.docx");
+        reportDoc.Save(reportPath);
     }
 }
 
-public class SampleModel
+// Simple data model used for the report.
+public class Model
 {
     public string Name { get; set; } = string.Empty;
 }

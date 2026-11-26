@@ -1,89 +1,78 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
 
-namespace LinqReportingCurrencyExample
+public class Product
 {
-    // Data model classes
-    public class Product
-    {
-        public string Name { get; set; } = "";
-        public decimal Price { get; set; }
-    }
+    public string Name { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+}
 
-    public class ReportModel
-    {
-        public List<Product> Products { get; set; } = new();
-    }
+public class ReportModel
+{
+    public List<Product> Products { get; set; } = new();
+}
 
-    public class Program
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Prepare template.
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        builder.Writeln("Product List");
+        builder.Writeln("<<foreach [p in Products]>>");
+
+        Table table = builder.StartTable();
+
+        // Header row.
+        builder.InsertCell();
+        builder.Writeln("Name");
+        builder.InsertCell();
+        builder.Writeln("Price");
+        builder.EndRow();
+
+        // Data row.
+        builder.InsertCell();
+        builder.Writeln("<<[p.Name]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[p.Price.ToString(\"C\")]>>");
+        builder.EndRow();
+
+        builder.EndTable();
+        builder.Writeln("<</foreach>>");
+
+        templateDoc.Save(templatePath);
+
+        // Prepare data.
+        ReportModel model = new()
         {
-            // Register code page provider (required by Aspose.Words for some encodings)
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            // Prepare sample data
-            var model = new ReportModel
+            Products = new()
             {
-                Products = new List<Product>
-                {
-                    new Product { Name = "Apple", Price = 0.99m },
-                    new Product { Name = "Banana", Price = 0.59m },
-                    new Product { Name = "Cherry", Price = 2.49m }
-                }
-            };
+                new Product { Name = "Apple", Price = 0.99m },
+                new Product { Name = "Banana", Price = 0.59m },
+                new Product { Name = "Cherry", Price = 2.49m }
+            }
+        };
 
-            // Create template document programmatically
-            var templatePath = "Template.docx";
-            var builder = new DocumentBuilder();
+        // Build report.
+        Document reportDoc = new Document(templatePath);
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None;
+        engine.BuildReport(reportDoc, model, "model");
 
-            // Document title
-            builder.Writeln("Product Price Report");
-            builder.Writeln();
+        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "report.docx");
+        reportDoc.Save(reportPath);
 
-            // Begin foreach loop over Products
-            builder.Writeln("<<foreach [p in Products]>>");
-
-            // Table for each product
-            var table = builder.StartTable();
-
-            // Header row
-            builder.InsertCell();
-            builder.Writeln("Product");
-            builder.InsertCell();
-            builder.Writeln("Price");
-            builder.EndRow();
-
-            // Data row
-            builder.InsertCell();
-            builder.Writeln("<<[p.Name]>>");
-            builder.InsertCell();
-            // Render price as currency using standard .NET format string
-            builder.Writeln("<<[p.Price.ToString(\"C\")]>>");
-            builder.EndRow();
-
-            // End table for this iteration
-            builder.EndTable();
-
-            // End foreach
-            builder.Writeln("<</foreach>>");
-
-            // Save the template
-            builder.Document.Save(templatePath);
-
-            // Load the template for reporting
-            var doc = new Document(templatePath);
-
-            // Build the report
-            var engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
-
-            // Save the final report
-            var outputPath = "Report.docx";
-            doc.Save(outputPath);
-        }
+        Console.WriteLine($"Report generated: {reportPath}");
     }
 }

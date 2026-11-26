@@ -1,68 +1,52 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class Product
-{
-    public string Name { get; set; } = "";
-    public int Stock { get; set; }
-}
-
-public class ReportModel
-{
-    public List<Product> Products { get; set; } = new();
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare folders.
-        string outputDir = "Output";
-        Directory.CreateDirectory(outputDir);
-
-        // Create template document.
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Write a heading.
-        builder.Writeln("Product Stock Report");
-        builder.Writeln();
-
-        // Begin foreach over Products.
-        builder.Writeln("<<foreach [p in Products]>>");
-        builder.Writeln("Product: <<[p.Name]>>");
-        // If stock > 0, show quantity, else show 'Out of stock'.
-        builder.Writeln("<<if [p.Stock > 0]>>Quantity: <<[p.Stock]>> in stock<</if>>");
-        builder.Writeln("<<if [p.Stock == 0]>>Out of stock<</if>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template.
-        templateDoc.Save(templatePath);
-
-        // Load the template for reporting.
-        Document doc = new Document(templatePath);
-
-        // Prepare sample data.
-        ReportModel model = new()
+        // Prepare sample data
+        var product = new Product
         {
-            Products = new()
-            {
-                new Product { Name = "Apple", Stock = 15 },
-                new Product { Name = "Banana", Stock = 0 },
-                new Product { Name = "Cherry", Stock = 7 }
-            }
+            Name = "Widget",
+            Quantity = 0 // Change to a positive number to see the quantity displayed
         };
 
-        // Build the report.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        // Create template document with LINQ Reporting tags
+        string templatePath = "template.docx";
+        CreateTemplate(templatePath);
 
-        // Save the generated report.
-        string resultPath = Path.Combine(outputDir, "report.docx");
-        doc.Save(resultPath);
+        // Load the template
+        var doc = new Document(templatePath);
+
+        // Build the report
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, product, "product");
+
+        // Save the generated report
+        string reportPath = "report.docx";
+        doc.Save(reportPath);
+
+        Console.WriteLine($"Report generated: {Path.GetFullPath(reportPath)}");
     }
+
+    private static void CreateTemplate(string path)
+    {
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        builder.Writeln("Product: <<[product.Name]>>");
+        // Inline if‑else: display quantity when >0, otherwise show "Out of stock"
+        builder.Writeln("Stock: <<if [product.Quantity > 0]>> <<[product.Quantity]>> <<else>>Out of stock<</if>>");
+
+        doc.Save(path);
+    }
+}
+
+public class Product
+{
+    public string Name { get; set; } = string.Empty;
+    public int Quantity { get; set; }
 }

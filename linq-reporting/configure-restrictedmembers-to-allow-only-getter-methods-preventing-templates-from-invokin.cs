@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,49 +9,62 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare working folder
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        Directory.CreateDirectory(workDir);
-        string templatePath = Path.Combine(workDir, "template.docx");
-        string outputPath = Path.Combine(workDir, "report.docx");
+        // Prepare output directory
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Create a simple template document with LINQ Reporting tags
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Person Report");
-        builder.Writeln("Name: <<[model.Name]>>");
-        builder.Writeln("Age: <<[model.Age]>>");
-        templateDoc.Save(templatePath);
+        // Create a simple template document with a LINQ Reporting tag
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+        builder.Writeln("Customer Name: <<[model.Name]>>");
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        template.Save(templatePath);
 
-        // Load the template
-        Document doc = new Document(templatePath);
+        // Load the template for reporting
+        Document reportDoc = new Document(templatePath);
 
-        // Sample data model
-        Person model = new Person
-        {
-            Name = "Alice Johnson",
-            Age = 28
-        };
+        // Sample data model with a getter and setter
+        MyModel model = new MyModel { Name = "John Doe" };
 
-        // Configure ReportingEngine (restricted members configuration is not required for this version)
+        // Configure ReportingEngine to allow only getter methods
         ReportingEngine engine = new ReportingEngine();
 
+        // Use reflection to access the RestrictedMembers collection (if present) and configure it
+        PropertyInfo restrictedProp = typeof(ReportingEngine).GetProperty(
+            "RestrictedMembers",
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+        if (restrictedProp != null)
+        {
+            if (restrictedProp.GetValue(engine) is ICollection<MemberInfo> restrictedMembers)
+            {
+                restrictedMembers.Clear();
+
+                MethodInfo nameGetter = typeof(MyModel)
+                    .GetProperty(nameof(MyModel.Name))!
+                    .GetGetMethod();
+
+                if (nameGetter != null)
+                {
+                    restrictedMembers.Add(nameGetter);
+                }
+            }
+        }
+
         // Build the report
-        bool success = engine.BuildReport(doc, model, "model");
+        engine.BuildReport(reportDoc, model, "model");
 
         // Save the generated report
-        doc.Save(outputPath);
+        string reportPath = Path.Combine(outputDir, "Report.docx");
+        reportDoc.Save(reportPath);
 
-        // Indicate result (no interactive input)
-        Console.WriteLine(success
-            ? $"Report generated successfully at: {outputPath}"
-            : "Report generation failed.");
+        // Indicate completion
+        Console.WriteLine($"Report generated at: {reportPath}");
     }
 }
 
-// Data model with public properties
-public class Person
+// Data model with a public property
+public class MyModel
 {
     public string Name { get; set; } = string.Empty;
-    public int Age { get; set; }
 }

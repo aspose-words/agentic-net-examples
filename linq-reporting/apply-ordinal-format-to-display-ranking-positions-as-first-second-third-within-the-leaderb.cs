@@ -1,143 +1,76 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
 
-public class Program
+public class Player
 {
-    public static void Main()
+    public string Name { get; set; } = "";
+    public int Score { get; set; }
+    public int Rank { get; set; }
+
+    // Returns ordinal representation of the rank (First, Second, Third, etc.).
+    public string Ordinal => GetOrdinal(Rank);
+
+    private static string GetOrdinal(int number)
     {
-        // Register code page provider for any encoding needs.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Paths for template and output.
-        string templatePath = "LeaderboardTemplate.docx";
-        string outputPath = "LeaderboardReport.docx";
-
-        // -------------------------------------------------
-        // Create the LINQ Reporting template programmatically.
-        // -------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Title.
-        builder.Writeln("Leaderboard");
-        builder.Writeln();
-
-        // Table header.
-        Table headerTable = builder.StartTable();
-        builder.InsertCell();
-        builder.Writeln("Rank");
-        builder.InsertCell();
-        builder.Writeln("Name");
-        builder.InsertCell();
-        builder.Writeln("Score");
-        builder.EndRow();
-        builder.EndTable();
-
-        // Begin foreach over players.
-        builder.Writeln("<<foreach [player in Leaderboard.Players]>>");
-
-        // Table rows for each player.
-        Table table = builder.StartTable();
-
-        // Rank (ordinal).
-        builder.InsertCell();
-        builder.Writeln("<<[player.RankOrdinal]>>");
-
-        // Name.
-        builder.InsertCell();
-        builder.Writeln("<<[player.Name]>>");
-
-        // Score.
-        builder.InsertCell();
-        builder.Writeln("<<[player.Score]>>");
-
-        builder.EndRow();
-        builder.EndTable();
-
-        // End foreach.
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -------------------------------------------------
-        // Load the template and build the report.
-        // -------------------------------------------------
-        Document doc = new Document(templatePath);
-
-        // Prepare sample data.
-        Leaderboard model = new Leaderboard
+        return number switch
         {
-            Players = new List<Player>
-            {
-                new Player { Name = "Alice", Score = 95 },
-                new Player { Name = "Bob", Score = 87 },
-                new Player { Name = "Charlie", Score = 78 },
-                new Player { Name = "Diana", Score = 65 }
-            }
+            1 => "First",
+            2 => "Second",
+            3 => "Third",
+            _ => $"{number}th"
         };
-
-        // Assign positions based on descending score.
-        model.Players.Sort((a, b) => b.Score.CompareTo(a.Score));
-        for (int i = 0; i < model.Players.Count; i++)
-        {
-            model.Players[i].Position = i + 1;
-        }
-
-        // Build the report.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "Leaderboard");
-
-        // Save the generated report.
-        doc.Save(outputPath);
     }
 }
 
-// Root data model.
 public class Leaderboard
 {
     public List<Player> Players { get; set; } = new();
 }
 
-// Player data model.
-public class Player
+public class Program
 {
-    public string Name { get; set; } = "";
-    public int Score { get; set; }
-    public int Position { get; set; }
-
-    // Returns ordinal representation (First, Second, Third, etc.).
-    public string RankOrdinal
+    public static void Main()
     {
-        get
+        // Register code page provider for potential encoding needs.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Step 1: Create the LINQ Reporting template programmatically.
+        var templatePath = "LeaderboardTemplate.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        builder.Writeln("Leaderboard");
+        builder.Writeln("<<foreach [player in Players]>>");
+        builder.Writeln("<<[player.Ordinal]>> - <<[player.Name]>> - Score: <<[player.Score]>>");
+        builder.Writeln("<</foreach>>");
+
+        doc.Save(templatePath);
+
+        // Step 2: Load the template for report generation.
+        var reportDoc = new Document(templatePath);
+
+        // Step 3: Prepare sample data.
+        var model = new Leaderboard
         {
-            return Position switch
+            Players = new List<Player>
             {
-                1 => "First",
-                2 => "Second",
-                3 => "Third",
-                _ => Position + GetOrdinalSuffix(Position)
-            };
-        }
-    }
-
-    private static string GetOrdinalSuffix(int number)
-    {
-        int absNumber = Math.Abs(number);
-        int lastTwoDigits = absNumber % 100;
-        if (lastTwoDigits >= 11 && lastTwoDigits <= 13)
-            return "th";
-
-        return (absNumber % 10) switch
-        {
-            1 => "st",
-            2 => "nd",
-            3 => "rd",
-            _ => "th"
+                new Player { Name = "Alice",   Score = 95, Rank = 1 },
+                new Player { Name = "Bob",     Score = 90, Rank = 2 },
+                new Player { Name = "Charlie", Score = 85, Rank = 3 },
+                new Player { Name = "David",   Score = 80, Rank = 4 }
+            }
         };
+
+        // Step 4: Build the report using the LINQ Reporting engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
+
+        // Step 5: Save the generated report.
+        var outputPath = "LeaderboardReport.docx";
+        reportDoc.Save(outputPath);
     }
 }

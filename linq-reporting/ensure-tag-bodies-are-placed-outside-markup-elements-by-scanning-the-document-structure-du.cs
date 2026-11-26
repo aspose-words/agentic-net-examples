@@ -2,85 +2,108 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Drawing;
 using Newtonsoft.Json;
 
-namespace LinqReportingTagPreprocess
+public class Program
 {
-    // Simple data model for the report.
-    public class ReportModel
+    public static void Main()
     {
-        public string BookmarkName { get; set; } = "MyBookmark";
-        public string Title { get; set; } = "Report Title";
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Prepare sample data model.
+        var model = new ReportModel
+        {
+            Name = "John Doe"
+        };
+
+        // Create a template document with a tag inside a paragraph that also contains other text.
+        string templatePath = "template.docx";
+        CreateTemplate(templatePath);
+
+        // Load the template.
+        Document doc = new Document(templatePath);
+
+        // Preprocess the document to ensure tag bodies are placed outside markup elements.
+        PreprocessDocument(doc);
+
+        // Build the report.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
+
+        // Save the generated report.
+        string outputPath = "output.docx";
+        doc.Save(outputPath);
     }
 
-    // Visitor that scans the document for LINQ Reporting tags.
-    public class TagPreprocessor : DocumentVisitor
+    // Creates a simple template containing a tag inside a paragraph with surrounding text.
+    private static void CreateTemplate(string path)
     {
-        public override VisitorAction VisitRun(Run run)
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Paragraph with tag embedded in text.
+        builder.Writeln("Hello <<[model.Name]>> world!");
+
+        // Save the template.
+        doc.Save(path);
+    }
+
+    // Scans the document and moves tag bodies to separate runs if they share a run with other text.
+    private static void PreprocessDocument(Document doc)
+    {
+        // Regular expression to find LINQ Reporting tags like <<[...]>>
+        Regex tagRegex = new Regex(@"<<\[[^\]]+\]>>", RegexOptions.Compiled);
+
+        // Collect runs to process to avoid modifying the collection while iterating.
+        List<Run> runs = new List<Run>();
+        foreach (Run run in doc.GetChildNodes(NodeType.Run, true))
+        {
+            runs.Add(run);
+        }
+
+        foreach (Run run in runs)
         {
             string text = run.Text;
-            if (text.Contains("<<bookmark") && text.Contains("<</bookmark>>"))
+            Match match = tagRegex.Match(text);
+            if (match.Success && match.Length != text.Length)
             {
-                // Example check: ensure the tag body (the text between opening and closing tags)
-                // is not mixed with other markup in the same run.
-                // For demonstration we simply output a diagnostic message.
-                Console.WriteLine("Found bookmark tag in run: \"{0}\"", text);
+                string before = text.Substring(0, match.Index);
+                string tag = match.Value;
+                string after = text.Substring(match.Index + match.Length);
+
+                // Insert runs in the order: before, tag, after.
+                if (!string.IsNullOrEmpty(before))
+                {
+                    Run beforeRun = (Run)run.Clone(true);
+                    beforeRun.Text = before;
+                    run.ParentNode.InsertBefore(beforeRun, run);
+                }
+
+                Run tagRun = (Run)run.Clone(true);
+                tagRun.Text = tag;
+                run.ParentNode.InsertBefore(tagRun, run);
+
+                if (!string.IsNullOrEmpty(after))
+                {
+                    Run afterRun = (Run)run.Clone(true);
+                    afterRun.Text = after;
+                    run.ParentNode.InsertBefore(afterRun, run);
+                }
+
+                // Remove the original mixed run.
+                run.Remove();
             }
-            return VisitorAction.Continue;
         }
     }
 
-    public class Program
+    // Sample data model used by the report.
+    public class ReportModel
     {
-        public static void Main()
-        {
-            // Register code page provider for any encoding needs.
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            // Paths for template and output.
-            string templatePath = "template.docx";
-            string outputPath = "output.docx";
-
-            // -------------------------------------------------
-            // Step 1: Create the template document programmatically.
-            // -------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-            // Insert a bookmark tag with its body placed outside any markup.
-            builder.Writeln("<<bookmark [model.BookmarkName]>>");
-            builder.Writeln("<<[model.Title]>>");
-            builder.Writeln("<</bookmark>>");
-
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -------------------------------------------------
-            // Step 2: Load the template for preprocessing.
-            // -------------------------------------------------
-            Document doc = new Document(templatePath);
-
-            // Scan the document structure to ensure tag bodies are correctly placed.
-            doc.Accept(new TagPreprocessor());
-
-            // -------------------------------------------------
-            // Step 3: Prepare the data model.
-            // -------------------------------------------------
-            ReportModel model = new ReportModel();
-
-            // -------------------------------------------------
-            // Step 4: Build the report using LINQ Reporting Engine.
-            // -------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
-
-            // -------------------------------------------------
-            // Step 5: Save the generated report.
-            // -------------------------------------------------
-            doc.Save(outputPath);
-        }
+        public string Name { get; set; } = string.Empty;
     }
 }

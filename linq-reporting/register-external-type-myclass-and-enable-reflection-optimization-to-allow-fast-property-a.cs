@@ -1,11 +1,11 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class MyClass
 {
-    // Initialize properties to avoid nullable warnings.
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; set; } = "";
     public int Value { get; set; }
 }
 
@@ -13,34 +13,39 @@ public class Program
 {
     public static void Main()
     {
-        // Enable reflection optimization for faster property access.
-        ReportingEngine.UseReflectionOptimization = true;
+        // Create output directory
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Create a template document with LINQ Reporting tags.
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Hello <<[model.Name]>>! Value: <<[model.Value]>>.");
+        // Build template document with LINQ Reporting tags
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+        builder.Writeln("Hello, <<[my.Name]>>!");
+        builder.Writeln("Value: <<[my.Value]>>");
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        template.Save(templatePath);
 
-        // Save the template.
-        const string templatePath = "Template.docx";
-        templateDoc.Save(templatePath);
+        // Load template for report generation
+        Document report = new Document(templatePath);
 
-        // Load the template for report generation.
-        Document reportDoc = new Document(templatePath);
-
-        // Prepare the data model.
-        MyClass model = new MyClass
+        // Sample data
+        MyClass data = new MyClass
         {
-            Name = "Aspose",
-            Value = 123
+            Name = "World",
+            Value = 42
         };
 
-        // Build the report.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+        // Enable reflection optimization
+        ReportingEngine.UseReflectionOptimization = true;
 
-        // Save the generated report.
-        const string reportPath = "Report.docx";
-        reportDoc.Save(reportPath);
+        // Build report
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(report, data, "my");
+
+        // Save the generated report
+        string reportPath = Path.Combine(outputDir, "Report.docx");
+        report.Save(reportPath);
+
+        Console.WriteLine($"Report generated at: {reportPath}");
     }
 }

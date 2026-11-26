@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -12,42 +11,50 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare file paths in the current working directory.
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "template.docx");
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
+        // -----------------------------------------------------------------
+        // Create a simple template with a LINQ Reporting tag.
+        // -----------------------------------------------------------------
+        const string templatePath = "template.docx";
 
-        // 1. Create a LINQ Reporting template programmatically.
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Hello <<[model.Name]>>!");
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
+        builder.Writeln("Hello <<[model.Name]>>");
         templateDoc.Save(templatePath);
 
-        // 2. Load the template and prepare the data model.
-        Document loadedTemplate = new Document(templatePath);
-        Model model = new Model();
+        // -----------------------------------------------------------------
+        // Load the template for reporting.
+        // -----------------------------------------------------------------
+        Document doc = new(templatePath);
+        Model model = new();
 
-        // 3. Configure the ReportingEngine and set restricted types BEFORE the first BuildReport.
-        ReportingEngine engine = new ReportingEngine();
-        ReportingEngine.SetRestrictedTypes(typeof(string)); // static call as required.
+        // -----------------------------------------------------------------
+        // Set restricted types BEFORE the first BuildReport.
+        // SetRestrictedTypes is a static method, so call it on the type.
+        // -----------------------------------------------------------------
+        ReportingEngine.SetRestrictedTypes(typeof(string));
 
-        // Build the report for the first time.
-        engine.BuildReport(loadedTemplate, model, "model");
-        loadedTemplate.Save(outputPath);
+        // Build the report – this should succeed.
+        ReportingEngine engine = new();
+        engine.BuildReport(doc, model, "model");
+        const string outputPath = "output.docx";
+        doc.Save(outputPath);
 
-        // 4. Attempt to call SetRestrictedTypes AFTER a report has already been built.
-        //    According to the documentation this must throw an InvalidOperationException.
+        // -----------------------------------------------------------------
+        // Attempt to call SetRestrictedTypes AFTER the first BuildReport.
+        // This must throw InvalidOperationException as documented.
+        // -----------------------------------------------------------------
         try
         {
             ReportingEngine.SetRestrictedTypes(typeof(int));
-            Console.WriteLine("ERROR: No exception was thrown when calling SetRestrictedTypes after BuildReport.");
+            Console.WriteLine("Error: No exception was thrown when calling SetRestrictedTypes after BuildReport.");
         }
         catch (InvalidOperationException ex)
         {
-            Console.WriteLine("Expected exception caught: " + ex.Message);
+            Console.WriteLine($"Expected exception caught: {ex.Message}");
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Unexpected exception type caught: " + ex.GetType().Name + " - " + ex.Message);
+            Console.WriteLine($"Unexpected exception type: {ex.GetType().Name} - {ex.Message}");
         }
     }
 }

@@ -1,60 +1,80 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 namespace LinqReportingWhereExample
 {
     // Data model classes
+    public class ReportModel
+    {
+        public int MinAge { get; set; } = 30;
+        public List<Person> Persons { get; set; } = new();
+    }
+
     public class Person
     {
         public string Name { get; set; } = "";
         public int Age { get; set; }
     }
 
-    public class ReportModel
-    {
-        public List<Person> Persons { get; set; } = new();
-        public int MinAge { get; set; }
-    }
-
     public class Program
     {
         public static void Main()
         {
+            // Register code page provider (required for some Aspose.Words features)
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Paths for template and output
+            string templatePath = "Template.docx";
+            string outputPath = "Report.docx";
+
+            // -------------------------------------------------
+            // Create the template document with LINQ Reporting tags
+            // -------------------------------------------------
+            Document templateDoc = new();
+            DocumentBuilder builder = new(templateDoc);
+
+            // Title
+            builder.Writeln("Filtered Persons (Age >= <<[model.MinAge]>>):");
+
+            // Foreach with Where filter based on runtime MinAge
+            builder.Writeln("<<foreach [p in model.Persons.Where(p => p.Age >= model.MinAge)]>>");
+            builder.Writeln("- <<[p.Name]>> (<<[p.Age]>> years)");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk
+            templateDoc.Save(templatePath);
+
+            // -------------------------------------------------
+            // Load the template document (required before building report)
+            // -------------------------------------------------
+            Document loadedTemplate = new(templatePath);
+
+            // -------------------------------------------------
             // Prepare sample data
-            var model = new ReportModel
+            // -------------------------------------------------
+            ReportModel model = new()
             {
                 MinAge = 30,
-                Persons = new List<Person>
+                Persons = new()
                 {
-                    new Person { Name = "Alice", Age = 25 },
+                    new Person { Name = "Alice", Age = 28 },
                     new Person { Name = "Bob", Age = 35 },
-                    new Person { Name = "Charlie", Age = 30 },
-                    new Person { Name = "Diana", Age = 40 }
+                    new Person { Name = "Charlie", Age = 42 },
+                    new Person { Name = "Diana", Age = 25 }
                 }
             };
 
-            // Create template document programmatically
-            var templatePath = "Template.docx";
-            var builder = new DocumentBuilder();
-            builder.Writeln("<<foreach [p in Persons.Where(p => p.Age >= MinAge)]>>");
-            builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
-            builder.Writeln("<</foreach>>");
-            builder.Document.Save(templatePath);
-
-            // Load the template
-            var doc = new Document(templatePath);
-
-            // Build the report
-            var engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
+            // -------------------------------------------------
+            // Build the report using Aspose.Words LINQ Reporting Engine
+            // -------------------------------------------------
+            ReportingEngine engine = new();
+            engine.BuildReport(loadedTemplate, model, "model");
 
             // Save the generated report
-            var outputPath = "Report.docx";
-            doc.Save(outputPath);
+            loadedTemplate.Save(outputPath);
         }
     }
 }

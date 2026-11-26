@@ -7,103 +7,107 @@ using Aspose.Words.Reporting;
 using Aspose.Words.Tables;
 using Newtonsoft.Json;
 
-namespace LinqReportingMultilingual
+public class Program
 {
-    // Root data model aligned with the template.
-    public class ReportModel
+    public static void Main()
     {
-        public string TitleEn { get; set; } = "";
-        public string TitleFr { get; set; } = "";
-        public string TitleZh { get; set; } = "";
+        // Register code page provider for Aspose.Words if needed
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Prepare sample JSON data with multilingual fields
+        string json = @"
+{
+  ""Items"": [
+    {
+      ""Id"": 1,
+      ""NameEn"": ""Apple"",
+      ""NameRu"": ""Яблоко"",
+      ""NameZh"": ""苹果"",
+      ""NameAr"": ""تفاح""
+    },
+    {
+      ""Id"": 2,
+      ""NameEn"": ""Banana"",
+      ""NameRu"": ""Банан"",
+      ""NameZh"": ""香蕉"",
+      ""NameAr"": ""موز""
+    },
+    {
+      ""Id"": 3,
+      ""NameEn"": ""Cherry"",
+      ""NameRu"": ""Вишня"",
+      ""NameZh"": ""樱桃"",
+      ""NameAr"": ""كرز""
+    }
+  ]
+}";
+        // Write JSON to a file (optional, just to demonstrate file usage)
+        File.WriteAllText("data.json", json, Encoding.UTF8);
+
+        // Deserialize JSON into model
+        ReportData model = JsonConvert.DeserializeObject<ReportData>(json) ?? new ReportData();
+
+        // Create a template document programmatically
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+
+        builder.Writeln("Multilingual Items Report");
+        builder.Writeln("");
+
+        // Begin foreach over Items
+        builder.Writeln("<<foreach [item in Items]>>");
+
+        // Write item ID
+        builder.Writeln("Item ID: <<[item.Id]>>");
+
+        // Create a table for the multilingual names
+        Table table = builder.StartTable();
+
+        // Header row
+        builder.InsertCell(); builder.Writeln("English");
+        builder.InsertCell(); builder.Writeln("Russian");
+        builder.InsertCell(); builder.Writeln("Chinese");
+        builder.InsertCell(); builder.Writeln("Arabic");
+        builder.EndRow();
+
+        // Data row with tags
+        builder.InsertCell(); builder.Writeln("<<[item.NameEn]>>");
+        builder.InsertCell(); builder.Writeln("<<[item.NameRu]>>");
+        builder.InsertCell(); builder.Writeln("<<[item.NameZh]>>");
+        builder.InsertCell(); builder.Writeln("<<[item.NameAr]>>");
+        builder.EndRow();
+
+        builder.EndTable();
+
+        // End foreach
+        builder.Writeln("<</foreach>>");
+
+        // Save the template
+        template.Save("template.docx");
+
+        // Load the template for reporting
+        Document reportDoc = new Document("template.docx");
+
+        // Build the report
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "data");
+
+        // Save the final report
+        reportDoc.Save("report.docx");
+    }
+
+    // Data model classes
+    public class ReportData
+    {
         public List<Item> Items { get; set; } = new();
     }
 
     public class Item
     {
+        public int Id { get; set; }
         public string NameEn { get; set; } = "";
-        public string NameFr { get; set; } = "";
+        public string NameRu { get; set; } = "";
         public string NameZh { get; set; } = "";
-        public decimal Price { get; set; }
-    }
-
-    public class Program
-    {
-        public static void Main()
-        {
-            // Register code page provider for full Unicode support.
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            // Paths for temporary files.
-            string templatePath = "template.docx";
-            string jsonPath = "data.json";
-            string outputPath = "report.docx";
-
-            // Create sample JSON data.
-            var sampleModel = new ReportModel
-            {
-                TitleEn = "Product Catalog (English)",
-                TitleFr = "Catalogue de Produits (Français)",
-                TitleZh = "产品目录 (中文)",
-                Items = new List<Item>
-                {
-                    new Item { NameEn = "Apple", NameFr = "Pomme", NameZh = "苹果", Price = 1.20m },
-                    new Item { NameEn = "Banana", NameFr = "Banane", NameZh = "香蕉", Price = 0.80m },
-                    new Item { NameEn = "Cherry", NameFr = "Cerise", NameZh = "樱桃", Price = 2.50m }
-                }
-            };
-            File.WriteAllText(jsonPath, JsonConvert.SerializeObject(sampleModel, Formatting.Indented));
-
-            // -----------------------------------------------------------------
-            // Build the template document programmatically.
-            // -----------------------------------------------------------------
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
-
-            // Title section with multilingual fields.
-            builder.Writeln("<<[model.TitleEn]>>");
-            builder.Writeln("<<[model.TitleFr]>>");
-            builder.Writeln("<<[model.TitleZh]>>");
-            builder.Writeln();
-
-            // Header table (static, not repeated).
-            builder.Writeln("Items:");
-            Table headerTable = builder.StartTable();
-            builder.InsertCell(); builder.Writeln("Name (EN)");
-            builder.InsertCell(); builder.Writeln("Name (FR)");
-            builder.InsertCell(); builder.Writeln("Name (ZH)");
-            builder.InsertCell(); builder.Writeln("Price");
-            builder.EndRow();
-            builder.EndTable();
-
-            // Repeated rows – each iteration creates a one‑row table.
-            builder.Writeln("<<foreach [item in Items]>>");
-            Table dataTable = builder.StartTable();
-            builder.InsertCell(); builder.Writeln("<<[item.NameEn]>>");
-            builder.InsertCell(); builder.Writeln("<<[item.NameFr]>>");
-            builder.InsertCell(); builder.Writeln("<<[item.NameZh]>>");
-            builder.InsertCell(); builder.Writeln("<<[item.Price]>>");
-            builder.EndRow();
-            builder.EndTable();
-            builder.Writeln("<</foreach>>");
-
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // Load JSON data.
-            // -----------------------------------------------------------------
-            string jsonContent = File.ReadAllText(jsonPath);
-            var model = JsonConvert.DeserializeObject<ReportModel>(jsonContent) ?? new ReportModel();
-
-            // Load the template for reporting.
-            var reportDoc = new Document(templatePath);
-
-            // Build the report using LINQ Reporting Engine.
-            var engine = new ReportingEngine();
-            engine.BuildReport(reportDoc, model, "model");
-
-            // Save the generated report.
-            reportDoc.Save(outputPath);
-        }
+        public string NameAr { get; set; } = "";
     }
 }

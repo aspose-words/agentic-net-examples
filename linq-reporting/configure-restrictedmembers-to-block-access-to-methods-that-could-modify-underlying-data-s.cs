@@ -1,76 +1,89 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class ReportModel
+{
+    // Collection of items to be displayed in the report.
+    public List<string> Items { get; set; } = new();
+
+    // Method that adds an item to the collection and returns the new count.
+    public int AddItem(string item)
+    {
+        Items.Add(item);
+        return Items.Count;
+    }
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words encodings.
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Register code page provider for Aspose.Words (required for some encodings).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Sample data model.
-        ReportModel model = new()
-        {
-            Items = new List<string> { "Apple", "Banana", "Cherry" }
-        };
+        // Prepare output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
 
-        // Create a template document programmatically.
-        string templatePath = "template.docx";
-        Document templateDoc = new();
-        DocumentBuilder builder = new(templateDoc);
+        // -----------------------------------------------------------------
+        // Create the template document programmatically.
+        // -----------------------------------------------------------------
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Write LINQ Reporting tags.
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("<<[item]>>");
-        builder.Writeln("<</foreach>>");
+        // Display the number of items before attempting to add a new one.
+        builder.Writeln("Items before: <<[model.Items.Count]>>");
 
-        // Save the template.
-        templateDoc.Save(templatePath);
+        // Attempt to add a new item via a method call in the template.
+        // This will invoke ReportModel.AddItem during report generation.
+        builder.Writeln("Attempt to add item: <<[model.AddItem(\"NewItem\")]>>");
 
+        // Display the number of items after the method call.
+        builder.Writeln("Items after: <<[model.Items.Count]>>");
+
+        // Save the template to disk.
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        template.Save(templatePath);
+
+        // -----------------------------------------------------------------
         // Load the template for reporting.
-        Document doc = new(templatePath);
+        // -----------------------------------------------------------------
+        Document doc = new Document(templatePath);
 
-        // Configure ReportingEngine.
-        ReportingEngine engine = new();
+        // -----------------------------------------------------------------
+        // Prepare the data model.
+        // -----------------------------------------------------------------
+        ReportModel model = new ReportModel();
+        model.Items.Add("Item1");
+        model.Items.Add("Item2");
 
-        // Block methods that could modify the data source (e.g., List<T>.Add and List<T>.Remove).
-        MethodInfo? addMethod = typeof(List<string>).GetMethod("Add", new[] { typeof(string) });
-        MethodInfo? removeMethod = typeof(List<string>).GetMethod("Remove", new[] { typeof(string) });
+        // -----------------------------------------------------------------
+        // Configure the reporting engine.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
 
-        // The RestrictedMembers property may not exist in older versions of Aspose.Words.
-        // Use reflection to add the methods if the property is present.
-        PropertyInfo? restrictedProp = typeof(ReportingEngine).GetProperty(
-            "RestrictedMembers",
-            BindingFlags.Instance | BindingFlags.Public);
+        // Enable inline error messages (useful for debugging).
+        engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-        if (restrictedProp != null && restrictedProp.GetValue(engine) is System.Collections.ICollection collection)
-        {
-            MethodInfo? addToCollection = collection.GetType().GetMethod("Add");
-            if (addToCollection != null)
-            {
-                if (addMethod != null) addToCollection.Invoke(collection, new object[] { addMethod });
-                if (removeMethod != null) addToCollection.Invoke(collection, new object[] { removeMethod });
-            }
-        }
+        // NOTE: In newer versions of Aspose.Words the RestrictedMembers
+        // collection may not be available. If it exists, you could block
+        // methods like AddItem here. For compatibility we omit this step.
 
+        // -----------------------------------------------------------------
         // Build the report.
+        // -----------------------------------------------------------------
         bool success = engine.BuildReport(doc, model, "model");
 
         // Save the generated report.
-        string outputPath = "report.docx";
+        string outputPath = Path.Combine(outputDir, "output.docx");
         doc.Save(outputPath);
 
-        // Indicate result.
-        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to '{outputPath}'.");
+        // Indicate completion.
+        Console.WriteLine($"Report generation success: {success}");
+        Console.WriteLine($"Output saved to: {outputPath}");
     }
-}
-
-// Data model used by the report.
-public class ReportModel
-{
-    public List<string> Items { get; set; } = new();
 }

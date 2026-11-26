@@ -1,10 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Newtonsoft.Json;
 
 namespace LinqReportingConditionalDefault
 {
@@ -17,60 +14,61 @@ namespace LinqReportingConditionalDefault
     public class Item
     {
         public string Name { get; set; } = string.Empty;
-        public string Status { get; set; } = string.Empty;
+        public string Type { get; set; } = string.Empty;
     }
 
-    public class Program
+    class Program
     {
-        public static void Main()
+        static void Main()
         {
-            // Register code page provider (required for some encodings)
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
             // Prepare sample data
-            var model = new ReportModel
-            {
-                Items = new List<Item>
-                {
-                    new Item { Name = "Item 1", Status = "Active" },
-                    new Item { Name = "Item 2", Status = "Pending" },
-                    new Item { Name = "Item 3", Status = "Other" }
-                }
-            };
+            var model = new ReportModel();
+            model.Items.Add(new Item { Name = "Alpha", Type = "A" });
+            model.Items.Add(new Item { Name = "Beta", Type = "B" });
+            model.Items.Add(new Item { Name = "Gamma", Type = "C" }); // No specific condition
 
-            // Create template document programmatically
-            var templatePath = "Template.docx";
+            // Create template document
+            var templatePath = "template.docx";
             var doc = new Document();
             var builder = new DocumentBuilder(doc);
 
-            builder.Writeln("LINQ Reporting - Conditional Default Example");
+            // Write a heading
+            builder.Writeln("Items Report");
             builder.Writeln();
 
-            // Begin foreach loop over Items
+            // Begin foreach over Items
             builder.Writeln("<<foreach [item in Items]>>");
-            builder.Writeln("Name: <<[item.Name]>> - Status: ");
 
-            // Conditional blocks for known statuses
-            builder.Writeln("<<if [item.Status == \"Active\"]>>Active<</if>>");
-            builder.Writeln("<<if [item.Status == \"Pending\"]>>Pending<</if>>");
+            // Conditional blocks with a default case
+            builder.Writeln("<<if [item.Type == \"A\"]>>");
+            builder.Writeln("Item: <<[item.Name]>> (Type A)");
+            builder.Writeln("<</if>>");
 
-            // Default block when no previous condition matches
-            builder.Writeln("<<if [item.Status != \"Active\" && item.Status != \"Pending\"]>>Unknown<</if>>");
+            builder.Writeln("<<if [item.Type == \"B\"]>>");
+            builder.Writeln("Item: <<[item.Name]>> (Type B)");
+            builder.Writeln("<</if>>");
+
+            // Default case when none of the above conditions are true
+            builder.Writeln("<<if [!(item.Type == \"A\" || item.Type == \"B\")]>><<textColor [\"Red\"]>>");
+            builder.Writeln("Item: <<[item.Name]>> (Other Type)");
+            builder.Writeln("<</textColor>><</if>>");
+
+            // End foreach
             builder.Writeln("<</foreach>>");
 
-            // Save the template to disk
+            // Save the template
             doc.Save(templatePath);
 
-            // Load the template for report generation
-            var templateDoc = new Document(templatePath);
+            // Load the template for reporting
+            var reportDoc = new Document(templatePath);
 
-            // Build the report using the LINQ Reporting engine
+            // Build the report
             var engine = new ReportingEngine();
-            engine.BuildReport(templateDoc, model, "model");
+            engine.BuildReport(reportDoc, model, "model");
 
             // Save the generated report
-            var reportPath = "Report.docx";
-            templateDoc.Save(reportPath);
+            var outputPath = "output.docx";
+            reportDoc.Save(outputPath);
         }
     }
 }

@@ -2,85 +2,76 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class Order
-{
-    public string CustomerName { get; set; } = "John Doe";
-    public List<Item> Items { get; set; } = new();
-}
-
-public class Item
-{
-    public int Index { get; set; }
-    public string Name { get; set; } = "";
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for any required encodings.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Prepare folders
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
 
-        // Prepare sample data.
-        var order = new Order
-        {
-            CustomerName = "Acme Corp",
-            Items = new List<Item>
-            {
-                new Item { Index = 1, Name = "Widget A" },
-                new Item { Index = 2, Name = "Widget B" },
-                new Item { Index = 3, Name = "Widget C" }
-            }
-        };
+        // Create template document
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Create a template document programmatically.
-        var templatePath = "template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("<<foreach [item in order.Items]>>");
-        builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
+        // Insert LINQ Reporting tags
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("Item: <<[item.Name]>> - Value: <<[item.Value]>>");
         builder.Writeln("<</foreach>>");
 
-        doc.Save(templatePath);
+        // Save template to disk
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        template.Save(templatePath);
 
-        // Load the template for report generation.
-        var templateDoc = new Document(templatePath);
+        // Load template for reporting
+        Document doc = new Document(templatePath);
+        DocumentBuilder reportBuilder = new DocumentBuilder(doc); // Not strictly needed but keeps builder available if further edits required
 
-        // Configure the reporting engine with RemoveEmptyParagraphs option.
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
+        // Prepare sample data
+        ReportModel model = new ReportModel
+        {
+            Items = new List<Item>()
+        };
+        for (int i = 1; i <= 1000; i++)
+        {
+            model.Items.Add(new Item { Name = $"Item{i}", Value = i * 10 });
+        }
 
-        // Measure memory before report generation.
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
-        GC.Collect();
+        // Measure memory before report generation
         long memoryBefore = GC.GetTotalMemory(true);
-        var process = Process.GetCurrentProcess();
-        long privateBefore = process.PrivateMemorySize64;
 
-        // Build the report.
-        engine.BuildReport(templateDoc, order, "order");
+        // Build report with RemoveEmptyParagraphs option
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
+        engine.BuildReport(doc, model, "model");
 
-        // Measure memory after report generation.
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
-        GC.Collect();
+        // Measure memory after report generation
         long memoryAfter = GC.GetTotalMemory(true);
-        process.Refresh();
-        long privateAfter = process.PrivateMemorySize64;
+        long memoryDiff = memoryAfter - memoryBefore;
 
-        // Save the generated report.
-        var outputPath = "output.docx";
-        templateDoc.Save(outputPath);
+        // Save the generated report
+        string outputPath = Path.Combine(outputDir, "report.docx");
+        doc.Save(outputPath);
 
-        // Output memory consumption details.
-        Console.WriteLine($"GC Total Memory Increase: {memoryAfter - memoryBefore:N0} bytes");
-        Console.WriteLine($"Private Memory Increase: {privateAfter - privateBefore:N0} bytes");
+        // Output memory consumption information
+        Console.WriteLine($"Memory before: {memoryBefore:N0} bytes");
+        Console.WriteLine($"Memory after : {memoryAfter:N0} bytes");
+        Console.WriteLine($"Memory diff  : {memoryDiff:N0} bytes");
+        Console.WriteLine($"Report saved to: {outputPath}");
     }
+}
+
+// Data model classes
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    public string Name { get; set; } = string.Empty;
+    public int Value { get; set; }
 }

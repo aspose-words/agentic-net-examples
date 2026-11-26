@@ -1,63 +1,52 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class Program
 {
-    // Simple data model used by the template.
-    public class Model
+    public static void Main()
     {
-        // Initialize to avoid nullable warnings.
-        public string Name { get; set; } = "John Doe";
-    }
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-    public class Program
-    {
-        public static void Main()
+        // Paths for the template and the generated report.
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        string reportPath = Path.Combine(outputDir, "report.docx");
+
+        // Create a simple template with a LINQ Reporting tag.
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Hello, <<[model.Name]>>!");
+        templateDoc.Save(templatePath);
+
+        // Load the template for reporting.
+        Document doc = new Document(templatePath);
+
+        // Disable reflection optimization for this report generation.
+        ReportingEngine.UseReflectionOptimization = false;
+
+        // Prepare the data model.
+        ReportModel model = new()
         {
-            // Register code page provider required by Aspose.Words.
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            Name = "Aspose.Words User"
+        };
 
-            // Prepare file paths.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-            Directory.CreateDirectory(outputDir);
-            string templatePath = Path.Combine(outputDir, "Template.docx");
-            string resultPath = Path.Combine(outputDir, "Result.docx");
+        // Build the report.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-            // -----------------------------------------------------------------
-            // Create the template document programmatically.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-            // Insert a simple LINQ Reporting tag that references the model.
-            builder.Writeln("Hello, <<[model.Name]>>!");
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
+        // Save the generated report.
+        doc.Save(reportPath);
 
-            // -----------------------------------------------------------------
-            // Load the template for report generation.
-            // -----------------------------------------------------------------
-            Document doc = new Document(templatePath);
-
-            // Create sample data.
-            Model model = new Model();
-
-            // -----------------------------------------------------------------
-            // Configure the reporting engine.
-            // -----------------------------------------------------------------
-            // Disable reflection optimization for this template.
-            ReportingEngine.UseReflectionOptimization = false;
-
-            // Create the engine (ReportingEngine does not implement IDisposable, so no using block).
-            ReportingEngine engine = new ReportingEngine();
-
-            // Build the report.
-            engine.BuildReport(doc, model, "model");
-
-            // Save the generated report.
-            doc.Save(resultPath);
-        }
+        // Indicate completion (no interactive prompts).
+        Console.WriteLine("Report generated at: " + reportPath);
     }
+}
+
+// Simple data model used by the template.
+public class ReportModel
+{
+    public string Name { get; set; } = string.Empty;
 }

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -8,73 +7,60 @@ public class Program
 {
     public static void Main()
     {
-        // Create a temporary folder for the example files.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "LinQReportingExample");
-        Directory.CreateDirectory(workDir);
-
-        // Paths for the template and the generated report.
-        string templatePath = Path.Combine(workDir, "template.docx");
-        string outputPath = Path.Combine(workDir, "report.docx");
-
-        // -----------------------------------------------------------------
-        // 1. Build the template document programmatically.
-        // -----------------------------------------------------------------
-        Document templateDoc = new();
-        DocumentBuilder builder = new(templateDoc);
-
-        // Insert a heading for each section using a foreach tag.
-        builder.Writeln("<<foreach [sec in Sections]>>");
-        // The Letter property converts the integer Number to an uppercase letter.
-        builder.Writeln("<<[sec.Letter]>>. <<[sec.Title]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Prepare the data model.
-        // -----------------------------------------------------------------
-        ReportModel model = new()
+        // Prepare sample data.
+        var model = new ReportModel
         {
-            Sections = new()
+            Sections = new List<Section>
             {
-                new Section { Number = 1, Title = "Introduction" },
-                new Section { Number = 2, Title = "Methodology" },
-                new Section { Number = 3, Title = "Results" },
-                new Section { Number = 4, Title = "Conclusion" }
+                new Section { Number = 1 },
+                new Section { Number = 2 },
+                new Section { Number = 3 },
+                new Section { Number = 4 },
+                new Section { Number = 5 }
             }
         };
 
-        // -----------------------------------------------------------------
-        // 3. Load the template and generate the report.
-        // -----------------------------------------------------------------
-        Document doc = new(templatePath);
-        ReportingEngine engine = new();
+        // Create a template document programmatically.
+        const string templatePath = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        builder.Writeln("Sections Report");
+        builder.Writeln();
+
+        // Begin foreach loop over Sections.
+        builder.Writeln("<<foreach [sec in Sections]>>");
+        // Use the computed SectionLetter property for heading.
+        builder.Writeln("<<[sec.SectionLetter]>>. Section <<[sec.Number]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template.
+        doc.Save(templatePath);
+
+        // Load the template for reporting.
+        var templateDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
+
         // Build the report using the model as the root object named "model".
-        engine.BuildReport(doc, model, "model");
+        engine.BuildReport(templateDoc, model, "model");
 
         // Save the generated report.
-        doc.Save(outputPath);
+        const string outputPath = "output.docx";
+        templateDoc.Save(outputPath);
     }
 }
 
-// ---------------------------------------------------------------------
-// Data model classes.
-// ---------------------------------------------------------------------
+// Wrapper model for the report.
 public class ReportModel
 {
-    // Collection of sections to be reported.
     public List<Section> Sections { get; set; } = new();
 }
 
+// Section data model.
 public class Section
 {
-    // Numeric identifier of the section.
     public int Number { get; set; }
 
-    // Title of the section.
-    public string Title { get; set; } = string.Empty;
-
-    // Converts the numeric section number to an uppercase alphabetic letter (A, B, C, ...).
-    public string Letter => ((char)('A' + Number - 1)).ToString();
+    // Convert the integer to an upper‑case alphabetic letter (A, B, C, ...).
+    public string SectionLetter => ((char)('A' + (Number - 1))).ToString();
 }

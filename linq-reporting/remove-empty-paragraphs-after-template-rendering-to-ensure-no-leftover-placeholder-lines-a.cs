@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Tables;
@@ -12,70 +10,82 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare sample data model.
-        var model = new ReportModel
+        // Paths for the template and the final document.
+        string templatePath = "template.docx";
+        string outputPath = "output.docx";
+
+        // -----------------------------------------------------------------
+        // 1. Create a template document with LINQ Reporting tags.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Normal paragraph.
+        builder.Writeln("Report Header");
+        builder.Writeln();
+
+        // Paragraph with a required field.
+        builder.Writeln("Customer: <<[model.CustomerName]>>");
+
+        // Paragraph that may become empty after rendering.
+        builder.Writeln("Notes: <<[model.OptionalNotes]>>");
+
+        // Another normal paragraph.
+        builder.Writeln("Thank you for your business.");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template for report generation.
+        // -----------------------------------------------------------------
+        Document doc = new Document(templatePath);
+
+        // -----------------------------------------------------------------
+        // 3. Prepare the data model.
+        // -----------------------------------------------------------------
+        ReportModel model = new()
         {
-            Name = "John Doe",
-            // OptionalLine is left null to produce an empty paragraph after rendering.
-            OptionalLine = null
+            CustomerName = "Acme Corp",
+            // OptionalNotes is left null to simulate an empty placeholder line.
+            OptionalNotes = null
         };
 
-        // Create a template document programmatically.
-        var templatePath = "Template.docx";
-        CreateTemplate(templatePath);
-
-        // Load the template.
-        var doc = new Document(templatePath);
-
-        // Build the report using LINQ Reporting Engine.
-        var engine = new ReportingEngine();
+        // -----------------------------------------------------------------
+        // 4. Build the report using the LINQ Reporting engine.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
-        // Remove empty paragraphs that may have been left after rendering.
-        RemoveEmptyParagraphs(doc);
-
-        // Save the final document.
-        var outputPath = "Report.docx";
-        doc.Save(outputPath);
-    }
-
-    private static void CreateTemplate(string path)
-    {
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        // Greeting line with a placeholder.
-        builder.Writeln("Hello <<[model.Name]>>!");
-
-        // This line contains only a placeholder that may become empty.
-        builder.Writeln("<<[model.OptionalLine]>>");
-
-        // Save the template.
-        doc.Save(path);
-    }
-
-    private static void RemoveEmptyParagraphs(Document doc)
-    {
-        // Collect paragraphs to remove to avoid modifying the collection while iterating.
-        var paragraphsToRemove = new List<Paragraph>();
-
-        foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
+        // -----------------------------------------------------------------
+        // 5. Remove empty paragraphs that may have been left after rendering.
+        // -----------------------------------------------------------------
+        foreach (Section section in doc.Sections)
         {
-            // Get the paragraph text without the end-of-paragraph marker.
-            var text = para.GetText().Replace("\a", string.Empty).Trim();
-
-            if (string.IsNullOrEmpty(text))
-                paragraphsToRemove.Add(para);
+            Body body = section.Body;
+            for (int i = body.Paragraphs.Count - 1; i >= 0; i--)
+            {
+                Paragraph para = body.Paragraphs[i];
+                // Get the paragraph text (includes the paragraph break character).
+                string text = para.GetText();
+                // Remove control characters and check if the remaining text is whitespace.
+                if (string.IsNullOrWhiteSpace(text.Replace("\r", string.Empty).Replace("\a", string.Empty)))
+                {
+                    para.Remove();
+                }
+            }
         }
 
-        foreach (var para in paragraphsToRemove)
-            para.Remove();
+        // -----------------------------------------------------------------
+        // 6. Save the final document.
+        // -----------------------------------------------------------------
+        doc.Save(outputPath);
     }
 }
 
-// Data model used by the report.
+// Data model used by the template.
 public class ReportModel
 {
-    public string Name { get; set; } = string.Empty;
-    public string? OptionalLine { get; set; }
+    public string CustomerName { get; set; } = string.Empty;
+    public string? OptionalNotes { get; set; }
 }

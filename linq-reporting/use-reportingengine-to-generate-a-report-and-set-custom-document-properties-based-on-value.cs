@@ -1,111 +1,64 @@
 using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
-
-public class Employee
-{
-    public string Name { get; set; } = "";
-    public int Age { get; set; }
-}
-
-public class ReportModel
-{
-    // Title of the report.
-    public string ReportTitle { get; set; } = "Employee Report";
-
-    // Collection of employee rows.
-    public List<Employee> Employees { get; set; } = new();
-}
 
 public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Prepare sample data in a DataSet.
-        // -----------------------------------------------------------------
-        DataSet dataSet = new();
-        DataTable employeeTable = new("Employees");
-        employeeTable.Columns.Add("Name", typeof(string));
-        employeeTable.Columns.Add("Age", typeof(int));
-        employeeTable.Rows.Add("Alice", 30);
-        employeeTable.Rows.Add("Bob", 45);
-        employeeTable.Rows.Add("Charlie", 28);
-        dataSet.Tables.Add(employeeTable);
+        // Prepare sample data in a DataSet.
+        DataSet dataSet = new DataSet();
 
-        // -----------------------------------------------------------------
-        // 2. Create the template document programmatically.
-        // -----------------------------------------------------------------
-        Document templateDoc = new();
-        DocumentBuilder builder = new(templateDoc);
+        // Employees table.
+        DataTable employeesTable = new DataTable("Employees");
+        employeesTable.Columns.Add("Name", typeof(string));
+        employeesTable.Columns.Add("Age", typeof(int));
+        employeesTable.Rows.Add("Alice Johnson", 30);
+        employeesTable.Rows.Add("Bob Smith", 45);
+        employeesTable.Rows.Add("Carol White", 28);
+        dataSet.Tables.Add(employeesTable);
 
-        // Title placeholder.
-        builder.Writeln("<<[model.ReportTitle]>>");
-        builder.Writeln();
+        // CompanyInfo table (used for custom document properties).
+        DataTable companyInfoTable = new DataTable("CompanyInfo");
+        companyInfoTable.Columns.Add("CompanyName", typeof(string));
+        companyInfoTable.Columns.Add("ReportDate", typeof(DateTime));
+        companyInfoTable.Rows.Add("Acme Corporation", DateTime.Today);
+        dataSet.Tables.Add(companyInfoTable);
 
-        // Table header (static part).
-        Table headerTable = builder.StartTable();
-        builder.InsertCell();
-        builder.Writeln("Name");
-        builder.InsertCell();
-        builder.Writeln("Age");
-        builder.EndRow();
-        builder.EndTable();
+        // Create the LINQ Reporting template programmatically.
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Data rows using LINQ Reporting foreach.
-        builder.Writeln("<<foreach [emp in model.Employees]>>");
-        Table dataTable = builder.StartTable();
-        builder.InsertCell();
-        builder.Writeln("<<[emp.Name]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[emp.Age]>>");
-        builder.EndRow();
-        builder.EndTable();
+        builder.Writeln("Employee Report");
+        builder.Writeln("<<foreach [emp in Employees]>>");
+        builder.Writeln("Name: <<[emp.Name]>>, Age: <<[emp.Age]>>");
         builder.Writeln("<</foreach>>");
 
         // Save the template to disk.
         const string templatePath = "Template.docx";
         templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 3. Load the template and build the report.
-        // -----------------------------------------------------------------
-        Document reportDoc = new(templatePath);
+        // Load the template for report generation.
+        Document reportDoc = new Document(templatePath);
 
-        // Prepare the root model.
-        ReportModel model = new()
+        // Build the report using the ReportingEngine.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, dataSet, "data");
+
+        // Set custom document properties based on values from the DataSet.
+        if (dataSet.Tables.Contains("CompanyInfo") && dataSet.Tables["CompanyInfo"].Rows.Count > 0)
         {
-            Employees = employeeTable.AsEnumerable()
-                .Select(r => new Employee
-                {
-                    Name = r.Field<string>("Name") ?? "",
-                    Age = r.Field<int>("Age")
-                })
-                .ToList()
-        };
+            DataRow infoRow = dataSet.Tables["CompanyInfo"].Rows[0];
+            string companyName = infoRow["CompanyName"]?.ToString() ?? string.Empty;
+            DateTime reportDate = infoRow["ReportDate"] is DateTime dt ? dt : DateTime.MinValue;
 
-        // Build the report.
-        ReportingEngine engine = new();
-        engine.BuildReport(reportDoc, model, "model");
+            reportDoc.CustomDocumentProperties.Add("CompanyName", companyName);
+            reportDoc.CustomDocumentProperties.Add("ReportDate", reportDate);
+        }
 
-        // -----------------------------------------------------------------
-        // 4. Set custom document properties based on the data.
-        // -----------------------------------------------------------------
-        int totalEmployees = model.Employees.Count;
-        double averageAge = totalEmployees > 0
-            ? model.Employees.Average(e => e.Age)
-            : 0;
-
-        reportDoc.CustomDocumentProperties.Add("TotalEmployees", totalEmployees);
-        reportDoc.CustomDocumentProperties.Add("AverageAge", averageAge);
-
-        // -----------------------------------------------------------------
-        // 5. Save the final report.
-        // -----------------------------------------------------------------
+        // Save the generated report.
         const string outputPath = "Report.docx";
         reportDoc.Save(outputPath);
     }

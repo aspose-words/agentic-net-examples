@@ -1,71 +1,79 @@
 using System;
-using System.IO;
+using System.Collections.Generic;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class ReportModel
+namespace LinqReportingExample
 {
-    // Valid property used in the template.
-    public string Name { get; set; } = "John Doe";
-
-    // No property named MissingProperty – this will trigger an inline error message.
-}
-
-public class Program
-{
-    public static void Main()
+    // Sample data model
+    public class ReportModel
     {
-        // Register code page provider for full encoding support.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        public List<Item> Items { get; set; } = new();
+    }
 
-        // Create a temporary folder for the example files.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+    public class Item
+    {
+        public string Name { get; set; } = "";
+        public int Quantity { get; set; }
+    }
 
-        // Paths for the template and the generated report.
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        string reportPath = Path.Combine(outputDir, "Report.docx");
+    public class Program
+    {
+        public static void Main()
+        {
+            // Register code page provider for Aspose.Words
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // -----------------------------------------------------------------
-        // Step 1: Build the template document programmatically.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            // Create template document
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Add an empty paragraph that should be removed later.
-        builder.Writeln(string.Empty);
-        builder.Writeln(string.Empty);
+            // Header
+            builder.Writeln("Report Header");
+            // Empty paragraph that should be removed
+            builder.Writeln("");
 
-        // Add a paragraph with a valid tag.
-        builder.Writeln("Customer Name: <<[model.Name]>>");
+            // Begin foreach over Items
+            builder.Writeln("<<foreach [item in Items]>>");
+            // Line with a missing property 'Price' to trigger inline error message
+            builder.Writeln("Item: <<[item.Name]>>, Price: <<[item.Price]>>");
+            // Another empty paragraph inside the loop
+            builder.Writeln("   ");
+            // End foreach
+            builder.Writeln("<</foreach>>");
 
-        // Add a paragraph with an invalid tag to demonstrate inline error messages.
-        builder.Writeln("Missing field: <<[model.MissingProperty]>>");
+            // Save the template to disk
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
 
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
+            // Load the template (simulating separate load step)
+            Document doc = new Document(templatePath);
 
-        // -----------------------------------------------------------------
-        // Step 2: Load the template and prepare the data model.
-        // -----------------------------------------------------------------
-        Document doc = new Document(templatePath);
-        ReportModel model = new ReportModel();
+            // Prepare sample data
+            ReportModel model = new()
+            {
+                Items = new()
+                {
+                    new Item { Name = "Apple", Quantity = 10 },
+                    new Item { Name = "Banana", Quantity = 20 }
+                }
+            };
 
-        // -----------------------------------------------------------------
-        // Step 3: Configure the reporting engine with both options.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs | ReportBuildOptions.InlineErrorMessages;
+            // Configure reporting engine with both options
+            ReportingEngine engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.InlineErrorMessages | ReportBuildOptions.RemoveEmptyParagraphs;
 
-        // Build the report. The returned flag indicates overall success.
-        bool success = engine.BuildReport(doc, model, "model");
+            // Build the report
+            bool success = engine.BuildReport(doc, model, "model");
 
-        // Save the generated report.
-        doc.Save(reportPath);
+            // Save the generated report
+            const string outputPath = "ReportOutput.docx";
+            doc.Save(outputPath);
 
-        // Output the result status.
-        Console.WriteLine($"Report generation success: {success}");
-        Console.WriteLine($"Report saved to: {reportPath}");
+            // Output result status
+            Console.WriteLine($"Report generation success: {success}");
+            Console.WriteLine($"Output saved to: {outputPath}");
+        }
     }
 }

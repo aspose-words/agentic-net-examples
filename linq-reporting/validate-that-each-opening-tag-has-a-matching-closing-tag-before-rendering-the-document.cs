@@ -4,133 +4,124 @@ using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
 
-public class Program
+namespace LinqReportingTagValidator
 {
-    public static void Main()
+    // Sample data model
+    public class ReportModel
     {
-        // Ensure output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
+        public List<Item> Items { get; set; } = new();
+    }
 
-        // Create a simple LINQ Reporting template.
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        CreateTemplate(templatePath);
+    public class Item
+    {
+        public int Index { get; set; }
+        public string Name { get; set; } = string.Empty;
+    }
 
-        // Load the template for validation and reporting.
-        Document templateDoc = new Document(templatePath);
-
-        // Validate that each opening tag has a matching closing tag.
-        if (!ValidateReportingTags(templateDoc))
+    public class Program
+    {
+        // Entry point
+        public static void Main()
         {
-            Console.WriteLine("Tag validation failed. Report generation aborted.");
-            return;
+            // Prepare sample data
+            var model = new ReportModel
+            {
+                Items = new()
+                {
+                    new Item { Index = 1, Name = "Alpha" },
+                    new Item { Index = 2, Name = "Beta" },
+                    new Item { Index = 3, Name = "Gamma" }
+                }
+            };
+
+            // Create template document programmatically
+            var templatePath = "template.docx";
+            CreateTemplate(templatePath);
+
+            // Load the template for processing
+            var doc = new Document(templatePath);
+
+            // Validate LINQ Reporting tags before building the report
+            if (!ValidateTags(doc, out string validationError))
+            {
+                Console.WriteLine($"Tag validation failed: {validationError}");
+                return;
+            }
+
+            // Build the report
+            var engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
+
+            // Save the generated report
+            var outputPath = "output.docx";
+            doc.Save(outputPath);
+            Console.WriteLine($"Report generated successfully: {outputPath}");
         }
 
-        // Prepare sample data.
-        ReportModel model = new()
+        // Creates a simple template containing foreach and if tags
+        private static void CreateTemplate(string path)
         {
-            Title = "Sample Report",
-            Items = new()
-            {
-                new Item { Index = 1, Name = "Alpha" },
-                new Item { Index = 2, Name = "Beta" },
-                new Item { Index = 3, Name = "Gamma" }
-            }
-        };
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
 
-        // Build the report.
-        ReportingEngine engine = new();
-        engine.BuildReport(templateDoc, model, "model");
+            builder.Writeln("LINQ Reporting Tag Validation Example");
+            builder.Writeln("<<foreach [item in Items]>>");
+            builder.Writeln("Item <<[item.Index]>>: <<if [item.Index % 2 == 0]>>Even<<[item.Name]>> <</if>><<if [item.Index % 2 != 0]>>Odd<<[item.Name]>> <</if>>");
+            builder.Writeln("<</foreach>>");
 
-        // Save the generated report.
-        string reportPath = Path.Combine(outputDir, "report.docx");
-        templateDoc.Save(reportPath);
-        Console.WriteLine($"Report generated successfully at: {reportPath}");
-    }
-
-    // Creates a Word document containing LINQ Reporting tags.
-    private static void CreateTemplate(string path)
-    {
-        Document doc = new();
-        DocumentBuilder builder = new(doc);
-
-        // Title
-        builder.Writeln("<<[model.Title]>>");
-        builder.Writeln();
-
-        // Begin a foreach loop over Items.
-        builder.Writeln("<<foreach [item in Items]>>");
-
-        // Table header (once per document, but placed inside loop for simplicity).
-        Table table = builder.StartTable();
-        builder.InsertCell();
-        builder.Writeln("Index");
-        builder.InsertCell();
-        builder.Writeln("Name");
-        builder.EndRow();
-
-        // Table row for each item.
-        builder.InsertCell();
-        builder.Writeln("<<[item.Index]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[item.Name]>>");
-        builder.EndRow();
-        builder.EndTable();
-
-        // End foreach.
-        builder.Writeln("<</foreach>>");
-
-        // Bookmark example with matching closing tag.
-        builder.Writeln("<<bookmark [\"MyBookmark\"]>>");
-        builder.Writeln("This is bookmarked text.");
-        builder.Writeln("<</bookmark>>");
-
-        doc.Save(path);
-    }
-
-    // Validates that opening tags have matching closing tags in the document.
-    private static bool ValidateReportingTags(Document doc)
-    {
-        string docText = doc.GetText();
-
-        // Tags that require a closing counterpart.
-        string[] pairedTags = { "foreach", "if", "bookmark", "textColor", "backColor" };
-
-        bool isValid = true;
-
-        foreach (string tag in pairedTags)
-        {
-            // Opening tags: <<tag ...>>
-            string openingPattern = $@"<<\s*{tag}\b[^>]*>>";
-            // Closing tags: <</tag>>
-            string closingPattern = $@"<</\s*{tag}\s*>>";
-
-            int openingCount = Regex.Matches(docText, openingPattern).Count;
-            int closingCount = Regex.Matches(docText, closingPattern).Count;
-
-            if (openingCount != closingCount)
-            {
-                Console.WriteLine($"Tag mismatch for '{tag}': {openingCount} opening tag(s) vs {closingCount} closing tag(s).");
-                isValid = false;
-            }
+            doc.Save(path);
         }
 
-        return isValid;
+        // Validates that each opening tag has a matching closing tag
+        private static bool ValidateTags(Document doc, out string errorMessage)
+        {
+            // Extract raw text (including LINQ Reporting tags) from the document
+            string docText = doc.GetText();
+
+            // Regex to match both opening and closing tags
+            // Opening tags: <<foreach ...>>, <<if ...>>, <<bookmark ...>>
+            // Closing tags: <</foreach>>, <</if>>, <</bookmark>>
+            var tagPattern = new Regex(@"<<\s*(?<type>foreach|if|bookmark)\b[^>]*>>|<</\s*(?<typeClose>foreach|if|bookmark)\s*>>",
+                RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+            var stack = new Stack<string>();
+            foreach (Match match in tagPattern.Matches(docText))
+            {
+                // Determine if this is an opening or closing tag
+                var opening = match.Groups["type"];
+                var closing = match.Groups["typeClose"];
+
+                if (opening.Success)
+                {
+                    // Push the tag type onto the stack
+                    stack.Push(opening.Value.ToLowerInvariant());
+                }
+                else if (closing.Success)
+                {
+                    if (stack.Count == 0)
+                    {
+                        errorMessage = $"Unexpected closing tag </{closing.Value}> without matching opening tag.";
+                        return false;
+                    }
+
+                    var expected = stack.Pop();
+                    if (!string.Equals(expected, closing.Value, StringComparison.OrdinalIgnoreCase))
+                    {
+                        errorMessage = $"Mismatched tag: expected closing </{expected}> but found </{closing.Value}>.";
+                        return false;
+                    }
+                }
+            }
+
+            if (stack.Count > 0)
+            {
+                errorMessage = $"Unclosed tag(s): {string.Join(", ", stack)}.";
+                return false;
+            }
+
+            errorMessage = string.Empty;
+            return true;
+        }
     }
-}
-
-// Sample data model for the report.
-public class ReportModel
-{
-    public string Title { get; set; } = string.Empty;
-    public List<Item> Items { get; set; } = new();
-}
-
-// Item used inside the foreach loop.
-public class Item
-{
-    public int Index { get; set; }
-    public string Name { get; set; } = string.Empty;
 }

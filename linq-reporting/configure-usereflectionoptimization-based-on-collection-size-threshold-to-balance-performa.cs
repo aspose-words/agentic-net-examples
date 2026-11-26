@@ -4,72 +4,70 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
+public class Item
+{
+    public int Index { get; set; }
+    public string Name { get; set; } = "";
+}
+
+public class Order
+{
+    public string CustomerName { get; set; } = "";
+    public List<Item> Items { get; set; } = new();
+}
+
 public class Program
 {
-    // Sample data model classes
-    public class Order
-    {
-        public string CustomerName { get; set; } = "John Doe";
-        public List<Item> Items { get; set; } = new();
-    }
-
-    public class Item
-    {
-        public int Index { get; set; }
-        public string Name { get; set; } = "";
-    }
-
     public static void Main()
     {
-        // Ensure output directory exists
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
-
-        // Paths for template and result documents
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        string resultPath = Path.Combine(outputDir, "report.docx");
-
-        // Create sample data
+        // Prepare sample data.
         var order = new Order
         {
-            Items = GenerateItems(150) // Adjust count to test threshold behavior
+            CustomerName = "Acme Corp",
+            Items = GenerateItems(1500) // Adjust count to test threshold.
         };
 
-        // Configure reflection optimization based on collection size threshold
-        const int threshold = 100;
+        // Configure reflection optimization based on collection size.
+        const int threshold = 1000;
         ReportingEngine.UseReflectionOptimization = order.Items.Count > threshold;
 
-        // Build the template document programmatically
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Create a template document with LINQ Reporting tags.
+        string templatePath = "Template.docx";
+        CreateTemplate(templatePath);
 
-        builder.Writeln($"Customer: <<[order.CustomerName]>>");
-        builder.Writeln("<<foreach [item in order.Items]>>");
-        builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
-        builder.Writeln("<</foreach>>");
+        // Load the template.
+        var doc = new Document(templatePath);
 
-        // Save the template to disk
-        templateDoc.Save(templatePath);
-
-        // Load the template for reporting
-        var loadedTemplate = new Document(templatePath);
-
-        // Build the report
+        // Build the report.
         var engine = new ReportingEngine();
-        engine.BuildReport(loadedTemplate, order, "order");
+        engine.BuildReport(doc, order, "order");
 
-        // Save the generated report
-        loadedTemplate.Save(resultPath);
+        // Save the generated report.
+        string outputPath = "Report.docx";
+        doc.Save(outputPath);
     }
 
-    // Helper method to generate a list of items
     private static List<Item> GenerateItems(int count)
     {
-        var items = new List<Item>();
+        var items = new List<Item>(count);
         for (int i = 1; i <= count; i++)
         {
-            items.Add(new Item { Index = i, Name = $"Product {i}" });
+            items.Add(new Item { Index = i, Name = $"Item {i}" });
         }
         return items;
+    }
+
+    private static void CreateTemplate(string path)
+    {
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Items:");
+        builder.Writeln("<<foreach [item in order.Items]>>");
+        builder.Writeln("- <<[item.Index]>>: <<[item.Name]>>");
+        builder.Writeln("<</foreach>>");
+
+        doc.Save(path);
     }
 }

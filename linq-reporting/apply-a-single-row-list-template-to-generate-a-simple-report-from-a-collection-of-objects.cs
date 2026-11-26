@@ -3,62 +3,51 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingSingleRowList
+public class Person
 {
-    // Data model classes
-    public class Person
-    {
-        public string Name { get; set; } = string.Empty;
-        public int Age { get; set; }
-    }
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
+}
 
-    public class ReportModel
-    {
-        public List<Person> Persons { get; set; } = new();
-    }
+public class ReportModel
+{
+    public List<Person> Persons { get; set; } = new();
+}
 
-    class Program
+public class Program
+{
+    public static void Main()
     {
-        static void Main()
+        // Sample data
+        var model = new ReportModel
         {
-            // Prepare sample data
-            var model = new ReportModel
+            Persons = new List<Person>
             {
-                Persons = new()
-                {
-                    new Person { Name = "Alice", Age = 30 },
-                    new Person { Name = "Bob", Age = 25 },
-                    new Person { Name = "Charlie", Age = 28 }
-                }
-            };
+                new() { Name = "Alice", Age = 30 },
+                new() { Name = "Bob", Age = 25 },
+                new() { Name = "Charlie", Age = 35 }
+            }
+        };
 
-            // Create template document programmatically
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
+        // Create template document with LINQ Reporting tags
+        const string templatePath = "template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Person Report");
+        builder.Writeln("<<foreach [person in Persons]>>");
+        builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
+        builder.Writeln("<</foreach>>");
+        templateDoc.Save(templatePath);
 
-            // Insert a single‑row list template using LINQ Reporting tags
-            builder.Writeln("<<foreach [p in Persons]>>");
-            builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
-            builder.Writeln("<</foreach>>");
+        // Load the template
+        var doc = new Document(templatePath);
 
-            // Save the template to disk (required before building the report)
-            const string templatePath = "Template.docx";
-            templateDoc.Save(templatePath);
+        // Build the report
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-            // Load the template for report generation
-            var doc = new Document(templatePath);
-
-            // Build the report
-            var engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.None; // default options
-            bool success = engine.BuildReport(doc, model, "model");
-
-            // Save the generated report
-            const string outputPath = "Report.docx";
-            doc.Save(outputPath);
-
-            // Optionally indicate success (no interactive input)
-            Console.WriteLine(success ? "Report generated successfully." : "Report generation failed.");
-        }
+        // Save the generated report
+        const string reportPath = "report.docx";
+        doc.Save(reportPath);
     }
 }

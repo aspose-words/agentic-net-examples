@@ -7,90 +7,69 @@ public class Program
 {
     public static void Main()
     {
-        // Create a temporary folder for the example files.
-        string outputFolder = "output";
-        System.IO.Directory.CreateDirectory(outputFolder);
+        // Create a template document programmatically.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // -----------------------------------------------------------------
-        // 1. Create the LINQ Reporting template programmatically.
-        // -----------------------------------------------------------------
-        string templatePath = System.IO.Path.Combine(outputFolder, "ReportTemplate.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Title
-        builder.Writeln("Company Departments Report");
-        builder.Writeln();
-
-        // Begin outer foreach for departments.
+        // Write LINQ Reporting tags for hierarchical data: Departments -> Employees -> Projects.
         builder.Writeln("<<foreach [dept in Departments]>>");
         builder.Writeln("Department: <<[dept.Name]>>");
-        builder.Writeln();
-
-        // Begin foreach for employees within a department.
         builder.Writeln("<<foreach [emp in dept.Employees]>>");
         builder.Writeln("  Employee: <<[emp.Name]>>");
-        builder.Writeln();
+        builder.Writeln("  <<foreach [proj in emp.Projects]>>");
+        builder.Writeln("    - <<[proj.Name]>>");
+        builder.Writeln("  <</foreach>>");
+        builder.Writeln("<</foreach>>");
+        builder.Writeln("<</foreach>>");
 
-        // Begin foreach for projects within an employee.
-        builder.Writeln("<<foreach [proj in emp.Projects]>>");
-        builder.Writeln("    Project: <<[proj.Name]>>");
-        builder.Writeln("<</foreach>>"); // End projects foreach
+        // Save the template to a file.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
 
-        builder.Writeln("<</foreach>>"); // End employees foreach
-        builder.Writeln("<</foreach>>"); // End departments foreach
+        // Load the template for report generation.
+        Document doc = new Document(templatePath);
 
-        // Save the template.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template for report generation.
-        // -----------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
-
-        // -----------------------------------------------------------------
-        // 3. Prepare sample hierarchical data.
-        // -----------------------------------------------------------------
+        // Prepare sample data.
         ReportModel model = new ReportModel
         {
             Departments = new List<Department>
             {
                 new Department
                 {
-                    Name = "Research & Development",
+                    Name = "Research",
                     Employees = new List<Employee>
                     {
                         new Employee
                         {
-                            Name = "Alice Johnson",
+                            Name = "Alice",
                             Projects = new List<Project>
                             {
                                 new Project { Name = "AI Platform" },
-                                new Project { Name = "Quantum Computing Study" }
+                                new Project { Name = "Data Mining" }
                             }
                         },
                         new Employee
                         {
-                            Name = "Bob Smith",
+                            Name = "Bob",
                             Projects = new List<Project>
                             {
-                                new Project { Name = "Robotics Prototype" }
+                                new Project { Name = "Quantum Computing" }
                             }
                         }
                     }
                 },
                 new Department
                 {
-                    Name = "Marketing",
+                    Name = "Development",
                     Employees = new List<Employee>
                     {
                         new Employee
                         {
-                            Name = "Carol White",
+                            Name = "Charlie",
                             Projects = new List<Project>
                             {
-                                new Project { Name = "Social Media Campaign" },
-                                new Project { Name = "Brand Redesign" }
+                                new Project { Name = "Mobile App" },
+                                new Project { Name = "Web Portal" }
                             }
                         }
                     }
@@ -98,40 +77,40 @@ public class Program
             }
         };
 
-        // -----------------------------------------------------------------
-        // 4. Build the report using Aspose.Words LINQ Reporting Engine.
-        // -----------------------------------------------------------------
+        // Build the report using the LINQ Reporting engine.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+        engine.BuildReport(doc, model, "model");
 
-        // -----------------------------------------------------------------
-        // 5. Save the generated report.
-        // -----------------------------------------------------------------
-        string resultPath = System.IO.Path.Combine(outputFolder, "ReportResult.docx");
-        reportDoc.Save(resultPath);
+        // Save the generated report.
+        const string outputPath = "Report.docx";
+        doc.Save(outputPath);
+
+        // Indicate completion.
+        Console.WriteLine("Report generated: " + outputPath);
     }
 }
 
-// ---------------------------------------------------------------------
-// Data model definitions (public, with initialized collections).
-// ---------------------------------------------------------------------
+// Root data model.
 public class ReportModel
 {
     public List<Department> Departments { get; set; } = new();
 }
 
+// Department model.
 public class Department
 {
     public string Name { get; set; } = string.Empty;
     public List<Employee> Employees { get; set; } = new();
 }
 
+// Employee model.
 public class Employee
 {
     public string Name { get; set; } = string.Empty;
     public List<Project> Projects { get; set; } = new();
 }
 
+// Project model.
 public class Project
 {
     public string Name { get; set; } = string.Empty;

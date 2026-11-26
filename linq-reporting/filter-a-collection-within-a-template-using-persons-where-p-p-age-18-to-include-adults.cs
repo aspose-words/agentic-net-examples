@@ -11,46 +11,38 @@ public class Person
     public int Age { get; set; }
 }
 
-public class Model
-{
-    public List<Person> Persons { get; set; } = new();
-}
-
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
-        var model = new Model
+        // Sample data with mixed ages.
+        List<Person> persons = new()
         {
-            Persons = new List<Person>
-            {
-                new() { Name = "Alice", Age = 25 },
-                new() { Name = "Bob", Age = 17 },
-                new() { Name = "Charlie", Age = 30 },
-                new() { Name = "Diana", Age = 15 }
-            }
+            new Person { Name = "Alice", Age = 25 },
+            new Person { Name = "Bob", Age = 17 },
+            new Person { Name = "Charlie", Age = 30 }
         };
 
-        // Create a template document with LINQ Reporting tags.
-        var templatePath = "Template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Create a template document programmatically.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        builder.Writeln("List of adults (Age > 18):");
-        builder.Writeln("<<foreach [p in Persons.Where(p => p.Age > 18)]>>");
-        builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
+        builder.Writeln("Adults (Age > 18):");
+        builder.Writeln("<<foreach [p in persons.Where(p => p.Age > 18)]>>");
+        builder.Writeln("- <<[p.Name]>> (<<[p.Age]>> years)");
         builder.Writeln("<</foreach>>");
 
-        doc.Save(templatePath);
+        // Save the template (optional, demonstrates the workflow).
+        template.Save("Template.docx");
 
-        // Load the template and build the report.
-        var templateDoc = new Document(templatePath);
-        var engine = new ReportingEngine();
-        engine.BuildReport(templateDoc, model, "model");
+        // Load the template for report generation.
+        Document report = new Document("Template.docx");
+
+        // Build the report using the persons list as the root data source.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(report, persons, "persons");
 
         // Save the generated report.
-        var outputPath = "Report.docx";
-        templateDoc.Save(outputPath);
+        report.Save("Report.docx");
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
@@ -7,62 +8,50 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some Aspose.Words features)
+        // Register code page provider for any encoding needs.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Paths for the template and generated reports
-        const string templatePath = "template.docx";
-        const string outputPath1 = "output1.docx";
-        const string outputPath2 = "output2.docx";
+        // Prepare working directory.
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(workDir);
 
         // -----------------------------------------------------------------
-        // 1. Create a simple template document with a LINQ Reporting tag.
+        // Create a simple template document with a LINQ Reporting tag.
         // -----------------------------------------------------------------
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Hello, <<[model.Name]>>!");
+        string templatePath = Path.Combine(workDir, "Template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
         templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the template for processing.
-        // -----------------------------------------------------------------
-        var loadedTemplate = new Document(templatePath);
+        // Load the template for reporting.
+        Document loadedTemplate = new Document(templatePath);
 
-        // -----------------------------------------------------------------
-        // 3. Prepare the data model.
-        // -----------------------------------------------------------------
-        var model = new ReportModel { Name = "Alice" };
+        // Sample data model.
+        Order order = new Order { CustomerName = "John Doe" };
 
-        // -----------------------------------------------------------------
-        // 4. Create the ReportingEngine and enable template caching.
-        // -----------------------------------------------------------------
-        var engine = new ReportingEngine();
+        // Create a ReportingEngine.
+        // Reusing the same engine instance provides caching of compiled templates.
+        ReportingEngine engine = new ReportingEngine();
 
-        // The CacheCompiledTemplates flag may not be present in older library versions.
-        // Using the numeric value (2) ensures the flag is set when available.
-        engine.Options = (ReportBuildOptions)2; // Enable caching of compiled templates
-
-        // -----------------------------------------------------------------
-        // 5. Build the first report.
-        // -----------------------------------------------------------------
-        engine.BuildReport(loadedTemplate, model, "model");
+        // First report generation.
+        engine.BuildReport(loadedTemplate, order, "order");
+        string outputPath1 = Path.Combine(workDir, "Report1.docx");
         loadedTemplate.Save(outputPath1);
 
-        // -----------------------------------------------------------------
-        // 6. Modify the model and rebuild using the same engine (cached template will be reused).
-        // -----------------------------------------------------------------
-        model.Name = "Bob";
+        // Modify data and generate a second report using the same engine.
+        order.CustomerName = "Jane Smith";
 
-        var secondTemplate = new Document(templatePath);
-        engine.BuildReport(secondTemplate, model, "model");
+        // Reload the template to simulate a fresh document instance.
+        Document secondTemplate = new Document(templatePath);
+        engine.BuildReport(secondTemplate, order, "order");
+        string outputPath2 = Path.Combine(workDir, "Report2.docx");
         secondTemplate.Save(outputPath2);
     }
+}
 
-    // -----------------------------------------------------------------
-    // Simple data model used by the template.
-    // -----------------------------------------------------------------
-    public class ReportModel
-    {
-        public string Name { get; set; } = string.Empty;
-    }
+// Public data model class.
+public class Order
+{
+    public string CustomerName { get; set; } = string.Empty;
 }

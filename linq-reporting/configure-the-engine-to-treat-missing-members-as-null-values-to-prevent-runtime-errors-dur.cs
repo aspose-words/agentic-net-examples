@@ -1,67 +1,68 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Person
+namespace LinqReportingMissingMembers
 {
-    public string Name { get; set; } = "";
-    public int Age { get; set; }
-}
-
-public class ReportModel
-{
-    public Person Person { get; set; } = new Person();
-    public List<Person> Persons { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main()
+    // Sample data model.
+    public class Model
     {
-        // Register code page provider for Aspose.Words if needed
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Non‑nullable property initialized to avoid warnings.
+        public string Name { get; set; } = "John Doe";
 
-        // Prepare sample data
-        var model = new ReportModel
+        // Property that does not exist in the template – will be missing.
+        // No definition needed; the engine will treat it as null.
+    }
+
+    public class Program
+    {
+        public static void Main()
         {
-            Person = new Person { Name = "Alice", Age = 30 },
-            Persons = new List<Person>
-            {
-                new Person { Name = "Bob", Age = 25 },
-                new Person { Name = "Charlie", Age = 35 }
-            }
-        };
+            // Required for some Aspose.Words features (e.g., code page support).
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create template document
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+            // Prepare sample data.
+            var model = new Model();
 
-        builder.Writeln("Existing member: <<[model.Person.Name]>>");
-        builder.Writeln("Missing member (treated as null): <<[model.Person.NonExisting]>>");
-        builder.Writeln("<<foreach [p in model.Persons]>>");
-        builder.Writeln("Person: <<[p.Name]>>, Age: <<[p.Age]>>");
-        builder.Writeln("<</foreach>>");
+            // -----------------------------------------------------------------
+            // Create a template document programmatically.
+            // -----------------------------------------------------------------
+            var templatePath = "template.docx";
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
 
-        doc.Save(templatePath);
+            // Insert LINQ Reporting tags.
+            builder.Writeln("Customer Name: <<[model.Name]>>");
+            builder.Writeln("Missing Member (should be empty): <<[model.Missing]>>");
 
-        // Load template for reporting
-        var reportDoc = new Document(templatePath);
+            // Save the template to disk.
+            doc.Save(templatePath);
 
-        // Configure reporting engine to treat missing members as null (inline error messages prevent exceptions)
-        var engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.InlineErrorMessages
-        };
+            // Load the template for reporting.
+            var template = new Document(templatePath);
 
-        // Build the report
-        engine.BuildReport(reportDoc, model, "model");
+            // -----------------------------------------------------------------
+            // Configure the reporting engine.
+            // Use InlineErrorMessages to avoid runtime exceptions for missing members.
+            // This will render missing members as empty strings (no error thrown).
+            // -----------------------------------------------------------------
+            var engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-        // Save the generated report
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        reportDoc.Save(outputPath);
+            // Build the report.
+            bool success = engine.BuildReport(template, model, "model");
+
+            // Save the generated report.
+            var outputDir = "output";
+            Directory.CreateDirectory(outputDir);
+            var outputPath = Path.Combine(outputDir, "report.docx");
+            template.Save(outputPath);
+
+            // Indicate completion.
+            Console.WriteLine($"Report generation success: {success}");
+            Console.WriteLine($"Report saved to: {outputPath}");
+        }
     }
 }

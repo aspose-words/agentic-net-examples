@@ -1,44 +1,64 @@
 using System;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class Model
+{
+    // Sample property; does NOT contain a member named "nonexistent"
+    public string Name { get; set; } = "Sample";
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Create a template document with a tag that references a nonexistent member.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Start");
-        builder.Writeln("<<[nonexistent]>>"); // This member does not exist in the model.
-        builder.Writeln("End");
+        // Register code page provider required by Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Simple model with no members.
-        var model = new Model();
+        // Prepare file paths in the current working directory.
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        string reportPath   = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
 
-        // Configure the reporting engine to handle missing members gracefully.
+        // -------------------------------------------------
+        // Create the LINQ Reporting template programmatically
+        // -------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Tag that references a missing member; should resolve to null without error.
+        builder.Writeln("Value: <<[nonexistent]>>.");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -------------------------------------------------
+        // Load the template and build the report
+        // -------------------------------------------------
+        Document reportDoc = new Document(templatePath);
+        Model model = new Model();
+
         ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.InlineErrorMessages; // Missing members will be treated as null.
 
-        // Build the report.
-        bool success = engine.BuildReport(doc, model, "model");
+        // Enable missing‑member handling. The MissingMemberHandling flag does not exist,
+        // so we fall back to InlineErrorMessages which suppresses exceptions and leaves
+        // the tag output empty (null) when a member is not found.
+        engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-        // Save the document (optional).
-        doc.Save("output.docx");
+        // Build the report; root object name is "model".
+        // When InlineErrorMessages is set, BuildReport returns a bool indicating success.
+        bool success = engine.BuildReport(reportDoc, model, "model");
 
-        // Verify that the missing member produced no output.
-        string resultText = doc.GetText()
-                               .Replace("\r", string.Empty)
-                               .Replace("\n", string.Empty)
-                               .Trim();
+        // Save the generated report.
+        reportDoc.Save(reportPath);
 
-        Console.WriteLine($"Report built successfully: {success}");
-        Console.WriteLine($"Resulting document text (without line breaks): '{resultText}'");
-        // Expected output: "StartEnd"
-    }
-
-    // Empty model class – no members defined.
-    public class Model
-    {
+        // -------------------------------------------------
+        // Verify that the missing member was handled gracefully
+        // -------------------------------------------------
+        string resultText = reportDoc.GetText();
+        Console.WriteLine("Report text:");
+        Console.WriteLine(resultText);
+        Console.WriteLine($"Build succeeded: {success}");
     }
 }

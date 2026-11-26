@@ -2,10 +2,53 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
+using System.Text;                     // Correct namespace for Encoding
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Drawing;           // Required for ShapeType if needed in future
 
+class Program
+{
+    static void Main()
+    {
+        // Register code page provider (required for some encodings).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Prepare sample data.
+        var model = new ReportModel
+        {
+            Persons =
+            {
+                new Person { Name = "Alice", Age = 30 },
+                new Person { Name = "Bob", Age = 25 },
+                new Person { Name = "Charlie", Age = 35 }
+            }
+        };
+
+        // Create template document programmatically.
+        string templatePath = "template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Report of Persons:");
+        builder.Writeln("<<foreach [line in FormattedPersons]>>");
+        builder.Writeln("<<[line]>>");
+        builder.Writeln("<</foreach>>");
+        templateDoc.Save(templatePath);
+
+        // Load the template for reporting.
+        var doc = new Document(templatePath);
+        var engine = new ReportingEngine();
+
+        // Build the report using the model as the root object named "model".
+        engine.BuildReport(doc, model, "model");
+
+        // Save the generated report.
+        string outputPath = "output.docx";
+        doc.Save(outputPath);
+    }
+}
+
+// Public data model classes.
 public class Person
 {
     public string Name { get; set; } = "";
@@ -14,58 +57,8 @@ public class Person
 
 public class ReportModel
 {
-    public List<string> FormattedPersons { get; set; } = new();
-}
+    public List<Person> Persons { get; set; } = new();
 
-public class Program
-{
-    public static void Main()
-    {
-        // Register code page provider for Aspose.Words.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Sample data.
-        List<Person> persons = new()
-        {
-            new Person { Name = "Alice", Age = 30 },
-            new Person { Name = "Bob", Age = 25 },
-            new Person { Name = "Charlie", Age = 35 }
-        };
-
-        // Transform each person into a formatted string using a custom delegate.
-        ReportModel model = new()
-        {
-            FormattedPersons = persons
-                .Select(p => $"{p.Name} ({p.Age} years old)")
-                .ToList()
-        };
-
-        // Create the LINQ Reporting template.
-        string templatePath = "Template.docx";
-        Document templateDoc = new();
-        DocumentBuilder builder = new(templateDoc);
-
-        // Write heading.
-        builder.Writeln("Person List:");
-        // Begin foreach over formatted strings.
-        builder.Writeln("<<foreach [p in FormattedPersons]>>");
-        // Output each formatted string.
-        builder.Writeln("<<[p]>>");
-        // End foreach.
-        builder.Writeln("<</foreach>>");
-
-        // Save the template.
-        templateDoc.Save(templatePath);
-
-        // Load the template for reporting.
-        Document doc = new(templatePath);
-
-        // Build the report.
-        ReportingEngine engine = new();
-        engine.BuildReport(doc, model, "model");
-
-        // Save the final report.
-        string outputPath = "Report.docx";
-        doc.Save(outputPath);
-    }
+    // Custom delegate via LINQ Select to format each person.
+    public IEnumerable<string> FormattedPersons => Persons.Select(p => $"{p.Name} ({p.Age})");
 }

@@ -1,59 +1,58 @@
 using System;
-using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class Model
+{
+    // Existing property (not used in the template).
+    public string ExistingProperty { get; set; } = "ExistingValue";
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for Aspose.Words)
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // 1. Create a template document that references a missing member.
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
+        builder.Writeln("Report start");
+        builder.Writeln("Missing member: <<[model.MissingProperty]>>");
+        builder.Writeln("Report end");
 
-        // Create a simple template with a missing member reference
-        string templatePath = "template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Hello <<[model.MissingMember]>>!");
-        templateDoc.Save(templatePath);
+        // Save the template to disk – required by the workflow.
+        const string templatePath = "template.docx";
+        template.Save(templatePath);
 
-        // Load the template (simulating a real scenario)
-        Document doc = new Document(templatePath);
+        // 2. Load the template for reporting.
+        var doc = new Document(templatePath);
 
-        // Prepare model without the referenced member
+        // 3. Prepare the root data object.
         var model = new Model();
 
-        // Configure the reporting engine to use inline error messages
-        ReportingEngine engine = new ReportingEngine();
+        // 4. Configure the reporting engine with inline error messages.
+        var engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-        // Build the report
+        // 5. Build the report. The method returns false because a missing
+        //    member is encountered, but an inline error message should be inserted.
         bool success = engine.BuildReport(doc, model, "model");
 
-        // Retrieve the generated text
+        // 6. Verify that the inline error message appears in the generated document.
+        //    The default inline error contains the missing member name.
         string resultText = doc.GetText();
+        bool containsMissingMember = resultText.Contains("MissingProperty");
 
-        // Determine if the fallback message appears (Aspose.Words inserts "??" for missing members)
-        bool containsFallback = resultText.Contains("??") || resultText.Contains("Error") || resultText.Contains("missing");
-
-        // Simple unit‑test style output
-        if (!success && containsFallback)
+        // Simple assertion logic to emulate a unit test.
+        if (!success && containsMissingMember)
         {
-            Console.WriteLine("Test Passed: Fallback message detected.");
+            Console.WriteLine("Test passed: inline error message displayed for missing member.");
         }
         else
         {
-            Console.WriteLine("Test Failed: Fallback message not detected.");
+            Console.WriteLine("Test failed: inline error message not displayed as expected.");
         }
 
-        // Save the generated document for inspection (optional)
+        // Save the generated report for manual inspection if needed.
         doc.Save("output.docx");
-    }
-
-    // Model class without the MissingMember property
-    public class Model
-    {
-        public string ExistingMember { get; set; } = "ExistingValue";
     }
 }

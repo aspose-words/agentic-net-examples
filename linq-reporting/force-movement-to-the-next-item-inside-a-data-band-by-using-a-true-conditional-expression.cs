@@ -1,69 +1,64 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using System.Text;
 
-namespace LinqReportingTrueConditional
+public class Program
 {
-    public class Item
+    public static void Main()
     {
-        public int Index { get; set; } = 0;
-        public string Name { get; set; } = string.Empty;
-    }
+        // Register code page provider for Aspose.Words if needed.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    public class ReportModel
-    {
-        public List<Item> Items { get; set; } = new();
-    }
-
-    public class Program
-    {
-        public static void Main()
+        // Prepare sample data.
+        var model = new ReportModel
         {
-            // Register code page provider for Aspose.Words if needed
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            // Paths for template and output
-            string templatePath = "template.docx";
-            string outputPath = "output.docx";
-
-            // Create template document with LINQ Reporting tags
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-            builder.Writeln("Report generated with LINQ Reporting");
-            builder.Writeln("<<foreach [item in Items]>>");
-            // Output item details
-            builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
-            // True conditional expression to force movement to next item (no additional content)
-            builder.Writeln("<<if [true]>> <<[item.Name]>> <</if>>");
-            builder.Writeln("<</foreach>>");
-
-            // Save the template
-            templateDoc.Save(templatePath);
-
-            // Load the template for reporting
-            Document doc = new Document(templatePath);
-
-            // Prepare sample data
-            ReportModel model = new()
+            Items = new List<Item>
             {
-                Items = new()
-                {
-                    new Item { Index = 1, Name = "Alpha" },
-                    new Item { Index = 2, Name = "Beta" },
-                    new Item { Index = 3, Name = "Gamma" }
-                }
-            };
+                new Item { Id = 1, Name = "Alpha" },
+                new Item { Id = 2, Name = "Beta" },
+                new Item { Id = 3, Name = "Gamma" }
+            }
+        };
 
-            // Build the report
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
+        // Create a template document programmatically.
+        var templatePath = "template.docx";
+        var builder = new DocumentBuilder();
+        builder.Writeln("Report Start");
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("Item: <<[item.Id]>> - <<[item.Name]>>");
+        // Force movement to the next item using a true conditional expression.
+        builder.Writeln("<<if [true]>> <<next>> <</if>>");
+        // This line will be skipped for each item because of the <<next>> above.
+        builder.Writeln("This line should NOT appear in the output.");
+        builder.Writeln("<</foreach>>");
+        builder.Writeln("Report End");
+        builder.Document.Save(templatePath);
 
-            // Save the generated report
-            doc.Save(outputPath);
-        }
+        // Load the template and build the report.
+        var doc = new Document(templatePath);
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
+
+        // Save the generated report.
+        var outputPath = "report.docx";
+        doc.Save(outputPath);
+
+        // Indicate completion.
+        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
     }
+}
+
+// Data model classes.
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
 }

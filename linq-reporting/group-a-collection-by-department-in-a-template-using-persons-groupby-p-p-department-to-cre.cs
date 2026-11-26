@@ -12,71 +12,57 @@ public class Person
     public string Department { get; set; } = "";
 }
 
-public class DepartmentGroup
-{
-    public string Name { get; set; } = "";
-    public List<Person> Persons { get; set; } = new();
-}
-
 public class ReportModel
 {
-    public List<DepartmentGroup> Departments { get; set; } = new();
+    public List<Person> Persons { get; set; } = new();
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
-        List<Person> persons = new()
+        // Sample data
+        var persons = new List<Person>
         {
-            new() { Name = "Alice", Age = 30, Department = "HR" },
-            new() { Name = "Bob", Age = 25, Department = "IT" },
-            new() { Name = "Charlie", Age = 28, Department = "HR" },
-            new() { Name = "Diana", Age = 35, Department = "Finance" },
-            new() { Name = "Evan", Age = 22, Department = "IT" }
+            new Person { Name = "Alice", Age = 30, Department = "HR" },
+            new Person { Name = "Bob", Age = 25, Department = "IT" },
+            new Person { Name = "Charlie", Age = 28, Department = "HR" },
+            new Person { Name = "Diana", Age = 35, Department = "Finance" },
+            new Person { Name = "Evan", Age = 40, Department = "IT" }
         };
 
-        // Group persons by department.
-        ReportModel model = new()
-        {
-            Departments = persons
-                .GroupBy(p => p.Department)
-                .Select(g => new DepartmentGroup
-                {
-                    Name = g.Key,
-                    Persons = g.ToList()
-                })
-                .ToList()
-        };
+        var model = new ReportModel { Persons = persons };
 
-        // Create the template document.
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-        Document templateDoc = new();
-        DocumentBuilder builder = new(templateDoc);
+        // Create template document
+        var templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        builder.Writeln("<<foreach [dept in Departments]>>");
-        builder.Writeln("Department: <<[dept.Name]>>");
-        builder.Writeln("<<foreach [p in dept.Persons]>>");
-        builder.Writeln("- <<[p.Name]>> (Age: <<[p.Age]>>)");
+        builder.Writeln("Employee Report");
+        builder.Writeln();
+
+        // Group by Department
+        builder.Writeln("<<foreach [dept in model.Persons.GroupBy(p => p.Department)]>>");
+        builder.Writeln("Department: <<[dept.Key]>>");
+        builder.Writeln();
+
+        // List persons in each department
+        builder.Writeln("<<foreach [person in dept]>>");
+        builder.Writeln("- <<[person.Name]>> (Age: <<[person.Age]>>)");
         builder.Writeln("<</foreach>>");
+        builder.Writeln();
+
         builder.Writeln("<</foreach>>");
 
-        // Save the template.
-        templateDoc.Save(templatePath);
+        doc.Save(templatePath);
 
-        // Load the template for report generation.
-        Document reportDoc = new(templatePath);
+        // Load template and build report
+        var template = new Document(templatePath);
+        var engine = new ReportingEngine();
+        engine.BuildReport(template, model, "model");
 
-        // Build the report.
-        ReportingEngine engine = new()
-        {
-            Options = ReportBuildOptions.None
-        };
-        engine.BuildReport(reportDoc, model, "model");
-
-        // Save the final report.
-        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        reportDoc.Save(reportPath);
+        // Save final report
+        var outputPath = "Report.docx";
+        template.Save(outputPath);
     }
 }

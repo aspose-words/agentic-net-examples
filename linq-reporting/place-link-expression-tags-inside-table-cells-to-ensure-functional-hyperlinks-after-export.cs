@@ -5,80 +5,75 @@ using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsLinqLinkInTable
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Register code page provider (required for some encodings).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Sample data.
+        var model = new ReportModel
         {
-            // Register code page provider for Aspose.Words.
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            // Sample data.
-            ReportModel model = new()
+            Items = new List<Item>
             {
-                Items = new()
-                {
-                    new Item { Url = "https://example.com/1", LinkText = "Example 1" },
-                    new Item { Url = "https://example.com/2", LinkText = "Example 2" },
-                    new Item { Url = "https://example.com/3", LinkText = "Example 3" }
-                }
-            };
+                new Item { Url = "https://example.com", LinkText = "Example Site" },
+                new Item { Url = "https://github.com", LinkText = "GitHub" },
+                new Item { Url = "https://docs.microsoft.com", LinkText = "Microsoft Docs" }
+            }
+        };
 
-            // Create the template document.
-            Document templateDoc = new();
-            DocumentBuilder builder = new(templateDoc);
+        // Create the template document.
+        var templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-            // Begin foreach block.
-            builder.Writeln("<<foreach [item in Items]>>");
+        // Begin the foreach loop.
+        builder.Writeln("<<foreach [item in Items]>>");
 
-            // Start table inside the foreach block.
-            Table table = builder.StartTable();
+        // Build the table inside the loop.
+        Table table = builder.StartTable();
 
-            // Header row.
-            builder.InsertCell();
-            builder.Writeln("Link");
-            builder.EndRow();
+        // Header row.
+        builder.InsertCell();
+        builder.Writeln("Link");
+        builder.EndRow();
 
-            // Data row for each item.
-            builder.InsertCell();
-            builder.Writeln("<<link [item.Url] [item.LinkText]>>");
-            builder.EndRow();
+        // Data row (repeated for each item).
+        builder.InsertCell();
+        builder.Writeln("<<link [item.Url] [item.LinkText]>>");
+        builder.EndRow();
 
-            // End table.
-            builder.EndTable();
+        // End the table.
+        builder.EndTable();
 
-            // End foreach block.
-            builder.Writeln("<</foreach>>");
+        // End the foreach loop.
+        builder.Writeln("<</foreach>>");
 
-            // Save the template.
-            string templatePath = "Template.docx";
-            templateDoc.Save(templatePath);
+        // Save the template.
+        doc.Save(templatePath);
 
-            // Load the template for report generation.
-            Document reportDoc = new(templatePath);
+        // Load the template for reporting.
+        var reportDoc = new Document(templatePath);
 
-            // Build the report.
-            ReportingEngine engine = new();
-            engine.Options = ReportBuildOptions.None;
-            bool success = engine.BuildReport(reportDoc, model, "model");
+        // Build the report.
+        var engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
 
-            // Save the generated report.
-            string outputPath = "Report.docx";
-            reportDoc.Save(outputPath);
-        }
+        // Save the final report.
+        var outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
+}
 
-    // Root data model.
-    public class ReportModel
-    {
-        public List<Item> Items { get; set; } = new();
-    }
+// Data model classes.
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
 
-    // Item model representing a hyperlink.
-    public class Item
-    {
-        public string Url { get; set; } = "";
-        public string LinkText { get; set; } = "";
-    }
+public class Item
+{
+    public string Url { get; set; } = "";
+    public string LinkText { get; set; } = "";
 }

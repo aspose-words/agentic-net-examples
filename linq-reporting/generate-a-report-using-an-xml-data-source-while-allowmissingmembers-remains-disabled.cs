@@ -1,74 +1,92 @@
 using System;
-using System.Collections.Generic;
+using System.Data;
 using System.IO;
-using System.Xml.Serialization;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+public class LinqReportingXmlExample
 {
     public static void Main()
     {
-        // Define file paths
-        string currentDir = Directory.GetCurrentDirectory();
-        string xmlPath = Path.Combine(currentDir, "sample.xml");
-        string templatePath = Path.Combine(currentDir, "Template.docx");
-        string reportPath = Path.Combine(currentDir, "Report.docx");
+        // Register code page provider for XML encoding support.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create sample XML data
-        string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
+        // -----------------------------------------------------------------
+        // 1. Create sample XML data.
+        // -----------------------------------------------------------------
+        string xmlPath = "data.xml";
+        File.WriteAllText(xmlPath,
+            @"<?xml version=""1.0"" encoding=""UTF-8""?>
 <Orders>
-    <Order>
-        <CustomerName>John Doe</CustomerName>
-        <Total>123.45</Total>
-    </Order>
-    <Order>
-        <CustomerName>Jane Smith</CustomerName>
-        <Total>678.90</Total>
-    </Order>
-</Orders>";
-        File.WriteAllText(xmlPath, xmlContent);
+  <Order>
+    <CustomerName>John Doe</CustomerName>
+    <OrderDate>2023-01-01</OrderDate>
+    <Items>
+      <Item>
+        <ProductName>Widget</ProductName>
+        <Quantity>2</Quantity>
+      </Item>
+      <Item>
+        <ProductName>Gadget</ProductName>
+        <Quantity>5</Quantity>
+      </Item>
+    </Items>
+  </Order>
+  <Order>
+    <CustomerName>Jane Smith</CustomerName>
+    <OrderDate>2023-02-15</OrderDate>
+    <Items>
+      <Item>
+        <ProductName>Thingamajig</ProductName>
+        <Quantity>1</Quantity>
+      </Item>
+    </Items>
+  </Order>
+</Orders>");
 
-        // Deserialize XML into a strongly‑typed model
-        OrdersRoot dataModel;
-        var serializer = new XmlSerializer(typeof(OrdersRoot));
-        using (var fs = new FileStream(xmlPath, FileMode.Open, FileAccess.Read))
-        {
-            dataModel = (OrdersRoot)serializer.Deserialize(fs)!;
-        }
+        // -----------------------------------------------------------------
+        // 2. Build a template document that contains LINQ Reporting tags.
+        // -----------------------------------------------------------------
+        string templatePath = "template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Build the template document with LINQ Reporting tags
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Order Report");
-        builder.Writeln("<<foreach [order in data.Orders]>>");
-        builder.Writeln("Customer: <<[order.CustomerName]>>   Total: <<[order.Total]>>");
+        builder.Writeln("Orders Report");
+        builder.Writeln("<<foreach [order in Order]>>");
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Date: <<[order.OrderDate]>>");
+        builder.Writeln("Items:");
+        builder.Writeln("<<foreach [item in order.Items.Item]>>");
+        builder.Writeln("- <<[item.ProductName]>>: <<[item.Quantity]>>");
         builder.Writeln("<</foreach>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
         templateDoc.Save(templatePath);
 
-        // Load the template for report generation
-        var reportDoc = new Document(templatePath);
+        // -----------------------------------------------------------------
+        // 3. Load the template document for reporting.
+        // -----------------------------------------------------------------
+        Document doc = new Document(templatePath);
 
-        // Build the report (AllowMissingMembers remains disabled)
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        engine.BuildReport(reportDoc, dataModel, "data");
+        // -----------------------------------------------------------------
+        // 4. Load XML data into a DataSet (the format expected by the engine).
+        // -----------------------------------------------------------------
+        DataSet dataSet = new DataSet();
+        dataSet.ReadXml(xmlPath);
 
-        // Save the final report
-        reportDoc.Save(reportPath);
+        // -----------------------------------------------------------------
+        // 5. Build the report. AllowMissingMembers stays disabled (default).
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
+        // No special options are set; the default disables AllowMissingMembers.
+        engine.BuildReport(doc, dataSet, "Orders");
+
+        // -----------------------------------------------------------------
+        // 6. Save the generated report.
+        // -----------------------------------------------------------------
+        string outputPath = "report.docx";
+        doc.Save(outputPath);
     }
-}
-
-// Strongly‑typed model that matches the XML structure
-[XmlRoot("Orders")]
-public class OrdersRoot
-{
-    [XmlElement("Order")]
-    public List<Order> Orders { get; set; } = new();
-}
-
-public class Order
-{
-    public string CustomerName { get; set; } = "";
-    public decimal Total { get; set; }
 }

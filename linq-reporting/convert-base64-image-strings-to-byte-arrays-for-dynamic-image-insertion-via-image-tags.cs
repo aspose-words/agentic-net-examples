@@ -1,60 +1,54 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
-using Aspose.Words.Reporting;
 using Aspose.Words.Drawing;
+using Aspose.Words.Reporting;
+
+public class ReportModel
+{
+    // Base64 string of a small PNG image (1x1 pixel)
+    public string Base64Image { get; set; } = string.Empty;
+
+    // Convert Base64 string to byte array for the image tag
+    public byte[] ImageData => Convert.FromBase64String(Base64Image);
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare folders
-        string outputDir = "output";
-        Directory.CreateDirectory(outputDir);
+        // Register code page provider (required for some encodings)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create template document with an image placeholder inside a textbox
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Prepare sample data with a Base64 encoded image
+        var model = new ReportModel
+        {
+            Base64Image = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XGkUAAAAASUVORK5CYII="
+        };
 
-        // Insert a textbox to host the image
+        // Create a template document programmatically
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+
+        // Insert a textbox to host the image tag
         Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
         builder.MoveTo(textBox.FirstParagraph);
         builder.Write("<<image [model.ImageData] -fitSize>>");
 
-        // Save the template
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        template.Save(templatePath);
+        // Save the template to disk
+        const string templatePath = "Template.docx";
+        templateDoc.Save(templatePath);
 
         // Load the template for reporting
-        Document reportDoc = new Document(templatePath);
+        var loadedTemplate = new Document(templatePath);
 
-        // Prepare model with Base64 image string and converted byte array
-        ReportModel model = new()
-        {
-            Base64Image = SampleBase64Png,
-            ImageData = Convert.FromBase64String(SampleBase64Png)
-        };
+        // Build the report using LINQ Reporting Engine
+        var engine = new ReportingEngine();
+        engine.BuildReport(loadedTemplate, model, "model");
 
-        // Build the report
-        ReportingEngine engine = new();
-        engine.BuildReport(reportDoc, model, "model");
-
-        // Save the final document
-        string resultPath = Path.Combine(outputDir, "result.docx");
-        reportDoc.Save(resultPath);
-    }
-
-    // Sample 1x1 pixel PNG encoded in Base64
-    private const string SampleBase64Png =
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BAQAE/wJ" +
-        "Zc6cAAAAASUVORK5CYII=";
-
-    public class ReportModel
-    {
-        // Base64 string (not used directly in the template but kept for completeness)
-        public string Base64Image { get; set; } = string.Empty;
-
-        // Byte array used by the image tag
-        public byte[] ImageData { get; set; } = Array.Empty<byte>();
+        // Save the generated report
+        const string outputPath = "Report.docx";
+        loadedTemplate.Save(outputPath);
     }
 }

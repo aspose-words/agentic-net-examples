@@ -1,54 +1,52 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class Order
-{
-    public string CustomerName { get; set; } = "";
-    public double DiscountPercentage { get; set; }
-    public double DiscountAmount { get; set; }
-    public double Total { get; set; }
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some environments)
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Sample data
-        var order = new Order
+        // Prepare sample data.
+        var product = new Product
         {
-            CustomerName = "John Doe",
-            DiscountPercentage = 10.0,
-            DiscountAmount = 15.0,
-            Total = 150.0
+            Name = "SuperWidget",
+            Price = 49.99m,
+            Discount = 15m // Discount percentage greater than zero.
         };
 
-        // Create template document
+        // Create a template document programmatically.
         var templatePath = "template.docx";
         var doc = new Document();
         var builder = new DocumentBuilder(doc);
 
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("Total: $<<[order.Total]>>");
-        // Conditional block: show discount only when percentage > 0
-        builder.Writeln("<<if [order.DiscountPercentage > 0]>>Discount: <<[order.DiscountPercentage]>>% (-$<<[order.DiscountAmount]>>)<</if>>");
+        builder.Writeln("Product: <<[product.Name]>>");
+        builder.Writeln("Price: $<<[product.Price]>>");
+        builder.Writeln("<<if [product.Discount > 0]>>Discount: <<[product.Discount]>>%<</if>>");
 
-        // Save template
         doc.Save(templatePath);
 
-        // Load template for report generation
-        var reportDoc = new Document(templatePath);
+        // Load the template for reporting.
+        var template = new Document(templatePath);
 
-        // Build report
+        // Build the report using LINQ Reporting Engine.
         var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, order, "order");
+        engine.BuildReport(template, product, "product");
 
-        // Save final report
+        // Save the generated report.
         var outputPath = "report.docx";
-        reportDoc.Save(outputPath);
+        template.Save(outputPath);
     }
+}
+
+// Public data model class.
+public class Product
+{
+    public string Name { get; set; } = "";
+    public decimal Price { get; set; }
+    public decimal Discount { get; set; }
 }

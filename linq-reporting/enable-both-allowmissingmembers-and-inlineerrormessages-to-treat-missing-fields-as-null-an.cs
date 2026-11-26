@@ -1,71 +1,63 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Newtonsoft.Json;
 
-public class Program
+namespace LinqReportingAllowMissingMembers
 {
-    public static void Main()
+    // Sample data model
+    public class Person
     {
-        // Register code page provider (required for some encodings)
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Paths for template and output
-        string templatePath = "template.docx";
-        string outputPath = "output.docx";
-
-        // Create template document with LINQ Reporting tags
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Write a heading
-        builder.Writeln("LINQ Reporting Example with AllowMissingMembers and InlineErrorMessages");
-        builder.Writeln();
-
-        // Correct tag
-        builder.Writeln("Name: <<[person.Name]>>");
-        builder.Writeln("Age: <<[person.Age]>>");
-
-        // Missing member tag (property does not exist in the model)
-        builder.Writeln("Missing field (should be treated as null): <<[person.MissingField]>>");
-
-        // Syntax error tag (invalid switch)
-        builder.Writeln("Syntax error example: <<[person.Name] -invalidSwitch>>");
-
-        // Save the template
-        templateDoc.Save(templatePath);
-
-        // Load the template for reporting
-        Document doc = new Document(templatePath);
-
-        // Prepare data model
-        Person person = new Person
-        {
-            Name = "John Doe",
-            Age = 30
-        };
-
-        // Configure reporting engine with required options
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.AllowMissingMembers | ReportBuildOptions.InlineErrorMessages;
-
-        // Build the report
-        bool success = engine.BuildReport(doc, person, "person");
-
-        // Save the generated report
-        doc.Save(outputPath);
-
-        // Output result status
-        Console.WriteLine($"Report generation success: {success}");
-        Console.WriteLine($"Output saved to: {Path.GetFullPath(outputPath)}");
+        public string Name { get; set; } = "John Doe";
+        public int Age { get; set; } = 30;
+        // Note: No Address property – will be missing in the template.
     }
-}
 
-// Data model class
-public class Person
-{
-    public string Name { get; set; } = string.Empty;
-    public int Age { get; set; }
+    class Program
+    {
+        static void Main()
+        {
+            // Register code page provider for .NET Core.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Build the LINQ Reporting template.
+            builder.Writeln("Name: <<[model.Name]>>");
+            builder.Writeln("Age: <<[model.Age]>>");
+            // This field does not exist in the model; AllowMissingMembers will treat it as null.
+            builder.Writeln("Address: <<[model.Address]>>");
+            // Intentional syntax error: missing closing </if> tag.
+            builder.Writeln("<<if [model.Name]>>Hello");
+
+            // Save the template (optional, for inspection).
+            string templatePath = "Template.docx";
+            doc.Save(templatePath);
+
+            // Load the template back (demonstrates load step).
+            Document templateDoc = new Document(templatePath);
+
+            // Prepare the data source.
+            Person model = new();
+
+            // Configure the reporting engine with both options.
+            ReportingEngine engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.AllowMissingMembers | ReportBuildOptions.InlineErrorMessages;
+
+            // Build the report.
+            bool success = engine.BuildReport(templateDoc, model, "model");
+
+            // Save the generated report.
+            string outputPath = "Report.docx";
+            templateDoc.Save(outputPath);
+
+            // Output the result status.
+            Console.WriteLine($"Report generation success: {success}");
+            Console.WriteLine($"Report saved to: {Path.GetFullPath(outputPath)}");
+        }
+    }
 }

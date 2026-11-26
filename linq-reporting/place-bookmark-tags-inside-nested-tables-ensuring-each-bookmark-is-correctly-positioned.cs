@@ -3,124 +3,119 @@ using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output directory
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Prepare sample data model
+        var model = new ReportModel
+        {
+            OuterItems = new List<OuterItem>
+            {
+                new OuterItem
+                {
+                    Name = "Outer 1",
+                    InnerItems = new List<InnerItem>
+                    {
+                        new InnerItem { Title = "Inner 1A", BookmarkName = "BM_1A" },
+                        new InnerItem { Title = "Inner 1B", BookmarkName = "BM_1B" }
+                    }
+                },
+                new OuterItem
+                {
+                    Name = "Outer 2",
+                    InnerItems = new List<InnerItem>
+                    {
+                        new InnerItem { Title = "Inner 2A", BookmarkName = "BM_2A" },
+                        new InnerItem { Title = "Inner 2B", BookmarkName = "BM_2B" }
+                    }
+                }
+            }
+        };
 
-        // Paths for template and result documents
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        string resultPath = Path.Combine(outputDir, "output.docx");
+        // Create template document programmatically
+        var templatePath = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Create the template document with nested tables and bookmark tags
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Begin outer foreach
+        builder.Writeln("<<foreach [outer in Model.OuterItems]>>");
 
-        // Begin outer foreach over Sections
-        builder.Writeln("<<foreach [section in Sections]>>");
+        // Outer table start
+        builder.StartTable();
 
-        // Start outer table
-        Table outerTable = builder.StartTable();
-
-        // First cell: Section title
+        // First cell: outer name
         builder.InsertCell();
-        builder.Writeln("<<[section.Title]>>");
+        builder.Writeln("<<[outer.Name]>>");
 
-        // Second cell: will contain inner table with items
+        // Second cell: will contain inner table
         builder.InsertCell();
 
-        // Begin inner foreach over Items
-        builder.Writeln("<<foreach [item in section.Items]>>");
+        // Begin inner foreach
+        builder.Writeln("<<foreach [inner in outer.InnerItems]>>");
 
-        // Start inner table
-        Table innerTable = builder.StartTable();
+        // Inner table start
+        builder.StartTable();
 
-        // Cell with bookmark around item name
+        // Inner row first cell with bookmark
         builder.InsertCell();
-        builder.Writeln("<<bookmark [item.BookmarkName]>>");
-        builder.Writeln("<<[item.Name]>>");
+        builder.Writeln("<<bookmark [inner.BookmarkName]>>");
+        builder.Writeln("<<[inner.Title]>>");
         builder.Writeln("<</bookmark>>");
 
-        // End inner row and table
+        // Inner row second cell (optional additional content)
+        builder.InsertCell();
+        builder.Writeln("Details for <<[inner.Title]>>");
+
+        // End inner row
         builder.EndRow();
+
+        // End inner table
         builder.EndTable();
 
         // End inner foreach
         builder.Writeln("<</foreach>>");
 
-        // End outer row and table
+        // End outer row
         builder.EndRow();
+
+        // End outer table
         builder.EndTable();
 
         // End outer foreach
         builder.Writeln("<</foreach>>");
 
         // Save the template
-        templateDoc.Save(templatePath);
-
-        // Prepare sample data
-        ReportModel model = new()
-        {
-            Sections = new()
-            {
-                new Section
-                {
-                    Title = "Section A",
-                    Items = new()
-                    {
-                        new Item { Name = "Item A1", BookmarkName = "BM_A1" },
-                        new Item { Name = "Item A2", BookmarkName = "BM_A2" }
-                    }
-                },
-                new Section
-                {
-                    Title = "Section B",
-                    Items = new()
-                    {
-                        new Item { Name = "Item B1", BookmarkName = "BM_B1" },
-                        new Item { Name = "Item B2", BookmarkName = "BM_B2" },
-                        new Item { Name = "Item B3", BookmarkName = "BM_B3" }
-                    }
-                }
-            }
-        };
+        doc.Save(templatePath);
 
         // Load the template for reporting
-        Document reportDoc = new Document(templatePath);
-        ReportingEngine engine = new();
+        var templateDoc = new Document(templatePath);
 
         // Build the report
-        bool success = engine.BuildReport(reportDoc, model, "model");
+        var engine = new ReportingEngine();
+        engine.BuildReport(templateDoc, model, "Model");
 
         // Save the generated report
-        reportDoc.Save(resultPath);
-
-        // Output result information
-        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}.");
-        Console.WriteLine($"Template saved to: {templatePath}");
-        Console.WriteLine($"Report saved to: {resultPath}");
+        var outputPath = "output.docx";
+        templateDoc.Save(outputPath);
     }
 }
 
 // Data model classes
 public class ReportModel
 {
-    public List<Section> Sections { get; set; } = new();
+    public List<OuterItem> OuterItems { get; set; } = new();
 }
 
-public class Section
+public class OuterItem
 {
-    public string Title { get; set; } = "";
-    public List<Item> Items { get; set; } = new();
+    public string Name { get; set; } = string.Empty;
+    public List<InnerItem> InnerItems { get; set; } = new();
 }
 
-public class Item
+public class InnerItem
 {
-    public string Name { get; set; } = "";
-    public string BookmarkName { get; set; } = "";
+    public string Title { get; set; } = string.Empty;
+    public string BookmarkName { get; set; } = string.Empty;
 }

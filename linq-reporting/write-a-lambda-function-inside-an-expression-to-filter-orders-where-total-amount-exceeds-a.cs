@@ -5,19 +5,21 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingLambdaExample
+namespace LinqReportingExample
 {
-    // Data model classes
+    // Order data model
     public class Order
     {
-        public string CustomerName { get; set; } = "";
-        public decimal TotalAmount { get; set; }
+        public int Id { get; set; } = 0;
+        public string CustomerName { get; set; } = string.Empty;
+        public decimal Total { get; set; } = 0m;
     }
 
+    // Root model passed to the reporting engine
     public class ReportModel
     {
         public List<Order> Orders { get; set; } = new();
-        public decimal Threshold { get; set; }
+        public decimal Threshold { get; set; } = 0m;
     }
 
     public class Program
@@ -25,36 +27,40 @@ namespace LinqReportingLambdaExample
         public static void Main()
         {
             // Prepare sample data
-            var model = new ReportModel
+            var orders = new List<Order>
             {
-                Threshold = 150m,
-                Orders = new List<Order>
-                {
-                    new Order { CustomerName = "Alice", TotalAmount = 120m },
-                    new Order { CustomerName = "Bob",   TotalAmount = 200m },
-                    new Order { CustomerName = "Carol", TotalAmount = 300m }
-                }
+                new Order { Id = 1, CustomerName = "Alice", Total = 75.50m },
+                new Order { Id = 2, CustomerName = "Bob",   Total = 150.00m },
+                new Order { Id = 3, CustomerName = "Carol", Total = 200.25m },
+                new Order { Id = 4, CustomerName = "Dave",  Total = 45.00m }
             };
 
-            // Create template document programmatically
-            var templatePath = "Template.docx";
-            var builder = new DocumentBuilder();
-            builder.Writeln("Orders with total greater than <<[model.Threshold]>>:");
-            builder.Writeln("<<foreach [order in model.Orders.Where(o => o.TotalAmount > model.Threshold)]>>");
-            builder.Writeln("- <<[order.CustomerName]>>: $<<[order.TotalAmount]>>");
+            var model = new ReportModel
+            {
+                Orders = orders,
+                Threshold = 100m // Filter threshold
+            };
+
+            // Create the template document programmatically
+            var templatePath = "template.docx";
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+
+            builder.Writeln("Orders with total greater than the threshold:");
+            builder.Writeln("<<foreach [order in model.Orders.Where(o => o.Total > model.Threshold)]>>");
+            builder.Writeln("Order ID: <<[order.Id]>>, Customer: <<[order.CustomerName]>>, Total: <<[order.Total]>>");
             builder.Writeln("<</foreach>>");
-            builder.Document.Save(templatePath);
 
-            // Load the template
-            var doc = new Document(templatePath);
+            doc.Save(templatePath);
 
-            // Build the report
+            // Load the template and build the report
+            var loadedDoc = new Document(templatePath);
             var engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
+            engine.BuildReport(loadedDoc, model, "model");
 
             // Save the generated report
-            var outputPath = "Report.docx";
-            doc.Save(outputPath);
+            var outputPath = "report.docx";
+            loadedDoc.Save(outputPath);
         }
     }
 }

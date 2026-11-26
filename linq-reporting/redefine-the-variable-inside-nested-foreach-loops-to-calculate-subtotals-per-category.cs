@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -9,91 +10,85 @@ public class Program
 {
     public static void Main()
     {
+        // Register code page provider for Aspose.Words if needed.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
         // Prepare sample data.
-        ReportModel model = new()
+        var model = new ReportModel
         {
-            Categories = new()
+            Categories = new List<Category>
             {
                 new Category
                 {
                     Name = "Beverages",
-                    Items = new()
+                    Items = new List<Item>
                     {
-                        new Item { Name = "Coffee", Amount = 3.50m },
-                        new Item { Name = "Tea", Amount = 2.75m },
-                        new Item { Name = "Juice", Amount = 4.20m }
+                        new Item { Name = "Coffee", Price = 3.50m },
+                        new Item { Name = "Tea", Price = 2.75m },
+                        new Item { Name = "Juice", Price = 4.20m }
                     }
                 },
                 new Category
                 {
                     Name = "Snacks",
-                    Items = new()
+                    Items = new List<Item>
                     {
-                        new Item { Name = "Chips", Amount = 1.99m },
-                        new Item { Name = "Cookies", Amount = 2.49m }
+                        new Item { Name = "Chips", Price = 1.99m },
+                        new Item { Name = "Cookies", Price = 2.49m }
                     }
                 }
             }
         };
 
-        // Create a template document programmatically.
-        string templatePath = "Template.docx";
-        Document templateDoc = new();
-        DocumentBuilder builder = new(templateDoc);
+        // Create the template document programmatically.
+        const string templatePath = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        builder.Writeln("LINQ Reporting – Subtotals per Category");
-        builder.Writeln();
-
-        // Outer foreach over categories.
         builder.Writeln("<<foreach [cat in Categories]>>");
         builder.Writeln("Category: <<[cat.Name]>>");
-        builder.Writeln();
-
-        // Inner foreach over items.
-        builder.Writeln("<<foreach [itm in cat.Items]>>");
-        builder.Writeln("- <<[itm.Name]>>: $<<[itm.Amount]>>");
+        builder.Writeln("<<foreach [item in cat.Items]>>");
+        builder.Writeln("- <<[item.Name]>>: $<<[item.Price]>>");
         builder.Writeln("<</foreach>>");
-
-        // Subtotal for the current category.
-        builder.Writeln("Subtotal: $<<[cat.Subtotal]>>");
-        builder.Writeln();
+        builder.Writeln("Subtotal for <<[cat.Name]>>: $<<[cat.Items.Sum(i => i.Price)]>>");
         builder.Writeln("<</foreach>>");
 
         // Save the template.
-        templateDoc.Save(templatePath);
+        doc.Save(templatePath);
 
-        // Load the template for report generation.
-        Document reportDoc = new(templatePath);
+        // Load the template for reporting.
+        var templateDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
 
         // Build the report.
-        ReportingEngine engine = new();
-        engine.BuildReport(reportDoc, model, "model");
+        bool success = engine.BuildReport(templateDoc, model, "model");
+        if (!success)
+        {
+            Console.WriteLine("Report generation failed.");
+            return;
+        }
 
         // Save the generated report.
-        string outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+        const string outputPath = "report.docx";
+        templateDoc.Save(outputPath);
+        Console.WriteLine($"Report generated successfully: {Path.GetFullPath(outputPath)}");
     }
 }
 
-// Root model.
+// Data model classes.
 public class ReportModel
 {
     public List<Category> Categories { get; set; } = new();
 }
 
-// Category with a computed subtotal.
 public class Category
 {
     public string Name { get; set; } = string.Empty;
     public List<Item> Items { get; set; } = new();
-
-    // Subtotal calculated from the items.
-    public decimal Subtotal => Items.Sum(i => i.Amount);
 }
 
-// Individual item.
 public class Item
 {
     public string Name { get; set; } = string.Empty;
-    public decimal Amount { get; set; }
+    public decimal Price { get; set; }
 }

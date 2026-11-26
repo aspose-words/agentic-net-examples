@@ -5,85 +5,78 @@ using System.Linq;
 using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using System.Text;
 
-namespace LinqReportingCaseInsensitiveFilter
+public class Product
 {
-    // Model representing a single item.
-    public class Item
+    public string Name { get; set; } = "";
+    public string Category { get; set; } = "";
+}
+
+public class ReportModel
+{
+    public List<Product> Products { get; set; } = new();
+}
+
+public class Program
+{
+    public static void Main()
     {
-        public string Name { get; set; } = "";
-        public string Category { get; set; } = "";
-    }
+        // Prepare sample XML data.
+        string xmlPath = "data.xml";
+        File.WriteAllText(xmlPath,
+@"<Products>
+    <Product Name='Laptop' Category='Electronics' />
+    <Product Name='Desk' Category='Furniture' />
+    <Product Name='Smartphone' Category='electronics' />
+    <Product Name='Chair' Category='Furniture' />
+    <Product Name='Headphones' Category='ELECTRONICS' />
+</Products>");
 
-    // Root model passed to the reporting engine.
-    public class ReportModel
-    {
-        public List<Item> Items { get; set; } = new();
-    }
-
-    public class Program
-    {
-        public static void Main()
-        {
-            // Register code page provider (required by Aspose.Words for some encodings).
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            // 1. Create sample XML data.
-            string xmlContent = @"
-                <Items>
-                    <Item Name='Apple' Category='Fruit' />
-                    <Item Name='Carrot' Category='Vegetable' />
-                    <Item Name='Banana' Category='fruit' />
-                    <Item Name='Broccoli' Category='Vegetable' />
-                    <Item Name='Strawberry' Category='FRUIT' />
-                </Items>";
-            string xmlPath = Path.Combine(Directory.GetCurrentDirectory(), "Data.xml");
-            File.WriteAllText(xmlPath, xmlContent);
-
-            // 2. Load XML and filter nodes with case‑insensitive comparison on the 'Category' attribute.
-            XDocument xDoc = XDocument.Load(xmlPath);
-            List<Item> filteredItems = xDoc.Root!
-                .Elements("Item")
-                .Where(e => string.Equals(
-                    (string?)e.Attribute("Category"),
-                    "fruit",
-                    StringComparison.OrdinalIgnoreCase))
-                .Select(e => new Item
-                {
-                    Name = (string?)e.Attribute("Name") ?? "",
-                    Category = (string?)e.Attribute("Category") ?? ""
-                })
-                .ToList();
-
-            // 3. Prepare the report model.
-            ReportModel model = new()
+        // Load XML and parse into objects.
+        XDocument xdoc = XDocument.Load(xmlPath);
+        List<Product> allProducts = xdoc.Root!
+            .Elements("Product")
+            .Select(e => new Product
             {
-                Items = filteredItems
-            };
+                Name = (string?)e.Attribute("Name") ?? "",
+                Category = (string?)e.Attribute("Category") ?? ""
+            })
+            .ToList();
 
-            // 4. Create a Word template with LINQ Reporting tags.
-            string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-            Document templateDoc = new();
-            DocumentBuilder builder = new(templateDoc);
+        // Filter with case‑insensitive comparison using Where.
+        List<Product> filteredProducts = allProducts
+            .Where(p => string.Equals(p.Category, "electronics", StringComparison.OrdinalIgnoreCase))
+            .ToList();
 
-            builder.Writeln("Filtered Items (Category = 'Fruit'):");
-            builder.Writeln("<<foreach [item in Items]>>");
-            builder.Writeln(" - <<[item.Name]>> (<<[item.Category]>>)");
-            builder.Writeln("<</foreach>>");
+        // Prepare the model for the report.
+        ReportModel model = new()
+        {
+            Products = filteredProducts
+        };
 
-            templateDoc.Save(templatePath);
+        // Create the template document programmatically.
+        string templatePath = "template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Products in the 'Electronics' category:");
+        builder.Writeln("<<foreach [p in Products]>>");
+        builder.Writeln("- <<[p.Name]>> (<<[p.Category]>>)");
+        builder.Writeln("<</foreach>>");
+        templateDoc.Save(templatePath);
 
-            // 5. Load the template for report generation.
-            Document reportDoc = new(templatePath);
+        // Load the template for reporting.
+        Document reportDoc = new Document(templatePath);
 
-            // 6. Build the report.
-            ReportingEngine engine = new();
-            engine.BuildReport(reportDoc, model, "model");
+        // Build the report.
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None;
+        engine.BuildReport(reportDoc, model, "model");
 
-            // 7. Save the generated report.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-            reportDoc.Save(outputPath);
-        }
+        // Save the generated report.
+        string outputPath = "report.docx";
+        reportDoc.Save(outputPath);
+
+        // Indicate completion.
+        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
     }
 }

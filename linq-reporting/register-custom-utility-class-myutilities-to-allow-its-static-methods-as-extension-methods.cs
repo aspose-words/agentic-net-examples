@@ -1,57 +1,66 @@
 using System;
-using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public static class MyUtilities
+namespace AsposeWordsLinqReportingExample
 {
-    public static string FormatDate(DateTime date) => date.ToString("yyyy-MM-dd");
-}
-
-public class Order
-{
-    public string CustomerName { get; set; } = "";
-    public DateTime OrderDate { get; set; }
-
-    // Helper property that uses the utility method – no registration required.
-    public string FormattedOrderDate => MyUtilities.FormatDate(OrderDate);
-}
-
-public class Program
-{
-    public static void Main()
+    // Sample data model.
+    public class Order
     {
-        // Register code page provider (required for some Aspose.Words features)
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Initialize to avoid nullable warnings.
+        public string CustomerName { get; set; } = string.Empty;
+        public DateTime OrderDate { get; set; }
+    }
 
-        // Prepare sample data
-        var order = new Order
+    // Custom utility class whose static methods will be used as extension methods in the template.
+    public static class MyUtilities
+    {
+        // Extension method for DateTime to format the date.
+        public static string FormatDate(this DateTime date)
         {
-            CustomerName = "Acme Corp",
-            OrderDate = new DateTime(2023, 12, 15)
-        };
+            return date.ToString("yyyy-MM-dd");
+        }
 
-        // Create a template document programmatically
-        const string templatePath = "Template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("Order Date: <<[order.FormattedOrderDate]>>");
-        doc.Save(templatePath);
+        // Additional utility method (example) that could be used in templates.
+        public static string ToUpperCase(this string text)
+        {
+            return text?.ToUpperInvariant() ?? string.Empty;
+        }
+    }
 
-        // Load the template (optional, can reuse the same document)
-        var template = new Document(templatePath);
+    public class Program
+    {
+        public static void Main()
+        {
+            // Create a simple template document programmatically.
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Build the report
-        var engine = new ReportingEngine();
-        engine.BuildReport(template, order, "order");
+            // Insert LINQ Reporting tags that reference the data model and the extension methods.
+            builder.Writeln("Customer: <<[order.CustomerName.ToUpperCase()]>>");
+            builder.Writeln("Order Date: <<[order.OrderDate.FormatDate()]>>");
 
-        // Save the generated report
-        const string outputPath = "Report.docx";
-        template.Save(outputPath);
+            // Prepare sample data.
+            Order order = new Order
+            {
+                CustomerName = "John Doe",
+                OrderDate = DateTime.Now
+            };
 
-        // Indicate completion (no interactive input)
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+            // Initialize the reporting engine.
+            ReportingEngine engine = new ReportingEngine();
+
+            // Allow the engine to treat missing members (including extension methods) as valid.
+            engine.Options = ReportBuildOptions.AllowMissingMembers;
+
+            // Register the custom utility class so its static methods can be used as extension methods.
+            engine.KnownTypes.Add(typeof(MyUtilities));
+
+            // Build the report using the template, the data source, and the root name "order".
+            engine.BuildReport(template, order, "order");
+
+            // Save the generated report.
+            template.Save("Report.docx");
+        }
     }
 }

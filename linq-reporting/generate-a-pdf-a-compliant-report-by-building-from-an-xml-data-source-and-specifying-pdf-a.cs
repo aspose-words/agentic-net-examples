@@ -1,72 +1,90 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Saving;
-using Newtonsoft.Json; // Included as required by category
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for any required encodings.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Prepare output directory.
-        string outputDir = "output";
-        Directory.CreateDirectory(outputDir);
-
-        // Create sample XML data source.
-        string xmlPath = Path.Combine(outputDir, "data.xml");
+        // Create sample XML data file.
+        const string xmlFileName = "data.xml";
         string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
 <Report>
-  <Title>Sample Report</Title>
-  <Date>2023-01-01</Date>
-  <Items>
-    <Item>
-      <Name>Item 1</Name>
-      <Quantity>2</Quantity>
-      <Price>10.5</Price>
-    </Item>
-    <Item>
-      <Name>Item 2</Name>
-      <Quantity>5</Quantity>
-      <Price>7.25</Price>
-    </Item>
-  </Items>
+    <Title>Sample LINQ Reporting PDF/A Report</Title>
+    <Items>
+        <Item>
+            <Name>Apple</Name>
+            <Quantity>10</Quantity>
+        </Item>
+        <Item>
+            <Name>Banana</Name>
+            <Quantity>20</Quantity>
+        </Item>
+        <Item>
+            <Name>Cherry</Name>
+            <Quantity>15</Quantity>
+        </Item>
+    </Items>
 </Report>";
-        File.WriteAllText(xmlPath, xmlContent, Encoding.UTF8);
+        File.WriteAllText(xmlFileName, xmlContent);
 
-        // Create the Word template with LINQ Reporting tags.
-        string templatePath = Path.Combine(outputDir, "template.docx");
+        // Create the template document with LINQ Reporting tags.
+        const string templateFileName = "template.docx";
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Report Title: <<[Report.Title]>>");
-        builder.Writeln("Date: <<[Report.Date]>>");
-        builder.Writeln("");
-        builder.Writeln("Items:");
-        builder.Writeln("<<foreach [item in Report.Items.Item]>>");
-        builder.Writeln("- <<[item.Name]>>: <<[item.Quantity]>> x $<<[item.Price]>>");
-        builder.Writeln("<</foreach>>");
-        templateDoc.Save(templatePath);
 
-        // Load the template for processing.
-        Document doc = new Document(templatePath);
+        // Title.
+        builder.Writeln("<<[Report.Title]>>");
+        builder.Writeln();
+
+        // Begin foreach loop over items.
+        builder.Writeln("<<foreach [item in Report.Items.Item]>>");
+
+        // Table with header and data rows.
+        Table table = builder.StartTable();
+
+        // Header row.
+        builder.InsertCell();
+        builder.Writeln("Product");
+        builder.InsertCell();
+        builder.Writeln("Quantity");
+        builder.EndRow();
+
+        // Data row (repeated for each item).
+        builder.InsertCell();
+        builder.Writeln("<<[item.Name]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[item.Quantity]>>");
+        builder.EndRow();
+
+        // End table.
+        builder.EndTable();
+
+        // End foreach loop.
+        builder.Writeln("<</foreach>>");
+
+        // Save the template.
+        templateDoc.Save(templateFileName);
+
+        // Load the template for report generation.
+        Document reportDoc = new Document(templateFileName);
 
         // Load XML data source.
-        XmlDataSource dataSource = new XmlDataSource(xmlPath);
+        XmlDataSource xmlDataSource = new XmlDataSource(xmlFileName);
 
-        // Build the report using the LINQ Reporting engine.
+        // Build the report.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, dataSource, "Report");
+        engine.BuildReport(reportDoc, xmlDataSource, "Report");
 
-        // Save the generated document as PDF/A-1b.
+        // Save the report as PDF/A compliant file.
+        const string outputPdf = "report.pdf";
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
             Compliance = PdfCompliance.PdfA1b
         };
-        string pdfPath = Path.Combine(outputDir, "report.pdf");
-        doc.Save(pdfPath, pdfOptions);
+        reportDoc.Save(outputPdf, pdfOptions);
     }
 }
