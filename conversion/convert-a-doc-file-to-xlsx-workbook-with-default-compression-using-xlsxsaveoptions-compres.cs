@@ -10,16 +10,16 @@ public class Program
         // Create a sample DOC file.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Sample DOC content.");
+        builder.Writeln("Sample DOC content for conversion to XLSX.");
         sourceDoc.Save("input.doc", SaveFormat.Doc);
 
         // Load the DOC file.
         Document doc = new Document("input.doc");
 
-        // Prepare XLSX save options with default compression.
+        // Configure XLSX save options with a valid compression level.
         XlsxSaveOptions xlsxOptions = new XlsxSaveOptions
         {
-            CompressionLevel = CompressionLevel.Normal // Default compression.
+            CompressionLevel = CompressionLevel.Normal // Use a defined compression level.
         };
 
         // Save the document as XLSX.

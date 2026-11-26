@@ -1,61 +1,88 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample Word document with a table.
-        Document wordDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(wordDoc);
+        // Paths for the sample PDF and the resulting XLSX.
+        string pdfPath = "sample.pdf";
+        string xlsxPath = "output.xlsx";
 
-        // Build a simple table with two columns and two data rows.
+        // Create a sample PDF containing two tables.
+        CreateSamplePdf(pdfPath);
+
+        // Load the PDF with Aspose.Words.
+        Document pdfDocument = new Document(pdfPath);
+
+        // Save the document as XLSX. Each table will be placed on a separate worksheet.
+        pdfDocument.Save(xlsxPath, SaveFormat.Xlsx);
+
+        // Validate that the XLSX file was created and is not empty.
+        if (!File.Exists(xlsxPath) || new FileInfo(xlsxPath).Length == 0)
+        {
+            throw new InvalidOperationException("Expected output XLSX was not created or is empty.");
+        }
+
+        Console.WriteLine($"Conversion succeeded. XLSX saved to '{xlsxPath}'.");
+    }
+
+    private static void CreateSamplePdf(string path)
+    {
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // First table (3 columns, 4 rows including header).
         builder.StartTable();
-
         // Header row.
         builder.InsertCell();
-        builder.Write("Header 1");
+        builder.Write("Header1");
         builder.InsertCell();
-        builder.Write("Header 2");
+        builder.Write("Header2");
+        builder.InsertCell();
+        builder.Write("Header3");
         builder.EndRow();
 
-        // First data row.
-        builder.InsertCell();
-        builder.Write("Row 1, Cell 1");
-        builder.InsertCell();
-        builder.Write("Row 1, Cell 2");
-        builder.EndRow();
-
-        // Second data row.
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 1");
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 2");
-        builder.EndRow();
-
+        // Data rows.
+        for (int i = 1; i <= 3; i++)
+        {
+            builder.InsertCell();
+            builder.Write($"R{i}C1");
+            builder.InsertCell();
+            builder.Write($"R{i}C2");
+            builder.InsertCell();
+            builder.Write($"R{i}C3");
+            builder.EndRow();
+        }
         builder.EndTable();
 
-        // Save the Word document as a PDF file.
-        const string pdfPath = "sample.pdf";
-        wordDoc.Save(pdfPath, SaveFormat.Pdf);
+        // Insert a page break before the second table.
+        builder.InsertBreak(BreakType.PageBreak);
 
-        // Verify the PDF was created.
-        if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("PDF file was not created.");
+        // Second table (2 columns, 3 rows including header).
+        builder.StartTable();
+        // Header row.
+        builder.InsertCell();
+        builder.Write("ColA");
+        builder.InsertCell();
+        builder.Write("ColB");
+        builder.EndRow();
 
-        // Load the PDF using Aspose.Words.
-        Document pdfDoc = new Document(pdfPath);
+        // Data rows.
+        for (int i = 1; i <= 2; i++)
+        {
+            builder.InsertCell();
+            builder.Write($"A{i}");
+            builder.InsertCell();
+            builder.Write($"B{i}");
+            builder.EndRow();
+        }
+        builder.EndTable();
 
-        // Convert the PDF to an XLSX spreadsheet.
-        const string xlsxPath = "output.xlsx";
-        pdfDoc.Save(xlsxPath, SaveFormat.Xlsx);
-
-        // Verify the XLSX file was created.
-        if (!File.Exists(xlsxPath))
-            throw new InvalidOperationException("XLSX file was not created.");
-
-        // Optional cleanup (commented out).
-        // File.Delete(pdfPath);
+        // Save the document as PDF.
+        doc.Save(path, SaveFormat.Pdf);
     }
 }

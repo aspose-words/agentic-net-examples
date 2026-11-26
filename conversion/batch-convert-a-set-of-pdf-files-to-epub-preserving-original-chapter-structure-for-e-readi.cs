@@ -2,62 +2,58 @@ using System;
 using System.IO;
 using Aspose.Words;
 
-public class BatchPdfToEpubConverter
+public class Program
 {
     public static void Main()
     {
-        // Define input and output directories.
+        // Define input and output folders.
         string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputPdfs");
         string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputEpubs");
-
-        // Ensure directories exist.
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Create sample PDF files with chapter headings.
-        for (int i = 1; i <= 2; i++)
-        {
-            Document sampleDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        // Create sample PDF files with heading styles to represent chapters.
+        CreateSamplePdf(Path.Combine(inputFolder, "Sample1.pdf"), "Sample Document 1");
+        CreateSamplePdf(Path.Combine(inputFolder, "Sample2.pdf"), "Sample Document 2");
 
-            // Chapter 1
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-            builder.Writeln($"Sample PDF {i} - Chapter 1");
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-            builder.Writeln("This is the first chapter content.");
-
-            // Chapter 2
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-            builder.Writeln($"Sample PDF {i} - Chapter 2");
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-            builder.Writeln("This is the second chapter content.");
-
-            string pdfPath = Path.Combine(inputFolder, $"Sample{i}.pdf");
-            sampleDoc.Save(pdfPath, SaveFormat.Pdf);
-
-            if (!File.Exists(pdfPath))
-                throw new InvalidOperationException($"Failed to create sample PDF: {pdfPath}");
-        }
-
-        // Batch convert each PDF to EPUB.
+        // Batch convert each PDF to EPUB, preserving the heading structure.
         string[] pdfFiles = Directory.GetFiles(inputFolder, "*.pdf");
-        foreach (string pdfFile in pdfFiles)
+        foreach (string pdfPath in pdfFiles)
         {
-            // Load the PDF document.
-            Document pdfDoc = new Document(pdfFile);
-
-            // Determine output EPUB path.
-            string epubFileName = Path.ChangeExtension(Path.GetFileNameWithoutExtension(pdfFile), ".epub");
+            Document doc = new Document(pdfPath);
+            string epubFileName = Path.GetFileNameWithoutExtension(pdfPath) + ".epub";
             string epubPath = Path.Combine(outputFolder, epubFileName);
-
-            // Save as EPUB, preserving headings as chapters.
-            pdfDoc.Save(epubPath, SaveFormat.Epub);
+            doc.Save(epubPath, SaveFormat.Epub);
 
             if (!File.Exists(epubPath))
-                throw new InvalidOperationException($"EPUB conversion failed for: {pdfFile}");
+                throw new InvalidOperationException($"EPUB file was not created: {epubPath}");
         }
+    }
 
-        // Indicate completion.
-        Console.WriteLine("Batch PDF to EPUB conversion completed successfully.");
+    private static void CreateSamplePdf(string filePath, string title)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Title as Heading 1.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln(title);
+
+        // Chapter 1.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+        builder.Writeln("Chapter 1");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("Content of chapter one.");
+
+        // Chapter 2.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+        builder.Writeln("Chapter 2");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("Content of chapter two.");
+
+        doc.Save(filePath, SaveFormat.Pdf);
+
+        if (!File.Exists(filePath))
+            throw new InvalidOperationException($"PDF file was not created: {filePath}");
     }
 }

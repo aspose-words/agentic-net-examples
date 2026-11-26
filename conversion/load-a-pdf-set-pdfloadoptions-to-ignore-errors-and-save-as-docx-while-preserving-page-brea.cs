@@ -7,35 +7,34 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with a page break.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        // Step 1: Create a sample PDF with a page break.
+        Document samplePdf = new Document();
+        DocumentBuilder builder = new DocumentBuilder(samplePdf);
         builder.Writeln("First page content.");
         builder.InsertBreak(BreakType.PageBreak);
         builder.Writeln("Second page content.");
+        const string pdfPath = "sample.pdf";
+        samplePdf.Save(pdfPath, SaveFormat.Pdf);
 
-        // Save the sample as PDF – this will be the input file.
-        const string inputPdfPath = "input.pdf";
-        sourceDoc.Save(inputPdfPath, SaveFormat.Pdf);
+        // Verify the PDF was created.
+        if (!File.Exists(pdfPath))
+            throw new InvalidOperationException("Sample PDF was not created.");
 
-        // Load the PDF with options that ignore errors.
-        PdfLoadOptions loadOptions = new PdfLoadOptions
-        {
-            // By default, Aspose.Words ignores most loading errors.
-            // If specific error‑ignoring flags existed, they would be set here.
-        };
-        Document pdfDoc = new Document(inputPdfPath, loadOptions);
+        // Step 2: Load the PDF with PdfLoadOptions that ignore errors.
+        PdfLoadOptions loadOptions = new PdfLoadOptions();
+        // By default, Aspose.Words ignores non‑critical errors during PDF loading.
+        // If specific error‑ignoring flags existed, they would be set here.
 
-        // Save the loaded PDF as DOCX while preserving page breaks.
-        const string outputDocxPath = "output.docx";
-        pdfDoc.Save(outputDocxPath, SaveFormat.Docx);
+        Document pdfDocument = new Document(pdfPath, loadOptions);
+
+        // Step 3: Save the loaded document as DOCX, preserving page breaks.
+        const string docxPath = "output.docx";
+        pdfDocument.Save(docxPath, SaveFormat.Docx);
 
         // Validate that the DOCX file was created.
-        if (!File.Exists(outputDocxPath))
-            throw new InvalidOperationException("The DOCX output file was not created.");
+        if (!File.Exists(docxPath))
+            throw new InvalidOperationException("The DOCX output was not created.");
 
-        // Optional cleanup (not required, but keeps the example tidy).
-        // File.Delete(inputPdfPath);
-        // File.Delete(outputDocxPath);
+        Console.WriteLine("PDF successfully converted to DOCX with page breaks preserved.");
     }
 }

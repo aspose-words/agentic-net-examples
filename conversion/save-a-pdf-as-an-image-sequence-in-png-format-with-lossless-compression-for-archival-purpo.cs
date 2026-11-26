@@ -7,54 +7,40 @@ public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create a sample Word document and save it as PDF (the source PDF).
-        // -----------------------------------------------------------------
+        // Create a sample PDF document.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("This is a sample PDF page 1.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("This is a sample PDF page 2.");
+        builder.Writeln("Sample PDF content for archival purposes.");
+        sourceDoc.Save("sample.pdf", SaveFormat.Pdf);
 
-        string pdfPath = "sample.pdf";
-        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
+        // Load the PDF document.
+        Document pdfDoc = new Document("sample.pdf");
 
-        if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("PDF file was not created.");
+        // Prepare output directory for PNG images.
+        string outputDir = "output_images";
+        Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // 2. Load the PDF document.
-        // -----------------------------------------------------------------
-        Document pdfDoc = new Document(pdfPath);
-
-        // -----------------------------------------------------------------
-        // 3. Prepare PNG image save options (lossless compression is default for PNG).
-        // -----------------------------------------------------------------
+        // Configure image save options for PNG (lossless by default).
         ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png);
 
-        // -----------------------------------------------------------------
-        // 4. Save each page of the PDF as a separate PNG image.
-        // -----------------------------------------------------------------
-        string outputPattern = "output_page_{0}.png";
-
-        int pageCount = pdfDoc.PageCount;
-        for (int i = 0; i < pageCount; i++)
+        // Save each page of the PDF as a separate PNG file.
+        for (int pageIndex = 0; pageIndex < pdfDoc.PageCount; pageIndex++)
         {
-            // Restrict the save operation to a single page.
-            pngOptions.PageSet = new PageSet(i);
+            // Save only the current page.
+            pngOptions.PageSet = new PageSet(pageIndex);
 
-            string fileName = string.Format(outputPattern, i);
-            pdfDoc.Save(fileName, pngOptions);
+            string outputPath = Path.Combine(outputDir, $"page_{pageIndex + 1}.png");
+            pdfDoc.Save(outputPath, pngOptions);
+
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException($"Expected PNG file was not created: {outputPath}");
         }
 
-        // -----------------------------------------------------------------
-        // 5. Verify that PNG files were created for each page.
-        // -----------------------------------------------------------------
-        for (int i = 0; i < pageCount; i++)
-        {
-            string fileName = string.Format(outputPattern, i);
-            if (!File.Exists(fileName))
-                throw new InvalidOperationException($"Expected PNG file '{fileName}' was not created.");
-        }
+        // Verify that at least one PNG file was generated.
+        string[] generatedFiles = Directory.GetFiles(outputDir, "*.png");
+        if (generatedFiles.Length == 0)
+            throw new InvalidOperationException("No PNG images were generated from the PDF.");
+
+        // Example completed successfully.
     }
 }

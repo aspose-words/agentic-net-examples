@@ -4,13 +4,13 @@
     "slug": "conversion",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Bootstrap any required input files locally, load them with the correct Aspose.Words constructors, configure the matching SaveFormat or specialized SaveOptions, write the result to a file or MemoryStream, verify that the output exists and contains data, and exit without launching servers or awaiting external input.",
+    "preferred_workflow": "Create any required input files or streams within the example, load them with Document or DocumentBuilder, choose the matching SaveFormat or a concrete SaveOptions class (e.g., PdfSaveOptions, HtmlSaveOptions), save to a file or MemoryStream, verify that the output exists and has non-zero length, and finally dispose of all resources.",
     "required_packages": [
       "Aspose.Words",
       "Aspose.Drawing.Common"
     ],
     "package_versions": {
-      "Aspose.Words": "26.10.0",
+      "Aspose.Words": "26.11.0",
       "Aspose.Drawing.Common": "26.10.0"
     },
     "required_namespaces": [
@@ -20,20 +20,19 @@
       "Aspose.Words.Saving",
       "Aspose.Drawing",
       "Aspose.Drawing.Imaging",
+      "System.Reflection",
       "System.Linq",
-      "Aspose.Drawing.Drawing2D",
       "System.Net.Mail",
       "Aspose.Words.Replacing",
       "Aspose.Words.Drawing",
+      "Aspose.Drawing.Drawing2D",
       "System.Net.Mime",
-      "System.Net.Http",
-      "System.Threading.Tasks",
       "Aspose.Words.Fields",
+      "System.Collections.Generic",
       "System.Drawing",
-      "Aspose.Words.Tables",
-      "System.Text",
       "Aspose.Words.Loading",
-      "Aspose.Drawing.Text"
+      "Aspose.Words.Tables",
+      "Aspose.Words.Layout"
     ],
     "key_apis": [
       "Document",
@@ -44,16 +43,15 @@
       "MemoryStream",
       "Directory",
       "Path",
-      "ImageSaveOptions",
-      "HtmlSaveOptions",
       "Font",
+      "ImageSaveOptions",
+      "StyleIdentifier",
+      "HtmlSaveOptions",
       "Range",
       "FindReplaceOptions",
-      "StyleIdentifier",
-      "LoadOptions",
-      "Table",
       "Row",
-      "Cell"
+      "Cell",
+      "LoadOptions"
     ]
   },
   "stats": {
@@ -69,65 +67,63 @@
   },
   "rules_summary": {
     "strict_api_bans": [
-      "Do not use System.Drawing in this category.",
-      "Do not assume input files already exist; bootstrap them locally when needed.",
-      "Do not start a real web server or HTTP listener for response-stream tasks.",
-      "Do not use an incorrect SaveFormat for the requested output extension."
+      "Do not reference System.Drawing types; use Aspose.Drawing exclusively.",
+      "Do not assume that input files already exist; generate them locally when needed.",
+      "Do not start a real HTTP listener; simulate response streams with MemoryStream."
     ],
     "canonical_patterns": [
-      "Create local DOC/DOCX/HTML/TXT/XML inputs inside the example when the task implies an existing source.",
-      "Use the correct Document loading workflow and the correct SaveFormat or SaveOptions for the target output.",
-      "Simulate network or browser responses with MemoryStream instead of hosting a real server.",
-      "Validate output files exist or output streams contain data before finishing."
+      "Bootstrap sample DOC/DOCX/HTML/TXT/XML files inside the snippet before loading.",
+      "Select the SaveFormat or a specific SaveOptions class that matches the target extension.",
+      "Validate the output file or stream before program termination."
     ],
     "nullable_warning_prevention": [
-      "Initialize all non-nullable reference-type properties to avoid CS8618 warnings.",
-      "Guard against possible null values before dereferencing to prevent CS8600, CS8602, and CS8604.",
-      "Declare locals as nullable when a null value is legitimate and perform explicit null checks."
+      "Initialize all non-nullable reference-type members to avoid CS8618 warnings.",
+      "Guard potentially null values with explicit null checks before dereferencing.",
+      "Declare locals as nullable when a null value is a legitimate outcome."
     ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "Missing API member",
-      "symptom": "Compilation fails because the referenced type, property, or enum value does not exist in the installed Aspose.Words version.",
-      "cause": "The code targets an API that was removed, renamed, or introduced in a different version of the library.",
-      "fix": "Reference the correct member available in the installed version or upgrade the package to a version that provides the member.",
-      "prevention": "Consult the official Aspose.Words documentation for the exact version and avoid hard-coding members that may not exist."
+      "pattern": "Missing LoadOptions or incorrect Document.Load usage",
+      "symptom": "Compilation fails with CS0246 for LoadOptions and CS0117 indicating Document.Load does not exist.",
+      "cause": "The code references LoadOptions or the overload Document.Load(string) that is unavailable in the referenced Aspose.Words version.",
+      "fix": "Remove the LoadOptions parameter and use the constructor new Document(stringPath) or new Document(stream) that matches the library version.",
+      "prevention": "Consult the current API reference for the correct Document loading signatures and avoid assuming older overloads are present."
     },
     {
-      "pattern": "Enum ambiguity",
-      "symptom": "The compiler reports an ambiguous reference between System.IO.Compression.CompressionLevel and Aspose.Words.Saving.CompressionLevel.",
-      "cause": "Both namespaces define a CompressionLevel enum and the code does not qualify the intended one.",
-      "fix": "Fully qualify the enum with its namespace or create an alias for the Aspose.Words enum.",
-      "prevention": "Always reference Aspose.Words.Saving.CompressionLevel when configuring compression options for Aspose.Words."
+      "pattern": "Incorrect SaveFormat or unavailable enum value",
+      "symptom": "Compilation errors such as CS0117 for PdfCompliance.Ua or PdfA3b, indicating the enum member does not exist.",
+      "cause": "Enum members have been renamed or removed in newer Aspose.Words releases.",
+      "fix": "Use the enum value that exists in the target version, e.g., PdfCompliance.PdfUa1 for PDF/UA compliance.",
+      "prevention": "Reference the version-specific documentation or use reflection to verify enum members before coding."
     },
     {
-      "pattern": "System.Drawing conflict",
-      "symptom": "Compilation errors arise from ambiguous Font types between Aspose.Drawing.Font and System.Drawing.Font.",
-      "cause": "The example imports System.Drawing while also using Aspose.Drawing, causing type collisions.",
-      "fix": "Remove System.Drawing usage and declare fonts explicitly as Aspose.Drawing.Font.",
-      "prevention": "Do not import System.Drawing in conversion samples; rely solely on Aspose.Drawing for graphics."
+      "pattern": "Unavailable type or property (e.g., JpegSaveOptions, HtmlSaveOptions properties)",
+      "symptom": "Compilation fails with CS0246 for missing types or CS0117 for properties like ExportEmbeddedCss, ExportRoundTripInformation, ExportEmbeddedFonts.",
+      "cause": "The referenced type or property is not part of the installed Aspose.Words package version.",
+      "fix": "Replace the missing type with the supported alternative (e.g., use ImageSaveOptions with appropriate settings) and conditionally set properties only when they exist.",
+      "prevention": "Check the API surface of the installed package and guard property assignments with reflection if backward compatibility is required."
     },
     {
-      "pattern": "Missing input bootstrap",
-      "symptom": "Runtime throws a file-not-found exception because the example assumes a source file already exists.",
-      "cause": "The sample does not create the required input document or image before loading it.",
-      "fix": "Generate the input file locally within the example prior to loading.",
-      "prevention": "Always bootstrap required input files in the code to make the example self-contained."
+      "pattern": "Ambiguous type references",
+      "symptom": "Compilation error CS0104 indicating CompressionLevel is ambiguous between System.IO.Compression and Aspose.Words.Saving.",
+      "cause": "Both namespaces define a type named CompressionLevel and the code does not qualify which one to use.",
+      "fix": "Fully qualify the enum, e.g., Aspose.Words.Saving.CompressionLevel.Default, or add an alias for the desired namespace.",
+      "prevention": "Always use explicit namespace qualifiers for types that exist in multiple referenced assemblies."
     },
     {
-      "pattern": "Stream position or disposal issue",
-      "symptom": "Reading from a MemoryStream after saving fails because the stream position is at the end or the stream has been disposed.",
-      "cause": "The stream is not reset to position 0 or is disposed before validation.",
-      "fix": "Reset MemoryStream.Position to 0 and keep the stream alive until after validation is complete.",
-      "prevention": "Validate stream length after resetting position and dispose the stream only after all checks are finished."
+      "pattern": "Runtime missing output files",
+      "symptom": "InvalidOperationException stating that the expected output file (e.g., JPEG image, CSS file) was not created.",
+      "cause": "The conversion code did not reset stream positions, disposed streams prematurely, or used incorrect page indices.",
+      "fix": "Ensure MemoryStream.Position is set to 0 before reading, keep the stream alive until after validation, and verify page indices are within the document's PageCount.",
+      "prevention": "Add explicit stream position resets and lifetime checks, and validate page indices against Document.PageCount before saving."
     },
     {
-      "pattern": "Incorrect SaveFormat pairing",
-      "symptom": "The generated file has an extension that does not match the SaveFormat used, leading to invalid output or runtime errors.",
-      "cause": "The code selects a SaveFormat that does not correspond to the desired output type.",
-      "fix": "Use the SaveFormat or specialized SaveOptions that exactly matches the target file extension.",
-      "prevention": "Map each target format to its corresponding SaveFormat constant before saving."
+      "pattern": "Unsupported input format (e.g., XPS)",
+      "symptom": "Aspose.Words.UnsupportedFileFormatException thrown at runtime when loading an XPS file.",
+      "cause": "The installed Aspose.Words version does not include a loader for the XPS format.",
+      "fix": "Either upgrade to a version that supports XPS or convert the XPS to a supported format (e.g., PDF) using a different library before invoking Aspose.Words.",
+      "prevention": "Verify supported LoadFormat values for the target Aspose.Words version before attempting to load a file."
     }
   ],
   "examples": [
@@ -236,8 +232,8 @@
         "pdf",
         "jpeg"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 10,
@@ -247,8 +243,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 11,
@@ -296,8 +292,8 @@
         "docx",
         "html"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 15,
@@ -320,8 +316,8 @@
         "docx",
         "html"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 17,
@@ -331,8 +327,8 @@
       "outputs": [
         "html"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 18,
@@ -410,8 +406,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 25,
@@ -458,8 +454,8 @@
         "pdf",
         "xps"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 29,
@@ -639,8 +635,8 @@
         "pdf",
         "png"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 44,
@@ -760,8 +756,8 @@
         "docx",
         "mhtml"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 54,
@@ -783,8 +779,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 56,
@@ -807,8 +803,8 @@
         "pdf",
         "html"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 58,
@@ -819,8 +815,8 @@
         "epub",
         "mhtml"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 59,
@@ -842,8 +838,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 61,
@@ -901,8 +897,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 66,
@@ -996,8 +992,8 @@
         "pdf",
         "html"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 74,
@@ -1008,8 +1004,8 @@
         "pdf",
         "xml"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 75,
@@ -1090,8 +1086,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 82,
@@ -1102,8 +1098,8 @@
         "pdf",
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 83,
@@ -1126,8 +1122,8 @@
         "pdf",
         "html"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 85,
@@ -1161,8 +1157,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 88,
@@ -1172,8 +1168,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 89,
@@ -1208,8 +1204,8 @@
         "pdf",
         "xps"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 92,
@@ -1318,8 +1314,8 @@
         "pdf",
         "png"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 101,
@@ -1356,8 +1352,8 @@
         "pdf",
         "jpeg"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 104,
@@ -1380,8 +1376,8 @@
         "pdf",
         "png"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 106,
@@ -1392,8 +1388,8 @@
         "pdf",
         "md"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 107,
@@ -1421,15 +1417,13 @@
     }
   ],
   "narrative": {
-    "overview": "The Conversion category demonstrates how to transform documents, images, and other media between supported formats using Aspose.Words 26.10.0. Verified examples cover HTML-to-PDF, image-to-PDF, PDF-to-JPG, PDF/UA compliance, HTML saving with font handling, round-trip HTML, font resource export, DOCX-to-MHTML, XLSX compression, and streaming PDF/A conversions.",
-    "purpose": "Provide concise, version-aware code snippets that load a source document or image, apply the appropriate Aspose.Words SaveFormat or SaveOptions, validate the generated output, and terminate without external dependencies, enabling an AI coding agent to generate reliable conversion solutions.",
+    "overview": "The Conversion category showcases how to convert documents, images, and web content between formats using Aspose.Words and its companion libraries. Verified examples demonstrate loading locally bootstrapped sources, applying the correct save options, and confirming that the output artifact is created successfully.",
+    "purpose": "Supply an AI coding assistant with concise, self-contained patterns for loading a source, selecting the appropriate Aspose.Words SaveFormat or specialized SaveOptions, performing the conversion, and validating the result without external dependencies.",
     "validation_priorities": [
-      "Confirm that the output file or stream is created and non-empty before the program terminates."
+      "Confirm that the output file or stream exists and its length is greater than zero before exiting."
     ],
     "maintenance_notes": [
-      "Upgrade to newer Aspose.Words releases when additional API members become available and adjust code accordingly.",
-      "After each code change, recompile and verify that all referenced types and members exist in the current package version.",
-      "Keep the input-bootstrap logic synchronized with the conversion workflow to ensure examples remain self-contained."
+      "Periodically review Aspose.Words release notes to update enum names, property availability, and supported formats, ensuring code stays compatible with the installed package version."
     ]
   }
 }

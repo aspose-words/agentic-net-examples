@@ -4,59 +4,54 @@ using Aspose.Words;
 using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
-using Aspose.Drawing.Drawing2D;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample DOCX document with text.
-        Document sampleDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-        builder.Font.Name = "Arial";
-        builder.Writeln("Sample text with embedded font.");
-
-        // Create a simple bitmap image using Aspose.Drawing.
+        // Create a sample PNG image using Aspose.Drawing.
+        string imagePath = "sample.png";
         using (Bitmap bitmap = new Bitmap(100, 100))
         {
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
                 graphics.Clear(Color.LightBlue);
-                using (Pen pen = new Pen(Color.Red, 2))
+                using (Pen pen = new Pen(Color.DarkBlue, 3))
                 {
                     graphics.DrawEllipse(pen, 10, 10, 80, 80);
                 }
             }
 
-            // Save the bitmap to a memory stream as PNG.
-            using (MemoryStream imageStream = new MemoryStream())
-            {
-                bitmap.Save(imageStream, ImageFormat.Png);
-                imageStream.Position = 0;
-
-                // Insert the image into the document.
-                builder.InsertImage(imageStream);
-            }
+            bitmap.Save(imagePath, ImageFormat.Png);
         }
 
-        // Save the sample document as DOCX (input file).
-        const string inputPath = "sample.docx";
-        sampleDoc.Save(inputPath, SaveFormat.Docx);
+        // Create a sample DOCX document that includes text and the image.
+        string docxPath = "sample.docx";
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Font.Name = "Arial";
+        builder.Writeln("This is a sample document with an embedded image and a custom font.");
+        builder.InsertImage(imagePath);
+        doc.Save(docxPath, SaveFormat.Docx);
 
         // Load the DOCX document for conversion.
-        Document doc = new Document(inputPath);
+        Document loadedDoc = new Document(docxPath);
 
-        // Save the document as MHTML. Aspose.Words embeds images and fonts by default.
-        const string outputPath = "output.mhtml";
-        doc.Save(outputPath, SaveFormat.Mhtml);
-
-        // Validate that the output file was created.
-        if (!File.Exists(outputPath))
+        // Configure HTML save options to produce MHTML with embedded images and fonts.
+        HtmlSaveOptions mhtmlOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
         {
-            throw new InvalidOperationException("Expected output MHTML was not created.");
-        }
+            ExportImagesAsBase64 = true,
+            ExportFontsAsBase64 = true
+        };
 
-        // Optional cleanup of the sample input file.
-        // File.Delete(inputPath);
+        // Save the document as MHTML.
+        string mhtmlPath = "output.mhtml";
+        loadedDoc.Save(mhtmlPath, mhtmlOptions);
+
+        // Verify that the MHTML file was created.
+        if (!File.Exists(mhtmlPath))
+        {
+            throw new InvalidOperationException("Expected MHTML output was not created.");
+        }
     }
 }

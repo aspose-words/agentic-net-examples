@@ -9,50 +9,73 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample image using Aspose.Drawing and save it to a file.
-        string imagePath = "sample.png";
-        using (Bitmap bitmap = new Bitmap(100, 100))
-        {
-            using (Graphics graphics = Graphics.FromImage(bitmap))
-            {
-                graphics.Clear(Color.LightBlue);
-                using (Pen pen = new Pen(Color.DarkBlue, 2))
-                {
-                    graphics.DrawRectangle(pen, new Rectangle(10, 10, 80, 80));
-                }
-            }
-            bitmap.Save(imagePath, ImageFormat.Png);
-        }
-
-        // Create a sample Word document, insert the image, and save it as PDF.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("This is a sample PDF document with an image.");
-        builder.InsertImage(imagePath);
-        string pdfPath = "sample.pdf";
-        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
-
-        // Ensure the assets folder exists for extracted images.
+        // Define paths.
         string assetsFolder = "assets";
+        string imagePath = "sample.png";
+        string pdfPath = "input.pdf";
+        string markdownPath = "output.md";
+
+        // Ensure the assets folder exists.
         Directory.CreateDirectory(assetsFolder);
 
-        // Load the PDF and convert it to Markdown, extracting images to the assets folder.
+        // Create a simple image using Aspose.Drawing.
+        Bitmap bitmap = new Bitmap(100, 100);
+        try
+        {
+            Graphics graphics = Graphics.FromImage(bitmap);
+            try
+            {
+                graphics.Clear(Color.Blue);
+            }
+            finally
+            {
+                graphics.Dispose();
+            }
+
+            // Save the image to a file.
+            bitmap.Save(imagePath, ImageFormat.Png);
+        }
+        finally
+        {
+            bitmap.Dispose();
+        }
+
+        // Create a sample document, insert text and the image, then save as PDF.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("This is a sample PDF document containing an image.");
+        builder.InsertImage(imagePath);
+        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
+
+        // Load the PDF document.
         Document pdfDoc = new Document(pdfPath);
+
+        // Configure Markdown save options to store images in the assets folder.
         MarkdownSaveOptions mdOptions = new MarkdownSaveOptions
         {
             ImagesFolder = assetsFolder,
             ImagesFolderAlias = assetsFolder
         };
-        string markdownPath = "output.md";
+
+        // Save the PDF as Markdown.
         pdfDoc.Save(markdownPath, mdOptions);
 
-        // Validate that the Markdown file was created.
+        // Validation: ensure Markdown file exists.
         if (!File.Exists(markdownPath))
-            throw new InvalidOperationException("Markdown file was not created.");
+        {
+            throw new InvalidOperationException("The Markdown output file was not created.");
+        }
 
-        // Validate that at least one image was extracted to the assets folder.
+        // Validation: ensure at least one image was extracted to the assets folder.
         string[] extractedImages = Directory.GetFiles(assetsFolder);
         if (extractedImages.Length == 0)
+        {
             throw new InvalidOperationException("No images were extracted to the assets folder.");
+        }
+
+        // Clean up temporary files (optional).
+        // File.Delete(imagePath);
+        // File.Delete(pdfPath);
+        // Note: The assets folder and its contents are retained for inspection.
     }
 }

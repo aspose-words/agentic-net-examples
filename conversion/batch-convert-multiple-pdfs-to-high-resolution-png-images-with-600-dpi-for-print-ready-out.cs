@@ -7,54 +7,60 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare input folder and sample PDF files.
-        string inputFolder = "InputPdfs";
-        Directory.CreateDirectory(inputFolder);
+        // Define folders for input PDFs and output PNGs.
+        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputPdfs");
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputPngs");
 
+        // Ensure the folders exist.
+        Directory.CreateDirectory(inputFolder);
+        Directory.CreateDirectory(outputFolder);
+
+        // Create sample PDF files.
         for (int i = 1; i <= 3; i++)
         {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln($"Sample PDF document #{i}");
+            Document sampleDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+            builder.Writeln($"Sample PDF content for file {i}.");
             string pdfPath = Path.Combine(inputFolder, $"sample{i}.pdf");
-            doc.Save(pdfPath, SaveFormat.Pdf);
+            sampleDoc.Save(pdfPath, SaveFormat.Pdf);
+
             if (!File.Exists(pdfPath))
                 throw new InvalidOperationException($"Failed to create sample PDF: {pdfPath}");
         }
 
-        // Prepare output folder for PNG images.
-        string outputFolder = "OutputPngs";
-        Directory.CreateDirectory(outputFolder);
-
-        // Batch convert each PDF to high‑resolution PNG images (600 DPI), one image per page.
-        foreach (string pdfFile in Directory.GetFiles(inputFolder, "*.pdf"))
+        // Batch convert each PDF to high‑resolution PNG images (600 DPI).
+        string[] pdfFiles = Directory.GetFiles(inputFolder, "*.pdf");
+        foreach (string pdfFile in pdfFiles)
         {
+            // Load the PDF document.
             Document pdfDocument = new Document(pdfFile);
-            int pageCount = pdfDocument.PageCount;
 
-            for (int pageIndex = 0; pageIndex < pageCount; pageIndex++)
+            // Configure image save options for PNG with 600 DPI.
+            ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Png)
             {
-                string outputFileName = $"{Path.GetFileNameWithoutExtension(pdfFile)}_page{pageIndex + 1}.png";
-                string outputPath = Path.Combine(outputFolder, outputFileName);
+                Resolution = 600
+            };
 
-                ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png)
-                {
-                    PageSet = new PageSet(pageIndex),
-                    Resolution = 600
-                };
+            // Base name for output files.
+            string baseFileName = Path.GetFileNameWithoutExtension(pdfFile);
 
-                pdfDocument.Save(outputPath, options);
+            // Save each page as a separate PNG file.
+            for (int pageIndex = 0; pageIndex < pdfDocument.PageCount; pageIndex++)
+            {
+                // Restrict saving to the current page.
+                saveOptions.PageSet = new PageSet(pageIndex);
 
-                if (!File.Exists(outputPath))
-                    throw new InvalidOperationException($"Failed to create PNG image: {outputPath}");
+                string pngPath = Path.Combine(outputFolder, $"{baseFileName}_Page_{pageIndex}.png");
+                pdfDocument.Save(pngPath, saveOptions);
+
+                // Validate that the PNG file was created and is not empty.
+                if (!File.Exists(pngPath))
+                    throw new InvalidOperationException($"Expected PNG file was not created: {pngPath}");
+
+                FileInfo info = new FileInfo(pngPath);
+                if (info.Length == 0)
+                    throw new InvalidOperationException($"Created PNG file is empty: {pngPath}");
             }
         }
-
-        // Verify that at least one PNG file was created.
-        string[] createdPngs = Directory.GetFiles(outputFolder, "*.png");
-        if (createdPngs.Length == 0)
-            throw new InvalidOperationException("No PNG images were generated.");
-
-        // Example completed successfully.
     }
 }

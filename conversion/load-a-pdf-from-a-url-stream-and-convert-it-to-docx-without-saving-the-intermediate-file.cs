@@ -1,31 +1,28 @@
 using System;
 using System.IO;
-using System.Net.Http;
-using System.Threading.Tasks;
 using Aspose.Words;
 
 public class Program
 {
-    public static async Task Main()
+    public static void Main()
     {
-        // URL of a sample PDF file.
-        const string pdfUrl = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf";
+        // Create a sample document and save it as PDF into a memory stream.
+        Document source = new Document();
+        DocumentBuilder builder = new DocumentBuilder(source);
+        builder.Writeln("Sample PDF content generated for conversion.");
 
-        // Download the PDF into a memory stream.
-        using HttpClient httpClient = new HttpClient();
-        using Stream downloadStream = await httpClient.GetStreamAsync(pdfUrl);
-        using MemoryStream pdfMemory = new MemoryStream();
-        await downloadStream.CopyToAsync(pdfMemory);
-        pdfMemory.Position = 0; // Reset position before loading.
+        using MemoryStream pdfStream = new MemoryStream();
+        source.Save(pdfStream, SaveFormat.Pdf);
+        pdfStream.Position = 0; // Reset for reading.
 
-        // Load the PDF document from the memory stream.
-        Document pdfDocument = new Document(pdfMemory);
+        // Load the PDF from the stream (simulating a URL stream).
+        Document pdfDocument = new Document(pdfStream);
 
-        // Convert the PDF to DOCX and save to a file.
+        // Convert the loaded PDF to DOCX and save to a file.
         const string outputPath = "output.docx";
         pdfDocument.Save(outputPath, SaveFormat.Docx);
 
-        // Verify that the DOCX file was created.
+        // Validate that the DOCX file was created.
         if (!File.Exists(outputPath))
         {
             throw new InvalidOperationException("Expected output DOCX was not created.");

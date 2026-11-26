@@ -9,36 +9,47 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple cover image using Aspose.Drawing.
-        const string coverImagePath = "cover.png";
-        using (Bitmap bitmap = new Bitmap(600, 800))
+        // Create a simple cover image using Aspose.Drawing
+        string coverImagePath = "cover.png";
+        using (Bitmap bitmap = new Bitmap(400, 200))
         {
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
                 graphics.Clear(Color.LightBlue);
-                // Additional drawing can be added here if desired.
+                // Draw some text on the image
+                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 24))
+                {
+                    // Use a brush for the text color and a point for the location
+                    using (SolidBrush brush = new SolidBrush(Color.DarkBlue))
+                    {
+                        graphics.DrawString("Cover Page", font, brush, new PointF(50, 80));
+                    }
+                }
             }
             bitmap.Save(coverImagePath, ImageFormat.Png);
         }
 
-        // Create a sample DOCX document.
-        const string inputDocxPath = "input.docx";
+        // Create a sample DOCX document (input)
+        string inputDocxPath = "input.docx";
         Document sourceDoc = new Document();
         DocumentBuilder sourceBuilder = new DocumentBuilder(sourceDoc);
-        sourceBuilder.Writeln("This is the main document content.");
+        sourceBuilder.Writeln("This is the main content of the document.");
         sourceDoc.Save(inputDocxPath, SaveFormat.Docx);
 
-        // Load the DOCX, insert the cover image, and convert to PDF.
+        // Load the DOCX document
         Document doc = new Document(inputDocxPath);
-        DocumentBuilder coverBuilder = new DocumentBuilder(doc);
-        coverBuilder.MoveToDocumentStart();
-        coverBuilder.InsertImage(coverImagePath);
-        coverBuilder.InsertBreak(BreakType.PageBreak);
 
-        const string outputPdfPath = "output.pdf";
+        // Insert the cover image at the beginning of the document
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.MoveToDocumentStart();
+        builder.InsertImage(coverImagePath);
+        builder.InsertBreak(BreakType.PageBreak);
+
+        // Convert to PDF
+        string outputPdfPath = "output.pdf";
         doc.Save(outputPdfPath, SaveFormat.Pdf);
 
-        // Validate that the PDF was created.
+        // Validate that the PDF was created
         if (!File.Exists(outputPdfPath))
         {
             throw new InvalidOperationException("Expected output PDF was not created.");

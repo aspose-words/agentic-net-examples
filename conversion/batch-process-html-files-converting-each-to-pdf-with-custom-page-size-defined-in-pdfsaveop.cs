@@ -7,11 +7,11 @@ public class Program
 {
     public static void Main()
     {
-        // Define input and output folders.
-        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "HtmlInput");
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "PdfOutput");
+        // Define folders for input HTML files and output PDFs.
+        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputHtml");
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputPdf");
 
-        // Ensure clean environment.
+        // Ensure clean state.
         if (Directory.Exists(inputFolder))
             Directory.Delete(inputFolder, true);
         if (Directory.Exists(outputFolder))
@@ -23,30 +23,33 @@ public class Program
         // Create sample HTML files.
         for (int i = 1; i <= 3; i++)
         {
-            string htmlPath = Path.Combine(inputFolder, $"sample{i}.html");
+            string htmlFilePath = Path.Combine(inputFolder, $"sample{i}.html");
             string htmlContent = $"<html><body><h1>Sample {i}</h1><p>This is HTML file number {i}.</p></body></html>";
-            File.WriteAllText(htmlPath, htmlContent);
+            File.WriteAllText(htmlFilePath, htmlContent);
         }
 
-        // Process each HTML file and convert to PDF with custom page size.
-        foreach (string htmlFile in Directory.GetFiles(inputFolder, "*.html"))
+        // Process each HTML file and convert to PDF with a custom page size.
+        string[] htmlFiles = Directory.GetFiles(inputFolder, "*.html");
+        foreach (string htmlPath in htmlFiles)
         {
-            // Load HTML document.
-            Document doc = new Document(htmlFile);
+            // Load the HTML document.
+            Document doc = new Document(htmlPath);
 
-            // Set a custom page size (width and height in points).
-            // Example: 500 points wide x 700 points tall.
-            doc.FirstSection.PageSetup.PageWidth = 500f;
-            doc.FirstSection.PageSetup.PageHeight = 700f;
+            // Set a custom page size (595x842 points ≈ A4) for the first section.
+            if (doc.FirstSection?.PageSetup != null)
+            {
+                doc.FirstSection.PageSetup.PageWidth = 595f;   // Width in points.
+                doc.FirstSection.PageSetup.PageHeight = 842f; // Height in points.
+            }
 
-            // Prepare PDF save options (no special options needed beyond defaults).
+            // Configure PDF save options (no special options needed for custom size).
             PdfSaveOptions pdfOptions = new PdfSaveOptions();
 
             // Determine output PDF path.
-            string pdfFileName = Path.GetFileNameWithoutExtension(htmlFile) + ".pdf";
-            string pdfPath = Path.Combine(outputFolder, pdfFileName);
+            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(htmlPath);
+            string pdfPath = Path.Combine(outputFolder, $"{fileNameWithoutExt}.pdf");
 
-            // Save as PDF.
+            // Save the document as PDF using the options.
             doc.Save(pdfPath, pdfOptions);
 
             // Validate that the PDF was created.
@@ -54,10 +57,10 @@ public class Program
                 throw new InvalidOperationException($"PDF file was not created: {pdfPath}");
         }
 
-        // Final validation: ensure at least one PDF exists.
+        // Final validation: ensure the number of PDFs matches the number of HTML files.
         string[] pdfFiles = Directory.GetFiles(outputFolder, "*.pdf");
-        if (pdfFiles.Length == 0)
-            throw new InvalidOperationException("No PDF files were generated.");
+        if (pdfFiles.Length != htmlFiles.Length)
+            throw new InvalidOperationException("The number of generated PDF files does not match the number of input HTML files.");
 
         // Example completed successfully.
         Console.WriteLine("Batch HTML to PDF conversion completed.");

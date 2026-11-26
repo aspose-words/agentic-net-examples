@@ -19,23 +19,23 @@ public class Program
             Compliance = PdfCompliance.PdfUa1
         };
 
-        string outputPath = "output_pdfua.pdf";
-
         // Save the document as PDF/UA.
+        string outputPath = "output_ua.pdf";
         doc.Save(outputPath, saveOptions);
 
-        // Validate that the file was created and is not empty.
+        // Verify that the output file was created.
         if (!File.Exists(outputPath))
         {
-            throw new InvalidOperationException("PDF/UA output file was not created.");
+            throw new InvalidOperationException("Expected PDF/UA output file was not created.");
         }
 
+        // Verify that the file size is greater than zero.
         FileInfo info = new FileInfo(outputPath);
         if (info.Length == 0)
         {
-            throw new InvalidOperationException("PDF/UA output file is empty.");
+            throw new InvalidOperationException("The generated PDF/UA file is empty.");
         }
 
-        Console.WriteLine($"PDF/UA file successfully created at '{Path.GetFullPath(outputPath)}' (size: {info.Length} bytes).");
+        // Successful completion.
     }
 }

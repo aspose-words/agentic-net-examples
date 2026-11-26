@@ -6,43 +6,35 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample DOCX document.
+        // Create a sample DOCX document in memory.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
         builder.Writeln("This is a sample DOCX document created for conversion.");
 
-        // Save the document as DOCX to a local file.
-        const string inputPath = "input.docx";
-        sourceDoc.Save(inputPath, SaveFormat.Docx);
-
-        // Load the DOCX document from the file.
-        Document doc = new Document(inputPath);
-
-        // Simulate an HTTP response stream using MemoryStream.
-        using MemoryStream responseStream = new MemoryStream();
-
-        // Save the document as PDF directly into the response stream.
-        doc.Save(responseStream, SaveFormat.Pdf);
-
-        // Validate that PDF data was written to the stream.
-        if (responseStream.Length == 0)
+        // Save the DOCX to a memory stream.
+        using (MemoryStream docxStream = new MemoryStream())
         {
-            throw new InvalidOperationException("No PDF data was written to the simulated response stream.");
-        }
+            sourceDoc.Save(docxStream, SaveFormat.Docx);
+            // Reset the stream position before loading.
+            docxStream.Position = 0;
 
-        // (Optional) Write the PDF to a file for verification.
-        const string outputPath = "output.pdf";
-        File.WriteAllBytes(outputPath, responseStream.ToArray());
+            // Load the document from the DOCX memory stream.
+            Document loadedDoc = new Document(docxStream);
 
-        if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException("Expected output PDF file was not created.");
-        }
+            // Simulate a response stream and save the PDF directly into it.
+            using (MemoryStream responseStream = new MemoryStream())
+            {
+                loadedDoc.Save(responseStream, SaveFormat.Pdf);
 
-        // Clean up the temporary input file.
-        if (File.Exists(inputPath))
-        {
-            File.Delete(inputPath);
+                // Verify that PDF data was written.
+                if (responseStream.Length == 0)
+                {
+                    throw new InvalidOperationException("No PDF data was written to the simulated response stream.");
+                }
+
+                // Optionally, you could write the PDF to a file for verification.
+                // File.WriteAllBytes("output.pdf", responseStream.ToArray());
+            }
         }
     }
 }

@@ -8,36 +8,30 @@ public class Program
     public static void Main()
     {
         // Create a sample PDF file with two pages.
-        Document sampleDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-        builder.Writeln("This is the content of page 1.");
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("First page content.");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("This is the content of page 2.");
-        string pdfPath = "sample.pdf";
-        sampleDoc.Save(pdfPath, SaveFormat.Pdf);
-
-        if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("The sample PDF file was not created.");
+        builder.Writeln("Second page content.");
+        sourceDoc.Save("sample.pdf", SaveFormat.Pdf);
 
         // Load the PDF document.
-        Document pdfDocument = new Document(pdfPath);
+        Document pdfDoc = new Document("sample.pdf");
 
-        // Export each page as a separate PNG image.
-        for (int pageIndex = 0; pageIndex < pdfDocument.PageCount; pageIndex++)
+        // Export each page of the PDF as a separate PNG image.
+        for (int i = 0; i < pdfDoc.PageCount; i++)
         {
             ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png)
             {
-                PageSet = new PageSet(pageIndex)
+                PageSet = new PageSet(i) // Export only the current page.
             };
 
-            string outputImagePath = $"page_{pageIndex + 1}.png";
-            pdfDocument.Save(outputImagePath, options);
+            string outputPath = $"page_{i + 1}.png";
+            pdfDoc.Save(outputPath, options);
 
-            if (!File.Exists(outputImagePath))
-                throw new InvalidOperationException($"Failed to create PNG for page {pageIndex + 1}.");
+            // Verify that the PNG file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException($"Expected PNG file '{outputPath}' was not created.");
         }
-
-        // Optional: Clean up the sample PDF if not needed.
-        // File.Delete(pdfPath);
     }
 }

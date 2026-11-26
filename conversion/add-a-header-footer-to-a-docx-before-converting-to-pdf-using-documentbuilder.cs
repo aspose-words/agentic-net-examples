@@ -6,30 +6,34 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample DOCX document.
+        // Step 1: Create a sample DOCX document.
         Document sourceDoc = new Document();
-        DocumentBuilder sourceBuilder = new DocumentBuilder(sourceDoc);
-        sourceBuilder.Writeln("This is the main body of the document.");
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("Sample content for the DOCX document.");
         sourceDoc.Save("input.docx", SaveFormat.Docx);
 
-        // Load the DOCX document.
+        // Step 2: Load the DOCX and add header and footer.
         Document doc = new Document("input.docx");
+        DocumentBuilder headerFooterBuilder = new DocumentBuilder(doc);
 
-        // Add a header.
-        DocumentBuilder headerBuilder = new DocumentBuilder(doc);
-        headerBuilder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        headerBuilder.Writeln("Sample Header");
+        // Add header.
+        headerFooterBuilder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        headerFooterBuilder.Writeln("Document Header");
 
-        // Add a footer.
-        DocumentBuilder footerBuilder = new DocumentBuilder(doc);
-        footerBuilder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        footerBuilder.Writeln("Sample Footer");
+        // Add footer.
+        headerFooterBuilder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+        headerFooterBuilder.Writeln("Page Footer");
 
-        // Convert the document to PDF.
+        // Step 3: Convert the document with header/footer to PDF.
         doc.Save("output.pdf", SaveFormat.Pdf);
 
-        // Validate that the PDF was created.
+        // Step 4: Validate that the PDF was created.
         if (!File.Exists("output.pdf"))
+        {
             throw new InvalidOperationException("Expected output PDF was not created.");
+        }
+
+        // Optional: Clean up intermediate files (not required, but keeps the folder tidy).
+        // File.Delete("input.docx");
     }
 }

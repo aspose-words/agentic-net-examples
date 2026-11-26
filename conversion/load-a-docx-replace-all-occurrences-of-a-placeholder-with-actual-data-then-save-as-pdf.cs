@@ -7,27 +7,32 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample DOCX file containing a placeholder.
-        string inputPath = "input.docx";
-        Document sourceDocument = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDocument);
-        builder.Writeln("Hello <<Name>>! This is a sample document.");
-        sourceDocument.Save(inputPath, SaveFormat.Docx);
+        // Step 1: Create a sample DOCX file containing a placeholder.
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        builder.Writeln("Dear <<Name>>,");
+        builder.Writeln("Thank you for using Aspose.Words.");
+        sampleDoc.Save("input.docx", SaveFormat.Docx);
 
-        // Load the DOCX file.
-        Document document = new Document(inputPath);
+        // Step 2: Load the DOCX file.
+        Document doc = new Document("input.docx");
 
-        // Replace all occurrences of the placeholder with actual data.
-        document.Range.Replace("<<Name>>", "John Doe", new FindReplaceOptions());
+        // Step 3: Replace all occurrences of the placeholder with actual data.
+        string placeholder = "<<Name>>";
+        string actualValue = "John Doe";
+        doc.Range.Replace(placeholder, actualValue, new FindReplaceOptions());
 
-        // Save the modified document as PDF.
-        string outputPath = "output.pdf";
-        document.Save(outputPath, SaveFormat.Pdf);
+        // Step 4: Save the modified document as PDF.
+        doc.Save("output.pdf", SaveFormat.Pdf);
 
-        // Verify that the PDF was created.
-        if (!File.Exists(outputPath))
+        // Step 5: Validate that the PDF was created.
+        if (!File.Exists("output.pdf"))
         {
             throw new InvalidOperationException("Expected output PDF was not created.");
         }
+
+        // Optional: Clean up sample files (comment out if you want to keep them).
+        // File.Delete("input.docx");
+        // File.Delete("output.pdf");
     }
 }

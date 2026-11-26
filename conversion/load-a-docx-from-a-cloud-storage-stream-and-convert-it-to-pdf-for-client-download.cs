@@ -6,36 +6,40 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample DOCX document and store it in a memory stream
+        // Create a sample DOCX document locally.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("Sample DOCX content generated for conversion.");
+        sourceDoc.Save("input.docx", SaveFormat.Docx);
+
+        // Simulate loading the DOCX from a cloud storage stream.
         using (MemoryStream cloudStream = new MemoryStream())
         {
-            Document sourceDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-            builder.Writeln("Hello from cloud storage DOCX.");
+            using (FileStream fileStream = new FileStream("input.docx", FileMode.Open, FileAccess.Read))
+            {
+                fileStream.CopyTo(cloudStream);
+            }
+            cloudStream.Position = 0; // Reset before reading.
 
-            // Save the document as DOCX into the simulated cloud stream
-            sourceDoc.Save(cloudStream, SaveFormat.Docx);
-            cloudStream.Position = 0; // Reset for reading
+            // Load the document from the simulated cloud stream.
+            Document doc = new Document(cloudStream);
 
-            // Load the DOCX from the simulated cloud storage stream
-            Document loadedDoc = new Document(cloudStream);
-
-            // Convert the loaded document to PDF and write to a simulated client response stream
+            // Convert the document to PDF and write to a simulated response stream.
             using (MemoryStream responseStream = new MemoryStream())
             {
-                loadedDoc.Save(responseStream, SaveFormat.Pdf);
+                doc.Save(responseStream, SaveFormat.Pdf);
 
-                // Validate that PDF data was written
+                // Validate that PDF data was written.
                 if (responseStream.Length == 0)
                 {
                     throw new InvalidOperationException("No PDF data was written to the simulated response stream.");
                 }
 
-                // Optionally, save the PDF to a file for verification
+                // Optional: write the PDF to a file for verification.
                 responseStream.Position = 0;
-                using (FileStream file = new FileStream("output.pdf", FileMode.Create, FileAccess.Write))
+                using (FileStream outputFile = new FileStream("output.pdf", FileMode.Create, FileAccess.Write))
                 {
-                    responseStream.CopyTo(file);
+                    responseStream.CopyTo(outputFile);
                 }
 
                 if (!File.Exists("output.pdf"))

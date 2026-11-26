@@ -13,23 +13,19 @@ public class Program
         builder.Writeln("Hello World! This is a sample document.");
         source.Save("input.docx", SaveFormat.Docx);
 
-        // Load the created document.
+        // Load the document.
         Document doc = new Document("input.docx");
 
-        // Perform a find‑and‑replace: replace "Hello" with "Hi".
-        FindReplaceOptions replaceOptions = new FindReplaceOptions();
-        doc.Range.Replace("Hello", "Hi", replaceOptions);
+        // Perform find-and-replace: replace "World" with "Aspose".
+        doc.Range.Replace("World", "Aspose", new FindReplaceOptions(FindReplaceDirection.Forward));
 
-        // Export the modified document to Excel format (XLSX).
+        // Save the modified document as Excel (XLSX).
         doc.Save("output.xlsx", SaveFormat.Xlsx);
 
-        // Validate that the Excel file was created.
+        // Validate that the output file was created.
         if (!File.Exists("output.xlsx"))
         {
             throw new InvalidOperationException("Expected output XLSX was not created.");
         }
-
-        // Optional: clean up temporary files (not required, but keeps the folder tidy).
-        // File.Delete("input.docx");
     }
 }

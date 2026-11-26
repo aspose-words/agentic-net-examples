@@ -1,62 +1,64 @@
 using System;
 using System.IO;
+using System.Collections.Generic;
 using Aspose.Words;
 
-public class PdfToDocxBatchConverter
+public class Program
 {
     public static void Main()
     {
-        // Define input and output directories.
-        string inputDir = "input_pdfs";
-        string outputDir = "output_docx";
+        // Define input and output folders.
+        string inputFolder = "input_pdfs";
+        string outputFolder = "output_docx";
 
-        // Ensure the directories exist.
-        Directory.CreateDirectory(inputDir);
-        Directory.CreateDirectory(outputDir);
+        // Ensure a clean environment.
+        if (Directory.Exists(inputFolder))
+            Directory.Delete(inputFolder, true);
+        if (Directory.Exists(outputFolder))
+            Directory.Delete(outputFolder, true);
+        Directory.CreateDirectory(inputFolder);
+        Directory.CreateDirectory(outputFolder);
 
-        // Create sample PDF files to simulate existing inputs.
-        CreateSamplePdf(Path.Combine(inputDir, "sample1.pdf"), "This is the first sample PDF.");
-        CreateSamplePdf(Path.Combine(inputDir, "sample2.pdf"), "This is the second sample PDF.");
-        CreateSamplePdf(Path.Combine(inputDir, "sample3.pdf"), "This is the third sample PDF.");
+        // Create sample PDF files.
+        List<string> pdfPaths = new List<string>();
+        for (int i = 1; i <= 3; i++)
+        {
+            string pdfPath = Path.Combine(inputFolder, $"sample{i}.pdf");
+            CreateSamplePdf(pdfPath, $"This is sample PDF number {i}.");
+            pdfPaths.Add(pdfPath);
+        }
 
-        // Retrieve all PDF files from the input folder.
-        string[] pdfFiles = Directory.GetFiles(inputDir, "*.pdf");
-
-        // Convert each PDF file to DOCX format.
-        foreach (string pdfPath in pdfFiles)
+        // Convert each PDF to DOCX.
+        foreach (string pdfPath in pdfPaths)
         {
             // Load the PDF document.
             Document pdfDoc = new Document(pdfPath);
 
             // Determine the output DOCX file path.
             string fileNameWithoutExt = Path.GetFileNameWithoutExtension(pdfPath);
-            string docxPath = Path.Combine(outputDir, fileNameWithoutExt + ".docx");
+            string docxPath = Path.Combine(outputFolder, $"{fileNameWithoutExt}.docx");
 
             // Save the document as DOCX.
             pdfDoc.Save(docxPath, SaveFormat.Docx);
 
             // Verify that the DOCX file was created.
             if (!File.Exists(docxPath))
-            {
                 throw new InvalidOperationException($"Conversion failed: {docxPath} was not created.");
-            }
         }
     }
 
-    private static void CreateSamplePdf(string filePath, string text)
+    private static void CreateSamplePdf(string path, string text)
     {
-        // Create a new blank document.
+        // Create a simple document with one paragraph.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln(text);
 
         // Save the document as PDF.
-        doc.Save(filePath, SaveFormat.Pdf);
+        doc.Save(path, SaveFormat.Pdf);
 
         // Verify that the PDF file was created.
-        if (!File.Exists(filePath))
-        {
-            throw new InvalidOperationException($"Sample PDF creation failed: {filePath} was not created.");
-        }
+        if (!File.Exists(path))
+            throw new InvalidOperationException($"Failed to create sample PDF at {path}.");
     }
 }

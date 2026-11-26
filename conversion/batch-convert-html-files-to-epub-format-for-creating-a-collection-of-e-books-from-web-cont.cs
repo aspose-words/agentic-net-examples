@@ -2,48 +2,54 @@ using System;
 using System.IO;
 using Aspose.Words;
 
-public class Program
+public class BatchHtmlToEpubConverter
 {
     public static void Main()
     {
-        // Define input and output directories.
-        string inputDir = Path.Combine(Directory.GetCurrentDirectory(), "InputHtml");
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "OutputEpub");
+        // Define input and output directories
+        string inputDir = "input_html";
+        string outputDir = "output_epub";
 
-        // Ensure the directories exist.
+        // Ensure clean start
+        if (Directory.Exists(inputDir))
+            Directory.Delete(inputDir, true);
+        if (Directory.Exists(outputDir))
+            Directory.Delete(outputDir, true);
+
         Directory.CreateDirectory(inputDir);
         Directory.CreateDirectory(outputDir);
 
-        // Create sample HTML files.
-        CreateSampleHtmlFile(Path.Combine(inputDir, "sample1.html"),
-            "<html><body><h1>First Book</h1><p>This is the first e‑book.</p></body></html>");
-        CreateSampleHtmlFile(Path.Combine(inputDir, "sample2.html"),
-            "<html><body><h1>Second Book</h1><p>This is the second e‑book.</p></body></html>");
+        // Create sample HTML files
+        CreateSampleHtmlFile(Path.Combine(inputDir, "sample1.html"), "<html><body><h1>First Document</h1><p>This is the first sample.</p></body></html>");
+        CreateSampleHtmlFile(Path.Combine(inputDir, "sample2.html"), "<html><body><h1>Second Document</h1><p>This is the second sample.</p></body></html>");
+        CreateSampleHtmlFile(Path.Combine(inputDir, "sample3.html"), "<html><body><h1>Third Document</h1><p>This is the third sample.</p></body></html>");
 
-        // Batch convert each HTML file to EPUB.
+        // Process each HTML file and convert to EPUB
         foreach (string htmlPath in Directory.GetFiles(inputDir, "*.html"))
         {
-            // Load the HTML document.
+            // Load HTML document
             Document doc = new Document(htmlPath);
 
-            // Determine the output EPUB file path.
+            // Determine output EPUB path
             string fileNameWithoutExt = Path.GetFileNameWithoutExtension(htmlPath);
             string epubPath = Path.Combine(outputDir, fileNameWithoutExt + ".epub");
 
-            // Save the document as EPUB.
+            // Save as EPUB
             doc.Save(epubPath, SaveFormat.Epub);
 
-            // Validate that the EPUB file was created.
+            // Validate output
             if (!File.Exists(epubPath))
-            {
                 throw new InvalidOperationException($"EPUB file was not created: {epubPath}");
-            }
         }
+
+        // Optional: indicate success (no interactive output required)
+        Console.WriteLine("Batch conversion completed successfully.");
     }
 
     private static void CreateSampleHtmlFile(string path, string htmlContent)
     {
-        // Write deterministic HTML content to a file.
         File.WriteAllText(path, htmlContent);
+        if (!File.Exists(path))
+            throw new InvalidOperationException($"Failed to create sample HTML file: {path}");
     }
 }

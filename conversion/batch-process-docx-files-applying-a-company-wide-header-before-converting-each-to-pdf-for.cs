@@ -2,11 +2,11 @@ using System;
 using System.IO;
 using Aspose.Words;
 
-public class BatchDocxToPdfWithHeader
+public class Program
 {
-    public static void Main()
+    public static void Main(string[] args)
     {
-        // Define folders for input DOCX files and output PDFs.
+        // Define folders for input DOCX files and output PDF files.
         string inputFolder = "InputDocs";
         string outputFolder = "OutputPdfs";
 
@@ -14,43 +14,40 @@ public class BatchDocxToPdfWithHeader
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Create sample DOCX files in the input folder.
+        // Create sample DOCX documents to simulate existing files.
         for (int i = 1; i <= 3; i++)
         {
-            string docxPath = Path.Combine(inputFolder, $"SampleDocument{i}.docx");
             Document sampleDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-            builder.Writeln($"This is the content of sample document {i}.");
-            sampleDoc.Save(docxPath, SaveFormat.Docx);
+            builder.Writeln($"Sample content for document {i}.");
+            string inputPath = Path.Combine(inputFolder, $"Sample{i}.docx");
+            sampleDoc.Save(inputPath, SaveFormat.Docx);
         }
 
-        // Define the company-wide header text.
-        const string headerText = "Company Confidential";
-
-        // Process each DOCX file: add header and convert to PDF.
-        foreach (string docxFilePath in Directory.GetFiles(inputFolder, "*.docx"))
+        // Process each DOCX file: add a header and convert to PDF.
+        foreach (string docxPath in Directory.GetFiles(inputFolder, "*.docx"))
         {
             // Load the DOCX document.
-            Document doc = new Document(docxFilePath);
+            Document doc = new Document(docxPath);
 
-            // Add a primary header with the company text.
+            // Add a company‑wide header.
             DocumentBuilder headerBuilder = new DocumentBuilder(doc);
             headerBuilder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-            headerBuilder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-            headerBuilder.Writeln(headerText);
+            headerBuilder.Writeln("Company Header");
 
             // Determine the output PDF path.
-            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(docxFilePath);
-            string pdfPath = Path.Combine(outputFolder, $"{fileNameWithoutExt}.pdf");
+            string pdfFileName = Path.GetFileNameWithoutExtension(docxPath) + ".pdf";
+            string pdfPath = Path.Combine(outputFolder, pdfFileName);
 
             // Save the document as PDF.
             doc.Save(pdfPath, SaveFormat.Pdf);
 
             // Validate that the PDF was created.
             if (!File.Exists(pdfPath))
-            {
-                throw new InvalidOperationException($"PDF file was not created: {pdfPath}");
-            }
+                throw new InvalidOperationException($"Expected PDF was not created: {pdfPath}");
         }
+
+        // Indicate successful completion.
+        Console.WriteLine("Batch processing completed successfully.");
     }
 }
