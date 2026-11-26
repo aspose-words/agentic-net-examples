@@ -12,48 +12,43 @@ public class Program
         // Ensure the document has a VBA project.
         doc.VbaProject = new VbaProject();
 
-        // Sample VBA macro source containing a hard‑coded absolute file path.
-        string originalVba =
-@"Sub Test()
-    Dim path As String
-    path = ""C:\Data\file.txt""
-    MsgBox path
-End Sub";
+        // VBA code with a hard‑coded absolute file path.
+        string vbaCode = @"
+Sub Example()
+    Dim filePath As String
+    filePath = ""C:\Data\MyFile.txt""
+    MsgBox filePath
+End Sub
+";
 
-        // Create a new VBA module, set its name and source code, then add it to the project.
-        VbaModule module = new VbaModule();
-        module.Name = "Module1";
-        module.SourceCode = originalVba;
-        doc.VbaProject.Modules.Add(module);
+        // Create a VBA module, set its name and source code, then add it to the project.
+        VbaModule newModule = new VbaModule();
+        newModule.Name = "Module1";
+        newModule.SourceCode = vbaCode;
+        doc.VbaProject.Modules.Add(newModule);
 
-        // Retrieve the module (guard against null source code).
-        VbaModule targetModule = doc.VbaProject.Modules["Module1"];
-        string sourceCode = targetModule?.SourceCode ?? string.Empty;
+        // Retrieve the module.
+        VbaModule module = doc.VbaProject.Modules["Module1"];
+        string source = module.SourceCode ?? string.Empty;
 
-        // Replace the absolute path with a relative path (just the file name).
-        string absolutePath = @"C:\Data\file.txt";
-        string relativePath = "file.txt";
-        string updatedSource = sourceCode.Replace(absolutePath, relativePath);
+        // Replace the absolute path with a relative path.
+        string absolutePath = @"C:\Data\MyFile.txt";
+        string relativePath = @"..\Data\MyFile.txt";
+        string updatedSource = source.Replace(absolutePath, relativePath);
 
-        // Update the module's source code.
-        if (targetModule != null)
-        {
-            targetModule.SourceCode = updatedSource;
-        }
+        // Update the module source code.
+        module.SourceCode = updatedSource;
 
         // Save the document in macro‑enabled format.
-        string outputPath = "output.docm";
-        doc.Save(outputPath);
+        string fileName = "MacroDocument.docm";
+        doc.Save(fileName);
 
         // Reload the document to verify the change.
-        Document loadedDoc = new Document(outputPath);
-        VbaModule loadedModule = loadedDoc.VbaProject?.Modules["Module1"];
-        string loadedSource = loadedModule?.SourceCode ?? string.Empty;
+        Document loadedDoc = new Document(fileName);
+        VbaModule loadedModule = loadedDoc.VbaProject.Modules["Module1"];
+        string finalSource = loadedModule.SourceCode ?? string.Empty;
 
-        // Simple validation output.
-        bool containsRelative = loadedSource.Contains(relativePath);
-        bool containsAbsolute = loadedSource.Contains(absolutePath);
-        Console.WriteLine($"Relative path present: {containsRelative}");
-        Console.WriteLine($"Absolute path present: {containsAbsolute}");
+        bool containsRelative = finalSource.Contains(relativePath);
+        Console.WriteLine("Relative path replacement successful: " + containsRelative);
     }
 }

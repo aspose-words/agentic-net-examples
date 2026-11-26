@@ -1,6 +1,5 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 using Aspose.Words.Vba;
 
 namespace VbaModuleCopyExample
@@ -13,45 +12,57 @@ namespace VbaModuleCopyExample
             Document sourceDoc = new Document();
 
             // Ensure the source document has a VBA project.
-            sourceDoc.VbaProject = new VbaProject();
+            if (sourceDoc.VbaProject == null)
+                sourceDoc.VbaProject = new VbaProject();
 
-            // Define a simple VBA module.
-            string moduleName = "TestModule";
-            string moduleCode = "Sub Hello()\n    MsgBox \"Hello from source\"\nEnd Sub";
+            // Add a VBA module to the source document.
+            string moduleName = "SampleModule";
+            string moduleCode = @"Sub ShowMessage()
+    MsgBox ""Hello from source!""
+End Sub";
 
-            // Create the module, set its name and source code, then add it to the source document's VBA project.
-            VbaModule sourceModule = new VbaModule();
-            sourceModule.Name = moduleName;
-            sourceModule.SourceCode = moduleCode;
-            sourceDoc.VbaProject.Modules.Add(sourceModule);
+            // VbaModule has a parameterless constructor; set properties manually.
+            VbaModule sourceModuleToAdd = new VbaModule
+            {
+                Name = moduleName,
+                SourceCode = moduleCode
+            };
+            sourceDoc.VbaProject.Modules.Add(sourceModuleToAdd);
 
             // Save the source document in a macro‑enabled format.
-            sourceDoc.Save("source.docm", SaveFormat.Docm);
+            string sourcePath = "source.docm";
+            sourceDoc.Save(sourcePath, SaveFormat.Docm);
 
             // Create a destination macro‑enabled document.
             Document destDoc = new Document();
 
             // Ensure the destination document has a VBA project.
-            destDoc.VbaProject = new VbaProject();
+            if (destDoc.VbaProject == null)
+                destDoc.VbaProject = new VbaProject();
 
-            // Retrieve the source module's code (guard against null).
-            string sourceCode = sourceModule?.SourceCode ?? string.Empty;
+            // Load the source document to access its VBA module.
+            Document loadedSource = new Document(sourcePath);
+            VbaModule loadedSourceModule = loadedSource.VbaProject?.Modules[moduleName];
 
-            // Create a new module in the destination document using the source code.
-            VbaModule destModule = new VbaModule();
-            destModule.Name = sourceModule.Name;
-            destModule.SourceCode = sourceCode;
-            destDoc.VbaProject.Modules.Add(destModule);
+            // Guard against missing module.
+            if (loadedSourceModule != null)
+            {
+                // Copy the module into the destination document.
+                VbaModule copiedModule = new VbaModule
+                {
+                    Name = loadedSourceModule.Name,
+                    SourceCode = loadedSourceModule.SourceCode ?? string.Empty
+                };
+                destDoc.VbaProject.Modules.Add(copiedModule);
+            }
 
-            // Save the destination document in a macro‑enabled format.
-            destDoc.Save("dest.docm", SaveFormat.Docm);
+            // Save the destination document.
+            string destPath = "dest.docm";
+            destDoc.Save(destPath, SaveFormat.Docm);
 
-            // Validation: check that the module exists and its code matches.
-            VbaModule copiedModule = destDoc.VbaProject.Modules[moduleName];
-            bool moduleExists = copiedModule != null;
-            bool codeMatches = copiedModule?.SourceCode == sourceCode;
-
-            Console.WriteLine($"Module copied: {moduleExists && codeMatches}");
+            // Simple validation: confirm the module exists in the destination.
+            bool moduleCopied = destDoc.VbaProject?.Modules[moduleName] != null;
+            Console.WriteLine($"Module '{moduleName}' copied: {moduleCopied}");
         }
     }
 }

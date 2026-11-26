@@ -1,6 +1,8 @@
 using System;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
@@ -8,112 +10,84 @@ public class Program
 {
     public static void Main()
     {
-        // Define the folder that will contain the DOCM files.
-        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "Docs");
-        Directory.CreateDirectory(inputFolder);
+        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "Docs");
+        Directory.CreateDirectory(baseDir);
 
-        // If the folder is empty, create sample macro‑enabled documents.
-        if (Directory.GetFiles(inputFolder, "*.docm").Length == 0)
+        // Create sample DOCM files
+        for (int i = 1; i <= 2; i++)
         {
-            CreateSampleDocument(Path.Combine(inputFolder, "Sample1.docm"));
-            CreateSampleDocument(Path.Combine(inputFolder, "Sample2.docm"));
+            string filePath = Path.Combine(baseDir, $"Sample{i}.docm");
+            CreateSampleDocm(filePath, i);
         }
 
-        // Prepare a list to hold CSV rows.
-        var csvRows = new List<string> { "Document,MacroName" };
+        // Process files and collect macro names
+        var csvBuilder = new StringBuilder();
+        csvBuilder.AppendLine("FileName,MacroName");
 
-        // Process each DOCM file in the folder.
-        foreach (string filePath in Directory.GetFiles(inputFolder, "*.docm"))
+        foreach (string docPath in Directory.GetFiles(baseDir, "*.docm"))
         {
-            Document doc = new Document(filePath);
+            var doc = new Document(docPath);
+            var vbaProject = doc.VbaProject;
+            if (vbaProject == null) continue;
 
-            // Ensure the document actually contains a VBA project.
-            if (doc.HasMacros && doc.VbaProject != null)
+            foreach (VbaModule module in vbaProject.Modules)
             {
-                foreach (VbaModule module in doc.VbaProject.Modules)
+                string source = module.SourceCode ?? string.Empty;
+                foreach (string macro in ExtractMacroNames(source))
                 {
-                    // Guard against null source code.
-                    string source = module.SourceCode ?? string.Empty;
-
-                    // Extract macro names from the source code.
-                    foreach (string macroName in ExtractMacroNames(source))
-                    {
-                        // Add a CSV row: document file name and macro name.
-                        csvRows.Add($"{Path.GetFileName(filePath)},{macroName}");
-                    }
+                    csvBuilder.AppendLine($"{Path.GetFileName(docPath)},{macro}");
                 }
             }
         }
 
-        // Write the CSV summary file.
-        string csvPath = Path.Combine(inputFolder, "MacroSummary.csv");
-        File.WriteAllLines(csvPath, csvRows);
+        string csvPath = Path.Combine(Directory.GetCurrentDirectory(), "macro_summary.csv");
+        File.WriteAllText(csvPath, csvBuilder.ToString());
     }
 
-    // Creates a simple macro‑enabled document with one procedural module containing two macros.
-    private static void CreateSampleDocument(string filePath)
+    private static void CreateSampleDocm(string path, int index)
     {
-        Document doc = new Document();
+        var doc = new Document();
 
-        // Create a new VBA project and assign it to the document.
-        VbaProject project = new VbaProject();
-        project.Name = "SampleProject";
-        doc.VbaProject = project;
+        // Ensure the document has a VBA project
+        var vbaProject = new VbaProject();
 
-        // Create a module with sample VBA code.
-        VbaModule module = new VbaModule();
-        module.Name = "SampleModule";
-        module.Type = VbaModuleType.ProceduralModule;
-        module.SourceCode = @"
-Sub MacroOne()
-    MsgBox ""Hello from MacroOne""
+        string moduleSource = $@"
+Sub Macro{index}_One()
+    MsgBox ""Hello from Macro {index}_One""
 End Sub
 
-Sub MacroTwo()
-    MsgBox ""Hello from MacroTwo""
-End Sub
+Function Macro{index}_Two() As String
+    Macro{index}_Two = ""Result""
+End Function
 ";
 
-        // Add the module to the VBA project.
-        doc.VbaProject.Modules.Add(module);
+        // Create a module using the parameterless constructor and set properties
+        var module = new VbaModule
+        {
+            Name = $"Module{index}",
+            SourceCode = moduleSource
+        };
 
-        // Save as a macro‑enabled document.
-        doc.Save(filePath);
+        vbaProject.Modules.Add(module);
+        doc.VbaProject = vbaProject;
+
+        // Save as a macro‑enabled document
+        doc.Save(path, SaveFormat.Docm);
     }
 
-    // Parses VBA source code and returns the names of Sub and Function macros.
     private static IEnumerable<string> ExtractMacroNames(string source)
     {
-        var macroNames = new List<string>();
-        using (StringReader reader = new StringReader(source))
+        var names = new List<string>();
+        if (string.IsNullOrEmpty(source)) return names;
+
+        var regex = new Regex(@"^\s*(Sub|Function)\s+([A-Za-z0-9_]+)", RegexOptions.Multiline | RegexOptions.IgnoreCase);
+        foreach (Match match in regex.Matches(source))
         {
-            string line;
-            while ((line = reader.ReadLine()) != null)
+            if (match.Groups.Count > 2)
             {
-                line = line.TrimStart();
-
-                // Look for Sub or Function declarations.
-                if (line.StartsWith("Sub ", StringComparison.OrdinalIgnoreCase) ||
-                    line.StartsWith("Function ", StringComparison.OrdinalIgnoreCase))
-                {
-                    // Remove the keyword.
-                    int startIdx = line.IndexOf(' ') + 1;
-                    if (startIdx > 0 && startIdx < line.Length)
-                    {
-                        // Extract the name up to the first '(' or whitespace.
-                        int endIdx = line.IndexOf('(', startIdx);
-                        if (endIdx == -1)
-                            endIdx = line.IndexOf(' ', startIdx);
-                        if (endIdx == -1)
-                            endIdx = line.Length;
-
-                        string name = line.Substring(startIdx, endIdx - startIdx).Trim();
-                        if (!string.IsNullOrEmpty(name))
-                            macroNames.Add(name);
-                    }
-                }
+                names.Add(match.Groups[2].Value);
             }
         }
-        return macroNames;
+        return names;
     }
 }

@@ -6,30 +6,41 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank Word document.
+        // Create a new blank document.
         Document doc = new Document();
 
-        // Create a new VBA project and assign it to the document.
-        VbaProject project = new VbaProject();
-        project.Name = "Aspose.Project";
-        doc.VbaProject = project;
+        // Ensure the document has a VBA project.
+        if (doc.VbaProject == null)
+        {
+            doc.VbaProject = new VbaProject();
+        }
 
-        // Create a new standard (procedural) VBA module.
-        VbaModule module = new VbaModule();
-        module.Name = "MyStandardModule";
-        module.Type = VbaModuleType.ProceduralModule;
+        // Define custom macro code.
+        string macroCode = "Sub MyMacro()\n    MsgBox \"Hello from macro\"\nEnd Sub";
 
-        // Assign custom macro code to the module's SourceCode property.
-        module.SourceCode = @"
-Sub MyMacro()
-    MsgBox ""Hello from VBA!""
-End Sub
-";
+        // Create a standard module and assign its name and source code.
+        VbaModule module = new VbaModule
+        {
+            Name = "StandardModule1",
+            SourceCode = macroCode
+        };
 
         // Add the module to the VBA project.
         doc.VbaProject.Modules.Add(module);
 
-        // Save the document in a macro‑enabled format (.docm).
-        doc.Save("VbaProject.CreateVBAMacros.docm");
+        // Save the document in a macro‑enabled format.
+        string outputPath = "MacroDocument.docm";
+        doc.Save(outputPath, SaveFormat.Docm);
+
+        // Validate that the module was added correctly.
+        VbaModule addedModule = doc.VbaProject.Modules["StandardModule1"];
+        if (addedModule != null && addedModule.SourceCode == macroCode)
+        {
+            Console.WriteLine("Macro module added successfully.");
+        }
+        else
+        {
+            Console.WriteLine("Failed to add macro module.");
+        }
     }
 }

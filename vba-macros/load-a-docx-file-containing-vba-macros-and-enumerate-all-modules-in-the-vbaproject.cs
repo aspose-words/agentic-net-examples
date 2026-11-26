@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
@@ -16,43 +15,44 @@ public class Program
             doc.VbaProject = new VbaProject();
         }
 
-        // Add a couple of VBA modules with simple code.
-        VbaModuleCollection modules = doc.VbaProject.Modules;
-
-        // Create first module and set its name and source code.
-        VbaModule moduleOne = new VbaModule();
-        moduleOne.Name = "ModuleOne";
-        moduleOne.SourceCode = "Sub HelloWorld()\n    MsgBox \"Hello from ModuleOne\"\nEnd Sub";
-        modules.Add(moduleOne);
-
-        // Create second module and set its name and source code.
-        VbaModule moduleTwo = new VbaModule();
-        moduleTwo.Name = "ModuleTwo";
-        moduleTwo.SourceCode = "Sub ShowInfo()\n    MsgBox \"Info from ModuleTwo\"\nEnd Sub";
-        modules.Add(moduleTwo);
-
-        // Save the document to a macro‑enabled format in a memory stream.
-        using (MemoryStream stream = new MemoryStream())
+        // Add a simple VBA module if none exist.
+        if (doc.VbaProject.Modules.Count == 0)
         {
-            doc.Save(stream, SaveFormat.Docm);
-            stream.Position = 0; // Reset for reading.
+            string moduleCode = @"Sub Hello()
+    MsgBox ""Hello from VBA!""
+End Sub";
 
-            // Load the document back from the stream.
-            Document loadedDoc = new Document(stream);
-
-            // Enumerate all VBA modules in the loaded document.
-            VbaProject vbaProject = loadedDoc.VbaProject;
-            if (vbaProject != null)
+            VbaModule module = new VbaModule
             {
-                VbaModuleCollection loadedModules = vbaProject.Modules;
-                foreach (VbaModule module in loadedModules)
-                {
-                    // Output module name and its source code line count.
-                    string source = module.SourceCode ?? string.Empty;
-                    int lineCount = source.Split('\n').Length;
-                    Console.WriteLine($"Module: {module.Name}, Lines of code: {lineCount}");
-                }
+                Name = "TestModule",
+                SourceCode = moduleCode
+            };
+
+            doc.VbaProject.Modules.Add(module);
+        }
+
+        // Save the document as a macro‑enabled file.
+        const string fileName = "SampleMacroDocument.docm";
+        doc.Save(fileName, SaveFormat.Docm);
+
+        // Load the saved document.
+        Document loadedDoc = new Document(fileName);
+
+        // Enumerate all VBA modules in the loaded document.
+        if (loadedDoc.VbaProject != null)
+        {
+            foreach (VbaModule vbaModule in loadedDoc.VbaProject.Modules)
+            {
+                string source = vbaModule.SourceCode ?? string.Empty;
+                Console.WriteLine($"Module Name: {vbaModule.Name}");
+                Console.WriteLine("Source Code:");
+                Console.WriteLine(source);
+                Console.WriteLine(new string('-', 40));
             }
+        }
+        else
+        {
+            Console.WriteLine("No VBA project found in the document.");
         }
     }
 }
