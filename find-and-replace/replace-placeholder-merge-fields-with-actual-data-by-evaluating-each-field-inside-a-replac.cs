@@ -4,85 +4,104 @@ using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using Newtonsoft.Json;
+
+public class PlaceholderReplacer : IReplacingCallback
+{
+    private readonly IDictionary<string, string> _values;
+
+    public PlaceholderReplacer(IDictionary<string, string> values)
+    {
+        _values = values ?? throw new ArgumentNullException(nameof(values));
+    }
+
+    public ReplaceAction Replacing(ReplacingArgs args)
+    {
+        // Extract the field name without the surrounding << and >>.
+        string placeholder = args.Match.Value;
+        string key = placeholder.Substring(2, placeholder.Length - 4);
+
+        if (_values.TryGetValue(key, out string replacement))
+        {
+            args.Replacement = replacement;
+        }
+        else
+        {
+            // Keep the original placeholder if no replacement is found.
+            args.Replacement = placeholder;
+        }
+
+        return ReplaceAction.Replace;
+    }
+}
 
 public class Program
 {
-    // Callback that replaces {{FieldName}} placeholders with values from a dictionary.
-    private class PlaceholderReplacer : IReplacingCallback
-    {
-        private readonly IDictionary<string, string> _values;
-
-        public PlaceholderReplacer(IDictionary<string, string> values)
-        {
-            _values = values ?? throw new ArgumentNullException(nameof(values));
-        }
-
-        public ReplaceAction Replacing(ReplacingArgs args)
-        {
-            // The regular expression has one capturing group that contains the field name.
-            string key = args.Match.Groups[1].Value;
-
-            if (_values.TryGetValue(key, out string replacement))
-            {
-                // Set the replacement text and tell Aspose.Words to replace the match.
-                args.Replacement = replacement;
-                return ReplaceAction.Replace;
-            }
-
-            // No matching key – leave the original placeholder unchanged.
-            return ReplaceAction.Skip;
-        }
-    }
-
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create a sample document containing placeholder merge fields.
-        // -----------------------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Dear {{FirstName}} {{LastName}},");
-        builder.Writeln("Your order {{OrderId}} has been shipped.");
-        builder.Writeln("Thank you for shopping with us.");
+        // -------------------------------------------------------------
+        // 1. Create a sample template document containing placeholder fields.
+        // -------------------------------------------------------------
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Dear <<FirstName>> <<LastName>>,");
+        builder.Writeln("Your order <<OrderNumber>> has been shipped.");
+        const string templatePath = "template.docx";
+        templateDoc.Save(templatePath);
 
-        // Save the source document (optional, just to illustrate the input file).
-        const string inputPath = "input.docx";
-        doc.Save(inputPath);
+        // -------------------------------------------------------------
+        // 2. Load the template for processing.
+        // -------------------------------------------------------------
+        var doc = new Document(templatePath);
 
-        // -----------------------------------------------------------------
-        // 2. Define the data that will replace the placeholders.
-        // -----------------------------------------------------------------
-        var placeholderValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        // -------------------------------------------------------------
+        // 3. Define the data that will replace the placeholders.
+        // -------------------------------------------------------------
+        var fieldValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             { "FirstName", "John" },
             { "LastName", "Doe" },
-            { "OrderId", "12345" }
+            { "OrderNumber", "12345" }
         };
 
-        // -----------------------------------------------------------------
-        // 3. Set up a regular expression that matches {{FieldName}} patterns.
-        // -----------------------------------------------------------------
-        Regex placeholderRegex = new Regex(@"\{\{(\w+)\}\}", RegexOptions.Compiled);
+        // -------------------------------------------------------------
+        // 4. Prepare a regular expression that matches placeholders like <<FieldName>>.
+        // -------------------------------------------------------------
+        var placeholderRegex = new Regex(@"<<\w+>>", RegexOptions.Compiled);
 
-        // -----------------------------------------------------------------
-        // 4. Perform the replacement using a custom IReplacingCallback.
-        // -----------------------------------------------------------------
-        FindReplaceOptions options = new FindReplaceOptions
-        {
-            ReplacingCallback = new PlaceholderReplacer(placeholderValues)
-        };
+        // -------------------------------------------------------------
+        // 5. Set up the replacing callback that supplies the actual replacement text.
+        // -------------------------------------------------------------
+        var replacer = new PlaceholderReplacer(fieldValues);
+        var options = new FindReplaceOptions { ReplacingCallback = replacer };
 
-        // The replacement string argument is ignored because the callback sets args.Replacement.
+        // -------------------------------------------------------------
+        // 6. Perform the replacement using the callback overload.
+        // -------------------------------------------------------------
         int replacedCount = doc.Range.Replace(placeholderRegex, string.Empty, options);
 
-        // Validate that at least one replacement occurred.
+        // -------------------------------------------------------------
+        // 7. Validate that at least one replacement occurred.
+        // -------------------------------------------------------------
         if (replacedCount == 0)
             throw new InvalidOperationException("No placeholders were replaced.");
 
-        // -----------------------------------------------------------------
-        // 5. Save the resulting document.
-        // -----------------------------------------------------------------
+        // -------------------------------------------------------------
+        // 8. Save the resulting document.
+        // -------------------------------------------------------------
         const string outputPath = "output.docx";
         doc.Save(outputPath);
+
+        // -------------------------------------------------------------
+        // 9. Write a simple JSON report of the performed replacements.
+        // -------------------------------------------------------------
+        var report = new
+        {
+            InputFile = Path.GetFullPath(templatePath),
+            OutputFile = Path.GetFullPath(outputPath),
+            ReplacementsMade = replacedCount,
+            ReplacedFields = fieldValues
+        };
+        File.WriteAllText("report.json", JsonConvert.SerializeObject(report, Formatting.Indented));
     }
 }

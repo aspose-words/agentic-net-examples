@@ -5,38 +5,27 @@ using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-public class ReplaceLanguageCallback : IReplacingCallback
+public class LanguageTagReplacer : IReplacingCallback
 {
-    private readonly Dictionary<string, string> _languageMap = new()
-    {
-        { "en", "English" },
-        { "fr", "French" },
-        { "es", "Spanish" },
-        { "de", "German" },
-        { "it", "Italian" }
-        // Add more mappings as needed
-    };
+    private readonly Dictionary<string, string> _languageMap;
 
-    public int ReplacementsMade { get; private set; }
+    public LanguageTagReplacer(Dictionary<string, string> languageMap)
+    {
+        _languageMap = languageMap ?? throw new ArgumentNullException(nameof(languageMap));
+    }
 
     public ReplaceAction Replacing(ReplacingArgs args)
     {
-        // Extract the language code from the match (e.g., "en" from "[en]")
+        // The regex has one capturing group that contains the language code.
         string code = args.Match.Groups[1].Value;
-
         if (_languageMap.TryGetValue(code, out string fullName))
         {
-            // Set the replacement text to the full language name
             args.Replacement = fullName;
-            ReplacementsMade++;
-        }
-        else
-        {
-            // If the code is unknown, keep the original tag
-            args.Replacement = args.Match.Value;
+            return ReplaceAction.Replace;
         }
 
-        return ReplaceAction.Replace;
+        // If the code is not in the map, leave the original text unchanged.
+        return ReplaceAction.Skip;
     }
 }
 
@@ -44,29 +33,35 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document containing language code tags.
+        // Create a sample document containing language code tags like [en], [fr], etc.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Welcome message: [en]");
-        builder.Writeln("Message en français: [fr]");
-        builder.Writeln("Mensaje en español: [es]");
-        builder.Writeln("Unbekannte Sprache: [xx]"); // This tag will remain unchanged.
+        builder.Writeln("Welcome to our site. [en]");
+        builder.Writeln("Bienvenue sur notre site. [fr]");
+        builder.Writeln("Bienvenido a nuestro sitio. [es]");
+        builder.Writeln("Willkommen auf unserer Seite. [de]");
 
-        // Define a regular expression to match tags like [en], [fr], etc.
-        Regex languageTagRegex = new Regex(@"\[([a-z]{2})\]", RegexOptions.IgnoreCase);
-
-        // Set up the callback that will replace each tag with the full language name.
-        ReplaceLanguageCallback callback = new ReplaceLanguageCallback();
-        FindReplaceOptions options = new FindReplaceOptions
+        // Define the mapping from language codes to full language names.
+        var languageMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            ReplacingCallback = callback
+            { "en", "English" },
+            { "fr", "French" },
+            { "es", "Spanish" },
+            { "de", "German" }
         };
 
-        // Perform the replacement using the regex and callback.
-        int totalReplacements = doc.Range.Replace(languageTagRegex, string.Empty, options);
+        // Regular expression to find tags like [en], [fr], etc.
+        Regex tagRegex = new Regex(@"\[(\w{2})\]", RegexOptions.Compiled);
+
+        // Set up find‑replace options with the custom callback.
+        FindReplaceOptions options = new FindReplaceOptions();
+        options.ReplacingCallback = new LanguageTagReplacer(languageMap);
+
+        // Perform the replacement. The replacement string argument is ignored because the callback supplies it.
+        int replacedCount = doc.Range.Replace(tagRegex, string.Empty, options);
 
         // Validate that at least one replacement occurred.
-        if (totalReplacements == 0)
+        if (replacedCount == 0)
             throw new InvalidOperationException("No language tags were replaced.");
 
         // Save the modified document.
@@ -74,7 +69,7 @@ public class Program
         doc.Save(outputPath);
 
         // Optional: write a simple confirmation to the console.
-        Console.WriteLine($"Replacements performed: {callback.ReplacementsMade}");
-        Console.WriteLine($"Document saved to: {Path.GetFullPath(outputPath)}");
+        Console.WriteLine($"Replacements performed: {replacedCount}");
+        Console.WriteLine($"Modified document saved to: {Path.GetFullPath(outputPath)}");
     }
 }

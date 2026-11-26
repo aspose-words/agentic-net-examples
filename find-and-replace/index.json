@@ -4,14 +4,14 @@
     "slug": "find-and-replace",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Create a sample DOCX (or other supported format) in the example, load it with a Document object, configure a FindReplaceOptions instance with the appropriate flags, and invoke Document.Range.Replace using either a literal string, a Regex, or a custom IReplacingCallback; finally, save the modified document to the desired output path.",
+    "preferred_workflow": "Create a realistic sample document (DOC, DOCX, HTML, TXT, stream, or folder) locally, configure a FindReplaceOptions instance with the needed flags, and invoke Document.Range.Replace using either a literal string, a Regex, or a custom IReplacingCallback. After replacement, validate the returned count, optionally log the operation, and save the document in the desired format.",
     "required_packages": [
       "Aspose.Words",
       "Aspose.Drawing.Common",
       "Newtonsoft.Json"
     ],
     "package_versions": {
-      "Aspose.Words": "26.10.0",
+      "Aspose.Words": "26.11.0",
       "Aspose.Drawing.Common": "26.10.0",
       "Newtonsoft.Json": ""
     },
@@ -20,30 +20,30 @@
       "System.IO",
       "Aspose.Words",
       "Aspose.Words.Replacing",
+      "Aspose.Words.Saving",
       "Aspose.Drawing",
-      "Newtonsoft.Json",
       "System.Text.RegularExpressions",
       "System.Collections.Generic",
-      "Aspose.Words.Drawing",
-      "Aspose.Words.Saving",
+      "Newtonsoft.Json",
       "Aspose.Words.Fields",
-      "Aspose.Words.Tables"
+      "System.Globalization"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
+      "Directory",
+      "Path",
       "Range",
       "FindReplaceOptions",
-      "File",
-      "NodeType",
-      "Path",
-      "Run",
       "SaveFormat",
+      "File",
       "MemoryStream",
+      "Field",
+      "Node",
+      "NodeType",
       "Paragraph",
       "StyleIdentifier",
-      "Node",
-      "Directory",
+      "Run",
       "FieldType",
       "Style",
       "Font",
@@ -64,55 +64,85 @@
   "rules_summary": {
     "strict_api_bans": [
       "Do not reference System.Drawing; use Aspose.Drawing for any drawing-related types.",
-      "Do not assume that source files, streams, or folders exist; generate minimal sample inputs within the example code.",
-      "Do not call undocumented helpers such as Document.ReplaceAll or Paragraph.Replace."
+      "Do not assume source files or folders exist; always bootstrap them within the example.",
+      "Do not invent unsupported find-replace helpers such as Document.ReplaceAll or Paragraph.Replace.",
+      "Do not omit the final Save call when the task expects an output artifact."
     ],
     "canonical_patterns": [
-      "Use Document.Range.Replace with a literal string, a Regex, or a FindReplaceOptions instance for all supported replacement scenarios.",
-      "Implement IReplacingCallback when custom replacement logic is required and assign it to FindReplaceOptions.ReplacingCallback.",
-      "When a task mentions placeholders, headers, footers, or other sections, access the corresponding Nodes collection and apply the same replace pattern."
+      "Use Document.Range.Replace with a properly configured FindReplaceOptions or a Regex overload for all replacements.",
+      "Implement custom replacement logic by creating a class that implements IReplacingCallback and assigning it to FindReplaceOptions.ReplacingCallback.",
+      "Bootstrap local sample inputs (documents, streams, or folders) whenever a task references an existing source.",
+      "Employ Newtonsoft.Json for JSON reporting and reference Aspose.Drawing explicitly when drawing types are required."
     ],
     "nullable_warning_prevention": [
-      "Initialize all non-nullable reference-type fields or properties before use to avoid CS8618 warnings.",
-      "Guard any value that may be null with an explicit null-check before dereferencing to prevent CS8600, CS8602, and CS8604.",
-      "Declare local variables as nullable when a null value is legitimate and handle the null case explicitly."
+      "Initialize all non-nullable reference-type properties to avoid CS8618 warnings.",
+      "Guard any potentially null values before dereferencing to prevent CS8600, CS8602, and CS8604.",
+      "Declare locals as nullable when a null value is legitimate and perform explicit null checks before use."
     ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "Missing FindReplaceOptions property",
-      "symptom": "The compiler reports that FindReplaceOptions does not contain definitions such as MatchWholeWord, UseRegularExpressions, or FindWholeWords.",
-      "cause": "The code references property names that were renamed or never existed in the Aspose.Words API version 26.10.0.",
-      "fix": "Use the correct property names: MatchCase for case sensitivity, FindWholeWordsOnly for whole-word matching, and rely on the Regex overload to enable regular-expression mode.",
-      "prevention": "Consult the official Aspose.Words API reference for the exact property names and avoid hard-coding undocumented members."
+      "pattern": "Incorrect FindReplaceOptions property",
+      "symptom": "Compilation fails with CS0117 because properties such as MatchWholeWord, UseRegularExpressions, or FindWholeWords are not found on FindReplaceOptions.",
+      "cause": "The code references outdated or misspelled property names that do not exist in the current Aspose.Words API.",
+      "fix": "Use the correct property names: FindWholeWordsOnly, MatchCase, IgnoreFields, etc., as defined in Aspose.Words.Replacing.FindReplaceOptions.",
+      "prevention": "Consult the official Aspose.Words documentation for the exact property names and enable IntelliSense to catch misspellings."
     },
     {
-      "pattern": "Undefined ReplaceEvaluator type",
-      "symptom": "Compilation fails with CS0246 because the type ReplaceEvaluator cannot be found.",
-      "cause": "The example attempts to use a non-existent delegate type instead of the documented IReplacingCallback interface.",
-      "fix": "Implement a class that inherits from IReplacingCallback and assign an instance to FindReplaceOptions.ReplacingCallback.",
-      "prevention": "Always use IReplacingCallback for custom replacement logic and verify its namespace (Aspose.Words.Replacing)."
+      "pattern": "Missing FindReplaceOptions type",
+      "symptom": "Compilation fails with CS0246 indicating that FindReplaceOptions cannot be found.",
+      "cause": "The required namespace Aspose.Words.Replacing is not imported, so the type is unavailable.",
+      "fix": "Add `using Aspose.Words.Replacing;` at the top of the file.",
+      "prevention": "Always include the Replacing namespace whenever FindReplaceOptions or related types are used."
     },
     {
-      "pattern": "Incorrect overload arguments",
-      "symptom": "The compiler reports CS1503 errors when a Regex and a FindReplaceOptions object are passed to an overload expecting string arguments.",
-      "cause": "The code calls the string-based Replace overload instead of the Regex overload that accepts a Regex, a replacement string, and FindReplaceOptions.",
-      "fix": "Call Document.Range.Replace with the Regex overload: Replace(Regex pattern, string replacement, FindReplaceOptions options).",
-      "prevention": "Match the argument types exactly to the overload signature; use IntelliSense or the API docs to select the correct method."
+      "pattern": "Missing ReplaceEvaluator type",
+      "symptom": "Compilation fails with CS0246 because ReplaceEvaluator is undefined.",
+      "cause": "The code attempts to use a non-existent delegate name; the correct interface is IReplacingCallback.",
+      "fix": "Implement IReplacingCallback and assign the instance to FindReplaceOptions.ReplacingCallback.",
+      "prevention": "Reference the Aspose.Words.Replacing namespace and use the documented IReplacingCallback interface for custom logic."
     },
     {
-      "pattern": "Metacharacter replacement without real line breaks",
-      "symptom": "Runtime throws an InvalidOperationException because no replacements were made when attempting to replace multiple line-break sequences with \"\\n\" or \"&p\".",
-      "cause": "The source document contains plain text literals instead of actual ControlChar.LineBreak characters, so the regex never matches.",
-      "fix": "Insert real line-break characters using ControlChar.LineBreak when building the sample document, and match them with a regex such as \"(\\v){2,}\".",
-      "prevention": "Bootstrap the input document with the exact control characters that the replacement logic expects."
+      "pattern": "Missing Field type",
+      "symptom": "Compilation fails with CS0103 or CS0246 when the code references the Field class without a proper using directive.",
+      "cause": "The Field class resides in Aspose.Words.Fields, which is not imported.",
+      "fix": "Add `using Aspose.Words.Fields;` and reference Field members through that namespace.",
+      "prevention": "Include the Fields namespace whenever field manipulation is required."
     },
     {
-      "pattern": "Callback misuse leading to null parent",
-      "symptom": "Runtime throws an InvalidOperationException or ArgumentException when the callback attempts to move the DocumentBuilder to a node with a null parent.",
-      "cause": "The IReplacingCallback implementation accesses args.MatchNode without verifying that it belongs to the main story or attempts to insert breaks outside a valid paragraph.",
-      "fix": "Validate that args.MatchNode is not null and that its parent story is the main document before performing insertions; use DocumentBuilder.MoveTo(args.MatchNode) only on nodes within the main story.",
-      "prevention": "Add defensive null checks and story-type checks inside the Replacing method to ensure safe node manipulation."
+      "pattern": "Improper source content for metacharacter replacement",
+      "symptom": "Runtime throws InvalidOperationException because no line-break characters are found, resulting in zero replacements.",
+      "cause": "The sample document contains plain text without actual ControlChar.LineBreak or paragraph breaks, so metacharacter patterns never match.",
+      "fix": "Insert real line-break control characters (e.g., ControlChar.LineBreak) into the source document before performing the replace.",
+      "prevention": "Validate that the document contains the expected control characters or use a regex that matches the actual content."
+    },
+    {
+      "pattern": "Invalid field handling when ignoring fields",
+      "symptom": "Runtime throws InvalidOperationException indicating that a field code was unexpectedly modified.",
+      "cause": "FindReplaceOptions.IgnoreFields is set, but the replacement logic still attempts to modify field codes or the document contains only fields matching the search term.",
+      "fix": "Ensure that the search pattern does not target field codes, or verify that at least one non-field occurrence exists before replacement.",
+      "prevention": "When using IgnoreFields, design the find pattern to exclude field codes and always check the replacement count."
+    },
+    {
+      "pattern": "Aspose.Drawing vs System.Drawing type conflict",
+      "symptom": "Compilation fails with CS0029 because Aspose.Drawing.Color cannot be assigned to System.Drawing.Color.",
+      "cause": "The code mixes types from the two drawing libraries, violating type compatibility.",
+      "fix": "Use only Aspose.Drawing types (e.g., Aspose.Drawing.Color) and avoid referencing System.Drawing.",
+      "prevention": "Reference Aspose.Drawing exclusively and qualify type names when ambiguity is possible."
+    },
+    {
+      "pattern": "DocumentBuilder API misuse",
+      "symptom": "Compilation fails with CS1503 or CS1061 because constructors or methods such as DocumentBuilderOptions, InsertParagraphAfter, or ParagraphStyleName are not found.",
+      "cause": "The code attempts to use non-existent overloads or members that belong to older versions of the API.",
+      "fix": "Instantiate DocumentBuilder with a Document instance and use supported methods like InsertParagraph, MoveTo, or ParagraphFormat properties.",
+      "prevention": "Refer to the current Aspose.Words API reference for DocumentBuilder usage and rely on IntelliSense to select valid members."
+    },
+    {
+      "pattern": "Incorrect overload usage for regex replace",
+      "symptom": "Compilation fails with CS1503 when a string is passed where a Regex is expected, or vice versa.",
+      "cause": "The code calls the overload that expects a Regex object but supplies a plain string, or supplies a Regex but provides a FindReplaceOptions where a string is required.",
+      "fix": "Use the overload `Range.Replace(Regex pattern, string replacement, FindReplaceOptions options)` with a proper Regex instance.",
+      "prevention": "Match the method signature exactly: provide a Regex object for the pattern and a string for the replacement."
     }
   ],
   "examples": [
@@ -201,8 +231,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 9,
@@ -212,8 +242,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 10,
@@ -366,8 +396,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 24,
@@ -410,8 +440,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 28,
@@ -498,8 +528,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 36,
@@ -575,8 +605,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 43,
@@ -630,8 +660,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 48,
@@ -718,8 +748,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 56,
@@ -784,8 +814,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 62,
@@ -806,18 +836,18 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     }
   ],
   "narrative": {
-    "overview": "The Find and Replace category demonstrates how to perform literal, case-sensitive, whole-word, and regular-expression replacements in Word documents using Aspose.Words. Verified examples show correct usage of Document.Range.Replace, FindReplaceOptions, and IReplacingCallback with locally bootstrapped sample files.",
-    "purpose": "Provide an AI coding assistant with clear, reproducible patterns for implementing robust find-and-replace operations in Aspose.Words, ensuring that all required namespaces are imported, documents are created or loaded locally, and only supported APIs are used.",
+    "overview": "The Find and Replace category demonstrates how to perform robust text substitutions in Aspose.Words documents using the native Range.Replace API. Verified examples illustrate literal, whole-word, case-sensitive, regex, and callback-driven replacements with proper handling of fields, metacharacters, and dynamic content insertion.",
+    "purpose": "Provide an AI coding agent with concise guidance to implement reliable find-and-replace operations in Aspose.Words, covering the correct API usage, required namespaces, and common pitfalls to avoid compilation and runtime errors.",
     "validation_priorities": [
-      "Verify that the replacement count returned by Document.Range.Replace is greater than zero; otherwise throw an informative exception."
+      "Validate that Document.Range.Replace returns a replacement count greater than zero before proceeding to save or report."
     ],
     "maintenance_notes": [
-      "Update the example code whenever a new Aspose.Words version changes property names or overload signatures, and run the verification suite after each upgrade."
+      "Periodically verify the Aspose.Words version used in the project to ensure property names and method signatures have not changed."
     ]
   }
 }

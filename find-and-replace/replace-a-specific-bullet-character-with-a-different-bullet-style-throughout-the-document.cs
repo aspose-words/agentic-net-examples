@@ -3,43 +3,40 @@ using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Aspose.Drawing; // Required package, not used directly but ensures reference
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with bullet characters.
+        // Create a sample document containing the default bullet character (U+2022).
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("• Item 1");
-        builder.Writeln("• Item 2");
-        builder.Writeln("• Item 3");
-        builder.Writeln("Regular paragraph without bullet.");
+        builder.Writeln("\u2022 First item");
+        builder.Writeln("\u2022 Second item");
+        builder.Writeln("\u2022 Third item");
 
-        // Save the sample input document.
+        // Save the source document (optional, demonstrates file I/O).
         const string inputPath = "input.docx";
         doc.Save(inputPath);
 
-        // Load the document for processing.
+        // Load the document from the saved file.
         Document loaded = new Document(inputPath);
 
-        // Define a regular expression that matches the bullet character (U+2022).
+        // Regular expression that matches the bullet character.
         Regex bulletRegex = new Regex("\u2022");
 
-        // Replace the bullet character with a different bullet style (U+25E6).
-        FindReplaceOptions options = new FindReplaceOptions();
-        int replacedCount = loaded.Range.Replace(bulletRegex, "\u25E6", options);
+        // New bullet character to replace with (e.g., white bullet U+25E6).
+        const string newBullet = "\u25E6";
 
-        // Validate that at least one replacement occurred.
+        // Perform the replacement throughout the document.
+        int replacedCount = loaded.Range.Replace(bulletRegex, newBullet, new FindReplaceOptions());
+
+        // Ensure that at least one replacement occurred.
         if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one bullet replacement, but none were made.");
+            throw new InvalidOperationException("Expected at least one bullet character to be replaced.");
 
         // Save the modified document.
         const string outputPath = "output.docx";
         loaded.Save(outputPath);
-
-        // Optional: write a simple confirmation to the console.
-        Console.WriteLine($"Replaced {replacedCount} bullet character(s). Output saved to '{outputPath}'.");
     }
 }

@@ -12,46 +12,50 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("The total is 1,234.56 dollars.");
-        builder.Writeln("Another amount: 12,345.67 euros.");
-        builder.Writeln("Simple number: 123.45.");
-        builder.Writeln("No thousand separator: 987.65.");
-        // Save the original document (optional, just for demonstration).
-        doc.Save("input.docx");
+        builder.Writeln("Another value: 12,345.67 and 123.45.");
+        builder.Writeln("No change needed for 1234,56.");
 
-        // Define a regex that matches numbers with optional thousand separators and a decimal part.
+        // Define a regular expression that matches numbers like 1,234.56 or 12,345.
         Regex numberRegex = new Regex(@"\b\d{1,3}(?:,\d{3})*(?:\.\d+)?\b");
 
-        // Set up find/replace options with a custom callback to perform locale conversion.
+        // Set up find‑replace options with a custom callback to localize the format.
         FindReplaceOptions options = new FindReplaceOptions();
-        options.ReplacingCallback = new NumericLocaleCallback();
+        options.ReplacingCallback = new NumericFormatReplacer();
 
         // Perform the replacement.
-        int replacedCount = doc.Range.Replace(numberRegex, "", options);
+        int replacedCount = doc.Range.Replace(numberRegex, string.Empty, options);
+
+        // Validate that at least one replacement occurred.
         if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one numeric replacement.");
+            throw new InvalidOperationException("Expected at least one numeric format replacement.");
 
         // Save the modified document.
-        doc.Save("output.docx");
+        string outputPath = "output.docx";
+        doc.Save(outputPath);
+        Console.WriteLine($"Replacements performed: {replacedCount}. Output saved to '{outputPath}'.");
     }
+}
 
-    // Callback that converts a matched US-formatted number to a European-style format.
-    private class NumericLocaleCallback : IReplacingCallback
+// Callback that converts US numeric format (1,234.56) to European format (1.234,56).
+public class NumericFormatReplacer : IReplacingCallback
+{
+    public ReplaceAction Replacing(ReplacingArgs args)
     {
-        public ReplaceAction Replacing(ReplacingArgs args)
+        string original = args.Match.Value;
+
+        // Preserve numbers without a decimal separator (e.g., "1234,56") unchanged.
+        if (!original.Contains(",") && !original.Contains("."))
         {
-            // The original matched text, e.g., "1,234.56".
-            string original = args.Match.Value;
-
-            // Swap commas and periods: commas become temporary placeholder, periods become commas,
-            // then placeholder becomes periods.
-            string temp = original.Replace(",", "#");
-            string swapped = temp.Replace(".", ",");
-            string localized = swapped.Replace("#", ".");
-
-            // Set the replacement text.
-            args.Replacement = localized;
-
+            args.Replacement = original;
             return ReplaceAction.Replace;
         }
+
+        // Swap commas and periods.
+        string temp = original.Replace(",", "__COMMA__");
+        string swapped = temp.Replace(".", ",");
+        string result = swapped.Replace("__COMMA__", ".");
+
+        args.Replacement = result;
+        return ReplaceAction.Replace;
     }
 }

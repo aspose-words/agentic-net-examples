@@ -1,5 +1,5 @@
 using System;
-using System.IO;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -7,88 +7,72 @@ public class Program
 {
     public static void Main()
     {
-        // Create a temporary working folder.
-        string folder = Path.Combine(Path.GetTempPath(), "AsposeFindReplaceExample");
-        Directory.CreateDirectory(folder);
-
-        string inputPath = Path.Combine(folder, "input.docx");
-        string outputPath = Path.Combine(folder, "output.docx");
-
-        // -----------------------------------------------------------------
-        // Build a sample document that contains different types of headers.
-        // -----------------------------------------------------------------
+        // Create a sample document with a first page header and a primary header.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First section – enable a different first‑page header/footer.
-        builder.PageSetup.DifferentFirstPageHeaderFooter = true;
+        // Body content.
+        builder.Writeln("This is the body of the document.");
 
-        // First‑page header.
+        // Enable different first page header/footer for the first section.
+        builder.CurrentSection.PageSetup.DifferentFirstPageHeaderFooter = true;
+
+        // First page header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderFirst);
-        builder.Writeln("PLACEHOLDER");
+        builder.Writeln("Header1");
 
-        // Primary header for the first section.
+        // Primary header (used for all other pages).
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Writeln("PLACEHOLDER");
+        builder.Writeln("Header1");
 
-        // Return to the main story before inserting a section break.
-        builder.MoveToDocumentEnd();
-
-        // Add a second section.
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
-
-        // In the new section, disable a different first‑page header/footer.
-        builder.PageSetup.DifferentFirstPageHeaderFooter = false;
-
-        // Primary header for the second section.
-        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Writeln("PLACEHOLDER");
-
-        // Save the source document.
+        // Save the input document.
+        const string inputPath = "input.docx";
         doc.Save(inputPath);
 
-        // --------------------------------------------------------------
-        // Load the document and replace the placeholder text with a
-        // custom value that depends on the header type.
-        // --------------------------------------------------------------
+        // Load the document for replacement.
         Document loaded = new Document(inputPath);
 
+        // Set up find-and-replace with a custom callback.
         FindReplaceOptions options = new FindReplaceOptions
         {
             ReplacingCallback = new HeaderReplacingCallback()
         };
 
-        int replacedCount = loaded.Range.Replace("PLACEHOLDER", string.Empty, options);
+        // Perform replacement of the placeholder text "Header1".
+        int replacedCount = loaded.Range.Replace("Header1", string.Empty, options);
+
         if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one replacement, but none occurred.");
+            throw new InvalidOperationException("No header replacements were performed.");
 
         // Save the modified document.
+        const string outputPath = "output.docx";
         loaded.Save(outputPath);
     }
 
-    // Callback that substitutes the placeholder with a different string
-    // depending on whether the match is inside a first‑page header or any other header.
+    // Callback that replaces header text differently for the first page header.
     private class HeaderReplacingCallback : IReplacingCallback
     {
         public ReplaceAction Replacing(ReplacingArgs args)
         {
-            // Ascend the node hierarchy until we find the containing HeaderFooter node.
-            Node node = args.MatchNode;
+            // Ascend the node hierarchy to find the containing HeaderFooter.
+            Node? node = args.MatchNode;
             while (node != null && !(node is HeaderFooter))
                 node = node.ParentNode;
 
-            // Default replacement text for normal headers.
-            string replacementText = "Other Header";
-
-            // If the match is inside a first‑page header, use a special text.
-            if (node is HeaderFooter headerFooter &&
-                headerFooter.HeaderFooterType == HeaderFooterType.HeaderFirst)
+            if (node is HeaderFooter headerFooter)
             {
-                replacementText = "First Page Header";
+                // Choose replacement based on the header type.
+                if (headerFooter.HeaderFooterType == HeaderFooterType.HeaderFirst)
+                    args.Replacement = "First Header Updated";
+                else
+                    args.Replacement = "Other Header Updated";
+            }
+            else
+            {
+                // Fallback replacement if not inside a header (should not happen here).
+                args.Replacement = args.Match.Value;
             }
 
-            // Set the replacement string.
-            args.Replacement = replacementText;
             return ReplaceAction.Replace;
         }
     }

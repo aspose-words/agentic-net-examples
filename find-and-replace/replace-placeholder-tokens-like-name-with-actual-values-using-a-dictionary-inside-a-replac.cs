@@ -1,85 +1,75 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-
-public class PlaceholderReplacer : IReplacingCallback
-{
-    private readonly Document _document;
-    private readonly Dictionary<string, string> _values;
-
-    public PlaceholderReplacer(Document document, Dictionary<string, string> values)
-    {
-        _document = document ?? throw new ArgumentNullException(nameof(document));
-        _values = values ?? throw new ArgumentNullException(nameof(values));
-    }
-
-    public ReplaceAction Replacing(ReplacingArgs args)
-    {
-        // The matched placeholder, e.g., "{{Name}}"
-        string placeholder = args.Match.Value;
-
-        // Extract the token name without the surrounding braces.
-        string token = placeholder.Trim('{', '}');
-
-        if (_values.TryGetValue(token, out string replacement))
-        {
-            // Replace the placeholder with the replacement text.
-            args.Replacement = replacement;
-            return ReplaceAction.Replace;
-        }
-
-        // If no replacement is found, leave the original text unchanged.
-        return ReplaceAction.Skip;
-    }
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with placeholder tokens.
-        Document sampleDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        // Create a sample document containing placeholder tokens.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Dear {{Name}},");
-        builder.Writeln("Your appointment is scheduled for {{Date}}.");
+        builder.Writeln("Your order {{OrderId}} has been shipped.");
         builder.Writeln("Thank you, {{Company}}.");
 
-        const string inputPath = "input.docx";
-        sampleDoc.Save(inputPath);
+        // Save the original document for inspection (optional).
+        doc.Save("input.docx");
 
-        // Load the document for processing.
-        Document doc = new Document(inputPath);
-
-        // Define replacement values.
-        var replacements = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        // Define the placeholder values to substitute.
+        var placeholders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            { "Name", "Alice Johnson" },
-            { "Date", "2024-01-15" },
+            { "Name", "John Doe" },
+            { "OrderId", "12345" },
             { "Company", "Acme Corp" }
         };
 
-        // Set up the callback that will perform token replacement.
-        var callback = new PlaceholderReplacer(doc, replacements);
-        var options = new FindReplaceOptions
-        {
-            ReplacingCallback = callback
-        };
+        // Set up find‑replace options with a custom callback that performs the substitution.
+        FindReplaceOptions options = new FindReplaceOptions();
+        options.ReplacingCallback = new PlaceholderReplacer(placeholders);
 
-        // Regex to find all placeholders of the form {{Token}}.
-        Regex placeholderRegex = new Regex(@"\{\{[^}]+\}\}");
+        // Regular expression that matches tokens of the form {{Key}}.
+        Regex placeholderRegex = new Regex(@"\{\{.+?\}\}", RegexOptions.Compiled);
 
-        // Perform the find-and-replace operation.
+        // Perform the replacement. The callback supplies the actual replacement text.
         int replacedCount = doc.Range.Replace(placeholderRegex, string.Empty, options);
 
-        // Validate that at least one replacement occurred.
+        // Ensure that at least one placeholder was replaced.
         if (replacedCount == 0)
             throw new InvalidOperationException("No placeholders were replaced.");
 
         // Save the modified document.
-        const string outputPath = "output.docx";
-        doc.Save(outputPath);
+        doc.Save("output.docx");
+    }
+
+    // Callback that replaces each matched placeholder with the corresponding value from the dictionary.
+    private class PlaceholderReplacer : IReplacingCallback
+    {
+        private readonly IDictionary<string, string> _values;
+
+        public PlaceholderReplacer(IDictionary<string, string> values)
+        {
+            _values = values ?? throw new ArgumentNullException(nameof(values));
+        }
+
+        public ReplaceAction Replacing(ReplacingArgs args)
+        {
+            // Extract the placeholder key without the surrounding braces, e.g. "{{Name}}" -> "Name".
+            string match = args.Match.Value;
+            string key = match.Trim('{', '}');
+
+            // Look up the replacement value.
+            if (_values.TryGetValue(key, out string replacement))
+            {
+                // Provide the replacement text to Aspose.Words.
+                args.Replacement = replacement;
+                return ReplaceAction.Replace;
+            }
+
+            // If no replacement is found, leave the original text unchanged.
+            return ReplaceAction.Skip;
+        }
     }
 }

@@ -1,62 +1,57 @@
 using System;
-using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-public class Program
+public class PrefixReplacer : IReplacingCallback
 {
-    // Callback that adds a prefix to each matched word.
-    private class PrefixReplacer : IReplacingCallback
+    private readonly string _prefix;
+
+    public PrefixReplacer(string prefix)
     {
-        private readonly string _prefix;
-
-        public PrefixReplacer(string prefix) => _prefix = prefix;
-
-        public ReplaceAction Replacing(ReplacingArgs args)
-        {
-            // Build the replacement text with the desired prefix.
-            args.Replacement = _prefix + args.Match.Value;
-            return ReplaceAction.Replace;
-        }
+        _prefix = prefix;
     }
 
+    // Called for each match found by Range.Replace.
+    public ReplaceAction Replacing(ReplacingArgs args)
+    {
+        // Prepend the desired prefix to the matched text.
+        args.Replacement = _prefix + args.Match.Value;
+        // Perform the replacement.
+        return ReplaceAction.Replace;
+    }
+}
+
+public class Program
+{
     public static void Main()
     {
-        // Create a sample document in memory.
+        // Create a new document and add sample text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document. It contains several words to replace.");
+        builder.Writeln("alpha beta alpha gamma alpha");
 
-        // Save the sample document to a local file.
-        const string inputPath = "input.docx";
-        doc.Save(inputPath);
+        // Define the prefix to add to each matched word.
+        const string prefix = "pre-";
 
-        // Load the document for processing.
-        Document loaded = new Document(inputPath);
-
-        // Define a regex that matches each word.
-        Regex wordRegex = new Regex(@"\b\w+\b", RegexOptions.Compiled);
-
-        // Prefix to add to each matched word.
-        const string prefix = "PRE_";
-
-        // Set up FindReplaceOptions with the custom callback.
+        // Set up find/replace options and assign the custom callback.
         FindReplaceOptions options = new FindReplaceOptions();
         options.ReplacingCallback = new PrefixReplacer(prefix);
 
-        // Perform the replacement using the regex and callback.
-        // The overload requires a replacement string; it will be ignored because the callback sets args.Replacement.
-        int replacedCount = loaded.Range.Replace(wordRegex, string.Empty, options);
+        // Perform the replacement for the word "alpha" using the callback.
+        // The second argument (replacement text) is ignored when a callback is used,
+        // so we pass an empty string.
+        int replacedCount = doc.Range.Replace("alpha", string.Empty, options);
 
-        // Validate that replacements occurred.
+        // Validate that at least one replacement occurred.
         if (replacedCount == 0)
-            throw new InvalidOperationException("No words were replaced.");
+            throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
         // Save the modified document.
         const string outputPath = "output.docx";
-        loaded.Save(outputPath);
+        doc.Save(outputPath);
 
-        // Indicate success.
-        Console.WriteLine($"Replaced {replacedCount} words. Output saved to '{outputPath}'.");
+        // Write a simple confirmation to the console.
+        Console.WriteLine($"Replacements performed: {replacedCount}");
+        Console.WriteLine($"Modified document saved to: {outputPath}");
     }
 }

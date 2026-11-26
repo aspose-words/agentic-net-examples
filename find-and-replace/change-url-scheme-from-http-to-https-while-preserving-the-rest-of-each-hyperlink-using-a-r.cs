@@ -8,34 +8,35 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with HTTP hyperlinks.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-        builder.InsertHyperlink("http://example.com/page1", "Example Page 1", false);
+        // Create a sample document with a few hyperlinks.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        builder.Writeln("Sample document with hyperlinks:");
+        builder.InsertHyperlink("http://example.com", "Example Site", false);
         builder.Writeln();
-        builder.InsertHyperlink("http://test.org/resource", "Test Resource", false);
+        builder.InsertHyperlink("http://contoso.com/page", "Contoso Page", false);
         builder.Writeln();
-        builder.InsertHyperlink("http://sample.net", "Sample Site", false);
+
         // Save the input document.
         const string inputPath = "input.docx";
         doc.Save(inputPath);
 
         // Load the document for processing.
-        var loadedDoc = new Document(inputPath);
+        Document loaded = new Document(inputPath);
 
-        // Define a regex that captures the part of the URL after the scheme.
-        var regex = new Regex(@"http://(?<rest>[^""\s]+)", RegexOptions.Compiled);
+        // Define a regular expression that matches the HTTP scheme.
+        Regex httpRegex = new Regex(@"http://", RegexOptions.Compiled);
 
-        // Replace the scheme with HTTPS while preserving the rest of the URL.
-        var options = new FindReplaceOptions();
-        int replacedCount = loadedDoc.Range.Replace(regex, "https://${rest}", options);
+        // Replace all occurrences of "http://" with "https://".
+        int replacedCount = loaded.Range.Replace(httpRegex, "https://", new FindReplaceOptions());
 
         // Validate that at least one replacement occurred.
         if (replacedCount == 0)
-            throw new InvalidOperationException("No HTTP URLs were replaced.");
+            throw new InvalidOperationException("No hyperlink URLs were updated.");
 
         // Save the modified document.
         const string outputPath = "output.docx";
-        loadedDoc.Save(outputPath);
+        loaded.Save(outputPath);
     }
 }
