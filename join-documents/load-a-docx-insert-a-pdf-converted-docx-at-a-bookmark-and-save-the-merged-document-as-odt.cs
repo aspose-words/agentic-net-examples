@@ -7,78 +7,70 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for temporary source documents and final output
-        string sourceDocPath = "SourceDocument.docx";
-        string pdfConvertedDocPath = "PdfConvertedDocument.docx";
-        string outputPath = "MergedDocument.odt";
+        // Prepare a temporary working directory.
+        string workDir = Path.Combine(Path.GetTempPath(), "AsposeJoinExample");
+        Directory.CreateDirectory(workDir);
+
+        // Paths for the sample documents.
+        string sourceDocxPath = Path.Combine(workDir, "SourceDocument.docx");
+        string pdfConvertedDocxPath = Path.Combine(workDir, "PdfConvertedDocument.docx");
+        string mergedOdtPath = Path.Combine(workDir, "MergedOutput.odt");
 
         // -----------------------------------------------------------------
-        // Create the first DOCX with a bookmark where the second document will be inserted
+        // Create the source DOCX with a bookmark where the PDF‑converted DOCX will be inserted.
         // -----------------------------------------------------------------
         Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("This is the beginning of the source document.");
-        builder.StartBookmark("InsertHere");
-        builder.Writeln("Bookmark location – content will be inserted here.");
-        builder.EndBookmark("InsertHere");
-        builder.Writeln("This is the end of the source document.");
-        sourceDoc.Save(sourceDocPath, SaveFormat.Docx);
+        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
+        srcBuilder.Writeln("This is the original source document.");
+        srcBuilder.StartBookmark("InsertHere");
+        srcBuilder.Writeln("[Insertion point]");
+        srcBuilder.EndBookmark("InsertHere");
+        sourceDoc.Save(sourceDocxPath, SaveFormat.Docx);
 
         // -----------------------------------------------------------------
-        // Create the second DOCX that simulates a PDF‑converted document
+        // Create a DOCX that simulates a PDF that has been converted to DOCX.
         // -----------------------------------------------------------------
         Document pdfConvertedDoc = new Document();
         DocumentBuilder pdfBuilder = new DocumentBuilder(pdfConvertedDoc);
-        pdfBuilder.Writeln("=== PDF Converted Content Start ===");
-        pdfBuilder.Writeln("This text represents content that originated from a PDF file.");
-        pdfBuilder.Writeln("=== PDF Converted Content End ===");
-        pdfConvertedDoc.Save(pdfConvertedDocPath, SaveFormat.Docx);
+        pdfBuilder.Writeln("This content originates from a PDF that was converted to DOCX.");
+        pdfConvertedDoc.Save(pdfConvertedDocxPath, SaveFormat.Docx);
 
         // -----------------------------------------------------------------
-        // Load the documents from the saved files
+        // Load the documents.
         // -----------------------------------------------------------------
-        Document mainDoc = new Document(sourceDocPath);
-        Document insertDoc = new Document(pdfConvertedDocPath);
+        Document mainDoc = new Document(sourceDocxPath);
+        Document insertDoc = new Document(pdfConvertedDocxPath);
 
         // -----------------------------------------------------------------
-        // Move the builder to the bookmark and insert the second document
+        // Insert the PDF‑converted document at the bookmark.
         // -----------------------------------------------------------------
         DocumentBuilder insertBuilder = new DocumentBuilder(mainDoc);
-
-        // Verify that the bookmark exists
-        if (mainDoc.Range.Bookmarks["InsertHere"] == null)
-        {
-            throw new Exception("Bookmark 'InsertHere' was not found in the source document.");
-        }
-
         insertBuilder.MoveToBookmark("InsertHere");
         insertBuilder.InsertDocument(insertDoc, ImportFormatMode.KeepSourceFormatting);
 
         // -----------------------------------------------------------------
-        // Save the merged document as ODT
+        // Save the merged document as ODT.
         // -----------------------------------------------------------------
-        mainDoc.Save(outputPath, SaveFormat.Odt);
+        mainDoc.Save(mergedOdtPath, SaveFormat.Odt);
 
         // -----------------------------------------------------------------
-        // Validation: ensure the output file exists and contains expected content
+        // Validation: ensure the merged file exists and contains content from both sources.
         // -----------------------------------------------------------------
-        if (!File.Exists(outputPath))
+        if (!File.Exists(mergedOdtPath))
         {
-            throw new Exception($"Failed to create the merged ODT file at '{outputPath}'.");
+            throw new FileNotFoundException("Merged ODT file was not created.", mergedOdtPath);
         }
 
-        string mergedText = mainDoc.GetText();
-        if (!mergedText.Contains("This is the beginning of the source document.") ||
-            !mergedText.Contains("This text represents content that originated from a PDF file.") ||
-            !mergedText.Contains("This is the end of the source document."))
+        Document mergedDoc = new Document(mergedOdtPath);
+        string mergedText = mergedDoc.GetText();
+
+        if (!mergedText.Contains("This is the original source document.") ||
+            !mergedText.Contains("This content originates from a PDF that was converted to DOCX."))
         {
-            throw new Exception("Merged document does not contain expected content from both source files.");
+            throw new InvalidOperationException("Merged document does not contain expected content from both source files.");
         }
 
-        // -----------------------------------------------------------------
-        // Clean up temporary files (optional)
-        // -----------------------------------------------------------------
-        File.Delete(sourceDocPath);
-        File.Delete(pdfConvertedDocPath);
+        // Cleanup (optional): delete temporary files.
+        // Directory.Delete(workDir, true);
     }
 }

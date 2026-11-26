@@ -1,77 +1,99 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create the main document with a header that contains a bookmark.
-        Document mainDoc = new Document();
-        Section mainSection = mainDoc.Sections[0];
+        // -------------------------------------------------
+        // 1. Create the main document with a header that
+        //    contains a bookmark named "InsertHere".
+        // -------------------------------------------------
+        var mainDoc = new Document();
+        var mainSection = mainDoc.Sections[0];
 
-        // Add a header to the first section.
-        HeaderFooter header = new HeaderFooter(mainDoc, HeaderFooterType.HeaderPrimary);
-        mainSection.HeadersFooters.Add(header);
-
-        // Build a paragraph in the header with a bookmark.
-        Paragraph headerPara = new Paragraph(mainDoc);
-        Run runBefore = new Run(mainDoc, "Header before bookmark. ");
-        headerPara.AppendChild(runBefore);
-
-        // Insert bookmark.
-        BookmarkStart bookmarkStart = new BookmarkStart(mainDoc, "InsertHere");
-        BookmarkEnd bookmarkEnd = new BookmarkEnd(mainDoc, "InsertHere");
-        headerPara.AppendChild(bookmarkStart);
-        headerPara.AppendChild(new Run(mainDoc, " ")); // placeholder for inserted content.
-        headerPara.AppendChild(bookmarkEnd);
-
-        Run runAfter = new Run(mainDoc, " Header after bookmark.");
-        headerPara.AppendChild(runAfter);
-        header.AppendChild(headerPara);
-
-        // Save the main document (optional, for debugging).
-        const string mainPath = "Main.docx";
-        mainDoc.Save(mainPath, SaveFormat.Docx);
-
-        // Create the document that will be inserted.
-        Document insertDoc = new Document();
-        Paragraph insertPara = new Paragraph(insertDoc);
-        insertPara.AppendChild(new Run(insertDoc, "This is the inserted content from the DOCX."));
-        insertDoc.FirstSection.Body.AppendChild(insertPara);
-
-        // Save the insert document (optional, for debugging).
-        const string insertPath = "Insert.docx";
-        insertDoc.Save(insertPath, SaveFormat.Docx);
-
-        // Load the documents (simulating a real scenario where they are separate files).
-        Document srcDoc = new Document(mainPath);
-        Document docToInsert = new Document(insertPath);
-
-        // Locate the bookmark inside the header.
-        Bookmark bookmark = srcDoc.Range.Bookmarks["InsertHere"];
-        if (bookmark == null)
-            throw new InvalidOperationException("Bookmark 'InsertHere' not found.");
-
-        // The bookmark is inside a paragraph; we will insert after the bookmark start.
-        Node insertAfterNode = bookmark.BookmarkStart;
-
-        // Import each node from the document to insert into the main document.
-        // We will import the body of the first section (all its child nodes).
-        foreach (Node srcNode in docToInsert.FirstSection.Body)
+        // Ensure the primary header exists.
+        var header = mainSection.HeadersFooters[HeaderFooterType.HeaderPrimary];
+        if (header == null)
         {
-            Node importedNode = srcDoc.ImportNode(srcNode, true, ImportFormatMode.KeepSourceFormatting);
-            // Insert the imported node after the current node.
-            srcDoc.FirstSection.HeadersFooters[HeaderFooterType.HeaderPrimary].AppendChild(importedNode);
+            header = new HeaderFooter(mainDoc, HeaderFooterType.HeaderPrimary);
+            mainSection.HeadersFooters.Add(header);
         }
 
-        // Save the resulting document preserving header formatting.
-        const string resultPath = "Result.docx";
-        srcDoc.Save(resultPath, SaveFormat.Docx);
+        // Add a paragraph with an empty bookmark inside the header.
+        var headerParagraph = new Paragraph(mainDoc);
+        var bookmarkStart = new BookmarkStart(mainDoc, "InsertHere");
+        var bookmarkEnd = new BookmarkEnd(mainDoc, "InsertHere");
+        headerParagraph.AppendChild(bookmarkStart);
+        headerParagraph.AppendChild(bookmarkEnd);
+        header.AppendChild(headerParagraph);
 
-        // Validate that the output file exists.
+        // Save the main document (sample input).
+        const string mainPath = "MainDocument.docx";
+        mainDoc.Save(mainPath, SaveFormat.Docx);
+
+        // -------------------------------------------------
+        // 2. Create the document whose content will be inserted.
+        // -------------------------------------------------
+        var insertDoc = new Document();
+        var insertSection = insertDoc.Sections[0];
+
+        // Add a couple of paragraphs as sample content.
+        var para1 = new Paragraph(insertDoc);
+        para1.AppendChild(new Run(insertDoc, "First inserted paragraph."));
+        insertSection.Body.AppendChild(para1);
+
+        var para2 = new Paragraph(insertDoc);
+        para2.AppendChild(new Run(insertDoc, "Second inserted paragraph."));
+        insertSection.Body.AppendChild(para2);
+
+        // Save the insert document (sample input).
+        const string insertPath = "InsertDocument.docx";
+        insertDoc.Save(insertPath, SaveFormat.Docx);
+
+        // -------------------------------------------------
+        // 3. Load both documents as if they were external files.
+        // -------------------------------------------------
+        var loadedMain = new Document(mainPath);
+        var loadedInsert = new Document(insertPath);
+
+        // -------------------------------------------------
+        // 4. Locate the bookmark inside the header of the main document.
+        // -------------------------------------------------
+        var bookmark = loadedMain.Range.Bookmarks["InsertHere"];
+        if (bookmark == null)
+            throw new InvalidOperationException("Bookmark 'InsertHere' was not found in the header.");
+
+        // The insertion point should be after the paragraph that contains the bookmark.
+        Node referenceNode = bookmark.BookmarkStart.ParentNode; // This is the Paragraph node.
+
+        // -------------------------------------------------
+        // 5. Import each node from the insert document and place it
+        //    after the bookmark paragraph, preserving source formatting.
+        // -------------------------------------------------
+        foreach (Node node in loadedInsert.FirstSection.Body)
+        {
+            // Import the node into the main document.
+            Node importedNode = loadedMain.ImportNode(node, true, ImportFormatMode.KeepSourceFormatting);
+
+            // Insert the imported node after the reference paragraph.
+            referenceNode.ParentNode.InsertAfter(importedNode, referenceNode);
+
+            // Update the reference so the next node is inserted after this one.
+            referenceNode = importedNode;
+        }
+
+        // -------------------------------------------------
+        // 6. Save the resulting document, preserving header formatting.
+        // -------------------------------------------------
+        const string resultPath = "ResultDocument.docx";
+        loadedMain.Save(resultPath, SaveFormat.Docx);
+
+        // -------------------------------------------------
+        // 7. Validate that the output file exists.
+        // -------------------------------------------------
         if (!File.Exists(resultPath))
-            throw new FileNotFoundException("The result document was not created.", resultPath);
+            throw new FileNotFoundException("The resulting document was not saved correctly.", resultPath);
     }
 }

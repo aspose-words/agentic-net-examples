@@ -7,46 +7,60 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for temporary files
-        string destPath = "dest.docx";
-        string sourcePath = "source.docx";
-        string outputPdfPath = "output.pdf";
+        // Define file names
+        const string destPath = "dest.docx";
+        const string sourcePath = "source.docx";
+        const string outputPdfPath = "merged.pdf";
+        const string protectionPassword = "pwd";
 
+        // -----------------------------------------------------------------
         // Create destination document with sample content
-        Document destDoc = new Document();
-        DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
-        destBuilder.Writeln("This is the destination document.");
-        destDoc.Save(destPath, SaveFormat.Docx);
+        // -----------------------------------------------------------------
+        var destDoc = new Document();
+        var builder = new DocumentBuilder(destDoc);
+        builder.Writeln("This is the destination document.");
+        destDoc.Save(destPath);
 
         // Protect the destination document with read‑only restriction
-        destDoc.Protect(ProtectionType.ReadOnly, "pwd");
+        destDoc.Protect(ProtectionType.ReadOnly, protectionPassword);
+        destDoc.Save(destPath); // Overwrite with protection applied
 
+        // -----------------------------------------------------------------
         // Create source document with sample content
-        Document sourceDoc = new Document();
-        DocumentBuilder sourceBuilder = new DocumentBuilder(sourceDoc);
+        // -----------------------------------------------------------------
+        var sourceDoc = new Document();
+        var sourceBuilder = new DocumentBuilder(sourceDoc);
         sourceBuilder.Writeln("This is the source document.");
-        sourceDoc.Save(sourcePath, SaveFormat.Docx);
+        sourceDoc.Save(sourcePath);
 
-        // Load the source document (already in memory, but demonstrate loading)
-        Document srcToAppend = new Document(sourcePath);
+        // -----------------------------------------------------------------
+        // Load the protected destination document and the source document
+        // -----------------------------------------------------------------
+        var protectedDest = new Document(destPath);
+        var source = new Document(sourcePath);
 
         // Append source document to the protected destination document
-        destDoc.AppendDocument(srcToAppend, ImportFormatMode.KeepSourceFormatting);
+        protectedDest.AppendDocument(source, ImportFormatMode.KeepSourceFormatting);
 
-        // Remove protection before saving as PDF
-        destDoc.Unprotect();
+        // Remove protection after appending
+        protectedDest.Unprotect(protectionPassword);
 
-        // Save the combined document as PDF
-        destDoc.Save(outputPdfPath, SaveFormat.Pdf);
+        // Save the merged document as PDF
+        protectedDest.Save(outputPdfPath, SaveFormat.Pdf);
 
-        // Validate that the PDF was created
+        // -----------------------------------------------------------------
+        // Validation
+        // -----------------------------------------------------------------
         if (!File.Exists(outputPdfPath))
         {
-            throw new InvalidOperationException("Failed to create the output PDF.");
+            throw new Exception("The merged PDF file was not created.");
         }
 
-        // Clean up temporary files (optional)
-        File.Delete(destPath);
-        File.Delete(sourcePath);
+        // Ensure the merged document contains content from both source documents
+        int paragraphCount = protectedDest.GetChildNodes(NodeType.Paragraph, true).Count;
+        if (paragraphCount < 2)
+        {
+            throw new Exception("The merged document does not contain expected content from both source documents.");
+        }
     }
 }

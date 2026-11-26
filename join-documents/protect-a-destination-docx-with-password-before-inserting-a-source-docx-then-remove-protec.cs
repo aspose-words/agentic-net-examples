@@ -1,52 +1,57 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Define file paths in the current directory.
-        string destPath = Path.Combine(Directory.GetCurrentDirectory(), "Destination.docx");
-        string sourcePath = Path.Combine(Directory.GetCurrentDirectory(), "Source.docx");
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedResult.docx");
-        string password = "Secret123";
+        // Define file paths.
+        string destinationPath = "Destination.docx";
+        string sourcePath = "Source.docx";
+        string mergedPath = "Merged.docx";
 
-        // -----------------------------------------------------------------
-        // Create the destination document and add some content.
-        // -----------------------------------------------------------------
-        Document destDoc = new Document();
-        DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
+        // Create a sample destination document.
+        Document destinationDoc = new Document();
+        DocumentBuilder destBuilder = new DocumentBuilder(destinationDoc);
         destBuilder.Writeln("This is the destination document.");
-        destDoc.Save(destPath, SaveFormat.Docx);
+        destinationDoc.Save(destinationPath, SaveFormat.Docx);
 
-        // Protect the destination document with a password (read‑only protection).
-        destDoc.Protect(ProtectionType.ReadOnly, password);
-
-        // -----------------------------------------------------------------
-        // Create the source document and add some content.
-        // -----------------------------------------------------------------
+        // Create a sample source document.
         Document sourceDoc = new Document();
         DocumentBuilder sourceBuilder = new DocumentBuilder(sourceDoc);
         sourceBuilder.Writeln("This is the source document.");
         sourceDoc.Save(sourcePath, SaveFormat.Docx);
 
-        // Load the source document from file (simulating a typical workflow).
-        Document loadedSource = new Document(sourcePath);
+        // Load the destination document and protect it with a password.
+        Document protectedDest = new Document(destinationPath);
+        protectedDest.Protect(ProtectionType.ReadOnly, "myPassword");
 
-        // Append the source document to the protected destination document.
-        destDoc.AppendDocument(loadedSource, ImportFormatMode.KeepSourceFormatting);
+        // Load the source document.
+        Document source = new Document(sourcePath);
+
+        // Append the source document to the protected destination.
+        protectedDest.AppendDocument(source, ImportFormatMode.KeepSourceFormatting);
 
         // Remove protection from the merged document.
-        destDoc.Unprotect(password);
+        protectedDest.Unprotect();
 
         // Save the final merged document.
-        destDoc.Save(outputPath, SaveFormat.Docx);
+        protectedDest.Save(mergedPath, SaveFormat.Docx);
 
-        // Verify that the output file was created.
-        if (!File.Exists(outputPath))
+        // Validate that the merged file was created.
+        if (!File.Exists(mergedPath))
         {
-            throw new InvalidOperationException("Merged document was not saved correctly.");
+            throw new InvalidOperationException("The merged document was not saved correctly.");
+        }
+
+        // Optional validation: ensure the merged document contains content from both sources.
+        Document result = new Document(mergedPath);
+        int paragraphCount = result.GetChildNodes(NodeType.Paragraph, true).Count;
+        if (paragraphCount < 2)
+        {
+            throw new InvalidOperationException("The merged document does not contain expected content.");
         }
     }
 }

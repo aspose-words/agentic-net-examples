@@ -1,52 +1,89 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
-using Aspose.Words.BuildingBlocks;
+using Aspose.Words.Replacing;
 
 public class Program
 {
     public static void Main()
     {
-        // ---------- Create destination document with a placeholder ----------
-        Document destDoc = new Document();
-        DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
-        destBuilder.Writeln("This is the main document.");
-        destBuilder.Writeln("INSERT_HERE"); // placeholder
-        destBuilder.Writeln("End of the main document.");
+        // Create the main document with a placeholder.
+        Document mainDoc = new Document();
+        DocumentBuilder mainBuilder = new DocumentBuilder(mainDoc);
+        mainBuilder.Writeln("This is the main document.");
+        mainBuilder.Writeln("INSERT_HERE");
+        mainBuilder.Writeln("End of the main document.");
+        mainDoc.Save("main.docx", SaveFormat.Docx);
 
-        // ---------- Create source document that will be inserted ----------
-        Document srcDoc = new Document();
-        DocumentBuilder srcBuilder = new DocumentBuilder(srcDoc);
-        srcBuilder.Writeln("=== Inserted Document Start ===");
-        srcBuilder.Writeln("This content comes from the source DOCX.");
-        srcBuilder.Writeln("=== Inserted Document End ===");
+        // Create the document that will be inserted.
+        Document insertDoc = new Document();
+        DocumentBuilder insertBuilder = new DocumentBuilder(insertDoc);
+        insertBuilder.Writeln("This is the inserted document.");
+        insertBuilder.Writeln("It has multiple paragraphs.");
+        insertDoc.Save("insert.docx", SaveFormat.Docx);
 
-        // ---------- Locate the placeholder run ----------
-        Run? placeholderRun = destDoc.GetChildNodes(NodeType.Run, true)
-                                    .Cast<Run>()
-                                    .FirstOrDefault(r => r.Text.Contains("INSERT_HERE"));
+        // Load the main document for processing.
+        Document doc = new Document("main.docx");
 
-        if (placeholderRun == null)
-            throw new InvalidOperationException("Placeholder text not found in destination document.");
+        // Set up FindReplaceOptions with a custom callback that inserts the document.
+        FindReplaceOptions options = new FindReplaceOptions
+        {
+            ReplacingCallback = new InsertDocumentCallback(insertDoc)
+        };
 
-        // ---------- Insert the source document at the placeholder ----------
-        DocumentBuilder insertBuilder = new DocumentBuilder(destDoc);
-        insertBuilder.MoveTo(placeholderRun);
-        insertBuilder.InsertDocument(srcDoc, ImportFormatMode.KeepSourceFormatting);
+        // Perform the find-and-replace; the replacement string is empty because the callback handles insertion.
+        doc.Range.Replace("INSERT_HERE", string.Empty, options);
 
-        // Remove the placeholder run after insertion.
-        placeholderRun.Remove();
+        // Save the resulting document.
+        const string outputPath = "output.docx";
+        doc.Save(outputPath, SaveFormat.Docx);
 
-        // ---------- Save the merged document ----------
-        string resultPath = "Result.docx";
-        destDoc.Save(resultPath, SaveFormat.Docx);
+        // Validate that the output file was created and contains inserted content.
+        if (!File.Exists(outputPath))
+            throw new Exception("The output document was not created.");
 
-        // ---------- Validate output ----------
-        if (!File.Exists(resultPath))
-            throw new InvalidOperationException("Result document was not created.");
+        Document result = new Document(outputPath);
+        string resultText = result.GetText();
+        if (!resultText.Contains("This is the inserted document.") ||
+            !resultText.Contains("It has multiple paragraphs."))
+            throw new Exception("The inserted content was not found in the output document.");
+    }
+}
 
-        // Optional: clean up (if any temporary files were created, none in this example)
-        Console.WriteLine($"Merged document saved to '{resultPath}'.");
+// Callback that replaces the placeholder with the contents of another document.
+public class InsertDocumentCallback : IReplacingCallback
+{
+    private readonly Document _insertDoc;
+
+    public InsertDocumentCallback(Document insertDoc)
+    {
+        _insertDoc = insertDoc ?? throw new ArgumentNullException(nameof(insertDoc));
+    }
+
+    public ReplaceAction Replacing(ReplacingArgs e)
+    {
+        // The match node for a text replace is a Run, not a Paragraph.
+        Run? run = e.MatchNode as Run;
+        if (run == null)
+            return ReplaceAction.Skip;
+
+        // Get the paragraph that contains the placeholder run.
+        Paragraph placeholderParagraph = run.ParentParagraph;
+
+        // Import nodes from the insert document into the main document.
+        NodeImporter importer = new NodeImporter(_insertDoc, placeholderParagraph.Document, ImportFormatMode.KeepSourceFormatting);
+
+        // Insert each node from the first section's body after the placeholder paragraph.
+        foreach (Node srcNode in _insertDoc.FirstSection.Body)
+        {
+            Node importedNode = importer.ImportNode(srcNode, true);
+            placeholderParagraph.ParentNode?.InsertAfter(importedNode, placeholderParagraph);
+        }
+
+        // Remove the placeholder paragraph.
+        placeholderParagraph.Remove();
+
+        // Skip the default replacement.
+        return ReplaceAction.Skip;
     }
 }

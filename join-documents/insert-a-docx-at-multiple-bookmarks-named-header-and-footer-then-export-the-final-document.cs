@@ -1,85 +1,61 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Tables;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare a temporary working folder.
-        string workFolder = Path.Combine(Path.GetTempPath(), "AsposeJoinExample");
-        Directory.CreateDirectory(workFolder);
-
-        // File paths for the main document, the document to insert, and the final HTML output.
-        string mainDocPath = Path.Combine(workFolder, "Main.docx");
-        string insertDocPath = Path.Combine(workFolder, "Insert.docx");
-        string outputHtmlPath = Path.Combine(workFolder, "Result.html");
-
-        // -------------------------------------------------------------
-        // Create the main document containing two bookmarks: Header and Footer.
-        // -------------------------------------------------------------
+        // Create the main document with two bookmarks: Header and Footer.
         Document mainDoc = new Document();
         DocumentBuilder mainBuilder = new DocumentBuilder(mainDoc);
 
-        mainBuilder.Writeln("Document with bookmarks.");
+        mainBuilder.Writeln("Document start.");
 
         // Header bookmark.
         mainBuilder.StartBookmark("Header");
-        mainBuilder.Writeln("Header placeholder.");
+        mainBuilder.Writeln("[Header placeholder]");
         mainBuilder.EndBookmark("Header");
 
-        // Page break between the two sections.
-        mainBuilder.InsertBreak(BreakType.PageBreak);
+        mainBuilder.Writeln("Some content between bookmarks.");
 
         // Footer bookmark.
         mainBuilder.StartBookmark("Footer");
-        mainBuilder.Writeln("Footer placeholder.");
+        mainBuilder.Writeln("[Footer placeholder]");
         mainBuilder.EndBookmark("Footer");
 
-        // Save the main document as DOCX.
-        mainDoc.Save(mainDocPath, SaveFormat.Docx);
+        mainBuilder.Writeln("Document end.");
 
-        // -------------------------------------------------------------
-        // Create the document that will be inserted at each bookmark.
-        // -------------------------------------------------------------
+        // Create the document that will be inserted at the bookmarks.
         Document insertDoc = new Document();
         DocumentBuilder insertBuilder = new DocumentBuilder(insertDoc);
-        insertBuilder.Writeln("Inserted content.");
-        insertDoc.Save(insertDocPath, SaveFormat.Docx);
+        insertBuilder.Writeln("=== Inserted Content Start ===");
+        insertBuilder.Writeln("This is the first line of inserted content.");
+        insertBuilder.Writeln("This is the second line of inserted content.");
+        insertBuilder.Writeln("=== Inserted Content End ===");
 
-        // -------------------------------------------------------------
-        // Load the documents for processing.
-        // -------------------------------------------------------------
-        Document destination = new Document(mainDocPath);
-        Document source = new Document(insertDocPath);
+        // Insert the insertDoc at the Header bookmark.
+        DocumentBuilder insertAtHeader = new DocumentBuilder(mainDoc);
+        insertAtHeader.MoveToBookmark("Header");
+        insertAtHeader.InsertDocument(insertDoc, ImportFormatMode.KeepSourceFormatting);
 
-        // Insert the source document at each bookmark.
-        foreach (string bookmarkName in new[] { "Header", "Footer" })
+        // Insert the insertDoc at the Footer bookmark.
+        DocumentBuilder insertAtFooter = new DocumentBuilder(mainDoc);
+        insertAtFooter.MoveToBookmark("Footer");
+        insertAtFooter.InsertDocument(insertDoc, ImportFormatMode.KeepSourceFormatting);
+
+        // Save the final document as HTML.
+        string outputPath = "Result.html";
+        mainDoc.Save(outputPath, SaveFormat.Html);
+
+        // Validate that the output file was created.
+        if (!File.Exists(outputPath))
         {
-            // Ensure the bookmark exists.
-            bool bookmarkExists = destination.Range.Bookmarks.Any(b => b.Name == bookmarkName);
-            if (!bookmarkExists)
-                throw new InvalidOperationException($"Bookmark '{bookmarkName}' not found.");
-
-            // Clear any existing placeholder text inside the bookmark.
-            Bookmark bm = destination.Range.Bookmarks[bookmarkName];
-            bm.Text = string.Empty;
-
-            // Move the builder to the bookmark location and insert the source document.
-            DocumentBuilder builder = new DocumentBuilder(destination);
-            builder.MoveToBookmark(bookmarkName);
-            builder.InsertDocument(source, ImportFormatMode.KeepSourceFormatting);
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
         }
 
-        // -------------------------------------------------------------
-        // Export the final merged document to HTML.
-        // -------------------------------------------------------------
-        destination.Save(outputHtmlPath, SaveFormat.Html);
-
-        // Validate that the HTML file was created.
-        if (!File.Exists(outputHtmlPath))
-            throw new FileNotFoundException("The HTML output file was not created.", outputHtmlPath);
+        // Optionally, you could perform additional validation here (e.g., check file size).
+        Console.WriteLine($"Document successfully saved to '{outputPath}'.");
     }
 }

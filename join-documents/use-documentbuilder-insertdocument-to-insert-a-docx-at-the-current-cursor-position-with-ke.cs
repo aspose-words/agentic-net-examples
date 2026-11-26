@@ -1,40 +1,50 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Create the destination document.
-        Document destination = new Document();
-        DocumentBuilder destBuilder = new DocumentBuilder(destination);
-        destBuilder.Writeln("This is the main document.");
+        // Paths for temporary source document and final HTML output
+        string sourceDocPath = Path.Combine(Path.GetTempPath(), "Source.docx");
+        string outputHtmlPath = Path.Combine(Path.GetTempPath(), "JoinedOutput.html");
 
-        // Create the source document to be inserted.
-        Document source = new Document();
-        DocumentBuilder srcBuilder = new DocumentBuilder(source);
-        srcBuilder.Font.Color = System.Drawing.Color.Blue;
-        srcBuilder.Writeln("This is the inserted document with source formatting.");
+        // Create source DOCX document
+        Document sourceDoc = new Document();
+        DocumentBuilder sourceBuilder = new DocumentBuilder(sourceDoc);
+        sourceBuilder.Writeln("This is the source document inserted with KeepSourceFormatting.");
+        sourceDoc.Save(sourceDocPath, SaveFormat.Docx);
 
-        // Insert the source document at the current cursor position, preserving its formatting.
-        destBuilder.InsertDocument(source, ImportFormatMode.KeepSourceFormatting);
+        // Create destination document
+        Document destDoc = new Document();
+        DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
+        destBuilder.Writeln("This is the destination document before insertion.");
 
-        // Save the merged document as HTML.
-        string outputPath = "MergedOutput.html";
-        destination.Save(outputPath, SaveFormat.Html);
+        // Load the source document from file
+        Document loadedSource = new Document(sourceDocPath);
 
-        // Validate that the output file was created.
-        if (!File.Exists(outputPath))
+        // Insert the source document at the current cursor position, preserving its formatting
+        destBuilder.InsertDocument(loadedSource, ImportFormatMode.KeepSourceFormatting);
+
+        // Save the combined document as HTML
+        destDoc.Save(outputHtmlPath, SaveFormat.Html);
+
+        // Validate that the HTML file was created and contains content from both documents
+        if (!File.Exists(outputHtmlPath))
         {
-            throw new InvalidOperationException($"The output file '{outputPath}' was not created.");
+            throw new InvalidOperationException("The output HTML file was not created.");
         }
 
-        // Optional: simple validation that the file contains content from both documents.
-        string htmlContent = File.ReadAllText(outputPath);
-        if (!htmlContent.Contains("This is the main document.") || !htmlContent.Contains("This is the inserted document"))
+        string htmlContent = File.ReadAllText(outputHtmlPath);
+        if (!htmlContent.Contains("destination document before insertion") ||
+            !htmlContent.Contains("source document inserted with KeepSourceFormatting"))
         {
             throw new InvalidOperationException("The merged HTML does not contain expected content from both source documents.");
         }
+
+        // Clean up temporary source document (optional)
+        try { File.Delete(sourceDocPath); } catch { /* ignore cleanup errors */ }
     }
 }

@@ -1,81 +1,72 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Loading;
+using Aspose.Words.Loading;      // Needed for LoadOptions
 using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a temporary working folder.
-        string workFolder = Path.Combine(Path.GetTempPath(), "AsposeJoinExample");
-        Directory.CreateDirectory(workFolder);
+        // Paths for temporary and output files
+        string protectedDocPath = "protected.docx";
+        string sourceDocPath = "source.docx";
+        string outputPath = "merged.docx";
 
-        // Define file paths.
-        string sourcePath = Path.Combine(workFolder, "source.docx");
-        string destPath = Path.Combine(workFolder, "dest.docx");
-        string outputPath = Path.Combine(workFolder, "merged.docx");
-
-        // -------------------------------------------------
-        // 1. Create a password‑protected source DOCX.
-        // -------------------------------------------------
+        // -----------------------------------------------------------------
+        // Create a source DOCX that will be inserted later
+        // -----------------------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
         srcBuilder.Writeln("This is the source document content.");
-        OoxmlSaveOptions sourceSaveOptions = new OoxmlSaveOptions { Password = "Secret123" };
-        sourceDoc.Save(sourcePath, sourceSaveOptions);
+        sourceDoc.Save(sourceDocPath, SaveFormat.Docx);
 
-        // -------------------------------------------------
-        // 2. Create a destination DOCX that contains a bookmark.
-        // -------------------------------------------------
-        Document destDoc = new Document();
+        // -----------------------------------------------------------------
+        // Create a password‑protected DOCX with a bookmark named "InsertHere"
+        // -----------------------------------------------------------------
+        Document protectedDoc = new Document();
+        DocumentBuilder protBuilder = new DocumentBuilder(protectedDoc);
+        protBuilder.Writeln("This is the protected document before insertion.");
+        protBuilder.StartBookmark("InsertHere");
+        protBuilder.Writeln("Bookmark location.");
+        protBuilder.EndBookmark("InsertHere");
+
+        // Apply read‑only protection and set a password for the file itself
+        protectedDoc.Protect(ProtectionType.ReadOnly, "pwd123");
+        OoxmlSaveOptions protectSaveOptions = new OoxmlSaveOptions { Password = "pwd123" };
+        protectedDoc.Save(protectedDocPath, protectSaveOptions);
+
+        // -----------------------------------------------------------------
+        // Load the protected document using the password
+        // -----------------------------------------------------------------
+        LoadOptions loadOptions = new LoadOptions { Password = "pwd123" };
+        Document destDoc = new Document(protectedDocPath, loadOptions);
+
+        // Load the source document that will be inserted
+        Document srcDoc = new Document(sourceDocPath);
+
+        // -----------------------------------------------------------------
+        // Insert the source document at the bookmark location
+        // -----------------------------------------------------------------
         DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
-        destBuilder.Writeln("Destination document start.");
-        destBuilder.StartBookmark("InsertHere");
-        destBuilder.Writeln("[Bookmark placeholder]");
-        destBuilder.EndBookmark("InsertHere");
-        destBuilder.Writeln("Destination document end.");
-        destDoc.Save(destPath, SaveFormat.Docx);
+        destBuilder.MoveToBookmark("InsertHere");
+        destBuilder.InsertDocument(srcDoc, ImportFormatMode.KeepSourceFormatting);
 
-        // -------------------------------------------------
-        // 3. Load the documents (source requires the password).
-        // -------------------------------------------------
-        LoadOptions loadOpts = new LoadOptions { Password = "Secret123" };
-        Document protectedSource = new Document(sourcePath, loadOpts);
-        Document destination = new Document(destPath);
+        // -----------------------------------------------------------------
+        // Remove protection and save the merged document
+        // -----------------------------------------------------------------
+        destDoc.Unprotect("pwd123");
+        destDoc.Save(outputPath, SaveFormat.Docx);
 
-        // -------------------------------------------------
-        // 4. Insert the source document at the bookmark.
-        // -------------------------------------------------
-        DocumentBuilder insertBuilder = new DocumentBuilder(destination);
-        // MoveToBookmark returns true if the bookmark exists; we ignore the return value here.
-        insertBuilder.MoveToBookmark("InsertHere");
-        insertBuilder.InsertDocument(protectedSource, ImportFormatMode.KeepSourceFormatting);
-
-        // -------------------------------------------------
-        // 5. Remove any protection from the merged document.
-        // -------------------------------------------------
-        destination.Unprotect();
-
-        // -------------------------------------------------
-        // 6. Save the merged result.
-        // -------------------------------------------------
-        destination.Save(outputPath, SaveFormat.Docx);
-
-        // -------------------------------------------------
-        // 7. Validate that the output file exists and contains the expected text.
-        // -------------------------------------------------
+        // -----------------------------------------------------------------
+        // Validation: ensure the merged file exists and contains the source text
+        // -----------------------------------------------------------------
         if (!File.Exists(outputPath))
             throw new InvalidOperationException("Merged document was not created.");
 
-        Document resultDoc = new Document(outputPath);
-        string resultText = resultDoc.GetText();
-
-        if (!resultText.Contains("This is the source document content."))
-            throw new InvalidOperationException("Source content was not inserted correctly.");
-
-        // Optional cleanup: uncomment the following line to delete temporary files.
-        // Directory.Delete(workFolder, true);
+        Document mergedDoc = new Document(outputPath);
+        string mergedText = mergedDoc.GetText();
+        if (!mergedText.Contains("This is the source document content."))
+            throw new InvalidOperationException("Source content was not inserted into the merged document.");
     }
 }

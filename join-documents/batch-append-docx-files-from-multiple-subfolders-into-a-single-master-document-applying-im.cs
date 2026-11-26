@@ -6,78 +6,74 @@ public class Program
 {
     public static void Main()
     {
-        // Base directory for input documents
+        // Base directory for input documents.
         string baseInputDir = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
-        // Ensure a clean environment
-        if (Directory.Exists(baseInputDir))
-            Directory.Delete(baseInputDir, true);
+        // Ensure the base directory exists.
         Directory.CreateDirectory(baseInputDir);
 
-        // Define subfolders
-        string[] subFolders = { "FolderA", "FolderB" };
-        int docsPerFolder = 2; // number of DOCX files per subfolder
-
-        // Create sample DOCX files in each subfolder
-        foreach (string folder in subFolders)
+        // Define subfolders to simulate multiple source locations.
+        string[] subfolders = { "FolderA", "FolderB" };
+        foreach (string subfolder in subfolders)
         {
-            string folderPath = Path.Combine(baseInputDir, folder);
-            Directory.CreateDirectory(folderPath);
+            string subfolderPath = Path.Combine(baseInputDir, subfolder);
+            Directory.CreateDirectory(subfolderPath);
 
-            for (int i = 1; i <= docsPerFolder; i++)
+            // Create two sample DOCX files in each subfolder.
+            for (int i = 1; i <= 2; i++)
             {
-                string fileName = $"Sample_{folder}_{i}.docx";
-                string filePath = Path.Combine(folderPath, fileName);
+                string fileName = $"Doc{i}.docx";
+                string filePath = Path.Combine(subfolderPath, fileName);
 
-                // Create a simple document with identifiable content
+                // Build a simple document with identifiable content.
                 Document doc = new Document();
                 DocumentBuilder builder = new DocumentBuilder(doc);
-                builder.Writeln($"This is {fileName} located in {folder}.");
+                builder.Writeln($"Content from {subfolder} - {fileName}");
                 doc.Save(filePath, SaveFormat.Docx);
             }
         }
 
-        // Prepare the master document (initially empty)
+        // Prepare the master document that will receive all appended content.
         Document masterDoc = new Document();
 
-        // Keep track of how many source documents are processed
-        int sourceDocCount = 0;
+        // Track the total number of sections from source documents for validation.
+        int totalSourceSections = 0;
 
-        // Batch append all DOCX files from subfolders
-        foreach (string folder in subFolders)
+        // Iterate through each subfolder and append its DOCX files.
+        foreach (string subfolder in subfolders)
         {
-            string folderPath = Path.Combine(baseInputDir, folder);
-            string[] docxFiles = Directory.GetFiles(folderPath, "*.docx");
+            string subfolderPath = Path.Combine(baseInputDir, subfolder);
+            string[] sourceFiles = Directory.GetFiles(subfolderPath, "*.docx", SearchOption.TopDirectoryOnly);
 
-            foreach (string docxPath in docxFiles)
+            foreach (string sourceFile in sourceFiles)
             {
-                Document srcDoc = new Document(docxPath);
-                masterDoc.AppendDocument(srcDoc, ImportFormatMode.UseDestinationStyles);
-                sourceDocCount++;
+                Document sourceDoc = new Document(sourceFile);
+                totalSourceSections += sourceDoc.Sections.Count;
+
+                // Append the source document using destination styles.
+                masterDoc.AppendDocument(sourceDoc, ImportFormatMode.UseDestinationStyles);
             }
         }
 
-        // Define output paths
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string masterDocPath = Path.Combine(outputDir, "Master.docx");
-        string masterPdfPath = Path.Combine(outputDir, "Master.pdf");
+        // Define output paths.
+        string outputDocxPath = Path.Combine(Directory.GetCurrentDirectory(), "Master.docx");
+        string outputPdfPath = Path.Combine(Directory.GetCurrentDirectory(), "Master.pdf");
 
-        // Save the merged document in DOCX and PDF formats
-        masterDoc.Save(masterDocPath, SaveFormat.Docx);
-        masterDoc.Save(masterPdfPath, SaveFormat.Pdf);
+        // Save the merged document in DOCX and PDF formats.
+        masterDoc.Save(outputDocxPath, SaveFormat.Docx);
+        masterDoc.Save(outputPdfPath, SaveFormat.Pdf);
 
-        // Validation: ensure output files exist
-        if (!File.Exists(masterDocPath))
-            throw new InvalidOperationException("Merged DOCX file was not created.");
-        if (!File.Exists(masterPdfPath))
-            throw new InvalidOperationException("Merged PDF file was not created.");
+        // Validation: ensure output files exist.
+        if (!File.Exists(outputDocxPath) || !File.Exists(outputPdfPath))
+        {
+            throw new InvalidOperationException("Merged output files were not created as expected.");
+        }
 
-        // Validation: ensure the master document contains sections from all source docs
-        // The initial empty document has one section; each appended document adds its sections.
-        int expectedSections = 1 + sourceDocCount; // assuming each source has one section
+        // Validation: ensure the master document contains the expected number of sections.
+        // The master document starts with one empty section; each source document adds its sections.
+        int expectedSections = 1 + totalSourceSections;
         if (masterDoc.Sections.Count != expectedSections)
-            throw new InvalidOperationException($"Expected {expectedSections} sections, but found {masterDoc.Sections.Count}.");
-
-        // Program completed successfully
+        {
+            throw new InvalidOperationException($"Section count mismatch. Expected: {expectedSections}, Actual: {masterDoc.Sections.Count}");
+        }
     }
 }

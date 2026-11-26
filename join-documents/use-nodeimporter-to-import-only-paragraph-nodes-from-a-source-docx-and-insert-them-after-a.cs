@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -8,70 +9,70 @@ public class Program
     public static void Main()
     {
         // Create destination document with a bookmark.
-        Document destDoc = new Document();
-        DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
-        destBuilder.Writeln("Destination document start.");
+        var destDoc = new Document();
+        var destBuilder = new DocumentBuilder(destDoc);
+        destBuilder.Writeln("Destination Document Start");
         destBuilder.StartBookmark("InsertHere");
-        destBuilder.Writeln("Bookmark location.");
+        destBuilder.Writeln("Bookmark location");
         destBuilder.EndBookmark("InsertHere");
-        destBuilder.Writeln("Destination document end.");
+        destBuilder.Writeln("Destination Document End");
 
-        // Save destination for reference (optional).
-        string destPath = "Destination.docx";
+        // Save destination document (optional, just to have a file).
+        const string destPath = "Destination.docx";
         destDoc.Save(destPath, SaveFormat.Docx);
 
         // Create source document containing several paragraphs.
-        Document sourceDoc = new Document();
-        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
-        srcBuilder.Writeln("Source paragraph 1.");
-        srcBuilder.Writeln("Source paragraph 2.");
-        srcBuilder.Writeln("Source paragraph 3.");
+        var srcDoc = new Document();
+        var srcBuilder = new DocumentBuilder(srcDoc);
+        srcBuilder.Writeln("Source Paragraph 1");
+        srcBuilder.Writeln("Source Paragraph 2");
+        srcBuilder.Writeln("Source Paragraph 3");
 
-        // Save source for reference (optional).
-        string sourcePath = "Source.docx";
-        sourceDoc.Save(sourcePath, SaveFormat.Docx);
+        // Save source document (optional, just to have a file).
+        const string srcPath = "Source.docx";
+        srcDoc.Save(srcPath, SaveFormat.Docx);
 
-        // Load the source document (simulating a separate load step).
-        Document srcToImport = new Document(sourcePath);
-
-        // Prepare a NodeImporter to import nodes from source to destination.
-        NodeImporter importer = new NodeImporter(srcToImport, destDoc, ImportFormatMode.KeepSourceFormatting);
+        // Load documents (in case they were saved to disk).
+        var destination = new Document(destPath);
+        var source = new Document(srcPath);
 
         // Locate the bookmark in the destination document.
-        Bookmark bookmark = destDoc.Range.Bookmarks["InsertHere"];
-        if (bookmark == null)
+        if (!destination.Range.Bookmarks.Any(b => b.Name == "InsertHere"))
             throw new InvalidOperationException("Bookmark 'InsertHere' not found in destination document.");
 
-        // The paragraph that contains the bookmark start.
-        Paragraph bookmarkParagraph = (Paragraph)bookmark.BookmarkStart.ParentNode;
+        var bookmark = destination.Range.Bookmarks["InsertHere"];
+        var bookmarkParagraph = bookmark.BookmarkStart.ParentNode as Paragraph;
+        if (bookmarkParagraph == null)
+            throw new InvalidOperationException("Bookmark does not have a parent paragraph.");
 
-        // Insert imported paragraphs after the bookmark paragraph.
+        // Prepare a NodeImporter to import nodes from source to destination.
+        var importer = new NodeImporter(source, destination, ImportFormatMode.KeepSourceFormatting);
+
+        // Insert each paragraph from the source document after the bookmark.
         Node insertAfterNode = bookmarkParagraph;
-        foreach (Paragraph srcParagraph in srcToImport.GetChildNodes(NodeType.Paragraph, true))
+        foreach (Paragraph srcParagraph in source.GetChildNodes(NodeType.Paragraph, true).OfType<Paragraph>())
         {
-            // Import the paragraph node.
+            // Import the paragraph node (including its children).
             Node importedNode = importer.ImportNode(srcParagraph, true);
-            // Insert after the previously inserted node.
-            Node insertedNode = insertAfterNode.ParentNode.InsertAfter(importedNode, insertAfterNode);
-            // Update reference for next insertion.
-            insertAfterNode = insertedNode;
+            // Insert the imported paragraph after the previous node.
+            insertAfterNode.ParentNode?.InsertAfter(importedNode, insertAfterNode);
+            // Update the reference so the next paragraph is inserted after this one.
+            insertAfterNode = importedNode;
         }
 
-        // Save the merged result.
-        string resultPath = "Result.docx";
-        destDoc.Save(resultPath, SaveFormat.Docx);
+        // Save the resulting document.
+        const string resultPath = "Result.docx";
+        destination.Save(resultPath, SaveFormat.Docx);
 
-        // Validation: ensure the result file exists.
+        // Validate that the result file was created.
         if (!File.Exists(resultPath))
-            throw new FileNotFoundException("The merged document was not saved correctly.", resultPath);
+            throw new FileNotFoundException("Result document was not created.", resultPath);
 
-        // Validation: ensure the result contains the expected number of paragraphs.
-        int expectedParagraphs = destDoc.GetChildNodes(NodeType.Paragraph, true).Count;
-        Document resultDoc = new Document(resultPath);
-        int actualParagraphs = resultDoc.GetChildNodes(NodeType.Paragraph, true).Count;
-        if (actualParagraphs < expectedParagraphs)
-            throw new InvalidOperationException("The merged document does not contain the expected paragraphs.");
-
-        // Program completed successfully.
+        // Optional validation: ensure the expected number of paragraphs were inserted.
+        int sourceParagraphCount = source.GetChildNodes(NodeType.Paragraph, true).Count;
+        int resultParagraphCount = destination.GetChildNodes(NodeType.Paragraph, true).Count;
+        // Destination originally had 3 paragraphs (start, bookmark location, end).
+        if (resultParagraphCount < sourceParagraphCount + 3)
+            throw new InvalidOperationException("Not all source paragraphs were inserted into the destination document.");
     }
 }

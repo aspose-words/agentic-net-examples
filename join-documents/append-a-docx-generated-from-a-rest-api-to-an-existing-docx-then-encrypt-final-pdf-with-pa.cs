@@ -7,63 +7,56 @@ public class Program
 {
     public static void Main()
     {
-        // Ensure output directory exists
-        string outputDir = "output";
-        Directory.CreateDirectory(outputDir);
+        // Create a temporary working directory
+        string workDir = Path.Combine(Path.GetTempPath(), "AsposeJoinDemo_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(workDir);
 
-        // Paths for documents
-        string existingDocPath = Path.Combine(outputDir, "existing.docx");
-        string mergedDocPath = Path.Combine(outputDir, "merged.docx");
-        string finalPdfPath = Path.Combine(outputDir, "final.pdf");
+        // Paths for the documents
+        string destDocPath = Path.Combine(workDir, "dest.docx");
+        string sourceDocPath = Path.Combine(workDir, "source.docx");
+        string mergedPdfPath = Path.Combine(workDir, "merged_encrypted.pdf");
 
-        // 1. Create an existing DOCX file locally
-        Document existingDoc = new Document();
-        DocumentBuilder existingBuilder = new DocumentBuilder(existingDoc);
-        existingBuilder.Writeln("This is the existing document.");
-        existingDoc.Save(existingDocPath);
+        // 1. Create the destination DOCX (existing document)
+        var destDoc = new Document();
+        var destBuilder = new DocumentBuilder(destDoc);
+        destBuilder.Writeln("This is the original document.");
+        destDoc.Save(destDocPath, SaveFormat.Docx);
 
-        // 2. Simulate a REST API that returns a DOCX as a byte array
-        byte[] apiDocBytes = GetDocumentFromApi();
+        // 2. Simulate obtaining a DOCX from a REST API by creating it locally
+        var sourceDoc = new Document();
+        var sourceBuilder = new DocumentBuilder(sourceDoc);
+        sourceBuilder.Writeln("This content comes from the simulated REST API.");
+        sourceDoc.Save(sourceDocPath, SaveFormat.Docx);
 
-        // 3. Load the DOCX returned from the API
-        Document apiDoc;
-        using (MemoryStream apiStream = new MemoryStream(apiDocBytes))
-        {
-            apiDoc = new Document(apiStream);
-        }
+        // 3. Load both documents
+        var destination = new Document(destDocPath);
+        var source = new Document(sourceDocPath);
 
-        // 4. Append the API-generated document to the existing document
-        existingDoc.AppendDocument(apiDoc, ImportFormatMode.KeepSourceFormatting);
-        existingDoc.Save(mergedDocPath);
+        // 4. Append the source document to the destination document
+        destination.AppendDocument(source, ImportFormatMode.KeepSourceFormatting);
 
-        // 5. Convert the merged document to PDF and encrypt it with a password
-        PdfSaveOptions pdfOptions = new PdfSaveOptions
+        // 5. Save the merged document as an encrypted PDF
+        var pdfOptions = new PdfSaveOptions
         {
             EncryptionDetails = new PdfEncryptionDetails(
-                userPassword: "userPassword",
-                ownerPassword: "ownerPassword")
+                userPassword: "userPass123",
+                ownerPassword: "ownerPass123")
         };
-        existingDoc.Save(finalPdfPath, pdfOptions);
+        destination.Save(mergedPdfPath, pdfOptions);
 
-        // 6. Validate that the files were created
-        if (!File.Exists(existingDocPath))
-            throw new FileNotFoundException("Existing DOCX was not created.", existingDocPath);
-        if (!File.Exists(mergedDocPath))
-            throw new FileNotFoundException("Merged DOCX was not created.", mergedDocPath);
-        if (!File.Exists(finalPdfPath))
-            throw new FileNotFoundException("Final encrypted PDF was not created.", finalPdfPath);
-    }
-
-    // Simulated REST API call that returns a DOCX file as a byte array
-    private static byte[] GetDocumentFromApi()
-    {
-        Document apiDoc = new Document();
-        DocumentBuilder apiBuilder = new DocumentBuilder(apiDoc);
-        apiBuilder.Writeln("This is the document generated from the REST API.");
-        using (MemoryStream stream = new MemoryStream())
+        // 6. Validation
+        if (!File.Exists(mergedPdfPath))
         {
-            apiDoc.Save(stream, SaveFormat.Docx);
-            return stream.ToArray();
+            throw new InvalidOperationException("The encrypted PDF was not created.");
         }
+
+        // Verify that the merged document contains both sections
+        if (destination.Sections.Count < 2)
+        {
+            throw new InvalidOperationException("The source document was not appended correctly.");
+        }
+
+        // Optional cleanup: uncomment to delete temporary files after execution
+        // Directory.Delete(workDir, true);
     }
 }

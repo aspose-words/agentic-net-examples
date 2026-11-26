@@ -1,83 +1,76 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for temporary files
-        string mainDocPath = "Main.docx";
-        string insertDocPath = "Insert.docx";
-        string outputPath = "Result.odt";
+        // Prepare file paths
+        string baseDir = Directory.GetCurrentDirectory();
+        string insertDocPath = Path.Combine(baseDir, "InsertDoc.docx");
+        string resultPath = Path.Combine(baseDir, "Result.odt");
 
         // -------------------------------------------------
-        // 1. Create the main document with a table and a bookmark inside a cell
+        // 1. Create the source DOCX that will be inserted.
+        // -------------------------------------------------
+        Document insertDoc = new Document();
+        DocumentBuilder insertBuilder = new DocumentBuilder(insertDoc);
+        insertBuilder.Writeln("This is the content coming from the inserted DOCX.");
+        insertDoc.Save(insertDocPath, SaveFormat.Docx);
+
+        // -------------------------------------------------
+        // 2. Create the destination document with a table
+        //    containing a bookmark inside a cell.
         // -------------------------------------------------
         Document mainDoc = new Document();
         DocumentBuilder mainBuilder = new DocumentBuilder(mainDoc);
 
-        // Start a 1x1 table
-        Table table = mainBuilder.StartTable();
+        // Start a table with one row and one cell.
+        mainBuilder.StartTable();
         mainBuilder.InsertCell();
 
-        // Add a paragraph with a bookmark named "InsertHere"
+        // Write some text before the bookmark.
+        mainBuilder.Write("Before bookmark ");
+
+        // Insert the bookmark where the other document will be placed.
         mainBuilder.StartBookmark("InsertHere");
-        mainBuilder.Writeln("Placeholder text before insertion.");
+        // Placeholder (empty) – the content will be inserted here.
         mainBuilder.EndBookmark("InsertHere");
 
-        // End the row and table (EndCell is optional in recent versions)
+        // Write some text after the bookmark.
+        mainBuilder.Write(" After bookmark");
+
+        // End the cell, row, and table.
         mainBuilder.EndRow();
         mainBuilder.EndTable();
 
-        // Save the main document (DOCX)
-        mainDoc.Save(mainDocPath, SaveFormat.Docx);
+        // -------------------------------------------------
+        // 3. Load the source document and insert it at the bookmark.
+        // -------------------------------------------------
+        Document srcDoc = new Document(insertDocPath);
+        mainBuilder.MoveToBookmark("InsertHere");
+        mainBuilder.InsertDocument(srcDoc, ImportFormatMode.KeepSourceFormatting);
 
         // -------------------------------------------------
-        // 2. Create the document that will be inserted
+        // 4. Save the merged document as ODT, preserving the table.
         // -------------------------------------------------
-        Document insertDoc = new Document();
-        DocumentBuilder insertBuilder = new DocumentBuilder(insertDoc);
-        insertBuilder.Writeln("This is the inserted content from the DOCX document.");
-        insertDoc.Save(insertDocPath, SaveFormat.Docx);
+        mainDoc.Save(resultPath, SaveFormat.Odt);
 
         // -------------------------------------------------
-        // 3. Load the documents from disk
+        // 5. Validate that the output file was created.
         // -------------------------------------------------
-        Document loadedMain = new Document(mainDocPath);
-        Document loadedInsert = new Document(insertDocPath);
-
-        // -------------------------------------------------
-        // 4. Insert the DOCX at the bookmark inside the table cell
-        // -------------------------------------------------
-        DocumentBuilder insertionBuilder = new DocumentBuilder(loadedMain);
-        insertionBuilder.MoveToBookmark("InsertHere");
-        insertionBuilder.InsertDocument(loadedInsert, ImportFormatMode.KeepSourceFormatting);
-
-        // Optionally remove the bookmark after insertion
-        Bookmark bm = loadedMain.Range.Bookmarks["InsertHere"];
-        if (bm != null)
+        if (!File.Exists(resultPath))
         {
-            loadedMain.Range.Bookmarks.Remove(bm);
+            throw new InvalidOperationException("The ODT output file was not created.");
         }
 
-        // -------------------------------------------------
-        // 5. Save the resulting document as ODT, preserving table structure
-        // -------------------------------------------------
-        loadedMain.Save(outputPath, SaveFormat.Odt);
-
-        // -------------------------------------------------
-        // 6. Validate that the output file was created
-        // -------------------------------------------------
-        if (!File.Exists(outputPath))
+        // Optional: Validate that the table still exists.
+        int tableCount = mainDoc.GetChildNodes(NodeType.Table, true).Count;
+        if (tableCount == 0)
         {
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+            throw new InvalidOperationException("The resulting document does not contain the expected table.");
         }
-
-        // Optional cleanup of temporary files
-        // File.Delete(mainDocPath);
-        // File.Delete(insertDocPath);
     }
 }

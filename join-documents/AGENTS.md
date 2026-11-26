@@ -10,12 +10,13 @@ product: Aspose.Words
 
 ## Purpose
 
-Provide an AI coding assistant with clear, reproducible patterns for joining documents that avoid common API misuse, ensure all source artifacts are generated locally, and validate that the merged output contains the expected content.
+Provide an AI coding assistant with clear, reproducible patterns for safely joining, inserting, and appending documents in Aspose.Words, ensuring that all required resources are created locally, APIs are used correctly, and the merged output is validated for expected content.
 
 ## Non-negotiable conventions
 
-- Never reference members that are not part of the Aspose.Words public API, such as BookmarkCollection.Exists or non-existent InsertDocument overloads.
-- Do not attempt to append or insert a node into a parent that cannot accept that node type.
+- Never assume that source files or folders already exist; always generate them within the example.
+- Do not call non-existent Aspose.Words methods such as InsertDocument on MailMerge or use invented join APIs.
+- Never insert a node into an invalid parent container or append a node to itself.
 - Bootstrap local sample inputs for existing-file, folder, stream, image, and data workflows.
 - Prefer simple, verifiable workflows over speculative formatting shortcuts.
 
@@ -31,7 +32,7 @@ Use the simplest workflow that satisfies the task.
 
 ## Validation priorities
 
-1. Validate the merged document by confirming file existence and by searching for unique text fragments from every source document.
+1. After each join operation, confirm that the output file exists and that its text includes a unique marker from every source document.
 
 ## File-to-task reference
 
@@ -99,7 +100,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Use FindReplaceOptions to replace the phrase "PLACEHOLDER" with a DOCX document, then save as ODT.
   - Workflow: general-join-workflow
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `use-findreplaceoptions-with-a-replacingcallback-to-insert-a-docx-whenever-phrase-insert-he.cs`
   - Task: Use FindReplaceOptions with a ReplacingCallback to insert a DOCX whenever phrase "INSERT_HERE" is found, then save as DOCX.
   - Workflow: insert-document
@@ -109,17 +110,17 @@ Use the simplest workflow that satisfies the task.
   - Task: Insert a DOCX during a find-replace operation that replaces an XML tag, then save the document as DOCX.
   - Workflow: insert-document
   - Outputs: docx, doc, xml
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `set-mailmerge-insertdocument-event-to-inject-a-docx-for-each-data-row-and-generate-a-combi.cs`
   - Task: Set MailMerge.InsertDocument event to inject a DOCX for each data row, and generate a combined PDF file.
   - Workflow: insert-document
   - Outputs: docx, pdf
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `insert-a-docx-during-mail-merge-for-record-then-apply-importlanguageinfo-to-preserve-langu.cs`
   - Task: Insert a DOCX during mail merge for record, then apply ImportLanguageInfo to preserve language settings, save as PDF.
   - Workflow: mail-merge-insert
   - Outputs: docx, pdf
-  - Selected engine: mcp
+  - Selected engine: llm
 - `use-importlanguageinfo-option-to-preserve-language-settings-when-appending-a-source-docx-t.cs`
   - Task: Use ImportLanguageInfo option to preserve language settings when appending a source DOCX to a destination DOCX.
   - Workflow: append-document
@@ -154,12 +155,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Append a DOCX with video files to a destination DOCX, ensuring videos remain functional after saving as PDF.
   - Workflow: append-document
   - Outputs: docx, pdf
-  - Selected engine: mcp
+  - Selected engine: llm
 - `append-a-docx-containing-footnotes-to-a-destination-docx-and-ensure-footnote-numbering-con.cs`
   - Task: Append a DOCX containing footnotes to a destination DOCX and ensure footnote numbering continues, then save as PDF.
   - Workflow: append-document
   - Outputs: docx, pdf
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `append-a-docx-containing-a-bibliography-to-a-research-paper-docx-then-update-fields-and-ex.cs`
   - Task: Append a DOCX containing a bibliography to a research paper DOCX, then update fields and export to PDF.
   - Workflow: append-document
@@ -209,7 +210,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Append a DOCX generated from a web service to an existing DOCX, then encrypt final PDF with password.
   - Workflow: append-document
   - Outputs: docx, pdf
-  - Selected engine: mcp
+  - Selected engine: llm
 - `append-a-docx-generated-from-a-rest-api-to-an-existing-docx-then-encrypt-final-pdf-with-pa.cs`
   - Task: Append a DOCX generated from a REST API to an existing DOCX, then encrypt final PDF with password.
   - Workflow: append-document
@@ -218,47 +219,47 @@ Use the simplest workflow that satisfies the task.
 
 ## Common failure patterns and preferred agent fixes
 
-- **Nonexistent API member**
-  - Symptom: Compilation fails with CS1061, CS0246, or CS0234 because a referenced type or member cannot be found.
-  - Root cause: The code references classes, namespaces, or members that are not part of the Aspose.Words 26.10.0 API (e.g., BookmarkCollection.Exists, Aspose.Words.Protection, Import namespace, FindReplaceOptions.ReplacementDocument).
-  - Preferred fix: Replace the invalid reference with the correct API member (e.g., use mainDoc.Range.Bookmarks["name"] to test existence, use Document.Protect for protection, and use InsertDocument on DocumentBuilder).
-  - Prevention: Consult the official Aspose.Words documentation for the exact class and member names before coding and rely on IntelliSense to verify availability.
+- **Missing source document bootstrap**
+  - Symptom: The example fails to compile because it references source DOCX files that were never created.
+  - Root cause: The code assumes external files exist without generating them in the sample.
+  - Preferred fix: Create the required source documents programmatically before attempting to load or join them.
+  - Prevention: Always include document creation steps at the start of the sample.
 
-- **Invalid node insertion location**
-  - Symptom: Runtime throws System.ArgumentException stating that a node cannot be inserted at the current location.
-  - Root cause: InsertDocument is called on a node that cannot accept the imported content, such as inserting a whole section into a Run or inserting into a bookmark that has been removed.
-  - Preferred fix: Move the DocumentBuilder to a valid container (e.g., a Paragraph or the bookmark itself) before calling InsertDocument, and ensure the bookmark remains in the document.
-  - Prevention: Always verify the target node type with Node.NodeType and use DocumentBuilder.MoveToBookmark or MoveTo(Run) to position the builder correctly.
+- **Wrong join API choice**
+  - Symptom: Compilation errors occur when the code calls unsupported methods or uses AppendDocument where InsertDocument is required.
+  - Root cause: The developer selected an API that does not match the intended operation (e.g., whole-document append vs. bookmark insertion).
+  - Preferred fix: Use AppendDocument for full-document concatenation and InsertDocument (or InsertDocumentInline) only when inserting at a specific location.
+  - Prevention: Map the desired join scenario to the correct Aspose.Words API before coding.
 
-- **Improper FindReplaceOptions usage**
-  - Symptom: Compilation or runtime errors occur when attempting to replace a placeholder with a document using FindReplaceOptions.
-  - Root cause: The code tries to assign a Document to FindReplaceOptions.ReplacementDocument or passes a Document to Range.Replace, which expects a string.
-  - Preferred fix: Implement a custom IReplacingCallback that inserts the document at the match location, and pass that callback via FindReplaceOptions.ReplacingCallback.
-  - Prevention: Use the documented pattern for document insertion during find-replace: create a callback class that receives the match node and calls DocumentBuilder.InsertDocument.
+- **Invalid node insertion**
+  - Symptom: Runtime exceptions indicate that a node of an unsupported type was inserted into a header, footer, or other invalid container.
+  - Root cause: The code attempts to insert a Section or Body node directly into a Paragraph or Header node.
+  - Preferred fix: Import only compatible node types (e.g., Paragraph, Run, Table) and insert them into a valid parent such as a Paragraph or Section.
+  - Prevention: Validate the target container's NodeType before performing InsertAfter/InsertBefore operations.
 
-- **Incorrect protection API reference**
-  - Symptom: Compilation fails because Protection or InsertDocument members are missing on the MailMerge or Document classes.
-  - Root cause: The sample uses outdated or non-existent protection APIs (e.g., Aspose.Words.Protection namespace) and assumes a MailMerge.InsertDocument event that does not exist.
-  - Preferred fix: Apply protection with Document.Protect(ProtectionType, password) and remove it with Document.Unprotect(password); handle mail-merge insertion via MailMerge.FieldMergingCallback and DocumentBuilder.InsertDocument.
-  - Prevention: Reference the current protection methods in the Document class and follow the official mail-merge insertion workflow.
+- **Find-replace insertion misuse**
+  - Symptom: Build failures arise from using string overloads of Range.Replace with a document object, and runtime errors occur when the callback inserts nodes incorrectly.
+  - Root cause: The sample treats a document as a replacement string instead of using a ReplacingCallback that imports nodes.
+  - Preferred fix: Configure FindReplaceOptions.ReplacingCallback to import nodes via NodeImporter and replace the placeholder run, then remove the placeholder paragraph.
+  - Prevention: Never pass a Document to the string-based Replace method; always use a callback for document insertion.
 
-- **Missing source document creation**
-  - Symptom: The example assumes that source DOCX files already exist, leading to FileNotFoundException or empty merges.
-  - Root cause: No code is provided to generate the prerequisite documents before the join operation.
-  - Preferred fix: Add code that creates each source document with DocumentBuilder, saves it to a temporary path, and then loads it for insertion or appending.
-  - Prevention: Always bootstrap required source files at the start of the sample, using clearly named temporary directories.
+- **MailMerge InsertDocument missing**
+  - Symptom: Compilation errors show that MailMerge.InsertDocument does not exist, and runtime checks report missing sections after merge.
+  - Root cause: The code references a non-existent InsertDocument event on MailMerge and does not correctly combine generated documents.
+  - Preferred fix: Perform mail merge on a template, then append or insert the additional document using DocumentBuilder.InsertDocument within a FieldMergingCallback, or concatenate results with AppendDocument.
+  - Prevention: Use the documented MailMerge.FieldMergingCallback pattern and combine documents with AppendDocument after each merge iteration.
 
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Primary package: `Aspose.Words` `26.10.0`
+- Primary package: `Aspose.Words` `26.11.0`
 
 ## Command reference
 
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.10.0
+dotnet add package Aspose.Words --version 26.11.0
 ```
 
 ```powershell
@@ -272,4 +273,4 @@ dotnet run --configuration Release --no-build
 
 ## Category update guidance
 
-- Keep the sample code in sync with the Aspose.Words version used for verification and update any API changes in future releases.
+- Keep the sample code aligned with the current Aspose.Words API surface; update namespace imports and method signatures whenever a new version is released.

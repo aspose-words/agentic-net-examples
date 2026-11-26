@@ -7,49 +7,46 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare working directory
-        string workingDir = Path.Combine(Directory.GetCurrentDirectory(), "WorkingDir");
-        Directory.CreateDirectory(workingDir);
-
         // Define file paths
-        string docxPath = Path.Combine(workingDir, "sample.docx");
-        string odtPath = Path.Combine(workingDir, "sample.odt");
-        string pdfPath = Path.Combine(workingDir, "merged.pdf");
+        string docxPath = "Sample.docx";
+        string odtPath = "Sample.odt";
+        string outputPdfPath = "Combined.pdf";
 
-        // Create a sample DOCX document
-        Document docx = new Document();
-        DocumentBuilder builderDocx = new DocumentBuilder(docx);
-        builderDocx.Writeln("This is content from the DOCX document.");
-        docx.Save(docxPath, SaveFormat.Docx);
+        // Create a DOCX document with sample content
+        Document docxDocument = new Document();
+        DocumentBuilder docxBuilder = new DocumentBuilder(docxDocument);
+        docxBuilder.Writeln("This is content from the DOCX document.");
+        docxDocument.Save(docxPath, SaveFormat.Docx);
 
-        // Create a sample ODT document
-        Document odt = new Document();
-        DocumentBuilder builderOdt = new DocumentBuilder(odt);
-        builderOdt.Writeln("This is content from the ODT document.");
-        odt.Save(odtPath, SaveFormat.Odt);
+        // Create an ODT document with sample content
+        Document odtDocument = new Document();
+        DocumentBuilder odtBuilder = new DocumentBuilder(odtDocument);
+        odtBuilder.Writeln("This is content from the ODT document.");
+        odtDocument.Save(odtPath, SaveFormat.Odt);
 
         // Load the created documents
-        Document mainDoc = new Document(docxPath);
-        Document odtDoc = new Document(odtPath);
+        Document destination = new Document(docxPath);
+        Document source = new Document(odtPath);
 
-        // Append ODT content to DOCX using KeepSourceFormatting
-        mainDoc.AppendDocument(odtDoc, ImportFormatMode.KeepSourceFormatting);
+        // Append the ODT document to the DOCX document, preserving source formatting
+        destination.AppendDocument(source, ImportFormatMode.KeepSourceFormatting);
 
         // Save the combined document as PDF
-        mainDoc.Save(pdfPath, SaveFormat.Pdf);
+        destination.Save(outputPdfPath, SaveFormat.Pdf);
 
-        // Validation: ensure PDF was created and contains content from both sources
-        if (!File.Exists(pdfPath))
-            throw new Exception("Merged PDF file was not created.");
+        // Validation: ensure the PDF file was created and is not empty
+        if (!File.Exists(outputPdfPath))
+        {
+            throw new FileNotFoundException("The combined PDF file was not created.", outputPdfPath);
+        }
 
-        FileInfo pdfInfo = new FileInfo(pdfPath);
+        FileInfo pdfInfo = new FileInfo(outputPdfPath);
         if (pdfInfo.Length == 0)
-            throw new Exception("Merged PDF file is empty.");
+        {
+            throw new InvalidOperationException("The combined PDF file is empty.");
+        }
 
-        if (mainDoc.Sections.Count < 2)
-            throw new Exception("Merged document does not contain both source sections.");
-
-        // Optional: indicate success
-        Console.WriteLine("Documents merged successfully into PDF at: " + pdfPath);
+        // Optional: output a simple confirmation (no interactive input)
+        Console.WriteLine($"Combined PDF created successfully at '{Path.GetFullPath(outputPdfPath)}'.");
     }
 }
