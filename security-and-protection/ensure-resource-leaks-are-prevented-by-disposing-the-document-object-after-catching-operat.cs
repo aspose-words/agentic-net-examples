@@ -1,40 +1,34 @@
 using System;
-using System.Threading;
 using Aspose.Words;
 
 public class Program
 {
     public static void Main()
     {
-        Document doc = null;
+        // Create a simple document in memory.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello, Aspose.Words!");
+
         try
         {
-            // Create a new document and add simple content.
-            doc = new Document();
-            var builder = new DocumentBuilder(doc);
-            builder.Writeln("Sample text.");
-
-            // Perform an operation that may be cancelled.
-            PerformCancellableOperation();
+            // Simulate an operation that may be cancelled.
+            // Here we directly throw the exception for demonstration.
+            throw new OperationCanceledException("The operation was cancelled.");
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException ex)
         {
             // Handle the cancellation.
-            Console.WriteLine("Operation was cancelled.");
+            Console.WriteLine($"Caught cancellation: {ex.Message}");
+            // No explicit Dispose needed for Document; rely on garbage collection.
         }
         finally
         {
-            // Aspose.Words.Document does not implement IDisposable, so no explicit Dispose is required.
-            // Setting the reference to null allows the garbage collector to reclaim the object.
+            // Ensure the document reference is cleared so it can be collected promptly.
             doc = null;
         }
 
+        // Optionally, you could perform other work here.
         Console.WriteLine("Program completed.");
-    }
-
-    private static void PerformCancellableOperation()
-    {
-        // Simulate a cancellation scenario.
-        throw new OperationCanceledException("Simulated cancellation.");
     }
 }

@@ -6,31 +6,19 @@ public class Program
 {
     public static async Task Main()
     {
-        // Create two independent cancellation token sources.
+        // First demonstration: cancel via the first source
         using var cts1 = new CancellationTokenSource();
         using var cts2 = new CancellationTokenSource();
-
-        // Create a linked token source that combines cts1 and cts2.
         using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cts1.Token, cts2.Token);
         CancellationToken linkedToken = linkedCts.Token;
 
-        // Start a long-running operation that observes the linked token.
         Task operation = LongRunningOperationAsync(linkedToken);
 
-        // Cancel the first source after 500 ms.
+        // Cancel cts1 after a short delay; this propagates to the linked token
         _ = Task.Run(async () =>
         {
             await Task.Delay(500);
-            Console.WriteLine("Cancelling first token source (cts1).");
             cts1.Cancel();
-        });
-
-        // Cancel the second source after 1000 ms (if not already cancelled).
-        _ = Task.Run(async () =>
-        {
-            await Task.Delay(1000);
-            Console.WriteLine("Cancelling second token source (cts2).");
-            cts2.Cancel();
         });
 
         try
@@ -39,22 +27,44 @@ public class Program
         }
         catch (OperationCanceledException)
         {
-            Console.WriteLine("Operation was cancelled via linked token.");
+            Console.WriteLine("Operation was cancelled via linked token (first source).");
         }
 
-        Console.WriteLine("Program completed.");
+        // Second demonstration: cancel via the second source
+        using var cts3 = new CancellationTokenSource();
+        using var cts4 = new CancellationTokenSource();
+        using var linkedCts2 = CancellationTokenSource.CreateLinkedTokenSource(cts3.Token, cts4.Token);
+        CancellationToken linkedToken2 = linkedCts2.Token;
+
+        Task operation2 = LongRunningOperationAsync(linkedToken2);
+
+        // Cancel cts4 after a short delay; this also propagates to the linked token
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(300);
+            cts4.Cancel();
+        });
+
+        try
+        {
+            await operation2;
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine("Operation was cancelled via linked token (second source).");
+        }
     }
 
     private static async Task LongRunningOperationAsync(CancellationToken token)
     {
-        Console.WriteLine("Long-running operation started.");
-        // Simulate work in a loop, checking for cancellation.
+        // Simulate work in steps, checking for cancellation
         for (int i = 0; i < 10; i++)
         {
             token.ThrowIfCancellationRequested();
             Console.WriteLine($"Working... step {i + 1}");
-            await Task.Delay(300, token); // Pass token to delay to observe cancellation promptly.
+            await Task.Delay(200, token);
         }
-        Console.WriteLine("Long-running operation completed successfully.");
+
+        Console.WriteLine("Operation completed successfully.");
     }
 }

@@ -10,11 +10,11 @@ product: Aspose.Words
 
 ## Purpose
 
-Provide concise, task-focused code snippets that enable developers to protect, unprotect, and safely load or save Word documents while handling cancellation without relying on undocumented or unavailable APIs.
+Provide an AI coding assistant with clear guidance to implement cancellation-aware document loading, saving, layout, field updates, and protection workflows while adhering to Aspose.Words 26.11.0's documented API surface.
 
 ## Non-negotiable conventions
 
-- Do not reference Aspose.Words members that are not present in version 26.10.0.
+- Do not reference members that are not present in Aspose.Words 26.11.0, such as LoadOptions.CancellationToken, Document.LoadAsync, or undocumented callback interfaces.
 - Bootstrap local sample inputs for existing-file, folder, stream, image, and data workflows.
 - Prefer simple, verifiable workflows over speculative formatting shortcuts.
 
@@ -26,7 +26,7 @@ Use the simplest workflow that satisfies the task.
 
 ## Validation priorities
 
-1. Confirm that the output file is created and that its protection status matches the requested ProtectionType.
+1. Prioritize confirming that the document was saved (or not saved) as intended and that any protection or cancellation behavior matches the token state.
 
 ## File-to-task reference
 
@@ -39,7 +39,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Attach a callback to DocumentLoadingArgs.ThrowIfCancellationRequested during loading to ensure proper response.
   - Workflow: security-workflow
   - Outputs: doc
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `use-token-throwifcancellationrequested-inside-a-field-update-loop-to-abort-long-running-op.cs`
   - Task: Use token.ThrowIfCancellationRequested inside a field update loop to abort long-running operations efficiently.
   - Workflow: security-workflow
@@ -79,7 +79,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Use token.IsCancellationRequested in a custom LINQ Reporting Engine query to abort large reports.
   - Workflow: security-workflow
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `wrap-a-batch-of-document-load-calls-in-a-foreach-loop-that-checks-token-cancellation-befor.cs`
   - Task: Wrap a batch of Document.Load calls in a foreach loop that checks token cancellation before each load.
   - Workflow: security-workflow
@@ -94,7 +94,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Integrate CancellationToken into a background worker that processes documents without blocking the UI.
   - Workflow: security-workflow
   - Outputs: doc
-  - Selected engine: mcp
+  - Selected engine: llm
 - `validate-that-long-running-field-updates-respect-the-token-by-inserting-periodic-cancellat.cs`
   - Task: Validate that long-running field updates respect the token by inserting periodic cancellation checks.
   - Workflow: security-workflow
@@ -119,7 +119,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Combine token monitoring with progress reporting to inform users when cancellation occurs during processing.
   - Workflow: security-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `implement-a-timeout-mechanism-that-triggers-cancellationtokensource-cancel-after-a-predefi.cs`
   - Task: Implement a timeout mechanism that triggers CancellationTokenSource.Cancel after a predefined duration automatically.
   - Workflow: security-workflow
@@ -129,7 +129,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Pass the token to DocumentBuilder operations to allow interruption while constructing complex documents.
   - Workflow: security-workflow
   - Outputs: doc
-  - Selected engine: mcp
+  - Selected engine: llm
 - `test-cancellation-behavior-by-simulating-user-aborts-during-document-layout-generation-in.cs`
   - Task: Test cancellation behavior by simulating user aborts during document layout generation in unit tests.
   - Workflow: security-workflow
@@ -184,34 +184,34 @@ Use the simplest workflow that satisfies the task.
 ## Common failure patterns and preferred agent fixes
 
 - **Unsupported API invention**
-  - Symptom: Compilation fails because members such as LoadOptions.LoadingCallback, Document.LoadAsync, or Document.Dispose are not defined.
-  - Root cause: The code references APIs that do not exist in the shipped Aspose.Words package.
-  - Preferred fix: Replace invented members with the documented Document constructor, LoadOptions, and explicit token-aware wrappers using Task.Run.
-  - Prevention: Consult the official Aspose.Words 26.10.0 reference and limit code to APIs listed in the key_apis set.
-
-- **Missing CancellationToken support**
-  - Symptom: Build errors occur when passing a CancellationToken directly to Document.Load or Document.Save, and runtime checks cannot locate cancellation callbacks.
-  - Root cause: Aspose.Words does not expose overloads that accept a CancellationToken in this version.
-  - Preferred fix: Wrap the load or save call inside Task.Run and invoke token.ThrowIfCancellationRequested before and after the operation.
-  - Prevention: Design cancellation logic around token checks surrounding synchronous Aspose.Words calls rather than expecting built-in overloads.
+  - Symptom: Compilation fails because the code references members such as LoadOptions.CancellationToken or Document.LoadAsync that do not exist in the referenced package.
+  - Root cause: The author assumed newer or custom APIs that are not part of Aspose.Words 26.11.0.
+  - Preferred fix: Replace the invented members with the documented constructors and methods, performing explicit token checks before calling the supported overloads.
+  - Prevention: Consult the official Aspose.Words 26.11.0 reference and limit code to the APIs listed in the key_apis set.
 
 - **Missing local bootstrap inputs**
-  - Symptom: Code assumes that source documents, templates, or image files already exist, leading to FileNotFound exceptions or invalid test results.
-  - Root cause: Samples do not create the required files before processing.
-  - Preferred fix: Generate deterministic sample documents, templates, or images at the start of each example and clean them up afterward.
-  - Prevention: Always include a self-contained setup block that creates any files the task needs.
+  - Symptom: Build succeeds but runtime errors occur because the sample expects external files, folders, or streams that were never created.
+  - Root cause: The example relied on pre-existing resources instead of generating deterministic test inputs.
+  - Preferred fix: Create temporary documents, directories, or streams within the sample before loading or processing them.
+  - Prevention: Always include deterministic bootstrap code that establishes required inputs in the same method.
+
+- **Over-broad validation**
+  - Symptom: The program throws exceptions while checking node types or fields unrelated to the requested protection or cancellation scenario.
+  - Root cause: The validation logic inspects the entire document tree instead of the specific outcome being demonstrated.
+  - Preferred fix: Validate only the presence of the output file and, when relevant, the ProtectionType or password state.
+  - Prevention: Keep validation narrow and task-specific as described in the core_rules.
 
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Primary package: `Aspose.Words` `26.10.0`
+- Primary package: `Aspose.Words` `26.11.0`
 
 ## Command reference
 
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.10.0
+dotnet add package Aspose.Words --version 26.11.0
 ```
 
 ```powershell
@@ -225,4 +225,4 @@ dotnet run --configuration Release --no-build
 
 ## Category update guidance
 
-- Update the examples whenever a new Aspose.Words version adds native CancellationToken overloads to simplify the wrappers.
+- Update examples whenever a new Aspose.Words version adds native cancellation support, and revise the token-checking pattern to use any newly introduced overloads.

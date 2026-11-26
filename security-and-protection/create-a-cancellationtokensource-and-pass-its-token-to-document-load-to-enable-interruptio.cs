@@ -8,45 +8,41 @@ public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create a simple source document and save it locally.
-        // -----------------------------------------------------------------
-        const string sourcePath = "source.docx";
+        // Create a temporary DOCX file to work with.
+        string filePath = Path.Combine(Path.GetTempPath(), "Sample.docx");
+        Document doc = new Document();          // empty document
+        doc.Save(filePath);                     // save it so we have something to load later
 
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello, Aspose.Words!");
-        doc.Save(sourcePath);
+        // Create a CancellationTokenSource and cancel it immediately.
+        using (CancellationTokenSource cts = new CancellationTokenSource())
+        {
+            cts.Cancel(); // request cancellation before the load starts
 
-        // -----------------------------------------------------------------
-        // 2. Prepare a CancellationTokenSource.
-        //    (The current Aspose.Words API does not expose a Load method
-        //     that accepts a CancellationToken, so we create the token
-        //     but load the document using the standard constructor.)
-        // -----------------------------------------------------------------
-        using var cts = new CancellationTokenSource();
+            // Prepare load options (no special settings needed for this example).
+            LoadOptions loadOptions = new LoadOptions();
 
-        // -----------------------------------------------------------------
-        // 3. Load the document with LoadOptions.
-        // -----------------------------------------------------------------
-        var loadOptions = new LoadOptions(); // No special options needed.
-        // The token is not used because the API version does not support it.
-        // If a future version adds overload Document.Load(string, LoadOptions, CancellationToken),
-        // the token can be passed there.
-        Document loadedDoc = new Document(sourcePath, loadOptions);
+            try
+            {
+                // Manually respect the cancellation token before invoking the load operation.
+                // Aspose.Words does not expose a Load overload that accepts a token in this version,
+                // so we check the token ourselves and throw if cancellation was requested.
+                if (cts.Token.IsCancellationRequested)
+                    throw new OperationCanceledException(cts.Token);
 
-        // -----------------------------------------------------------------
-        // 4. Save the loaded document to verify that loading succeeded.
-        // -----------------------------------------------------------------
-        const string outputPath = "loaded.docx";
-        loadedDoc.Save(outputPath);
+                // Load the document normally.
+                Document loadedDoc = new Document(filePath, loadOptions);
+                Console.WriteLine("Document loaded successfully (unexpected).");
+            }
+            catch (OperationCanceledException)
+            {
+                Console.WriteLine("Document loading was cancelled as expected.");
+            }
+        }
 
-        // -----------------------------------------------------------------
-        // 5. Validate that the output file was created.
-        // -----------------------------------------------------------------
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The document was not saved as expected.");
-
-        Console.WriteLine("Document loaded and saved successfully.");
+        // Clean up the temporary file.
+        if (File.Exists(filePath))
+        {
+            File.Delete(filePath);
+        }
     }
 }

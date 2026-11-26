@@ -1,32 +1,56 @@
 using System;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using Aspose.Words;
+using Aspose.Words.Loading;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a simple document in memory.
+        // Paths for the sample documents.
+        const string sourcePath = "Sample.docx";
+        const string protectedPath = "Protected.docx";
+
+        // Create a simple document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello, Aspose.Words!");
+        builder.Writeln("Hello World");
+        doc.Save(sourcePath);
 
-        // Use CancellationTokenSource to represent a cancellable operation.
-        // The using statement guarantees disposal after the operation completes.
+        // Apply read‑only protection with a password.
+        doc.Protect(ProtectionType.ReadOnly, "myPassword");
+        doc.Save(protectedPath);
+
+        // Verify that the protected file was created.
+        if (!File.Exists(protectedPath))
+            throw new FileNotFoundException("Protected document was not saved.", protectedPath);
+
+        // Use a CancellationTokenSource to load the protected document.
         using (CancellationTokenSource cts = new CancellationTokenSource())
         {
-            // Perform the document save operation.
-            // Aspose.Words does not require the token for Save, but the token source
-            // is kept to illustrate proper disposal after processing.
-            doc.Save("output.docx");
-            // No cancellation is requested; the operation finishes normally.
-        } // cts is disposed here, freeing system resources.
+            CancellationToken token = cts.Token;
 
-        // Validate that the output file was created.
-        if (!File.Exists("output.docx"))
-            throw new Exception("The document was not saved as expected.");
+            // Load the protected document in a separate task, respecting the token.
+            Task loadTask = Task.Run(() =>
+            {
+                // LoadOptions with the password required to open the protected file.
+                LoadOptions loadOptions = new LoadOptions { Password = "myPassword" };
+                Document loadedDoc = new Document(protectedPath, loadOptions);
 
-        // Clean up the generated file.
-        File.Delete("output.docx");
+                // Simple validation: the document should contain the original text.
+                if (!loadedDoc.GetText().Contains("Hello World"))
+                    throw new InvalidOperationException("Loaded document content is unexpected.");
+            }, token);
+
+            // Wait for the task to complete.
+            loadTask.Wait();
+        }
+
+        // At this point the CancellationTokenSource has been disposed,
+        // freeing any associated system resources.
+        Console.WriteLine("Document processed and CancellationTokenSource disposed successfully.");
     }
 }
