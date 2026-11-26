@@ -1,139 +1,137 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
-using Aspose.Drawing.Drawing2D;
 
-public class ImageGalleryGenerator
+namespace ImageGalleryExample
 {
-    public static void Main()
+    public class Program
     {
-        // Define file and folder names.
-        string sampleImagePath = "sample.png";
-        string documentPath = "sample.docx";
-        string imagesFolder = "extracted_images";
-        string htmlPath = "gallery.html";
-
-        // Ensure a clean environment.
-        if (File.Exists(sampleImagePath)) File.Delete(sampleImagePath);
-        if (File.Exists(documentPath)) File.Delete(documentPath);
-        if (File.Exists(htmlPath)) File.Delete(htmlPath);
-        if (Directory.Exists(imagesFolder)) Directory.Delete(imagesFolder, true);
-        Directory.CreateDirectory(imagesFolder);
-
-        // -------------------------------------------------
-        // Create a deterministic sample image using Aspose.Drawing.
-        // -------------------------------------------------
-        int imgWidth = 200;
-        int imgHeight = 200;
-        using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
+        public static void Main()
         {
-            using (Graphics g = Graphics.FromImage(bitmap))
+            // Step 1: Create a deterministic sample image (input.png)
+            const string sampleImagePath = "input.png";
+            CreateSampleImage(sampleImagePath);
+
+            // Step 2: Create a Word document and insert the sample image multiple times
+            const string docPath = "sample.docx";
+            CreateWordDocumentWithImages(docPath, sampleImagePath);
+
+            // Step 3: Load the Word document
+            Document doc = new Document(docPath);
+
+            // Step 4: Extract images from the document
+            List<string> extractedImages = ExtractImagesFromDocument(doc);
+
+            // Validate that at least one image was extracted
+            if (extractedImages.Count == 0)
+                throw new InvalidOperationException("No images were extracted from the document.");
+
+            // Step 5: Generate an HTML gallery page with Lightbox support
+            const string htmlPath = "gallery.html";
+            GenerateHtmlGallery(htmlPath, extractedImages);
+
+            // Validate that the HTML file was created
+            if (!File.Exists(htmlPath))
+                throw new InvalidOperationException("Failed to create the HTML gallery page.");
+        }
+
+        private static void CreateSampleImage(string path)
+        {
+            // Create a 200x200 white bitmap and draw a simple rectangle
+            using (Bitmap bitmap = new Bitmap(200, 200))
             {
-                // Fill background with white.
-                g.Clear(Color.White);
-                // Draw a simple red rectangle.
-                using (Pen pen = new Pen(Color.Red, 5))
+                using (Graphics graphics = Graphics.FromImage(bitmap))
                 {
-                    g.DrawRectangle(pen, 10, 10, imgWidth - 20, imgHeight - 20);
+                    graphics.Clear(Color.White);
+                    // Draw a blue rectangle
+                    using (var pen = new Aspose.Drawing.Pen(Color.Blue, 5))
+                    {
+                        graphics.DrawRectangle(pen, 25, 25, 150, 150);
+                    }
+                }
+                bitmap.Save(path);
+            }
+
+            // Ensure the image file exists
+            if (!File.Exists(path))
+                throw new InvalidOperationException($"Failed to create sample image at '{path}'.");
+        }
+
+        private static void CreateWordDocumentWithImages(string docPath, string imagePath)
+        {
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Insert the image three times
+            for (int i = 0; i < 3; i++)
+            {
+                builder.InsertParagraph();
+                builder.InsertImage(imagePath);
+            }
+
+            doc.Save(docPath);
+
+            // Ensure the document file exists
+            if (!File.Exists(docPath))
+                throw new InvalidOperationException($"Failed to create Word document at '{docPath}'.");
+        }
+
+        private static List<string> ExtractImagesFromDocument(Document doc)
+        {
+            List<string> imagePaths = new List<string>();
+            NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+            int index = 1;
+
+            foreach (Shape shape in shapes)
+            {
+                if (shape.HasImage)
+                {
+                    string imageFileName = $"image{index}.png";
+                    shape.ImageData.Save(imageFileName);
+                    imagePaths.Add(imageFileName);
+                    index++;
                 }
             }
-            // Save the image to a deterministic file.
-            bitmap.Save(sampleImagePath, ImageFormat.Png);
+
+            return imagePaths;
         }
 
-        // -------------------------------------------------
-        // Create a Word document and insert the sample image multiple times.
-        // -------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        // Insert three images.
-        for (int i = 0; i < 3; i++)
+        private static void GenerateHtmlGallery(string htmlPath, List<string> imageFiles)
         {
-            builder.InsertParagraph();
-            builder.InsertImage(sampleImagePath);
-        }
-        // Save the document.
-        doc.Save(documentPath);
+            StringBuilder sb = new StringBuilder();
 
-        // -------------------------------------------------
-        // Load the document (simulating a separate load step).
-        // -------------------------------------------------
-        Document loadedDoc = new Document(documentPath);
+            sb.AppendLine("<!DOCTYPE html>");
+            sb.AppendLine("<html lang=\"en\">");
+            sb.AppendLine("<head>");
+            sb.AppendLine("    <meta charset=\"UTF-8\">");
+            sb.AppendLine("    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">");
+            sb.AppendLine("    <title>Image Gallery</title>");
+            sb.AppendLine("    <link href=\"https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css\" rel=\"stylesheet\" />");
+            sb.AppendLine("</head>");
+            sb.AppendLine("<body>");
+            sb.AppendLine("    <h1>Extracted Images Gallery</h1>");
+            sb.AppendLine("    <div>");
 
-        // -------------------------------------------------
-        // Extract images from the document.
-        // -------------------------------------------------
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int imageIndex = 0;
-        foreach (Shape shape in shapeNodes)
-        {
-            if (shape.HasImage)
+            foreach (string img in imageFiles)
             {
-                string outImagePath = Path.Combine(imagesFolder, $"image{imageIndex}.png");
-                shape.ImageData.Save(outImagePath);
-                imageIndex++;
-            }
-        }
-
-        // Validate that at least one image was extracted.
-        if (imageIndex == 0)
-            throw new InvalidOperationException("No images were extracted from the document.");
-
-        // -------------------------------------------------
-        // Generate a simple HTML gallery with lightbox support.
-        // -------------------------------------------------
-        using (StreamWriter writer = new StreamWriter(htmlPath))
-        {
-            writer.WriteLine("<!DOCTYPE html>");
-            writer.WriteLine("<html lang=\"en\">");
-            writer.WriteLine("<head>");
-            writer.WriteLine("    <meta charset=\"UTF-8\">");
-            writer.WriteLine("    <title>Image Gallery</title>");
-            writer.WriteLine("    <style>");
-            writer.WriteLine("        body { font-family: Arial, sans-serif; margin: 0; padding: 0; }");
-            writer.WriteLine("        .gallery { display: flex; flex-wrap: wrap; padding: 10px; }");
-            writer.WriteLine("        .gallery img { margin: 5px; width: 150px; cursor: pointer; border: 2px solid #ccc; }");
-            writer.WriteLine("        #lightboxOverlay {");
-            writer.WriteLine("            position: fixed; top: 0; left: 0; width: 100%; height: 100%;");
-            writer.WriteLine("            background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center;");
-            writer.WriteLine("        }");
-            writer.WriteLine("        #lightboxOverlay img { max-width: 90%; max-height: 90%; }");
-            writer.WriteLine("    </style>");
-            writer.WriteLine("    <script>");
-            writer.WriteLine("        function openLightbox(src) {");
-            writer.WriteLine("            var overlay = document.getElementById('lightboxOverlay');");
-            writer.WriteLine("            var img = overlay.querySelector('img');");
-            writer.WriteLine("            img.src = src;");
-            writer.WriteLine("            overlay.style.display = 'flex';");
-            writer.WriteLine("        }");
-            writer.WriteLine("        function closeLightbox() {");
-            writer.WriteLine("            document.getElementById('lightboxOverlay').style.display = 'none';");
-            writer.WriteLine("        }");
-            writer.WriteLine("    </script>");
-            writer.WriteLine("</head>");
-            writer.WriteLine("<body>");
-            writer.WriteLine("    <div class=\"gallery\">");
-
-            // Add each extracted image to the gallery.
-            for (int i = 0; i < imageIndex; i++)
-            {
-                string relPath = Path.Combine(imagesFolder, $"image{i}.png").Replace("\\", "/");
-                writer.WriteLine($"        <img src=\"{relPath}\" onclick=\"openLightbox('{relPath}')\" alt=\"Image {i}\">");
+                // Use the same image for thumbnail; style limits size
+                sb.AppendLine($"        <a href=\"{img}\" data-lightbox=\"gallery\"><img src=\"{img}\" style=\"width:200px;height:auto;margin:5px;\" /></a>");
             }
 
-            writer.WriteLine("    </div>");
-            writer.WriteLine("    <div id=\"lightboxOverlay\" onclick=\"closeLightbox()\">");
-            writer.WriteLine("        <img src=\"\" alt=\"Lightbox Image\">");
-            writer.WriteLine("    </div>");
-            writer.WriteLine("</body>");
-            writer.WriteLine("</html>");
-        }
+            sb.AppendLine("    </div>");
+            sb.AppendLine("    <script src=\"https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox-plus-jquery.min.js\"></script>");
+            sb.AppendLine("</body>");
+            sb.AppendLine("</html>");
 
-        // Validate that the HTML file was created.
-        if (!File.Exists(htmlPath))
-            throw new InvalidOperationException("Failed to create the HTML gallery page.");
+            File.WriteAllText(htmlPath, sb.ToString());
+
+            // Ensure the HTML file exists
+            if (!File.Exists(htmlPath))
+                throw new InvalidOperationException($"Failed to write HTML gallery to '{htmlPath}'.");
+        }
     }
 }

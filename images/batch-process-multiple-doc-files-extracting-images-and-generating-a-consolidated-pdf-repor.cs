@@ -3,6 +3,7 @@ using System.IO;
 using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Tables;
 using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
@@ -14,42 +15,43 @@ public class Program
         // Define folders
         string baseDir = Directory.GetCurrentDirectory();
         string inputFolder = Path.Combine(baseDir, "InputDocs");
-        string extractedFolder = Path.Combine(baseDir, "ExtractedImages");
         string outputFolder = Path.Combine(baseDir, "Output");
+        string extractedImagesFolder = Path.Combine(outputFolder, "ExtractedImages");
 
         // Ensure folders exist
         Directory.CreateDirectory(inputFolder);
-        Directory.CreateDirectory(extractedFolder);
         Directory.CreateDirectory(outputFolder);
+        Directory.CreateDirectory(extractedImagesFolder);
 
-        // Create sample images that will be inserted into the DOC files
-        string sampleImagePath1 = Path.Combine(baseDir, "sample1.png");
-        string sampleImagePath2 = Path.Combine(baseDir, "sample2.png");
-        CreateSampleImage(sampleImagePath1, 200, 150, Aspose.Drawing.Color.LightBlue, "Img1");
-        CreateSampleImage(sampleImagePath2, 250, 180, Aspose.Drawing.Color.LightGreen, "Img2");
+        // Create a deterministic sample image (input.png)
+        string sampleImagePath = Path.Combine(baseDir, "input.png");
+        CreateSampleImage(sampleImagePath, 200, 200, Aspose.Drawing.Color.LightBlue, "Sample");
 
-        // Create sample DOCX files containing the images
-        CreateSampleDocument(Path.Combine(inputFolder, "Doc1.docx"), new[] { sampleImagePath1, sampleImagePath2 });
-        CreateSampleDocument(Path.Combine(inputFolder, "Doc2.docx"), new[] { sampleImagePath2 });
+        // Create sample DOCX files with the image inserted
+        int docCount = 2;
+        for (int i = 1; i <= docCount; i++)
+        {
+            string docPath = Path.Combine(inputFolder, $"Doc{i}.docx");
+            CreateSampleDocumentWithImage(docPath, sampleImagePath, $"Document {i}");
+        }
 
         // List to hold paths of all extracted images
         List<string> extractedImagePaths = new List<string>();
 
-        // Process each DOCX file in the input folder
-        foreach (string docPath in Directory.GetFiles(inputFolder, "*.docx"))
+        // Process each DOCX file: extract images
+        foreach (string docFile in Directory.GetFiles(inputFolder, "*.docx"))
         {
-            Document doc = new Document(docPath);
-            NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+            Document doc = new Document(docFile);
+            NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
             int imageIndex = 0;
-
-            foreach (Shape shape in shapeNodes)
+            foreach (Shape shape in shapes)
             {
                 if (shape.HasImage)
                 {
-                    string imageFileName = $"{Path.GetFileNameWithoutExtension(docPath)}_Image{imageIndex}.png";
-                    string imageFullPath = Path.Combine(extractedFolder, imageFileName);
-                    shape.ImageData.Save(imageFullPath);
-                    extractedImagePaths.Add(imageFullPath);
+                    string imageFileName = $"{Path.GetFileNameWithoutExtension(docFile)}_image{imageIndex}.png";
+                    string imagePath = Path.Combine(extractedImagesFolder, imageFileName);
+                    shape.ImageData.Save(imagePath);
+                    extractedImagePaths.Add(imagePath);
                     imageIndex++;
                 }
             }
@@ -60,64 +62,55 @@ public class Program
             throw new InvalidOperationException("No images were extracted from the DOC files.");
 
         // Create a consolidated PDF report containing all extracted images
-        Document reportDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(reportDoc);
+        Document pdfReport = new Document();
+        DocumentBuilder builder = new DocumentBuilder(pdfReport);
 
         for (int i = 0; i < extractedImagePaths.Count; i++)
         {
-            string imgPath = extractedImagePaths[i];
-            // Insert image
-            builder.InsertImage(imgPath);
-            // Add a page break after each image except the last one
-            if (i < extractedImagePaths.Count - 1)
+            if (i > 0)
                 builder.InsertBreak(BreakType.PageBreak);
+
+            builder.Writeln($"Image {i + 1}");
+            builder.InsertImage(extractedImagePaths[i]);
         }
 
-        // Save the PDF report
-        string pdfReportPath = Path.Combine(outputFolder, "ConsolidatedReport.pdf");
-        reportDoc.Save(pdfReportPath, SaveFormat.Pdf);
+        string pdfPath = Path.Combine(outputFolder, "Report.pdf");
+        pdfReport.Save(pdfPath, SaveFormat.Pdf);
 
-        // Validate that the PDF was created
-        if (!File.Exists(pdfReportPath))
+        // Validate PDF creation
+        if (!File.Exists(pdfPath))
             throw new InvalidOperationException("Failed to create the consolidated PDF report.");
+
+        // Optional: write simple console output (no waiting)
+        Console.WriteLine($"Extracted {extractedImagePaths.Count} images and generated PDF report at: {pdfPath}");
     }
 
-    // Helper method to create a deterministic sample PNG image
+    // Creates a deterministic PNG image with solid background and optional text
     private static void CreateSampleImage(string filePath, int width, int height, Aspose.Drawing.Color backColor, string text)
     {
-        // Create bitmap
-        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
+        using (Bitmap bitmap = new Bitmap(width, height))
         {
-            // Create graphics from bitmap
-            using (Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap))
+            using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                // Fill background
                 graphics.Clear(backColor);
-                // Draw simple text to identify the image
+                // Simple text drawing (optional)
                 using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 20))
                 {
                     graphics.DrawString(text, font, new SolidBrush(Aspose.Drawing.Color.Black), new PointF(10, height / 2 - 10));
                 }
-                // No explicit Flush needed; disposing will commit drawing operations
             }
-            // Save bitmap as PNG
             bitmap.Save(filePath, ImageFormat.Png);
         }
     }
 
-    // Helper method to create a DOCX file and insert provided images
-    private static void CreateSampleDocument(string docPath, string[] imagePaths)
+    // Creates a DOCX file with a paragraph and inserts the provided image
+    private static void CreateSampleDocumentWithImage(string docPath, string imagePath, string title)
     {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        foreach (string imgPath in imagePaths)
-        {
-            // Ensure the image file exists before insertion
-            if (!File.Exists(imgPath))
-                throw new FileNotFoundException($"Image file not found: {imgPath}");
-            builder.InsertImage(imgPath);
-            builder.Writeln(); // Add a line break between images
-        }
+        builder.Writeln(title);
+        builder.InsertParagraph();
+        builder.InsertImage(imagePath);
         doc.Save(docPath);
     }
 }

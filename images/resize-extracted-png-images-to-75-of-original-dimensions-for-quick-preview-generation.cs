@@ -8,77 +8,89 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a deterministic sample PNG image.
-        const string sampleImagePath = "sample.png";
+        // Step 1: Create a sample PNG image.
+        const string inputImagePath = "input.png";
         const int originalWidth = 200;
         const int originalHeight = 200;
 
-        using (Bitmap bitmap = new Bitmap(originalWidth, originalHeight))
+        // Create bitmap using Aspose.Drawing.
+        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(originalWidth, originalHeight))
         {
-            using (Graphics g = Graphics.FromImage(bitmap))
+            // Draw deterministic content.
+            using (Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap))
             {
-                g.Clear(Color.White);
-                // Draw a simple red rectangle for visual distinction.
-                g.FillRectangle(new SolidBrush(Color.Red), 20, 20, 160, 160);
+                graphics.Clear(Aspose.Drawing.Color.White);
+                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Black))
+                {
+                    graphics.DrawRectangle(pen, 20, 20, 160, 160);
+                }
             }
-            bitmap.Save(sampleImagePath);
+
+            // Save the sample image.
+            bitmap.Save(inputImagePath);
         }
 
-        // Step 2: Create a Word document and insert the sample image.
+        // Verify the sample image was created.
+        if (!File.Exists(inputImagePath))
+            throw new Exception("Failed to create the sample PNG image.");
+
+        // Step 2: Create a Word document and insert the PNG image.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(sampleImagePath);
+        builder.InsertImage(inputImagePath);
         const string docPath = "sample.docx";
         doc.Save(docPath);
 
-        // Step 3: Load the document (already in memory) and extract PNG images.
+        // Verify the document was saved.
+        if (!File.Exists(docPath))
+            throw new Exception("Failed to save the sample document.");
+
+        // Step 3: Extract PNG images from the document, resize them to 75%, and save previews.
         NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
         int previewIndex = 0;
+
         foreach (Shape shape in shapeNodes)
         {
             if (!shape.HasImage)
                 continue;
 
-            // Process only PNG images.
-            if (shape.ImageData.ImageType != ImageType.Png)
-                continue;
-
             // Save the original image to a memory stream.
-            using (MemoryStream imageStream = new MemoryStream())
+            using (MemoryStream originalStream = new MemoryStream())
             {
-                shape.ImageData.Save(imageStream);
-                imageStream.Position = 0; // Reset before reading.
+                shape.ImageData.Save(originalStream);
+                originalStream.Position = 0;
 
                 // Load the image using Aspose.Drawing.
-                using (Bitmap originalBitmap = new Bitmap(imageStream))
+                using (Aspose.Drawing.Bitmap originalBitmap = new Aspose.Drawing.Bitmap(originalStream))
                 {
-                    // Calculate 75% dimensions.
-                    int newWidth = (int)(originalBitmap.Width * 0.75);
-                    int newHeight = (int)(originalBitmap.Height * 0.75);
+                    int previewWidth = (int)(originalBitmap.Width * 0.75);
+                    int previewHeight = (int)(originalBitmap.Height * 0.75);
 
-                    // Create a resized bitmap.
-                    using (Bitmap resizedBitmap = new Bitmap(newWidth, newHeight))
+                    // Create a new bitmap for the resized preview.
+                    using (Aspose.Drawing.Bitmap previewBitmap = new Aspose.Drawing.Bitmap(previewWidth, previewHeight))
                     {
-                        using (Graphics graphics = Graphics.FromImage(resizedBitmap))
+                        using (Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(previewBitmap))
                         {
-                            graphics.DrawImage(originalBitmap, 0, 0, newWidth, newHeight);
+                            graphics.Clear(Aspose.Drawing.Color.White);
+                            graphics.DrawImage(originalBitmap, 0, 0, previewWidth, previewHeight);
                         }
 
-                        // Save the preview image.
                         string previewPath = $"preview-{previewIndex}.png";
-                        resizedBitmap.Save(previewPath);
+                        previewBitmap.Save(previewPath);
                         previewIndex++;
+
+                        // Validate that the preview file was created.
+                        if (!File.Exists(previewPath))
+                            throw new Exception($"Failed to save preview image '{previewPath}'.");
                     }
                 }
             }
         }
 
-        // Validation: ensure at least one preview image was generated.
+        // Ensure at least one preview was generated.
         if (previewIndex == 0)
-            throw new Exception("No PNG images were extracted and resized.");
+            throw new Exception("No images were extracted and resized from the document.");
 
-        // Optional: clean up sample files (comment out if inspection is needed).
-        // File.Delete(sampleImagePath);
-        // File.Delete(docPath);
+        Console.WriteLine("Image preview generation completed successfully.");
     }
 }

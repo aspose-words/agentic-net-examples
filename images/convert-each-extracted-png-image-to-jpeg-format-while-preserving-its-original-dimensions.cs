@@ -9,85 +9,68 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample PNG image.
-        const string pngPath = "sample.png";
-        CreateSamplePng(pngPath);
+        // Create sample PNG images.
+        CreateSamplePng("image1.png", 200, 150, Aspose.Drawing.Color.LightBlue);
+        CreateSamplePng("image2.png", 300, 100, Aspose.Drawing.Color.LightGreen);
 
-        // Create a Word document and insert the PNG image.
-        const string docPath = "DocumentWithImages.docx";
-        CreateDocumentWithImage(docPath, pngPath);
-
-        // Load the document, extract PNG images, and convert each to JPEG.
-        ConvertPngImagesToJpeg(docPath);
-    }
-
-    private static void CreateSamplePng(string path)
-    {
-        const int width = 200;
-        const int height = 100;
-
-        using (Bitmap bitmap = new Bitmap(width, height))
-        {
-            using (Graphics graphics = Graphics.FromImage(bitmap))
-            {
-                graphics.Clear(Color.White);
-                using (Pen pen = new Pen(Color.Blue, 3))
-                {
-                    graphics.DrawRectangle(pen, 10, 10, width - 20, height - 20);
-                }
-            }
-
-            bitmap.Save(path, ImageFormat.Png);
-        }
-
-        if (!File.Exists(path))
-            throw new Exception($"Failed to create PNG image at '{path}'.");
-    }
-
-    private static void CreateDocumentWithImage(string docPath, string imagePath)
-    {
+        // Create a new document and insert the PNG images.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(imagePath);
-        doc.Save(docPath);
+        builder.InsertImage("image1.png");
+        builder.Writeln(); // separate images
+        builder.InsertImage("image2.png");
+        doc.Save("DocumentWithImages.docx");
 
-        if (!File.Exists(docPath))
-            throw new Exception($"Failed to save document at '{docPath}'.");
-    }
+        // Load the document (optional, we already have it).
+        Document loadedDoc = new Document("DocumentWithImages.docx");
 
-    private static void ConvertPngImagesToJpeg(string docPath)
-    {
-        Document doc = new Document(docPath);
-        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-        int imageIndex = 0;
-
-        foreach (Shape shape in shapeNodes)
+        // Extract PNG images and convert each to JPEG.
+        NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        int jpegIndex = 1;
+        foreach (Shape shape in shapes)
         {
-            if (!shape.HasImage)
-                continue;
-
-            if (shape.ImageData.ImageType != ImageType.Png)
-                continue;
-
-            byte[] imageBytes = shape.ImageData.ImageBytes;
-
-            using (MemoryStream ms = new MemoryStream(imageBytes))
+            if (shape.HasImage && shape.ImageData.ImageType == ImageType.Png)
             {
-                ms.Position = 0;
-                using (Bitmap bitmap = new Bitmap(ms))
-                {
-                    string jpegPath = $"extracted-{imageIndex}.jpg";
-                    bitmap.Save(jpegPath, ImageFormat.Jpeg);
+                // Get PNG image bytes.
+                byte[] pngBytes = shape.ImageData.ImageBytes;
 
-                    if (!File.Exists(jpegPath))
-                        throw new Exception($"Failed to save JPEG image at '{jpegPath}'.");
+                // Load PNG into Aspose.Drawing.Bitmap.
+                using (MemoryStream ms = new MemoryStream(pngBytes))
+                {
+                    ms.Position = 0;
+                    using (Bitmap bitmap = new Bitmap(ms))
+                    {
+                        // Save as JPEG preserving dimensions.
+                        string jpegPath = $"extracted-{jpegIndex}.jpg";
+                        bitmap.Save(jpegPath, ImageFormat.Jpeg);
+                        jpegIndex++;
+                    }
                 }
             }
-
-            imageIndex++;
         }
 
-        if (imageIndex == 0)
-            throw new Exception("No PNG images were found for conversion.");
+        // Validate that at least one JPEG was created.
+        if (jpegIndex == 1)
+            throw new InvalidOperationException("No PNG images were found to convert.");
+
+        // Optional: indicate completion.
+        Console.WriteLine("PNG to JPEG conversion completed.");
+    }
+
+    private static void CreateSamplePng(string filePath, int width, int height, Aspose.Drawing.Color backgroundColor)
+    {
+        using (Bitmap bitmap = new Bitmap(width, height))
+        {
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                g.Clear(backgroundColor);
+                // Draw a simple rectangle for visual distinction.
+                using (Pen pen = new Pen(Aspose.Drawing.Color.Black, 3))
+                {
+                    g.DrawRectangle(pen, 10, 10, width - 20, height - 20);
+                }
+            }
+            bitmap.Save(filePath, ImageFormat.Png);
+        }
     }
 }

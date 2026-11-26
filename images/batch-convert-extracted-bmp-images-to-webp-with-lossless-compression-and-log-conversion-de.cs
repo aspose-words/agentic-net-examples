@@ -1,149 +1,101 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
-using Newtonsoft.Json;
 
-public class BatchBmpToWebpConverter
+public class Program
 {
-    public class ConversionInfo
-    {
-        public string InputPath { get; set; }
-        public string OutputPath { get; set; }
-        public bool Success { get; set; }
-        public string Message { get; set; }
-    }
-
     public static void Main()
     {
         // Prepare folders
-        string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-        string originalBmpFolder = Path.Combine(baseDir, "OriginalBMP");
-        string extractedBmpFolder = Path.Combine(baseDir, "ExtractedBMP");
-        string outputWebpFolder = Path.Combine(baseDir, "OutputWebP");
-        Directory.CreateDirectory(originalBmpFolder);
-        Directory.CreateDirectory(extractedBmpFolder);
-        Directory.CreateDirectory(outputWebpFolder);
+        string baseDir = Directory.GetCurrentDirectory();
+        string inputFolder = Path.Combine(baseDir, "InputImages");
+        string outputFolder = Path.Combine(baseDir, "OutputImages");
+        Directory.CreateDirectory(inputFolder);
+        Directory.CreateDirectory(outputFolder);
 
         // Step 1: Create sample BMP images
-        CreateSampleBmpImages(originalBmpFolder, 3);
-
-        // Step 2: Insert BMP images into a Word document
-        string docPath = Path.Combine(baseDir, "SampleDocument.docx");
-        InsertImagesIntoWordDocument(originalBmpFolder, docPath);
-
-        // Step 3: Extract BMP images from the Word document
-        ExtractBmpImagesFromDocument(docPath, extractedBmpFolder);
-
-        // Step 4: Batch convert extracted BMP images to lossless PNG (as a safe alternative to WebP)
-        List<ConversionInfo> conversions = ConvertBmpToPng(extractedBmpFolder, outputWebpFolder);
-
-        // Log conversion details as JSON
-        string jsonLog = JsonConvert.SerializeObject(conversions, Formatting.Indented);
-        Console.WriteLine(jsonLog);
-
-        // Validation
-        if (conversions.Count == 0 || conversions.Exists(c => !c.Success))
+        List<string> sampleBmpPaths = new List<string>();
+        for (int i = 1; i <= 2; i++)
         {
-            throw new Exception("One or more BMP images failed to convert to PNG.");
-        }
-
-        // Ensure at least one output file exists
-        if (Directory.GetFiles(outputWebpFolder, "*.png").Length == 0)
-        {
-            throw new Exception("No PNG files were created.");
-        }
-    }
-
-    private static void CreateSampleBmpImages(string folder, int count)
-    {
-        for (int i = 1; i <= count; i++)
-        {
-            string filePath = Path.Combine(folder, $"image{i}.bmp");
-            using (Bitmap bitmap = new Bitmap(200, 200))
+            string bmpPath = Path.Combine(baseDir, $"sample{i}.bmp");
+            Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(200, 200);
+            Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap);
+            g.Clear(Aspose.Drawing.Color.White);
+            // Draw a simple rectangle with a different color per image
+            Aspose.Drawing.Color rectColor = i == 1 ? Aspose.Drawing.Color.Red : Aspose.Drawing.Color.Blue;
+            using (Aspose.Drawing.Brush brush = new Aspose.Drawing.SolidBrush(rectColor))
             {
-                using (Graphics g = Graphics.FromImage(bitmap))
-                {
-                    g.Clear(Aspose.Drawing.Color.White);
-                    using (SolidBrush brush = new SolidBrush(Aspose.Drawing.Color.FromArgb(50 * i, 100, 150)))
-                    {
-                        g.FillRectangle(brush, 20, 20, 160, 160);
-                    }
-                }
-                bitmap.Save(filePath, ImageFormat.Bmp);
+                g.FillRectangle(brush, 50, 50, 100, 100);
             }
-        }
-    }
+            // Save BMP
+            bitmap.Save(bmpPath, Aspose.Drawing.Imaging.ImageFormat.Bmp);
+            // Cleanup
+            g.Dispose();
+            bitmap.Dispose();
 
-    private static void InsertImagesIntoWordDocument(string imagesFolder, string docPath)
-    {
+            sampleBmpPaths.Add(bmpPath);
+        }
+
+        // Step 2: Create a Word document and insert the BMP images
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        string[] bmpFiles = Directory.GetFiles(imagesFolder, "*.bmp");
-        foreach (string bmpFile in bmpFiles)
+        foreach (string bmpPath in sampleBmpPaths)
         {
-            builder.InsertParagraph();
-            builder.InsertImage(bmpFile);
+            builder.InsertImage(bmpPath);
+            builder.Writeln(); // separate images
         }
-
+        string docPath = Path.Combine(baseDir, "sample.docx");
         doc.Save(docPath);
-    }
 
-    private static void ExtractBmpImagesFromDocument(string docPath, string outputFolder)
-    {
-        Document doc = new Document(docPath);
-        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-        int index = 1;
-        foreach (Shape shape in shapeNodes)
+        // Step 3: Load the document and extract embedded BMP images
+        Document loadedDoc = new Document(docPath);
+        NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        int extractedCount = 0;
+        foreach (Shape shape in shapes)
         {
             if (shape.HasImage)
             {
-                string outPath = Path.Combine(outputFolder, $"extracted-{index}.bmp");
-                shape.ImageData.Save(outPath);
-                index++;
+                string extractedPath = Path.Combine(inputFolder, $"extracted-{extractedCount + 1}.bmp");
+                shape.ImageData.Save(extractedPath);
+                extractedCount++;
             }
         }
 
-        if (index == 1)
-        {
-            throw new Exception("No images were extracted from the document.");
-        }
-    }
+        if (extractedCount == 0)
+            throw new InvalidOperationException("No images were extracted from the document.");
 
-    private static List<ConversionInfo> ConvertBmpToPng(string inputFolder, string outputFolder)
-    {
-        List<ConversionInfo> results = new List<ConversionInfo>();
+        // Step 4: Convert each extracted BMP to lossless PNG (as a safe alternative to WebP)
         string[] bmpFiles = Directory.GetFiles(inputFolder, "*.bmp");
-        foreach (string bmpPath in bmpFiles)
+        if (bmpFiles.Length == 0)
+            throw new InvalidOperationException("No BMP files found for conversion.");
+
+        int convertedCount = 0;
+        foreach (string bmpFile in bmpFiles)
         {
-            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(bmpPath);
-            string outPath = Path.Combine(outputFolder, $"{fileNameWithoutExt}.png");
-            ConversionInfo info = new ConversionInfo
+            using (Aspose.Drawing.Bitmap bmp = new Aspose.Drawing.Bitmap(bmpFile))
             {
-                InputPath = bmpPath,
-                OutputPath = outPath
-            };
-            try
-            {
-                using (Bitmap bitmap = new Bitmap(bmpPath))
-                {
-                    // Save as PNG (lossless) – a safe, widely supported format
-                    bitmap.Save(outPath, ImageFormat.Png);
-                }
-                info.Success = true;
-                info.Message = "Conversion succeeded.";
+                string pngFileName = Path.GetFileNameWithoutExtension(bmpFile) + ".png";
+                string pngPath = Path.Combine(outputFolder, pngFileName);
+
+                // Save as lossless PNG
+                bmp.Save(pngPath, Aspose.Drawing.Imaging.ImageFormat.Png);
+
+                // Log conversion details
+                FileInfo originalInfo = new FileInfo(bmpFile);
+                FileInfo pngInfo = new FileInfo(pngPath);
+                Console.WriteLine($"Converted '{originalInfo.Name}' ({originalInfo.Length} bytes) to '{pngInfo.Name}' ({pngInfo.Length} bytes) losslessly.");
+
+                convertedCount++;
             }
-            catch (Exception ex)
-            {
-                info.Success = false;
-                info.Message = $"Conversion failed: {ex.Message}";
-            }
-            results.Add(info);
         }
-        return results;
+
+        if (convertedCount == 0)
+            throw new InvalidOperationException("No images were converted to PNG.");
+
+        Console.WriteLine($"Batch conversion completed. {convertedCount} image(s) converted.");
     }
 }

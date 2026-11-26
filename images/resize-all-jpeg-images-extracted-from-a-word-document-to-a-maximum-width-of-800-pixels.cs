@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
@@ -7,123 +8,115 @@ using Aspose.Drawing.Imaging;
 
 public class Program
 {
-    public static void Main()
+    public static void Main(string[] args)
     {
-        // Create a sample JPEG image (1200x900) and save it as input.jpg
-        const string sampleImagePath = "input.jpg";
-        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(1200, 900))
+        // Create a sample JPEG image (1200x900) and save it locally.
+        const string sampleImagePath = "sample.jpg";
+        using (Bitmap bitmap = new Bitmap(1200, 900))
         {
-            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
+            using (Graphics g = Graphics.FromImage(bitmap))
             {
-                g.Clear(Aspose.Drawing.Color.White);
-                // Draw simple text onto the image
-                g.DrawString(
-                    "Sample JPEG",
-                    new Aspose.Drawing.Font("Arial", 48),
-                    new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Black),
-                    new Aspose.Drawing.PointF(100, 400));
+                g.Clear(Color.White);
+                // Draw a simple rectangle for visual distinction.
+                g.DrawRectangle(Pens.Black, 100, 100, 1000, 700);
             }
-            bitmap.Save(sampleImagePath, Aspose.Drawing.Imaging.ImageFormat.Jpeg);
+            bitmap.Save(sampleImagePath, ImageFormat.Jpeg);
         }
 
-        // Create a Word document and insert the sample JPEG image twice
-        const string docPath = "input.docx";
+        // Create a Word document and insert the sample JPEG image twice.
+        const string inputDocPath = "input.docx";
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(sampleImagePath);
-        builder.Writeln(); // add a line break
+        builder.Writeln(); // Add a line break.
         builder.InsertImage(sampleImagePath);
-        doc.Save(docPath);
+        doc.Save(inputDocPath);
 
-        // Load the document for processing
-        Document loadedDoc = new Document(docPath);
-
-        // Prepare output folder
-        const string outputFolder = "ResizedImages";
-        Directory.CreateDirectory(outputFolder);
-
-        // Counters for naming output files
-        int imageIndex = 0;
-        int resizedCount = 0;
-
-        // Iterate over all Shape nodes in the document
+        // Load the document for processing.
+        Document loadedDoc = new Document(inputDocPath);
         NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+
+        int resizedCount = 0;
+        int imageIndex = 0;
+
         foreach (Shape shape in shapes)
         {
             if (!shape.HasImage)
                 continue;
 
-            // Process only JPEG images
+            // Process only JPEG images.
             if (shape.ImageData.ImageType != ImageType.Jpeg)
                 continue;
 
-            // Extract the image to a memory stream
-            using (MemoryStream originalStream = new MemoryStream())
+            // Load the original image into a bitmap.
+            byte[] imageBytes = shape.ImageData.ImageBytes;
+            using (MemoryStream originalStream = new MemoryStream(imageBytes))
             {
-                shape.ImageData.Save(originalStream);
                 originalStream.Position = 0;
-
-                // Load the image using Aspose.Drawing
-                using (Aspose.Drawing.Bitmap originalBitmap = new Aspose.Drawing.Bitmap(originalStream))
+                using (Bitmap originalBitmap = new Bitmap(originalStream))
                 {
-                    int originalWidth = originalBitmap.Width;
-                    int originalHeight = originalBitmap.Height;
-
-                    // Determine if resizing is needed
-                    if (originalWidth <= 800)
+                    // Determine if resizing is needed.
+                    if (originalBitmap.Width <= 800)
                     {
-                        // No resizing required; just save the original image
-                        string unchangedPath = Path.Combine(outputFolder, $"image-{imageIndex}.jpg");
-                        originalBitmap.Save(unchangedPath, Aspose.Drawing.Imaging.ImageFormat.Jpeg);
+                        // No resizing required; still save a copy for validation.
+                        string unchangedPath = $"resized-{imageIndex}.jpg";
+                        originalBitmap.Save(unchangedPath, ImageFormat.Jpeg);
                         imageIndex++;
                         continue;
                     }
 
-                    // Calculate new dimensions while preserving aspect ratio
                     int newWidth = 800;
-                    int newHeight = (int)(originalHeight * (800.0 / originalWidth));
+                    int newHeight = (int)((double)originalBitmap.Height * newWidth / originalBitmap.Width);
 
-                    // Create a new bitmap with the target size
-                    using (Aspose.Drawing.Bitmap resizedBitmap = new Aspose.Drawing.Bitmap(newWidth, newHeight))
+                    // Create a resized bitmap.
+                    using (Bitmap resizedBitmap = new Bitmap(newWidth, newHeight))
                     {
-                        using (Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(resizedBitmap))
+                        using (Graphics g = Graphics.FromImage(resizedBitmap))
                         {
-                            graphics.Clear(Aspose.Drawing.Color.White);
-                            graphics.DrawImage(originalBitmap, 0, 0, newWidth, newHeight);
+                            g.DrawImage(originalBitmap, 0, 0, newWidth, newHeight);
                         }
 
-                        // Save the resized image to a file
-                        string resizedPath = Path.Combine(outputFolder, $"image-{imageIndex}.jpg");
-                        resizedBitmap.Save(resizedPath, Aspose.Drawing.Imaging.ImageFormat.Jpeg);
-                        resizedCount++;
+                        // Save resized image to a file for validation.
+                        string resizedPath = $"resized-{imageIndex}.jpg";
+                        resizedBitmap.Save(resizedPath, ImageFormat.Jpeg);
 
-                        // Replace the image in the document with the resized version
+                        // Replace the image in the document with the resized version.
                         using (MemoryStream resizedStream = new MemoryStream())
                         {
-                            resizedBitmap.Save(resizedStream, Aspose.Drawing.Imaging.ImageFormat.Jpeg);
+                            resizedBitmap.Save(resizedStream, ImageFormat.Jpeg);
                             resizedStream.Position = 0;
                             shape.ImageData.SetImage(resizedStream);
                         }
-                    }
 
-                    imageIndex++;
+                        resizedCount++;
+                        imageIndex++;
+                    }
                 }
             }
         }
 
-        // Save the modified document
+        // Save the modified document.
         const string outputDocPath = "output.docx";
         loadedDoc.Save(outputDocPath);
 
-        // Validation: ensure at least one image was resized
+        // Validation: ensure at least one resized image was produced.
         if (resizedCount == 0)
-            throw new InvalidOperationException("No JPEG images required resizing or were found.");
+        {
+            throw new InvalidOperationException("No JPEG images were resized.");
+        }
 
-        // Validation: ensure at least one resized file exists
-        string[] resizedFiles = Directory.GetFiles(outputFolder, "*.jpg");
+        // Validation: ensure the output files exist.
+        if (!File.Exists(outputDocPath))
+        {
+            throw new FileNotFoundException("The output document was not created.", outputDocPath);
+        }
+
+        string[] resizedFiles = Directory.GetFiles(Directory.GetCurrentDirectory(), "resized-*.jpg");
         if (resizedFiles.Length == 0)
+        {
             throw new InvalidOperationException("Resized image files were not created.");
+        }
 
-        // Program completed successfully
+        // Cleanup: optional removal of temporary files can be added here.
     }
 }

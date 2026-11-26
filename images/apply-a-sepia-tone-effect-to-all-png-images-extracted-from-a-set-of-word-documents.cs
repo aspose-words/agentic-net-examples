@@ -5,71 +5,72 @@ using Aspose.Words.Drawing;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
-public class Program
+public class SepiaImageProcessor
 {
     public static void Main()
     {
         // Prepare folders
-        string inputFolder = "InputDocs";
-        string outputFolder = "OutputImages";
+        string baseDir = Directory.GetCurrentDirectory();
+        string inputFolder = Path.Combine(baseDir, "InputDocs");
+        string outputFolder = Path.Combine(baseDir, "SepiaImages");
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
         // Create a sample PNG image
-        string sampleImagePath = "sample.png";
+        string sampleImagePath = Path.Combine(baseDir, "sample.png");
         CreateSamplePng(sampleImagePath);
 
         // Create sample Word documents containing the PNG image
-        CreateSampleDocument(Path.Combine(inputFolder, "Doc1.docx"), sampleImagePath);
-        CreateSampleDocument(Path.Combine(inputFolder, "Doc2.docx"), sampleImagePath);
+        for (int i = 1; i <= 2; i++)
+        {
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.InsertImage(sampleImagePath);
+            string docPath = Path.Combine(inputFolder, $"Doc{i}.docx");
+            doc.Save(docPath);
+        }
 
         // Process each document: extract PNG images, apply sepia, save result
-        int totalSepiaImages = 0;
-        foreach (string docPath in Directory.GetFiles(inputFolder, "*.docx"))
+        int extractedCount = 0;
+        foreach (string docFile in Directory.GetFiles(inputFolder, "*.docx"))
         {
-            Document doc = new Document(docPath);
+            Document doc = new Document(docFile);
             NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-            int imageIndex = 0;
+            int shapeIndex = 0;
 
             foreach (Shape shape in shapeNodes)
             {
-                if (!shape.HasImage)
-                    continue;
-
-                if (shape.ImageData.ImageType != ImageType.Png)
-                    continue;
-
-                // Save the original image to a memory stream
-                using (MemoryStream imageStream = new MemoryStream())
+                if (shape.HasImage)
                 {
-                    shape.ImageData.Save(imageStream);
-                    imageStream.Position = 0; // Reset before reading
-
-                    // Load bitmap from stream
-                    using (Bitmap bitmap = new Bitmap(imageStream))
+                    // Save the image to a memory stream
+                    using (MemoryStream ms = new MemoryStream())
                     {
-                        ApplySepiaTone(bitmap);
+                        shape.ImageData.Save(ms);
+                        ms.Position = 0; // Reset stream position
 
-                        // Save sepia image to output folder
-                        string outputPath = Path.Combine(
-                            outputFolder,
-                            $"sepia-{Path.GetFileNameWithoutExtension(docPath)}-{imageIndex}.png");
+                        // Load bitmap from stream
+                        using (Bitmap bitmap = new Bitmap(ms))
+                        {
+                            // Apply sepia tone
+                            ApplySepia(bitmap);
 
-                        bitmap.Save(outputPath, ImageFormat.Png);
-                        totalSepiaImages++;
+                            // Save the processed image
+                            string outFileName = $"{Path.GetFileNameWithoutExtension(docFile)}-shape{shapeIndex}.png";
+                            string outPath = Path.Combine(outputFolder, outFileName);
+                            bitmap.Save(outPath, ImageFormat.Png);
+                            extractedCount++;
+                        }
                     }
+                    shapeIndex++;
                 }
-
-                imageIndex++;
             }
         }
 
-        // Validation: ensure at least one sepia image was created
-        if (totalSepiaImages == 0)
-            throw new InvalidOperationException("No PNG images were processed and saved.");
-
-        // Cleanup sample files (optional)
-        // File.Delete(sampleImagePath);
+        // Validate that at least one image was processed
+        if (extractedCount == 0)
+        {
+            throw new InvalidOperationException("No PNG images were extracted and processed.");
+        }
     }
 
     private static void CreateSamplePng(string path)
@@ -91,19 +92,14 @@ public class Program
         }
     }
 
-    private static void CreateSampleDocument(string docPath, string imagePath)
+    private static void ApplySepia(Bitmap bitmap)
     {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(imagePath);
-        doc.Save(docPath);
-    }
+        int width = bitmap.Width;
+        int height = bitmap.Height;
 
-    private static void ApplySepiaTone(Bitmap bitmap)
-    {
-        for (int y = 0; y < bitmap.Height; y++)
+        for (int y = 0; y < height; y++)
         {
-            for (int x = 0; x < bitmap.Width; x++)
+            for (int x = 0; x < width; x++)
             {
                 Color original = bitmap.GetPixel(x, y);
                 double r = original.R;

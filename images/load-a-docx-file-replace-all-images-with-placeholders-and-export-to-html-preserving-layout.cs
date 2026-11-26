@@ -5,42 +5,28 @@ using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
-using Newtonsoft.Json; // Included as per required packages
 
 public class Program
 {
     public static void Main()
     {
-        // Define deterministic file names
-        const string inputImagePath = "input.png";
+        // Create deterministic sample image to insert into the document.
+        const string sampleImagePath = "sample.png";
+        CreateSampleImage(sampleImagePath, 200, 100, "Sample");
+
+        // Create a placeholder image that will replace original images.
         const string placeholderImagePath = "placeholder.png";
+        CreateSampleImage(placeholderImagePath, 200, 100, "Placeholder");
+
+        // Build a DOCX file containing the sample image.
         const string inputDocPath = "input.docx";
-        const string outputHtmlPath = "output.html";
+        CreateDocumentWithImage(inputDocPath, sampleImagePath);
 
-        // Ensure a clean environment
-        DeleteIfExists(inputImagePath);
-        DeleteIfExists(placeholderImagePath);
-        DeleteIfExists(inputDocPath);
-        DeleteIfExists(outputHtmlPath);
+        // Load the DOCX file.
+        Document doc = new Document(inputDocPath);
 
-        // 1. Create a sample image to be inserted into the document
-        CreateSampleImage(inputImagePath, 300, 200, Aspose.Drawing.Color.LightBlue);
-
-        // 2. Create a placeholder image that will replace existing images
-        CreateSampleImage(placeholderImagePath, 300, 200, Aspose.Drawing.Color.LightGray);
-
-        // 3. Create a DOCX file containing the sample image
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Document with an image:");
-        builder.InsertImage(inputImagePath);
-        doc.Save(inputDocPath);
-
-        // 4. Load the DOCX file
-        Document loadedDoc = new Document(inputDocPath);
-
-        // 5. Replace all images with the placeholder image
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        // Replace each image with the placeholder image while preserving layout.
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
         foreach (Shape shape in shapeNodes)
         {
             if (shape.HasImage)
@@ -49,42 +35,63 @@ public class Program
             }
         }
 
-        // 6. Export the modified document to HTML while preserving layout
-        loadedDoc.Save(outputHtmlPath, SaveFormat.Html);
+        // Export the modified document to HTML.
+        const string outputHtmlPath = "output.html";
+        doc.Save(outputHtmlPath, SaveFormat.Html);
 
-        // 7. Validate that the HTML output was created
+        // Validate that the HTML file was created.
         if (!File.Exists(outputHtmlPath))
-            throw new Exception("HTML output file was not created.");
-
-        // Optional: Indicate success (no interactive prompts)
-        Console.WriteLine("Processing completed successfully.");
+            throw new Exception("HTML output was not created.");
     }
 
-    private static void CreateSampleImage(string path, int width, int height, Aspose.Drawing.Color backgroundColor)
+    private static void CreateSampleImage(string path, int width, int height, string text)
     {
-        using (Bitmap bitmap = new Bitmap(width, height))
+        // Ensure any existing file is removed.
+        if (File.Exists(path))
+            File.Delete(path);
+
+        // Create bitmap.
+        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
         {
-            using (Graphics graphics = Graphics.FromImage(bitmap))
+            // Create graphics object.
+            using (Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap))
             {
-                graphics.Clear(backgroundColor);
-                // Draw a simple border
-                using (Pen pen = new Pen(Aspose.Drawing.Color.Black, 5))
+                // Fill background.
+                graphics.Clear(Aspose.Drawing.Color.LightGray);
+
+                // Draw text.
+                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 12))
+                using (Aspose.Drawing.SolidBrush brush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Black))
                 {
-                    graphics.DrawRectangle(pen, 0, 0, width - 1, height - 1);
+                    graphics.DrawString(text, font, brush, new Aspose.Drawing.PointF(10, height / 2 - 10));
                 }
             }
-            // Save as PNG
-            bitmap.Save(path, ImageFormat.Png);
+
+            // Save bitmap to file.
+            bitmap.Save(path, Aspose.Drawing.Imaging.ImageFormat.Png);
         }
 
-        // Validate that the image file exists
+        // Validate that the image file exists.
         if (!File.Exists(path))
             throw new Exception($"Failed to create image file: {path}");
     }
 
-    private static void DeleteIfExists(string path)
+    private static void CreateDocumentWithImage(string docPath, string imagePath)
     {
-        if (File.Exists(path))
-            File.Delete(path);
+        // Ensure any existing file is removed.
+        if (File.Exists(docPath))
+            File.Delete(docPath);
+
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        builder.Writeln("Document with an image:");
+        builder.InsertImage(imagePath);
+
+        doc.Save(docPath, SaveFormat.Docx);
+
+        // Validate that the document file exists.
+        if (!File.Exists(docPath))
+            throw new Exception($"Failed to create document file: {docPath}");
     }
 }

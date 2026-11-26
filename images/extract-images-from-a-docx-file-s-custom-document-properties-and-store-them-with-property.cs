@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Properties;
+using Aspose.Words.Properties;          // Needed for DocumentProperty
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
@@ -10,72 +10,78 @@ public class Program
     public static void Main()
     {
         // Paths for temporary files
-        const string imagePath = "sample.png";
+        const string sampleImagePath = "sample.png";
         const string docPath = "sample.docx";
 
         // -------------------------------------------------
-        // Create a deterministic sample image (100x100 white)
+        // 1. Create a deterministic sample PNG image.
         // -------------------------------------------------
-        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(100, 100);
-        Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap);
-        graphics.Clear(Aspose.Drawing.Color.White);
-        // Save the image to a file (required by the workflow)
-        bitmap.Save(imagePath, ImageFormat.Png);
-        graphics.Dispose();
-        bitmap.Dispose();
+        const int width = 200;
+        const int height = 100;
+        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
+        {
+            using (Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap))
+            {
+                graphics.Clear(Aspose.Drawing.Color.White);
+                // Draw a simple rectangle for visual content
+                graphics.DrawRectangle(Aspose.Drawing.Pens.Black, 10, 10, width - 20, height - 20);
+            }
+            bitmap.Save(sampleImagePath, Aspose.Drawing.Imaging.ImageFormat.Png);
+        }
 
-        // Read the image bytes to store in a custom document property
-        byte[] imageBytes = File.ReadAllBytes(imagePath);
-        // Store as Base64 string because CustomDocumentProperties does not accept raw byte[]
+        // -------------------------------------------------
+        // 2. Load the image bytes and store them as a Base64
+        //    string in a custom document property.
+        // -------------------------------------------------
+        byte[] imageBytes = File.ReadAllBytes(sampleImagePath);
         string base64Image = Convert.ToBase64String(imageBytes);
 
-        // -------------------------------------------------
-        // Create a new DOCX document and add the image bytes
-        // as a custom document property
-        // -------------------------------------------------
         Document doc = new Document();
-        CustomDocumentProperties props = doc.CustomDocumentProperties;
-        // Property name will be used as the output file name later
-        props.Add("Image1", base64Image);
-        // Save the document
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Document with an image stored in a custom property.");
+
+        // Add the custom property named "SampleImage"
+        doc.CustomDocumentProperties.Add("SampleImage", base64Image);
         doc.Save(docPath);
 
         // -------------------------------------------------
-        // Load the document and extract images from custom properties
+        // 3. Reload the document and extract images from custom
+        //    document properties, saving each with the property name.
         // -------------------------------------------------
         Document loadedDoc = new Document(docPath);
-        CustomDocumentProperties loadedProps = loadedDoc.CustomDocumentProperties;
-
         int extractedCount = 0;
-        foreach (DocumentProperty prop in loadedProps)
+
+        foreach (DocumentProperty prop in loadedDoc.CustomDocumentProperties)
         {
-            // Only process properties that hold a Base64 string (image data)
-            if (prop.Value is string s && !string.IsNullOrEmpty(s))
+            // Expect the property value to be a Base64 string representing an image.
+            if (prop.Value is string base64 && !string.IsNullOrEmpty(base64))
             {
                 try
                 {
-                    byte[] bytes = Convert.FromBase64String(s);
-                    if (bytes.Length > 0)
-                    {
-                        string outputImagePath = $"{prop.Name}.png";
-                        File.WriteAllBytes(outputImagePath, bytes);
-                        extractedCount++;
-                        Console.WriteLine($"Extracted image from property '{prop.Name}' to file '{outputImagePath}'.");
-                    }
+                    byte[] bytes = Convert.FromBase64String(base64);
+                    string outputImagePath = $"{prop.Name}.png";
+                    File.WriteAllBytes(outputImagePath, bytes);
+                    extractedCount++;
+
+                    // Validate that the file was created.
+                    if (!File.Exists(outputImagePath))
+                        throw new InvalidOperationException($"Failed to write image file '{outputImagePath}'.");
                 }
                 catch (FormatException)
                 {
-                    // Not a Base64 string – ignore
+                    // Not a valid Base64 string – ignore this property.
                 }
             }
         }
 
-        // Validate that at least one image was extracted
+        // -------------------------------------------------
+        // 4. Validate that at least one image was extracted.
+        // -------------------------------------------------
         if (extractedCount == 0)
-            throw new InvalidOperationException("No image data found in custom document properties.");
+            throw new InvalidOperationException("No images were extracted from custom document properties.");
 
-        // Clean up temporary files (optional)
-        // File.Delete(imagePath);
+        // Cleanup temporary files (optional).
+        // File.Delete(sampleImagePath);
         // File.Delete(docPath);
     }
 }

@@ -9,89 +9,106 @@ public class Program
 {
     public static void Main()
     {
-        // Create a deterministic sample BMP image.
+        // ------------------------------------------------------------
+        // 1. Create a deterministic BMP image (200x200, solid red)
+        // ------------------------------------------------------------
         const string sampleBmpPath = "sample.bmp";
-        CreateSampleBmp(sampleBmpPath, 200, 200);
+        using (Bitmap bmp = new Bitmap(200, 200))
+        {
+            using (Graphics g = Graphics.FromImage(bmp))
+            {
+                g.Clear(Aspose.Drawing.Color.Red);
+            }
+            bmp.Save(sampleBmpPath, ImageFormat.Bmp);
+        }
 
-        // Build a Word document and insert the BMP image.
+        // ------------------------------------------------------------
+        // 2. Insert the BMP image into a new Word document
+        // ------------------------------------------------------------
+        const string docPath = "sample.docx";
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(sampleBmpPath);
-        const string docPath = "sample.docx";
         doc.Save(docPath);
 
-        // Reload the document to simulate a fresh processing scenario.
+        // ------------------------------------------------------------
+        // 3. Load the document and extract all image shapes
+        // ------------------------------------------------------------
         Document loadedDoc = new Document(docPath);
-
-        // Extract all Shape nodes that contain images, resize them to 1024px width,
-        // keep the aspect ratio, and save the resized images to disk.
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+
         int resizedCount = 0;
+        int imageIndex = 0;
+        const int targetWidth = 1024;
 
-        for (int i = 0; i < shapeNodes.Count; i++)
+        foreach (Shape shape in shapeNodes)
         {
-            Shape shape = (Shape)shapeNodes[i];
+            // Ensure the shape actually contains an image.
             if (!shape.HasImage)
-                continue; // Skip non‑image shapes.
+                continue;
 
-            // Obtain the original image bytes.
-            byte[] originalBytes = shape.ImageData.ImageBytes;
-            using (MemoryStream originalStream = new MemoryStream(originalBytes))
+            // ----------------------------------------------------------------
+            // Extract the original image bytes and load them into a bitmap.
+            // ----------------------------------------------------------------
+            byte[] imageBytes = shape.ImageData.ImageBytes;
+            using (MemoryStream ms = new MemoryStream(imageBytes))
             {
-                originalStream.Position = 0;
-                using (Bitmap originalBmp = new Bitmap(originalStream))
+                ms.Position = 0; // reset just in case
+                using (Bitmap originalBitmap = new Bitmap(ms))
                 {
-                    int originalWidth = originalBmp.Width;
-                    int originalHeight = originalBmp.Height;
+                    int originalWidth = originalBitmap.Width;
+                    int originalHeight = originalBitmap.Height;
 
-                    const int targetWidth = 1024;
-                    int targetHeight = (int)Math.Round((double)originalHeight * targetWidth / originalWidth);
+                    // Determine new dimensions: width = 1024 (or original if smaller),
+                    // height scaled proportionally.
+                    int newWidth = originalWidth >= targetWidth ? targetWidth : originalWidth;
+                    int newHeight = (int)(originalHeight * (newWidth / (double)originalWidth));
 
-                    // Create a new bitmap with the target dimensions.
-                    using (Bitmap resizedBmp = new Bitmap(targetWidth, targetHeight))
+                    // If dimensions are unchanged, skip resizing but still count as processed.
+                    if (newWidth == originalWidth && newHeight == originalHeight)
                     {
-                        using (Graphics g = Graphics.FromImage(resizedBmp))
-                        {
-                            g.Clear(Aspose.Drawing.Color.White);
-                            g.DrawImage(originalBmp, new Rectangle(0, 0, targetWidth, targetHeight));
-                        }
-
-                        // Save the resized bitmap to a deterministic file name.
-                        string resizedPath = $"resized-{i + 1}.bmp";
-                        resizedBmp.Save(resizedPath, ImageFormat.Bmp);
-
-                        // Replace the image inside the document with the resized version.
-                        shape.ImageData.SetImage(resizedPath);
+                        // Save a copy of the original image to keep the output pattern consistent.
+                        string unchangedPath = $"resized-{imageIndex}.bmp";
+                        originalBitmap.Save(unchangedPath, ImageFormat.Bmp);
+                        if (!File.Exists(unchangedPath))
+                            throw new InvalidOperationException($"Failed to save image: {unchangedPath}");
 
                         resizedCount++;
+                        imageIndex++;
+                        continue;
+                    }
+
+                    // --------------------------------------------------------
+                    // Create the resized bitmap and draw the scaled image.
+                    // --------------------------------------------------------
+                    using (Bitmap resizedBitmap = new Bitmap(newWidth, newHeight))
+                    {
+                        using (Graphics g = Graphics.FromImage(resizedBitmap))
+                        {
+                            g.DrawImage(originalBitmap, 0, 0, newWidth, newHeight);
+                        }
+
+                        // Save the resized bitmap as BMP.
+                        string resizedPath = $"resized-{imageIndex}.bmp";
+                        resizedBitmap.Save(resizedPath, ImageFormat.Bmp);
+                        if (!File.Exists(resizedPath))
+                            throw new InvalidOperationException($"Failed to save resized image: {resizedPath}");
+
+                        resizedCount++;
+                        imageIndex++;
                     }
                 }
             }
         }
 
-        // Validate that at least one image was resized.
+        // ------------------------------------------------------------
+        // Validation: at least one image should have been processed.
+        // ------------------------------------------------------------
         if (resizedCount == 0)
-            throw new InvalidOperationException("No images were found and resized.");
+            throw new InvalidOperationException("No images were found and processed in the document.");
 
-        // Save the document with the resized images.
-        const string updatedDocPath = "sample_resized.docx";
-        loadedDoc.Save(updatedDocPath);
-    }
-
-    // Helper method to create a simple BMP image using Aspose.Drawing.
-    private static void CreateSampleBmp(string path, int width, int height)
-    {
-        using (Bitmap bmp = new Bitmap(width, height))
-        {
-            using (Graphics g = Graphics.FromImage(bmp))
-            {
-                g.Clear(Aspose.Drawing.Color.White);
-                using (Pen pen = new Pen(Aspose.Drawing.Color.Black, 5))
-                {
-                    g.DrawRectangle(pen, 10, 10, width - 20, height - 20);
-                }
-            }
-            bmp.Save(path, ImageFormat.Bmp);
-        }
+        // Optional cleanup of temporary files (commented out).
+        // File.Delete(sampleBmpPath);
+        // File.Delete(docPath);
     }
 }

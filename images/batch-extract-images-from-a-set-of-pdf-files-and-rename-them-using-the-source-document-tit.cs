@@ -2,88 +2,77 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 using Aspose.Drawing;
 
-public class BatchPdfImageExtractor
+public class Program
 {
     public static void Main()
     {
-        // Base working directory.
-        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "BatchImages");
-        string inputFolder = Path.Combine(baseDir, "InputPdfs");
-        string outputFolder = Path.Combine(baseDir, "ExtractedImages");
+        // Prepare folders
+        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputPdfs");
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputImages");
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Create sample images that will be inserted into the PDFs.
-        string sampleImage1 = Path.Combine(baseDir, "sample1.png");
-        string sampleImage2 = Path.Combine(baseDir, "sample2.png");
-        CreateSampleImage(sampleImage1, 200, 100, Aspose.Drawing.Color.LightBlue, "Img1");
-        CreateSampleImage(sampleImage2, 150, 150, Aspose.Drawing.Color.LightGreen, "Img2");
+        // Create sample PDF files with images and titles
+        CreateSamplePdf(Path.Combine(inputFolder, "SampleDoc1.pdf"), "DocumentOne", Color.Blue);
+        CreateSamplePdf(Path.Combine(inputFolder, "SampleDoc2.pdf"), "DocumentTwo", Color.Green);
 
-        // Create sample PDF files with images and a title property.
-        for (int i = 1; i <= 2; i++)
+        // Batch process PDFs
+        string[] pdfFiles = Directory.GetFiles(inputFolder, "*.pdf");
+        foreach (string pdfPath in pdfFiles)
         {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            // Insert first image.
-            builder.InsertImage(sampleImage1);
-            builder.Writeln(); // Add a line break.
-            // Insert second image.
-            builder.InsertImage(sampleImage2);
-            // Set the document title.
-            doc.BuiltInDocumentProperties.Title = $"SampleDoc{i}";
-            string pdfPath = Path.Combine(inputFolder, $"SampleDoc{i}.pdf");
-            doc.Save(pdfPath, SaveFormat.Pdf);
-        }
-
-        // Process each PDF: extract images and rename them using the document title.
-        foreach (string pdfPath in Directory.GetFiles(inputFolder, "*.pdf"))
-        {
-            Document pdfDoc = new Document(pdfPath);
-            string title = pdfDoc.BuiltInDocumentProperties.Title;
+            // Load PDF as Aspose.Words document
+            Document doc = new Document(pdfPath);
+            string title = doc.BuiltInDocumentProperties.Title;
             if (string.IsNullOrEmpty(title))
                 title = Path.GetFileNameWithoutExtension(pdfPath);
 
-            NodeCollection shapeNodes = pdfDoc.GetChildNodes(NodeType.Shape, true);
-            int imageIndex = 1;
-            foreach (Shape shape in shapeNodes)
+            // Find all image shapes
+            NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+            int imageIndex = 0;
+            foreach (Shape shape in shapes)
             {
                 if (shape.HasImage)
                 {
-                    string outImagePath = Path.Combine(outputFolder, $"{title}_Image{imageIndex}.png");
-                    shape.ImageData.Save(outImagePath);
+                    string imageFileName = $"{title}_{imageIndex}.png";
+                    string imagePath = Path.Combine(outputFolder, imageFileName);
+                    shape.ImageData.Save(imagePath);
+                    if (!File.Exists(imagePath))
+                        throw new Exception($"Failed to save extracted image to '{imagePath}'.");
                     imageIndex++;
                 }
             }
 
-            if (imageIndex == 1) // No images were saved.
-                throw new InvalidOperationException($"No images were extracted from '{pdfPath}'.");
+            // Validate that at least one image was extracted
+            if (imageIndex == 0)
+                throw new Exception($"No images were extracted from document '{pdfPath}'.");
         }
-
-        // Validation: ensure at least one image file exists in the output folder.
-        if (Directory.GetFiles(outputFolder, "*.png").Length == 0)
-            throw new InvalidOperationException("Image extraction completed but no output images were found.");
-
-        // Example completed.
     }
 
-    // Helper method to create a deterministic sample PNG image.
-    private static void CreateSampleImage(string filePath, int width, int height, Aspose.Drawing.Color backColor, string text)
+    private static void CreateSamplePdf(string pdfPath, string title, Color fillColor)
     {
-        using (Bitmap bitmap = new Bitmap(width, height))
+        // Create a deterministic sample image using Aspose.Drawing
+        string tempImagePath = Path.Combine(Path.GetDirectoryName(pdfPath) ?? "", "temp_image.png");
+        using (Bitmap bitmap = new Bitmap(200, 200))
         {
-            using (Graphics graphics = Graphics.FromImage(bitmap))
+            using (Graphics g = Graphics.FromImage(bitmap))
             {
-                graphics.Clear(backColor);
-                // Simple drawing: fill a rectangle.
-                using (var brush = new SolidBrush(Aspose.Drawing.Color.DarkBlue))
-                {
-                    graphics.FillRectangle(brush, 10, 10, width - 20, height - 20);
-                }
-                // Optionally, draw text if needed (omitted to avoid font ambiguity).
+                g.Clear(fillColor);
             }
-            bitmap.Save(filePath);
+            bitmap.Save(tempImagePath);
         }
+
+        // Create a new Word document, set title, insert image, and save as PDF
+        Document doc = new Document();
+        doc.BuiltInDocumentProperties.Title = title;
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.InsertImage(tempImagePath);
+        doc.Save(pdfPath, SaveFormat.Pdf);
+
+        // Clean up temporary image file
+        if (File.Exists(tempImagePath))
+            File.Delete(tempImagePath);
     }
 }

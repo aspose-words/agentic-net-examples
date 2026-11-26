@@ -10,72 +10,65 @@ public class Program
 {
     public static void Main()
     {
-        // Create a deterministic sample JPEG image.
+        // Step 1: Create a sample JPEG image.
         const string jpegPath = "sample.jpg";
-        using (Bitmap bitmap = new Bitmap(200, 200))
-        {
-            using (Graphics g = Graphics.FromImage(bitmap))
-            {
-                g.Clear(Color.LightBlue);
-                g.DrawEllipse(new Pen(Color.DarkBlue, 5), 20, 20, 160, 160);
-            }
-            bitmap.Save(jpegPath, ImageFormat.Jpeg);
-        }
+        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(200, 200);
+        Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap);
+        graphics.Clear(Aspose.Drawing.Color.White);
+        graphics.DrawRectangle(Aspose.Drawing.Pens.Black, 20, 20, 160, 160);
+        bitmap.Save(jpegPath, Aspose.Drawing.Imaging.ImageFormat.Jpeg);
+        graphics.Dispose();
+        bitmap.Dispose();
 
-        // Create a Word document and insert the JPEG image.
+        // Step 2: Insert the JPEG into a Word document.
+        const string docPath = "sample.docx";
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(jpegPath);
-        const string docPath = "sample.docx";
         doc.Save(docPath);
 
-        // Reload the document (optional, demonstrates loading workflow).
-        Document loadedDoc = new Document(docPath);
+        // Step 3: Extract JPEG images from the document and convert to high‑resolution TIFF with LZW compression.
+        const string tiffPath = "converted.tiff";
+        bool tiffCreated = false;
 
-        // Extract JPEG images and convert each to high‑resolution TIFF with LZW compression.
-        int imageIndex = 0;
-        foreach (Shape shape in loadedDoc.GetChildNodes(NodeType.Shape, true))
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+        foreach (Shape shape in shapeNodes)
         {
             if (!shape.HasImage)
                 continue;
 
-            // Process only JPEG images.
-            if (shape.ImageData.ImageType != ImageType.Jpeg)
-                continue;
-
-            // Load the JPEG image into a bitmap.
-            using (MemoryStream ms = new MemoryStream(shape.ImageData.ImageBytes))
+            using (MemoryStream imageStream = new MemoryStream())
             {
-                ms.Position = 0;
-                using (Bitmap bmp = new Bitmap(ms))
+                shape.ImageData.Save(imageStream);
+                imageStream.Position = 0;
+
+                using (Aspose.Drawing.Image img = Aspose.Drawing.Image.FromStream(imageStream))
                 {
-                    // Set high resolution (e.g., 300 DPI).
-                    bmp.SetResolution(300f, 300f);
-
-                    // Prepare TIFF encoder with LZW compression.
-                    ImageCodecInfo tiffCodec = ImageCodecInfo.GetImageEncoders()
-                        .FirstOrDefault(c => c.FormatID == ImageFormat.Tiff.Guid);
+                    // Obtain the TIFF codec.
+                    var tiffCodec = Aspose.Drawing.Imaging.ImageCodecInfo.GetImageEncoders()
+                        .FirstOrDefault(c => c.FormatID == Aspose.Drawing.Imaging.ImageFormat.Tiff.Guid);
                     if (tiffCodec == null)
-                        throw new InvalidOperationException("TIFF encoder not found.");
+                        throw new Exception("TIFF codec not found.");
 
+                    // Prepare encoder parameters for LZW compression.
                     EncoderParameters encoderParams = new EncoderParameters(1);
-                    Encoder compressionEncoder = Encoder.Compression;
-                    EncoderParameter compressionParam = new EncoderParameter(compressionEncoder, (long)EncoderValue.CompressionLZW);
+                    EncoderParameter compressionParam = new EncoderParameter(
+                        Encoder.Compression,
+                        (long)EncoderValue.CompressionLZW);
                     encoderParams.Param[0] = compressionParam;
 
-                    // Save the TIFF file.
-                    string tiffPath = $"extracted-{imageIndex}.tiff";
-                    bmp.Save(tiffPath, tiffCodec, encoderParams);
-                    imageIndex++;
+                    // Save as TIFF with LZW compression.
+                    img.Save(tiffPath, tiffCodec, encoderParams);
+                    tiffCreated = true;
                 }
             }
         }
 
-        // Validate that at least one TIFF file was created.
-        if (imageIndex == 0)
-            throw new InvalidOperationException("No JPEG images were found and converted.");
+        // Validation: ensure the TIFF file was created.
+        if (!tiffCreated || !File.Exists(tiffPath))
+            throw new Exception("TIFF conversion failed or no image was processed.");
 
-        // Cleanup sample files (optional).
+        // Optional cleanup (commented out).
         // File.Delete(jpegPath);
         // File.Delete(docPath);
     }

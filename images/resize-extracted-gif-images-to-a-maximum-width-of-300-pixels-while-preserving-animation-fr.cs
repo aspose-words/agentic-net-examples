@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using Aspose.Words;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 using Aspose.Drawing.Drawing2D;
@@ -8,56 +9,66 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample GIF image (static for simplicity)
+        // Create a sample GIF image (single frame) with width greater than 300 pixels.
         const string inputPath = "input.gif";
-        const string outputPath = "output.gif";
+        const string outputPath = "resized.gif";
 
-        // Ensure any previous files are removed
-        if (File.Exists(inputPath)) File.Delete(inputPath);
-        if (File.Exists(outputPath)) File.Delete(outputPath);
+        int originalWidth = 500;
+        int originalHeight = 200;
 
-        // Create a simple bitmap and save as GIF
-        using (Bitmap bitmap = new Bitmap(500, 200))
+        using (Bitmap bitmap = new Bitmap(originalWidth, originalHeight))
         {
-            using (Graphics g = Graphics.FromImage(bitmap))
+            using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                g.Clear(Color.White);
-                g.FillRectangle(new SolidBrush(Color.Blue), 0, 0, 250, 200);
-                g.FillRectangle(new SolidBrush(Color.Red), 250, 0, 250, 200);
+                graphics.Clear(Color.White);
+                using (Pen pen = new Pen(Color.Blue, 5))
+                {
+                    graphics.DrawRectangle(pen, 10, 10, originalWidth - 20, originalHeight - 20);
+                }
             }
             bitmap.Save(inputPath, ImageFormat.Gif);
         }
 
-        // Load the GIF
-        using (Image gifImage = Image.FromFile(inputPath))
+        // Verify the input file was created.
+        if (!File.Exists(inputPath) || new FileInfo(inputPath).Length == 0)
+            throw new InvalidOperationException("Failed to create the input GIF image.");
+
+        // Load the GIF and resize while preserving animation frames (single frame in this example).
+        using (Image originalImage = Image.FromFile(inputPath))
         {
-            // Determine new width (max 300)
-            int originalWidth = gifImage.Width;
-            int originalHeight = gifImage.Height;
-            int newWidth = originalWidth > 300 ? 300 : originalWidth;
-            int newHeight = (int)((double)newWidth / originalWidth * originalHeight);
+            int width = originalImage.Width;
+            int height = originalImage.Height;
 
-            // Resize while preserving animation frames (single frame case)
-            using (Bitmap resizedBitmap = new Bitmap(newWidth, newHeight))
+            // Determine new dimensions.
+            int targetWidth = width > 300 ? 300 : width;
+            int targetHeight = (int)Math.Round((double)height * targetWidth / width);
+
+            // If resizing is needed, create a new bitmap and draw the original onto it.
+            if (targetWidth != width)
             {
-                using (Graphics g = Graphics.FromImage(resizedBitmap))
+                using (Bitmap resizedBitmap = new Bitmap(targetWidth, targetHeight))
                 {
-                    g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                    g.DrawImage(gifImage, 0, 0, newWidth, newHeight);
+                    using (Graphics graphics = Graphics.FromImage(resizedBitmap))
+                    {
+                        graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                        graphics.DrawImage(originalImage, 0, 0, targetWidth, targetHeight);
+                    }
+                    resizedBitmap.Save(outputPath, ImageFormat.Gif);
                 }
-
-                // Save the resized image as GIF
-                resizedBitmap.Save(outputPath, ImageFormat.Gif);
+            }
+            else
+            {
+                // No resizing needed; copy the original.
+                File.Copy(inputPath, outputPath, true);
             }
         }
 
-        // Validate output
+        // Validate that the resized GIF exists and has a non‑zero size.
         if (!File.Exists(outputPath) || new FileInfo(outputPath).Length == 0)
-        {
-            throw new Exception("Resized GIF was not created successfully.");
-        }
+            throw new InvalidOperationException("Resized GIF was not created successfully.");
 
-        // Indicate success (no interactive input)
-        Console.WriteLine("Resized GIF saved to " + Path.GetFullPath(outputPath));
+        // Optional: Output result information.
+        Console.WriteLine($"Input GIF:  {new FileInfo(inputPath).Length} bytes");
+        Console.WriteLine($"Resized GIF: {new FileInfo(outputPath).Length} bytes");
     }
 }

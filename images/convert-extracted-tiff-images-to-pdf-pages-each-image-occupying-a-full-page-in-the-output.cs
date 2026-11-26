@@ -10,13 +10,26 @@ public class Program
     public static void Main()
     {
         // Create sample TIFF images.
-        CreateSampleTiff("sample1.tif", 600, 800, Aspose.Drawing.Color.LightBlue);
-        CreateSampleTiff("sample2.tif", 800, 600, Aspose.Drawing.Color.LightGreen);
+        string[] tiffFiles = { "image1.tif", "image2.tif" };
+        int width = 500;
+        int height = 700;
+        Color[] colors = { Color.LightBlue, Color.LightCoral };
 
-        // Gather all TIFF files in the current directory.
-        string[] tiffFiles = Directory.GetFiles(Directory.GetCurrentDirectory(), "*.tif");
-        if (tiffFiles.Length == 0)
-            throw new Exception("No TIFF files found to convert.");
+        for (int i = 0; i < tiffFiles.Length; i++)
+        {
+            using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
+            {
+                using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
+                {
+                    g.Clear(colors[i % colors.Length]);
+                }
+                bitmap.Save(tiffFiles[i], ImageFormat.Tiff);
+            }
+
+            // Ensure the file was created.
+            if (!File.Exists(tiffFiles[i]))
+                throw new Exception($"Failed to create TIFF file: {tiffFiles[i]}");
+        }
 
         // Create a new Word document.
         Document doc = new Document();
@@ -26,14 +39,22 @@ public class Program
         for (int i = 0; i < tiffFiles.Length; i++)
         {
             if (i > 0)
-                builder.InsertBreak(BreakType.PageBreak);
+                builder.InsertBreak(BreakType.PageBreak); // Start a new page for subsequent images.
 
-            // Calculate image size to fill the page (respecting margins).
-            double pageWidth = builder.PageSetup.PageWidth - builder.PageSetup.LeftMargin - builder.PageSetup.RightMargin;
-            double pageHeight = builder.PageSetup.PageHeight - builder.PageSetup.TopMargin - builder.PageSetup.BottomMargin;
+            // Get page dimensions.
+            double pageWidth = builder.PageSetup.PageWidth;
+            double pageHeight = builder.PageSetup.PageHeight;
 
-            // Insert the image with the calculated dimensions.
-            builder.InsertImage(tiffFiles[i], pageWidth, pageHeight);
+            // Insert the image to fill the entire page.
+            builder.InsertImage(
+                tiffFiles[i],
+                RelativeHorizontalPosition.Page,
+                0,
+                RelativeVerticalPosition.Page,
+                0,
+                pageWidth,
+                pageHeight,
+                WrapType.None);
         }
 
         // Save the document as PDF.
@@ -42,25 +63,13 @@ public class Program
 
         // Validate that the PDF was created.
         if (!File.Exists(outputPath))
-            throw new Exception("Failed to create the PDF output file.");
+            throw new Exception("PDF output was not created.");
 
-        // Clean up sample images (optional).
+        // Cleanup sample images (optional).
         foreach (string file in tiffFiles)
-            File.Delete(file);
-    }
-
-    private static void CreateSampleTiff(string fileName, int width, int height, Aspose.Drawing.Color backgroundColor)
-    {
-        // Create a bitmap and fill it with a solid color.
-        using (Bitmap bitmap = new Bitmap(width, height))
         {
-            using (Graphics graphics = Graphics.FromImage(bitmap))
-            {
-                graphics.Clear(backgroundColor);
-            }
-
-            // Save the bitmap as a TIFF image.
-            bitmap.Save(fileName, ImageFormat.Tiff);
+            if (File.Exists(file))
+                File.Delete(file);
         }
     }
 }

@@ -1,124 +1,92 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Tables;
 using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
-namespace CommentImageExtraction
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Ensure output directory exists
+        string outputDir = "Output";
+        Directory.CreateDirectory(outputDir);
+
+        // 1. Create a sample image to be used inside a comment
+        string sampleImagePath = Path.Combine(outputDir, "sample.png");
+        CreateSampleImage(sampleImagePath);
+
+        // 2. Create a DOCX document with a comment that contains the image
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This paragraph will have a comment containing an image.");
+
+        // Capture the paragraph we just wrote
+        Paragraph paragraph = builder.CurrentParagraph;
+
+        // Create the comment node
+        Aspose.Words.Comment comment = new Aspose.Words.Comment(doc, "Author", "A", DateTime.Now);
+        Paragraph commentParagraph = new Paragraph(doc);
+        comment.AppendChild(commentParagraph);
+
+        // Create the image shape inside the comment
+        Shape imageShape = new Shape(doc, ShapeType.Image);
+        imageShape.ImageData.SetImage(sampleImagePath);
+        commentParagraph.AppendChild(imageShape);
+
+        // Append the comment to the paragraph (valid container)
+        paragraph.AppendChild(comment);
+
+        // Save the document (optional, for verification)
+        string docPath = Path.Combine(outputDir, "DocumentWithComment.docx");
+        doc.Save(docPath);
+
+        // 3. Extract images from comments and save them using comment identifier as filename
+        NodeCollection commentNodes = doc.GetChildNodes(NodeType.Comment, true);
+        int extractedCount = 0;
+
+        for (int i = 0; i < commentNodes.Count; i++)
         {
-            // Create a deterministic sample image file.
-            const string sampleImagePath = "sampleImage.png";
-            CreateSampleImage(sampleImagePath);
-
-            // Create a new document and add a paragraph with a comment that contains the image.
-            const string docPath = "sample.docx";
-            CreateDocumentWithCommentImage(docPath, sampleImagePath);
-
-            // Load the document and extract images from comments.
-            ExtractImagesFromComments(docPath);
-        }
-
-        private static void CreateSampleImage(string path)
-        {
-            const int width = 100;
-            const int height = 100;
-
-            using (Bitmap bitmap = new Bitmap(width, height))
+            Aspose.Words.Comment cm = (Aspose.Words.Comment)commentNodes[i];
+            NodeCollection shapeNodes = cm.GetChildNodes(NodeType.Shape, true);
+            foreach (Shape shape in shapeNodes)
             {
-                using (Graphics graphics = Graphics.FromImage(bitmap))
+                if (shape.HasImage)
                 {
-                    graphics.Clear(Aspose.Drawing.Color.White);
-                    // Draw a simple rectangle for visual distinction.
-                    using (var pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Blue, 3))
-                    {
-                        graphics.DrawRectangle(pen, 10, 10, width - 20, height - 20);
-                    }
-                }
-
-                bitmap.Save(path);
-            }
-
-            if (!File.Exists(path))
-                throw new InvalidOperationException($"Failed to create sample image at '{path}'.");
-        }
-
-        private static void CreateDocumentWithCommentImage(string docPath, string imagePath)
-        {
-            // Initialize a new document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Add a paragraph that will host the comment.
-            builder.Writeln("This paragraph has a comment containing an image.");
-
-            // Create a comment node.
-            Comment comment = new Comment(doc, "Author", "A", DateTime.Now);
-
-            // Create a paragraph inside the comment.
-            Paragraph commentParagraph = new Paragraph(doc);
-            comment.AppendChild(commentParagraph);
-
-            // Create an image shape and set its image.
-            Shape imageShape = new Shape(doc, ShapeType.Image);
-            imageShape.ImageData.SetImage(imagePath);
-            imageShape.Width = 100;
-            imageShape.Height = 100;
-
-            // Append the shape to the comment's paragraph.
-            commentParagraph.AppendChild(imageShape);
-
-            // Append the comment to the last paragraph of the document.
-            Paragraph lastParagraph = doc.LastSection.Body.LastParagraph;
-            lastParagraph.AppendChild(comment);
-
-            // Save the document.
-            doc.Save(docPath);
-
-            if (!File.Exists(docPath))
-                throw new InvalidOperationException($"Failed to save document at '{docPath}'.");
-        }
-
-        private static void ExtractImagesFromComments(string docPath)
-        {
-            // Load the document.
-            Document doc = new Document(docPath);
-
-            // Collect extracted image file names for validation.
-            List<string> extractedFiles = new List<string>();
-
-            // Enumerate all comment nodes.
-            NodeCollection commentNodes = doc.GetChildNodes(NodeType.Comment, true);
-            foreach (Comment comment in commentNodes)
-            {
-                // Find all shape nodes within the comment.
-                NodeCollection shapeNodes = comment.GetChildNodes(NodeType.Shape, true);
-                foreach (Shape shape in shapeNodes)
-                {
-                    if (shape.HasImage)
-                    {
-                        // Use the comment's Id as part of the filename.
-                        string outputFileName = $"comment-{comment.Id}.png";
-                        shape.ImageData.Save(outputFileName);
-                        extractedFiles.Add(outputFileName);
-                    }
+                    string imageFileName = Path.Combine(outputDir, $"comment-{i + 1}.png");
+                    shape.ImageData.Save(imageFileName);
+                    if (!File.Exists(imageFileName))
+                        throw new InvalidOperationException($"Failed to save extracted image to '{imageFileName}'.");
+                    extractedCount++;
                 }
             }
+        }
 
-            // Validate that at least one image was extracted.
-            if (extractedFiles.Count == 0)
-                throw new InvalidOperationException("No images were extracted from comments.");
+        // Validation
+        if (extractedCount == 0)
+            throw new InvalidOperationException("No images were extracted from comments.");
 
-            // Optional: verify that files exist.
-            foreach (string file in extractedFiles)
+        // Cleanup temporary sample image (optional)
+        // File.Delete(sampleImagePath);
+    }
+
+    private static void CreateSampleImage(string path)
+    {
+        const int width = 200;
+        const int height = 100;
+        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
+        {
+            using (Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap))
             {
-                if (!File.Exists(file))
-                    throw new InvalidOperationException($"Extracted image file not found: {file}");
+                graphics.Clear(Aspose.Drawing.Color.LightBlue);
+                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.DarkBlue, 3))
+                {
+                    graphics.DrawRectangle(pen, 10, 10, width - 20, height - 20);
+                }
             }
+            bitmap.Save(path, ImageFormat.Png);
         }
     }
 }

@@ -5,41 +5,77 @@ using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
+using Newtonsoft.Json;
 
-public class BatchImageExtractor
+public class Program
 {
     public static void Main()
     {
-        // Prepare folders
-        string baseDir = Directory.GetCurrentDirectory();
-        string sampleImagePath = Path.Combine(baseDir, "sample.png");
-        string inputDocsDir = Path.Combine(baseDir, "InputDocs");
-        string extractedImagesDir = Path.Combine(baseDir, "ExtractedImages");
-        Directory.CreateDirectory(inputDocsDir);
-        Directory.CreateDirectory(extractedImagesDir);
+        // Base working directory for the demo
+        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "BatchImageExtractionDemo");
+        string inputDir = Path.Combine(baseDir, "InputDocs");
+        string imageOutputDir = Path.Combine(baseDir, "ExtractedImages");
+        string indexPath = Path.Combine(baseDir, "ImageIndex.xlsx"); // CSV with .xlsx extension
 
-        // Create a deterministic sample image
-        CreateSampleImage(sampleImagePath);
+        // Ensure clean environment
+        if (Directory.Exists(baseDir))
+            Directory.Delete(baseDir, true);
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(imageOutputDir);
 
-        // Create sample DOCX files that contain the image
-        CreateSampleDocument(Path.Combine(inputDocsDir, "Doc1.docx"), sampleImagePath);
-        CreateSampleDocument(Path.Combine(inputDocsDir, "Doc2.docx"), sampleImagePath);
-
-        // Extract images and build index
-        var indexEntries = new List<(string DocumentPath, string ImagePath)>();
-        foreach (string docPath in Directory.GetFiles(inputDocsDir, "*.docx"))
+        // -------------------------------------------------
+        // 1. Create a deterministic sample image (input.png)
+        // -------------------------------------------------
+        string sampleImagePath = Path.Combine(baseDir, "input.png");
+        const int imgWidth = 200;
+        const int imgHeight = 100;
+        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(imgWidth, imgHeight))
         {
-            Document doc = new Document(docPath);
-            NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
+            {
+                g.Clear(Aspose.Drawing.Color.White);
+                // Draw a simple rectangle
+                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Black, 2))
+                {
+                    g.DrawRectangle(pen, 10, 10, imgWidth - 20, imgHeight - 20);
+                }
+            }
+            bitmap.Save(sampleImagePath, ImageFormat.Png);
+        }
+
+        // -------------------------------------------------
+        // 2. Create sample DOCX files each containing the image
+        // -------------------------------------------------
+        int docCount = 3;
+        for (int i = 1; i <= docCount; i++)
+        {
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln($"Document {i}");
+            builder.InsertImage(sampleImagePath);
+            string docPath = Path.Combine(inputDir, $"Doc{i}.docx");
+            doc.Save(docPath);
+        }
+
+        // -------------------------------------------------
+        // 3. Batch process DOCX files: extract images and build index data
+        // -------------------------------------------------
+        var indexEntries = new List<(string DocumentPath, string ImagePath)>();
+        string[] docFiles = Directory.GetFiles(inputDir, "*.docx", SearchOption.TopDirectoryOnly);
+        foreach (string docFile in docFiles)
+        {
+            Document doc = new Document(docFile);
+            NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
             int imageIndex = 0;
-            foreach (Shape shape in shapeNodes)
+            foreach (Shape shape in shapes)
             {
                 if (shape.HasImage)
                 {
-                    string imageFileName = $"{Path.GetFileNameWithoutExtension(docPath)}_image{imageIndex}.png";
-                    string imageFullPath = Path.Combine(extractedImagesDir, imageFileName);
-                    shape.ImageData.Save(imageFullPath);
-                    indexEntries.Add((docPath, imageFullPath));
+                    string imageFileName = $"{Path.GetFileNameWithoutExtension(docFile)}_img{imageIndex}.png";
+                    string imagePath = Path.Combine(imageOutputDir, imageFileName);
+                    // Save the image; format inferred from file extension
+                    shape.ImageData.Save(imagePath);
+                    indexEntries.Add((docFile, imagePath));
                     imageIndex++;
                 }
             }
@@ -47,43 +83,32 @@ public class BatchImageExtractor
 
         // Validate that at least one image was extracted
         if (indexEntries.Count == 0)
-            throw new Exception("No images were extracted from the documents.");
+            throw new InvalidOperationException("No images were extracted from the DOCX files.");
 
-        // Generate CSV index that Excel can open
-        string csvPath = Path.Combine(baseDir, "ImageIndex.csv");
-        using (var writer = new StreamWriter(csvPath))
+        // -------------------------------------------------
+        // 4. Generate a CSV index and save with .xlsx extension
+        // -------------------------------------------------
+        using (StreamWriter writer = new StreamWriter(indexPath, false))
         {
             writer.WriteLine("DocumentPath,ImagePath");
             foreach (var entry in indexEntries)
             {
-                // Quote paths in case they contain commas
-                writer.WriteLine($"\"{entry.DocumentPath}\",\"{entry.ImagePath}\"");
+                // Escape commas by surrounding with quotes
+                string docPathEscaped = $"\"{entry.DocumentPath}\"";
+                string imgPathEscaped = $"\"{entry.ImagePath}\"";
+                writer.WriteLine($"{docPathEscaped},{imgPathEscaped}");
             }
         }
 
-        // Simple validation that CSV was created
-        if (!File.Exists(csvPath))
-            throw new Exception("Failed to create the CSV index file.");
-    }
+        // Validate index file existence
+        if (!File.Exists(indexPath))
+            throw new FileNotFoundException("Failed to create the Excel index file.", indexPath);
 
-    private static void CreateSampleImage(string filePath)
-    {
-        // Create a 200x200 white bitmap
-        Bitmap bitmap = new Bitmap(200, 200);
-        Graphics graphics = Graphics.FromImage(bitmap);
-        graphics.Clear(Color.White);
-        // Save as PNG
-        bitmap.Save(filePath, ImageFormat.Png);
-        graphics.Dispose();
-        bitmap.Dispose();
-    }
-
-    private static void CreateSampleDocument(string docPath, string imagePath)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        // Insert the previously created image
-        builder.InsertImage(imagePath);
-        doc.Save(docPath);
+        // -------------------------------------------------
+        // 5. (Optional) Serialize index data to JSON using Newtonsoft.Json
+        // -------------------------------------------------
+        string jsonPath = Path.Combine(baseDir, "ImageIndex.json");
+        string jsonContent = JsonConvert.SerializeObject(indexEntries, Formatting.Indented);
+        File.WriteAllText(jsonPath, jsonContent);
     }
 }

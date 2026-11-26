@@ -1,6 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
@@ -10,77 +10,108 @@ public class Program
 {
     public static void Main()
     {
-        // Create a deterministic sample PNG image.
-        const int imgWidth = 200;
-        const int imgHeight = 200;
-        string sampleImagePath = "sample.png";
+        // Define file and folder paths
+        string inputImagePath = "input.png";
+        string docPath = "sample.docx";
+        string extractedFolder = "extracted";
+        string compressedFolder = "compressed";
 
-        Bitmap bitmap = new Bitmap(imgWidth, imgHeight);
-        Graphics graphics = Graphics.FromImage(bitmap);
-        graphics.Clear(Color.White);
-        using (Pen pen = new Pen(Color.Blue, 5))
+        // Ensure output directories exist
+        Directory.CreateDirectory(extractedFolder);
+        Directory.CreateDirectory(compressedFolder);
+
+        // -------------------------------------------------
+        // 1. Create a sample PNG image using Aspose.Drawing
+        // -------------------------------------------------
+        int imgWidth = 200;
+        int imgHeight = 200;
+        using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
         {
-            graphics.DrawRectangle(pen, 10, 10, imgWidth - 20, imgHeight - 20);
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                g.Clear(Color.White);
+                // Draw a simple red rectangle
+                using (Pen pen = new Pen(Color.Red, 5))
+                {
+                    g.DrawRectangle(pen, 10, 10, imgWidth - 20, imgHeight - 20);
+                }
+            }
+            bitmap.Save(inputImagePath);
         }
-        bitmap.Save(sampleImagePath, ImageFormat.Png);
-        graphics.Dispose();
-        bitmap.Dispose();
 
-        // Create a Word document and insert the sample image twice.
+        // -------------------------------------------------
+        // 2. Create a Word document and insert the image multiple times
+        // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(sampleImagePath);
-        builder.Writeln();
-        builder.InsertImage(sampleImagePath);
-        string docPath = "sample.docx";
+        for (int i = 0; i < 3; i++)
+        {
+            builder.InsertImage(inputImagePath);
+            builder.Writeln(); // Add a line break between images
+        }
         doc.Save(docPath);
 
-        // Load the document and extract all images.
+        // -------------------------------------------------
+        // 3. Load the document and extract all images
+        // -------------------------------------------------
         Document loadedDoc = new Document(docPath);
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        List<string> originalFiles = new List<string>();
-        List<string> compressedFiles = new List<string>();
         int imageIndex = 0;
+        var extractedFiles = new System.Collections.Generic.List<string>();
 
         foreach (Shape shape in shapeNodes)
         {
-            if (!shape.HasImage)
-                continue;
-
-            // Save the original extracted image.
-            string originalPath = $"extracted-{imageIndex}.png";
-            using (MemoryStream ms = new MemoryStream())
+            if (shape.HasImage)
             {
-                shape.ImageData.Save(ms);
-                ms.Position = 0;
-                File.WriteAllBytes(originalPath, ms.ToArray());
+                string extractedPath = Path.Combine(extractedFolder, $"extracted-{imageIndex}.png");
+                shape.ImageData.Save(extractedPath);
+                extractedFiles.Add(extractedPath);
+                imageIndex++;
             }
-            originalFiles.Add(originalPath);
-
-            // Load the image into a bitmap and re‑save it (lossless PNG compression).
-            string compressedPath = $"compressed-{imageIndex}.png";
-            using (MemoryStream ms = new MemoryStream(File.ReadAllBytes(originalPath)))
-            {
-                ms.Position = 0;
-                using (Bitmap bmp = new Bitmap(ms))
-                {
-                    bmp.Save(compressedPath, ImageFormat.Png);
-                }
-            }
-            compressedFiles.Add(compressedPath);
-            imageIndex++;
         }
 
-        if (originalFiles.Count == 0)
-            throw new Exception("No images were extracted from the document.");
+        if (extractedFiles.Count == 0)
+            throw new InvalidOperationException("No images were extracted from the document.");
 
-        // Compare file sizes and output statistics.
-        for (int i = 0; i < originalFiles.Count; i++)
+        // -------------------------------------------------
+        // 4. Apply lossless PNG compression to each extracted image
+        // -------------------------------------------------
+        var pngEncoder = ImageCodecInfo.GetImageEncoders()
+            .FirstOrDefault(enc => enc.FormatID == ImageFormat.Png.Guid);
+        if (pngEncoder == null)
+            throw new InvalidOperationException("PNG encoder not found.");
+
+        var compressionEncoder = Encoder.Compression;
+        var compressionLevel = (long)9; // Maximum lossless compression
+
+        var encoderParams = new EncoderParameters(1);
+        encoderParams.Param[0] = new EncoderParameter(compressionEncoder, compressionLevel);
+
+        int compressedIndex = 0;
+        foreach (string extractedPath in extractedFiles)
         {
-            long originalSize = new FileInfo(originalFiles[i]).Length;
-            long compressedSize = new FileInfo(compressedFiles[i]).Length;
-            long reduction = originalSize - compressedSize;
-            Console.WriteLine($"Image {i}: Original = {originalSize} bytes, Compressed = {compressedSize} bytes, Reduction = {reduction} bytes");
+            using (Bitmap bmp = new Bitmap(extractedPath))
+            {
+                string compressedPath = Path.Combine(compressedFolder, $"compressed-{compressedIndex}.png");
+                bmp.Save(compressedPath, pngEncoder, encoderParams);
+
+                // -------------------------------------------------
+                // 5. Compare file sizes and output statistics
+                // -------------------------------------------------
+                long originalSize = new FileInfo(extractedPath).Length;
+                long compressedSize = new FileInfo(compressedPath).Length;
+                double reductionPercent = originalSize == 0 ? 0 :
+                    100.0 * (originalSize - compressedSize) / originalSize;
+
+                Console.WriteLine($"Image {compressedIndex}: Original = {originalSize} bytes, " +
+                                  $"Compressed = {compressedSize} bytes, " +
+                                  $"Reduction = {reductionPercent:F2}%");
+                compressedIndex++;
+            }
         }
+
+        // Validate that compressed files were created
+        if (compressedIndex == 0)
+            throw new InvalidOperationException("No images were compressed.");
     }
 }

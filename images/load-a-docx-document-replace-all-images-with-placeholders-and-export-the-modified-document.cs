@@ -9,79 +9,72 @@ public class Program
 {
     public static void Main()
     {
-        // Define deterministic file names.
-        const string inputImagePath = "input.png";
-        const string placeholderImagePath = "placeholder.png";
-        const string originalDocPath = "original.docx";
-        const string modifiedDocPath = "modified.docx";
+        // Create a deterministic sample image to be inserted into the document.
+        const string sampleImagePath = "sample.png";
+        CreateSampleImage(sampleImagePath, 200, 150, Aspose.Drawing.Color.LightBlue, Aspose.Drawing.Color.DarkBlue);
 
-        // -------------------------------------------------
-        // Step 1: Create a sample input image (white square).
-        // -------------------------------------------------
-        const int imgWidth = 100;
-        const int imgHeight = 100;
-        using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
-        {
-            using (Graphics g = Graphics.FromImage(bitmap))
-            {
-                g.Clear(Color.White);
-            }
-            bitmap.Save(inputImagePath, ImageFormat.Png);
-        }
-
-        // -------------------------------------------------
-        // Step 2: Create a placeholder image (light gray square).
-        // -------------------------------------------------
-        using (Bitmap placeholder = new Bitmap(imgWidth, imgHeight))
-        {
-            using (Graphics g = Graphics.FromImage(placeholder))
-            {
-                g.Clear(Color.LightGray);
-            }
-            placeholder.Save(placeholderImagePath, ImageFormat.Png);
-        }
-
-        // -------------------------------------------------
-        // Step 3: Build a sample DOCX containing the input image.
-        // -------------------------------------------------
+        // Create a new document and insert the sample image.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        // Insert the sample image twice to have multiple images.
-        builder.InsertImage(inputImagePath);
-        builder.Writeln(); // Add a line break.
-        builder.InsertImage(inputImagePath);
-        doc.Save(originalDocPath);
+        builder.InsertImage(sampleImagePath);
+        const string inputDocPath = "input.docx";
+        doc.Save(inputDocPath);
 
-        // -------------------------------------------------
-        // Step 4: Load the document and replace all images with the placeholder.
-        // -------------------------------------------------
-        Document loadedDoc = new Document(originalDocPath);
+        // Load the document that contains images.
+        Document loadedDoc = new Document(inputDocPath);
+
+        // Create a placeholder image that will replace all existing images.
+        const string placeholderImagePath = "placeholder.png";
+        CreateSampleImage(placeholderImagePath, 200, 150, Aspose.Drawing.Color.LightGray, Aspose.Drawing.Color.DarkGray);
+
+        // Replace each image in the document with the placeholder image.
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
         foreach (Shape shape in shapeNodes)
         {
             if (shape.HasImage)
             {
-                // Replace the image data with the placeholder image.
                 shape.ImageData.SetImage(placeholderImagePath);
             }
         }
 
-        // -------------------------------------------------
-        // Step 5: Save the modified document.
-        // -------------------------------------------------
-        loadedDoc.Save(modifiedDocPath);
+        // Save the modified document.
+        const string outputDocPath = "output.docx";
+        loadedDoc.Save(outputDocPath);
 
-        // -------------------------------------------------
-        // Validation: Ensure the modified document was created.
-        // -------------------------------------------------
-        if (!File.Exists(modifiedDocPath))
+        // Validate that the output file was created.
+        if (!File.Exists(outputDocPath))
         {
-            throw new Exception($"Failed to create the modified document at '{modifiedDocPath}'.");
+            throw new Exception($"Failed to create the output document: {outputDocPath}");
         }
 
-        // Optional: Clean up generated files (comment out if inspection is needed).
-        // File.Delete(inputImagePath);
-        // File.Delete(placeholderImagePath);
-        // File.Delete(originalDocPath);
+        Console.WriteLine("Image replacement completed successfully.");
+    }
+
+    // Helper method to create a simple deterministic PNG image.
+    private static void CreateSampleImage(string filePath, int width, int height, Aspose.Drawing.Color background, Aspose.Drawing.Color border)
+    {
+        using (Bitmap bitmap = new Bitmap(width, height))
+        {
+            using (Graphics graphics = Graphics.FromImage(bitmap))
+            {
+                // Fill background.
+                graphics.Clear(background);
+
+                // Draw a simple border rectangle.
+                using (Pen pen = new Pen(border, 5))
+                {
+                    graphics.DrawRectangle(pen, 0, 0, width - 1, height - 1);
+                }
+            }
+
+            // Save as PNG.
+            bitmap.Save(filePath, ImageFormat.Png);
+        }
+
+        // Ensure the file exists.
+        if (!File.Exists(filePath))
+        {
+            throw new Exception($"Failed to create image file: {filePath}");
+        }
     }
 }

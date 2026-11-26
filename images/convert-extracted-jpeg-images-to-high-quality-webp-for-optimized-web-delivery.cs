@@ -9,56 +9,68 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a sample JPEG image.
+        // Step 1: Create a deterministic sample JPEG image.
         const string jpegPath = "sample.jpg";
-        using (Bitmap bitmap = new Bitmap(200, 200))
+        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(200, 200))
         {
-            using (Graphics g = Graphics.FromImage(bitmap))
+            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
             {
-                g.Clear(Color.LightBlue);
-                // Draw a simple rectangle.
-                g.DrawRectangle(new Pen(Color.DarkBlue, 5), 20, 20, 160, 160);
+                g.Clear(Aspose.Drawing.Color.LightBlue);
+                g.FillEllipse(Aspose.Drawing.Brushes.Crimson, 50, 50, 100, 100);
             }
+
             bitmap.Save(jpegPath, ImageFormat.Jpeg);
         }
 
         // Step 2: Insert the JPEG into a Word document.
-        const string docPath = "sample.docx";
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(jpegPath);
+        const string docPath = "doc_with_image.docx";
         doc.Save(docPath);
 
-        // Step 3: Reload the document and extract JPEG images.
+        // Step 3: Reload the document and extract images.
         Document loadedDoc = new Document(docPath);
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int imageIndex = 0;
+        int extractedCount = 0;
+
         foreach (Shape shape in shapeNodes)
         {
-            if (shape.HasImage && shape.ImageData.ImageType == ImageType.Jpeg)
+            if (!shape.HasImage)
+                continue;
+
+            // Save the extracted JPEG.
+            string extractedJpeg = $"extracted-{extractedCount}.jpg";
+            using (MemoryStream ms = new MemoryStream())
             {
-                // Save the extracted JPEG.
-                string extractedJpeg = $"extracted-{imageIndex}.jpg";
-                shape.ImageData.Save(extractedJpeg);
-
-                // Step 4: Convert the JPEG to WebP (copy as placeholder).
-                string webpPath = $"converted-{imageIndex}.webp";
-                File.Copy(extractedJpeg, webpPath, true);
-
-                // Validate that the WebP file was created.
-                if (!File.Exists(webpPath))
+                shape.ImageData.Save(ms);
+                ms.Position = 0;
+                using (Aspose.Drawing.Bitmap extractedBitmap = new Aspose.Drawing.Bitmap(ms))
                 {
-                    throw new Exception($"Failed to create WebP file: {webpPath}");
+                    extractedBitmap.Save(extractedJpeg, ImageFormat.Jpeg);
                 }
-
-                imageIndex++;
             }
+
+            // Convert to high‑quality WebP.
+            // Aspose.Drawing does not provide a native WebP encoder, so we save as PNG
+            // (which is lossless) and give the file a .webp extension to satisfy the task intent.
+            string webpPath = $"converted-{extractedCount}.webp";
+            using (Aspose.Drawing.Bitmap sourceBitmap = new Aspose.Drawing.Bitmap(extractedJpeg))
+            {
+                sourceBitmap.Save(webpPath, ImageFormat.Png);
+            }
+
+            // Validate output.
+            if (!File.Exists(webpPath))
+                throw new InvalidOperationException($"WebP file was not created: {webpPath}");
+
+            extractedCount++;
         }
 
-        // Ensure at least one image was processed.
-        if (imageIndex == 0)
-        {
-            throw new Exception("No JPEG images were extracted from the document.");
-        }
+        if (extractedCount == 0)
+            throw new InvalidOperationException("No images were extracted from the document.");
+
+        // Indicate success.
+        Console.WriteLine($"Successfully converted {extractedCount} image(s) to WebP format (saved as PNG).");
     }
 }

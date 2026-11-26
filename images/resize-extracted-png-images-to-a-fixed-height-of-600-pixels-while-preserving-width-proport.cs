@@ -8,34 +8,21 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a deterministic sample PNG image.
-        const string sampleImagePath = "input.png";
-        using (var bitmap = new Bitmap(200, 200))
-        {
-            using (var graphics = Graphics.FromImage(bitmap))
-            {
-                graphics.Clear(Color.White);
-                graphics.FillRectangle(new SolidBrush(Color.Red), 50, 50, 100, 100);
-            }
-            bitmap.Save(sampleImagePath);
-        }
+        // Create a deterministic sample PNG image.
+        const string inputImagePath = "input.png";
+        CreateSamplePng(inputImagePath, 200, 200);
 
-        // Step 2: Create a Word document and insert the sample image.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-        builder.InsertImage(sampleImagePath);
+        // Create a Word document and insert the sample image.
         const string docPath = "sample.docx";
-        doc.Save(docPath);
+        CreateDocumentWithImage(docPath, inputImagePath);
 
-        // Step 3: Reload the document for extraction.
-        var loadedDoc = new Document(docPath);
+        // Load the document and process PNG images.
+        Document doc = new Document(docPath);
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+        int resizedCount = 0;
 
-        // Step 4: Extract PNG images, resize them to height 600px while preserving aspect ratio.
-        var shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int extractedCount = 0;
-        for (int i = 0; i < shapeNodes.Count; i++)
+        foreach (Shape shape in shapes)
         {
-            var shape = (Shape)shapeNodes[i];
             if (!shape.HasImage)
                 continue;
 
@@ -43,50 +30,70 @@ public class Program
             if (shape.ImageData.ImageType != ImageType.Png)
                 continue;
 
-            // Save the extracted image.
-            string extractedPath = $"extracted_{i}.png";
-            shape.ImageData.Save(extractedPath);
-            extractedCount++;
-
-            // Load the extracted image for resizing.
-            using (var originalBitmap = new Bitmap(extractedPath))
+            // Extract image bytes.
+            byte[] imageBytes = shape.ImageData.ImageBytes;
+            using (MemoryStream inputStream = new MemoryStream(imageBytes))
             {
-                int originalWidth = originalBitmap.Width;
-                int originalHeight = originalBitmap.Height;
-
-                // Desired fixed height.
-                const int targetHeight = 600;
-                // Calculate proportional width.
-                int targetWidth = (int)Math.Round(originalWidth * (targetHeight / (double)originalHeight));
-
-                // Create a new bitmap with the target dimensions.
-                using (var resizedBitmap = new Bitmap(targetWidth, targetHeight))
+                inputStream.Position = 0;
+                using (Bitmap originalBitmap = new Bitmap(inputStream))
                 {
-                    using (var graphics = Graphics.FromImage(resizedBitmap))
+                    // Calculate new dimensions preserving aspect ratio with height = 600.
+                    const int targetHeight = 600;
+                    int originalWidth = originalBitmap.Width;
+                    int originalHeight = originalBitmap.Height;
+                    int targetWidth = (int)Math.Round(originalWidth * (targetHeight / (double)originalHeight));
+
+                    // Resize the image.
+                    using (Bitmap resizedBitmap = new Bitmap(targetWidth, targetHeight))
                     {
-                        graphics.Clear(Color.Transparent);
-                        graphics.DrawImage(originalBitmap, 0, 0, targetWidth, targetHeight);
+                        using (Graphics graphics = Graphics.FromImage(resizedBitmap))
+                        {
+                            graphics.Clear(Color.White);
+                            graphics.DrawImage(originalBitmap, 0, 0, targetWidth, targetHeight);
+                        }
+
+                        // Save the resized image.
+                        string resizedPath = $"resized-{resizedCount}.png";
+                        resizedBitmap.Save(resizedPath);
+                        resizedCount++;
+
+                        // Optional: replace the image in the document with the resized version.
+                        shape.ImageData.SetImage(resizedPath);
                     }
-
-                    // Save the resized image.
-                    string resizedPath = $"resized_{i}.png";
-                    resizedBitmap.Save(resizedPath);
-
-                    // Validate that the resized file exists.
-                    if (!File.Exists(resizedPath))
-                        throw new InvalidOperationException($"Resized image was not saved: {resizedPath}");
                 }
             }
-
-            // Validate that the extracted file exists.
-            if (!File.Exists(extractedPath))
-                throw new InvalidOperationException($"Extracted image was not saved: {extractedPath}");
         }
 
-        // Validation: ensure at least one PNG image was processed.
-        if (extractedCount == 0)
-            throw new InvalidOperationException("No PNG images were found and processed in the document.");
+        // Validate that at least one image was resized.
+        if (resizedCount == 0)
+            throw new InvalidOperationException("No PNG images were found and resized.");
 
-        // Cleanup: optional removal of intermediate files can be added here.
+        // Save the updated document.
+        const string outputDocPath = "sample_resized.docx";
+        doc.Save(outputDocPath);
+    }
+
+    private static void CreateSamplePng(string path, int width, int height)
+    {
+        using (Bitmap bitmap = new Bitmap(width, height))
+        {
+            using (Graphics graphics = Graphics.FromImage(bitmap))
+            {
+                graphics.Clear(Color.White);
+                using (Pen pen = new Pen(Color.Red, 5))
+                {
+                    graphics.DrawRectangle(pen, 10, 10, width - 20, height - 20);
+                }
+            }
+            bitmap.Save(path);
+        }
+    }
+
+    private static void CreateDocumentWithImage(string docPath, string imagePath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.InsertImage(imagePath);
+        doc.Save(docPath);
     }
 }

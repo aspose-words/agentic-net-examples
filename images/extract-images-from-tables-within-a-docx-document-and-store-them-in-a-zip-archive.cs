@@ -1,123 +1,122 @@
 using System;
 using System.IO;
 using System.IO.Compression;
+using System.Collections.Generic;
 using Aspose.Words;
-using Aspose.Words.Tables;
 using Aspose.Words.Drawing;
+using Aspose.Words.Tables;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
-public class ExtractImagesFromTables
+public class Program
 {
     public static void Main()
     {
-        // Prepare deterministic file names and folders
-        string workingDir = Directory.GetCurrentDirectory();
-        string sampleImagePath = Path.Combine(workingDir, "sample.png");
-        string docPath = Path.Combine(workingDir, "sample.docx");
-        string extractedFolder = Path.Combine(workingDir, "ExtractedImages");
-        string zipPath = Path.Combine(workingDir, "ImagesFromTables.zip");
+        // Paths
+        const string sampleImagePath = "input.png";
+        const string docPath = "sample.docx";
+        const string outputZipPath = "ImagesFromTables.zip";
+        const string tempImageFolder = "extracted_images";
 
-        // Ensure clean state
+        // Clean previous artifacts
         if (File.Exists(sampleImagePath)) File.Delete(sampleImagePath);
         if (File.Exists(docPath)) File.Delete(docPath);
-        if (Directory.Exists(extractedFolder)) Directory.Delete(extractedFolder, true);
-        if (File.Exists(zipPath)) File.Delete(zipPath);
+        if (File.Exists(outputZipPath)) File.Delete(outputZipPath);
+        if (Directory.Exists(tempImageFolder)) Directory.Delete(tempImageFolder, true);
+        Directory.CreateDirectory(tempImageFolder);
 
-        // -------------------------------------------------
-        // Create a deterministic sample image (100x100 white with a blue rectangle)
-        // -------------------------------------------------
-        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(100, 100);
-        try
+        // 1. Create a deterministic sample image
+        const int imgWidth = 200;
+        const int imgHeight = 100;
+        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(imgWidth, imgHeight))
         {
             using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
             {
                 g.Clear(Aspose.Drawing.Color.White);
                 using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Blue, 3))
                 {
-                    g.DrawRectangle(pen, 10, 10, 80, 80);
+                    g.DrawRectangle(pen, 10, 10, imgWidth - 20, imgHeight - 20);
                 }
             }
-
-            bitmap.Save(sampleImagePath, ImageFormat.Png);
-        }
-        finally
-        {
-            bitmap.Dispose();
+            bitmap.Save(sampleImagePath, Aspose.Drawing.Imaging.ImageFormat.Png);
         }
 
-        // -------------------------------------------------
-        // Create a DOCX document with a table containing images
-        // -------------------------------------------------
+        // 2. Create a DOCX with a 2x2 table containing the image in the first cell
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a 2x2 table
-        Table table = builder.StartTable();
+        // Start table
+        builder.StartTable();
 
-        for (int row = 0; row < 2; row++)
-        {
-            for (int col = 0; col < 2; col++)
-            {
-                builder.InsertCell();                     // Start a new cell
-                builder.InsertImage(sampleImagePath);     // Insert the sample image into the cell
-                // No explicit EndCell call needed; InsertCell moves to the next cell.
-            }
-            builder.EndRow(); // End the current row
-        }
+        // Row 1, Cell 1 – image
+        builder.InsertCell();
+        builder.InsertImage(sampleImagePath);
+        builder.EndRow();
 
-        builder.EndTable(); // End the table
+        // Row 2, Cell 1 – text
+        builder.InsertCell();
+        builder.Write("Cell 2");
+        builder.EndRow();
+
+        // Row 3, Cell 1 – text
+        builder.InsertCell();
+        builder.Write("Cell 3");
+        builder.EndRow();
+
+        // Row 4, Cell 1 – empty (to make it 2x2)
+        builder.InsertCell();
+        builder.EndRow();
+
+        // End table
+        builder.EndTable();
 
         // Save the document
         doc.Save(docPath);
 
-        // -------------------------------------------------
-        // Load the document and extract images from tables only
-        // -------------------------------------------------
+        // 3. Load the document for extraction
         Document loadedDoc = new Document(docPath);
-        NodeCollection tables = loadedDoc.GetChildNodes(NodeType.Table, true);
 
-        Directory.CreateDirectory(extractedFolder);
+        // 4. Extract images that are inside tables
+        List<string> extractedImagePaths = new List<string>();
+        NodeCollection tables = loadedDoc.GetChildNodes(NodeType.Table, true);
         int imageIndex = 0;
 
         foreach (Table tbl in tables)
         {
-            // Find all Shape nodes inside the current table
             NodeCollection shapes = tbl.GetChildNodes(NodeType.Shape, true);
             foreach (Shape shape in shapes)
             {
                 if (shape.HasImage)
                 {
-                    string imageFile = Path.Combine(extractedFolder, $"image-{imageIndex}.png");
-                    shape.ImageData.Save(imageFile);
+                    string imageFileName = $"image_{imageIndex}.png";
+                    string imageFullPath = Path.Combine(tempImageFolder, imageFileName);
+                    shape.ImageData.Save(imageFullPath);
+                    extractedImagePaths.Add(imageFullPath);
                     imageIndex++;
                 }
             }
         }
 
-        // Validate that at least one image was extracted
-        if (imageIndex == 0)
+        // Validate extraction
+        if (extractedImagePaths.Count == 0)
             throw new InvalidOperationException("No images were extracted from tables.");
 
-        // -------------------------------------------------
-        // Create a zip archive containing the extracted images
-        // -------------------------------------------------
-        ZipFile.CreateFromDirectory(extractedFolder, zipPath);
-
-        // Validate zip creation
-        if (!File.Exists(zipPath))
-            throw new InvalidOperationException("Failed to create the zip archive.");
-
-        // Optional: Verify that the zip contains entries
-        using (ZipArchive archive = ZipFile.OpenRead(zipPath))
+        // 5. Create a zip archive containing the extracted images
+        using (FileStream zipToOpen = new FileStream(outputZipPath, FileMode.Create))
+        using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Create))
         {
-            if (archive.Entries.Count == 0)
-                throw new InvalidOperationException("The zip archive is empty.");
+            foreach (string imgPath in extractedImagePaths)
+            {
+                string entryName = Path.GetFileName(imgPath);
+                archive.CreateEntryFromFile(imgPath, entryName);
+            }
         }
 
-        // Cleanup temporary files (optional)
-        // File.Delete(sampleImagePath);
-        // File.Delete(docPath);
-        // Directory.Delete(extractedFolder, true);
+        // Validate zip creation
+        if (!File.Exists(outputZipPath))
+            throw new InvalidOperationException("Zip archive was not created.");
+
+        // Clean up temporary images
+        Directory.Delete(tempImageFolder, true);
     }
 }

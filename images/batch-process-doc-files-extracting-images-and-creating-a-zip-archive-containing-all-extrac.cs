@@ -4,83 +4,36 @@ using System.IO.Compression;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
+using Newtonsoft.Json; // Required package as per rules
 
 public class Program
 {
     public static void Main()
     {
-        // Base directory for all example files
-        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "ExampleData");
-        string inputDocsDir = Path.Combine(baseDir, "InputDocs");
-        string extractedImagesDir = Path.Combine(baseDir, "ExtractedImages");
-        string zipPath = Path.Combine(baseDir, "ImagesArchive.zip");
-
-        // Ensure directories exist
-        Directory.CreateDirectory(inputDocsDir);
-        Directory.CreateDirectory(extractedImagesDir);
+        // Base working directory
+        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "BatchImageDemo");
+        string inputDir = Path.Combine(baseDir, "InputDocs");
+        string extractedDir = Path.Combine(baseDir, "ExtractedImages");
+        string outputDir = Path.Combine(baseDir, "Output");
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(extractedDir);
+        Directory.CreateDirectory(outputDir);
 
         // Create a deterministic sample image (input.png)
         string sampleImagePath = Path.Combine(baseDir, "input.png");
         CreateSampleImage(sampleImagePath, 200, 200);
 
-        // Create sample DOCX files containing the sample image
-        CreateSampleDocuments(inputDocsDir, sampleImagePath, 2);
-
-        // Batch process DOCX files: extract images
-        int extractedCount = ExtractImagesFromDocuments(inputDocsDir, extractedImagesDir);
-
-        // Validate that at least one image was extracted
-        if (extractedCount == 0)
-            throw new InvalidOperationException("No images were extracted from the documents.");
-
-        // Create a zip archive containing all extracted images
-        if (File.Exists(zipPath))
-            File.Delete(zipPath);
-        ZipFile.CreateFromDirectory(extractedImagesDir, zipPath);
-
-        // Validate zip creation
-        if (!File.Exists(zipPath))
-            throw new InvalidOperationException("Failed to create the zip archive.");
-
-        // Example completed successfully
-        Console.WriteLine($"Extracted {extractedCount} images and created archive at: {zipPath}");
-    }
-
-    private static void CreateSampleImage(string filePath, int width, int height)
-    {
-        // Create a white bitmap and save it as PNG
-        Bitmap bitmap = new Bitmap(width, height);
-        Graphics graphics = Graphics.FromImage(bitmap);
-        graphics.Clear(Color.White);
-        // Optionally draw something deterministic
-        // (e.g., a simple rectangle)
-        graphics.Dispose();
-        bitmap.Save(filePath, ImageFormat.Png);
-        bitmap.Dispose();
-    }
-
-    private static void CreateSampleDocuments(string outputDir, string imagePath, int documentCount)
-    {
-        for (int i = 1; i <= documentCount; i++)
+        // Create sample DOCX files containing the image
+        int docCount = 3;
+        for (int i = 1; i <= docCount; i++)
         {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln($"Document {i} with sample image:");
-            // Insert the sample image twice to have multiple images per document
-            builder.InsertImage(imagePath);
-            builder.InsertParagraph();
-            builder.InsertImage(imagePath);
-            string docPath = Path.Combine(outputDir, $"Sample{i}.docx");
-            doc.Save(docPath);
+            string docPath = Path.Combine(inputDir, $"SampleDocument{i}.docx");
+            CreateDocumentWithImage(docPath, sampleImagePath);
         }
-    }
 
-    private static int ExtractImagesFromDocuments(string docsDir, string outputImagesDir)
-    {
-        int totalExtracted = 0;
-        string[] docFiles = Directory.GetFiles(docsDir, "*.docx");
-        foreach (string docFile in docFiles)
+        // Batch process: extract images from each DOCX
+        var extractedImagePaths = new System.Collections.Generic.List<string>();
+        foreach (string docFile in Directory.GetFiles(inputDir, "*.docx"))
         {
             Document doc = new Document(docFile);
             NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
@@ -89,14 +42,62 @@ public class Program
             {
                 if (shape.HasImage)
                 {
-                    string imageFileName = $"{Path.GetFileNameWithoutExtension(docFile)}_image{imageIndex}.png";
-                    string imagePath = Path.Combine(outputImagesDir, imageFileName);
+                    string ext = shape.ImageData.ImageType.ToString().ToLower(); // e.g., png, jpeg
+                    string imageFileName = $"{Path.GetFileNameWithoutExtension(docFile)}_img{imageIndex}.{ext}";
+                    string imagePath = Path.Combine(extractedDir, imageFileName);
                     shape.ImageData.Save(imagePath);
+                    extractedImagePaths.Add(imagePath);
                     imageIndex++;
-                    totalExtracted++;
                 }
             }
         }
-        return totalExtracted;
+
+        // Validate that at least one image was extracted
+        if (extractedImagePaths.Count == 0)
+            throw new InvalidOperationException("No images were extracted from the documents.");
+
+        // Create a zip archive containing all extracted images
+        string zipPath = Path.Combine(outputDir, "ExtractedImages.zip");
+        using (FileStream zipToOpen = new FileStream(zipPath, FileMode.Create))
+        using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Update))
+        {
+            foreach (string imgPath in extractedImagePaths)
+            {
+                archive.CreateEntryFromFile(imgPath, Path.GetFileName(imgPath));
+            }
+        }
+
+        // Validate zip creation
+        if (!File.Exists(zipPath) || new FileInfo(zipPath).Length == 0)
+            throw new InvalidOperationException("Failed to create the zip archive with extracted images.");
+
+        // Cleanup extracted images (optional)
+        foreach (string imgPath in extractedImagePaths)
+        {
+            File.Delete(imgPath);
+        }
+    }
+
+    private static void CreateSampleImage(string filePath, int width, int height)
+    {
+        // Create a white bitmap and draw a red rectangle
+        Bitmap bitmap = new Bitmap(width, height);
+        Graphics graphics = Graphics.FromImage(bitmap);
+        graphics.Clear(Color.White);
+        using (var pen = new Pen(Color.Red, 5))
+        {
+            graphics.DrawRectangle(pen, 10, 10, width - 20, height - 20);
+        }
+        bitmap.Save(filePath);
+        graphics.Dispose();
+        bitmap.Dispose();
+    }
+
+    private static void CreateDocumentWithImage(string docPath, string imagePath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.InsertImage(imagePath);
+        doc.Save(docPath);
     }
 }

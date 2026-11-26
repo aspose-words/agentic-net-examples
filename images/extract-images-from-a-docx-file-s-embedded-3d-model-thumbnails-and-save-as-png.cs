@@ -3,68 +3,81 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
-public class Extract3DModelThumbnails
+public class Program
 {
     public static void Main()
     {
-        // Prepare a deterministic sample image to act as a 3D model thumbnail.
+        // Create a deterministic sample thumbnail image (PNG) using Aspose.Drawing.
         const string thumbnailPath = "thumb.png";
-        const int width = 200;
-        const int height = 200;
+        const int imgWidth = 200;
+        const int imgHeight = 200;
 
-        // Create the sample thumbnail image.
-        using (Bitmap bitmap = new Bitmap(width, height))
+        // Ensure any previous file is removed.
+        if (File.Exists(thumbnailPath))
+            File.Delete(thumbnailPath);
+
+        // Create bitmap, draw simple rectangle, and save.
+        using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
         {
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
                 graphics.Clear(Color.White);
-                // Draw a simple red ellipse to make the thumbnail recognizable.
-                graphics.FillEllipse(new SolidBrush(Color.Red), 20, 20, width - 40, height - 40);
+                graphics.DrawRectangle(Pens.Black, 10, 10, imgWidth - 20, imgHeight - 20);
             }
-            bitmap.Save(thumbnailPath);
+            bitmap.Save(thumbnailPath, ImageFormat.Png);
         }
 
-        // Create a new Word document and insert the thumbnail as a shape.
+        // Verify that the thumbnail image was created.
+        if (!File.Exists(thumbnailPath))
+            throw new InvalidOperationException($"Failed to create thumbnail image at '{thumbnailPath}'.");
+
+        // Create a DOCX document and insert the thumbnail image.
+        const string docPath = "sample.docx";
+
+        // Remove any existing document file.
+        if (File.Exists(docPath))
+            File.Delete(docPath);
+
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Create a shape that holds the image (simulating a 3D model thumbnail).
-        Shape thumbnailShape = new Shape(doc, ShapeType.Image);
-        thumbnailShape.ImageData.SetImage(thumbnailPath);
-        // Append the shape to the current paragraph.
-        builder.CurrentParagraph.AppendChild(thumbnailShape);
-
-        // Save the document containing the embedded thumbnail.
-        const string docPath = "sample.docx";
+        builder.InsertImage(thumbnailPath);
         doc.Save(docPath);
 
-        // Load the document for extraction.
-        Document loadedDoc = new Document(docPath);
+        // Verify that the document was saved.
+        if (!File.Exists(docPath))
+            throw new InvalidOperationException($"Failed to save document at '{docPath}'.");
 
-        // Iterate through all Shape nodes and extract images.
+        // Load the document and extract all embedded images (including 3D model thumbnails).
+        Document loadedDoc = new Document(docPath);
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
         int extractedCount = 0;
-        int index = 0;
 
         foreach (Shape shape in shapeNodes)
         {
             if (shape.HasImage)
             {
-                string outputImagePath = $"extracted-{index}.png";
-                shape.ImageData.Save(outputImagePath);
+                string extractedFileName = $"extracted-{extractedCount}.png";
+
+                // Remove any existing file with the same name.
+                if (File.Exists(extractedFileName))
+                    File.Delete(extractedFileName);
+
+                shape.ImageData.Save(extractedFileName);
+                // Validate that the image file was created.
+                if (!File.Exists(extractedFileName))
+                    throw new InvalidOperationException($"Failed to save extracted image '{extractedFileName}'.");
                 extractedCount++;
-                index++;
             }
         }
 
-        // Validate that at least one image was extracted.
+        // Validation: ensure at least one image was extracted.
         if (extractedCount == 0)
-        {
             throw new InvalidOperationException("No images were extracted from the document.");
-        }
 
-        // Optional: Clean up temporary files (comment out if you want to keep them).
+        Console.WriteLine($"Successfully extracted {extractedCount} image(s).");
+        // Optional cleanup (uncomment if you want to delete temporary files).
         // File.Delete(thumbnailPath);
         // File.Delete(docPath);
     }

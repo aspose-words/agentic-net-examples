@@ -9,24 +9,46 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a deterministic sample PNG image.
-        const string sampleImagePath = "sample.png";
-        CreateSamplePng(sampleImagePath, 200, 200);
+        // Create a deterministic sample PNG image.
+        const string inputImagePath = "sample.png";
+        const int originalWidth = 200;
+        const int originalHeight = 200;
 
-        // Step 2: Create a Word document and insert the sample image.
-        const string docPath = "DocumentWithImage.docx";
+        using (Bitmap bitmap = new Bitmap(originalWidth, originalHeight))
+        {
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                // Fill background with white.
+                g.Clear(Color.White);
+                // Draw a simple red rectangle.
+                using (SolidBrush brush = new SolidBrush(Color.Red))
+                {
+                    g.FillRectangle(brush, 20, 20, originalWidth - 40, originalHeight - 40);
+                }
+            }
+            bitmap.Save(inputImagePath, ImageFormat.Png);
+        }
+
+        // Create a Word document and insert the sample image.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(sampleImagePath);
+        builder.InsertImage(inputImagePath);
+        const string docPath = "DocumentWithImage.docx";
         doc.Save(docPath);
 
-        // Step 3: Load the document and extract PNG images.
+        // Reload the document (optional, demonstrates load step).
         Document loadedDoc = new Document(docPath);
-        NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int imageIndex = 0;
-        foreach (Shape shape in shapes)
+
+        // Extract PNG images, resize them to 50%, and save previews.
+        int previewIndex = 0;
+        foreach (Shape shape in loadedDoc.GetChildNodes(NodeType.Shape, true))
         {
-            if (!shape.HasImage) continue;
+            if (!shape.HasImage)
+                continue;
+
+            // Only process PNG images.
+            if (shape.ImageData.ImageType != ImageType.Png)
+                continue;
 
             // Save the original image to a memory stream.
             using (MemoryStream originalStream = new MemoryStream())
@@ -37,63 +59,35 @@ public class Program
                 // Load the image with Aspose.Drawing.
                 using (Bitmap originalBitmap = new Bitmap(originalStream))
                 {
-                    // Calculate 50% dimensions.
                     int newWidth = originalBitmap.Width / 2;
                     int newHeight = originalBitmap.Height / 2;
 
                     // Create a new bitmap for the resized preview.
-                    using (Bitmap previewBitmap = new Bitmap(newWidth, newHeight))
+                    using (Bitmap resizedBitmap = new Bitmap(newWidth, newHeight))
                     {
-                        using (Graphics graphics = Graphics.FromImage(previewBitmap))
+                        using (Graphics graphics = Graphics.FromImage(resizedBitmap))
                         {
                             // Draw the original image scaled down.
                             graphics.DrawImage(originalBitmap, 0, 0, newWidth, newHeight);
                         }
 
-                        // Save the preview image.
-                        string previewPath = $"preview-{imageIndex}.png";
-                        previewBitmap.Save(previewPath, ImageFormat.Png);
-
-                        // Validate that the preview file was created.
-                        if (!File.Exists(previewPath))
-                            throw new InvalidOperationException($"Failed to create preview image: {previewPath}");
-
-                        Console.WriteLine($"Preview image saved: {previewPath}");
+                        // Save the resized preview.
+                        string previewPath = $"preview-{previewIndex}.png";
+                        resizedBitmap.Save(previewPath, ImageFormat.Png);
+                        previewIndex++;
                     }
                 }
             }
-
-            imageIndex++;
         }
 
-        // Ensure at least one image was processed.
-        if (imageIndex == 0)
-            throw new InvalidOperationException("No images were found in the document.");
+        // Validate that at least one preview image was created.
+        if (previewIndex == 0)
+            throw new InvalidOperationException("No PNG images were extracted and resized.");
 
-        Console.WriteLine("Image resizing completed successfully.");
-    }
+        // Optional cleanup: ensure the sample files exist.
+        if (!File.Exists(inputImagePath) || !File.Exists(docPath))
+            throw new FileNotFoundException("Required input files were not created.");
 
-    private static void CreateSamplePng(string filePath, int width, int height)
-    {
-        using (Bitmap bitmap = new Bitmap(width, height))
-        {
-            using (Graphics graphics = Graphics.FromImage(bitmap))
-            {
-                // Fill background with white.
-                graphics.Clear(Color.White);
-                // Draw a simple red rectangle.
-                using (Pen pen = new Pen(Color.Red, 5))
-                {
-                    graphics.DrawRectangle(pen, 10, 10, width - 20, height - 20);
-                }
-            }
-
-            // Save as PNG.
-            bitmap.Save(filePath, ImageFormat.Png);
-        }
-
-        // Validate that the sample image was created.
-        if (!File.Exists(filePath))
-            throw new InvalidOperationException($"Failed to create sample image: {filePath}");
+        // The program finishes automatically.
     }
 }

@@ -1,79 +1,101 @@
 using System;
 using System.IO;
-using System.Text;
-using System.Xml.Linq;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // -------------------------------------------------
-        // 1. Create a deterministic sample image (sample.png)
-        // -------------------------------------------------
-        const string imagePath = "sample.png";
-        const int width = 100;
-        const int height = 100;
+        // Step 1: Create a deterministic sample image.
+        string imagePath = "sample.png";
+        CreateSampleImage(imagePath);
 
-        // Create bitmap and draw a white background.
+        // Step 2: Create a DOCX document and embed the image.
+        string docPath = "sample.docx";
+        CreateDocumentWithImage(docPath, imagePath);
+
+        // Step 3: Extract images from the document and save them with original filenames.
+        ExtractImagesFromDocument(docPath);
+    }
+
+    private static void CreateSampleImage(string path)
+    {
+        int width = 200;
+        int height = 100;
+
+        // Create bitmap using Aspose.Drawing.
         Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height);
         Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap);
         graphics.Clear(Aspose.Drawing.Color.White);
-        // Save the bitmap to a file.
-        bitmap.Save(imagePath);
-        // Clean up drawing objects.
+        using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Blue, 3))
+        {
+            graphics.DrawRectangle(pen, 10, 10, width - 20, height - 20);
+        }
+
+        // Save the bitmap to a deterministic file name.
+        bitmap.Save(path);
+
+        // Clean up drawing resources.
         graphics.Dispose();
         bitmap.Dispose();
 
-        // -------------------------------------------------
-        // 2. Create a new DOCX document and embed the image
-        //    inside a custom XML part as a Base64 string.
-        // -------------------------------------------------
+        // Validate that the image file was created.
+        if (!File.Exists(path))
+            throw new Exception($"Failed to create sample image at '{path}'.");
+    }
+
+    private static void CreateDocumentWithImage(string docPath, string imagePath)
+    {
+        // Load the image bytes to obtain the original file name.
+        string fileName = Path.GetFileName(imagePath);
+
+        // Create a new empty document.
         Document doc = new Document();
 
-        byte[] imageBytes = File.ReadAllBytes(imagePath);
-        string base64 = Convert.ToBase64String(imageBytes);
-        string xmlContent = $"<images><image name=\"{Path.GetFileName(imagePath)}\" data=\"{base64}\"/></images>";
-
-        // Add the custom XML part.
-        doc.CustomXmlParts.Add("urn:customXml", xmlContent);
+        // Insert the image using DocumentBuilder.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        Shape shape = builder.InsertImage(imagePath);
+        // Store the original file name in the shape's Title property for later extraction.
+        shape.Title = fileName;
 
         // Save the document.
-        const string docPath = "sample.docx";
         doc.Save(docPath);
 
-        // -------------------------------------------------
-        // 3. Load the document and extract images from the
-        //    custom XML parts, saving them with their original
-        //    filenames.
-        // -------------------------------------------------
-        Document loadedDoc = new Document(docPath);
+        // Validate that the document was saved.
+        if (!File.Exists(docPath))
+            throw new Exception($"Failed to create document at '{docPath}'.");
+    }
+
+    private static void ExtractImagesFromDocument(string docPath)
+    {
+        Document doc = new Document(docPath);
         int extractedCount = 0;
+        int index = 1;
 
-        foreach (var part in loadedDoc.CustomXmlParts)
+        // Iterate over all Shape nodes in the document.
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+        foreach (Shape shape in shapes)
         {
-            // CustomXmlPart.Data returns a byte[]; convert it to a string.
-            string data = Encoding.UTF8.GetString(part.Data);
-            XDocument xdoc = XDocument.Parse(data);
+            if (!shape.HasImage)
+                continue;
 
-            foreach (var imgElem in xdoc.Descendants("image"))
-            {
-                string name = (string)imgElem.Attribute("name");
-                string dataAttr = (string)imgElem.Attribute("data");
+            // Determine the output file name.
+            string fileName = !string.IsNullOrEmpty(shape.Title)
+                ? shape.Title
+                : $"extracted-{index}.png";
 
-                if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(dataAttr))
-                    continue;
-
-                byte[] imgData = Convert.FromBase64String(dataAttr);
-                File.WriteAllBytes(name, imgData);
-                extractedCount++;
-            }
+            // Save the image data to a file.
+            shape.ImageData.Save(fileName);
+            extractedCount++;
+            index++;
         }
 
         // Validate that at least one image was extracted.
         if (extractedCount == 0)
-            throw new InvalidOperationException("No images were extracted from custom XML parts.");
+            throw new Exception("No images were extracted from the document.");
+
+        Console.WriteLine($"Successfully extracted {extractedCount} image(s) from the document.");
     }
 }

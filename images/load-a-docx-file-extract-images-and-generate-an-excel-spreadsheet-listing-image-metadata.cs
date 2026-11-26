@@ -1,107 +1,166 @@
 using System;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare deterministic file names
-        string docPath = "sample.docx";
-        string image1Path = "input1.png";
-        string image2Path = "input2.png";
-        string outputFolder = "extracted_images";
-        string excelPath = "ImageMetadata.xlsx";
+        // Paths for temporary files
+        const string imagePath = "input.png";
+        const string docPath = "sample.docx";
+        const string reportPath = "ImageMetadata.xlsx"; // CSV content with .xlsx extension
 
-        // Ensure output folder exists
-        Directory.CreateDirectory(outputFolder);
+        // 1. Create a deterministic sample image
+        CreateSampleImage(imagePath);
 
-        // Create sample images
-        CreateSampleImage(image1Path, 200, 150, Aspose.Drawing.Color.LightBlue);
-        CreateSampleImage(image2Path, 120, 180, Aspose.Drawing.Color.LightCoral);
+        // 2. Create a DOCX document and insert the sample image
+        CreateDocumentWithImage(docPath, imagePath);
 
-        // Create a DOCX and insert the images
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample document with images:");
-        builder.InsertImage(image1Path);
-        builder.Writeln();
-        builder.InsertImage(image2Path);
-        doc.Save(docPath);
+        // 3. Load the DOCX and extract images, collecting metadata
+        var metadataList = ExtractImagesAndCollectMetadata(docPath);
 
-        // Load the document for extraction
-        Document loadedDoc = new Document(docPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        // 4. Generate a spreadsheet (CSV) with the collected metadata
+        GenerateCsvReport(reportPath, metadataList);
 
-        var metadataList = new List<ImageMetadata>();
-
-        int imageIndex = 1;
-        foreach (Shape shape in shapeNodes)
-        {
-            if (shape.HasImage)
-            {
-                // Prepare file name for extracted image
-                string extractedImagePath = Path.Combine(outputFolder, $"extracted_{imageIndex}.png");
-
-                // Save the image
-                shape.ImageData.Save(extractedImagePath);
-
-                // Get image size in points (1 point = 1/72 inch)
-                ImageSize size = shape.ImageData.ImageSize; // WidthPoints / HeightPoints
-                // Get file size in bytes
-                long fileSize = new FileInfo(extractedImagePath).Length;
-
-                metadataList.Add(new ImageMetadata
-                {
-                    FileName = Path.GetFileName(extractedImagePath),
-                    WidthPoints = size.WidthPoints,
-                    HeightPoints = size.HeightPoints,
-                    SizeBytes = fileSize
-                });
-
-                imageIndex++;
-            }
-        }
-
-        // Validate that at least one image was extracted
-        if (metadataList.Count == 0)
-            throw new InvalidOperationException("No images were extracted from the document.");
-
-        // Generate CSV content (Excel can open CSV files)
-        using (var writer = new StreamWriter(excelPath, false))
-        {
-            writer.WriteLine("ImageFileName,WidthPoints,HeightPoints,SizeBytes");
-            foreach (var meta in metadataList)
-            {
-                writer.WriteLine($"{meta.FileName},{meta.WidthPoints},{meta.HeightPoints},{meta.SizeBytes}");
-            }
-        }
-
-        // Validate that the spreadsheet was created
-        if (!File.Exists(excelPath))
-            throw new InvalidOperationException("Failed to create the Excel spreadsheet.");
+        // 5. Validate outputs
+        ValidateOutputs(metadataList, reportPath);
     }
 
-    private static void CreateSampleImage(string path, int width, int height, Aspose.Drawing.Color backColor)
+    private static void CreateSampleImage(string path)
     {
-        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
+        const int width = 200;
+        const int height = 150;
+
+        // Create bitmap using Aspose.Drawing
+        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height);
+        try
         {
-            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
+            // Obtain graphics object
+            Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap);
+            try
             {
-                g.Clear(backColor);
+                // Fill background
+                graphics.Clear(Aspose.Drawing.Color.White);
+                // Draw a simple rectangle
+                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Black, 3))
+                {
+                    graphics.DrawRectangle(pen, 10, 10, width - 20, height - 20);
+                }
             }
-            bitmap.Save(path);
+            finally
+            {
+                graphics.Dispose();
+            }
+
+            // Save as PNG
+            bitmap.Save(path, Aspose.Drawing.Imaging.ImageFormat.Png);
         }
+        finally
+        {
+            bitmap.Dispose();
+        }
+
+        if (!File.Exists(path))
+            throw new Exception($"Failed to create sample image at '{path}'.");
+    }
+
+    private static void CreateDocumentWithImage(string docPath, string imagePath)
+    {
+        // Ensure the image exists before insertion
+        if (!File.Exists(imagePath))
+            throw new FileNotFoundException($"Image file not found: {imagePath}");
+
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.InsertImage(imagePath);
+        doc.Save(docPath);
+
+        if (!File.Exists(docPath))
+            throw new Exception($"Failed to save document at '{docPath}'.");
+    }
+
+    private static List<ImageMetadata> ExtractImagesAndCollectMetadata(string docPath)
+    {
+        if (!File.Exists(docPath))
+            throw new FileNotFoundException($"Document file not found: {docPath}");
+
+        Document doc = new Document(docPath);
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+        List<ImageMetadata> metadataList = new List<ImageMetadata>();
+        int imageIndex = 0;
+
+        foreach (Shape shape in shapes)
+        {
+            if (!shape.HasImage)
+                continue;
+
+            string extractedImagePath = $"extracted-{imageIndex}.png";
+
+            // Save the image to a file
+            shape.ImageData.Save(extractedImagePath);
+
+            // Load the saved image to obtain dimensions and size
+            using (FileStream fs = new FileStream(extractedImagePath, FileMode.Open, FileAccess.Read))
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    fs.CopyTo(ms);
+                    ms.Position = 0; // Reset position before reading
+                    using (Aspose.Drawing.Bitmap bmp = new Aspose.Drawing.Bitmap(ms))
+                    {
+                        long sizeBytes = new FileInfo(extractedImagePath).Length;
+                        ImageMetadata meta = new ImageMetadata
+                        {
+                            FileName = extractedImagePath,
+                            SizeBytes = sizeBytes,
+                            Width = bmp.Width,
+                            Height = bmp.Height
+                        };
+                        metadataList.Add(meta);
+                    }
+                }
+            }
+
+            imageIndex++;
+        }
+
+        return metadataList;
+    }
+
+    private static void GenerateCsvReport(string reportPath, List<ImageMetadata> metadata)
+    {
+        using (StreamWriter writer = new StreamWriter(reportPath, false))
+        {
+            // Header row
+            writer.WriteLine("FileName,SizeBytes,Width,Height");
+
+            // Data rows
+            foreach (var item in metadata)
+            {
+                writer.WriteLine($"{item.FileName},{item.SizeBytes},{item.Width},{item.Height}");
+            }
+        }
+    }
+
+    private static void ValidateOutputs(List<ImageMetadata> metadata, string reportPath)
+    {
+        if (metadata.Count == 0)
+            throw new Exception("No images were extracted from the document.");
+
+        if (!File.Exists(reportPath))
+            throw new Exception($"Report was not created at '{reportPath}'.");
     }
 
     private class ImageMetadata
     {
         public string FileName { get; set; }
-        public double WidthPoints { get; set; }
-        public double HeightPoints { get; set; }
         public long SizeBytes { get; set; }
+        public int Width { get; set; }
+        public int Height { get; set; }
     }
 }

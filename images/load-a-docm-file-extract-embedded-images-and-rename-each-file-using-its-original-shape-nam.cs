@@ -1,115 +1,94 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
-using Newtonsoft.Json;
+using Aspose.Drawing.Drawing2D;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare directories
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        Directory.CreateDirectory(workDir);
-        string outputDir = Path.Combine(workDir, "Output");
-        Directory.CreateDirectory(outputDir);
+        // Prepare deterministic file names
+        const string imageFile = "sample.png";
+        const string docFile = "sample.docm";
 
-        // Create sample images
-        string imgPath1 = Path.Combine(workDir, "sample1.png");
-        string imgPath2 = Path.Combine(workDir, "sample2.png");
-        CreateSampleImage(imgPath1, 200, 100, Aspose.Drawing.Color.LightBlue, "Img1");
-        CreateSampleImage(imgPath2, 150, 150, Aspose.Drawing.Color.LightGreen, "Img2");
+        // Create a sample PNG image
+        CreateSamplePng(imageFile, 100, 100);
 
-        // Create a DOCM document with the images
-        string docPath = Path.Combine(workDir, "sample.docm");
-        CreateDocumentWithImages(docPath, new[] { imgPath1, imgPath2 });
-
-        // Load the DOCM and extract images, renaming them using the shape name
-        ExtractImagesUsingShapeNames(docPath, outputDir);
-    }
-
-    private static void CreateSampleImage(string filePath, int width, int height, Aspose.Drawing.Color backColor, string text)
-    {
-        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
-        {
-            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
-            {
-                g.Clear(backColor);
-
-                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Black, 2))
-                {
-                    g.DrawRectangle(pen, 10, 10, width - 20, height - 20);
-                }
-
-                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 12))
-                using (Aspose.Drawing.SolidBrush brush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Black))
-                {
-                    g.DrawString(text, font, brush, new Aspose.Drawing.PointF(15, height / 2 - 10));
-                }
-            }
-
-            bitmap.Save(filePath, Aspose.Drawing.Imaging.ImageFormat.Png);
-        }
-    }
-
-    private static void CreateDocumentWithImages(string docPath, string[] imagePaths)
-    {
+        // Create a DOCM document and insert the image as shapes with names
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        for (int i = 0; i < imagePaths.Length; i++)
+        // Insert first image and set shape name
+        Shape shape1 = builder.InsertImage(imageFile);
+        shape1.Name = "FirstShape";
+
+        // Insert second image (reuse same PNG) and set a different shape name
+        Shape shape2 = builder.InsertImage(imageFile);
+        shape2.Name = "SecondShape";
+
+        // Save the document as DOCM
+        doc.Save(docFile, SaveFormat.Docm);
+
+        // Load the DOCM document for extraction
+        Document loadedDoc = new Document(docFile);
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+
+        int extractedCount = 0;
+        foreach (Node node in shapeNodes)
         {
-            // Insert image and obtain the shape
-            Shape shape = builder.InsertImage(imagePaths[i]);
-            shape.Name = $"ImageShape{i + 1}";
-            // Add a paragraph break after each image
-            builder.Writeln();
+            Shape shape = (Shape)node;
+            if (!shape.HasImage)
+                continue;
+
+            // Determine file extension based on image type
+            string extension = GetExtensionFromImageType(shape.ImageData.ImageType);
+            if (string.IsNullOrEmpty(extension))
+                continue; // Skip unsupported types
+
+            // Use the shape's name for the output file; fallback to a generic name if missing
+            string baseName = !string.IsNullOrEmpty(shape.Name) ? shape.Name : $"shape_{extractedCount + 1}";
+            string outputFileName = $"{baseName}{extension}";
+
+            // Save the image
+            shape.ImageData.Save(outputFileName);
+            extractedCount++;
         }
 
-        doc.Save(docPath, SaveFormat.Docm);
+        if (extractedCount == 0)
+            throw new Exception("No images were extracted from the document.");
+
+        // Optional clean‑up (commented out to keep the generated files for inspection)
+        // File.Delete(imageFile);
+        // File.Delete(docFile);
     }
 
-    private static void ExtractImagesUsingShapeNames(string docPath, string outputDir)
+    private static void CreateSamplePng(string filePath, int width, int height)
     {
-        Document doc = new Document(docPath);
-        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
-        List<string> savedFiles = new List<string>();
-
-        foreach (Shape shape in shapes)
+        // Create a deterministic PNG image using Aspose.Drawing
+        using (Bitmap bitmap = new Bitmap(width, height))
         {
-            if (shape.HasImage)
+            using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                string shapeName = string.IsNullOrEmpty(shape.Name)
-                    ? $"UnnamedShape_{Guid.NewGuid()}"
-                    : shape.Name;
-
-                string extension = ImageTypeToExtension(shape.ImageData.ImageType);
-                string outPath = Path.Combine(outputDir, $"{shapeName}{extension}");
-                shape.ImageData.Save(outPath);
-                savedFiles.Add(outPath);
+                graphics.Clear(Color.White);
+                using (Pen pen = new Pen(Color.Red, 3))
+                {
+                    graphics.DrawRectangle(pen, 10, 10, width - 20, height - 20);
+                }
             }
+            bitmap.Save(filePath, ImageFormat.Png);
         }
-
-        if (savedFiles.Count == 0)
-        {
-            throw new InvalidOperationException("No images were extracted from the document.");
-        }
-
-        // Optional: write a simple JSON manifest of extracted files
-        string manifestPath = Path.Combine(outputDir, "manifest.json");
-        File.WriteAllText(manifestPath, JsonConvert.SerializeObject(savedFiles, Formatting.Indented));
     }
 
-    private static string ImageTypeToExtension(ImageType imageType)
+    private static string GetExtensionFromImageType(ImageType imageType)
     {
+        // Map Aspose.Words.Drawing.ImageType values to file extensions
         switch (imageType)
         {
             case ImageType.Jpeg:
-                return ".jpg";
+                return ".jpeg";
             case ImageType.Png:
                 return ".png";
             case ImageType.Gif:
@@ -121,7 +100,7 @@ public class Program
             case ImageType.Wmf:
                 return ".wmf";
             default:
-                return ".img";
+                return string.Empty; // Unsupported or unknown type
         }
     }
 }

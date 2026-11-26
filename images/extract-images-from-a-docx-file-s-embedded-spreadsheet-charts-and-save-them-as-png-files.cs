@@ -2,91 +2,86 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Drawing.Charts;
+using Aspose.Words.Tables;
 using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create a deterministic sample chart image using Aspose.Drawing.
-        // -----------------------------------------------------------------
-        const int chartWidth = 400;
-        const int chartHeight = 300;
-        const string chartImagePath = "sample-chart.png";
+        // Prepare deterministic file names
+        string imagePath = "sample.png";
+        string docPath = "sample.docx";
+        string outputFolder = "extracted_images";
 
-        using (Bitmap bitmap = new Bitmap(chartWidth, chartHeight))
+        // Ensure output folder exists
+        Directory.CreateDirectory(outputFolder);
+
+        // Create a sample PNG image using Aspose.Drawing
+        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(200, 200))
         {
-            using (Graphics graphics = Graphics.FromImage(bitmap))
+            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
             {
-                // Fill background.
-                graphics.Clear(Color.White);
-
-                // Draw simple column chart bars.
-                int barCount = 5;
-                int barWidth = chartWidth / (barCount * 2);
-                Random rnd = new Random();
-
-                for (int i = 0; i < barCount; i++)
+                g.Clear(Aspose.Drawing.Color.White);
+                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Blue, 5))
                 {
-                    int barHeight = rnd.Next(50, chartHeight - 50);
-                    int x = (i * 2 + 1) * barWidth;
-                    int y = chartHeight - barHeight;
-
-                    using (SolidBrush brush = new SolidBrush(Color.FromArgb(100 + i * 30, 150, 200)))
+                    g.DrawRectangle(pen, 20, 20, 160, 160);
+                }
+                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 24))
+                {
+                    using (Aspose.Drawing.SolidBrush brush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Black))
                     {
-                        graphics.FillRectangle(brush, x, y, barWidth, barHeight);
-                    }
-
-                    using (Pen pen = new Pen(Color.Black, 2))
-                    {
-                        graphics.DrawRectangle(pen, x, y, barWidth, barHeight);
+                        g.DrawString("Sample", font, brush, new Aspose.Drawing.PointF(40, 80));
                     }
                 }
             }
-
-            // Save the chart image to a local file.
-            bitmap.Save(chartImagePath);
+            bitmap.Save(imagePath, Aspose.Drawing.Imaging.ImageFormat.Png);
         }
 
-        // ---------------------------------------------------------------
-        // 2. Create a DOCX document and insert the generated chart image.
-        // ---------------------------------------------------------------
-        const string docPath = "sample.docx";
+        // Create a new Word document and insert the sample image and a chart
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert the chart image.
-        builder.InsertImage(chartImagePath);
+        // Insert the sample image
+        builder.InsertImage(imagePath);
+
+        // Insert a chart (embedded spreadsheet chart)
+        Chart chart = builder.InsertChart(ChartType.Column, 400, 300).Chart;
+        // Populate chart with sample data
+        chart.Series.Clear();
+        ChartSeries series = chart.Series.Add("Series 1", new string[] { "A", "B", "C" }, new double[] { 10, 20, 30 });
+        chart.Title.Text = "Sample Chart";
+
+        // Save the document
         doc.Save(docPath);
 
-        // ---------------------------------------------------------------
-        // 3. Load the document and extract all images (including the chart).
-        // ---------------------------------------------------------------
+        // Reload the document for extraction
         Document loadedDoc = new Document(docPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
 
-        int imageIndex = 0;
-        foreach (Shape shape in shapeNodes)
+        // Iterate through all Shape nodes and extract images
+        NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        int extractedCount = 0;
+
+        foreach (Shape shape in shapes)
         {
             if (shape.HasImage)
             {
-                string extractedPath = $"extracted-{imageIndex}.png";
-
-                // Save the image data to a file.
-                shape.ImageData.Save(extractedPath);
-                imageIndex++;
+                string outPath = Path.Combine(outputFolder, $"extracted-{extractedCount}.png");
+                shape.ImageData.Save(outPath);
+                extractedCount++;
             }
         }
 
-        // ---------------------------------------------------------------
-        // 4. Validate that at least one image was extracted.
-        // ---------------------------------------------------------------
-        if (imageIndex == 0)
+        // Validate that at least one image was extracted
+        if (extractedCount == 0)
         {
             throw new InvalidOperationException("No images were extracted from the document.");
         }
 
-        Console.WriteLine($"Extracted {imageIndex} image(s) to PNG files.");
+        // Optional cleanup (commented out)
+        // File.Delete(imagePath);
+        // File.Delete(docPath);
     }
 }

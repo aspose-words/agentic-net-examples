@@ -1,8 +1,9 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Notes;
 using Aspose.Words.Drawing;
+using Aspose.Words.Notes;
+using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
@@ -10,65 +11,85 @@ public class Program
 {
     public static void Main()
     {
-        // Create a deterministic sample image (input.png)
-        const string sampleImagePath = "sample.png";
-        using (Bitmap bitmap = new Bitmap(100, 100))
+        // -----------------------------------------------------------------
+        // Create a deterministic sample image (input.png) using Aspose.Drawing.
+        // -----------------------------------------------------------------
+        const string sampleImagePath = "input.png";
+        const int imgWidth = 200;
+        const int imgHeight = 200;
+
+        // Create bitmap and draw a simple rectangle.
+        using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
         {
             using (Graphics g = Graphics.FromImage(bitmap))
             {
                 g.Clear(Color.White);
-                using (Pen pen = new Pen(Color.Red, 5))
-                {
-                    g.DrawRectangle(pen, 10, 10, 80, 80);
-                }
+                g.FillRectangle(new SolidBrush(Color.LightBlue), 20, 20, imgWidth - 40, imgHeight - 40);
             }
-            bitmap.Save(sampleImagePath, ImageFormat.Png);
+            bitmap.Save(sampleImagePath);
         }
 
-        // Create a Word document with a footnote that contains the image
-        const string docPath = "DocumentWithFootnote.docx";
+        // -----------------------------------------------------------------
+        // Create a new Word document and insert a footnote that contains the image.
+        // -----------------------------------------------------------------
+        const string docPath = "Sample.docx";
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+
         builder.Writeln("This is a paragraph with a footnote reference.");
-        Footnote footnote = builder.InsertFootnote(FootnoteType.Footnote, string.Empty);
+
+        // Insert footnote and move builder into its first paragraph.
+        Footnote footnote = builder.InsertFootnote(FootnoteType.Footnote, "Footnote text.");
         builder.MoveTo(footnote.FirstParagraph);
         builder.InsertImage(sampleImagePath);
+
+        // Save the document.
         doc.Save(docPath);
 
-        // Extract images from footnotes and save them as JPEG files
+        // -----------------------------------------------------------------
+        // Load the document (demonstrates load/save lifecycle) and extract images from footnotes.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(docPath);
+        NodeCollection footnotes = loadedDoc.GetChildNodes(NodeType.Footnote, true);
+
         int extractedCount = 0;
-        NodeCollection footnotes = doc.GetChildNodes(NodeType.Footnote, true);
         int footnoteIndex = 1;
+
         foreach (Footnote fn in footnotes)
         {
+            // Find all Shape nodes inside the current footnote.
             NodeCollection shapes = fn.GetChildNodes(NodeType.Shape, true);
             foreach (Shape shape in shapes)
             {
                 if (shape.HasImage)
                 {
-                    string outputPath = $"footnote-{footnoteIndex}.jpg";
-                    using (MemoryStream ms = new MemoryStream())
+                    // First save the embedded image as PNG (original format).
+                    string tempPngPath = $"footnote-{footnoteIndex}.png";
+                    shape.ImageData.Save(tempPngPath);
+
+                    // Convert the PNG to JPEG using Aspose.Drawing.
+                    string outputJpegPath = $"footnote-{footnoteIndex}.jpg";
+                    using (Bitmap bmp = new Bitmap(tempPngPath))
                     {
-                        shape.ImageData.Save(ms);
-                        ms.Position = 0;
-                        using (Bitmap bmp = new Bitmap(ms))
-                        {
-                            bmp.Save(outputPath, ImageFormat.Jpeg);
-                        }
+                        bmp.Save(outputJpegPath, ImageFormat.Jpeg);
                     }
+
+                    // Clean up the temporary PNG file.
+                    File.Delete(tempPngPath);
+
                     extractedCount++;
                 }
             }
             footnoteIndex++;
         }
 
-        // Validate that at least one image was extracted
+        // Validate that at least one image was extracted.
         if (extractedCount == 0)
         {
             throw new InvalidOperationException("No images were extracted from footnotes.");
         }
 
-        // Clean up temporary files (optional)
+        // Optional clean‑up of the sample files.
         // File.Delete(sampleImagePath);
         // File.Delete(docPath);
     }

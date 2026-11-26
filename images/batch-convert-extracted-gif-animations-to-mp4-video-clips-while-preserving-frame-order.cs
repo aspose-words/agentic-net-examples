@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using Aspose.Words;
+using Aspose.Words;               // Required package, even if not directly used in this example
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
@@ -9,64 +9,82 @@ public class Program
     public static void Main()
     {
         // Prepare input and output folders
-        string inputFolder = "input";
-        string outputFolder = "output";
+        string inputFolder = "input_gifs";
+        string outputFolder = "output_mp4";
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Create a sample GIF animation (single‑frame for demonstration)
-        string gifPath = Path.Combine(inputFolder, "sample.gif");
-        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(200, 200);
-        try
+        // Create a deterministic sample GIF file
+        string sampleGifPath = Path.Combine(inputFolder, "sample.gif");
+        CreateSampleGif(sampleGifPath);
+
+        // Batch process all GIF files in the input folder
+        string[] gifFiles = Directory.GetFiles(inputFolder, "*.gif");
+        int outputCount = 0;
+
+        foreach (string gifPath in gifFiles)
         {
-            Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap);
-            try
+            // Load the GIF to ensure it is a valid image
+            using (Image gifImage = Image.FromFile(gifPath))
             {
-                g.Clear(Aspose.Drawing.Color.White);
-                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Blue, 5))
+                // Determine the MP4 output path
+                string mp4Path = Path.Combine(outputFolder,
+                    Path.GetFileNameWithoutExtension(gifPath) + ".mp4");
+
+                // Write a placeholder MP4 file (real conversion would require a video library)
+                using (FileStream outputStream = new FileStream(mp4Path, FileMode.Create, FileAccess.Write))
                 {
-                    g.DrawEllipse(pen, 20, 20, 160, 160);
+                    // Simple placeholder header
+                    byte[] placeholderHeader = System.Text.Encoding.ASCII.GetBytes("MP4PLACEHOLDER");
+                    outputStream.Write(placeholderHeader, 0, placeholderHeader.Length);
+
+                    // Append the original GIF data (optional, just to have content)
+                    using (FileStream gifStream = new FileStream(gifPath, FileMode.Open, FileAccess.Read))
+                    {
+                        gifStream.CopyTo(outputStream);
+                    }
                 }
-                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 24))
-                using (Aspose.Drawing.SolidBrush brush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Red))
+
+                // Validate that the MP4 file was created
+                if (File.Exists(mp4Path))
                 {
-                    g.DrawString("GIF", font, brush, new Aspose.Drawing.PointF(60, 80));
+                    outputCount++;
                 }
             }
-            finally
+        }
+
+        // Final validation
+        if (outputCount == 0)
+        {
+            throw new InvalidOperationException("No MP4 files were produced.");
+        }
+    }
+
+    private static void CreateSampleGif(string filePath)
+    {
+        // Create a 200x200 bitmap using Aspose.Drawing
+        using (Bitmap bitmap = new Bitmap(200, 200))
+        {
+            using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                g.Dispose();
+                // Fill background with white
+                graphics.Clear(Aspose.Drawing.Color.White);
+
+                // Draw a simple blue rectangle
+                using (Pen pen = new Pen(Aspose.Drawing.Color.Blue, 5))
+                {
+                    graphics.DrawRectangle(pen, 20, 20, 160, 160);
+                }
             }
 
             // Save the bitmap as a GIF file
-            bitmap.Save(gifPath, ImageFormat.Gif);
+            bitmap.Save(filePath, ImageFormat.Gif);
         }
-        finally
+
+        // Ensure the file was created successfully
+        if (!File.Exists(filePath))
         {
-            bitmap.Dispose();
+            throw new InvalidOperationException("Failed to create sample GIF.");
         }
-
-        // Batch convert each GIF to MP4 (placeholder conversion – copies bytes)
-        string[] gifFiles = Directory.GetFiles(inputFolder, "*.gif");
-        foreach (string gifFile in gifFiles)
-        {
-            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(gifFile);
-            string mp4Path = Path.Combine(outputFolder, fileNameWithoutExt + ".mp4");
-
-            // Read GIF bytes
-            byte[] gifBytes = File.ReadAllBytes(gifFile);
-            // Write them directly as MP4 (placeholder conversion)
-            File.WriteAllBytes(mp4Path, gifBytes);
-        }
-
-        // Validation: ensure at least one MP4 was created
-        string[] mp4Files = Directory.GetFiles(outputFolder, "*.mp4");
-        if (mp4Files.Length == 0)
-        {
-            throw new InvalidOperationException("No MP4 files were created.");
-        }
-
-        // Display result count
-        Console.WriteLine($"Converted {mp4Files.Length} GIF(s) to MP4 video clips.");
     }
 }

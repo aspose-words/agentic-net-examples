@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Xml.Linq;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 using Aspose.Words.Markup;
 using Aspose.Drawing;
 using Newtonsoft.Json;
@@ -13,131 +15,116 @@ public class Program
     public static void Main()
     {
         // Step 1: Create a deterministic sample image.
-        const string sampleImagePath = "sample.png";
-        CreateSampleImage(sampleImagePath);
+        const string sampleImagePath = "input.png";
+        CreateSampleImage(sampleImagePath, 200, 100);
 
-        // Step 2: Encode the image to Base64.
-        string base64Image = Convert.ToBase64String(File.ReadAllBytes(sampleImagePath));
-
-        // Step 3: Create a DOCX with a custom XML part that contains the image data.
+        // Step 2: Build a DOCX containing the image and a custom XML part that maps the image to an external ID.
         const string docPath = "sample.docx";
-        CreateDocumentWithCustomXml(docPath, base64Image);
+        CreateDocumentWithCustomXml(docPath, sampleImagePath);
 
-        // Step 4: Load the document and extract images from its custom XML schema.
-        Document doc = new Document(docPath);
-        var extractedImages = ExtractImagesFromCustomXml(doc);
+        // Step 3: Load the document, parse the custom XML, extract the mapped images, and save them using the external IDs.
+        var mapping = ExtractImagesBasedOnCustomXml(docPath);
 
-        // Step 5: Map extracted images to external resource IDs.
-        var resourceMap = MapImagesToExternalIds(extractedImages);
+        // Step 4: Validate that at least one image was extracted.
+        if (mapping.Count == 0)
+            throw new InvalidOperationException("No images were extracted based on the custom XML mapping.");
 
-        // Step 6: Validate that at least one image was extracted and saved.
-        if (resourceMap.Count == 0)
-            throw new Exception("No images were extracted from the custom XML.");
-
-        // Output the mapping (optional, just to demonstrate).
-        foreach (var kvp in resourceMap)
-        {
-            Console.WriteLine($"{kvp.Key} -> {kvp.Value}");
-        }
+        // Step 5: Output the mapping as JSON.
+        string json = JsonConvert.SerializeObject(mapping, Formatting.Indented);
+        Console.WriteLine(json);
     }
 
-    private static void CreateSampleImage(string path)
+    private static void CreateSampleImage(string path, int width, int height)
     {
-        // Create a 100x100 white bitmap.
-        Bitmap bitmap = new Bitmap(100, 100);
+        // Create a bitmap using Aspose.Drawing.
+        Bitmap bitmap = new Bitmap(width, height);
         Graphics graphics = Graphics.FromImage(bitmap);
+
+        // Fill background.
         graphics.Clear(Color.White);
 
-        // Draw a red ellipse for visual distinction.
-        using (Pen pen = new Pen(Color.Red, 2))
+        // Draw a simple rectangle.
+        using (Pen pen = new Pen(Color.Blue, 5))
         {
-            graphics.DrawEllipse(pen, new Rectangle(10, 10, 80, 80));
+            graphics.DrawRectangle(pen, 10, 10, width - 20, height - 20);
         }
 
-        // Save the bitmap to the specified path.
+        // Save the image.
         bitmap.Save(path);
+
+        // Clean up.
         graphics.Dispose();
         bitmap.Dispose();
-
-        // Validate that the image file exists.
-        if (!File.Exists(path))
-            throw new Exception($"Failed to create sample image at '{path}'.");
     }
 
-    private static void CreateDocumentWithCustomXml(string docPath, string base64Image)
+    private static void CreateDocumentWithCustomXml(string docPath, string imagePath)
     {
-        // Create an empty Word document.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple custom XML containing the image data.
-        string customXml = $@"
-<Images xmlns=""http://example.com/images"">
-    <Image id=""img1"">{base64Image}</Image>
-</Images>";
+        // Insert the sample image and assign a deterministic name.
+        Shape imageShape = builder.InsertImage(imagePath);
+        imageShape.Name = "MyImage1";
+
+        // Define custom XML that maps the image name to an external resource ID.
+        const string customXml = @"
+<Resources xmlns=""http://example.com/resources"">
+    <Resource>
+        <ImageName>MyImage1</ImageName>
+        <ExternalId>ext-001</ExternalId>
+    </Resource>
+</Resources>";
 
         // Add the custom XML part to the document.
-        // The first argument is a unique ID for the part, the second is the XML string.
-        doc.CustomXmlParts.Add("ImagesPart", customXml);
+        CustomXmlPart xmlPart = new CustomXmlPart();
+        xmlPart.Data = Encoding.UTF8.GetBytes(customXml);
+        doc.CustomXmlParts.Add(xmlPart);
 
         // Save the document.
         doc.Save(docPath);
-
-        // Validate that the document file exists.
-        if (!File.Exists(docPath))
-            throw new Exception($"Failed to create document at '{docPath}'.");
     }
 
-    private static Dictionary<string, byte[]> ExtractImagesFromCustomXml(Document doc)
+    private static Dictionary<string, string> ExtractImagesBasedOnCustomXml(string docPath)
     {
-        var images = new Dictionary<string, byte[]>();
+        var result = new Dictionary<string, string>();
+        Document doc = new Document(docPath);
 
-        foreach (CustomXmlPart part in doc.CustomXmlParts)
+        // Iterate over all custom XML parts.
+        foreach (CustomXmlPart customXmlPart in doc.CustomXmlParts)
         {
-            // Convert the part's data (byte[]) to a UTF-8 string.
-            string xmlContent = Encoding.UTF8.GetString(part.Data);
-            XDocument xDoc = XDocument.Parse(xmlContent);
+            // Parse the XML content.
+            string xmlString = Encoding.UTF8.GetString(customXmlPart.Data);
+            XDocument xDoc = XDocument.Parse(xmlString);
+            XNamespace ns = "http://example.com/resources";
 
-            // Namespace handling.
-            XNamespace ns = "http://example.com/images";
+            var resources = xDoc.Root?.Elements(ns + "Resource");
+            if (resources == null) continue;
 
-            foreach (XElement imgElement in xDoc.Descendants(ns + "Image"))
+            foreach (var resource in resources)
             {
-                XAttribute idAttr = imgElement.Attribute("id");
-                if (idAttr == null) continue;
+                string imageName = resource.Element(ns + "ImageName")?.Value;
+                string externalId = resource.Element(ns + "ExternalId")?.Value;
 
-                string id = idAttr.Value;
-                string base64 = imgElement.Value.Trim();
+                if (string.IsNullOrEmpty(imageName) || string.IsNullOrEmpty(externalId))
+                    continue;
 
-                if (string.IsNullOrEmpty(base64)) continue;
+                // Find the shape with the matching name.
+                Shape shape = doc.GetChildNodes(NodeType.Shape, true)
+                                 .Cast<Shape>()
+                                 .FirstOrDefault(s => s.Name == imageName);
 
-                byte[] imageBytes = Convert.FromBase64String(base64);
-                string fileName = $"{id}.png";
+                if (shape != null && shape.HasImage)
+                {
+                    string outputFileName = $"{externalId}.png";
+                    shape.ImageData.Save(outputFileName);
+                    if (!File.Exists(outputFileName))
+                        throw new InvalidOperationException($"Failed to save extracted image to '{outputFileName}'.");
 
-                // Save the extracted image.
-                File.WriteAllBytes(fileName, imageBytes);
-
-                // Validate that the file was written.
-                if (!File.Exists(fileName))
-                    throw new Exception($"Failed to write extracted image '{fileName}'.");
-
-                images[id] = imageBytes;
+                    result[externalId] = outputFileName;
+                }
             }
         }
 
-        return images;
-    }
-
-    private static Dictionary<string, string> MapImagesToExternalIds(Dictionary<string, byte[]> extractedImages)
-    {
-        var map = new Dictionary<string, string>();
-
-        foreach (var kvp in extractedImages)
-        {
-            // For demonstration, generate a GUID as the external resource ID.
-            string externalId = Guid.NewGuid().ToString();
-            map[kvp.Key] = externalId;
-        }
-
-        return map;
+        return result;
     }
 }

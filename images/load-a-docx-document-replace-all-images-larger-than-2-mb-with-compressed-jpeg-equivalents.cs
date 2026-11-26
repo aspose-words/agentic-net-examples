@@ -9,82 +9,91 @@ public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // Create a deterministic large image (>2 MB) using Aspose.Drawing.
-        // Save as BMP to avoid compression that would keep the file small.
-        // -----------------------------------------------------------------
-        const string largeImagePath = "large.bmp";
-        const int width = 3000;
-        const int height = 3000;
+        // Create deterministic sample images
+        const string largeImagePath = "large.png";
+        const string smallImagePath = "small.png";
 
-        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height);
-        Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap);
-        graphics.Clear(Aspose.Drawing.Color.White);
-        // Save as BMP – this format is uncompressed and will be larger than 2 MB.
-        bitmap.Save(largeImagePath, ImageFormat.Bmp);
-        graphics.Dispose();
-        bitmap.Dispose();
+        CreateSampleImage(3000, 3000, largeImagePath, true);   // noisy image to increase file size
+        CreateSampleImage(100, 100, smallImagePath, false);   // simple small image
 
-        // Verify that the created image is larger than 2 MB.
-        FileInfo fi = new FileInfo(largeImagePath);
-        if (fi.Length <= 2 * 1024 * 1024)
-            throw new Exception("Sample image is not larger than 2 MB.");
-
-        // -----------------------------------------------------------------
-        // Create a DOCX document and insert the large image.
-        // -----------------------------------------------------------------
+        // Create a sample DOCX containing both images
         const string inputDocPath = "input.docx";
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("Document with images:");
         builder.InsertImage(largeImagePath);
+        builder.Writeln();
+        builder.InsertImage(smallImagePath);
         doc.Save(inputDocPath);
 
-        // -----------------------------------------------------------------
-        // Load the document for processing.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(inputDocPath);
+        // Load the document for processing
+        var loadedDoc = new Document(inputDocPath);
+        var shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        int replacedCount = 0;
 
-        // Iterate over all Shape nodes that contain images.
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        foreach (Shape shape in shapeNodes)
+        foreach (Shape shape in shapes)
         {
-            if (!shape.HasImage)
-                continue;
+            if (!shape.HasImage) continue;
 
-            // Get the original image bytes.
-            byte[] originalBytes = shape.ImageData.ImageBytes;
-            if (originalBytes.Length <= 2 * 1024 * 1024)
-                continue; // Image already <= 2 MB.
+            byte[] imageBytes = shape.ImageData.ImageBytes;
+            if (imageBytes.Length <= 2 * 1024 * 1024) continue; // Skip images <= 2 MB
 
-            // Re‑encode the image as JPEG (compressed).
-            using (MemoryStream inputStream = new MemoryStream(originalBytes))
+            // Load the original image into a bitmap
+            using (var originalStream = new MemoryStream(imageBytes))
             {
-                using (Aspose.Drawing.Image img = Aspose.Drawing.Image.FromStream(inputStream))
+                originalStream.Position = 0;
+                using (var bitmap = new Bitmap(originalStream))
                 {
-                    using (MemoryStream jpegStream = new MemoryStream())
+                    // Save the bitmap as a JPEG to a new memory stream
+                    using (var jpegStream = new MemoryStream())
                     {
-                        img.Save(jpegStream, ImageFormat.Jpeg);
-                        jpegStream.Position = 0; // Reset before reuse.
+                        bitmap.Save(jpegStream, ImageFormat.Jpeg);
+                        jpegStream.Position = 0;
 
-                        // Replace the shape's image with the compressed JPEG.
+                        // Replace the shape's image with the compressed JPEG
                         shape.ImageData.SetImage(jpegStream);
+                        replacedCount++;
                     }
                 }
             }
         }
 
-        // -----------------------------------------------------------------
-        // Save the modified document.
-        // -----------------------------------------------------------------
+        // Validate that at least one image was replaced
+        if (replacedCount == 0)
+            throw new InvalidOperationException("No images larger than 2 MB were found to replace.");
+
+        // Save the modified document
         const string outputDocPath = "output.docx";
         loadedDoc.Save(outputDocPath);
 
-        // Validate that the output file was created.
+        // Validate output file existence
         if (!File.Exists(outputDocPath))
-            throw new Exception("Failed to create the output document.");
+            throw new FileNotFoundException("The output document was not created.", outputDocPath);
+    }
 
-        // Optional cleanup (commented out).
-        // File.Delete(largeImagePath);
-        // File.Delete(inputDocPath);
+    private static void CreateSampleImage(int width, int height, string filePath, bool noisy)
+    {
+        using (var bitmap = new Bitmap(width, height))
+        {
+            using (var graphics = Graphics.FromImage(bitmap))
+            {
+                graphics.Clear(Aspose.Drawing.Color.LightBlue);
+                if (noisy)
+                {
+                    var rnd = new Random();
+                    for (int y = 0; y < height; y++)
+                    {
+                        for (int x = 0; x < width; x++)
+                        {
+                            var r = (byte)rnd.Next(256);
+                            var g = (byte)rnd.Next(256);
+                            var b = (byte)rnd.Next(256);
+                            bitmap.SetPixel(x, y, Aspose.Drawing.Color.FromArgb(r, g, b));
+                        }
+                    }
+                }
+            }
+            bitmap.Save(filePath, ImageFormat.Png);
+        }
     }
 }
