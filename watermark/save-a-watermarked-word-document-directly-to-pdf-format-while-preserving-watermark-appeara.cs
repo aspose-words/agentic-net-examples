@@ -11,10 +11,10 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("This is a sample document with a watermark.");
 
-        // Apply a text watermark.
+        // Apply a text watermark to the document.
         doc.Watermark.SetText("CONFIDENTIAL");
 
-        // Save the document directly to PDF format.
+        // Save the document directly to PDF format, preserving the watermark.
         doc.Save("Watermarked.pdf", SaveFormat.Pdf);
     }
 }

@@ -6,40 +6,37 @@ public class Program
 {
     public static void Main()
     {
-        // Create a temporary folder for the sample files.
-        string tempFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-        Directory.CreateDirectory(tempFolder);
+        // Simulate a network share by creating a temporary folder.
+        string networkSharePath = Path.Combine(Path.GetTempPath(), "NetworkShare");
+        Directory.CreateDirectory(networkSharePath);
 
-        // Paths for the input and output documents.
-        string inputPath = Path.Combine(tempFolder, "input.docx");
-        string outputPath = Path.Combine(tempFolder, "output.docx");
+        // Path to the source document located on the simulated network share.
+        string sourceDocPath = Path.Combine(networkSharePath, "source.docx");
 
-        // Create a simple source document and save it to the input path.
-        Document sourceDoc = new Document();
-        sourceDoc.Save(inputPath);
-
-        // Open the document from a "network share" using a FileStream.
-        // The FileShare flags ensure the file handle is released properly.
-        using (FileStream readStream = new FileStream(
-            inputPath,
-            FileMode.Open,
-            FileAccess.ReadWrite,
-            FileShare.ReadWrite))
+        // Create a simple source document if it does not already exist.
+        if (!File.Exists(sourceDocPath))
         {
-            // Load the document from the stream.
-            Document doc = new Document(readStream);
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+            builder.Writeln("This is a sample document.");
+            doc.Save(sourceDocPath);
+        }
 
-            // Add a text watermark.
+        // Path for the output document with the watermark.
+        string outputDocPath = Path.Combine(networkSharePath, "watermarked.docx");
+
+        // Open the document from the network share using a FileStream to ensure proper disposal.
+        using (FileStream stream = new FileStream(sourceDocPath, FileMode.Open, FileAccess.ReadWrite, FileShare.Read))
+        {
+            var doc = new Document(stream);
+
+            // Add a text watermark to the document.
             doc.Watermark.SetText("CONFIDENTIAL");
 
-            // Save the watermarked document directly to a file path.
-            doc.Save(outputPath);
+            // Save the watermarked document.
+            doc.Save(outputDocPath);
         }
 
-        // Simple validation that the output file was created.
-        if (File.Exists(outputPath))
-        {
-            Console.WriteLine("Watermark applied and document saved to: " + outputPath);
-        }
+        // The program ends here; no user interaction is required.
     }
 }

@@ -4,13 +4,13 @@
     "slug": "watermark",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Create any required input files (documents, images) programmatically, load the Document, configure the appropriate WatermarkOptions, invoke Document.Watermark.SetText or SetImage with a file path or stream, and finally save the document to the desired format. For cell-level watermarks, add the watermark shape to the target cell after removing it from the header, ensuring the shape is inline to preserve layout.",
+    "preferred_workflow": "Prefer the high-level Document.Watermark.SetText and SetImage overloads that accept a file path or a stream together with TextWatermarkOptions or ImageWatermarkOptions. When a cell-level watermark is required, insert a Shape into the target cell and configure its wrap and alignment properties. Always create deterministic input files (documents, PNG images) in the local folder before loading them, and save the resulting document to a known location for validation.",
     "required_packages": [
       "Aspose.Words",
       "SkiaSharp"
     ],
     "package_versions": {
-      "Aspose.Words": "26.10.0",
+      "Aspose.Words": "26.11.0",
       "SkiaSharp": "4.152.1"
     },
     "required_namespaces": [
@@ -27,23 +27,23 @@
     ],
     "key_apis": [
       "Document",
-      "DocumentBuilder",
       "File",
       "Watermark",
+      "DocumentBuilder",
       "Directory",
       "Path",
       "ImageWatermarkOptions",
       "SaveFormat",
       "MemoryStream",
-      "NodeType",
+      "Paragraph",
+      "Run",
       "Shape",
       "Table",
       "Cell",
-      "Paragraph",
-      "Run",
-      "Font",
-      "Row",
+      "NodeType",
       "CellFormat",
+      "ImageData",
+      "Row",
       "TextWatermarkOptions"
     ]
   },
@@ -56,44 +56,45 @@
   },
   "rules_summary": {
     "strict_api_bans": [
-      "Do not reference members that are not present in the Aspose.Words 26.10.0 API, such as WatermarkLayout, TextBox.Text, or Shape.Transparency."
+      "Do not reference members that are not present in Aspose.Words 26.11.0, such as WatermarkLayout members, ImageWatermarkOptions inside the Watermark type, or System.Drawing APIs for image generation."
     ],
     "canonical_patterns": [
-      "Use Document.Watermark.SetText(string, TextWatermarkOptions) for text watermarks and Document.Watermark.SetImage(string, ImageWatermarkOptions) for image watermarks.",
-      "When inserting a watermark into a table cell, retrieve the watermark shape from the primary header, detach it, set WrapType to Inline, and append it to the target cell's first paragraph."
+      "Use Document.Watermark.SetText(string, TextWatermarkOptions) for customizable text watermarks.",
+      "Use Document.Watermark.SetImage(string, ImageWatermarkOptions) or the stream overload for image watermarks.",
+      "For table-cell watermarks, create a Shape, set WrapType to None, and append it to the cell's first paragraph."
     ],
     "nullable_warning_prevention": [
-      "Validate that image files exist before calling SetImage, and ensure that options objects are instantiated before use."
+      "Validate that all objects passed to Watermark methods are non-null and of the expected type before invoking the API."
     ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "Incorrect overload for SetImage",
-      "symptom": "Compilation fails with CS1503 because a string or stream is passed where an SKBitmap is expected.",
-      "cause": "The code uses the overload that requires a SkiaSharp.SKBitmap instead of the overload that accepts a file path or stream.",
-      "fix": "Call Document.Watermark.SetImage(string path, ImageWatermarkOptions) or SetImage(Stream stream, ImageWatermarkOptions) as demonstrated in the verified examples.",
-      "prevention": "Always select the overload that matches the argument type; consult the API reference for the correct signatures."
+      "pattern": "Incorrect argument type for Watermark.SetImage",
+      "symptom": "The compiler reports CS1503 because a string, FileStream, or MemoryStream is supplied where an SKBitmap is required, leading to runtime ArgumentNullException.",
+      "cause": "Code passes file paths or generic streams directly to SetImage instead of providing an SKBitmap instance or using the overload that accepts a file path.",
+      "fix": "Use the overload Document.Watermark.SetImage(string imagePath, ImageWatermarkOptions) or convert the stream to an SKBitmap before calling SetImage.",
+      "prevention": "Always select the overload that matches the input type and avoid implicit conversions; consult the API reference for accepted parameter types."
     },
     {
-      "pattern": "Reference to non-existent types or members",
-      "symptom": "Build errors such as CS0246, CS1061, or CS0117 indicate missing types like Table, Cell, WatermarkLayout, or members like Shape.Text.",
-      "cause": "The code invents or assumes APIs that are not part of the current Aspose.Words version.",
-      "fix": "Remove invented references and use only documented types (DocumentBuilder, Table, Cell, Shape) and members (WrapType, FillColor, etc.).",
-      "prevention": "Rely exclusively on the official Aspose.Words documentation and the verified code snippets for supported members."
+      "pattern": "Missing table and cell types",
+      "symptom": "CS0246 errors indicate that Table, Cell, Row, or related types cannot be resolved, causing build failures.",
+      "cause": "The required namespace Aspose.Words.Tables is omitted from the using directives.",
+      "fix": "Add \"using Aspose.Words.Tables;\" and, when needed, \"using System.Drawing;\" for color definitions.",
+      "prevention": "Include all necessary Aspose.Words namespaces at the top of the file before referencing table-related classes."
     },
     {
-      "pattern": "Misuse of using directives",
-      "symptom": "Compilation fails with CS0138 because a type is treated as a namespace in a using statement.",
-      "cause": "The code attempts to write \"using Watermark;\" or similar, treating the Watermark class as a namespace.",
-      "fix": "Remove the invalid using directive; reference the Watermark class directly via the Document instance.",
-      "prevention": "Only include using statements for actual namespaces; never use a class name in a using directive."
+      "pattern": "Invalid Watermark option types",
+      "symptom": "CS0426 and CS0117 errors show that TextWatermarkOptions, ImageWatermarkOptions, or WatermarkLayout members are not found within the Watermark type.",
+      "cause": "The code treats Watermark as a namespace and attempts to access option types that belong to the Aspose.Words.Drawing namespace.",
+      "fix": "Reference Aspose.Words.Drawing and instantiate TextWatermarkOptions or ImageWatermarkOptions directly; use WatermarkLayout from the same namespace.",
+      "prevention": "Follow the documented pattern: var options = new TextWatermarkOptions { FontFamily = \"Arial\", FontSize = 48, Color = Color.Blue, Layout = WatermarkLayout.Diagonal };"
     },
     {
-      "pattern": "Assignment to read-only TextBox property",
-      "symptom": "CS0200 errors occur when the code tries to assign to Shape.TextBox or its Text property.",
-      "cause": "The TextBox property of Shape is read-only, and its Text member does not exist in this API version.",
-      "fix": "Create a Shape, set its properties (Width, Height, FillColor, etc.), and add a Run with the desired text inside a Paragraph appended to the shape.",
-      "prevention": "Do not attempt to modify Shape.TextBox; instead build the watermark content using Paragraph and Run objects."
+      "pattern": "Misuse of Watermark as a namespace and overbroad validation",
+      "symptom": "CS0138 errors arise from using \"using Watermark;\" and validation code checks unrelated document internals.",
+      "cause": "Developers incorrectly add a using directive for the Watermark class and write validation that inspects unrelated nodes.",
+      "fix": "Remove the erroneous using directive and limit validation to checking the existence of the watermark and the output file.",
+      "prevention": "Treat Watermark as a static class accessed via Document.Watermark and keep validation scoped to the task's output."
     }
   ],
   "examples": [
@@ -138,8 +139,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 5,
@@ -183,8 +184,8 @@
         "docx",
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 9,
@@ -305,8 +306,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 20,
@@ -374,8 +375,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 26,
@@ -409,8 +410,8 @@
         "doc",
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 29,
@@ -442,8 +443,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 32,
@@ -469,13 +470,15 @@
     }
   ],
   "narrative": {
-    "overview": "The Watermark category demonstrates how to apply text and image watermarks to Word documents using Aspose.Words 26.10.0. Verified examples cover document-level, table-cell-level, batch, and combined watermark scenarios with correct API usage.",
-    "purpose": "Provide an AI coding agent with concise guidance for generating reliable watermark code snippets that load or create documents, configure TextWatermarkOptions or ImageWatermarkOptions, apply the watermark via Document.Watermark, and persist the result while handling resources safely.",
+    "overview": "The Watermark category demonstrates how to apply text and image watermarks to Word documents using Aspose.Words 26.11.0. Verified examples show correct usage of Document.Watermark APIs for document-wide, table-cell, and stream-based scenarios.",
+    "purpose": "Provide an AI coding agent with clear guidance to generate reliable watermark code that respects Aspose.Words APIs, creates any required sample assets, and validates only the presence of the expected watermark output.",
     "validation_priorities": [
-      "Confirm that the output file is created and that the document contains the expected watermark without throwing exceptions."
+      "Confirm that the output file exists and that Document.Watermark.ContainsWatermark returns true for the expected WatermarkType."
     ],
     "maintenance_notes": [
-      "Periodically verify that the Watermark API signatures have not changed in newer Aspose.Words releases and update the examples accordingly."
+      "Update example images to a minimal embedded PNG to avoid external dependencies.",
+      "Periodically verify that the Watermark API signatures have not changed in newer Aspose.Words releases.",
+      "Ensure that all sample code includes explicit using directives for Aspose.Words.Drawing and Aspose.Words.Tables."
     ]
   }
 }

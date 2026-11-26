@@ -3,64 +3,60 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Tables;
+using System.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table.
-        builder.StartTable();
-
-        // First row
+        // Insert a 2x2 table.
+        Table table = builder.StartTable();
         builder.InsertCell();
         builder.Writeln("Cell 1,1");
         builder.InsertCell();
         builder.Writeln("Cell 1,2");
         builder.EndRow();
-
-        // Second row
         builder.InsertCell();
         builder.Writeln("Cell 2,1");
         builder.InsertCell();
         builder.Writeln("Cell 2,2");
         builder.EndRow();
-
         builder.EndTable();
 
-        // Save the initial document (optional, just for reference).
-        string initialPath = "Sample.docx";
-        doc.Save(initialPath);
+        // Choose the target cell (first row, first column).
+        Cell targetCell = table.FirstRow.FirstCell;
 
-        // Apply a text watermark to the document using the Watermark API.
-        doc.Watermark.SetText("SAMPLE WATERMARK");
+        // Create a shape that will act as a text watermark inside the cell.
+        Shape watermarkShape = new Shape(doc, ShapeType.Rectangle);
+        watermarkShape.Width = 200;
+        watermarkShape.Height = 50;
+        watermarkShape.WrapType = WrapType.None;
+        // Transparent fill so only the text is visible.
+        watermarkShape.FillColor = Color.Transparent;
+        watermarkShape.StrokeColor = Color.Empty;
 
-        // Retrieve the watermark shape that was added to the primary header.
-        HeaderFooter header = doc.Sections[0].HeadersFooters[HeaderFooterType.HeaderPrimary];
-        Shape watermarkShape = (Shape)header.GetChildNodes(NodeType.Shape, true)[0];
+        // Add the watermark text to the shape.
+        Paragraph textParagraph = new Paragraph(doc);
+        Run textRun = new Run(doc, "CONFIDENTIAL");
+        textParagraph.AppendChild(textRun);
+        watermarkShape.AppendChild(textParagraph);
 
-        // Detach the shape from the header.
-        watermarkShape.Remove();
+        // Insert the shape into the first paragraph of the target cell.
+        Paragraph cellParagraph = targetCell.FirstParagraph;
+        cellParagraph.AppendChild(watermarkShape);
 
-        // Locate the target cell (second row, second column).
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        Cell targetCell = table.Rows[1].Cells[1];
-
-        // Insert the watermark shape into the target cell.
-        // Ensure the shape is inline so it fits inside the cell without layout issues.
-        watermarkShape.WrapType = WrapType.Inline;
-        targetCell.FirstParagraph.AppendChild(watermarkShape);
-
-        // Save the resulting document.
-        string outputPath = "WatermarkedCell.docx";
+        // Save the document.
+        string outputPath = "CellWatermark.docx";
         doc.Save(outputPath);
 
-        // Simple verification that the file was created.
-        Console.WriteLine(File.Exists(outputPath)
-            ? $"Watermark inserted and saved to '{outputPath}'."
-            : "Failed to create the output document.");
+        // Simple validation that the file was created.
+        if (File.Exists(outputPath))
+        {
+            Console.WriteLine("Document saved successfully: " + Path.GetFullPath(outputPath));
+        }
     }
 }

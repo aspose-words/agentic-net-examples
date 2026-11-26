@@ -5,28 +5,26 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document without any watermark.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample document without watermark.");
+        const string filePath = "sample.docx";
 
-        // Save the document (optional, demonstrates output file creation).
-        string outputPath = "NoWatermark.docx";
-        doc.Save(outputPath);
+        // Create a new blank document.
+        Document doc = new Document();
+
+        // Save the document to a local file.
+        doc.Save(filePath);
+
+        // Load the document from the file.
+        Document loadedDoc = new Document(filePath);
 
         // Validate that the document contains no watermark.
-        bool hasNoWatermark = doc.Watermark.Type == WatermarkType.None;
-
-        // Report the validation result.
-        Console.WriteLine(hasNoWatermark
-            ? "Document has no watermark."
-            : "Document contains a watermark.");
-
-        // If a watermark were present, remove it and save a cleaned copy.
-        if (!hasNoWatermark)
+        // The Watermark.Type property returns a WatermarkType enum defined in Aspose.Words.
+        if (loadedDoc.Watermark.Type == Aspose.Words.WatermarkType.None)
         {
-            doc.Watermark.Remove();
-            doc.Save("Cleaned_" + outputPath);
+            Console.WriteLine("Validation passed: No watermark present.");
+        }
+        else
+        {
+            Console.WriteLine("Validation failed: Watermark detected.");
         }
     }
 }

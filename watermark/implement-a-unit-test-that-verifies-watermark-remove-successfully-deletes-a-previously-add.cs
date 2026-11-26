@@ -3,61 +3,75 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class WatermarkRemovalTest
+public class Program
 {
-    // Checks whether the document contains a shape that represents a watermark.
-    private static bool HasWatermark(Document doc)
+    private static void Assert(bool condition, string message)
     {
-        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
-        {
-            // Aspose.Words typically sets the watermark shape's Name or AlternativeText to contain "Watermark".
-            if (!string.IsNullOrEmpty(shape.Name) && shape.Name.Contains("Watermark", StringComparison.OrdinalIgnoreCase))
-                return true;
+        if (!condition)
+            throw new Exception("Assertion failed: " + message);
+    }
 
-            if (!string.IsNullOrEmpty(shape.AlternativeText) && shape.AlternativeText.Contains("Watermark", StringComparison.OrdinalIgnoreCase))
-                return true;
+    // Counts shapes that Aspose.Words uses for watermarks (they are named "Watermark").
+    private static int CountWatermarkShapes(Document doc)
+    {
+        int count = 0;
+        foreach (Section section in doc.Sections)
+        {
+            foreach (HeaderFooter headerFooter in section.HeadersFooters)
+            {
+                NodeCollection shapes = headerFooter.GetChildNodes(NodeType.Shape, true);
+                foreach (Shape shape in shapes)
+                {
+                    if (shape.Name != null && shape.Name.Equals("Watermark", StringComparison.OrdinalIgnoreCase))
+                        count++;
+                }
+            }
         }
-        return false;
+        return count;
     }
 
     public static void Main()
     {
-        // Create a new empty document and add some content.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample content for watermark test.");
+        // Create a temporary folder for test files
+        string tempFolder = Path.Combine(Path.GetTempPath(), "WatermarkTest_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempFolder);
 
-        // Add a text watermark using the native API.
-        doc.Watermark.SetText("CONFIDENTIAL");
+        string withWatermarkPath = Path.Combine(tempFolder, "with_watermark.docx");
+        string withoutWatermarkPath = Path.Combine(tempFolder, "without_watermark.docx");
 
-        // Verify that the watermark was added.
-        if (!HasWatermark(doc))
+        try
         {
-            Console.WriteLine("Failed: Watermark was not added.");
-            Environment.Exit(1);
+            // 1. Create a new empty document
+            Document doc = new Document();
+
+            // 2. Add a text watermark
+            doc.Watermark.SetText("CONFIDENTIAL");
+            doc.Save(withWatermarkPath);
+
+            // Verify that the watermark exists
+            int watermarkCountAfterAdd = CountWatermarkShapes(doc);
+            Assert(watermarkCountAfterAdd > 0, "Watermark should exist after SetText.");
+
+            // 3. Remove the watermark
+            doc.Watermark.Remove();
+            doc.Save(withoutWatermarkPath);
+
+            // Verify that the watermark has been removed
+            int watermarkCountAfterRemove = CountWatermarkShapes(doc);
+            Assert(watermarkCountAfterRemove == 0, "Watermark should be removed after Remove().");
+
+            Console.WriteLine("Watermark removal test passed.");
         }
-
-        // Remove the watermark.
-        doc.Watermark.Remove();
-
-        // Verify that the watermark was removed.
-        if (HasWatermark(doc))
+        catch (Exception ex)
         {
-            Console.WriteLine("Failed: Watermark was not removed.");
-            Environment.Exit(1);
+            Console.WriteLine("Watermark removal test failed: " + ex.Message);
         }
-
-        // Save the resulting document to confirm output generation.
-        string outputPath = Path.Combine(Path.GetTempPath(), "WatermarkRemovalTest.docx");
-        doc.Save(outputPath);
-
-        // Confirm the file exists.
-        if (!File.Exists(outputPath))
+        finally
         {
-            Console.WriteLine("Failed: Output file was not saved.");
-            Environment.Exit(1);
+            // Clean up temporary files
+            try { if (File.Exists(withWatermarkPath)) File.Delete(withWatermarkPath); } catch { }
+            try { if (File.Exists(withoutWatermarkPath)) File.Delete(withoutWatermarkPath); } catch { }
+            try { Directory.Delete(tempFolder, true); } catch { }
         }
-
-        Console.WriteLine("Success: Watermark was added, removed, and document saved.");
     }
 }

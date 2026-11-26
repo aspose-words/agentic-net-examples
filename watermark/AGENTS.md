@@ -10,11 +10,11 @@ product: Aspose.Words
 
 ## Purpose
 
-Provide an AI coding agent with concise guidance for generating reliable watermark code snippets that load or create documents, configure TextWatermarkOptions or ImageWatermarkOptions, apply the watermark via Document.Watermark, and persist the result while handling resources safely.
+Provide an AI coding agent with clear guidance to generate reliable watermark code that respects Aspose.Words APIs, creates any required sample assets, and validates only the presence of the expected watermark output.
 
 ## Non-negotiable conventions
 
-- Do not reference members that are not present in the Aspose.Words 26.10.0 API, such as WatermarkLayout, TextBox.Text, or Shape.Transparency.
+- Do not reference members that are not present in Aspose.Words 26.11.0, such as WatermarkLayout members, ImageWatermarkOptions inside the Watermark type, or System.Drawing APIs for image generation.
 - Bootstrap local sample inputs for existing-file, folder, stream, image, and data workflows.
 - Prefer simple, verifiable workflows over speculative formatting shortcuts.
 
@@ -26,7 +26,7 @@ Use the simplest workflow that satisfies the task.
 
 ## Validation priorities
 
-1. Confirm that the output file is created and that the document contains the expected watermark without throwing exceptions.
+1. Confirm that the output file exists and that Document.Watermark.ContainsWatermark returns true for the expected WatermarkType.
 
 ## File-to-task reference
 
@@ -49,7 +49,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Insert a text watermark into a specific table cell within a Word document using the Watermark class.
   - Workflow: watermark-workflow
   - Outputs: doc
-  - Selected engine: llm
+  - Selected engine: mcp
 - `add-a-watermark-to-a-table-cell-that-spans-multiple-rows-and-columns-in-a-complex-word-tab.cs`
   - Task: Add a watermark to a table cell that spans multiple rows and columns in a complex Word table.
   - Workflow: watermark-workflow
@@ -69,7 +69,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Add a text watermark to a DOCX document using Watermark.SetText with custom font settings.
   - Workflow: watermark-workflow
   - Outputs: docx, doc
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `use-watermark-settext-with-textwatermarkoptions-to-set-watermark-font-size-color-and-spaci.cs`
   - Task: Use Watermark.SetText with TextWatermarkOptions to set watermark font size, color, and spacing.
   - Workflow: watermark-workflow
@@ -124,7 +124,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Validate that a document contains no watermarks before publishing by using WatermarkType.None check.
   - Workflow: watermark-workflow
   - Outputs: doc
-  - Selected engine: llm
+  - Selected engine: mcp
 - `use-watermarktype-enumeration-to-verify-a-document-has-no-watermark-before-adding-a-new-on.cs`
   - Task: Use WatermarkType enumeration to verify a document has no watermark before adding a new one.
   - Workflow: watermark-workflow
@@ -154,7 +154,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Batch process a folder of DOC files to add the same image watermark to each document.
   - Workflow: watermark-workflow
   - Outputs: doc
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `batch-process-multiple-word-documents-in-a-directory-to-add-a-text-watermark-to-each-file.cs`
   - Task: Batch process multiple Word documents in a directory to add a text watermark to each file.
   - Workflow: watermark-workflow
@@ -169,7 +169,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Batch convert DOCX files to PDF while adding a corporate logo image watermark to each PDF.
   - Workflow: watermark-workflow
   - Outputs: docx, doc, pdf
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `create-a-command-line-tool-that-accepts-a-directory-path-and-adds-a-specified-watermark-to.cs`
   - Task: Create a command-line tool that accepts a directory path and adds a specified watermark to each file.
   - Workflow: watermark-workflow
@@ -184,7 +184,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Implement a unit test that verifies Watermark.Remove successfully deletes a previously added text watermark.
   - Workflow: watermark-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `add-a-watermark-to-a-document-opened-from-a-network-share-ensuring-proper-disposal-of-file.cs`
   - Task: Add a watermark to a document opened from a network share, ensuring proper disposal of file handles.
   - Workflow: watermark-workflow
@@ -198,41 +198,41 @@ Use the simplest workflow that satisfies the task.
 
 ## Common failure patterns and preferred agent fixes
 
-- **Incorrect overload for SetImage**
-  - Symptom: Compilation fails with CS1503 because a string or stream is passed where an SKBitmap is expected.
-  - Root cause: The code uses the overload that requires a SkiaSharp.SKBitmap instead of the overload that accepts a file path or stream.
-  - Preferred fix: Call Document.Watermark.SetImage(string path, ImageWatermarkOptions) or SetImage(Stream stream, ImageWatermarkOptions) as demonstrated in the verified examples.
-  - Prevention: Always select the overload that matches the argument type; consult the API reference for the correct signatures.
+- **Incorrect argument type for Watermark.SetImage**
+  - Symptom: The compiler reports CS1503 because a string, FileStream, or MemoryStream is supplied where an SKBitmap is required, leading to runtime ArgumentNullException.
+  - Root cause: Code passes file paths or generic streams directly to SetImage instead of providing an SKBitmap instance or using the overload that accepts a file path.
+  - Preferred fix: Use the overload Document.Watermark.SetImage(string imagePath, ImageWatermarkOptions) or convert the stream to an SKBitmap before calling SetImage.
+  - Prevention: Always select the overload that matches the input type and avoid implicit conversions; consult the API reference for accepted parameter types.
 
-- **Reference to non-existent types or members**
-  - Symptom: Build errors such as CS0246, CS1061, or CS0117 indicate missing types like Table, Cell, WatermarkLayout, or members like Shape.Text.
-  - Root cause: The code invents or assumes APIs that are not part of the current Aspose.Words version.
-  - Preferred fix: Remove invented references and use only documented types (DocumentBuilder, Table, Cell, Shape) and members (WrapType, FillColor, etc.).
-  - Prevention: Rely exclusively on the official Aspose.Words documentation and the verified code snippets for supported members.
+- **Missing table and cell types**
+  - Symptom: CS0246 errors indicate that Table, Cell, Row, or related types cannot be resolved, causing build failures.
+  - Root cause: The required namespace Aspose.Words.Tables is omitted from the using directives.
+  - Preferred fix: Add "using Aspose.Words.Tables;" and, when needed, "using System.Drawing;" for color definitions.
+  - Prevention: Include all necessary Aspose.Words namespaces at the top of the file before referencing table-related classes.
 
-- **Misuse of using directives**
-  - Symptom: Compilation fails with CS0138 because a type is treated as a namespace in a using statement.
-  - Root cause: The code attempts to write "using Watermark;" or similar, treating the Watermark class as a namespace.
-  - Preferred fix: Remove the invalid using directive; reference the Watermark class directly via the Document instance.
-  - Prevention: Only include using statements for actual namespaces; never use a class name in a using directive.
+- **Invalid Watermark option types**
+  - Symptom: CS0426 and CS0117 errors show that TextWatermarkOptions, ImageWatermarkOptions, or WatermarkLayout members are not found within the Watermark type.
+  - Root cause: The code treats Watermark as a namespace and attempts to access option types that belong to the Aspose.Words.Drawing namespace.
+  - Preferred fix: Reference Aspose.Words.Drawing and instantiate TextWatermarkOptions or ImageWatermarkOptions directly; use WatermarkLayout from the same namespace.
+  - Prevention: Follow the documented pattern: var options = new TextWatermarkOptions { FontFamily = "Arial", FontSize = 48, Color = Color.Blue, Layout = WatermarkLayout.Diagonal };
 
-- **Assignment to read-only TextBox property**
-  - Symptom: CS0200 errors occur when the code tries to assign to Shape.TextBox or its Text property.
-  - Root cause: The TextBox property of Shape is read-only, and its Text member does not exist in this API version.
-  - Preferred fix: Create a Shape, set its properties (Width, Height, FillColor, etc.), and add a Run with the desired text inside a Paragraph appended to the shape.
-  - Prevention: Do not attempt to modify Shape.TextBox; instead build the watermark content using Paragraph and Run objects.
+- **Misuse of Watermark as a namespace and overbroad validation**
+  - Symptom: CS0138 errors arise from using "using Watermark;" and validation code checks unrelated document internals.
+  - Root cause: Developers incorrectly add a using directive for the Watermark class and write validation that inspects unrelated nodes.
+  - Preferred fix: Remove the erroneous using directive and limit validation to checking the existence of the watermark and the output file.
+  - Prevention: Treat Watermark as a static class accessed via Document.Watermark and keep validation scoped to the task's output.
 
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Primary package: `Aspose.Words` `26.10.0`
+- Primary package: `Aspose.Words` `26.11.0`
 
 ## Command reference
 
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.10.0
+dotnet add package Aspose.Words --version 26.11.0
 dotnet add package SkiaSharp --version 4.152.1
 ```
 
@@ -247,4 +247,6 @@ dotnet run --configuration Release --no-build
 
 ## Category update guidance
 
-- Periodically verify that the Watermark API signatures have not changed in newer Aspose.Words releases and update the examples accordingly.
+- Update example images to a minimal embedded PNG to avoid external dependencies.
+- Periodically verify that the Watermark API signatures have not changed in newer Aspose.Words releases.
+- Ensure that all sample code includes explicit using directives for Aspose.Words.Drawing and Aspose.Words.Tables.
