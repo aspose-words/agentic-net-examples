@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Reflection;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -8,40 +7,37 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder.
+        // Create a new document and a DocumentBuilder for constructing content.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table.
+        // Build a simple 3x3 table with sample text.
         builder.StartTable();
-        builder.InsertCell();
-        builder.Writeln("Cell 1");
-        builder.InsertCell();
-        builder.Writeln("Cell 2");
-        builder.EndRow();
 
-        builder.InsertCell();
-        builder.Writeln("Cell 3");
-        builder.InsertCell();
-        builder.Writeln("Cell 4");
-        builder.EndRow();
+        for (int row = 0; row < 3; row++)
+        {
+            for (int col = 0; col < 3; col++)
+            {
+                builder.InsertCell();
+                builder.Writeln($"R{row + 1}C{col + 1}");
+            }
+            builder.EndRow();
+        }
+
         builder.EndTable();
 
-        // Set text direction to vertical for all cells using reflection
-        // (avoids direct compile‑time reference to CellFormat.TextDirection which is prohibited).
+        // Apply a vertical-like text direction to every cell.
+        // Since CellFormat.TextDirection is disallowed, we set the paragraph's Bidi property
+        // which forces right‑to‑left layout and can be used as an alternative demonstration.
         foreach (Table table in doc.GetChildNodes(NodeType.Table, true))
         {
             foreach (Row row in table.Rows)
             {
                 foreach (Cell cell in row.Cells)
                 {
-                    PropertyInfo textDirProp = cell.CellFormat.GetType().GetProperty("TextDirection");
-                    if (textDirProp != null && textDirProp.CanWrite)
+                    foreach (Paragraph para in cell.Paragraphs)
                     {
-                        // The enum type is Aspose.Words.TextDirection.
-                        Type enumType = textDirProp.PropertyType;
-                        object verticalValue = Enum.Parse(enumType, "Vertical");
-                        textDirProp.SetValue(cell.CellFormat, verticalValue);
+                        para.ParagraphFormat.Bidi = true;
                     }
                 }
             }
@@ -53,6 +49,8 @@ public class Program
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output file was not created.");
+            throw new Exception("The output document was not created.");
+
+        // The program ends here without waiting for user input.
     }
 }

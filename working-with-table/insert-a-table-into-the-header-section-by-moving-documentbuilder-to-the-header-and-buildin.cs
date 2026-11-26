@@ -3,49 +3,66 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class HeaderTableExample
+public class Program
 {
     public static void Main()
     {
         // Create a new empty document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a primary header to the first section.
+        // Ensure the document has at least one section.
+        Section section = doc.FirstSection;
+
+        // Add a primary header to the section. The HeaderFooter constructor requires the owning document.
         HeaderFooter header = new HeaderFooter(doc, HeaderFooterType.HeaderPrimary);
-        doc.FirstSection.HeadersFooters.Add(header);
+        section.HeadersFooters.Add(header);
 
-        // Move the builder to the header so that subsequent operations affect it.
+        // Create a DocumentBuilder and move it to the header.
+        DocumentBuilder builder = new DocumentBuilder(doc);
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
 
-        // Build a 2x2 table inside the header.
+        // Insert a paragraph to provide a valid container for the table.
+        builder.Writeln();
+
+        // Build a 2x2 table in the header.
         builder.StartTable();
 
-        // First row.
+        // First row, first cell.
         builder.InsertCell();
-        builder.Write("Header Cell 1");
+        builder.Writeln("Header Cell 1");
+
+        // First row, second cell.
         builder.InsertCell();
-        builder.Write("Header Cell 2");
+        builder.Writeln("Header Cell 2");
+
+        // End first row.
         builder.EndRow();
 
-        // Second row.
+        // Second row, first cell.
         builder.InsertCell();
-        builder.Write("Header Cell 3");
-        builder.InsertCell();
-        builder.Write("Header Cell 4");
-        builder.EndRow();
+        builder.Writeln("Header Cell 3");
 
-        // Finish the table.
+        // Second row, second cell.
+        builder.InsertCell();
+        builder.Writeln("Header Cell 4");
+
+        // End second row and the table.
+        builder.EndRow();
         builder.EndTable();
 
-        // Save the document.
+        // Define output path.
         string outputPath = "HeaderTable.docx";
+
+        // Save the document.
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Validate that the file was created.
         if (!File.Exists(outputPath))
         {
             throw new Exception($"Failed to create the output file: {outputPath}");
         }
+
+        // Inform that the process completed.
+        Console.WriteLine($"Document saved successfully to '{outputPath}'.");
     }
 }

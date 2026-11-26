@@ -7,41 +7,44 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Move the builder to the end of the document.
         builder.MoveToDocumentEnd();
 
-        // Build a 2x2 table at the document end.
+        // Build a table with 2 rows and 3 columns.
         builder.StartTable();
 
-        // First row.
-        builder.InsertCell();
-        builder.Writeln("Cell 1,1");
-        builder.InsertCell();
-        builder.Writeln("Cell 1,2");
+        // First row cells.
+        for (int col = 0; col < 3; col++)
+        {
+            builder.InsertCell();
+            builder.Writeln($"R1C{col + 1}");
+        }
         builder.EndRow();
 
-        // Second row.
-        builder.InsertCell();
-        builder.Writeln("Cell 2,1");
-        builder.InsertCell();
-        builder.Writeln("Cell 2,2");
+        // Second row cells.
+        for (int col = 0; col < 3; col++)
+        {
+            builder.InsertCell();
+            builder.Writeln($"R2C{col + 1}");
+        }
         builder.EndRow();
 
         // Finish the table.
         builder.EndTable();
 
-        // Save the document.
-        string outputPath = "TableExample.docx";
+        // Save the document to a file.
+        string outputPath = "TableAtEnd.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException($"Failed to create output file: {outputPath}");
-        }
+            throw new Exception("The output document was not created.");
+
+        // Indicate successful completion.
+        Console.WriteLine("Document created successfully.");
     }
 }

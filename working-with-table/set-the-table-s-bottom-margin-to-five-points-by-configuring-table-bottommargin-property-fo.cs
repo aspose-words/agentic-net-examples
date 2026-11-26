@@ -3,42 +3,56 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace TableBottomMarginExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2‑row, 1‑column table.
-        builder.StartTable();
+            // Build a simple 2x2 table.
+            builder.StartTable();
 
-        // First row.
-        builder.InsertCell();
-        builder.Writeln("Cell 1");
-        builder.EndRow();
+            // First row, first cell.
+            builder.InsertCell();
+            builder.Writeln("Cell 1,1");
 
-        // Second row.
-        builder.InsertCell();
-        builder.Writeln("Cell 2");
-        builder.EndRow();
+            // First row, second cell.
+            builder.InsertCell();
+            builder.Writeln("Cell 1,2");
+            builder.EndRow();
 
-        // Finish the table.
-        builder.EndTable();
+            // Second row, first cell.
+            builder.InsertCell();
+            builder.Writeln("Cell 2,1");
 
-        // Retrieve the created table.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+            // Second row, second cell.
+            builder.InsertCell();
+            builder.Writeln("Cell 2,2");
+            builder.EndRow();
 
-        // Set the table's bottom padding to five points (Aspose.Words uses padding, not margin).
-        table.BottomPadding = 5.0;
+            // End the table.
+            builder.EndTable();
 
-        // Save the document to disk.
-        string outputPath = "TableBottomMargin.docx";
-        doc.Save(outputPath);
+            // Retrieve the created table.
+            Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+            if (table == null)
+                throw new InvalidOperationException("Table was not created.");
 
-        // Verify that the file was saved.
-        if (!File.Exists(outputPath))
-            throw new Exception("The document was not saved correctly.");
+            // Set the bottom padding of the table to five points.
+            // Aspose.Words uses BottomPadding instead of BottomMargin for this purpose.
+            table.BottomPadding = 5f;
+
+            // Save the document to disk.
+            string outputPath = "TableBottomMargin.docx";
+            doc.Save(outputPath);
+
+            // Verify that the file was saved.
+            if (!File.Exists(outputPath))
+                throw new FileNotFoundException("The output document was not saved.", outputPath);
+        }
     }
 }

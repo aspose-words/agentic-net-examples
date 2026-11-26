@@ -12,7 +12,7 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Begin the table.
+        // Build the table.
         builder.StartTable();
 
         // Header row.
@@ -23,62 +23,45 @@ public class Program
         builder.EndRow();
 
         // Add several data rows.
-        int dataRowCount = 6;
+        int dataRowCount = 5;
         for (int i = 0; i < dataRowCount; i++)
         {
             builder.InsertCell();
-            builder.Writeln($"Row {i + 1} - Col 1");
+            builder.Writeln($"Row {i + 1} Col 1");
             builder.InsertCell();
-            builder.Writeln($"Row {i + 1} - Col 2");
+            builder.Writeln($"Row {i + 1} Col 2");
             builder.EndRow();
         }
 
         // End the table.
         builder.EndTable();
 
-        // Retrieve the created table from the document.
+        // Retrieve the created table.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
 
-        // Apply shading to the header row cells.
-        Row headerRow = table.Rows[0];
-        foreach (Cell cell in headerRow.Cells)
+        // Apply alternating shading based on row index parity.
+        for (int rowIndex = 0; rowIndex < table.Rows.Count; rowIndex++)
         {
-            // Set solid gray background.
-            cell.CellFormat.Shading.Texture = TextureIndex.TextureSolid;
-            cell.CellFormat.Shading.BackgroundPatternColor = Color.Gray;
-        }
+            Row row = table.Rows[rowIndex];
+            // Even rows get LightGray, odd rows get White.
+            Color shade = (rowIndex % 2 == 0) ? Color.LightGray : Color.White;
 
-        // Apply alternating shading to data rows based on row index parity.
-        for (int i = 1; i < table.Rows.Count; i++)
-        {
-            Row row = table.Rows[i];
-            bool isEvenDataRow = ((i - 1) % 2 == 0); // (i-1) because first data row is index 1.
-
+            // Apply shading to each cell in the row.
             foreach (Cell cell in row.Cells)
             {
-                if (isEvenDataRow)
-                {
-                    // Light gray background for even rows.
-                    cell.CellFormat.Shading.Texture = TextureIndex.TextureSolid;
-                    cell.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
-                }
-                else
-                {
-                    // Clear shading for odd rows.
-                    cell.CellFormat.Shading.Texture = TextureIndex.TextureNone;
-                    cell.CellFormat.Shading.BackgroundPatternColor = Color.Empty;
-                }
+                cell.CellFormat.Shading.BackgroundPatternColor = shade;
+                // No need to set Texture; default is None.
             }
         }
 
-        // Save the document to a file.
-        string outputPath = "AlternatingRows.docx";
+        // Save the document.
+        string outputPath = "TableShading.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify that the file was saved.
         if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
-        }
+            throw new FileNotFoundException("The output document was not created.", outputPath);
     }
 }

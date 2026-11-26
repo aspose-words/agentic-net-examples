@@ -11,44 +11,46 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 3‑column table.
+        // Build a simple 2x2 table.
         builder.StartTable();
 
-        // Header row.
+        // First row, first cell.
         builder.InsertCell();
-        builder.Write("Header 1");
+        builder.Writeln("Cell 1,1");
+
+        // First row, second cell.
         builder.InsertCell();
-        builder.Write("Header 2");
-        builder.InsertCell();
-        builder.Write("Header 3");
+        builder.Writeln("Cell 1,2");
+
+        // End first row.
         builder.EndRow();
 
-        // Data row.
+        // Second row, first cell.
         builder.InsertCell();
-        builder.Write("Cell 1");
-        builder.InsertCell();
-        builder.Write("Cell 2");
-        builder.InsertCell();
-        builder.Write("Cell 3");
-        builder.EndRow();
+        builder.Writeln("Cell 2,1");
 
-        // Finish the table.
+        // Second row, second cell.
+        builder.InsertCell();
+        builder.Writeln("Cell 2,2");
+
+        // End second row and the table.
+        builder.EndRow();
         builder.EndTable();
 
         // Retrieve the created table.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
-        // Set the table to automatically fit to the window margins.
+        // Set the table to automatically fit to the window (page margins).
         table.AutoFit(AutoFitBehavior.AutoFitToWindow);
 
-        // Save the document.
+        // Save the document to a file.
         string outputPath = "TableAutoFit.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was saved successfully.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
         {
-            throw new InvalidOperationException("The document was not saved correctly.");
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
         }
     }
 }

@@ -11,46 +11,43 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table.
+        // Build a simple 2x2 table.
         builder.StartTable();
 
-        // Insert first row with two cells.
+        // First row.
         builder.InsertCell();
-        builder.Writeln("Cell 1");
+        builder.Writeln("Cell 1,1");
         builder.InsertCell();
-        builder.Writeln("Cell 2");
+        builder.Writeln("Cell 1,2");
         builder.EndRow();
 
-        // Insert second row with two cells.
+        // Second row.
         builder.InsertCell();
-        builder.Writeln("Cell 3");
+        builder.Writeln("Cell 2,1");
         builder.InsertCell();
-        builder.Writeln("Cell 4");
+        builder.Writeln("Cell 2,2");
         builder.EndRow();
 
         // End the table.
         builder.EndTable();
 
         // Retrieve the created table.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
-        // Apply custom left indent (margin) to the table.
+        // Apply custom left margin (indent) to the entire table.
         // The value is in points; 20 points ≈ 0.28 inches.
-        table.LeftIndent = 20.0;
+        table.LeftIndent = 20;
 
-        // NOTE: The task mentions setting Table.RightIndent, but according to the
-        // hard‑ban rules we must not use Table.RightIndent as it is prohibited.
-        // Therefore only the left indent is applied.
+        // NOTE: The Aspose.Words API does not provide a Table.RightIndent property.
+        // Therefore, only the left indent is applied as a custom margin.
 
         // Save the document to disk.
-        string outputPath = "TableMargin.docx";
+        string outputPath = "TableWithMargins.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-        {
-            throw new Exception($"Failed to create the output file: {outputPath}");
-        }
+            throw new InvalidOperationException("The output document was not created.");
 
         // The program finishes here without waiting for user input.
     }

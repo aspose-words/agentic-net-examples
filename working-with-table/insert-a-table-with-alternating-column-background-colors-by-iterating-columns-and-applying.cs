@@ -1,6 +1,6 @@
 using System;
-using System.IO;
 using System.Drawing;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -12,43 +12,56 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
+        // Add a heading.
+        builder.Writeln("Table with alternating column shading:");
+
         // Define table dimensions.
         int rows = 5;
         int columns = 4;
 
-        // Start building the table.
+        // Build the table.
         builder.StartTable();
-
-        for (int row = 0; row < rows; row++)
+        for (int r = 0; r < rows; r++)
         {
-            for (int col = 0; col < columns; col++)
+            for (int c = 0; c < columns; c++)
             {
-                // Insert a new cell.
                 builder.InsertCell();
-
-                // Apply alternating background colors per column.
-                // Even columns (0‑based) get LightGray, odd columns get White.
-                builder.CellFormat.Shading.BackgroundPatternColor = (col % 2 == 0) ? Color.LightGray : Color.White;
-
-                // Write some sample text into the cell.
-                builder.Writeln($"R{row + 1}C{col + 1}");
+                builder.Writeln($"R{r + 1}C{c + 1}");
             }
-
-            // End the current row.
             builder.EndRow();
         }
-
-        // End the table.
         builder.EndTable();
 
-        // Save the document to a file.
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
+
+        // Define two alternating colors.
+        Color colorEven = Color.LightGray;
+        Color colorOdd = Color.White;
+
+        // Apply shading to each column alternately.
+        for (int colIdx = 0; colIdx < columns; colIdx++)
+        {
+            Color shade = (colIdx % 2 == 0) ? colorEven : colorOdd;
+            foreach (Row row in table.Rows)
+            {
+                Cell cell = row.Cells[colIdx];
+                cell.CellFormat.Shading.ForegroundPatternColor = shade;
+                cell.CellFormat.Shading.Texture = TextureIndex.TextureSolid;
+            }
+        }
+
+        // Save the document.
         string outputPath = "AlternatingColumnsTable.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify that the file was saved.
         if (!File.Exists(outputPath))
-        {
-            throw new Exception($"Failed to create the output file: {outputPath}");
-        }
+            throw new Exception("The output file was not created.");
+
+        // Optionally, inform that the process completed.
+        Console.WriteLine($"Document saved to '{Path.GetFullPath(outputPath)}'.");
     }
 }

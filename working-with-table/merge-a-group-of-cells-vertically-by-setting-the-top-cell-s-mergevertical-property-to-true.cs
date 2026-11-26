@@ -3,63 +3,61 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace MergeVerticalCellsExample
 {
-    public static void Main()
+    class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Build a simple 3x2 table.
-        builder.StartTable();
-
-        // Row 1
-        builder.InsertCell();
-        builder.Write("Row 1, Cell 1");
-        builder.InsertCell();
-        builder.Write("Row 1, Cell 2");
-        builder.EndRow();
-
-        // Row 2
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 1");
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 2");
-        builder.EndRow();
-
-        // Row 3
-        builder.InsertCell();
-        builder.Write("Row 3, Cell 1");
-        builder.InsertCell();
-        builder.Write("Row 3, Cell 2");
-        builder.EndRow();
-
-        builder.EndTable();
-
-        // Retrieve the created table.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-
-        // Merge the first column vertically (cells in rows 1-3).
-        // Set the top cell to start the merge.
-        Cell topCell = table.Rows[0].Cells[0];
-        topCell.CellFormat.VerticalMerge = CellMerge.First;
-
-        // Set the cells below to continue the merge.
-        for (int i = 1; i < table.Rows.Count; i++)
+        static void Main()
         {
-            Cell cell = table.Rows[i].Cells[0];
-            cell.CellFormat.VerticalMerge = CellMerge.Previous;
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Start a table.
+            builder.StartTable();
+
+            // First row, first cell (top cell of the vertical merge).
+            builder.InsertCell();
+            builder.Writeln("Top Cell (merged vertically)");
+            // Set the vertical merge property to First for the top cell.
+            ((Cell)builder.CurrentParagraph.ParentNode).CellFormat.VerticalMerge = CellMerge.First;
+
+            // First row, second cell.
+            builder.InsertCell();
+            builder.Writeln("Cell 1,2");
+            builder.EndRow();
+
+            // Second row, first cell (merged with the top cell).
+            builder.InsertCell();
+            builder.Writeln("Merged Cell Part 2");
+            // Set the vertical merge property to Previous for the subsequent cell.
+            ((Cell)builder.CurrentParagraph.ParentNode).CellFormat.VerticalMerge = CellMerge.Previous;
+
+            // Second row, second cell.
+            builder.InsertCell();
+            builder.Writeln("Cell 2,2");
+            builder.EndRow();
+
+            // Third row, first cell (continue merging).
+            builder.InsertCell();
+            builder.Writeln("Merged Cell Part 3");
+            ((Cell)builder.CurrentParagraph.ParentNode).CellFormat.VerticalMerge = CellMerge.Previous;
+
+            // Third row, second cell.
+            builder.InsertCell();
+            builder.Writeln("Cell 3,2");
+            builder.EndRow();
+
+            // End the table.
+            builder.EndTable();
+
+            // Save the document.
+            string outputPath = "MergedCells.docx";
+            doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
         }
-
-        // Save the document.
-        string outputPath = "MergedCells.docx";
-        doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("The output file was not created.");
-
-        // Optionally, you could add further validation here.
     }
 }

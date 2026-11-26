@@ -6,50 +6,49 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder to construct a table.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a 3‑row, 2‑column table.
+        // Build a simple table with 3 rows and 2 columns.
         builder.StartTable();
 
-        // Row 1
+        // First row.
         builder.InsertCell();
         builder.Writeln("R1C1");
         builder.InsertCell();
         builder.Writeln("R1C2");
         builder.EndRow();
 
-        // Row 2
+        // Second row.
         builder.InsertCell();
         builder.Writeln("R2C1");
         builder.InsertCell();
         builder.Writeln("R2C2");
         builder.EndRow();
 
-        // Row 3
+        // Third row.
         builder.InsertCell();
         builder.Writeln("R3C1");
         builder.InsertCell();
         builder.Writeln("R3C2");
         builder.EndRow();
 
+        // End the table construction.
         builder.EndTable();
 
-        // Save the document (required by the workflow rules).
-        doc.Save("TableSample.docx");
-
         // Retrieve the first table in the document.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (table == null)
-            throw new InvalidOperationException("No table found in the document.");
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
-        // Get row and column counts.
+        // Get the number of rows and columns.
         int rowCount = table.Rows.Count;
         int columnCount = table.Rows[0].Cells.Count;
 
-        // Output the counts.
+        // Output the counts to the console.
         Console.WriteLine($"Rows: {rowCount}");
         Console.WriteLine($"Columns: {columnCount}");
+
+        // Save the document to a file.
+        doc.Save("TableInfo.docx");
     }
 }

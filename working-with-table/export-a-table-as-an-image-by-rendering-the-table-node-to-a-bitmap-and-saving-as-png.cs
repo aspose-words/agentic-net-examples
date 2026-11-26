@@ -11,6 +11,7 @@ public class Program
         // Create a new document and build a simple 2‑cell table.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+
         builder.StartTable();
         builder.InsertCell();
         builder.Write("Cell 1");
@@ -22,30 +23,30 @@ public class Program
         // Retrieve the first table in the document.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
         if (table == null)
-            throw new Exception("No table found in the document.");
+            throw new Exception("Table was not created.");
 
-        // Clone the table into a separate document.
-        Document tableDoc = new Document();               // New empty document.
-        Section section = tableDoc.Sections[0];           // Existing section to host the table.
+        // Create a new empty document that will contain only the imported table.
+        Document tableDoc = new Document();
 
-        // Import the table into the new document before appending.
-        NodeImporter importer = new NodeImporter(table.Document, tableDoc, ImportFormatMode.KeepSourceFormatting);
+        // Import the table node into the new document (required for cross‑document cloning).
+        NodeImporter importer = new NodeImporter(doc, tableDoc, ImportFormatMode.KeepSourceFormatting);
         Node importedTable = importer.ImportNode(table, true);
-        section.Body.AppendChild(importedTable);
 
-        // Configure image save options to produce a PNG of the first page (where the table resides).
+        // Append the imported table to the body of the new document.
+        tableDoc.FirstSection.Body.AppendChild(importedTable);
+
+        // Render the table document to a PNG image.
         ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png)
         {
-            PageSet = new PageSet(0)   // Render only the first page.
+            // Save only the first page (the table occupies a single page).
+            PageSet = new PageSet(0)
         };
 
-        string outputPath = "TableImage.png";
-        tableDoc.Save(outputPath, options);
+        string imagePath = "TableImage.png";
+        tableDoc.Save(imagePath, options);
 
         // Verify that the image file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("Failed to create the PNG image of the table.");
-
-        Console.WriteLine($"Table exported successfully as image: {Path.GetFullPath(outputPath)}");
+        if (!File.Exists(imagePath))
+            throw new Exception("Failed to save the table image.");
     }
 }

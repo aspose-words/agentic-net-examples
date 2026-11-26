@@ -3,61 +3,69 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace TableInsertRowExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Build a simple table with two rows and two columns.
-        builder.StartTable();
-
-        // First row.
-        builder.InsertCell();
-        builder.Write("R1C1");
-        builder.InsertCell();
-        builder.Write("R1C2");
-        builder.EndRow();
-
-        // Second row.
-        builder.InsertCell();
-        builder.Write("R2C1");
-        builder.InsertCell();
-        builder.Write("R2C2");
-        builder.EndRow();
-
-        // End the table.
-        builder.EndTable();
-
-        // Retrieve the created table.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (table == null)
-            throw new InvalidOperationException("Table was not created.");
-
-        // Clone the first row to use as a template for the new row.
-        Row newRow = (Row)table.Rows[0].Clone(true);
-
-        // Change the text in each cell of the new row.
-        foreach (Cell cell in newRow.Cells)
+        public static void Main()
         {
-            // Ensure the cell has at least one run to modify.
-            if (cell.FirstParagraph?.Runs.Count > 0)
-                cell.FirstParagraph.Runs[0].Text = "Inserted";
-            else
-                cell.FirstParagraph?.AppendChild(new Run(doc, "Inserted"));
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Build a simple 3x2 table.
+            builder.StartTable();
+
+            // First row.
+            builder.InsertCell();
+            builder.Write("R1C1");
+            builder.InsertCell();
+            builder.Write("R1C2");
+            builder.EndRow();
+
+            // Second row.
+            builder.InsertCell();
+            builder.Write("R2C1");
+            builder.InsertCell();
+            builder.Write("R2C2");
+            builder.EndRow();
+
+            // Third row.
+            builder.InsertCell();
+            builder.Write("R3C1");
+            builder.InsertCell();
+            builder.Write("R3C2");
+            builder.EndRow();
+
+            builder.EndTable();
+
+            // Retrieve the first table in the document.
+            Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
+
+            // Clone the first row to create a new row template.
+            Row newRow = (Row)table.Rows[0].Clone(true);
+
+            // Replace cell contents in the new row.
+            newRow.Cells[0].Paragraphs[0].Runs.Clear();
+            newRow.Cells[0].Paragraphs[0].AppendChild(new Run(doc, "Inserted 1"));
+            newRow.Cells[1].Paragraphs[0].Runs.Clear();
+            newRow.Cells[1].Paragraphs[0].AppendChild(new Run(doc, "Inserted 2"));
+
+            // Insert the new row after the second row (index 1).
+            // The new row should be placed at index 2 in the collection.
+            table.Rows.Insert(2, newRow);
+
+            // Save the document.
+            string outputPath = "Output.docx";
+            doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new Exception("The output file was not created.");
+
+            // Simple verification of row count (should be 4).
+            if (table.Rows.Count != 4)
+                throw new Exception("Row insertion failed; unexpected row count.");
         }
-
-        // Insert the new row at index 1 (between the original rows).
-        table.Rows.Insert(1, newRow);
-
-        // Save the document.
-        string outputPath = "Output.docx";
-        doc.Save(outputPath);
-
-        // Verify that the file was saved.
-        if (!File.Exists(outputPath))
-            throw new Exception("The document was not saved correctly.");
     }
 }

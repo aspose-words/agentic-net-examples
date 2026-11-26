@@ -8,78 +8,83 @@ public class Program
 {
     public static void Main()
     {
+        // Path for the output document.
+        string outputPath = "UpdatedTable.docx";
+
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a table with a header, two data rows, and a total row that uses a formula.
+        // Build a table with a header, two data rows, and a summary row that contains a formula.
         builder.StartTable();
 
         // Header row.
-        builder.InsertCell(); builder.Write("Item");
-        builder.InsertCell(); builder.Write("Quantity");
-        builder.InsertCell(); builder.Write("Price");
+        builder.InsertCell();
+        builder.Write("Item");
+        builder.InsertCell();
+        builder.Write("Value");
         builder.EndRow();
 
         // First data row.
-        builder.InsertCell(); builder.Write("Apple");
-        builder.InsertCell(); builder.Write("2");
-        builder.InsertCell(); builder.Write("3");
+        builder.InsertCell();
+        builder.Write("Row1");
+        builder.InsertCell();
+        builder.Write("10");
         builder.EndRow();
 
         // Second data row.
-        builder.InsertCell(); builder.Write("Banana");
-        builder.InsertCell(); builder.Write("5");
-        builder.InsertCell(); builder.Write("1");
+        builder.InsertCell();
+        builder.Write("Row2");
+        builder.InsertCell();
+        builder.Write("20");
         builder.EndRow();
 
-        // Total row – the Quantity cell contains a formula that sums the values above.
-        builder.InsertCell(); builder.Write("Total");
-        builder.InsertCell(); builder.InsertField("=SUM(ABOVE)", null);
-        builder.InsertCell(); builder.Write(string.Empty);
+        // Summary row with a formula that sums the values above.
+        builder.InsertCell();
+        builder.Write("Sum");
+        builder.InsertCell();
+        // Insert a field that will calculate the sum of the "Value" column.
+        builder.InsertField("=SUM(ABOVE)", "0");
         builder.EndRow();
 
-        // Finish the table.
         builder.EndTable();
 
         // Retrieve the created table.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (table == null)
-            throw new Exception("Table was not created.");
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
-        // Insert a new data row before the total row.
+        // Insert a new data row after the first data row (index 2 in the Rows collection).
         Row newRow = new Row(doc);
 
-        // Item cell.
-        Cell itemCell = new Cell(doc);
-        itemCell.AppendChild(new Paragraph(doc));               // Ensure a paragraph exists.
-        itemCell.FirstParagraph.AppendChild(new Run(doc, "Orange"));
-        newRow.AppendChild(itemCell);
+        // First cell of the new row.
+        Cell newCell1 = new Cell(doc);
+        newCell1.AppendChild(new Paragraph(doc));
+        newCell1.FirstParagraph.AppendChild(new Run(doc, "Row1.5"));
+        newRow.Cells.Add(newCell1);
 
-        // Quantity cell.
-        Cell quantityCell = new Cell(doc);
-        quantityCell.AppendChild(new Paragraph(doc));
-        quantityCell.FirstParagraph.AppendChild(new Run(doc, "3"));
-        newRow.AppendChild(quantityCell);
+        // Second cell of the new row with a numeric value.
+        Cell newCell2 = new Cell(doc);
+        newCell2.AppendChild(new Paragraph(doc));
+        newCell2.FirstParagraph.AppendChild(new Run(doc, "30"));
+        newRow.Cells.Add(newCell2);
 
-        // Price cell.
-        Cell priceCell = new Cell(doc);
-        priceCell.AppendChild(new Paragraph(doc));
-        priceCell.FirstParagraph.AppendChild(new Run(doc, "2"));
-        newRow.AppendChild(priceCell);
+        // Insert the new row into the table.
+        table.Rows.Insert(2, newRow);
 
-        // Insert the new row just before the total row (which is the last row).
-        table.Rows.Insert(table.Rows.Count - 1, newRow);
-
-        // Recalculate all fields (the SUM formula) after inserting the new row.
+        // Recalculate all fields in the document, updating the sum formula.
         doc.UpdateFields();
 
+        // Retrieve the updated sum from the summary row.
+        Row summaryRow = table.Rows[table.Rows.Count - 1];
+        string sumResult = summaryRow.Cells[1].GetText().Trim();
+
+        // Output the result to the console.
+        Console.WriteLine($"Sum after inserting new row and updating fields: {sumResult}");
+
         // Save the document.
-        const string outputPath = "UpdatedTable.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was saved.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The document was not saved correctly.");
+            throw new Exception("The output document was not saved correctly.");
     }
 }

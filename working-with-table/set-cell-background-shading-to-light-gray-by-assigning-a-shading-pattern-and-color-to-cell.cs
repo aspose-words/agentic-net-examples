@@ -12,34 +12,33 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table.
+        // Start building a table.
         builder.StartTable();
 
-        // Insert first cell.
+        // Insert a cell and add some text.
         builder.InsertCell();
-        // Set the cell background shading to light gray.
+        builder.Writeln("Cell with light gray shading");
+
+        // Retrieve the current cell that was just created.
         Cell cell = builder.CurrentParagraph.ParentNode as Cell;
         if (cell == null)
-            throw new InvalidOperationException("Current node is not a cell.");
+            throw new InvalidOperationException("Current node is not a table cell.");
 
-        cell.CellFormat.Shading.Texture = TextureIndex.TextureSolid;               // Solid fill pattern.
-        cell.CellFormat.Shading.ForegroundPatternColor = Color.LightGray;        // Light gray color.
-
-        // Add some text to the cell.
-        builder.Writeln("Shaded Cell");
+        // Apply light gray shading to the cell.
+        cell.CellFormat.Shading.ForegroundPatternColor = Color.LightGray;
+        cell.CellFormat.Shading.BackgroundPatternColor = Color.Empty;
+        cell.CellFormat.Shading.Texture = TextureIndex.TextureNone; // Solid fill.
 
         // End the row and the table.
         builder.EndRow();
         builder.EndTable();
 
-        // Define output path.
-        string outputPath = "TableShading.docx";
-
-        // Save the document.
+        // Save the document to disk.
+        string outputPath = "Output.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify that the file was created successfully.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output file was not created.", outputPath);
+            throw new Exception("The output document was not created.");
     }
 }

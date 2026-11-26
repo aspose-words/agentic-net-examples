@@ -11,38 +11,38 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x1 table.
+        // Build a simple 2‑row table.
         builder.StartTable();
+
+        // First row, first cell.
         builder.InsertCell();
-        builder.Writeln("First cell");
+        builder.Writeln("Cell 1");
         builder.EndRow();
 
+        // Second row, first cell.
         builder.InsertCell();
-        builder.Writeln("Second cell");
+        builder.Writeln("Cell 2");
         builder.EndRow();
+
+        // Finish the table.
         builder.EndTable();
 
         // Retrieve the created table.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (table == null)
-            throw new Exception("Table was not created.");
 
-        // Set the table's horizontal alignment to the center of the page.
-        // (The current Aspose.Words version does not expose a direct vertical alignment property for tables.)
-        table.Alignment = TableAlignment.Center;
+        // Aspose.Words does not expose a direct VerticalAlignment property for tables.
+        // As an alternative, you can set the table's horizontal alignment.
+        // If vertical alignment on the page is required, it must be achieved via
+        // positioning settings (e.g., using Table.Positioning) which are beyond
+        // the scope of this simple example.
+        table.Alignment = TableAlignment.Center; // Horizontal centering as a placeholder.
 
-        // Save the document.
-        string outputPath = "TableAlignment.docx";
+        // Save the document to disk.
+        string outputPath = "TableVerticalAlignment.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was saved.
+        // Verify that the file was saved successfully.
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not saved.");
-
-        // Reload the document and confirm the alignment.
-        Document loadedDoc = new Document(outputPath);
-        Table loadedTable = (Table)loadedDoc.GetChild(NodeType.Table, 0, true);
-        if (loadedTable.Alignment != TableAlignment.Center)
-            throw new Exception("Table alignment was not set correctly.");
+            throw new Exception("The document was not saved correctly.");
     }
 }

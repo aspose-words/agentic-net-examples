@@ -11,39 +11,43 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a table with three cells in a single row.
+        // Build a table with 2 rows and 3 columns.
         builder.StartTable();
 
+        // First row.
         builder.InsertCell();
         builder.Writeln("Cell 1");
-
         builder.InsertCell();
         builder.Writeln("Cell 2");
-
         builder.InsertCell();
         builder.Writeln("Cell 3");
-
         builder.EndRow();
+
+        // Second row.
+        builder.InsertCell();
+        builder.Writeln("Cell 4");
+        builder.InsertCell();
+        builder.Writeln("Cell 5");
+        builder.InsertCell();
+        builder.Writeln("Cell 6");
+        builder.EndRow();
+
         builder.EndTable();
 
-        // Retrieve the created table.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        Row row = table.Rows[0];
+        // Merge the first two cells of the first row horizontally.
+        Table table = doc.FirstSection.Body.Tables[0];
+        Row firstRow = table.Rows[0];
+        Cell firstCell = firstRow.Cells[0];
+        Cell secondCell = firstRow.Cells[1];
 
-        // Merge the three cells across the row using CellFormat.HorizontalMerge.
-        Cell firstCell = row.Cells[0];
-        Cell secondCell = row.Cells[1];
-        Cell thirdCell = row.Cells[2];
-
-        // Set merge flags: first cell is the start, others are previous.
         firstCell.CellFormat.HorizontalMerge = CellMerge.First;
         secondCell.CellFormat.HorizontalMerge = CellMerge.Previous;
-        thirdCell.CellFormat.HorizontalMerge = CellMerge.Previous;
 
-        // Set text for the merged cell.
-        firstCell.Paragraphs.Clear();
-        firstCell.Paragraphs.Add(new Paragraph(doc));
-        firstCell.FirstParagraph.AppendChild(new Run(doc, "Merged Cell"));
+        // Optionally merge the third cell as well to span all three columns.
+        // Uncomment the following lines to merge the third cell.
+        // Cell thirdCell = firstRow.Cells[2];
+        // firstCell.CellFormat.HorizontalMerge = CellMerge.First; // already set
+        // thirdCell.CellFormat.HorizontalMerge = CellMerge.Previous;
 
         // Save the document.
         string outputPath = "MergedCells.docx";
@@ -51,6 +55,6 @@ public class Program
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not created.");
+            throw new Exception("The output file was not created.");
     }
 }

@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Fields;
 
 public class Program
 {
@@ -12,22 +11,14 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Helper method to insert a table with a caption.
-        void InsertTableWithCaption(string captionText, int rows, int cols)
+        // Helper to add a caption paragraph followed by a simple 2x2 table.
+        void AddTableWithCaption(string captionText)
         {
-            // Ensure the caption starts on a new paragraph.
-            builder.Writeln();
-
-            // Insert the caption: "Table {SEQ Table \\* ARABIC}: {captionText}"
-            builder.Write("Table ");
-            builder.InsertField("SEQ Table \\* ARABIC", "1");
-            builder.Writeln($": {captionText}");
-
-            // Build the table.
+            builder.Writeln(captionText);
             builder.StartTable();
-            for (int r = 0; r < rows; r++)
+            for (int r = 0; r < 2; r++)
             {
-                for (int c = 0; c < cols; c++)
+                for (int c = 0; c < 2; c++)
                 {
                     builder.InsertCell();
                     builder.Writeln($"R{r + 1}C{c + 1}");
@@ -37,47 +28,44 @@ public class Program
             builder.EndTable();
         }
 
-        // Insert initial tables with captions.
-        InsertTableWithCaption("First table", 2, 2);
-        InsertTableWithCaption("Second table", 3, 3);
+        // Add three initial tables with captions.
+        for (int i = 1; i <= 3; i++)
+        {
+            AddTableWithCaption($"Table {i}: Sample caption");
+        }
 
-        // Insert a new table after the initial ones.
-        InsertTableWithCaption("Newly added table", 2, 3);
+        // Insert a new table at the beginning of the document.
+        builder.MoveToDocumentStart();
+        AddTableWithCaption("Table X: New table");
 
-        // Refresh all table captions to reflect the new ordering.
-        RefreshTableCaptions(doc);
+        // Refresh all table captions by iterating tables in document order.
+        NodeCollection tables = doc.GetChildNodes(NodeType.Table, true);
+        for (int i = 0; i < tables.Count; i++)
+        {
+            Table table = (Table)tables[i];
 
-        // Save the resulting document.
+            // Find the preceding paragraph that holds the caption.
+            Node prevNode = table.PreviousSibling;
+            while (prevNode != null && !(prevNode is Paragraph))
+                prevNode = prevNode.PreviousSibling;
+
+            if (prevNode is Paragraph captionParagraph)
+            {
+                // Replace the caption text with the correct sequential number.
+                captionParagraph.Runs.Clear();
+                captionParagraph.AppendChild(new Run(doc, $"Table {i + 1}: Updated caption"));
+            }
+        }
+
+        // Save the document.
         string outputPath = "UpdatedCaptions.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output file was not created.");
-    }
+            throw new InvalidOperationException("The output document was not saved correctly.");
 
-    // Iterates through all tables and updates any preceding caption SEQ fields.
-    private static void RefreshTableCaptions(Document doc)
-    {
-        NodeCollection tables = doc.GetChildNodes(NodeType.Table, true);
-        foreach (Node node in tables)
-        {
-            Table table = (Table)node;
-
-            // The caption paragraph is expected to be the immediate previous sibling.
-            Paragraph captionParagraph = table.PreviousSibling as Paragraph;
-            if (captionParagraph == null)
-                continue;
-
-            // Update each SEQ field that references Table captions.
-            foreach (Field field in captionParagraph.Range.Fields)
-            {
-                // Check the field code for the SEQ Table identifier.
-                if (field.GetFieldCode().Contains("SEQ Table"))
-                {
-                    field.Update();
-                }
-            }
-        }
+        // Confirmation message.
+        Console.WriteLine($"Document saved to '{Path.GetFullPath(outputPath)}' with refreshed table captions.");
     }
 }

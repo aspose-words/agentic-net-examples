@@ -14,35 +14,38 @@ public class Program
         // Build a simple table with 5 rows and 3 columns.
         builder.StartTable();
 
-        for (int rowIndex = 0; rowIndex < 5; rowIndex++)
+        for (int row = 1; row <= 5; row++)
         {
-            for (int colIndex = 0; colIndex < 3; colIndex++)
+            for (int col = 1; col <= 3; col++)
             {
                 builder.InsertCell();
-                builder.Writeln($"Row {rowIndex + 1}, Cell {colIndex + 1}");
+                builder.Writeln($"Row {row}, Cell {col}");
             }
+
+            // End the current row.
             builder.EndRow();
         }
 
+        // End the table.
         builder.EndTable();
 
         // Retrieve the created table.
-        Table table = doc.FirstSection.Body.Tables[0];
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
-        // Prevent rows from breaking across pages, which keeps the whole table on one page.
-        foreach (Row row in table.Rows)
+        // Prevent rows from breaking across pages to keep the whole table on one page.
+        foreach (Row r in table.Rows)
         {
-            row.RowFormat.AllowBreakAcrossPages = false;
+            r.RowFormat.AllowBreakAcrossPages = false;
         }
 
         // Save the document.
         string outputPath = "TableKeepTogether.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was saved.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
         {
-            throw new Exception($"Failed to save the document to '{outputPath}'.");
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
         }
     }
 }

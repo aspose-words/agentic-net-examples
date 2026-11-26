@@ -11,36 +11,33 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table.
+        // Build a simple 1x1 table.
         builder.StartTable();
-
-        // Insert a cell and add some text.
         builder.InsertCell();
         builder.Writeln("Centered Text");
 
-        // End the row and the table.
+        // Retrieve the cell that was just created.
+        Cell cell = (Cell)builder.CurrentParagraph.ParentNode;
+
+        // Set vertical alignment of the cell to center.
+        cell.CellFormat.VerticalAlignment = CellVerticalAlignment.Center;
+
+        // Align all paragraphs inside the cell horizontally to center.
+        foreach (Paragraph para in cell.Paragraphs)
+        {
+            para.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        }
+
+        // Finish the row and the table.
         builder.EndRow();
         builder.EndTable();
 
-        // Retrieve the first table, row, and cell.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        Cell cell = table.Rows[0].Cells[0];
-
-        // Set vertical alignment to center using CellFormat.
-        cell.CellFormat.VerticalAlignment = CellVerticalAlignment.Center;
-
-        // Set horizontal alignment to center by aligning the paragraph inside the cell.
-        Paragraph para = cell.FirstParagraph;
-        para.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-
-        // Save the document to a file.
-        string outputPath = "Output.docx";
+        // Save the document to disk.
+        string outputPath = "AlignedTable.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-        {
             throw new Exception("The output file was not created.");
-        }
     }
 }

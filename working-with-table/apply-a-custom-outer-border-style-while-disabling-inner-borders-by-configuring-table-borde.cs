@@ -32,15 +32,15 @@ public class Program
         builder.EndTable();
 
         // Retrieve the created table.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
-        // Apply a custom outer border (single line, 2 pt, black).
-        table.SetBorder(BorderType.Left,   LineStyle.Single, 2.0, Color.Black, true);
-        table.SetBorder(BorderType.Top,    LineStyle.Single, 2.0, Color.Black, true);
-        table.SetBorder(BorderType.Right,  LineStyle.Single, 2.0, Color.Black, true);
-        table.SetBorder(BorderType.Bottom, LineStyle.Single, 2.0, Color.Black, true);
+        // Apply custom outer borders (thick blue line).
+        table.SetBorder(BorderType.Left,   LineStyle.Single, 2.0, Color.Blue, true);
+        table.SetBorder(BorderType.Right,  LineStyle.Single, 2.0, Color.Blue, true);
+        table.SetBorder(BorderType.Top,    LineStyle.Single, 2.0, Color.Blue, true);
+        table.SetBorder(BorderType.Bottom, LineStyle.Single, 2.0, Color.Blue, true);
 
-        // Disable inner (horizontal and vertical) borders.
+        // Disable inner borders.
         table.SetBorder(BorderType.Horizontal, LineStyle.None, 0, Color.Empty, false);
         table.SetBorder(BorderType.Vertical,   LineStyle.None, 0, Color.Empty, false);
 
@@ -50,6 +50,9 @@ public class Program
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not saved correctly.");
+            throw new InvalidOperationException("The output file was not created.");
+
+        // Optionally, inform that the process completed (no interactive wait).
+        Console.WriteLine("Document created successfully: " + Path.GetFullPath(outputPath));
     }
 }

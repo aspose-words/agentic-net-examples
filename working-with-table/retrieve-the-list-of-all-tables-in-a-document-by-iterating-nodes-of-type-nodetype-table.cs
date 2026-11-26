@@ -1,82 +1,58 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace WorkingWithTableExample
+namespace AsposeWordsTableTraversal
 {
     public class Program
     {
         public static void Main()
         {
-            // Create a new document.
+            // Create a new blank document.
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Build the first table (2 rows x 2 columns).
+            // Build first sample table.
             builder.StartTable();
             builder.InsertCell();
-            builder.Writeln("Table1 Row1 Cell1");
+            builder.Write("Row 1, Cell 1");
             builder.InsertCell();
-            builder.Writeln("Table1 Row1 Cell2");
+            builder.Write("Row 1, Cell 2");
             builder.EndRow();
 
             builder.InsertCell();
-            builder.Writeln("Table1 Row2 Cell1");
+            builder.Write("Row 2, Cell 1");
             builder.InsertCell();
-            builder.Writeln("Table1 Row2 Cell2");
+            builder.Write("Row 2, Cell 2");
             builder.EndRow();
             builder.EndTable();
 
             // Add a paragraph between tables.
             builder.Writeln();
 
-            // Build the second table (1 row x 3 columns).
+            // Build second sample table.
             builder.StartTable();
             builder.InsertCell();
-            builder.Writeln("Table2 Cell1");
-            builder.InsertCell();
-            builder.Writeln("Table2 Cell2");
-            builder.InsertCell();
-            builder.Writeln("Table2 Cell3");
+            builder.Write("Only Cell");
             builder.EndRow();
             builder.EndTable();
 
-            // Save the document to a local file.
-            string outputPath = "SampleTables.docx";
+            // Save the sample document.
+            const string outputPath = "Sample.docx";
             doc.Save(outputPath);
 
-            // Verify that the file was saved.
-            if (!File.Exists(outputPath))
-                throw new Exception("Failed to save the document.");
-
-            // Load the document (demonstrates loading workflow).
-            Document loadedDoc = new Document(outputPath);
-
             // Retrieve all tables in the document.
-            NodeCollection tableNodes = loadedDoc.GetChildNodes(NodeType.Table, true);
+            NodeCollection tableNodes = doc.GetChildNodes(NodeType.Table, true);
 
-            Console.WriteLine($"Total tables found: {tableNodes.Count}");
-
-            // Iterate through each table and output its details.
-            for (int i = 0; i < tableNodes.Count; i++)
+            // Output information about each table.
+            int tableIndex = 1;
+            foreach (Table table in tableNodes)
             {
-                Table table = (Table)tableNodes[i];
-                Console.WriteLine($"Table {i + 1}: Rows = {table.Rows.Count}, Columns = {GetColumnCount(table)}");
+                int rowCount = table.Rows.Count;
+                int columnCount = rowCount > 0 ? table.FirstRow.Cells.Count : 0;
+                Console.WriteLine($"Table {tableIndex}: {rowCount} rows, {columnCount} columns");
+                tableIndex++;
             }
-        }
-
-        // Helper method to determine the maximum column count in a table.
-        private static int GetColumnCount(Table table)
-        {
-            int max = 0;
-            foreach (Row row in table.Rows)
-            {
-                int cells = row.Cells.Count;
-                if (cells > max)
-                    max = cells;
-            }
-            return max;
         }
     }
 }

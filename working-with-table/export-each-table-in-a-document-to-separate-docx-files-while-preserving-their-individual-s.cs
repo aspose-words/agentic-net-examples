@@ -1,20 +1,17 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class ExportTablesExample
+public class Program
 {
     public static void Main()
     {
-        // Create a sample document containing multiple tables, each with a distinct style.
+        // Create a sample source document with two tables, each having a different style.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        builder.Writeln("Document containing multiple tables with individual styles.");
-
-        // First table – apply Light List Accent 1 style.
+        // First table with "Table Grid" style.
         builder.StartTable();
         builder.InsertCell();
         builder.Write("Table 1 - Cell 1");
@@ -24,10 +21,14 @@ public class ExportTablesExample
         builder.EndRow();
         builder.EndTable();
 
-        Table firstTable = sourceDoc.LastSection.Body.Tables[sourceDoc.LastSection.Body.Tables.Count - 1];
-        firstTable.StyleIdentifier = StyleIdentifier.LightListAccent1;
+        // Apply style to the first table.
+        Table firstTable = (Table)sourceDoc.GetChild(NodeType.Table, 0, true);
+        firstTable.StyleIdentifier = StyleIdentifier.TableGrid;
 
-        // Second table – apply Light Grid Accent 2 style.
+        // Add a paragraph between tables.
+        builder.Writeln();
+
+        // Second table with "Light Shading Accent 1" style.
         builder.StartTable();
         builder.InsertCell();
         builder.Write("Table 2 - Cell 1");
@@ -37,38 +38,45 @@ public class ExportTablesExample
         builder.EndRow();
         builder.EndTable();
 
-        Table secondTable = sourceDoc.LastSection.Body.Tables[sourceDoc.LastSection.Body.Tables.Count - 1];
-        secondTable.StyleIdentifier = StyleIdentifier.LightGridAccent2;
+        // Apply style to the second table.
+        Table secondTable = (Table)sourceDoc.GetChild(NodeType.Table, 1, true);
+        secondTable.StyleIdentifier = StyleIdentifier.LightShadingAccent1;
 
-        // Gather all tables from the source document.
-        List<Table> tables = new List<Table>();
-        foreach (Node node in sourceDoc.GetChildNodes(NodeType.Table, true))
-        {
-            tables.Add((Table)node);
-        }
+        // Ensure output directory exists.
+        string outputDir = "ExportedTables";
+        Directory.CreateDirectory(outputDir);
 
-        // Export each table to its own DOCX file while preserving its style.
+        // Iterate over each table in the source document.
+        NodeCollection tables = sourceDoc.GetChildNodes(NodeType.Table, true);
         for (int i = 0; i < tables.Count; i++)
         {
-            Table table = tables[i];
+            Table srcTable = (Table)tables[i];
 
-            // Create a new document that will contain the single table.
-            Document tableDoc = new Document();
+            // Create a new empty document to hold the exported table.
+            Document destDoc = new Document();
 
-            // Use the NodeImporter that takes source and destination documents.
-            NodeImporter importer = new NodeImporter(sourceDoc, tableDoc, ImportFormatMode.KeepSourceFormatting);
-            Node importedTable = importer.ImportNode(table, true);
+            // Import the table into the new document, preserving its formatting.
+            NodeImporter importer = new NodeImporter(srcTable.Document, destDoc, ImportFormatMode.KeepSourceFormatting);
+            Node importedTable = importer.ImportNode(srcTable, true);
 
-            // Append the imported table to the body of the new document.
-            tableDoc.FirstSection.Body.AppendChild(importedTable);
+            // Append the imported table to the body of the destination document.
+            destDoc.FirstSection.Body.AppendChild(importedTable);
 
-            // Define and save the output file.
-            string outputFileName = $"Table_{i + 1}.docx";
-            tableDoc.Save(outputFileName);
+            // Define the output file name.
+            string outputPath = Path.Combine(outputDir, $"Table_{i + 1}.docx");
 
-            // Verify that the file was created.
-            if (!File.Exists(outputFileName))
-                throw new Exception($"Failed to create output file: {outputFileName}");
+            // Save the document containing the single table.
+            destDoc.Save(outputPath);
+
+            // Validate that the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException($"Failed to create output file: {outputPath}");
         }
+
+        // Optionally, save the source document for reference.
+        string sourcePath = Path.Combine(outputDir, "SourceDocument.docx");
+        sourceDoc.Save(sourcePath);
+        if (!File.Exists(sourcePath))
+            throw new InvalidOperationException($"Failed to save source document: {sourcePath}");
     }
 }

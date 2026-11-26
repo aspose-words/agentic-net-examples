@@ -3,41 +3,59 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace TableFixedWidthExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2‑column table.
-        builder.StartTable();
+            // Build a simple 2x2 table.
+            builder.StartTable();
 
-        builder.InsertCell();
-        builder.Writeln("Cell 1");
+            // First row, first cell.
+            builder.InsertCell();
+            builder.Write("Cell 1");
 
-        builder.InsertCell();
-        builder.Writeln("Cell 2");
+            // First row, second cell.
+            builder.InsertCell();
+            builder.Write("Cell 2");
+            builder.EndRow();
 
-        builder.EndRow();
-        builder.EndTable();
+            // Second row, first cell.
+            builder.InsertCell();
+            builder.Write("Cell 3");
 
-        // Retrieve the created table.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+            // Second row, second cell.
+            builder.InsertCell();
+            builder.Write("Cell 4");
+            builder.EndRow();
 
-        // Set the table width to a fixed 15 centimeters.
-        // 1 inch = 72 points, 1 cm = 72 / 2.54 points.
-        double centimeters = 15;
-        double points = centimeters * 72.0 / 2.54;
-        table.PreferredWidth = PreferredWidth.FromPoints(points);
+            // End the table construction.
+            builder.EndTable();
 
-        // Save the document.
-        string fileName = "TableFixedWidth.docx";
-        doc.Save(fileName);
+            // Retrieve the created table.
+            Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
-        // Verify that the file was created.
-        if (!File.Exists(fileName))
-            throw new Exception("The output file was not created.");
+            // Set the table width to a fixed 15 centimeters.
+            // 1 centimeter = 28.3464567 points.
+            double widthInPoints = 15.0 * 28.3464567;
+            // Use PreferredWidth.FromPoints for a fixed width.
+            table.PreferredWidth = PreferredWidth.FromPoints(widthInPoints);
+
+            // Save the document.
+            string outputPath = "TableFixedWidth.docx";
+            doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new Exception("The output file was not created.");
+
+            // Inform that the process completed.
+            Console.WriteLine("Document saved successfully to " + Path.GetFullPath(outputPath));
+        }
     }
 }

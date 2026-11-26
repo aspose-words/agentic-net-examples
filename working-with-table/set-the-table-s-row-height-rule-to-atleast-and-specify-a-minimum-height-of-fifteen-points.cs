@@ -11,44 +11,38 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table.
+        // Build a simple table with two rows.
         builder.StartTable();
 
         // First row, first cell.
         builder.InsertCell();
-        builder.Writeln("Cell 1");
-
-        // End first row.
+        builder.Write("Row 1, Cell 1");
         builder.EndRow();
 
         // Second row, first cell.
         builder.InsertCell();
-        builder.Writeln("Cell 2");
-
-        // End second row.
+        builder.Write("Row 2, Cell 1");
         builder.EndRow();
 
         // Finish the table.
         builder.EndTable();
 
         // Retrieve the created table.
-        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
 
-        // Set each row's height rule to AtLeast with a minimum height of 15 points.
-        foreach (Row row in table.Rows)
-        {
-            row.RowFormat.HeightRule = HeightRule.AtLeast;
-            row.RowFormat.Height = 15; // Height is measured in points.
-        }
+        // Set the first row's height rule to AtLeast with a minimum height of 15 points.
+        Row firstRow = table.Rows[0];
+        firstRow.RowFormat.HeightRule = HeightRule.AtLeast;
+        firstRow.RowFormat.Height = 15; // Height in points.
 
-        // Save the document to a file.
+        // Save the document to disk.
         string outputPath = "TableRowHeight.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify that the file was saved.
         if (!File.Exists(outputPath))
-        {
-            throw new Exception("The output document was not created.");
-        }
+            throw new FileNotFoundException("The output document was not created.", outputPath);
     }
 }

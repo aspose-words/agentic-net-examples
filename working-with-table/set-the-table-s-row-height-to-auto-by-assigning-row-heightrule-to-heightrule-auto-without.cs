@@ -16,34 +16,34 @@ public class Program
 
         // First row, first cell.
         builder.InsertCell();
-        builder.Writeln("R1C1");
-        // End first row.
+        builder.Write("R1C1");
         builder.EndRow();
 
         // Second row, first cell.
         builder.InsertCell();
-        builder.Writeln("R2C1");
-        // End second row.
+        builder.Write("R2C1");
         builder.EndRow();
 
-        // Finish the table.
+        // End the table.
         builder.EndTable();
 
         // Retrieve the created table.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (table == null)
-            throw new InvalidOperationException("Table was not created.");
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
-        // Set the height rule of the first row to Auto (no explicit height).
-        Row firstRow = table.Rows[0];
-        firstRow.RowFormat.HeightRule = HeightRule.Auto;
+        // Set each row's height rule to Auto (no explicit height).
+        foreach (Row row in table.Rows)
+        {
+            row.RowFormat.HeightRule = HeightRule.Auto;
+        }
 
-        // Save the document to disk.
-        string outputPath = "RowHeightAuto.docx";
+        // Save the document.
+        string outputPath = "TableRowHeightAuto.docx";
         doc.Save(outputPath);
 
         // Verify that the file was saved.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not created.", outputPath);
+        {
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+        }
     }
 }

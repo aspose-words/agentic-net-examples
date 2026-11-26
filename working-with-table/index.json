@@ -4,13 +4,13 @@
     "slug": "working-with-table",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Use DocumentBuilder.StartTable, InsertCell, EndRow, and EndTable for any table creation, then manipulate Table, Row, and Cell objects directly for edits such as adding rows, setting styles, or adjusting widths. When moving a table between documents, clone the node, import it with NodeImporter, and insert it via the parent node's InsertAfter method. Validate only the requested behavior and the existence of the output file.",
+    "preferred_workflow": "Use DocumentBuilder.StartTable, InsertCell, EndRow, and EndTable for straightforward table creation. For modifications, work directly with Table, Row, and Cell objects obtained from the document tree, and apply formatting through supported properties such as AutoFit, PreferredWidth, Alignment, and CellFormat. Always import or clone nodes when moving content between documents and validate only the requested output.",
     "required_packages": [
       "Aspose.Words",
       "Newtonsoft.Json"
     ],
     "package_versions": {
-      "Aspose.Words": "26.10.0",
+      "Aspose.Words": "26.11.0",
       "Newtonsoft.Json": ""
     },
     "required_namespaces": [
@@ -18,49 +18,47 @@
       "System.IO",
       "Aspose.Words",
       "Aspose.Words.Tables",
-      "System.Collections.Generic",
-      "Aspose.Words.Replacing",
-      "System.Drawing",
       "System.Linq",
-      "Aspose.Words.Drawing",
+      "System.Collections.Generic",
+      "System.Drawing",
+      "Aspose.Words.Replacing",
+      "Aspose.Words.Loading",
+      "System.Reflection",
       "System.Data",
       "Aspose.Words.Fields",
+      "Aspose.Words.Drawing",
       "Aspose.Words.Notes",
-      "Aspose.Words.Saving",
       "Newtonsoft.Json",
-      "System.Xml",
-      "System.Xml.Linq",
-      "System.Reflection",
-      "System.Text",
-      "System.Net"
+      "Aspose.Words.Saving",
+      "System.Xml.Linq"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
       "File",
+      "Path",
       "Row",
+      "Cell",
+      "NodeType",
       "Paragraph",
       "Run",
       "Table",
-      "Cell",
-      "NodeType",
       "StyleIdentifier",
       "CompositeNode",
-      "Path",
       "Node",
       "Range",
       "FindReplaceOptions",
+      "Directory",
       "CellFormat",
+      "LoadOptions",
       "Style",
       "Font",
-      "Directory",
       "Shape",
-      "MemoryStream",
       "SaveFormat",
-      "LoadOptions",
-      "Field",
+      "MemoryStream",
       "ProtectionType",
-      "ImageSaveOptions"
+      "ImageSaveOptions",
+      "HtmlSaveOptions"
     ]
   },
   "stats": {
@@ -73,47 +71,50 @@
   },
   "rules_summary": {
     "strict_api_bans": [
-      "Never reference members that are not present in Aspose.Words 26.10.0, such as Table.AutoFit as a property, Table.Borders, Table.VerticalAlignment, Table.Columns, Cell.PreferredWidth, TableStyleOptions members, BorderCollection.Clear, TextureIndex.None, LoadOptions, or VerticalAlignment enum.",
-      "Do not use DocumentBuilder.InsertTable; prefer the explicit StartTable workflow."
+      "Do not reference members that are not present in the installed Aspose.Words version."
     ],
     "canonical_patterns": [
-      "Create a table with DocumentBuilder, then retrieve the Table node via doc.GetChild(NodeType.Table, index, true) for further DOM manipulation.",
-      "Add rows by constructing a new Row(doc) and calling table.Rows.Add(row); add cells with new Row.Cells.Add(new Cell(doc)).",
-      "Clone a table with originalTable.Clone(true), import it using NodeImporter, and insert it with referenceParagraph.ParentNode.InsertAfter(clonedTable, referenceParagraph)."
+      "Prefer DocumentBuilder for table construction and the DOM API for inspection or fine-grained modifications."
     ],
     "nullable_warning_prevention": [
-      "Always append a Paragraph to a newly created Cell before adding Run objects to avoid NullReferenceException.",
-      "Check that target nodes (paragraphs, tables) are not null before moving the builder or performing InsertAfter."
+      "Create all required input files or objects locally before they are accessed by the code."
     ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "Missing Node argument in collection Add",
-      "symptom": "CS7036 errors indicating that NodeCollection.Add was called without a Node parameter.",
-      "cause": "The code attempted to add rows or cells using Rows.Add() or Cells.Add() without supplying a new Row or Cell instance.",
-      "fix": "Instantiate the required node (e.g., new Row(doc) or new Cell(doc)) and pass it to the Add method.",
-      "prevention": "Always create the node first and supply it as the argument to Rows.Add and Cells.Add."
+      "pattern": "Use of non-existent table APIs",
+      "symptom": "Compilation fails with CS0246 errors indicating that Table, Row, or Cell cannot be found.",
+      "cause": "The code references invented or outdated members that are not part of Aspose.Words 26.11.0.",
+      "fix": "Import Aspose.Words.Tables and instantiate the documented Table, Row, and Cell classes.",
+      "prevention": "Check the official API reference for the exact class names and namespaces before coding."
     },
     {
-      "pattern": "Incorrect InsertAfter usage",
-      "symptom": "CS1061 or CS7036 errors stating that InsertAfter is missing or that the refChild argument is absent.",
-      "cause": "The code called InsertAfter on the target node itself or omitted the reference child parameter.",
-      "fix": "Call InsertAfter on the parent CompositeNode: parentNode.InsertAfter(newNode, referenceNode).",
-      "prevention": "Locate the parent of the reference paragraph and use its InsertAfter method with both arguments."
+      "pattern": "Incorrect NodeCollection.Add usage",
+      "symptom": "CS7036 errors appear because NodeCollection.Add is called without a Node argument.",
+      "cause": "Rows or cells are added to a collection without first creating a Row or Cell instance.",
+      "fix": "Create a new Row or Cell object (e.g., new Row(doc)) and then add it to the collection.",
+      "prevention": "Always supply a concrete Node instance to Add; use builder methods when possible."
     },
     {
-      "pattern": "Invented or outdated API members",
-      "symptom": "Multiple CS0117, CS1061, CS0234, CS1656, CS1729, and CS0200 errors for members such as Table.AutoFit property, Table.Borders, Table.VerticalAlignment, Table.Columns, Cell.PreferredWidth, TableStyleOptions flags, BorderCollection.Clear, TextureIndex.None, LoadOptions, and PreferredWidth constructors.",
-      "cause": "The generated code referenced members that do not exist in Aspose.Words 26.10.0 or were mis-typed.",
-      "fix": "Use the documented APIs: call table.AutoFit(AutoFitBehavior...), set table.PreferredWidth via PreferredWidth.FromPoints or FromPercent, apply styles with table.StyleIdentifier, and configure borders through table.SetBorder(BorderType, LineStyle, width, color, true).",
-      "prevention": "Consult the official Aspose.Words 26.10.0 API reference and avoid guessing member names; rely on the key APIs list provided."
+      "pattern": "Misuse of AutoFit and width APIs",
+      "symptom": "CS1656 and CS0117 errors occur when assigning to AutoFit or using undefined enum values such as AutoFitBehavior.Fixed.",
+      "cause": "AutoFit is a method, not a property, and certain enum members were removed in the current version.",
+      "fix": "Invoke table.AutoFit(AutoFitBehavior.AutoFitToWindow) or set table.AllowAutoFit = false and use PreferredWidth.FromPoints/FromPercent for fixed widths.",
+      "prevention": "Follow the method-call pattern shown in the verified snippets and avoid hard-coding enum names not present in the version."
     },
     {
-      "pattern": "Missing paragraph in a new cell",
-      "symptom": "Runtime NullReferenceException when attempting to append a Run to a cell that has no Paragraph.",
-      "cause": "The code created a Cell but did not add a Paragraph before inserting text.",
-      "fix": "After creating a Cell, call cell.AppendChild(new Paragraph(doc)) and then add Run objects to cell.FirstParagraph.",
-      "prevention": "Always ensure each new Cell contains at least one Paragraph before writing content."
+      "pattern": "Missing table formatting members",
+      "symptom": "CS1061 errors report that members like Borders, Shading, RightIndent, or VerticalAlignment do not exist on Table.",
+      "cause": "Those properties are not exposed in Aspose.Words 26.11.0.",
+      "fix": "Use supported alternatives such as Table.Alignment for horizontal placement and PreferredWidth for width control; omit unsupported members.",
+      "prevention": "Verify property availability with IntelliSense or the API docs before using them."
+    },
+    {
+      "pattern": "Incorrect cell margin/padding APIs",
+      "symptom": "CS1061 errors indicate that CellFormat lacks MarginTop, PaddingTop, or similar properties.",
+      "cause": "Margin and padding properties were renamed or removed in the current library version.",
+      "fix": "Apply spacing through CellFormat.PreferredWidth, CellFormat.SetPadding (if available), or adjust ParagraphSpacing inside the cell.",
+      "prevention": "Reference the latest Aspose.Words documentation for the correct cell formatting API."
     }
   ],
   "examples": [
@@ -268,8 +269,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 15,
@@ -279,8 +280,8 @@
       "outputs": [
         "html"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 16,
@@ -389,8 +390,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 26,
@@ -444,8 +445,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 31,
@@ -455,8 +456,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 32,
@@ -488,8 +489,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 35,
@@ -499,8 +500,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 36,
@@ -521,8 +522,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 38,
@@ -576,8 +577,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 43,
@@ -598,8 +599,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 45,
@@ -631,8 +632,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 48,
@@ -664,8 +665,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 51,
@@ -785,8 +786,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 62,
@@ -796,8 +797,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 63,
@@ -895,8 +896,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 72,
@@ -906,8 +907,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 73,
@@ -928,8 +929,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 75,
@@ -1170,8 +1171,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 97,
@@ -1192,8 +1193,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 99,
@@ -1203,8 +1204,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 100,
@@ -1247,8 +1248,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 104,
@@ -1280,8 +1281,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 107,
@@ -1335,8 +1336,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 112,
@@ -1346,8 +1347,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 113,
@@ -1381,8 +1382,8 @@
         "docx",
         "html"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 116,
@@ -1458,8 +1459,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 123,
@@ -1513,8 +1514,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 128,
@@ -1535,8 +1536,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 130,
@@ -1645,8 +1646,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 140,
@@ -1667,8 +1668,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 142,
@@ -1678,8 +1679,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 143,
@@ -1766,8 +1767,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 151,
@@ -1821,8 +1822,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 156,
@@ -1854,8 +1855,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 159,
@@ -1931,8 +1932,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 166,
@@ -1953,8 +1954,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 168,
@@ -1986,8 +1987,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 171,
@@ -2118,8 +2119,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 183,
@@ -2140,8 +2141,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 185,
@@ -2239,8 +2240,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 194,
@@ -2283,8 +2284,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 198,
@@ -2299,13 +2300,13 @@
     }
   ],
   "narrative": {
-    "overview": "The Working With Table category demonstrates how to create, modify, clone, and style tables using Aspose.Words 26.10.0. Verified examples cover builder-based creation, DOM manipulation, insertion after specific nodes, cloning with import, and HTML-to-Word conversion while preserving merges.",
-    "purpose": "Provide an AI coding assistant with clear, version-compatible patterns for all common table operations in Aspose.Words, ensuring generated code compiles, runs, and produces the expected document output without relying on unavailable APIs or external assets.",
+    "overview": "The Working With Table category demonstrates how to create, modify, and style tables in Word documents using Aspose.Words 26.11.0. Verified examples show builder-based creation, DOM manipulation, cloning, AutoFit configuration, and width handling with correct API usage.",
+    "purpose": "Provide an AI coding agent with concise guidance to generate reliable, version-compatible C# snippets that manipulate tables in Aspose.Words documents while avoiding common compilation and runtime pitfalls.",
     "validation_priorities": [
-      "Confirm that the output document file exists and that the table contains the expected number of rows and cells."
+      "Confirm that the output document file exists and contains at least one table node."
     ],
     "maintenance_notes": [
-      "Periodically verify the Aspose.Words version used in the environment; update the rule set if new members are added or existing ones are deprecated."
+      "Update the examples whenever a new Aspose.Words version changes the table-related API surface."
     ]
   }
 }

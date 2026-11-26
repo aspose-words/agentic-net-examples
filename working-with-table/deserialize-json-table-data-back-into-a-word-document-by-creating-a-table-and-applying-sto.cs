@@ -1,14 +1,14 @@
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Drawing;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 using Newtonsoft.Json;
 
 public class Program
 {
-    // Model classes matching the JSON structure.
+    // Classes that represent the JSON structure for a table.
     public class TableData
     {
         public List<RowData> Rows { get; set; }
@@ -22,38 +22,37 @@ public class Program
     public class CellData
     {
         public string Text { get; set; }
-        public string BackgroundColor { get; set; } // HTML color string, e.g. "#D9E1F2"
-        public bool Bold { get; set; }
+        public string BackgroundColor { get; set; } // Color name or hex string.
     }
 
     public static void Main()
     {
-        // Sample JSON representing a table with formatting.
+        // Sample JSON that stores table content and simple cell formatting.
         string json = @"
         {
             ""Rows"": [
                 {
                     ""Cells"": [
-                        { ""Text"": ""Header 1"", ""BackgroundColor"": ""#D9E1F2"", ""Bold"": true },
-                        { ""Text"": ""Header 2"", ""BackgroundColor"": ""#D9E1F2"", ""Bold"": true }
+                        { ""Text"": ""Header 1"", ""BackgroundColor"": ""LightGray"" },
+                        { ""Text"": ""Header 2"", ""BackgroundColor"": ""LightGray"" }
                     ]
                 },
                 {
                     ""Cells"": [
-                        { ""Text"": ""Row 1, Col 1"", ""BackgroundColor"": ""#FFFFFF"", ""Bold"": false },
-                        { ""Text"": ""Row 1, Col 2"", ""BackgroundColor"": ""#FFFFFF"", ""Bold"": false }
+                        { ""Text"": ""Row1 Col1"", ""BackgroundColor"": ""White"" },
+                        { ""Text"": ""Row1 Col2"", ""BackgroundColor"": ""White"" }
                     ]
                 },
                 {
                     ""Cells"": [
-                        { ""Text"": ""Row 2, Col 1"", ""BackgroundColor"": ""#FFFFFF"", ""Bold"": false },
-                        { ""Text"": ""Row 2, Col 2"", ""BackgroundColor"": ""#FFFFFF"", ""Bold"": false }
+                        { ""Text"": ""Row2 Col1"", ""BackgroundColor"": ""White"" },
+                        { ""Text"": ""Row2 Col2"", ""BackgroundColor"": ""White"" }
                     ]
                 }
             ]
         }";
 
-        // Deserialize JSON into the model.
+        // Deserialize JSON into C# objects.
         TableData tableData = JsonConvert.DeserializeObject<TableData>(json);
         if (tableData == null || tableData.Rows == null)
             throw new InvalidOperationException("Failed to deserialize table data.");
@@ -62,7 +61,11 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build the table based on the deserialized data.
+        // Optional: add a title before the table.
+        builder.Writeln("Table generated from JSON data:");
+        builder.Writeln();
+
+        // Build the table using DocumentBuilder.
         builder.StartTable();
 
         foreach (RowData row in tableData.Rows)
@@ -75,22 +78,29 @@ public class Program
                 // Insert a new cell.
                 builder.InsertCell();
 
-                // Apply background shading if a color is provided.
+                // Write the cell text.
+                builder.Write(cell.Text ?? string.Empty);
+
+                // Apply background shading if a color is specified.
                 if (!string.IsNullOrEmpty(cell.BackgroundColor))
                 {
-                    Color bgColor = ColorTranslator.FromHtml(cell.BackgroundColor);
-                    builder.CellFormat.Shading.BackgroundPatternColor = bgColor;
+                    Color bgColor = Color.FromName(cell.BackgroundColor);
+                    // If the name is not known, try parsing as a hex value.
+                    if (!bgColor.IsKnownColor && !bgColor.IsNamedColor)
+                    {
+                        try
+                        {
+                            bgColor = ColorTranslator.FromHtml(cell.BackgroundColor);
+                        }
+                        catch
+                        {
+                            // Fallback to white if parsing fails.
+                            bgColor = Color.White;
+                        }
+                    }
+
+                    builder.CurrentParagraph.ParagraphFormat.Shading.BackgroundPatternColor = bgColor;
                 }
-
-                // Apply bold formatting if required.
-                builder.Font.Bold = cell.Bold;
-
-                // Write the cell text.
-                builder.Writeln(cell.Text);
-
-                // Reset formatting for the next cell.
-                builder.Font.Bold = false;
-                builder.CellFormat.Shading.ClearFormatting();
             }
 
             // End the current row.

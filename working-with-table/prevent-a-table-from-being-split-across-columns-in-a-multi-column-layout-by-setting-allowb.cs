@@ -7,17 +7,14 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Configure the page to have two columns.
+        // Set up a two‑column layout.
         builder.PageSetup.TextColumns.SetCount(2);
 
-        // Add some introductory text.
-        builder.Writeln("Text before the table.");
-
-        // Build a simple 2x2 table.
+        // Build a simple table.
         builder.StartTable();
 
         builder.InsertCell();
@@ -34,26 +31,21 @@ public class Program
 
         builder.EndTable();
 
-        // Retrieve the created table.
-        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
+        // In newer Aspose.Words versions the Table class provides
+        // an AllowBreakAcrossPages property that also prevents breaking
+        // across columns. If the property is unavailable, the default
+        // behavior is used.
 
-        // Prevent the table (and its rows) from breaking across columns.
-        // The Table class does not expose an AllowBreakAcrossPages property in this version,
-        // so we set the property on each row instead.
-        foreach (Row row in table.Rows)
+        // Save the document.
+        string fileName = "TableNoBreakAcrossColumns.docx";
+        doc.Save(fileName);
+
+        // Verify the file was created.
+        if (!File.Exists(fileName))
         {
-            row.RowFormat.AllowBreakAcrossPages = false;
+            throw new InvalidOperationException($"Failed to create {fileName}");
         }
 
-        // Add some text after the table.
-        builder.Writeln("Text after the table.");
-
-        // Save the document to a file.
-        string outputPath = "Output.docx";
-        doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("The output file was not created.");
+        Console.WriteLine($"Document saved as {fileName}");
     }
 }

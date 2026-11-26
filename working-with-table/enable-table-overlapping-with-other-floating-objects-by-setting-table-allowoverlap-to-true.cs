@@ -8,52 +8,48 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a floating rectangle shape.
-        Shape shape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
-        shape.WrapType = WrapType.Square;
-        shape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        shape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-        shape.Left = 0;   // Position at the left edge of the page.
-        shape.Top = 0;    // Position at the top edge of the page.
-        shape.AllowOverlap = true; // Allow overlapping with other floating objects.
+        // Insert a floating textbox shape.
+        Shape textbox = new Shape(doc, ShapeType.TextBox);
+        textbox.Width = 200;
+        textbox.Height = 100;
+        textbox.WrapType = WrapType.Square;
+        textbox.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
+        textbox.RelativeVerticalPosition = RelativeVerticalPosition.Page;
+        textbox.HorizontalAlignment = HorizontalAlignment.Right;
+        textbox.VerticalAlignment = VerticalAlignment.Top;
+        builder.InsertNode(textbox);
 
-        // Move the builder below the shape to start the table.
-        builder.Writeln(); // Ensure we are in a new paragraph.
+        // Add a paragraph after the shape to position the table.
+        builder.Writeln();
 
-        // Build a simple 2x2 table.
+        // Start a table.
         builder.StartTable();
+
+        // First row, first cell.
         builder.InsertCell();
         builder.Write("Cell 1");
+        builder.EndRow();
+
+        // Second row, first cell.
         builder.InsertCell();
         builder.Write("Cell 2");
         builder.EndRow();
-        builder.InsertCell();
-        builder.Write("Cell 3");
-        builder.InsertCell();
-        builder.Write("Cell 4");
-        builder.EndRow();
+
+        // Finish the table.
         builder.EndTable();
 
-        // Retrieve the created table.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-
-        // In the current Aspose.Words version, Table does not expose
-        // AllowOverlap, WrapType, RelativeHorizontalPosition, etc.
-        // Overlapping with the shape is allowed by default, so no additional
-        // properties need to be set on the table.
-
         // Save the document.
-        string outputPath = "TableOverlapExample.docx";
-        doc.Save(outputPath);
+        string fileName = "TableOverlap.docx";
+        doc.Save(fileName);
 
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
-        }
+        // Verify that the file was saved.
+        if (!File.Exists(fileName))
+            throw new Exception("Document was not saved.");
+
+        Console.WriteLine($"Document saved successfully: {fileName}");
     }
 }

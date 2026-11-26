@@ -3,88 +3,53 @@ using System.IO;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
+using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder for constructing content.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Define table dimensions.
-        int rows = 5;
-        int columns = 3;
-
-        // Build the table.
+        // Build a 3x3 table.
         builder.StartTable();
-        for (int r = 0; r < rows; r++)
+        for (int row = 0; row < 3; row++)
         {
-            for (int c = 0; c < columns; c++)
+            for (int col = 0; col < 3; col++)
             {
                 builder.InsertCell();
-                builder.Writeln($"R{r + 1}C{c + 1}");
+                builder.Writeln($"R{row + 1}C{col + 1}");
             }
             builder.EndRow();
         }
         builder.EndTable();
 
         // Retrieve the created table.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (table == null)
-            throw new InvalidOperationException("Table was not created.");
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
         // Apply distinct border style to the first row.
-        Row firstRow = table.FirstRow;
-        firstRow.RowFormat.Borders.Top.LineStyle = LineStyle.Single;
-        firstRow.RowFormat.Borders.Top.Color = Color.Red;
-        firstRow.RowFormat.Borders.Top.LineWidth = 2.0;
-        firstRow.RowFormat.Borders.Bottom.LineStyle = LineStyle.Single;
-        firstRow.RowFormat.Borders.Bottom.Color = Color.Red;
-        firstRow.RowFormat.Borders.Bottom.LineWidth = 2.0;
-        firstRow.RowFormat.Borders.Left.LineStyle = LineStyle.Single;
-        firstRow.RowFormat.Borders.Left.Color = Color.Red;
-        firstRow.RowFormat.Borders.Left.LineWidth = 2.0;
-        firstRow.RowFormat.Borders.Right.LineStyle = LineStyle.Single;
-        firstRow.RowFormat.Borders.Right.Color = Color.Red;
-        firstRow.RowFormat.Borders.Right.LineWidth = 2.0;
+        Row firstRow = table.Rows[0];
+        firstRow.RowFormat.Borders.LineStyle = LineStyle.Single;
+        firstRow.RowFormat.Borders.Color = Color.Red;
+        firstRow.RowFormat.Borders.LineWidth = 2.0; // points
 
         // Apply distinct border style to the last row.
-        Row lastRow = table.LastRow;
-        lastRow.RowFormat.Borders.Top.LineStyle = LineStyle.Double;
-        lastRow.RowFormat.Borders.Top.Color = Color.Blue;
-        lastRow.RowFormat.Borders.Top.LineWidth = 2.0;
-        lastRow.RowFormat.Borders.Bottom.LineStyle = LineStyle.Double;
-        lastRow.RowFormat.Borders.Bottom.Color = Color.Blue;
-        lastRow.RowFormat.Borders.Bottom.LineWidth = 2.0;
-        lastRow.RowFormat.Borders.Left.LineStyle = LineStyle.Double;
-        lastRow.RowFormat.Borders.Left.Color = Color.Blue;
-        lastRow.RowFormat.Borders.Left.LineWidth = 2.0;
-        lastRow.RowFormat.Borders.Right.LineStyle = LineStyle.Double;
-        lastRow.RowFormat.Borders.Right.Color = Color.Blue;
-        lastRow.RowFormat.Borders.Right.LineWidth = 2.0;
+        Row lastRow = table.Rows[table.Rows.Count - 1];
+        lastRow.RowFormat.Borders.LineStyle = LineStyle.Single;
+        lastRow.RowFormat.Borders.Color = Color.Blue;
+        lastRow.RowFormat.Borders.LineWidth = 2.0; // points
 
-        // Apply a different border style to all inner cells (rows 2..rows-1).
-        for (int r = 1; r < rows - 1; r++)
+        // Apply a different border style to inner cells (rows that are not first or last).
+        for (int i = 1; i < table.Rows.Count - 1; i++)
         {
-            Row row = table.Rows[r];
-            foreach (Cell cell in row.Cells)
+            Row innerRow = table.Rows[i];
+            foreach (Cell cell in innerRow.Cells)
             {
-                cell.CellFormat.Borders.Top.LineStyle = LineStyle.Dot;
-                cell.CellFormat.Borders.Top.Color = Color.Green;
-                cell.CellFormat.Borders.Top.LineWidth = 1.5;
-
-                cell.CellFormat.Borders.Bottom.LineStyle = LineStyle.Dot;
-                cell.CellFormat.Borders.Bottom.Color = Color.Green;
-                cell.CellFormat.Borders.Bottom.LineWidth = 1.5;
-
-                cell.CellFormat.Borders.Left.LineStyle = LineStyle.Dot;
-                cell.CellFormat.Borders.Left.Color = Color.Green;
-                cell.CellFormat.Borders.Left.LineWidth = 1.5;
-
-                cell.CellFormat.Borders.Right.LineStyle = LineStyle.Dot;
-                cell.CellFormat.Borders.Right.Color = Color.Green;
-                cell.CellFormat.Borders.Right.LineWidth = 1.5;
+                cell.CellFormat.Borders.LineStyle = LineStyle.Dot; // corrected enum value
+                cell.CellFormat.Borders.Color = Color.Green;
+                cell.CellFormat.Borders.LineWidth = 1.5; // points
             }
         }
 
@@ -94,6 +59,8 @@ public class Program
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not saved.", outputPath);
+        {
+            throw new InvalidOperationException("The output document was not saved correctly.");
+        }
     }
 }

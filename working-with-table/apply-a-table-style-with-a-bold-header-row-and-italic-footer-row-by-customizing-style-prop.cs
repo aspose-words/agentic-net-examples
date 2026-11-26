@@ -7,79 +7,81 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table.
+        // Start the table.
         builder.StartTable();
 
-        // ----- Header Row -----
+        // Header row.
         builder.InsertCell();
-        builder.Write("Header 1");
+        builder.Writeln("Header 1");
         builder.InsertCell();
-        builder.Write("Header 2");
-        builder.InsertCell();
-        builder.Write("Header 3");
+        builder.Writeln("Header 2");
         builder.EndRow();
 
-        // ----- Data Rows -----
-        for (int i = 1; i <= 3; i++)
-        {
-            builder.InsertCell();
-            builder.Write($"Data {i}A");
-            builder.InsertCell();
-            builder.Write($"Data {i}B");
-            builder.InsertCell();
-            builder.Write($"Data {i}C");
-            builder.EndRow();
-        }
+        // Data row 1.
+        builder.InsertCell();
+        builder.Writeln("Data 1A");
+        builder.InsertCell();
+        builder.Writeln("Data 1B");
+        builder.EndRow();
 
-        // ----- Footer Row -----
+        // Data row 2.
         builder.InsertCell();
-        builder.Write("Footer 1");
+        builder.Writeln("Data 2A");
         builder.InsertCell();
-        builder.Write("Footer 2");
+        builder.Writeln("Data 2B");
+        builder.EndRow();
+
+        // Footer row.
         builder.InsertCell();
-        builder.Write("Footer 3");
+        builder.Writeln("Footer 1");
+        builder.InsertCell();
+        builder.Writeln("Footer 2");
         builder.EndRow();
 
         // End the table.
         builder.EndTable();
 
-        // Retrieve the created table (the first table in the document).
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
-        // Create a custom table style.
-        Style customStyle = doc.Styles.Add(StyleType.Table, "CustomTableStyle");
-
-        // Apply the style to the table.
-        table.Style = customStyle;
-
-        // Make the first row (header) bold via style options.
-        // The TableStyleOptions property belongs to Table, not Style.
-        table.StyleOptions = TableStyleOptions.FirstRow;
-        customStyle.Font.Bold = true;
-
-        // Make the last row (footer) italic by formatting its runs directly.
-        Row footerRow = table.Rows[table.Rows.Count - 1];
-        foreach (Cell cell in footerRow.Cells)
+        // Apply bold formatting to the header row.
+        Row headerRow = table.FirstRow;
+        foreach (Cell cell in headerRow.Cells)
         {
-            foreach (Paragraph para in cell.Paragraphs)
+            // Ensure the cell contains at least one paragraph and one run.
+            if (cell.FirstParagraph?.Runs.Count > 0)
             {
-                foreach (Run run in para.Runs)
-                {
-                    run.Font.Italic = true;
-                }
+                cell.FirstParagraph.Runs[0].Font.Bold = true;
             }
         }
+
+        // Apply italic formatting to the footer row.
+        Row footerRow = table.LastRow;
+        foreach (Cell cell in footerRow.Cells)
+        {
+            if (cell.FirstParagraph?.Runs.Count > 0)
+            {
+                cell.FirstParagraph.Runs[0].Font.Italic = true;
+            }
+        }
+
+        // Optionally, assign a simple table style (e.g., "Table Grid") to keep a base style.
+        table.StyleIdentifier = StyleIdentifier.TableGrid;
 
         // Save the document.
         string outputPath = "TableStyleExample.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify that the file was saved.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not created.");
+        {
+            throw new Exception($"Failed to create the output file: {outputPath}");
+        }
+
+        Console.WriteLine($"Document saved successfully to '{outputPath}'.");
     }
 }

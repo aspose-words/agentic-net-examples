@@ -11,44 +11,32 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table.
+        // Start a table.
         builder.StartTable();
 
-        // First row.
-        builder.InsertCell();
-        builder.Writeln("Cell 1");
-        builder.InsertCell();
-        builder.Writeln("Cell 2");
-        builder.EndRow();
+        // Build a 2x2 table and set cell padding to 5 points on all sides.
+        for (int row = 0; row < 2; row++)
+        {
+            for (int col = 0; col < 2; col++)
+            {
+                builder.InsertCell();
+                builder.Writeln($"R{row + 1}C{col + 1}");
 
-        // Second row.
-        builder.InsertCell();
-        builder.Writeln("Cell 3");
-        builder.InsertCell();
-        builder.Writeln("Cell 4");
-        builder.EndRow();
+                // The current paragraph resides inside the newly created cell.
+                Cell cell = (Cell)builder.CurrentParagraph.ParentNode;
+                cell.CellFormat.LeftPadding = 5.0;
+                cell.CellFormat.RightPadding = 5.0;
+                cell.CellFormat.TopPadding = 5.0;
+                cell.CellFormat.BottomPadding = 5.0;
+            }
+            builder.EndRow();
+        }
 
         // End the table.
         builder.EndTable();
 
-        // Set padding of 5 points on all sides for every cell in the document.
-        foreach (Table table in doc.GetChildNodes(NodeType.Table, true))
-        {
-            foreach (Row row in table.Rows)
-            {
-                foreach (Cell cell in row.Cells)
-                {
-                    // Set individual padding properties (values are in points).
-                    cell.CellFormat.LeftPadding = 5;
-                    cell.CellFormat.RightPadding = 5;
-                    cell.CellFormat.TopPadding = 5;
-                    cell.CellFormat.BottomPadding = 5;
-                }
-            }
-        }
-
-        // Save the document to a file.
-        string outputPath = "CellPadding.docx";
+        // Save the document.
+        string outputPath = "TableWithPadding.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
@@ -56,5 +44,8 @@ public class Program
         {
             throw new Exception($"Failed to create the output file: {outputPath}");
         }
+
+        // Indicate success (no interactive input required).
+        Console.WriteLine($"Document saved successfully to '{outputPath}'.");
     }
 }

@@ -7,50 +7,57 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build an initial table with one row and two cells.
+        // Build an initial table with two rows and two cells per row.
         builder.StartTable();
+
         builder.InsertCell();
-        builder.Write("Cell 1");
+        builder.Write("R1C1");
         builder.InsertCell();
-        builder.Write("Cell 2");
+        builder.Write("R1C2");
         builder.EndRow();
+
+        builder.InsertCell();
+        builder.Write("R2C1");
+        builder.InsertCell();
+        builder.Write("R2C2");
+        builder.EndRow();
+
         builder.EndTable();
 
         // Retrieve the created table.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (table == null)
-            throw new InvalidOperationException("Table was not created.");
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
-        // Add a new row to the table.
+        // Create a new row.
         Row newRow = new Row(doc);
-        table.Rows.Add(newRow);
 
-        // Add two cells to the new row.
+        // First cell.
         Cell cell1 = new Cell(doc);
-        Cell cell2 = new Cell(doc);
+        cell1.AppendChild(new Paragraph(doc));
+        cell1.FirstParagraph.AppendChild(new Run(doc, "R3C1"));
         newRow.Cells.Add(cell1);
+
+        // Second cell.
+        Cell cell2 = new Cell(doc);
+        cell2.AppendChild(new Paragraph(doc));
+        cell2.FirstParagraph.AppendChild(new Run(doc, "R3C2"));
         newRow.Cells.Add(cell2);
 
-        // Ensure each cell contains a paragraph before adding runs.
-        cell1.AppendChild(new Paragraph(doc));
-        cell2.AppendChild(new Paragraph(doc));
-
-        // Insert text into the new cells.
-        cell1.FirstParagraph?.AppendChild(new Run(doc, "New Row Cell 1"));
-        cell2.FirstParagraph?.AppendChild(new Run(doc, "New Row Cell 2"));
+        // Add the new row to the table.
+        table.Rows.Add(newRow);
 
         // Save the document.
-        string outputPath = "Output.docx";
+        string outputPath = "AddedRow.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was saved.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not saved.", outputPath);
+            throw new Exception("The output document was not saved.");
 
-        Console.WriteLine($"Document saved successfully to '{outputPath}'.");
+        // Indicate successful completion.
+        Console.WriteLine($"Document saved to: {Path.GetFullPath(outputPath)}");
     }
 }

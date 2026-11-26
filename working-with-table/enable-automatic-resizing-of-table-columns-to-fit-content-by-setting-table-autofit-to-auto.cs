@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -12,43 +11,38 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple table with two rows and three columns.
+        // Build a simple 2x2 table with varying text lengths.
         builder.StartTable();
 
-        // First row (header).
+        // First row.
         builder.InsertCell();
-        builder.Writeln("Header 1");
+        builder.Write("Short");
         builder.InsertCell();
-        builder.Writeln("Header 2");
-        builder.InsertCell();
-        builder.Writeln("Header 3");
+        builder.Write("A much longer text that should cause the column to expand");
         builder.EndRow();
 
-        // Second row (data).
+        // Second row.
         builder.InsertCell();
-        builder.Writeln("Short");
+        builder.Write("Another short");
         builder.InsertCell();
-        builder.Writeln("A bit longer text");
-        builder.InsertCell();
-        builder.Writeln("This is a considerably longer piece of text to demonstrate auto‑fit.");
+        builder.Write("Medium length");
         builder.EndRow();
 
-        // Finish the table.
+        // End the table.
         builder.EndTable();
 
-        // Retrieve the created table (the last table in the document).
-        Table table = doc.GetChildNodes(NodeType.Table, true)
-                         .Cast<Table>()
-                         .LastOrDefault();
-
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
         if (table == null)
             throw new InvalidOperationException("Table was not created.");
 
         // Enable automatic column resizing to fit the content.
         table.AutoFit(AutoFitBehavior.AutoFitToContents);
 
-        // Save the document to disk.
-        string outputPath = "AutoFitTable.docx";
+        // Define output file path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableAutoFit.docx");
+
+        // Save the document.
         doc.Save(outputPath);
 
         // Verify that the file was saved.

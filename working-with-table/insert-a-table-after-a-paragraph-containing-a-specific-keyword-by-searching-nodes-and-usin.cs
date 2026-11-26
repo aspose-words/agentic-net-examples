@@ -7,21 +7,19 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and add some paragraphs.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add some paragraphs, one of them contains the keyword.
         builder.Writeln("First paragraph.");
-        builder.Writeln("Paragraph with keyword INSERT_HERE where table will be inserted.");
-        builder.Writeln("Last paragraph.");
+        builder.Writeln("Paragraph with keyword: InsertHere");
+        builder.Writeln("Another paragraph.");
 
         // Search for the paragraph that contains the specific keyword.
         Paragraph targetParagraph = null;
         NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
         foreach (Paragraph para in paragraphs)
         {
-            if (para.GetText().Contains("INSERT_HERE"))
+            if (para.GetText().Contains("InsertHere"))
             {
                 targetParagraph = para;
                 break;
@@ -29,42 +27,40 @@ public class Program
         }
 
         if (targetParagraph == null)
-            throw new InvalidOperationException("Keyword not found in any paragraph.");
+            throw new InvalidOperationException("Keyword paragraph not found.");
 
-        // Insert an empty paragraph after the target paragraph – this will be the anchor for the new table.
+        // Build a table in a temporary document.
+        Document tempDoc = new Document();
+        DocumentBuilder tblBuilder = new DocumentBuilder(tempDoc);
+        tblBuilder.StartTable();
+
+        tblBuilder.InsertCell();
+        tblBuilder.Write("Cell 1");
+        tblBuilder.EndRow();
+
+        tblBuilder.InsertCell();
+        tblBuilder.Write("Cell 2");
+        tblBuilder.EndRow();
+
+        tblBuilder.EndTable();
+
+        // Retrieve the created table.
+        Table table = (Table)tempDoc.GetChild(NodeType.Table, 0, true);
+
+        // Import the table into the main document.
+        NodeImporter importer = new NodeImporter(tempDoc, doc, ImportFormatMode.KeepSourceFormatting);
+        Table importedTable = (Table)importer.ImportNode(table, true);
+
+        // Insert the table after the target paragraph.
         CompositeNode parent = targetParagraph.ParentNode as CompositeNode;
-        if (parent == null)
-            throw new InvalidOperationException("Unable to locate a suitable parent node for insertion.");
+        parent.InsertAfter(importedTable, targetParagraph);
 
-        Paragraph anchorParagraph = new Paragraph(doc);
-        parent.InsertAfter(anchorParagraph, targetParagraph);
-
-        // Move the builder to the newly inserted paragraph and build a 2x2 table.
-        builder.MoveTo(anchorParagraph);
-        builder.StartTable();
-
-        // First row.
-        builder.InsertCell();
-        builder.Write("Cell 1");
-        builder.InsertCell();
-        builder.Write("Cell 2");
-        builder.EndRow();
-
-        // Second row.
-        builder.InsertCell();
-        builder.Write("Cell 3");
-        builder.InsertCell();
-        builder.Write("Cell 4");
-        builder.EndRow();
-
-        builder.EndTable();
-
-        // Save the document to disk.
+        // Save the resulting document.
         string outputPath = "Output.docx";
         doc.Save(outputPath);
 
-        // Simple validation that the file was created.
+        // Verify that the file was saved.
         if (!File.Exists(outputPath))
-            throw new Exception("Document was not saved correctly.");
+            throw new Exception("Failed to save the document.");
     }
 }

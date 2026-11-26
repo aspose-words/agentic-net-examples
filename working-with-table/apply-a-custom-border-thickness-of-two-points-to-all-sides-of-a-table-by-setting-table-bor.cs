@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -11,37 +12,36 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x1 table.
+        // Build a simple 2x2 table.
         builder.StartTable();
+
         builder.InsertCell();
         builder.Writeln("Cell 1");
         builder.InsertCell();
         builder.Writeln("Cell 2");
         builder.EndRow();
+
+        builder.InsertCell();
+        builder.Writeln("Cell 3");
+        builder.InsertCell();
+        builder.Writeln("Cell 4");
+        builder.EndRow();
+
         builder.EndTable();
 
         // Retrieve the created table.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (table == null)
-            throw new InvalidOperationException("Table was not created.");
 
-        // Apply a custom border thickness of two points to all sides of the table.
-        // Since Table.Borders is not available, set the border width on each cell.
-        foreach (Row row in table.Rows)
-        {
-            foreach (Cell cell in row.Cells)
-            {
-                // Set the line width for all four sides of the cell.
-                cell.CellFormat.Borders.LineWidth = 2.0;
-            }
-        }
+        // Apply a custom border thickness of two points to all sides.
+        // Use the SetBorders method because Table.Borders property is not available.
+        table.SetBorders(LineStyle.Single, 2.0, Color.Black);
 
         // Save the document.
         string outputPath = "TableBorders.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was saved.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output file was not created.", outputPath);
+            throw new Exception("Output file was not created.");
     }
 }

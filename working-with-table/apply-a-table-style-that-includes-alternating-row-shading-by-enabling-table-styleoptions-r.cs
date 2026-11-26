@@ -1,5 +1,5 @@
 using System;
-using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -7,48 +7,53 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a DocumentBuilder.
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple table with a header row and several data rows.
+        // Build a simple 3x3 table.
         builder.StartTable();
-
-        // Header row.
-        builder.InsertCell();
-        builder.Writeln("Header 1");
-        builder.InsertCell();
-        builder.Writeln("Header 2");
-        builder.EndRow();
-
-        // Data rows.
-        for (int i = 1; i <= 5; i++)
+        for (int row = 0; row < 3; row++)
         {
-            builder.InsertCell();
-            builder.Writeln($"Row {i} Col 1");
-            builder.InsertCell();
-            builder.Writeln($"Row {i} Col 2");
+            for (int col = 0; col < 3; col++)
+            {
+                builder.InsertCell();
+                builder.Writeln($"R{row + 1}C{col + 1}");
+            }
             builder.EndRow();
         }
-
-        // End the table.
         builder.EndTable();
 
         // Retrieve the created table.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // Apply a built‑in style and enable alternating row shading.
-        table.StyleIdentifier = StyleIdentifier.TableGrid;
-        table.StyleOptions = TableStyleOptions.RowBands;
+        // Apply a built‑in style that supports shading.
+        table.StyleIdentifier = StyleIdentifier.LightShadingAccent1;
+
+        // Apply alternating row shading (row banding) by shading each cell in the target rows.
+        for (int i = 0; i < table.Rows.Count; i++)
+        {
+            // Shade every other row (e.g., even rows, index 1, 3, ...).
+            if (i % 2 == 1)
+            {
+                Row row = table.Rows[i];
+                foreach (Cell cell in row.Cells)
+                {
+                    cell.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
+                    cell.CellFormat.Shading.Texture = TextureIndex.TextureSolid;
+                }
+            }
+        }
 
         // Save the document.
-        string outputPath = "TableRowBanding.docx";
-        doc.Save(outputPath);
+        const string fileName = "TableRowBanding.docx";
+        doc.Save(fileName);
 
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-        {
-            throw new Exception("The output document was not created.");
-        }
+        // Verify the file was created.
+        if (!System.IO.File.Exists(fileName))
+            throw new Exception("Failed to create the output document.");
+
+        // Confirmation (non‑interactive).
+        Console.WriteLine($"Document saved to {fileName}");
     }
 }

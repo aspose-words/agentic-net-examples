@@ -7,67 +7,54 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 3‑row, 2‑column table.
+        // Build a simple 3x2 table.
         builder.StartTable();
 
-        // Header row.
+        // First row (header).
         builder.InsertCell();
-        builder.Write("Header 1");
+        builder.Writeln("Header 1");
         builder.InsertCell();
-        builder.Write("Header 2");
+        builder.Writeln("Header 2");
         builder.EndRow();
 
-        // First data row.
+        // Second row.
         builder.InsertCell();
-        builder.Write("Row 1, Col 1");
+        builder.Writeln("Row 1, Col 1");
         builder.InsertCell();
-        builder.Write("Row 1, Col 2");
+        builder.Writeln("Row 1, Col 2");
         builder.EndRow();
 
-        // Second data row.
+        // Third row.
         builder.InsertCell();
-        builder.Write("Row 2, Col 1");
+        builder.Writeln("Row 2, Col 1");
         builder.InsertCell();
-        builder.Write("Row 2, Col 2");
+        builder.Writeln("Row 2, Col 2");
         builder.EndRow();
 
-        // Finish the table.
+        // End the table.
         builder.EndTable();
 
         // Retrieve the created table.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (table == null)
-            throw new InvalidOperationException("Table was not created.");
 
-        // Apply a built‑in style (e.g., "Table Grid").
+        // Apply a built‑in style.
         table.Style = doc.Styles["Table Grid"];
 
-        // Enable the first column style option.
+        // Enable bold formatting for the first column using the supported option.
         table.StyleOptions = TableStyleOptions.FirstColumn;
 
-        // Apply bold formatting to all cells in the first column.
-        foreach (Row row in table.Rows)
-        {
-            Cell firstCell = row.Cells[0];
-            foreach (Paragraph para in firstCell.Paragraphs)
-            {
-                foreach (Run run in para.Runs)
-                {
-                    run.Font.Bold = true;
-                }
-            }
-        }
-
         // Save the document.
-        string outputPath = "TableStyleFirstColumnBold.docx";
+        string outputPath = "TableFirstColumnBold.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was saved.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not created.", outputPath);
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+
+        Console.WriteLine($"Document saved successfully to '{Path.GetFullPath(outputPath)}'.");
     }
 }

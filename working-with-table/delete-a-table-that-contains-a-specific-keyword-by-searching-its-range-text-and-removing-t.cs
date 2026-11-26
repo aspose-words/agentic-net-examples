@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -7,64 +6,54 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and builder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build first table (does not contain the keyword).
+        // Build the first table (does NOT contain the keyword).
         builder.StartTable();
         builder.InsertCell();
-        builder.Write("Cell 1A");
+        builder.Write("First table cell 1");
         builder.EndRow();
         builder.InsertCell();
-        builder.Write("Cell 1B");
+        builder.Write("First table cell 2");
         builder.EndRow();
         builder.EndTable();
 
         // Add a paragraph separator.
         builder.Writeln();
 
-        // Build second table (contains the keyword "DeleteMe").
+        // Build the second table (contains the keyword to trigger deletion).
         builder.StartTable();
         builder.InsertCell();
-        builder.Write("DeleteMe");
+        builder.Write("This cell will be deleted: DELETE_ME");
         builder.EndRow();
         builder.InsertCell();
-        builder.Write("Cell 2B");
+        builder.Write("Second table cell 2");
         builder.EndRow();
         builder.EndTable();
 
-        // Save the original document (optional, just to have an input file).
-        string originalPath = "Original.docx";
-        doc.Save(originalPath);
+        // Save the original document (optional, for verification).
+        doc.Save("Original.docx");
 
-        // Load the document (simulating processing an existing file).
-        Document loadedDoc = new Document(originalPath);
+        // Keyword to search for inside tables.
+        string keyword = "DELETE_ME";
 
-        // Search for tables whose full text contains the keyword and remove them.
-        string keyword = "DeleteMe";
-        NodeCollection tables = loadedDoc.GetChildNodes(NodeType.Table, true);
-        foreach (Table table in tables)
+        // Retrieve all tables in the document.
+        NodeCollection tables = doc.GetChildNodes(NodeType.Table, true);
+
+        // Iterate backwards so removal does not affect the loop index.
+        for (int i = tables.Count - 1; i >= 0; i--)
         {
-            if (table.Range.Text != null && table.Range.Text.Contains(keyword))
+            Table table = (Table)tables[i];
+            if (table.Range.Text.Contains(keyword))
             {
-                table.Remove();
-                // Since we modified the collection while iterating, break after removal.
-                break;
+                // Remove the table node from its parent.
+                table.ParentNode.RemoveChild(table);
             }
         }
 
-        // Save the modified document.
-        string resultPath = "Result.docx";
-        loadedDoc.Save(resultPath);
-
-        // Verify that the result file was created.
-        if (!File.Exists(resultPath))
-        {
-            throw new Exception("The result document was not saved correctly.");
-        }
-
-        // Optionally, indicate success (no interactive input required).
-        Console.WriteLine("Table containing the keyword was removed and document saved as " + resultPath);
+        // Save the modified document where the matching table has been removed.
+        doc.Save("Modified.docx");
     }
 }

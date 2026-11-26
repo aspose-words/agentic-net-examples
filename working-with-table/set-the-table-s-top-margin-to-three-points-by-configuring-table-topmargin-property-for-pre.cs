@@ -11,34 +11,28 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table.
+        // Build a simple 1x1 table.
         builder.StartTable();
-
-        // Insert a single cell with some text.
         builder.InsertCell();
-        builder.Writeln("Sample cell");
-
-        // End the row and the table.
+        builder.Write("Sample cell");
         builder.EndRow();
         builder.EndTable();
 
         // Retrieve the created table.
-        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+            throw new InvalidOperationException("Table was not created.");
 
         // Set the top padding of the table to three points.
-        // This provides a vertical offset similar to a top margin.
+        // Aspose.Words does not expose a TopMargin property; the closest equivalent is TopPadding.
         table.TopPadding = 3f;
 
-        // Define output file path.
-        string outputPath = "TableTopMargin.docx";
-
         // Save the document.
+        string outputPath = "TableTopMargin.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify that the file was saved.
         if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
-        }
+            throw new FileNotFoundException("The output document was not saved.", outputPath);
     }
 }

@@ -1,13 +1,12 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document and a DocumentBuilder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
@@ -16,23 +15,16 @@ public class Program
         builder.InsertCell();
         builder.Write("Table 1, Cell 1");
         builder.EndRow();
-
-        builder.InsertCell();
-        builder.Write("Table 1, Cell 2");
-        builder.EndRow();
         builder.EndTable();
 
         // Insert an empty paragraph to separate the tables.
+        // This prevents Aspose.Words from merging the two tables automatically.
         builder.Writeln();
 
         // Build the second table.
         builder.StartTable();
         builder.InsertCell();
         builder.Write("Table 2, Cell 1");
-        builder.EndRow();
-
-        builder.InsertCell();
-        builder.Write("Table 2, Cell 2");
         builder.EndRow();
         builder.EndTable();
 
@@ -42,9 +34,6 @@ public class Program
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("Failed to create the output document.");
-
-        // Indicate successful creation.
-        Console.WriteLine("Document created: " + Path.GetFullPath(outputPath));
+            throw new Exception("The output document was not saved correctly.");
     }
 }

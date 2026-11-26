@@ -3,61 +3,84 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace TableReportExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Define distinct table styles to apply.
-        // Use StyleIdentifier enum – it contains the built‑in table style identifiers.
-        StyleIdentifier[] styles = new StyleIdentifier[]
+        public static void Main()
         {
-            StyleIdentifier.TableGrid,
-            StyleIdentifier.LightShadingAccent1,
-            StyleIdentifier.LightListAccent2
-        };
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a table for each style.
-        foreach (StyleIdentifier style in styles)
-        {
-            // Start a new table.
+            // ---------- First Table ----------
             builder.StartTable();
 
-            // Create 2 rows with 3 columns each.
-            for (int row = 1; row <= 2; row++)
+            // Header row.
+            builder.InsertCell();
+            builder.Write("Header 1");
+            builder.InsertCell();
+            builder.Write("Header 2");
+            builder.EndRow();
+
+            // Data rows.
+            for (int i = 1; i <= 3; i++)
             {
-                for (int col = 1; col <= 3; col++)
-                {
-                    builder.InsertCell();
-                    builder.Writeln($"Style: {style}, R{row}C{col}");
-                }
+                builder.InsertCell();
+                builder.Write($"Row {i} Col 1");
+                builder.InsertCell();
+                builder.Write($"Row {i} Col 2");
                 builder.EndRow();
             }
 
-            // End the table.
             builder.EndTable();
 
-            // Retrieve the table that was just added.
-            Table table = doc.LastSection.Body.Tables[doc.LastSection.Body.Tables.Count - 1];
+            // Apply a distinct style to the first table.
+            Table firstTable = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
+            firstTable.StyleIdentifier = StyleIdentifier.LightShadingAccent1;
 
-            // Apply the distinct style.
-            table.StyleIdentifier = style;
+            // Consistent spacing after the first table.
+            builder.ParagraphFormat.SpaceAfter = 12; // 12 points spacing.
+            builder.Writeln(); // Insert an empty paragraph with the spacing.
+            builder.ParagraphFormat.SpaceAfter = 0; // Reset spacing for following content.
 
-            // Add consistent spacing after the table.
-            builder.Writeln(); // Inserts an empty paragraph as spacing.
-        }
+            // ---------- Second Table ----------
+            builder.StartTable();
 
-        // Save the document to a file.
-        string outputPath = "Report.docx";
-        doc.Save(outputPath);
+            // Header row.
+            builder.InsertCell();
+            builder.Write("Column A");
+            builder.InsertCell();
+            builder.Write("Column B");
+            builder.InsertCell();
+            builder.Write("Column C");
+            builder.EndRow();
 
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-        {
-            throw new Exception($"Failed to create the output file: {outputPath}");
+            // Data rows.
+            for (int i = 1; i <= 2; i++)
+            {
+                builder.InsertCell();
+                builder.Write($"Item {i} A");
+                builder.InsertCell();
+                builder.Write($"Item {i} B");
+                builder.InsertCell();
+                builder.Write($"Item {i} C");
+                builder.EndRow();
+            }
+
+            builder.EndTable();
+
+            // Apply a different style to the second table.
+            Table secondTable = (Table)doc.GetChildNodes(NodeType.Table, true)[1];
+            secondTable.StyleIdentifier = StyleIdentifier.LightListAccent2;
+
+            // Save the document.
+            string outputPath = "Report.docx";
+            doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new Exception($"Failed to create the output file: {outputPath}");
         }
     }
 }

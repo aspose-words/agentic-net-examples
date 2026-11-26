@@ -11,26 +11,21 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table.
+        // Build a simple one‑row, one‑cell table.
         builder.StartTable();
-
-        // Insert a single cell with some text.
         builder.InsertCell();
-        builder.Writeln("Sample cell");
-
-        // End the first row.
+        builder.Write("Sample cell");
         builder.EndRow();
+        builder.EndTable();
 
-        // Retrieve the first row of the table.
+        // Retrieve the created table.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        Row firstRow = table.Rows[0];
+        // Get the first row of the table.
+        Row row = table.Rows[0];
 
         // Set the row height to exactly 20 points.
-        firstRow.RowFormat.Height = 20.0;               // Height in points.
-        firstRow.RowFormat.HeightRule = HeightRule.Exactly;
-
-        // End the table.
-        builder.EndTable();
+        row.RowFormat.Height = 20.0;                     // Height in points.
+        row.RowFormat.HeightRule = HeightRule.Exactly; // Enforce exact height.
 
         // Save the document to disk.
         string outputPath = "RowHeight.docx";
@@ -38,6 +33,8 @@ public class Program
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not saved correctly.");
+        {
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+        }
     }
 }

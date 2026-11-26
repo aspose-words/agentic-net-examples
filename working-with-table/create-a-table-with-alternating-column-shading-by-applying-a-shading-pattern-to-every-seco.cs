@@ -12,24 +12,31 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a table with 5 rows and 3 columns.
+        // Add a heading.
+        builder.Writeln("Table with alternating column shading:");
+
+        // Define table dimensions.
+        int rows = 4;
+        int columns = 5;
+
+        // Build the table.
         builder.StartTable();
-        for (int row = 0; row < 5; row++)
+        for (int r = 1; r <= rows; r++)
         {
-            for (int col = 0; col < 3; col++)
+            for (int c = 1; c <= columns; c++)
             {
                 builder.InsertCell();
-                builder.Writeln($"R{row + 1}C{col + 1}");
+                builder.Writeln($"R{r}C{c}");
             }
             builder.EndRow();
         }
         builder.EndTable();
 
-        // Apply shading to every second column (index 1, 3, ...).
-        Table table = doc.FirstSection.Body.Tables[0];
-        int columnCount = table.Rows[0].Cells.Count;
+        // Retrieve the created table.
+        Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
-        for (int colIndex = 0; colIndex < columnCount; colIndex++)
+        // Apply shading to every second column (index 1, 3, ...).
+        for (int colIndex = 0; colIndex < columns; colIndex++)
         {
             if (colIndex % 2 == 1) // every second column
             {
@@ -48,8 +55,6 @@ public class Program
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not created.");
-
-        // Program ends automatically.
+            throw new Exception("The output document was not saved correctly.");
     }
 }

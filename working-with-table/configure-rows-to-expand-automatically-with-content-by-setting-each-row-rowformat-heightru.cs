@@ -11,47 +11,40 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table.
+        // Build a simple table with two rows.
         builder.StartTable();
 
-        // First row with short content.
+        // First row – short content.
+        builder.InsertCell();
+        builder.Writeln("Short text");
+        builder.InsertCell();
+        builder.Writeln("Another short text");
+        builder.EndRow();
+
+        // Second row – longer content to demonstrate automatic height expansion.
+        builder.InsertCell();
+        builder.Writeln("This is a longer piece of text that should cause the row height to increase automatically based on its content.");
         builder.InsertCell();
         builder.Writeln("Short");
         builder.EndRow();
 
-        // Second row with longer content to demonstrate auto height.
-        builder.InsertCell();
-        builder.Writeln("This is a longer piece of text that should cause the row to expand automatically based on its content.");
-        builder.EndRow();
-
-        // Third row with even longer content.
-        builder.InsertCell();
-        builder.Writeln("Another row with a very long text. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
-        builder.EndRow();
-
-        // End the table.
+        // Finish the table.
         builder.EndTable();
 
-        // Retrieve the created table (the first table in the document).
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-
-        // Set each row's HeightRule to Auto so rows expand with their content.
-        foreach (Row row in table.Rows)
+        // Configure each row to expand automatically with its content.
+        foreach (Row row in doc.GetChildNodes(NodeType.Row, true))
         {
             row.RowFormat.HeightRule = HeightRule.Auto;
         }
 
-        // Save the document to a file.
-        string outputPath = "TableRowsAutoHeight.docx";
+        // Save the document to disk.
+        string outputPath = "TableAutoHeight.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify that the file was created successfully.
         if (!File.Exists(outputPath))
         {
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+            throw new InvalidOperationException($"Failed to create output file: {outputPath}");
         }
-
-        // Optionally, inform that the process completed (no interactive input required).
-        Console.WriteLine("Document created successfully: " + Path.GetFullPath(outputPath));
     }
 }

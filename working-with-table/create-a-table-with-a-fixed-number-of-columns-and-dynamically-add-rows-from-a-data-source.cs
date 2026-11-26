@@ -5,59 +5,66 @@ using Aspose.Words;
 
 public class Program
 {
+    // Simple data model for rows
+    public class Person
+    {
+        public string Name { get; set; }
+        public int Age { get; set; }
+        public string City { get; set; }
+    }
+
     public static void Main()
     {
-        // Sample data source.
-        var people = new List<Person>
+        // Sample data source
+        List<Person> people = new List<Person>
         {
-            new Person { Name = "Alice", Age = 30 },
-            new Person { Name = "Bob", Age = 25 },
-            new Person { Name = "Charlie", Age = 35 }
+            new Person { Name = "Alice", Age = 30, City = "New York" },
+            new Person { Name = "Bob", Age = 25, City = "London" },
+            new Person { Name = "Charlie", Age = 35, City = "Paris" }
         };
 
-        // Create a new document.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Create a new blank document
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table with a fixed number of columns (2).
+        // Optional title
+        builder.Writeln("Dynamic Table Example");
+
+        // Start the table with a fixed number of columns (3)
         builder.StartTable();
 
-        // Header row.
+        // Header row
         builder.InsertCell();
         builder.Writeln("Name");
         builder.InsertCell();
         builder.Writeln("Age");
+        builder.InsertCell();
+        builder.Writeln("City");
         builder.EndRow();
 
-        // Dynamically add rows from the data source.
+        // Add a row for each person in the collection
         foreach (var person in people)
         {
             builder.InsertCell();
             builder.Writeln(person.Name);
             builder.InsertCell();
             builder.Writeln(person.Age.ToString());
+            builder.InsertCell();
+            builder.Writeln(person.City);
             builder.EndRow();
         }
 
-        // End the table.
+        // End the table
         builder.EndTable();
 
-        // Save the document.
-        string outputPath = "OutputTable.docx";
+        // Save the document
+        string outputPath = "TableOutput.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify that the file was created
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not created.");
-
-        // Indicate success.
-        Console.WriteLine($"Document saved to {Path.GetFullPath(outputPath)}");
-    }
-
-    // Simple data class representing a row.
-    private class Person
-    {
-        public string Name { get; set; }
-        public int Age { get; set; }
+        {
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+        }
     }
 }

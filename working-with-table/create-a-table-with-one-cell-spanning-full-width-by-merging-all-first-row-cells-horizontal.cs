@@ -3,51 +3,60 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace TableMergeExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Start building a table.
-        builder.StartTable();
-
-        // ---- First row (merged cell) ----
-        // Insert the first cell and mark it as the start of a horizontal merge.
-        builder.InsertCell();
-        Cell firstCell = (Cell)builder.CurrentParagraph.ParentNode;
-        firstCell.CellFormat.HorizontalMerge = CellMerge.First;
-        builder.Writeln("Header spanning all columns");
-
-        // Insert the second cell and mark it as a continuation of the merge.
-        builder.InsertCell();
-        Cell secondCell = (Cell)builder.CurrentParagraph.ParentNode;
-        secondCell.CellFormat.HorizontalMerge = CellMerge.Previous;
-        // No text needed for the merged part.
-
-        // End the first row.
-        builder.EndRow();
-
-        // ---- Second row (regular cells) ----
-        builder.InsertCell();
-        builder.Writeln("Cell 1");
-        builder.InsertCell();
-        builder.Writeln("Cell 2");
-        builder.EndRow();
-
-        // Finish the table.
-        builder.EndTable();
-
-        // Save the document to disk.
-        string outputPath = "MergedTable.docx";
-        doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
+        public static void Main()
         {
-            throw new Exception("The output document was not created.");
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Start building a table.
+            builder.StartTable();
+
+            // ---- First row: one cell spanning the full width ----
+            // Insert the first cell and mark it as the start of a horizontal merge.
+            builder.InsertCell();
+            builder.CellFormat.HorizontalMerge = CellMerge.First;
+            builder.Writeln("This cell spans the full width of the table.");
+
+            // Insert additional cells in the same row and mark them as merged with the previous cell.
+            builder.InsertCell();
+            builder.CellFormat.HorizontalMerge = CellMerge.Previous;
+
+            builder.InsertCell();
+            builder.CellFormat.HorizontalMerge = CellMerge.Previous;
+
+            // End the first row.
+            builder.EndRow();
+
+            // ---- Optional second row: normal cells for demonstration ----
+            builder.InsertCell();
+            builder.Writeln("Cell 1");
+
+            builder.InsertCell();
+            builder.Writeln("Cell 2");
+
+            builder.InsertCell();
+            builder.Writeln("Cell 3");
+
+            // End the second row.
+            builder.EndRow();
+
+            // Finish the table.
+            builder.EndTable();
+
+            // Save the document to a file.
+            string outputPath = "MergedTable.docx";
+            doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new Exception("The output file was not created.");
+
+            // The program ends here without waiting for user input.
         }
     }
 }

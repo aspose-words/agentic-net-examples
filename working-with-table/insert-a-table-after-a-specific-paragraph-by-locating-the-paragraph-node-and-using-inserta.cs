@@ -3,64 +3,79 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace TableInsertionExample
 {
-    public static void Main()
+    class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add some paragraphs to the document.
-        builder.Writeln("First paragraph.");
-        builder.Writeln("Target paragraph."); // This is the paragraph after which we will insert the table.
-        builder.Writeln("Third paragraph.");
-
-        // Locate the paragraph with the exact text "Target paragraph."
-        Paragraph targetParagraph = null;
-        NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
-        foreach (Paragraph para in paragraphs)
+        static void Main()
         {
-            if (para.GetText().Trim() == "Target paragraph.")
+            // Create a new document and add some paragraphs.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("First paragraph.");
+            builder.Writeln("Target paragraph."); // This paragraph will be the insertion point.
+            builder.Writeln("Third paragraph.");
+
+            // Locate the paragraph node that contains the specific text.
+            Paragraph targetParagraph = null;
+            NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
+            foreach (Paragraph para in paragraphs)
             {
-                targetParagraph = para;
-                break;
+                // Trim to ignore trailing paragraph marks.
+                if (para.GetText().Trim() == "Target paragraph.")
+                {
+                    targetParagraph = para;
+                    break;
+                }
             }
+
+            if (targetParagraph == null)
+                throw new Exception("Target paragraph not found.");
+
+            // Create a new table.
+            Table table = new Table(doc);
+
+            // First row.
+            Row row1 = new Row(doc);
+            table.Rows.Add(row1);
+
+            Cell cell11 = new Cell(doc);
+            cell11.AppendChild(new Paragraph(doc));
+            cell11.FirstParagraph.AppendChild(new Run(doc, "Cell 1"));
+            row1.Cells.Add(cell11);
+
+            Cell cell12 = new Cell(doc);
+            cell12.AppendChild(new Paragraph(doc));
+            cell12.FirstParagraph.AppendChild(new Run(doc, "Cell 2"));
+            row1.Cells.Add(cell12);
+
+            // Second row.
+            Row row2 = new Row(doc);
+            table.Rows.Add(row2);
+
+            Cell cell21 = new Cell(doc);
+            cell21.AppendChild(new Paragraph(doc));
+            cell21.FirstParagraph.AppendChild(new Run(doc, "Cell 3"));
+            row2.Cells.Add(cell21);
+
+            Cell cell22 = new Cell(doc);
+            cell22.AppendChild(new Paragraph(doc));
+            cell22.FirstParagraph.AppendChild(new Run(doc, "Cell 4"));
+            row2.Cells.Add(cell22);
+
+            // Insert the table after the target paragraph.
+            // The parent of the paragraph is a Body node, which can contain a Table.
+            targetParagraph.ParentNode.InsertAfter(table, targetParagraph);
+
+            // Save the document.
+            string outputPath = "Output.docx";
+            doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new Exception("Failed to create the output document.");
+
+            // The program finishes without waiting for user input.
         }
-
-        if (targetParagraph == null)
-            throw new Exception("Target paragraph not found.");
-
-        // Move the builder to the target paragraph.
-        builder.MoveTo(targetParagraph);
-        // Insert a new empty paragraph after the target paragraph – this will be the anchor for the table.
-        builder.InsertParagraph();
-
-        // Build a simple 2x2 table using DocumentBuilder (preferred workflow).
-        builder.StartTable();
-        for (int rowIndex = 0; rowIndex < 2; rowIndex++)
-        {
-            for (int colIndex = 0; colIndex < 2; colIndex++)
-            {
-                builder.InsertCell();
-                builder.Write($"R{rowIndex + 1}C{colIndex + 1}");
-            }
-            builder.EndRow();
-        }
-        builder.EndTable();
-
-        // Retrieve the table that was just created (it will be the last table in the document).
-        Table table = (Table)doc.GetChildNodes(NodeType.Table, true).Last();
-
-        // Apply a basic grid style now that the table has rows.
-        table.StyleIdentifier = StyleIdentifier.TableGrid;
-
-        // Save the document.
-        string outputPath = "Output.docx";
-        doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("Failed to save the output document.");
     }
 }

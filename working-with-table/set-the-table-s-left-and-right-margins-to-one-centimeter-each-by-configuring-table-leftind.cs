@@ -11,44 +11,38 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table.
+        // Build a simple 1x1 table.
         builder.StartTable();
-
-        // Insert first row with two cells.
         builder.InsertCell();
-        builder.Writeln("Cell 1");
-        builder.InsertCell();
-        builder.Writeln("Cell 2");
+        builder.Writeln("Sample cell");
         builder.EndRow();
-
-        // Insert second row with two cells.
-        builder.InsertCell();
-        builder.Writeln("Cell 3");
-        builder.InsertCell();
-        builder.Writeln("Cell 4");
-        builder.EndRow();
-
-        // End the table.
         builder.EndTable();
 
-        // Retrieve the created table (the first table in the document).
+        // Retrieve the created table.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
 
-        // Set left indent to 1 centimeter (1 cm = 72 points / 2.54).
-        float oneCentimeterInPoints = (float)(72.0 / 2.54);
-        table.LeftIndent = oneCentimeterInPoints;
+        // Convert 1 centimeter to points (1 cm = 28.3465 points).
+        const double cmToPoints = 28.3465;
 
-        // NOTE: The use of Table.RightIndent is prohibited by the current rules,
-        // so only the left indent is set as required by the allowed API usage.
+        // Set left indent of the table.
+        table.LeftIndent = cmToPoints;
+
+        // Aspose.Words Table does not expose a RightIndent property.
+        // To achieve a right margin of 1 cm, set the table width so that
+        // the remaining space on the page equals the desired right indent.
+        double pageContentWidth = doc.FirstSection.PageSetup.PageWidth
+                                   - doc.FirstSection.PageSetup.LeftMargin
+                                   - doc.FirstSection.PageSetup.RightMargin;
+
+        double tableWidth = pageContentWidth - (2 * cmToPoints); // left + right margins
+        table.PreferredWidth = PreferredWidth.FromPoints(tableWidth);
 
         // Save the document to disk.
-        string outputPath = "TableIndent.docx";
-        doc.Save(outputPath);
+        const string outputFile = "TableIndent.docx";
+        doc.Save(outputFile);
 
         // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not created.");
-
-        // The program finishes automatically.
+        if (!File.Exists(outputFile))
+            throw new Exception("Failed to create the output document.");
     }
 }

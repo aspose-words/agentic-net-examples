@@ -7,32 +7,32 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
+        // Build a simple table with a header row and two data rows.
         builder.StartTable();
 
         // Header row.
         builder.InsertCell();
-        builder.Writeln("Header 1");
+        builder.Write("Header 1");
         builder.InsertCell();
-        builder.Writeln("Header 2");
+        builder.Write("Header 2");
         builder.EndRow();
 
         // First data row.
         builder.InsertCell();
-        builder.Writeln("Data 1A");
+        builder.Write("Row 1, Cell 1");
         builder.InsertCell();
-        builder.Writeln("Data 1B");
+        builder.Write("Row 1, Cell 2");
         builder.EndRow();
 
         // Second data row.
         builder.InsertCell();
-        builder.Writeln("Data 2A");
+        builder.Write("Row 2, Cell 1");
         builder.InsertCell();
-        builder.Writeln("Data 2B");
+        builder.Write("Row 2, Cell 2");
         builder.EndRow();
 
         // End the table.
@@ -41,16 +41,18 @@ public class Program
         // Retrieve the created table.
         Table table = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
-        // Apply a built‑in style and enable the FirstRow option to format the header row.
-        table.StyleIdentifier = StyleIdentifier.TableGrid;
+        // Apply a built‑in style that supports header row formatting.
+        table.StyleIdentifier = StyleIdentifier.LightShading;
+
+        // Enable the FirstRow option so the first row is treated as a header.
         table.StyleOptions = TableStyleOptions.FirstRow;
 
         // Save the document.
-        string outputPath = "TableStyleFirstRow.docx";
+        string outputPath = "TableWithHeader.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify that the file was saved.
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not saved correctly.");
+            throw new InvalidOperationException("The output file was not created.");
     }
 }

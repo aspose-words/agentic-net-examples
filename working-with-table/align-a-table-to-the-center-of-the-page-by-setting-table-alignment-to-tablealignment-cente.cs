@@ -11,31 +11,27 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building a table.
+        // Build a simple 2x2 table.
         builder.StartTable();
 
-        // First row, first cell.
+        // First row
         builder.InsertCell();
-        builder.Write("Cell 1");
-        // First row, second cell.
+        builder.Writeln("Cell 1,1");
         builder.InsertCell();
-        builder.Write("Cell 2");
-        // End the first row.
+        builder.Writeln("Cell 1,2");
         builder.EndRow();
 
-        // Second row, first cell.
+        // Second row
         builder.InsertCell();
-        builder.Write("Cell 3");
-        // Second row, second cell.
+        builder.Writeln("Cell 2,1");
         builder.InsertCell();
-        builder.Write("Cell 4");
-        // End the second row.
+        builder.Writeln("Cell 2,2");
         builder.EndRow();
 
         // End the table construction.
         builder.EndTable();
 
-        // Retrieve the created table from the document.
+        // Retrieve the created table.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
         if (table == null)
             throw new InvalidOperationException("Table was not created.");

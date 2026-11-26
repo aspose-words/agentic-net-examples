@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -6,35 +7,42 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple one‑cell table.
+        // Start a table.
         builder.StartTable();
+
+        // Insert a cell and write Arabic text.
         builder.InsertCell();
+        builder.Writeln("مرحبا بالعالم"); // Arabic for "Hello World"
 
-        // Insert Arabic text into the cell.
-        builder.Writeln("مرحبا بالعالم"); // "Hello World" in Arabic
+        // Retrieve the cell that was just created.
+        Cell cell = (Cell)builder.CurrentParagraph.ParentNode;
 
-        // Retrieve the cell that the builder is currently inside.
-        Cell cell = builder.CurrentParagraph?.ParentNode as Cell;
-        if (cell == null)
-            throw new InvalidOperationException("Unable to locate the current cell.");
+        // Set the paragraph direction to right‑to‑left.
+        Paragraph para = cell.FirstParagraph;
+        para.ParagraphFormat.Bidi = true;
 
-        // Set right‑to‑left (RTL) direction for all paragraphs in the cell.
-        foreach (Paragraph para in cell.Paragraphs)
-        {
-            para.ParagraphFormat.Bidi = true; // Enables RTL layout.
-        }
-
-        // Finish the row and the table.
+        // End the row and the table.
         builder.EndRow();
         builder.EndTable();
 
-        // Save the document to disk.
-        const string outputFile = "CellTextDirection.docx";
-        doc.Save(outputFile);
-        Console.WriteLine($"Document saved to '{outputFile}'.");
+        // Save the document.
+        string fileName = "CellTextDirection.docx";
+        doc.Save(fileName);
+
+        // Verify that the file was created.
+        if (!File.Exists(fileName))
+            throw new Exception("The output file was not created.");
+
+        // Reload the document and confirm the text direction.
+        Document loadedDoc = new Document(fileName);
+        Table table = (Table)loadedDoc.GetChild(NodeType.Table, 0, true);
+        Cell loadedCell = table.Rows[0].Cells[0];
+        bool isBidi = loadedCell.FirstParagraph.ParagraphFormat.Bidi;
+        if (!isBidi)
+            throw new Exception("The cell text direction was not set to right‑to‑left.");
     }
 }

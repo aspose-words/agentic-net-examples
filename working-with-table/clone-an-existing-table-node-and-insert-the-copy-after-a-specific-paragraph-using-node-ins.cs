@@ -3,57 +3,68 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace TableCloneExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new document and a DocumentBuilder.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add a paragraph before the table.
-        builder.Writeln("Paragraph before the table.");
-
-        // Build a simple 2‑row table.
-        builder.StartTable();
-        builder.InsertCell();
-        builder.Write("Cell 1");
-        builder.EndRow();
-
-        builder.InsertCell();
-        builder.Write("Cell 2");
-        builder.EndRow();
-        builder.EndTable();
-
-        // Add a paragraph after the original table.
-        builder.Writeln("Paragraph after the original table.");
-
-        // Save the initial document (optional, just to have a file).
-        string originalPath = "Original.docx";
-        doc.Save(originalPath);
-
-        // Locate the paragraph after which we want to insert the cloned table.
-        // Here we use the first paragraph ("Paragraph before the table.").
-        Paragraph targetParagraph = (Paragraph)doc.GetChildNodes(NodeType.Paragraph, true)[0];
-
-        // Find the first table in the document.
-        Table originalTable = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
-
-        // Clone the table (deep clone).
-        Table clonedTable = (Table)originalTable.Clone(true);
-
-        // Insert the cloned table after the target paragraph.
-        // InsertAfter is called on the parent node of the reference paragraph.
-        targetParagraph.ParentNode.InsertAfter(clonedTable, targetParagraph);
-
-        // Save the resulting document.
-        string resultPath = "ClonedTable.docx";
-        doc.Save(resultPath);
-
-        // Validate that the output file was created.
-        if (!File.Exists(resultPath))
+        public static void Main()
         {
-            throw new Exception("The output document was not created.");
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Add an initial paragraph.
+            builder.Writeln("Paragraph before the original table.");
+
+            // Build the original table.
+            builder.StartTable();
+            builder.InsertCell();
+            builder.Writeln("Cell 1");
+            builder.InsertCell();
+            builder.Writeln("Cell 2");
+            builder.EndRow();
+            builder.InsertCell();
+            builder.Writeln("Cell 3");
+            builder.InsertCell();
+            builder.Writeln("Cell 4");
+            builder.EndRow();
+            builder.EndTable();
+
+            // Keep a reference to the created table.
+            Table originalTable = (Table)doc.GetChild(NodeType.Table, 0, true);
+
+            // Add a paragraph after which the cloned table will be inserted.
+            builder.Writeln("Target paragraph. The cloned table will appear after this line.");
+
+            // Locate the target paragraph by its text.
+            Paragraph targetParagraph = null;
+            NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
+            foreach (Paragraph para in paragraphs)
+            {
+                if (para.GetText().Contains("Target paragraph"))
+                {
+                    targetParagraph = para;
+                    break;
+                }
+            }
+
+            if (targetParagraph == null)
+                throw new InvalidOperationException("Target paragraph not found.");
+
+            // Clone the original table (deep clone).
+            Node clonedTable = originalTable.Clone(true);
+
+            // Insert the cloned table after the target paragraph.
+            // The parent of a paragraph is typically a Body node.
+            targetParagraph.ParentNode.InsertAfter(clonedTable, targetParagraph);
+
+            // Save the document.
+            string outputPath = "ClonedTable.docx";
+            doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new FileNotFoundException("The output document was not saved.", outputPath);
         }
     }
 }

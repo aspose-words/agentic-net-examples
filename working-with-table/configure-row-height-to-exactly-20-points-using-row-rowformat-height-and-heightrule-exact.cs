@@ -3,42 +3,38 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace RowHeightExactExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple table with two rows.
-        builder.StartTable();
+            // Build a simple one‑row, one‑cell table.
+            builder.StartTable();
+            builder.InsertCell();
+            builder.Writeln("Sample cell");
+            builder.EndRow();
+            builder.EndTable();
 
-        // First row, first cell.
-        builder.InsertCell();
-        builder.Writeln("Row 1, Cell 1");
-        builder.EndRow();
+            // Retrieve the first (and only) row of the table.
+            Table table = doc.FirstSection.Body.Tables[0];
+            Row row = table.Rows[0];
 
-        // Second row, first cell.
-        builder.InsertCell();
-        builder.Writeln("Row 2, Cell 1");
-        builder.EndRow();
+            // Set the row height to exactly 20 points.
+            row.RowFormat.Height = 20.0;
+            row.RowFormat.HeightRule = HeightRule.Exactly; // Correct enum value
 
-        // Finish the table.
-        builder.EndTable();
+            // Save the document to disk.
+            string outputPath = "RowHeightExact.docx";
+            doc.Save(outputPath);
 
-        // Access the first row and set its height to exactly 20 points.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        Row firstRow = table.Rows[0];
-        firstRow.RowFormat.Height = 20; // Height in points.
-        firstRow.RowFormat.HeightRule = HeightRule.Exactly; // Exact height rule.
-
-        // Save the document to disk.
-        string outputPath = "RowHeightExact.docx";
-        doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("Failed to create the output document.");
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+        }
     }
 }

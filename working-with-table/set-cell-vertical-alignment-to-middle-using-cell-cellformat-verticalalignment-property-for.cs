@@ -3,43 +3,58 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsTableExample
 {
-    public static void Main()
+    class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building a table.
-        builder.StartTable();
+            // Start a new table.
+            builder.StartTable();
 
-        // First cell.
-        builder.InsertCell();
-        builder.Writeln("Cell 1");
-        // Set vertical alignment to middle (center) for the first cell.
-        Cell cell1 = builder.CurrentParagraph.ParentNode as Cell;
-        if (cell1 != null)
-            cell1.CellFormat.VerticalAlignment = CellVerticalAlignment.Center;
+            // Insert the first cell.
+            builder.InsertCell();
 
-        // Second cell.
-        builder.InsertCell();
-        builder.Writeln("Cell 2");
-        // Set vertical alignment to middle (center) for the second cell.
-        Cell cell2 = builder.CurrentParagraph.ParentNode as Cell;
-        if (cell2 != null)
-            cell2.CellFormat.VerticalAlignment = CellVerticalAlignment.Center;
+            // Get the current cell that the builder is inside.
+            Cell cell = builder.CurrentParagraph.ParentNode as Cell;
+            if (cell == null)
+                throw new InvalidOperationException("Unable to retrieve the current cell.");
 
-        // End the row and the table.
-        builder.EndRow();
-        builder.EndTable();
+            // Set vertical alignment of the cell to middle (center).
+            cell.CellFormat.VerticalAlignment = CellVerticalAlignment.Center;
 
-        // Save the document to a file.
-        string outputPath = "VerticalAlignmentTable.docx";
-        doc.Save(outputPath);
+            // Add some text to the cell.
+            builder.Writeln("This text is vertically centered.");
 
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("The output file was not created.");
+            // End the row and the table.
+            builder.EndRow();
+            builder.EndTable();
+
+            // Define output file path.
+            string outputPath = "VerticalAlignmentTable.docx";
+
+            // Save the document.
+            doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new FileNotFoundException("The output document was not saved.", outputPath);
+
+            // Reload the document and verify the vertical alignment.
+            Document loadedDoc = new Document(outputPath);
+            Table table = loadedDoc.GetChild(NodeType.Table, 0, true) as Table;
+            if (table == null)
+                throw new InvalidOperationException("No table found in the saved document.");
+
+            Cell loadedCell = table.Rows[0].Cells[0];
+            if (loadedCell.CellFormat.VerticalAlignment != CellVerticalAlignment.Center)
+                throw new InvalidOperationException("Cell vertical alignment is not set to center as expected.");
+
+            // Program completed successfully.
+        }
     }
 }

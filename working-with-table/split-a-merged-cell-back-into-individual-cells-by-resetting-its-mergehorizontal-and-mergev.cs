@@ -7,60 +7,60 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Build a 2x2 table.
         builder.StartTable();
 
-        // ---- First row ----
-        // Cell (0,0) will be merged horizontally and vertically.
+        // First row, first cell (will be merged horizontally and vertically).
         builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.First;   // Start horizontal merge.
-        builder.CellFormat.VerticalMerge = CellMerge.First;     // Start vertical merge.
         builder.Writeln("Merged Cell");
 
-        // Cell (0,1) continues the horizontal merge.
+        // First row, second cell (horizontal merge continuation).
         builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.Previous; // Continue horizontal merge.
-        // No text needed for the merged part.
+        // Get the cell that was just created and set its horizontal merge to Previous.
+        Cell cellH = (Cell)builder.CurrentParagraph.ParentNode;
+        cellH.CellFormat.HorizontalMerge = CellMerge.Previous;
+        builder.Writeln(" ");
+
+        // End first row.
         builder.EndRow();
 
-        // ---- Second row ----
-        // Cell (1,0) continues the vertical merge.
+        // Second row, first cell (vertical merge continuation).
         builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.None;    // No horizontal merge here.
-        builder.CellFormat.VerticalMerge = CellMerge.Previous; // Continue vertical merge.
-        // No text needed for the merged part.
+        // Get the cell that was just created and set its vertical merge to Previous.
+        Cell cellV = (Cell)builder.CurrentParagraph.ParentNode;
+        cellV.CellFormat.VerticalMerge = CellMerge.Previous;
+        builder.Writeln(" ");
 
-        // Cell (1,1) is a normal cell.
+        // Second row, second cell (normal cell).
         builder.InsertCell();
-        builder.Writeln("Normal Cell");
+        builder.Writeln("Cell 2,2");
+
+        // End second row and the table.
         builder.EndRow();
-
         builder.EndTable();
 
-        // Retrieve the created table.
+        // Locate the originally merged cell (first row, first cell).
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        Cell mergedCell = table.Rows[0].Cells[0];
 
-        // Split the previously merged cells by resetting merge properties.
-        // Reset horizontal and vertical merge for each cell in the table.
-        foreach (Row row in table.Rows)
-        {
-            foreach (Cell cell in row.Cells)
-            {
-                cell.CellFormat.HorizontalMerge = CellMerge.None;
-                cell.CellFormat.VerticalMerge = CellMerge.None;
-            }
-        }
+        // Reset merge properties to split the cell back into individual cells.
+        mergedCell.CellFormat.HorizontalMerge = CellMerge.None;
+        mergedCell.CellFormat.VerticalMerge = CellMerge.None;
 
-        // Save the resulting document.
+        // Also reset the continuation cells to ensure they are independent.
+        table.Rows[0].Cells[1].CellFormat.HorizontalMerge = CellMerge.None;
+        table.Rows[1].Cells[0].CellFormat.VerticalMerge = CellMerge.None;
+
+        // Save the document.
         string outputPath = "SplitMergedCell.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output file was not created.");
+            throw new InvalidOperationException("The output document was not saved correctly.");
     }
 }
