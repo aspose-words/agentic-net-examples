@@ -1,10 +1,11 @@
 using System;
-using System.Reflection;
+using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
 
-public class Program
+public class ChartSeriesValidationExample
 {
     public static void Main()
     {
@@ -14,114 +15,69 @@ public class Program
 
         // Insert a column chart.
         Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
-        if (!chartShape.HasChart)
-            throw new InvalidOperationException("Inserted shape does not contain a chart.");
-
         Chart chart = chartShape.Chart;
 
-        // Define categories for the chart using reflection (CategoryLabels may not exist in older versions).
-        SetCategoryLabels(chart, new[] { "Q1", "Q2", "Q3" });
-
-        // Remove any default series.
+        // Ensure the chart starts with no series.
         chart.Series.Clear();
 
-        // Add series with matching category counts.
-        chart.Series.Add("Series 1", new double[] { 10, 20, 30 });
-        chart.Series.Add("Series 2", new double[] { 15, 25, 35 });
+        // Add two series with mismatched category counts.
+        // Series 1 has three categories.
+        chart.Series.Add("Series 1",
+            new[] { "Category A", "Category B", "Category C" },
+            new[] { 10.0, 20.0, 30.0 });
 
-        // Add a series with a mismatched number of values to demonstrate validation.
-        chart.Series.Add("Series 3", new double[] { 5, 12 }); // Only 2 values instead of 3.
+        // Series 2 has only two categories (mismatch).
+        chart.Series.Add("Series 2",
+            new[] { "Category A", "Category B" },
+            new[] { 15.0, 25.0 });
 
-        // Validate that each series aligns with the category count.
+        // Validate the chart series.
         try
         {
-            ValidateSeriesCategoryAlignment(chart);
-            Console.WriteLine("All series have matching category counts.");
+            ValidateSeriesCategoryCounts(chart);
+            Console.WriteLine("Validation passed: all series have matching category counts.");
         }
         catch (InvalidOperationException ex)
         {
-            Console.WriteLine($"Validation error: {ex.Message}");
+            Console.WriteLine($"Validation failed: {ex.Message}");
+            Console.WriteLine("Fixing the mismatch by rebuilding the series with consistent categories.");
+
+            // Rebuild series with consistent categories.
+            string[] categories = new[] { "Category A", "Category B", "Category C" };
+            chart.Series.Clear();
+
+            chart.Series.Add("Series 1", categories, new[] { 10.0, 20.0, 30.0 });
+            chart.Series.Add("Series 2", categories, new[] { 15.0, 25.0, 0.0 }); // Added missing value.
+
+            // Re‑validate after fixing.
+            ValidateSeriesCategoryCounts(chart);
+            Console.WriteLine("After fixing, validation passed.");
         }
 
         // Save the document.
-        doc.Save("validated-chart.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ValidatedChart.docx");
+        doc.Save(outputPath);
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 
-    // Sets the CategoryLabels property via reflection if it exists.
-    private static void SetCategoryLabels(Chart chart, string[] labels)
-    {
-        PropertyInfo prop = chart.GetType().GetProperty("CategoryLabels", BindingFlags.Public | BindingFlags.Instance);
-        if (prop != null && prop.CanWrite)
-        {
-            prop.SetValue(chart, labels);
-        }
-        else
-        {
-            // If the property does not exist, attempt to set XValues on the first series as a fallback.
-            if (chart.Series.Count > 0)
-            {
-                ChartSeries firstSeries = chart.Series[0];
-                PropertyInfo xValuesProp = firstSeries.GetType().GetProperty("XValues", BindingFlags.Public | BindingFlags.Instance);
-                if (xValuesProp != null && xValuesProp.CanWrite)
-                {
-                    xValuesProp.SetValue(firstSeries, labels);
-                }
-            }
-        }
-    }
-
-    private static void ValidateSeriesCategoryAlignment(Chart chart)
+    private static void ValidateSeriesCategoryCounts(Chart chart)
     {
         if (chart == null) throw new ArgumentNullException(nameof(chart));
+        if (chart.Series == null || chart.Series.Count == 0)
+            throw new InvalidOperationException("Chart must contain at least one series.");
 
-        // Try to obtain category count from CategoryLabels property.
-        int categoryCount = 0;
-        PropertyInfo catProp = chart.GetType().GetProperty("CategoryLabels", BindingFlags.Public | BindingFlags.Instance);
-        if (catProp != null)
-        {
-            var catArray = catProp.GetValue(chart) as string[];
-            categoryCount = catArray?.Length ?? 0;
-        }
-
-        // Fallback: use the length of the first series' values if categories are not explicitly defined.
-        if (categoryCount == 0 && chart.Series.Count > 0)
-        {
-            ChartSeries firstSeries = chart.Series[0];
-            double[] values = GetSeriesValues(firstSeries);
-            categoryCount = values?.Length ?? 0;
-        }
-
-        if (categoryCount == 0)
-            throw new InvalidOperationException("Chart must contain at least one category label or series with values.");
+        // Expected number of categories is taken from the first series.
+        int expectedCount = chart.Series[0].DataPoints?.Count ?? 0;
 
         foreach (ChartSeries series in chart.Series)
         {
-            double[] values = GetSeriesValues(series);
-            if (values == null)
-                throw new InvalidOperationException($"Series '{series.Name}' has no values.");
-
-            if (values.Length != categoryCount)
+            int actualCount = series.DataPoints?.Count ?? 0;
+            if (actualCount != expectedCount)
+            {
                 throw new InvalidOperationException(
-                    $"Series '{series.Name}' has {values.Length} values, but there are {categoryCount} categories.");
+                    $"Series \"{series.Name}\" has {actualCount} data points, " +
+                    $"but expected {expectedCount} to match other series.");
+            }
         }
-    }
-
-    // Retrieves the Values array from a ChartSeries using reflection.
-    private static double[] GetSeriesValues(ChartSeries series)
-    {
-        PropertyInfo valuesProp = series.GetType().GetProperty("Values", BindingFlags.Public | BindingFlags.Instance);
-        if (valuesProp != null)
-        {
-            return valuesProp.GetValue(series) as double[];
-        }
-
-        // Some older versions expose the data via a method named GetValues().
-        MethodInfo getValuesMethod = series.GetType().GetMethod("GetValues", BindingFlags.Public | BindingFlags.Instance);
-        if (getValuesMethod != null)
-        {
-            return getValuesMethod.Invoke(series, null) as double[];
-        }
-
-        return null;
     }
 }

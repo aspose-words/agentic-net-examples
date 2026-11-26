@@ -1,31 +1,36 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Drawing.Charts;
+using Aspose.Words.Drawing.Charts;   // Required for Chart, ChartType, etc.
 
-public class Program
+public class ScatterChartExample
 {
     public static void Main()
     {
-        // Create a new document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write a paragraph that will contain the scatter chart.
-        builder.Writeln("Paragraph that will contain a scatter chart:");
+        // Add a paragraph that will contain the scatter chart.
+        builder.Writeln("This paragraph will contain a scatter chart:");
 
-        // Move the builder to the start of the first paragraph.
-        builder.MoveToParagraph(0, 0);
+        // Move the builder back to the paragraph we just created.
+        Paragraph paragraph = builder.CurrentParagraph;
+        builder.MoveTo(paragraph);
 
         // Insert a scatter chart into the current paragraph.
         Shape chartShape = builder.InsertChart(ChartType.Scatter, 432, 252);
         Chart chart = chartShape.Chart;
 
-        // Clear any default series and add custom data for the scatter chart.
+        // Remove any default series that were added automatically.
         chart.Series.Clear();
-        chart.Series.Add("Series 1", new double[] { 1, 2, 3 }, new double[] { 4, 5, 6 });
 
-        // Save the document.
+        // Add a series with X and Y values for the scatter chart.
+        double[] xValues = { 1, 2, 3, 4, 5 };
+        double[] yValues = { 2, 4, 1, 3, 5 };
+        chart.Series.Add("Sample Series", xValues, yValues);
+
+        // Save the document to the local file system.
         doc.Save("ScatterChart.docx");
     }
 }

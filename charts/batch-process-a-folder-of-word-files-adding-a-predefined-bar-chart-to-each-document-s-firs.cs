@@ -19,23 +19,20 @@ public class Program
             sampleDoc.Save(Path.Combine(workDir, $"input-{i}.docx"));
         }
 
-        // Process each document: add a predefined bar chart to the first page.
+        // Process each DOCX file in the folder, adding a predefined bar chart to the first page.
         foreach (string filePath in Directory.GetFiles(workDir, "*.docx"))
         {
             Document doc = new Document(filePath);
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Move the builder to the start of the document (first page).
+            // Move the builder to the start of the document (first page) and insert a bar chart.
             builder.MoveToDocumentStart();
-
-            // Insert a bar chart with explicit size.
             Shape chartShape = builder.InsertChart(ChartType.Bar, 432, 252);
             Chart chart = chartShape.Chart;
 
-            // Define the chart data: clear any default series and add custom series.
+            // Define custom data for the chart.
             chart.Series.Clear();
-            chart.Series.Add("Q1 Sales", new double[] { 12000, 15000, 18000 });
-            chart.Series.Add("Q2 Sales", new double[] { 13000, 16000, 19000 });
+            chart.Series.Add("Sales", new double[] { 120, 150, 180 });
 
             // Save the modified document back to the same file.
             doc.Save(filePath);

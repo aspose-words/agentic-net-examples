@@ -8,28 +8,30 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a DocumentBuilder.
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart into the document.
+        // Insert a column chart.
         Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
+        if (!chartShape.HasChart)
+            throw new InvalidOperationException("The inserted shape does not contain a chart.");
+
         Chart chart = chartShape.Chart;
 
         // Remove any default series.
         chart.Series.Clear();
 
-        // Define values and corresponding colors for each data point.
-        double[] values = { 10, 20, 30 };
-        Color[] colors = { Color.Red, Color.Green, Color.Blue };
-
-        // Add a series with the defined values.
+        // Add a new series with the desired values.
+        double[] values = new double[] { 15, 30, 45 };
         ChartSeries series = chart.Series.Add("Sample Series", values);
 
-        // Set the fill color for each data point.
-        for (int i = 0; i < series.DataPoints.Count && i < colors.Length; i++)
+        // Set fill colors for each data point.
+        if (series.DataPoints.Count >= 3)
         {
-            series.DataPoints[i].Format.Fill.ForeColor = colors[i];
+            series.DataPoints[0].Format.Fill.ForeColor = Color.Red;
+            series.DataPoints[1].Format.Fill.ForeColor = Color.Green;
+            series.DataPoints[2].Format.Fill.ForeColor = Color.Blue;
         }
 
         // Save the document.

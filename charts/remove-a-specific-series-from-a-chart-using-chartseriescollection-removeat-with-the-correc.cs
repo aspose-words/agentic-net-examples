@@ -13,32 +13,27 @@ public class Program
 
         // Insert a column chart into the document.
         Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
-
-        // Ensure the shape actually contains a chart.
-        if (!chartShape.HasChart)
-            return;
-
-        // Access the chart object.
         Chart chart = chartShape.Chart;
 
-        // Remove any default series that were added automatically.
-        chart.Series.Clear();
-
-        // Add three series with sample data.
+        // Add three series to the chart.
         chart.Series.Add("Series 1", new double[] { 10, 20, 30 });
         chart.Series.Add("Series 2", new double[] { 15, 25, 35 });
         chart.Series.Add("Series 3", new double[] { 12, 22, 32 });
 
-        // Define the index of the series to remove (e.g., the second series).
+        // Index of the series to remove (e.g., remove the second series).
         int removeIndex = 1;
 
-        // Validate the index before attempting removal.
+        // Validate the index before removing.
         if (removeIndex >= 0 && removeIndex < chart.Series.Count)
         {
             chart.Series.RemoveAt(removeIndex);
         }
+        else
+        {
+            throw new ArgumentOutOfRangeException(nameof(removeIndex), "Invalid series index.");
+        }
 
-        // Save the modified document.
-        doc.Save("remove-series.docx");
+        // Save the document with the modified chart.
+        doc.Save("chart-removed-series.docx");
     }
 }

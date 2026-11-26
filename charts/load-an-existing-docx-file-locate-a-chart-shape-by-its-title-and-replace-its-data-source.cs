@@ -9,67 +9,52 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the sample input and output documents.
+        // Step 1: Create a sample DOCX with a chart and a title.
+        Document inputDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(inputDoc);
+
+        // Insert a column chart.
+        Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
+        Chart chart = chartShape.Chart;
+
+        // Set chart title.
+        chart.Title.Text = "Sales Overview";
+
+        // Add initial series data.
+        chart.Series.Clear();
+        chart.Series.Add("Q1", new double[] { 15, 25, 35 });
+        chart.Series.Add("Q2", new double[] { 20, 30, 40 });
+
+        // Save the input document.
         string inputPath = "input.docx";
-        string outputPath = "output.docx";
+        inputDoc.Save(inputPath);
 
-        // -----------------------------------------------------------------
-        // Step 1: Create a sample DOCX with a chart if it does not already exist.
-        // -----------------------------------------------------------------
-        if (!File.Exists(inputPath))
-        {
-            Document createDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(createDoc);
-
-            // Insert a column chart.
-            Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
-            // Use the shape's Title property to identify the chart later.
-            chartShape.Title = "TargetChart";
-
-            // Optionally set the chart's internal title.
-            Chart chart = chartShape.Chart;
-            chart.Title.Text = "Original Chart Title";
-
-            // Populate the chart with initial data.
-            chart.Series.Clear();
-            chart.Series.Add("InitialSeries", new double[] { 5, 10, 15 });
-
-            // Save the document that will be used as input.
-            createDoc.Save(inputPath);
-        }
-
-        // -----------------------------------------------------------------
-        // Step 2: Load the existing document.
-        // -----------------------------------------------------------------
+        // Step 2: Load the existing DOCX.
         Document doc = new Document(inputPath);
 
-        // -----------------------------------------------------------------
         // Step 3: Locate the chart shape by its title.
-        // -----------------------------------------------------------------
-        Shape targetChartShape = doc.GetChildNodes(NodeType.Shape, true)
+        Shape? targetChartShape = doc.GetChildNodes(NodeType.Shape, true)
             .OfType<Shape>()
-            .FirstOrDefault(s => s.HasChart && s.Title == "TargetChart");
+            .FirstOrDefault(s => s.HasChart && s.Chart.Title != null && s.Chart.Title.Text == "Sales Overview");
 
         if (targetChartShape == null)
+        {
             throw new InvalidOperationException("Chart with the specified title was not found.");
+        }
 
-        // -----------------------------------------------------------------
         // Step 4: Replace the chart's data source.
-        // -----------------------------------------------------------------
         Chart targetChart = targetChartShape.Chart;
-
-        // Clear existing series.
         targetChart.Series.Clear();
 
-        // Add new series with new data.
-        targetChart.Series.Add("NewSeries", new double[] { 12, 24, 36, 48 });
+        // New data series.
+        targetChart.Series.Add("2023", new double[] { 50, 60, 70 });
+        targetChart.Series.Add("2024", new double[] { 55, 65, 75 });
 
-        // Optionally update the chart's internal title to reflect the change.
-        targetChart.Title.Text = "Updated Chart Title";
+        // Optionally update the title to reflect new data.
+        targetChart.Title.Text = "Projected Sales";
 
-        // -----------------------------------------------------------------
-        // Step 5: Save the modified document.
-        // -----------------------------------------------------------------
+        // Step 5: Save the updated document.
+        string outputPath = "output.docx";
         doc.Save(outputPath);
     }
 }
