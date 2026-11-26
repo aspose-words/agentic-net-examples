@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Tables;
 using Aspose.Words.Fields;
@@ -10,56 +9,63 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with a table, some paragraphs, and a PAGE field.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // ------------------------------------------------------------
+        // Create a sample document containing a table, a paragraph,
+        // and a MERGEFIELD. This document will be used as the source.
+        // ------------------------------------------------------------
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        builder.Writeln("Paragraph before table.");
+        builder.Writeln("Intro paragraph before table.");
 
-        // Insert a table.
+        // Insert a simple 2x2 table.
         builder.StartTable();
         builder.InsertCell();
         builder.Write("Cell 1");
-        builder.EndRow();
         builder.InsertCell();
         builder.Write("Cell 2");
         builder.EndRow();
+        builder.InsertCell();
+        builder.Write("Cell 3");
+        builder.InsertCell();
+        builder.Write("Cell 4");
+        builder.EndRow();
         builder.EndTable();
 
-        builder.Writeln("Paragraph between table and field.");
-        builder.Writeln("Another paragraph between table and field.");
+        // Paragraph that will be between the table and the field.
+        builder.Writeln("Paragraph that lies between the table and the field.");
 
-        // Insert a PAGE field.
-        builder.InsertField("PAGE", null);
+        // Insert a MERGEFIELD.
+        builder.InsertField("MERGEFIELD MyField \\* MERGEFORMAT", "MyField");
+
         builder.Writeln("Paragraph after field.");
 
-        // Save the source document.
-        string sourcePath = "source.docx";
-        doc.Save(sourcePath);
+        // Save the source document to a deterministic local file.
+        const string sourcePath = "source.docx";
+        sourceDoc.Save(sourcePath);
 
+        // ------------------------------------------------------------
         // Load the document for processing.
-        Document loaded = new Document(sourcePath);
+        // ------------------------------------------------------------
+        Document doc = new Document(sourcePath);
 
-        // Locate the first table.
-        Table table = loaded.GetChildNodes(NodeType.Table, true)
-            .Cast<Table>()
-            .FirstOrDefault();
-
+        // Locate the first table in the document.
+        Table table = doc.GetChildNodes(NodeType.Table, true)[0] as Table;
         if (table == null)
             throw new InvalidOperationException("Table not found in the document.");
 
-        // Locate the first PAGE field start node.
-        FieldStart fieldStart = loaded.GetChildNodes(NodeType.FieldStart, true)
-            .Cast<FieldStart>()
-            .FirstOrDefault(fs => fs.FieldType == FieldType.FieldPage);
+        // Locate the first field in the document.
+        if (doc.Range.Fields.Count == 0)
+            throw new InvalidOperationException("No fields found in the document.");
+        Field field = doc.Range.Fields[0];
+        Node fieldStartNode = field.Start; // Correct property for the start node.
+        if (fieldStartNode == null)
+            throw new InvalidOperationException("Field start node is missing.");
 
-        if (fieldStart == null)
-            throw new InvalidOperationException("PAGE field not found in the document.");
-
-        // Determine the range of nodes between the table and the field (exclusive).
+        // Determine the nodes that lie between the table and the field.
         List<Node> nodesBetween = new List<Node>();
         Node current = table.NextSibling;
-        while (current != null && current != fieldStart)
+        while (current != null && current != fieldStartNode)
         {
             nodesBetween.Add(current);
             current = current.NextSibling;
@@ -68,62 +74,40 @@ public class Program
         if (nodesBetween.Count == 0)
             throw new InvalidOperationException("No content found between the table and the field.");
 
-        // Clone the extracted nodes and insert them after the paragraph that contains the field.
-        Paragraph fieldParagraph = fieldStart.GetAncestor(NodeType.Paragraph) as Paragraph;
+        // Duplicate the extracted nodes after the field's containing paragraph.
+        Paragraph fieldParagraph = fieldStartNode.ParentNode as Paragraph;
         if (fieldParagraph == null)
             throw new InvalidOperationException("Field is not inside a paragraph.");
 
-        CompositeNode parent = fieldParagraph.ParentNode as CompositeNode;
-        if (parent == null)
-            throw new InvalidOperationException("Unable to locate a valid parent for insertion.");
-
-        Node referenceNode = fieldParagraph;
-
+        Node insertionPoint = fieldParagraph;
         foreach (Node node in nodesBetween)
         {
-            Node cloned = node.Clone(true);
-            parent.InsertAfter(cloned, referenceNode);
-            referenceNode = cloned; // Subsequent clones are inserted after the previous one.
+            Node clonedNode = node.Clone(true);
+            // Insert after the current insertion point.
+            insertionPoint.ParentNode.InsertAfter(clonedNode, insertionPoint);
+            insertionPoint = clonedNode;
         }
 
-        // Save the modified document.
-        string outputPath = "output.docx";
-        loaded.Save(outputPath);
+        // Save the resulting document.
+        const string outputPath = "output.docx";
+        doc.Save(outputPath);
 
-        // Validation: ensure the duplicated content exists after the field.
+        // ------------------------------------------------------------
+        // Validation: ensure the duplicated content exists at least twice.
+        // ------------------------------------------------------------
         Document resultDoc = new Document(outputPath);
-        FieldStart resultFieldStart = resultDoc.GetChildNodes(NodeType.FieldStart, true)
-            .Cast<FieldStart>()
-            .FirstOrDefault(fs => fs.FieldType == FieldType.FieldPage);
-
-        if (resultFieldStart == null)
-            throw new InvalidOperationException("PAGE field not found in the result document.");
-
-        Paragraph resultFieldParagraph = resultFieldStart.GetAncestor(NodeType.Paragraph) as Paragraph;
-        if (resultFieldParagraph == null)
-            throw new InvalidOperationException("Field paragraph not found in the result document.");
-
-        // Collect texts of the original nodes (trimmed for comparison).
-        List<string> originalTexts = nodesBetween
-            .Select(n => n.GetText().Trim())
-            .Where(t => !string.IsNullOrEmpty(t))
-            .ToList();
-
-        // Walk nodes after the field paragraph and count matches.
         int duplicatedCount = 0;
-        Node nodeAfter = resultFieldParagraph.NextSibling;
-        while (nodeAfter != null && duplicatedCount < originalTexts.Count)
+        foreach (Paragraph para in resultDoc.GetChildNodes(NodeType.Paragraph, true))
         {
-            string txt = nodeAfter.GetText().Trim();
-            if (originalTexts.Contains(txt))
+            if (para.GetText().Contains("Paragraph that lies between the table and the field."))
                 duplicatedCount++;
-
-            nodeAfter = nodeAfter.NextSibling;
         }
 
-        if (duplicatedCount < originalTexts.Count)
-            throw new InvalidOperationException("Duplicated content was not inserted correctly.");
+        if (duplicatedCount < 2)
+            throw new InvalidOperationException("Duplicated content was not correctly inserted.");
 
-        Console.WriteLine("Extraction and duplication completed successfully.");
+        // Optional clean‑up (commented out to keep files for inspection).
+        // File.Delete(sourcePath);
+        // File.Delete(outputPath);
     }
 }

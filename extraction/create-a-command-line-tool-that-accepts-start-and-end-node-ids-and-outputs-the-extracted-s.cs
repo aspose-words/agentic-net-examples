@@ -1,94 +1,87 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
 using Aspose.Words.Saving;
 
-public class ExtractionTool
+public class Program
 {
     public static void Main(string[] args)
     {
-        // Parse command‑line arguments (start and end node IDs)
-        int startId = 0;
-        int endId = 0;
-        if (args.Length >= 2)
-        {
-            int.TryParse(args[0], out startId);
-            int.TryParse(args[1], out endId);
-        }
-        else
-        {
-            // Default range if arguments are missing
-            startId = 1;
-            endId = 3;
-        }
-
-        // Create a sample source document
+        // 1. Create a sample source document (sample.docx) with several paragraphs.
         const string sourcePath = "sample.docx";
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-
-        builder.Writeln("Paragraph 0");
         builder.Writeln("Paragraph 1");
         builder.Writeln("Paragraph 2");
-        builder.StartTable();
-        builder.InsertCell(); builder.Write("Cell A1");
-        builder.InsertCell(); builder.Write("Cell B1");
-        builder.EndRow();
-        builder.InsertCell(); builder.Write("Cell A2");
-        builder.InsertCell(); builder.Write("Cell B2");
-        builder.EndRow();
-        builder.EndTable();
         builder.Writeln("Paragraph 3");
         builder.Writeln("Paragraph 4");
         sourceDoc.Save(sourcePath);
 
-        // Load the source document
+        // 2. Load the document that will be used for extraction.
         Document loadedDoc = new Document(sourcePath);
-        Body body = loadedDoc.FirstSection.Body;
 
-        // Collect block‑level nodes (Paragraphs and Tables) in document order
-        List<Node> blockNodes = new List<Node>();
-        foreach (Node node in body.GetChildNodes(NodeType.Any, true))
+        // 3. Determine start and end paragraph indices.
+        int startIndex;
+        int endIndex;
+
+        if (args.Length >= 2 &&
+            int.TryParse(args[0], out int parsedStart) &&
+            int.TryParse(args[1], out int parsedEnd))
         {
-            if (node.NodeType == NodeType.Paragraph || node.NodeType == NodeType.Table)
-            {
-                blockNodes.Add(node);
-            }
+            startIndex = parsedStart;
+            endIndex = parsedEnd;
+        }
+        else
+        {
+            startIndex = 1; // second paragraph (zero‑based)
+            endIndex = 2;   // third paragraph
         }
 
-        // Validate indices
-        if (startId < 0 || endId < 0 || startId >= blockNodes.Count || endId >= blockNodes.Count || startId > endId)
+        // Validate indices.
+        ParagraphCollection paragraphs = loadedDoc.FirstSection.Body.Paragraphs;
+        if (startIndex < 0 || endIndex < 0 ||
+            startIndex >= paragraphs.Count || endIndex >= paragraphs.Count ||
+            startIndex > endIndex)
         {
-            throw new InvalidOperationException("Invalid start or end node IDs.");
+            throw new InvalidOperationException("Invalid start or end paragraph indexes.");
         }
 
-        // Prepare the result document
+        // 4. Locate the start and end nodes.
+        Node startNode = paragraphs[startIndex];
+        Node endNode = paragraphs[endIndex];
+
+        // 5. Build a new document that will contain the extracted range.
         Document resultDoc = new Document();
         resultDoc.RemoveAllChildren();
+
         Section resultSection = new Section(resultDoc);
         resultDoc.AppendChild(resultSection);
+
         Body resultBody = new Body(resultDoc);
         resultSection.AppendChild(resultBody);
 
-        // Import and append nodes within the specified range
+        // 6. Import and copy nodes from startNode to endNode (inclusive).
         NodeImporter importer = new NodeImporter(loadedDoc, resultDoc, ImportFormatMode.KeepSourceFormatting);
-        for (int i = startId; i <= endId; i++)
+        for (Node cur = startNode; cur != null; cur = cur.NextSibling)
         {
-            Node srcNode = blockNodes[i];
-            Node importedNode = importer.ImportNode(srcNode, true);
-            resultBody.AppendChild(importedNode);
+            if (cur.NodeType == NodeType.Paragraph || cur.NodeType == NodeType.Table)
+            {
+                Node importedNode = importer.ImportNode(cur, true);
+                resultBody.AppendChild(importedNode);
+            }
+
+            if (cur == endNode)
+                break;
         }
 
-        // Save the extracted segment as PDF
+        // 7. Save the extracted segment as PDF.
         const string outputPdf = "extracted.pdf";
         resultDoc.Save(outputPdf, SaveFormat.Pdf);
 
-        // Verify that the PDF was created
+        // 8. Verify that the PDF file was created.
         if (!File.Exists(outputPdf))
-        {
-            throw new InvalidOperationException("Failed to create the PDF output.");
-        }
+            throw new InvalidOperationException("The PDF output was not created.");
+
+        Console.WriteLine($"Extraction completed. PDF saved to '{outputPdf}'.");
     }
 }

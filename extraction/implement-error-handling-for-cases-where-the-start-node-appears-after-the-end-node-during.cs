@@ -3,90 +3,68 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+public class ExtractionExample
 {
     public static void Main()
     {
-        // Create a sample document with three paragraphs.
+        // Create a sample document with several paragraphs.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
         builder.Writeln("Paragraph 1");
         builder.Writeln("Paragraph 2");
         builder.Writeln("Paragraph 3");
-        sourceDoc.Save("input.docx");
+        builder.Writeln("Paragraph 4");
+        builder.Writeln("Paragraph 5");
+        sourceDoc.Save("sample.docx");
 
         // Load the document for extraction.
-        Document loadedDoc = new Document("input.docx");
+        Document loadedDoc = new Document("sample.docx");
         Body body = loadedDoc.FirstSection.Body;
 
-        // Attempt extraction where start node appears after end node (should raise error).
-        Paragraph startAfterEnd = body.Paragraphs[2]; // Third paragraph
-        Paragraph endBeforeStart = body.Paragraphs[1]; // Second paragraph
+        // Define start and end paragraphs (intentionally reversed to trigger error handling).
+        Paragraph startParagraph = body.Paragraphs[3]; // "Paragraph 4"
+        Paragraph endParagraph = body.Paragraphs[1];   // "Paragraph 2"
 
         try
         {
-            ExtractRange(loadedDoc, startAfterEnd, endBeforeStart, "invalid-extraction.docx");
+            // Validate that start node appears before end node.
+            int startIndex = body.Paragraphs.IndexOf(startParagraph);
+            int endIndex = body.Paragraphs.IndexOf(endParagraph);
+            if (startIndex < 0 || endIndex < 0)
+                throw new InvalidOperationException("One of the specified paragraphs was not found.");
+
+            if (startIndex > endIndex)
+                throw new InvalidOperationException("Start paragraph appears after the end paragraph. Extraction aborted.");
+
+            // Extract the range of paragraphs into a new document.
+            Document resultDoc = new Document();
+            resultDoc.RemoveAllChildren();
+
+            Section resultSection = new Section(resultDoc);
+            resultDoc.AppendChild(resultSection);
+            Body resultBody = new Body(resultDoc);
+            resultSection.AppendChild(resultBody);
+
+            for (int i = startIndex; i <= endIndex; i++)
+            {
+                Paragraph para = (Paragraph)body.Paragraphs[i].Clone(true);
+                resultBody.AppendChild(para);
+            }
+
+            // Save the extracted content.
+            string outputPath = "extracted.docx";
+            resultDoc.Save(outputPath);
+
+            // Verify that the output file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException("Extraction succeeded but the output file was not created.");
+
+            Console.WriteLine("Extraction completed successfully.");
         }
-        catch (InvalidOperationException ex)
+        catch (Exception ex)
         {
-            // Expected error handling.
-            Console.WriteLine($"Error: {ex.Message}");
+            // Handle errors such as reversed node order.
+            Console.WriteLine($"Error during extraction: {ex.Message}");
         }
-
-        // Correct extraction where start node precedes end node.
-        Paragraph validStart = body.Paragraphs[0]; // First paragraph
-        Paragraph validEnd = body.Paragraphs[1];   // Second paragraph
-
-        ExtractRange(loadedDoc, validStart, validEnd, "extracted.docx");
-
-        // Validate that the extraction output file was created.
-        if (!File.Exists("extracted.docx"))
-            throw new InvalidOperationException("Expected extraction output was not created.");
-    }
-
-    private static void ExtractRange(Document source, Paragraph startNode, Paragraph endNode, string outputPath)
-    {
-        // Ensure both nodes are not null.
-        if (startNode == null || endNode == null)
-            throw new InvalidOperationException("Start or end node is null.");
-
-        // Ensure both nodes belong to the same body.
-        Body body = startNode.ParentNode as Body;
-        if (body == null || endNode.ParentNode != body)
-            throw new InvalidOperationException("Start and end nodes must be within the same body.");
-
-        // Determine the positions of the nodes within the body.
-        int startIndex = body.Paragraphs.IndexOf(startNode);
-        int endIndex = body.Paragraphs.IndexOf(endNode);
-
-        if (startIndex == -1 || endIndex == -1)
-            throw new InvalidOperationException("Start or end node not found in the body.");
-
-        // Validate ordering.
-        if (startIndex > endIndex)
-            throw new InvalidOperationException("Start node appears after the end node. Extraction aborted.");
-
-        // Create a new document to hold the extracted content.
-        Document result = new Document();
-        result.RemoveAllChildren();
-
-        Section section = new Section(result);
-        result.AppendChild(section);
-        Body resultBody = new Body(result);
-        section.AppendChild(resultBody);
-
-        // Use NodeImporter to import nodes from the source document into the result document.
-        NodeImporter importer = new NodeImporter(source, result, ImportFormatMode.KeepSourceFormatting);
-
-        // Clone and import paragraphs from start to end inclusive.
-        for (int i = startIndex; i <= endIndex; i++)
-        {
-            Paragraph para = body.Paragraphs[i];
-            Node importedNode = importer.ImportNode(para, true);
-            resultBody.AppendChild(importedNode);
-        }
-
-        // Save the extracted content.
-        result.Save(outputPath);
     }
 }

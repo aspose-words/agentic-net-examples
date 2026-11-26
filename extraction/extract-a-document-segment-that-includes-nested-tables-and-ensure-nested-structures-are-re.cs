@@ -7,81 +7,95 @@ public class Program
 {
     public static void Main()
     {
-        // Create a source document with a nested table.
+        // ------------------------------------------------------------
+        // 1. Create a source document with an outer table that contains
+        //    a nested table inside its second cell.
+        // ------------------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        // Outer table start.
+        // Start outer table.
         builder.StartTable();
 
-        // First row, first cell.
+        // First cell of outer table.
         builder.InsertCell();
         builder.Write("Outer Cell 1");
 
-        // Second cell will contain the inner table.
+        // Second cell of outer table – will contain a nested table.
         builder.InsertCell();
 
-        // Inner table inside the current cell.
+        // Start nested table inside the second cell.
         builder.StartTable();
         builder.InsertCell();
-        builder.Write("Inner Cell 1");
+        builder.Write("Nested Cell 1");
         builder.EndRow();
         builder.InsertCell();
-        builder.Write("Inner Cell 2");
+        builder.Write("Nested Cell 2");
         builder.EndRow();
-        builder.EndTable();
+        builder.EndTable(); // End nested table.
 
-        // End first row of outer table.
-        builder.EndRow();
-
-        // Second row of outer table.
-        builder.InsertCell();
-        builder.Write("Outer Cell 2");
-        builder.InsertCell();
-        builder.Write("Outer Cell 3");
-        builder.EndRow();
-
-        // End outer table.
-        builder.EndTable();
+        builder.EndRow();   // End outer table row.
+        builder.EndTable(); // End outer table.
 
         // Save the source document.
-        string sourcePath = "source.docx";
-        sourceDoc.Save(sourcePath);
+        sourceDoc.Save("source.docx");
 
-        // Load the source document.
-        Document loadedDoc = new Document(sourcePath);
-
-        // Retrieve the outer table (first table in the document).
+        // ------------------------------------------------------------
+        // 2. Load the source document and locate the outer table.
+        // ------------------------------------------------------------
+        Document loadedDoc = new Document("source.docx");
         Table outerTable = loadedDoc.GetChildNodes(NodeType.Table, true)[0] as Table;
         if (outerTable == null)
-            throw new InvalidOperationException("Outer table not found.");
+            throw new InvalidOperationException("Outer table not found in the source document.");
 
-        // Deep clone the outer table to retain nested structures.
-        Table clonedTable = (Table)outerTable.Clone(true);
+        // ------------------------------------------------------------
+        // 3. Create a new empty document that will hold the extracted segment.
+        // ------------------------------------------------------------
+        Document extractedDoc = new Document();
+        extractedDoc.RemoveAllChildren();
 
-        // Create a new document to hold the extracted segment.
-        Document resultDoc = new Document();
-        resultDoc.RemoveAllChildren(); // Remove default section and body.
-
-        // Build a minimal document structure.
-        Section section = new Section(resultDoc);
-        resultDoc.AppendChild(section);
-        Body body = new Body(resultDoc);
+        // Build minimal document structure: Section -> Body.
+        Section section = new Section(extractedDoc);
+        extractedDoc.AppendChild(section);
+        Body body = new Body(extractedDoc);
         section.AppendChild(body);
 
-        // Import the cloned table into the new document.
-        NodeImporter importer = new NodeImporter(loadedDoc, resultDoc, ImportFormatMode.KeepSourceFormatting);
-        Node importedTable = importer.ImportNode(clonedTable, true);
+        // ------------------------------------------------------------
+        // 4. Import (clone) the outer table into the new document.
+        //    Use NodeImporter to transfer the node between documents.
+        // ------------------------------------------------------------
+        NodeImporter importer = new NodeImporter(loadedDoc, extractedDoc, ImportFormatMode.KeepSourceFormatting);
+        Node importedTable = importer.ImportNode(outerTable, true);
+        if (importedTable == null)
+            throw new InvalidOperationException("Failed to import the outer table into the extracted document.");
+
         body.AppendChild(importedTable);
 
-        // Save the extracted document.
-        string resultPath = "extracted.docx";
-        resultDoc.Save(resultPath);
+        // ------------------------------------------------------------
+        // 5. Save the extracted document.
+        // ------------------------------------------------------------
+        extractedDoc.Save("extracted.docx");
 
-        // Verify that the extracted document still contains both tables.
-        Document verifyDoc = new Document(resultPath);
-        int tableCount = verifyDoc.GetChildNodes(NodeType.Table, true).Count;
-        if (tableCount < 2)
-            throw new InvalidOperationException("Nested tables were not retained in the extracted document.");
+        // ------------------------------------------------------------
+        // 6. Validation: ensure the extracted document contains the nested table.
+        // ------------------------------------------------------------
+        Table extractedOuter = extractedDoc.GetChildNodes(NodeType.Table, true)[0] as Table;
+        if (extractedOuter == null)
+            throw new InvalidOperationException("Extracted outer table not found.");
+
+        // The nested table resides in the second cell of the outer table.
+        Cell secondCell = extractedOuter.FirstRow.Cells[1];
+        NodeCollection nestedTables = secondCell.GetChildNodes(NodeType.Table, true);
+        if (nestedTables == null || nestedTables.Count == 0)
+            throw new InvalidOperationException("Nested table was not retained in the extracted document.");
+
+        // ------------------------------------------------------------
+        // 7. Verify that both output files were created.
+        // ------------------------------------------------------------
+        if (!File.Exists("source.docx") || !File.Exists("extracted.docx"))
+            throw new InvalidOperationException("Expected output files were not created.");
+
+        // If we reach this point, the extraction succeeded.
+        Console.WriteLine("Extraction completed successfully.");
     }
 }

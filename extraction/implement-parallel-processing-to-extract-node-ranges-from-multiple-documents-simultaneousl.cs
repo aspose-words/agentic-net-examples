@@ -1,83 +1,119 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Aspose.Words;
 using Aspose.Words.Tables;
+using Newtonsoft.Json;
 
-public class ParallelExtractionExample
+public class Program
 {
     public static void Main()
     {
-        // Prepare input and output directories.
+        // Prepare input and output folders.
         string baseDir = Directory.GetCurrentDirectory();
         string inputDir = Path.Combine(baseDir, "InputDocs");
-        string outputDir = Path.Combine(baseDir, "OutputDocs");
+        string outputDir = Path.Combine(baseDir, "Extracted");
         Directory.CreateDirectory(inputDir);
         Directory.CreateDirectory(outputDir);
 
-        // Create a set of sample documents.
-        int documentCount = 5;
-        for (int i = 0; i < documentCount; i++)
+        // -----------------------------------------------------------------
+        // Create sample documents that contain two bookmarks ("Start" and "End")
+        // surrounding the paragraphs we want to extract.
+        // -----------------------------------------------------------------
+        const int docCount = 5;
+        for (int i = 1; i <= docCount; i++)
         {
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
+
             builder.Writeln($"Document {i} - Intro paragraph.");
-            builder.Writeln($"Document {i} - Target paragraph 1.");
-            builder.Writeln($"Document {i} - Target paragraph 2.");
-            builder.Writeln($"Document {i} - End paragraph.");
+            builder.StartBookmark("Start");
+            builder.Writeln($"Document {i} - First extracted paragraph.");
+            builder.Writeln($"Document {i} - Second extracted paragraph.");
+            builder.EndBookmark("Start");
+            builder.StartBookmark("End");
+            builder.Writeln($"Document {i} - Content after extraction.");
+            builder.EndBookmark("End");
+            builder.Writeln($"Document {i} - Final paragraph.");
+
             string filePath = Path.Combine(inputDir, $"doc{i}.docx");
             doc.Save(filePath);
         }
 
-        // Gather all input files.
-        string[] inputFiles = Directory.GetFiles(inputDir, "*.docx");
+        // -----------------------------------------------------------------
+        // Process all documents in parallel, extracting the content that lies
+        // between the "Start" and "End" bookmarks (exclusive) and saving it
+        // as a new document.
+        // -----------------------------------------------------------------
+        string[] files = Directory.GetFiles(inputDir, "*.docx");
+        var summary = new List<object>();
 
-        // Process each document in parallel, extracting a specific range of paragraphs.
-        Parallel.ForEach(inputFiles, inputFile =>
+        Parallel.ForEach(files, filePath =>
         {
             // Load the source document.
-            Document source = new Document(inputFile);
+            Document source = new Document(filePath);
 
-            // Identify the paragraphs to extract (indexes 1 and 2).
-            Paragraph startParagraph = source.FirstSection?.Body?.Paragraphs[1];
-            Paragraph endParagraph = source.FirstSection?.Body?.Paragraphs[2];
-            if (startParagraph == null || endParagraph == null)
-                throw new InvalidOperationException($"Required paragraphs not found in {Path.GetFileName(inputFile)}.");
+            // Retrieve the bookmarks that define the extraction range.
+            Bookmark startBookmark = source.Range.Bookmarks["Start"];
+            Bookmark endBookmark = source.Range.Bookmarks["End"];
+            if (startBookmark == null || endBookmark == null)
+                throw new InvalidOperationException($"Bookmarks not found in {Path.GetFileName(filePath)}.");
 
-            // Create a new empty document that will hold the extracted range.
+            // Create a fresh destination document with a single section and body.
             Document extracted = new Document();
-            extracted.RemoveAllChildren(); // Remove the default empty section.
-            Section section = new Section(extracted);
-            extracted.AppendChild(section);
-            Body body = new Body(extracted);
-            section.AppendChild(body);
+            extracted.RemoveAllChildren(); // Remove the default section/body.
+            Section destSection = new Section(extracted);
+            extracted.AppendChild(destSection);
+            Body destBody = new Body(extracted);
+            destSection.AppendChild(destBody);
 
-            // Use a NodeImporter to import nodes from the source document into the destination document.
+            // Prepare an importer to copy nodes from the source to the destination.
             NodeImporter importer = new NodeImporter(source, extracted, ImportFormatMode.KeepSourceFormatting);
-            Node importedStart = importer.ImportNode(startParagraph, true);
-            Node importedEnd = importer.ImportNode(endParagraph, true);
 
-            // Append the imported paragraphs to the new document's body.
-            body.AppendChild(importedStart);
-            body.AppendChild(importedEnd);
+            // Walk through the nodes that lie between the two bookmarks.
+            Node current = startBookmark.BookmarkStart.NextSibling;
+            while (current != null && current != endBookmark.BookmarkEnd)
+            {
+                // Only block-level nodes (Paragraph, Table, etc.) can be appended to a Body.
+                if (current.NodeType == NodeType.Paragraph || current.NodeType == NodeType.Table)
+                {
+                    Node importedNode = importer.ImportNode(current, true);
+                    destBody.AppendChild(importedNode);
+                }
 
-            // Define output file paths.
-            string baseName = Path.GetFileNameWithoutExtension(inputFile);
-            string outputDocPath = Path.Combine(outputDir, $"{baseName}_extracted.docx");
-            string outputTxtPath = Path.Combine(outputDir, $"{baseName}_extracted.txt");
+                current = current.NextSibling;
+            }
 
             // Save the extracted document.
-            extracted.Save(outputDocPath);
+            string outputFileName = $"extracted-{Path.GetFileNameWithoutExtension(filePath)}.docx";
+            string outputPath = Path.Combine(outputDir, outputFileName);
+            extracted.Save(outputPath);
 
-            // Also write the extracted plain text to a .txt file.
-            string extractedText = extracted.GetText();
-            File.WriteAllText(outputTxtPath, extractedText);
-
-            // Verify that the output files were created.
-            if (!File.Exists(outputDocPath) || !File.Exists(outputTxtPath))
-                throw new InvalidOperationException($"Extraction output not created for {baseName}.");
+            // Record the processing result.
+            lock (summary)
+            {
+                summary.Add(new { Input = Path.GetFileName(filePath), Output = outputFileName });
+            }
         });
 
-        // Extraction completed.
+        // -----------------------------------------------------------------
+        // Verify that every expected output file exists.
+        // -----------------------------------------------------------------
+        foreach (var entry in summary)
+        {
+            string outputPath = Path.Combine(outputDir, ((dynamic)entry).Output);
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException($"Expected output file was not created: {outputPath}");
+        }
+
+        // Write a JSON report describing the batch operation.
+        string jsonReportPath = Path.Combine(baseDir, "extraction-report.json");
+        File.WriteAllText(jsonReportPath, JsonConvert.SerializeObject(summary, Formatting.Indented));
+
+        // Final validation of the JSON report.
+        if (!File.Exists(jsonReportPath))
+            throw new InvalidOperationException("JSON report was not created.");
     }
 }

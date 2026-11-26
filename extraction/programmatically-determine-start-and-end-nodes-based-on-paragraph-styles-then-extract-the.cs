@@ -3,113 +3,98 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace StyledContentExtraction
+class Program
 {
-    public class Program
+    static void Main()
     {
-        public static void Main()
+        // -------------------------------------------------
+        // 1. Create a sample source document with custom styles.
+        // -------------------------------------------------
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+
+        // Add custom paragraph styles.
+        Style startStyle = sourceDoc.Styles.Add(StyleType.Paragraph, "StartStyle");
+        startStyle.Font.Bold = true;
+        Style endStyle = sourceDoc.Styles.Add(StyleType.Paragraph, "EndStyle");
+        endStyle.Font.Italic = true;
+
+        // Paragraphs with the defined styles and normal paragraphs.
+        builder.ParagraphFormat.StyleName = "StartStyle";
+        builder.Writeln("This is the start styled paragraph.");
+
+        builder.ParagraphFormat.StyleName = "Normal";
+        builder.Writeln("First normal paragraph.");
+        builder.Writeln("Second normal paragraph.");
+
+        builder.ParagraphFormat.StyleName = "EndStyle";
+        builder.Writeln("This is the end styled paragraph.");
+
+        builder.ParagraphFormat.StyleName = "Normal";
+        builder.Writeln("Paragraph after end.");
+
+        // Save the source document locally.
+        const string sourcePath = "styled-input.docx";
+        sourceDoc.Save(sourcePath);
+
+        // -------------------------------------------------
+        // 2. Load the document and locate the start/end paragraphs.
+        // -------------------------------------------------
+        Document loadedDoc = new Document(sourcePath);
+        Body sourceBody = loadedDoc.FirstSection.Body;
+
+        Paragraph startParagraph = null;
+        Paragraph endParagraph = null;
+
+        foreach (Paragraph para in sourceBody.Paragraphs)
         {
-            // -------------------------------------------------
-            // 1. Create a sample source document with styled paragraphs.
-            // -------------------------------------------------
-            Document sourceDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-
-            // Normal paragraph.
-            builder.Writeln("Introduction paragraph.");
-
-            // Heading 1 – start marker.
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-            builder.Writeln("Start of Styled Section");
-
-            // Normal paragraphs inside the range.
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-            builder.Writeln("First content paragraph.");
-            builder.Writeln("Second content paragraph.");
-
-            // Heading 2 – end marker.
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-            builder.Writeln("End of Styled Section");
-
-            // Normal paragraph after the range.
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-            builder.Writeln("Conclusion paragraph.");
-
-            // Save the source document locally.
-            const string sourcePath = "source.docx";
-            sourceDoc.Save(sourcePath);
-
-            // -------------------------------------------------
-            // 2. Load the document for extraction.
-            // -------------------------------------------------
-            Document loadedDoc = new Document(sourcePath);
-            Body body = loadedDoc.FirstSection.Body;
-
-            // -------------------------------------------------
-            // 3. Locate start and end paragraphs based on styles.
-            // -------------------------------------------------
-            Paragraph startParagraph = null;
-            Paragraph endParagraph = null;
-
-            foreach (Paragraph para in body.Paragraphs)
-            {
-                StyleIdentifier styleId = para.ParagraphFormat.StyleIdentifier;
-                if (styleId == StyleIdentifier.Heading1 && startParagraph == null)
-                {
-                    startParagraph = para;
-                }
-                else if (styleId == StyleIdentifier.Heading2 && startParagraph != null && endParagraph == null)
-                {
-                    endParagraph = para;
-                    break; // End found.
-                }
-            }
-
-            if (startParagraph == null)
-                throw new InvalidOperationException("Start paragraph with Heading 1 style not found.");
-            if (endParagraph == null)
-                throw new InvalidOperationException("End paragraph with Heading 2 style not found.");
-
-            // -------------------------------------------------
-            // 4. Build a new document containing the extracted range.
-            // -------------------------------------------------
-            Document resultDoc = new Document();
-            resultDoc.RemoveAllChildren();
-
-            Section resultSection = new Section(resultDoc);
-            resultDoc.AppendChild(resultSection);
-
-            Body resultBody = new Body(resultDoc);
-            resultSection.AppendChild(resultBody);
-
-            bool copy = false;
-            foreach (Paragraph para in body.Paragraphs)
-            {
-                if (para == startParagraph)
-                    copy = true;
-
-                if (copy)
-                {
-                    // Import the paragraph into the destination document to avoid cross‑document node errors.
-                    Node importedNode = resultDoc.ImportNode(para, true);
-                    resultBody.AppendChild(importedNode);
-                }
-
-                if (para == endParagraph)
-                    break;
-            }
-
-            // -------------------------------------------------
-            // 5. Save the extracted content.
-            // -------------------------------------------------
-            const string resultPath = "extracted.docx";
-            resultDoc.Save(resultPath);
-
-            // Verify that the output file was created.
-            if (!File.Exists(resultPath))
-                throw new InvalidOperationException("Extraction output file was not created.");
-
-            Console.WriteLine("Styled content segment extracted successfully.");
+            string styleName = para.ParagraphFormat.StyleName;
+            if (styleName == "StartStyle" && startParagraph == null)
+                startParagraph = para;
+            else if (styleName == "EndStyle" && startParagraph != null && endParagraph == null)
+                endParagraph = para;
         }
+
+        if (startParagraph == null)
+            throw new InvalidOperationException("Start styled paragraph not found.");
+        if (endParagraph == null)
+            throw new InvalidOperationException("End styled paragraph not found.");
+
+        // Determine the indices of the boundary paragraphs.
+        int startIndex = sourceBody.Paragraphs.IndexOf(startParagraph);
+        int endIndex = sourceBody.Paragraphs.IndexOf(endParagraph);
+        if (startIndex < 0 || endIndex < 0 || endIndex < startIndex)
+            throw new InvalidOperationException("Invalid paragraph boundaries.");
+
+        // -------------------------------------------------
+        // 3. Build a new document that will contain the extracted segment.
+        // -------------------------------------------------
+        Document resultDoc = new Document();
+        resultDoc.RemoveAllChildren();
+
+        Section resultSection = new Section(resultDoc);
+        resultDoc.AppendChild(resultSection);
+
+        Body resultBody = new Body(resultDoc);
+        resultSection.AppendChild(resultBody);
+
+        // Use NodeImporter to import nodes from the source document into the result document.
+        NodeImporter importer = new NodeImporter(loadedDoc, resultDoc, ImportFormatMode.KeepSourceFormatting);
+
+        for (int i = startIndex; i <= endIndex; i++)
+        {
+            Paragraph srcPara = sourceBody.Paragraphs[i];
+            Node importedNode = importer.ImportNode(srcPara, true);
+            resultBody.AppendChild(importedNode);
+        }
+
+        // -------------------------------------------------
+        // 4. Save the extracted segment and validate the output.
+        // -------------------------------------------------
+        const string resultPath = "extracted-styled.docx";
+        resultDoc.Save(resultPath);
+
+        if (!File.Exists(resultPath))
+            throw new InvalidOperationException("Extraction output file was not created.");
     }
 }

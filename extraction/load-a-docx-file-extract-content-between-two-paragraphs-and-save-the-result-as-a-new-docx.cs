@@ -7,76 +7,73 @@ public class Program
 {
     public static void Main()
     {
-        // -------------------------------------------------
-        // 1. Create a sample source document with several paragraphs.
-        // -------------------------------------------------
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Paragraph 1");
-        builder.Writeln("Paragraph 2");
-        builder.Writeln("Paragraph 3");
-        builder.Writeln("Paragraph 4");
+        // -----------------------------------------------------------------
+        // Create a sample source document with several paragraphs.
+        // -----------------------------------------------------------------
+        Document source = new Document();
+        DocumentBuilder builder = new DocumentBuilder(source);
+        builder.Writeln("Paragraph before start");
+        builder.Writeln("Start paragraph");          // Start boundary
+        builder.Writeln("Middle paragraph 1");
+        builder.Writeln("Middle paragraph 2");
+        builder.Writeln("End paragraph");            // End boundary
+        builder.Writeln("Paragraph after end");
+        source.Save("source.docx");
 
-        string sourcePath = "source.docx";
-        sourceDoc.Save(sourcePath);
+        // -----------------------------------------------------------------
+        // Load the source document.
+        // -----------------------------------------------------------------
+        Document loaded = new Document("source.docx");
 
-        // -------------------------------------------------
-        // 2. Load the document from the file system.
-        // -------------------------------------------------
-        Document loadedDoc = new Document(sourcePath);
-        Body sourceBody = loadedDoc.FirstSection.Body;
+        // Locate the start and end paragraphs (by index).
+        Body body = loaded.FirstSection.Body;
+        int startIndex = 1; // "Start paragraph"
+        int endIndex = 4;   // "End paragraph"
 
-        // -------------------------------------------------
-        // 3. Identify the start and end paragraphs (inclusive).
-        //    For this example we extract "Paragraph 2" through "Paragraph 3".
-        // -------------------------------------------------
-        Paragraph startParagraph = sourceBody.Paragraphs[1];
-        Paragraph endParagraph = sourceBody.Paragraphs[2];
-
-        if (startParagraph == null || endParagraph == null)
-            throw new InvalidOperationException("Boundary paragraphs not found.");
-
-        int startIndex = sourceBody.Paragraphs.IndexOf(startParagraph);
-        int endIndex = sourceBody.Paragraphs.IndexOf(endParagraph);
-
-        if (startIndex < 0 || endIndex < 0 || endIndex < startIndex)
+        if (startIndex < 0 || endIndex >= body.Paragraphs.Count || startIndex > endIndex)
             throw new InvalidOperationException("Invalid paragraph boundaries.");
 
-        // -------------------------------------------------
-        // 4. Prepare the destination document.
-        // -------------------------------------------------
-        Document resultDoc = new Document();
-        resultDoc.RemoveAllChildren();
+        // -----------------------------------------------------------------
+        // Prepare a fresh destination document.
+        // -----------------------------------------------------------------
+        Document result = new Document();
+        result.RemoveAllChildren();
 
-        Section resultSection = new Section(resultDoc);
-        resultDoc.AppendChild(resultSection);
+        Section resultSection = new Section(result);
+        result.AppendChild(resultSection);
 
-        Body resultBody = new Body(resultDoc);
+        Body resultBody = new Body(result);
         resultSection.AppendChild(resultBody);
 
-        // -------------------------------------------------
-        // 5. Import (clone) each paragraph from the source range into the destination.
-        //    Use NodeImporter to keep the nodes compatible with the new document.
-        // -------------------------------------------------
-        NodeImporter importer = new NodeImporter(loadedDoc, resultDoc, ImportFormatMode.KeepSourceFormatting);
-
+        // -----------------------------------------------------------------
+        // Import and append each paragraph from start to end inclusive.
+        // -----------------------------------------------------------------
         for (int i = startIndex; i <= endIndex; i++)
         {
-            Paragraph para = sourceBody.Paragraphs[i];
-            Node importedNode = importer.ImportNode(para, true);
-            resultBody.AppendChild(importedNode);
+            Paragraph para = body.Paragraphs[i];
+            if (para == null)
+                throw new InvalidOperationException($"Paragraph at index {i} not found.");
+
+            // Import the paragraph into the destination document.
+            Node imported = result.ImportNode(para, true);
+            resultBody.AppendChild(imported);
         }
 
-        // -------------------------------------------------
-        // 6. Save the extracted content to a new DOCX file.
-        // -------------------------------------------------
-        string resultPath = "extracted.docx";
-        resultDoc.Save(resultPath);
+        // -----------------------------------------------------------------
+        // Validate the extracted paragraph count.
+        // -----------------------------------------------------------------
+        int expectedCount = endIndex - startIndex + 1;
+        if (result.FirstSection.Body.Paragraphs.Count != expectedCount)
+            throw new InvalidOperationException("Extracted paragraph count does not match expected.");
 
-        // -------------------------------------------------
-        // 7. Validate that the output file was created.
-        // -------------------------------------------------
-        if (!File.Exists(resultPath))
+        // -----------------------------------------------------------------
+        // Save the extracted content as a new DOCX file.
+        // -----------------------------------------------------------------
+        string outputPath = "extracted.docx";
+        result.Save(outputPath);
+
+        // Verify that the output file was created.
+        if (!File.Exists(outputPath))
             throw new InvalidOperationException("The extracted document was not created.");
     }
 }
