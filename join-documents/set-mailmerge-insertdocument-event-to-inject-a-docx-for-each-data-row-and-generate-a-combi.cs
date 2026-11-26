@@ -1,84 +1,77 @@
 using System;
-using System.Data;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
         // Prepare a temporary working folder.
-        string workFolder = Path.Combine(Path.GetTempPath(), "AsposeJoinDemo");
+        string workFolder = Path.Combine(Path.GetTempPath(), "AsposeJoinExample");
         Directory.CreateDirectory(workFolder);
 
-        // Paths for the sample documents.
-        string templatePath = Path.Combine(workFolder, "Template.docx");
-        string insertDocPath = Path.Combine(workFolder, "Insert.docx");
-        string resultPdfPath = Path.Combine(workFolder, "Combined.pdf");
-
-        // -----------------------------------------------------------------
-        // Create the main template document (Header + Footer).
-        // -----------------------------------------------------------------
-        var templateBuilder = new DocumentBuilder();
-        templateBuilder.Writeln("Header of the main document.");
-        templateBuilder.Writeln("Footer of the main document.");
-        templateBuilder.Document.Save(templatePath, SaveFormat.Docx);
-
-        // -----------------------------------------------------------------
         // Create the document that will be inserted for each data row.
-        // -----------------------------------------------------------------
-        var insertBuilder = new DocumentBuilder();
-        insertBuilder.Writeln("=== Inserted Document Content ===");
-        insertBuilder.Writeln("This content comes from the inserted document.");
-        insertBuilder.Document.Save(insertDocPath, SaveFormat.Docx);
+        Document insertDoc = new Document();
+        DocumentBuilder insertBuilder = new DocumentBuilder(insertDoc);
+        insertBuilder.Writeln("=== Inserted Content ===");
+        insertBuilder.Writeln("This paragraph is inserted for each record.");
 
-        // -----------------------------------------------------------------
-        // Load the documents.
-        // -----------------------------------------------------------------
-        Document mainDoc = new Document(templatePath);
-        Document insertDoc = new Document(insertDocPath);
+        // Create the main template document with a merge field.
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("=== Mail Merge Report ===");
+        builder.Writeln("Name: <<Name>>");
+        builder.Writeln("Below is the inserted document for this record:");
 
-        // -----------------------------------------------------------------
-        // Prepare a data source with two rows; each row will trigger an insertion.
-        // -----------------------------------------------------------------
-        DataTable data = new DataTable("Data");
-        data.Columns.Add("InsertDoc", typeof(string));
-        data.Rows.Add("Row1");
-        data.Rows.Add("Row2");
-
-        // -----------------------------------------------------------------
-        // Append the insert document for each data row.
-        // -----------------------------------------------------------------
-        DocumentBuilder builder = new DocumentBuilder(mainDoc);
-        bool first = true;
-        foreach (DataRow row in data.Rows)
+        // Sample data rows.
+        var data = new[]
         {
-            // Optionally add a page break before each inserted document except the first.
-            if (!first)
-            {
-                builder.InsertBreak(BreakType.PageBreak);
-            }
+            new Person { Name = "Alice" },
+            new Person { Name = "Bob" },
+            new Person { Name = "Charlie" }
+        };
 
-            // Insert the whole document at the current builder position.
-            builder.InsertDocument(insertDoc, ImportFormatMode.KeepSourceFormatting);
-            first = false;
+        Document? masterDoc = null;
+
+        foreach (var person in data)
+        {
+            // Clone the template for the current record.
+            Document currentDoc = (Document)templateDoc.Clone(true);
+            // Perform mail merge for the current record.
+            currentDoc.MailMerge.Execute(new[] { "Name" }, new object[] { person.Name });
+
+            // Append the insert document to the current document.
+            currentDoc.AppendDocument(insertDoc, ImportFormatMode.KeepSourceFormatting);
+
+            // Combine with the master document.
+            if (masterDoc == null)
+            {
+                masterDoc = currentDoc;
+            }
+            else
+            {
+                masterDoc.AppendDocument(currentDoc, ImportFormatMode.KeepSourceFormatting);
+            }
         }
 
-        // -----------------------------------------------------------------
-        // Save the combined result as PDF.
-        // -----------------------------------------------------------------
-        mainDoc.Save(resultPdfPath, SaveFormat.Pdf);
+        if (masterDoc == null)
+        {
+            throw new InvalidOperationException("No documents were generated.");
+        }
 
-        // -----------------------------------------------------------------
+        // Save the combined result as PDF.
+        string pdfPath = Path.Combine(workFolder, "CombinedReport.pdf");
+        masterDoc.Save(pdfPath, SaveFormat.Pdf);
+
         // Validate that the PDF was created.
-        // -----------------------------------------------------------------
-        if (!File.Exists(resultPdfPath))
+        if (!File.Exists(pdfPath))
         {
             throw new InvalidOperationException("The combined PDF file was not created.");
         }
+    }
 
-        // Optional: indicate success.
-        Console.WriteLine($"Combined PDF created at: {resultPdfPath}");
+    private class Person
+    {
+        public string Name { get; set; } = string.Empty;
     }
 }

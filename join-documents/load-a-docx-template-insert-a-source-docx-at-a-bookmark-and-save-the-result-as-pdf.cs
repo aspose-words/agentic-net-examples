@@ -1,55 +1,68 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the sample files
-        string templatePath = "Template.docx";
-        string sourcePath = "Source.docx";
-        string outputPath = "Result.pdf";
+        // Prepare a temporary working folder.
+        string workFolder = Path.Combine(Path.GetTempPath(), "AsposeJoinExample");
+        Directory.CreateDirectory(workFolder);
 
-        // Create a template document with a bookmark named "InsertHere"
-        var templateDoc = new Document();
-        var templateBuilder = new DocumentBuilder(templateDoc);
-        templateBuilder.Writeln("This is the beginning of the template document.");
+        // Paths for the template, source, and output files.
+        string templatePath = Path.Combine(workFolder, "Template.docx");
+        string sourcePath = Path.Combine(workFolder, "Source.docx");
+        string outputPath = Path.Combine(workFolder, "Result.pdf");
+
+        // -----------------------------------------------------------------
+        // Create the template document with a bookmark named "InsertHere".
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder templateBuilder = new DocumentBuilder(templateDoc);
+        templateBuilder.Writeln("This is the template document.");
         templateBuilder.StartBookmark("InsertHere");
-        templateBuilder.Writeln("[Content will be inserted here]");
+        templateBuilder.Writeln("Bookmark location (will be replaced).");
         templateBuilder.EndBookmark("InsertHere");
-        templateBuilder.Writeln("This is the end of the template document.");
         templateDoc.Save(templatePath, SaveFormat.Docx);
 
-        // Create a source document that will be inserted
-        var sourceDoc = new Document();
-        var sourceBuilder = new DocumentBuilder(sourceDoc);
-        sourceBuilder.Writeln("=== Start of Source Document ===");
-        sourceBuilder.Writeln("This is some sample content from the source document.");
-        sourceBuilder.Writeln("=== End of Source Document ===");
+        // -----------------------------------------------------------------
+        // Create the source document that will be inserted at the bookmark.
+        // -----------------------------------------------------------------
+        Document sourceDoc = new Document();
+        DocumentBuilder sourceBuilder = new DocumentBuilder(sourceDoc);
+        sourceBuilder.Writeln("This is the source document inserted at the bookmark.");
         sourceDoc.Save(sourcePath, SaveFormat.Docx);
 
-        // Load the template and source documents
-        var mainDoc = new Document(templatePath);
-        var insertDoc = new Document(sourcePath);
+        // -----------------------------------------------------------------
+        // Load the template, locate the bookmark, and insert the source document.
+        // -----------------------------------------------------------------
+        Document loadedTemplate = new Document(templatePath);
+        Document loadedSource = new Document(sourcePath);
 
-        // Move to the bookmark and insert the source document
-        var builder = new DocumentBuilder(mainDoc);
-        builder.MoveToBookmark("InsertHere");
-        builder.InsertDocument(insertDoc, ImportFormatMode.KeepSourceFormatting);
-
-        // Save the merged document as PDF
-        mainDoc.Save(outputPath, SaveFormat.Pdf);
-
-        // Validate that the output file was created
-        if (!File.Exists(outputPath) || new FileInfo(outputPath).Length == 0)
+        // Ensure the bookmark exists.
+        if (loadedTemplate.Range.Bookmarks["InsertHere"] == null)
         {
-            throw new InvalidOperationException("The merged PDF was not created successfully.");
+            throw new InvalidOperationException("Bookmark 'InsertHere' not found in the template.");
         }
 
-        // Clean up temporary files (optional)
-        File.Delete(templatePath);
-        File.Delete(sourcePath);
+        // Move the builder to the bookmark and insert the source document.
+        DocumentBuilder insertBuilder = new DocumentBuilder(loadedTemplate);
+        insertBuilder.MoveToBookmark("InsertHere");
+        insertBuilder.InsertDocument(loadedSource, ImportFormatMode.KeepSourceFormatting);
+
+        // -----------------------------------------------------------------
+        // Save the merged result as PDF.
+        // -----------------------------------------------------------------
+        loadedTemplate.Save(outputPath, SaveFormat.Pdf);
+
+        // Validate that the PDF was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new InvalidOperationException("Failed to create the PDF output file.");
+        }
+
+        // Indicate success (no interactive prompts required).
+        Console.WriteLine($"PDF created successfully at: {outputPath}");
     }
 }

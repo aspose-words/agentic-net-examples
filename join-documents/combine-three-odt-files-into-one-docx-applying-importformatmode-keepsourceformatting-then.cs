@@ -6,58 +6,50 @@ public class Program
 {
     public static void Main()
     {
-        // Define file names
-        string doc1Path = "doc1.odt";
-        string doc2Path = "doc2.odt";
-        string doc3Path = "doc3.odt";
-        string mergedPath = "merged.docx";
+        // Define file names for the source ODT files and the merged DOCX output.
+        string[] sourceFiles = { "Doc1.odt", "Doc2.odt", "Doc3.odt" };
+        string mergedFile = "Merged.docx";
 
-        // Create first ODT document
-        var doc1 = new Document();
-        var builder1 = new DocumentBuilder(doc1);
-        builder1.Writeln("Content of Document 1");
-        doc1.Save(doc1Path, SaveFormat.Odt);
-
-        // Create second ODT document
-        var doc2 = new Document();
-        var builder2 = new DocumentBuilder(doc2);
-        builder2.Writeln("Content of Document 2");
-        doc2.Save(doc2Path, SaveFormat.Odt);
-
-        // Create third ODT document
-        var doc3 = new Document();
-        var builder3 = new DocumentBuilder(doc3);
-        builder3.Writeln("Content of Document 3");
-        doc3.Save(doc3Path, SaveFormat.Odt);
-
-        // Load the first document as the destination
-        var mergedDoc = new Document(doc1Path);
-
-        // Append the second and third documents, preserving source formatting
-        mergedDoc.AppendDocument(new Document(doc2Path), ImportFormatMode.KeepSourceFormatting);
-        mergedDoc.AppendDocument(new Document(doc3Path), ImportFormatMode.KeepSourceFormatting);
-
-        // Save the merged document as DOCX
-        mergedDoc.Save(mergedPath, SaveFormat.Docx);
-
-        // Validation: ensure the merged file exists
-        if (!File.Exists(mergedPath))
-            throw new Exception("Merged DOCX file was not created.");
-
-        // Validation: ensure content from all source documents is present
-        var resultDoc = new Document(mergedPath);
-        string allText = resultDoc.GetText();
-
-        if (!allText.Contains("Content of Document 1") ||
-            !allText.Contains("Content of Document 2") ||
-            !allText.Contains("Content of Document 3"))
+        // Create three sample ODT documents with distinct content.
+        for (int i = 0; i < sourceFiles.Length; i++)
         {
-            throw new Exception("Merged document does not contain content from all source files.");
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln($"This is the content of source document {i + 1}.");
+            doc.Save(sourceFiles[i], SaveFormat.Odt);
         }
 
-        // Cleanup: optional removal of temporary files (comment out if inspection needed)
-        // File.Delete(doc1Path);
-        // File.Delete(doc2Path);
-        // File.Delete(doc3Path);
+        // Load the first document which will serve as the destination.
+        Document mergedDoc = new Document(sourceFiles[0]);
+
+        // Append the remaining documents using KeepSourceFormatting.
+        for (int i = 1; i < sourceFiles.Length; i++)
+        {
+            Document srcDoc = new Document(sourceFiles[i]);
+            mergedDoc.AppendDocument(srcDoc, ImportFormatMode.KeepSourceFormatting);
+        }
+
+        // Save the merged document as DOCX.
+        mergedDoc.Save(mergedFile, SaveFormat.Docx);
+
+        // Validation: ensure the merged file exists.
+        if (!File.Exists(mergedFile))
+        {
+            throw new InvalidOperationException($"Merged file '{mergedFile}' was not created.");
+        }
+
+        // Validation: ensure the merged document contains three sections (one per source).
+        Document validationDoc = new Document(mergedFile);
+        if (validationDoc.Sections.Count != sourceFiles.Length)
+        {
+            throw new InvalidOperationException($"Merged document should contain {sourceFiles.Length} sections, but contains {validationDoc.Sections.Count}.");
+        }
+
+        // Optional cleanup: delete temporary source files (comment out if you want to keep them).
+        foreach (string file in sourceFiles)
+        {
+            if (File.Exists(file))
+                File.Delete(file);
+        }
     }
 }

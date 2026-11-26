@@ -7,72 +7,89 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare a temporary folder for the sample files.
-        string tempFolder = Path.Combine(Path.GetTempPath(), "AsposeJoinDemo");
-        Directory.CreateDirectory(tempFolder);
+        // Prepare file paths
+        string folder = Directory.GetCurrentDirectory();
+        string sourcePath1 = Path.Combine(folder, "Source1.docx");
+        string sourcePath2 = Path.Combine(folder, "Source2.docx");
+        string mergedPath = Path.Combine(folder, "Merged.docx");
 
-        // ---------- Create first source document ----------
-        Document srcDoc1 = new Document();
-        DocumentBuilder builder1 = new DocumentBuilder(srcDoc1);
+        // Create first source document with two pages and PAGE fields
+        var doc1 = new Document();
+        var builder1 = new DocumentBuilder(doc1);
         builder1.Writeln("Document 1 - Page 1");
+        builder1.InsertField("PAGE", "");
         builder1.InsertBreak(BreakType.PageBreak);
         builder1.Writeln("Document 1 - Page 2");
-        string srcPath1 = Path.Combine(tempFolder, "Source1.docx");
-        srcDoc1.Save(srcPath1, SaveFormat.Docx);
+        builder1.InsertField("PAGE", "");
+        doc1.Save(sourcePath1, SaveFormat.Docx);
 
-        // ---------- Create second source document ----------
-        Document srcDoc2 = new Document();
-        DocumentBuilder builder2 = new DocumentBuilder(srcDoc2);
+        // Create second source document with two pages and PAGE fields
+        var doc2 = new Document();
+        var builder2 = new DocumentBuilder(doc2);
         builder2.Writeln("Document 2 - Page 1");
+        builder2.InsertField("PAGE", "");
         builder2.InsertBreak(BreakType.PageBreak);
         builder2.Writeln("Document 2 - Page 2");
-        string srcPath2 = Path.Combine(tempFolder, "Source2.docx");
-        srcDoc2.Save(srcPath2, SaveFormat.Docx);
+        builder2.InsertField("PAGE", "");
+        doc2.Save(sourcePath2, SaveFormat.Docx);
 
-        // Load the source documents (simulating separate files).
-        Document source1 = new Document(srcPath1);
-        Document source2 = new Document(srcPath2);
+        // Load source documents
+        var sourceDoc1 = new Document(sourcePath1);
+        var sourceDoc2 = new Document(sourcePath2);
 
-        // Use the first document as the destination.
-        Document destination = source1;
+        // Create destination document and append source documents
+        var destDoc = new Document();
+        destDoc.AppendDocument(sourceDoc1, ImportFormatMode.KeepSourceFormatting);
+        destDoc.AppendDocument(sourceDoc2, ImportFormatMode.KeepSourceFormatting);
 
-        // Append the second document, preserving its original formatting.
-        destination.AppendDocument(source2, ImportFormatMode.KeepSourceFormatting);
+        // Update fields and layout to ensure PAGE fields are calculated
+        destDoc.UpdateFields();
+        destDoc.UpdatePageLayout();
 
-        // Ensure layout information (page numbers) is up‑to‑date.
-        destination.UpdatePageLayout();
+        // Validate that each inserted section starts on the correct page number
+        var collector = new LayoutCollector(destDoc);
+        int previousStart = 0;
+        int previousPageCount = 0;
 
-        // Use LayoutCollector to retrieve the start page of each section.
-        LayoutCollector collector = new LayoutCollector(destination);
-
-        int previousStartPage = 0;
-        int sectionIndex = 0;
-        foreach (Section section in destination.Sections)
+        for (int i = 0; i < destDoc.Sections.Count; i++)
         {
-            int startPage = collector.GetStartPageIndex(section);
+            Section section = destDoc.Sections[i];
+            Paragraph firstParagraph = section.Body.FirstParagraph;
+            if (firstParagraph == null)
+                throw new InvalidOperationException($"Section {i + 1} has no paragraphs.");
 
-            // Validate that sections appear in non‑decreasing page order.
-            if (sectionIndex > 0 && startPage < previousStartPage)
+            int startPage = collector.GetStartPageIndex(firstParagraph);
+            int expectedStart = (i == 0) ? 1 : previousStart + previousPageCount;
+
+            if (startPage != expectedStart)
+                throw new Exception($"Section {i + 1} starts on page {startPage}, but expected {expectedStart}.");
+
+            // Determine page count of this section
+            int pageCount;
+            if (i < destDoc.Sections.Count - 1)
             {
-                throw new InvalidOperationException(
-                    $"Section {sectionIndex} starts on page {startPage}, which is before the previous section's start page {previousStartPage}.");
+                Paragraph nextFirstParagraph = destDoc.Sections[i + 1].Body.FirstParagraph;
+                int nextStart = collector.GetStartPageIndex(nextFirstParagraph);
+                pageCount = nextStart - startPage;
+            }
+            else
+            {
+                pageCount = destDoc.PageCount - startPage + 1;
             }
 
-            previousStartPage = startPage;
-            sectionIndex++;
+            previousStart = startPage;
+            previousPageCount = pageCount;
         }
 
-        // Save the merged document.
-        string mergedPath = Path.Combine(tempFolder, "Merged.docx");
-        destination.Save(mergedPath, SaveFormat.Docx);
+        // Save merged document
+        destDoc.Save(mergedPath, SaveFormat.Docx);
 
-        // Verify that the merged file was created.
+        // Verify merged file exists
         if (!File.Exists(mergedPath))
-        {
             throw new FileNotFoundException("Merged document was not created.", mergedPath);
-        }
 
-        // Indicate successful completion.
-        Console.WriteLine("Document merged and validated successfully.");
+        // Clean up temporary source files
+        File.Delete(sourcePath1);
+        File.Delete(sourcePath2);
     }
 }
