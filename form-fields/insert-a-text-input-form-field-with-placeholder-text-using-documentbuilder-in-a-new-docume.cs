@@ -2,26 +2,22 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-public class Program
+namespace FormFieldExample
 {
-    public static void Main()
+    class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Initialize DocumentBuilder for the document.
-        DocumentBuilder builder = new DocumentBuilder(doc);
+            // Insert a text input form field with placeholder text.
+            // Parameters: name, type (regular text), format, placeholder text, max length.
+            builder.InsertTextInput("CustomerName", TextFormFieldType.Regular, "", "Enter your name", 50);
 
-        // Insert a text input form field.
-        // Parameters: name, field type, format, default text (used here as placeholder), max length (0 = no limit).
-        builder.InsertTextInput(
-            "TextInputField",
-            TextFormFieldType.Regular,
-            "",
-            "Enter your name",
-            0);
-
-        // Save the document to disk.
-        doc.Save("FormFieldExample.docx");
+            // Save the document.
+            doc.Save("FormFieldExample.docx");
+        }
     }
 }

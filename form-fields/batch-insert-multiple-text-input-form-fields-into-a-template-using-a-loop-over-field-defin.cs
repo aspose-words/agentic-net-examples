@@ -3,61 +3,57 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-namespace FormFieldsBatchInsert
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Define a set of text input form fields to insert.
+        var fieldDefinitions = new List<(string Name, string Label, string DefaultText, int MaxLength)>
         {
-            // Define the form field specifications.
-            var fieldDefinitions = new List<(string Name, string DefaultValue)>
-            {
-                ("FirstName", "John"),
-                ("LastName", "Doe"),
-                ("Email", "example@example.com")
-            };
+            ("FirstName", "First Name:", "John", 50),
+            ("LastName", "Last Name:", "Doe", 50),
+            ("Email", "Email Address:", "john.doe@example.com", 100),
+            ("Phone", "Phone Number:", "+1-555-1234", 20)
+        };
 
-            // Create a new blank document and a DocumentBuilder.
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
+        // Insert each form field using a loop.
+        foreach (var def in fieldDefinitions)
+        {
+            // Write the label.
+            builder.Writeln(def.Label);
 
-            // Insert a heading.
-            builder.Writeln("User Information Form");
+            // Insert the text input form field.
+            builder.InsertTextInput(
+                def.Name,                     // field name
+                TextFormFieldType.Regular,    // regular text field
+                "",                           // format (empty for plain text)
+                def.DefaultText,              // default text
+                def.MaxLength);               // maximum length
+
+            // Add a blank line after each field for readability.
             builder.Writeln();
-
-            // Batch insert text input form fields using the definitions.
-            foreach (var (name, defaultValue) in fieldDefinitions)
-            {
-                // Insert a label for the field.
-                builder.Write($"{name}: ");
-
-                // Insert the text input form field.
-                builder.InsertTextInput(name, TextFormFieldType.Regular, "", defaultValue, 0);
-
-                // Move to the next line after each field.
-                builder.Writeln();
-            }
-
-            // Save the document with the inserted form fields.
-            const string outputPath = "BatchFormFields.docx";
-            doc.Save(outputPath);
-
-            // Load the saved document to verify the fields.
-            var loadedDoc = new Document(outputPath);
-            var formFields = loadedDoc.Range.FormFields;
-
-            // Validate that each expected field exists and output its default value.
-            foreach (var (name, _) in fieldDefinitions)
-            {
-                var field = formFields[name];
-                if (field == null)
-                {
-                    throw new InvalidOperationException($"Form field '{name}' was not found in the document.");
-                }
-
-                // Output the field name and its current result (default value).
-                Console.WriteLine($"{field.Name}: {field.Result}");
-            }
         }
+
+        // Save the document with the inserted form fields.
+        const string outputPath = "Output.docx";
+        doc.Save(outputPath);
+
+        // Validate that all expected form fields exist and have the correct default values.
+        foreach (var def in fieldDefinitions)
+        {
+            FormField field = doc.Range.FormFields[def.Name];
+            if (field == null)
+                throw new InvalidOperationException($"Form field '{def.Name}' was not found.");
+
+            if (field.Result != def.DefaultText)
+                throw new InvalidOperationException($"Form field '{def.Name}' does not contain the expected default value.");
+        }
+
+        // Indicate successful completion (no interactive output required).
+        Console.WriteLine($"Document '{outputPath}' created with {fieldDefinitions.Count} text input form fields.");
     }
 }

@@ -10,34 +10,40 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a legacy text input form field.
-        // Parameters: name, type, format, default text, maxLength.
-        builder.InsertTextInput("MyTextField", TextFormFieldType.Regular, "", "Default", 0);
+        // Insert a text input form field with a placeholder value.
+        // Name: "MyTextField", type: regular text, default text: "Placeholder", max length: 50.
+        FormField textField = builder.InsertTextInput(
+            "MyTextField",
+            TextFormFieldType.Regular,
+            "",
+            "Placeholder",
+            50);
 
         // Ensure that at least one form field exists.
-        if (doc.Range.FormFields.Count == 0)
+        FormFieldCollection formFields = doc.Range.FormFields;
+        if (formFields == null || formFields.Count == 0)
         {
-            throw new InvalidOperationException("No form fields were found in the document.");
+            throw new InvalidOperationException("No form fields were created in the document.");
         }
 
-        // Access the first form field by index.
-        FormField formField = doc.Range.FormFields[0];
-        if (formField == null)
+        // Access the first form field by index (zero‑based) and modify its Result.
+        FormField fieldByIndex = formFields[0];
+        if (fieldByIndex == null)
         {
-            throw new InvalidOperationException("Form field at index 0 is null.");
+            throw new InvalidOperationException("Form field at index 0 could not be retrieved.");
         }
 
-        // Modify the Result property of the text input field.
-        string newValue = "Updated value";
-        formField.Result = newValue;
+        // Set a new value for the text input field.
+        fieldByIndex.Result = "New value set by code";
 
-        // Validate that the value was updated.
-        if (formField.Result != newValue)
+        // Optional: verify that the value was updated.
+        if (fieldByIndex.Result != "New value set by code")
         {
-            throw new InvalidOperationException("Failed to update the form field value.");
+            throw new InvalidOperationException("Failed to update the form field result.");
         }
 
         // Save the modified document.
-        doc.Save("FormFieldModified.docx");
+        string outputPath = "ModifiedFormFields.docx";
+        doc.Save(outputPath);
     }
 }

@@ -2,62 +2,57 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-public class Program
+namespace FormFieldsExample
 {
-    public static void Main()
+    class Program
     {
-        // Create a new document and a DocumentBuilder to add form fields.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert a text input form field. The last parameter is the maximum length of the field.
-        builder.InsertTextInput("TextField1", TextFormFieldType.Regular, "", "Default Text", 0);
-
-        // Insert a checkbox form field.
-        builder.InsertCheckBox("CheckBox1", false, 0);
-
-        // Insert a dropdown (combo box) form field.
-        builder.InsertComboBox("DropDown1", new string[] { "Option1", "Option2", "Option3" }, 0);
-
-        // Save the document that now contains the form fields.
-        const string outputPath = "FormFields.docx";
-        doc.Save(outputPath);
-
-        // Ensure that at least one form field exists.
-        if (doc.Range.FormFields.Count == 0)
+        static void Main()
         {
-            throw new InvalidOperationException("The document does not contain any form fields.");
-        }
+            // Create a new document and a DocumentBuilder for inserting form fields.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Iterate through all form fields and log their values.
-        foreach (FormField field in doc.Range.FormFields)
-        {
-            if (field == null)
-                continue; // Guard against null, though collection should not contain nulls.
+            // Insert a text input form field.
+            // Parameters: name, type, format, default text, max length (0 = unlimited).
+            builder.InsertTextInput("TextField1", TextFormFieldType.Regular, "", "Default Text", 0);
+            builder.Writeln(); // Add a line break.
 
-            string fieldInfo;
+            // Insert a checkbox form field.
+            // Parameters: name, isChecked, size (0 = default size).
+            builder.InsertCheckBox("CheckBox1", false, 0);
+            builder.Writeln();
 
-            switch (field.Type)
+            // Insert a dropdown (combo box) form field.
+            // Parameters: name, list of items, selected index.
+            string[] items = { "Option1", "Option2", "Option3" };
+            builder.InsertComboBox("DropDown1", items, 0);
+            builder.Writeln();
+
+            // Save the document with the created form fields.
+            const string outputPath = "FormFieldsExample.docx";
+            doc.Save(outputPath);
+
+            // Load the document (optional here, we already have it in memory).
+            Document loadedDoc = new Document(outputPath);
+
+            // Ensure that at least one form field exists.
+            if (loadedDoc.Range.FormFields.Count == 0)
+                throw new InvalidOperationException("The document does not contain any form fields.");
+
+            // Iterate through all form fields and log their Result values.
+            foreach (FormField field in loadedDoc.Range.FormFields)
             {
-                case FieldType.FieldFormCheckBox:
-                    fieldInfo = $"Name: {field.Name}, Type: CheckBox, Checked: {field.Checked}";
-                    break;
-                case FieldType.FieldFormDropDown:
-                    fieldInfo = $"Name: {field.Name}, Type: DropDown, Selected: {field.Result}";
-                    break;
-                case FieldType.FieldFormTextInput:
-                    fieldInfo = $"Name: {field.Name}, Type: TextInput, Result: {field.Result}";
-                    break;
-                default:
-                    fieldInfo = $"Name: {field.Name}, Type: Unknown, Result: {field.Result}";
-                    break;
+                // Guard against null field (should not happen, but added for safety).
+                if (field == null)
+                    continue;
+
+                // Log field name and its Result value.
+                Console.WriteLine($"Field Name: {field.Name}, Result: {field.Result}");
             }
 
-            Console.WriteLine(fieldInfo);
+            // Save the document after reading (no modifications made, but rule requires saving).
+            const string finalPath = "FormFieldsExample_Processed.docx";
+            loadedDoc.Save(finalPath);
         }
-
-        // Save the document again (even though we didn't modify fields, this satisfies the save requirement).
-        const string finalPath = "FormFields_Output.docx";
-        doc.Save(finalPath);
     }
 }

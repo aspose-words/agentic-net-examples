@@ -1,90 +1,70 @@
 using System;
 using System.IO;
+using System.Collections.Generic;
 using Aspose.Words;
-using Aspose.Words.Fields;   // Required for TextFormFieldType
+using Aspose.Words.Fields;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the template, CSV data, and output document.
-        const string templatePath = "Template.docx";
-        const string csvPath = "data.csv";
-        const string outputPath = "Output.docx";
+        // Define file paths
+        string csvPath = "data.csv";
+        string templatePath = "template.docx";
+        string outputPath = "output.docx";
 
-        // Create a template document with text input form fields if it does not exist.
-        if (!File.Exists(templatePath))
-        {
-            CreateTemplateDocument(templatePath);
-        }
+        // Create a sample CSV file
+        File.WriteAllText(csvPath, "Name,Email\nJohn Doe,john.doe@example.com");
 
-        // Create a sample CSV file with headers matching the form field names if it does not exist.
-        if (!File.Exists(csvPath))
-        {
-            CreateSampleCsv(csvPath);
-        }
+        // Create a template document with text input form fields
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Load the template document.
+        // Insert a text input field for Name
+        builder.InsertTextInput("Name", TextFormFieldType.Regular, "", "Default Name", 0);
+        builder.Writeln();
+
+        // Insert a text input field for Email
+        builder.InsertTextInput("Email", TextFormFieldType.Regular, "", "default@example.com", 0);
+        builder.Writeln();
+
+        // Save the template document
+        templateDoc.Save(templatePath);
+
+        // Load the template document for processing
         Document doc = new Document(templatePath);
-        FormFieldCollection formFields = doc.Range.FormFields;
 
-        // Read CSV content.
+        // Read CSV content
         string[] csvLines = File.ReadAllLines(csvPath);
         if (csvLines.Length < 2)
-        {
-            throw new Exception("CSV file must contain a header line and at least one data line.");
-        }
+            throw new InvalidOperationException("CSV file must contain header and at least one data row.");
 
-        // Parse header and first data row.
+        // Parse header and first data row
         string[] headers = csvLines[0].Split(',');
         string[] values = csvLines[1].Split(',');
 
-        // Populate each form field with the corresponding CSV value.
+        if (headers.Length != values.Length)
+            throw new InvalidOperationException("CSV header and data column counts do not match.");
+
+        // Populate form fields with CSV values
         for (int i = 0; i < headers.Length; i++)
         {
             string fieldName = headers[i].Trim();
-            string fieldValue = i < values.Length ? values[i].Trim() : string.Empty;
+            string fieldValue = values[i].Trim();
 
-            // Retrieve the form field by name.
-            FormField field = formFields[fieldName];
+            FormField field = doc.Range.FormFields[fieldName];
             if (field == null)
-            {
-                throw new Exception($"Form field '{fieldName}' not found in the document.");
-            }
+                throw new InvalidOperationException($"Form field '{fieldName}' not found in the document.");
 
-            // Update the text input field's result.
+            // Only text input fields have Result property
             field.Result = fieldValue;
+
+            // Validate assignment
+            if (field.Result != fieldValue)
+                throw new InvalidOperationException($"Failed to set value for field '{fieldName}'.");
         }
 
-        // Save the populated document.
+        // Save the populated document
         doc.Save(outputPath);
-    }
-
-    // Creates a simple template document with three text input form fields.
-    private static void CreateTemplateDocument(string path)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        builder.Writeln("Please fill in the following information:");
-        builder.InsertTextInput("FirstName", TextFormFieldType.Regular, "", "John", 0);
-        builder.Writeln();
-        builder.InsertTextInput("LastName", TextFormFieldType.Regular, "", "Doe", 0);
-        builder.Writeln();
-        builder.InsertTextInput("Email", TextFormFieldType.Regular, "", "john.doe@example.com", 0);
-        builder.Writeln();
-
-        doc.Save(path);
-    }
-
-    // Creates a sample CSV file with headers matching the form field names.
-    private static void CreateSampleCsv(string path)
-    {
-        string[] lines =
-        {
-            "FirstName,LastName,Email",
-            "Alice,Smith,alice.smith@example.com"
-        };
-        File.WriteAllLines(path, lines);
     }
 }

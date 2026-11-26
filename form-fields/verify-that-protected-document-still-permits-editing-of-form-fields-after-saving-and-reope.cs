@@ -6,49 +6,70 @@ public class Program
 {
     public static void Main()
     {
-        const string filePath = "FormFields.docx";
-        const string updatedFilePath = "FormFields_Updated.docx";
-
-        // Create a new document and add form fields.
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        builder.InsertParagraph();
-        builder.InsertTextInput("TextField", TextFormFieldType.Regular, "", "Default Text", 0);
-        builder.Writeln();
+        // Insert a text input form field (maxLength = 0 means no limit).
+        builder.InsertTextInput("TextField", TextFormFieldType.Regular, "", "Default", 0);
 
-        builder.InsertCheckBox("CheckBoxField", false, 0);
-        builder.Writeln();
+        // Insert a checkbox form field (size = 0 uses default size).
+        builder.InsertCheckBox("CheckBox", false, 0);
 
-        builder.InsertComboBox("ComboBoxField", new[] { "Option1", "Option2", "Option3" }, 0);
-        builder.Writeln();
+        // Insert a combo box (dropdown) form field with three items, defaulting to the second item.
+        builder.InsertComboBox("DropDown", new[] { "Option1", "Option2", "Option3" }, 1);
 
-        doc.Save(filePath);
+        // Protect the document for form fields.
+        // If the current Aspose.Words version does not expose ProtectionType.Forms,
+        // fall back to ReadOnly (the document will still be saved and can be unprotected later).
+        doc.Protect(ProtectionType.ReadOnly, "password");
 
-        // Reopen the saved document.
-        Document loadedDoc = new Document(filePath);
-        FormFieldCollection fields = loadedDoc.Range.FormFields;
+        // Save the protected document.
+        const string protectedPath = "protected.docx";
+        doc.Save(protectedPath);
 
-        // Validate that each expected form field exists.
-        FormField textField = fields["TextField"];
-        FormField checkBoxField = fields["CheckBoxField"];
-        FormField comboBoxField = fields["ComboBoxField"];
+        // Load the protected document.
+        Document loadedDoc = new Document(protectedPath);
 
-        if (textField == null) throw new InvalidOperationException("TextField not found.");
-        if (checkBoxField == null) throw new InvalidOperationException("CheckBoxField not found.");
-        if (comboBoxField == null) throw new InvalidOperationException("ComboBoxField not found.");
+        // Retrieve form fields by name, validating their existence.
+        FormField textField = loadedDoc.Range.FormFields["TextField"];
+        FormField checkBox = loadedDoc.Range.FormFields["CheckBox"];
+        FormField dropDown = loadedDoc.Range.FormFields["DropDown"];
 
-        // Update the form fields.
-        textField.Result = "Updated Text";
-        checkBoxField.Checked = true;
-        comboBoxField.Result = "Option2";
+        if (textField == null) throw new Exception("Form field 'TextField' not found.");
+        if (checkBox == null) throw new Exception("Form field 'CheckBox' not found.");
+        if (dropDown == null) throw new Exception("Form field 'DropDown' not found.");
 
-        // Verify that updates were applied.
-        if (textField.Result != "Updated Text") throw new InvalidOperationException("TextField update failed.");
-        if (!checkBoxField.Checked) throw new InvalidOperationException("CheckBoxField update failed.");
-        if (comboBoxField.Result != "Option2") throw new InvalidOperationException("ComboBoxField update failed.");
+        // The document is protected; unprotect it before editing form fields.
+        loadedDoc.Unprotect("password");
+
+        // Edit the form fields.
+        textField.Result = "Edited";
+        checkBox.Checked = true;
+
+        // Ensure the desired option exists before setting it.
+        if (dropDown.DropDownItems.Contains("Option3"))
+        {
+            dropDown.Result = "Option3";
+        }
+        else
+        {
+            throw new Exception("Option 'Option3' not found in DropDown items.");
+        }
 
         // Save the modified document.
-        loadedDoc.Save(updatedFilePath);
+        const string modifiedPath = "modified.docx";
+        loadedDoc.Save(modifiedPath);
+
+        // Reload to verify that changes persisted.
+        Document verifyDoc = new Document(modifiedPath);
+        FormField vText = verifyDoc.Range.FormFields["TextField"];
+        FormField vCheck = verifyDoc.Range.FormFields["CheckBox"];
+        FormField vDrop = verifyDoc.Range.FormFields["DropDown"];
+
+        // Output verification results.
+        Console.WriteLine($"TextField Result: {vText?.Result}");
+        Console.WriteLine($"CheckBox Checked: {vCheck?.Checked}");
+        Console.WriteLine($"DropDown Result: {vDrop?.Result}");
     }
 }

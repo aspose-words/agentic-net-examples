@@ -1,5 +1,6 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Fields;
 
 public class Program
 {
@@ -9,27 +10,23 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a legacy checkbox form field named "CheckBox1".
-        // Parameters: name, isChecked (false), size (default 0 points – will be changed later).
-        builder.InsertCheckBox("CheckBox1", false, 0);
+        // Insert a checkbox form field with the default automatic size.
+        // The name "MyCheckBox" will be used later to locate the field.
+        builder.Write("Please tick the box: ");
+        FormField checkBox = builder.InsertCheckBox("MyCheckBox", false, 0);
 
-        // Save the initial document containing the checkbox.
-        const string initialPath = "CheckboxFormField.docx";
-        doc.Save(initialPath);
+        // Ensure the checkbox size can be set explicitly.
+        checkBox.IsCheckBoxExactSize = true;
 
-        // Load the document back (demonstrates load step).
-        Document loadedDoc = new Document(initialPath);
+        // Change the size of the existing checkbox to 30 points.
+        // This improves visual consistency with other form elements.
+        checkBox.CheckBoxSize = 30.0;
 
-        // Retrieve the checkbox form field by name.
-        var checkBoxField = loadedDoc.Range.FormFields["CheckBox1"];
-        if (checkBoxField == null)
-            throw new InvalidOperationException("The checkbox form field 'CheckBox1' was not found.");
+        // Optional: verify that the size was applied.
+        if (Math.Abs(checkBox.CheckBoxSize - 30.0) > 0.001)
+            throw new InvalidOperationException("Failed to set the checkbox size.");
 
-        // Change the visual size of the checkbox to 20 points for consistency.
-        checkBoxField.CheckBoxSize = 20;
-
-        // Save the modified document.
-        const string outputPath = "CheckboxFormField_Modified.docx";
-        loadedDoc.Save(outputPath);
+        // Save the document to disk.
+        doc.Save("CheckboxSizeChanged.docx");
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
+using Aspose.Words.Tables;
 
 public class Program
 {
@@ -10,52 +11,54 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a paragraph before the form field.
-        builder.Writeln("This is the first paragraph.");
+        // Insert a paragraph before the form field.
+        builder.Writeln("Paragraph before the form field.");
 
-        // Insert a text input form field. This also creates a bookmark with the same name.
-        string fieldName = "MyTextField";
-        builder.InsertTextInput(fieldName, TextFormFieldType.Regular, "", "Default value", 0);
+        // Insert a text input form field. This automatically creates a bookmark with the same name.
+        builder.InsertTextInput("MyField", TextFormFieldType.Regular, "", "Default value", 0);
+        builder.Writeln(); // End the paragraph that contains the form field.
 
-        // Add a paragraph after the form field.
-        builder.Writeln("This is the paragraph after the form field.");
+        // Insert a paragraph after the form field.
+        builder.Writeln("Paragraph after the form field.");
 
         // Save the document.
-        doc.Save("FormFieldDemo.docx");
+        const string outputPath = "FormFieldExample.docx";
+        doc.Save(outputPath);
 
-        // Access the form field through the FormFields collection.
-        FormField formField = doc.Range.FormFields[fieldName];
-        if (formField == null)
-        {
-            throw new InvalidOperationException($"Form field '{fieldName}' was not found.");
-        }
-
-        // The form field automatically creates a bookmark with the same name.
-        // Use the bookmark to locate the paragraph that contains the field.
-        Bookmark bookmark = doc.Range.Bookmarks[fieldName];
+        // Locate the bookmark that was created for the form field.
+        Bookmark bookmark = doc.Range.Bookmarks["MyField"];
         if (bookmark == null)
         {
-            throw new InvalidOperationException($"Bookmark for form field '{fieldName}' was not found.");
+            throw new InvalidOperationException("Bookmark 'MyField' was not found.");
         }
 
-        // The start node of the bookmark is a Run; its parent is the containing Paragraph.
-        Node startNode = bookmark.BookmarkStart;
-        if (startNode == null || startNode.ParentNode == null)
+        // The bookmark start node resides inside a paragraph.
+        Node bookmarkStartNode = bookmark.BookmarkStart;
+        Paragraph fieldParagraph = bookmarkStartNode.ParentNode as Paragraph;
+        if (fieldParagraph == null)
         {
             throw new InvalidOperationException("Unable to locate the paragraph containing the form field.");
         }
 
-        Paragraph containingParagraph = startNode.ParentNode as Paragraph;
-        if (containingParagraph == null)
-        {
-            throw new InvalidOperationException("The parent node is not a paragraph.");
-        }
+        // Extract text from the paragraph that contains the form field.
+        string fieldParagraphText = fieldParagraph.GetText();
 
-        // Extract the text of the surrounding paragraph.
-        string paragraphText = containingParagraph.GetText();
+        // Extract text from the preceding paragraph, if it exists.
+        Paragraph previousParagraph = fieldParagraph.PreviousSibling as Paragraph;
+        string previousParagraphText = previousParagraph != null ? previousParagraph.GetText() : "(none)";
 
-        // Output the extracted paragraph text.
+        // Extract text from the following paragraph, if it exists.
+        Paragraph nextParagraph = fieldParagraph.NextSibling as Paragraph;
+        string nextParagraphText = nextParagraph != null ? nextParagraph.GetText() : "(none)";
+
+        // Output the results.
+        Console.WriteLine("Document saved to: " + outputPath);
+        Console.WriteLine();
+        Console.WriteLine("Previous paragraph text:");
+        Console.WriteLine(previousParagraphText);
         Console.WriteLine("Paragraph containing the form field:");
-        Console.WriteLine(paragraphText);
+        Console.WriteLine(fieldParagraphText);
+        Console.WriteLine("Next paragraph text:");
+        Console.WriteLine(nextParagraphText);
     }
 }
