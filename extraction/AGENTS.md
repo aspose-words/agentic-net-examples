@@ -10,11 +10,13 @@ product: Aspose.Words
 
 ## Purpose
 
-Provide an AI coding assistant with a concise, end-to-end reference for building reliable extraction utilities that locate start and end markers, import nodes safely, and persist the result using only supported Aspose.Words APIs.
+Provide an AI coding assistant with concise guidance for building reliable node-range extraction utilities that respect Aspose.Words document hierarchies, avoid cross-document node insertion errors, and produce correctly formatted output files.
 
 ## Non-negotiable conventions
 
-- Do not reference System.Drawing, assume no pre-existing files, and avoid inventing custom extraction helpers.
+- Do not reference System.Drawing; use Aspose.Drawing for all drawing operations.
+- Do not assume external files exist; always create sample documents or streams within the example.
+- Do not fabricate helper APIs; rely solely on documented Aspose.Words types such as DocumentBuilder, NodeImporter, and the classes in Aspose.Words.Tables.
 - Bootstrap local sample inputs for existing-file, folder, stream, image, and data workflows.
 - Prefer simple, verifiable workflows over speculative formatting shortcuts.
 
@@ -30,7 +32,7 @@ Use the simplest workflow that satisfies the task.
 
 ## Validation priorities
 
-1. Ensure every extracted node is imported before insertion and that the saved file is present on disk.
+1. Validate that the extracted document contains the expected number of nodes and that the output file exists on disk.
 
 ## File-to-task reference
 
@@ -43,7 +45,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Load a DOCM file, extract content between a macro-enabled field and a paragraph, and save as DOCX.
   - Workflow: targeted-node-extraction
   - Outputs: docx, doc
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `identify-a-start-run-node-and-an-end-bookmark-node-then-extract-the-intervening-nodes-into.cs`
   - Task: Identify a start run node and an end bookmark node, then extract the intervening nodes into a document.
   - Workflow: targeted-node-extraction
@@ -63,7 +65,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Extract a range of nodes that includes tables, images, and fields, preserving original hierarchy in the output.
   - Workflow: table-structured-extraction
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `extract-content-between-a-run-node-and-the-next-bookmark-then-convert-the-extracted-segmen.cs`
   - Task: Extract content between a run node and the next bookmark, then convert the extracted segment to HTML format.
   - Workflow: targeted-node-extraction
@@ -78,7 +80,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Use the extraction API to copy content between two headings and insert it into a template document.
   - Workflow: text-range-extraction
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `use-documentbuilder-to-prepend-extracted-node-collection-to-the-beginning-of-a-new-documen.cs`
   - Task: Use DocumentBuilder to prepend extracted node collection to the beginning of a new document before saving.
   - Workflow: text-range-extraction
@@ -88,22 +90,22 @@ Use the simplest workflow that satisfies the task.
   - Task: Use DocumentBuilder to insert extracted node collection into a new document at a custom bookmark location.
   - Workflow: targeted-node-extraction
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `duplicate-extracted-content-between-a-table-and-a-field-node-within-the-original-document.cs`
   - Task: Duplicate extracted content between a table and a field node within the original document without altering formatting.
   - Workflow: table-structured-extraction
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `save-extracted-content-as-a-docx-file-while-preserving-embedded-fields-and-their-evaluatio.cs`
   - Task: Save extracted content as a DOCX file while preserving embedded fields and their evaluation results.
   - Workflow: targeted-node-extraction
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `batch-process-multiple-word-files-extracting-content-between-specified-nodes-and-saving-ea.cs`
   - Task: Batch process multiple Word files, extracting content between specified nodes and saving each extraction as an individual PDF.
   - Workflow: input-bootstrap
   - Outputs: pdf
-  - Selected engine: llm
+  - Selected engine: mcp
 - `batch-extract-images-from-shape-nodes-in-documents-and-generate-a-csv-manifest-listing-ima.cs`
   - Task: Batch extract images from shape nodes in documents and generate a CSV manifest listing image names and sources.
   - Workflow: table-structured-extraction
@@ -138,7 +140,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Extract content between two bookmark nodes and replace the original range with a placeholder paragraph.
   - Workflow: targeted-node-extraction
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `extract-content-between-a-paragraph-and-a-comment-node-then-log-the-extracted-text-to-a-mo.cs`
   - Task: Extract content between a paragraph and a comment node, then log the extracted text to a monitoring system.
   - Workflow: targeted-node-extraction
@@ -153,7 +155,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Create a command-line tool that accepts start and end node IDs and outputs the extracted segment as PDF.
   - Workflow: text-range-extraction
   - Outputs: pdf
-  - Selected engine: llm
+  - Selected engine: mcp
 - `create-a-unit-test-that-verifies-extraction-of-content-between-two-specific-paragraphs-ret.cs`
   - Task: Create a unit test that verifies extraction of content between two specific paragraphs retains original text styling.
   - Workflow: text-range-extraction
@@ -168,7 +170,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Extract a range that starts inside a shape's image and ends at a field, preserving both elements.
   - Workflow: image-shape-extraction
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `extract-content-between-two-nodes-in-a-document-then-encrypt-the-resulting-file-using-a-pa.cs`
   - Task: Extract content between two nodes in a document, then encrypt the resulting file using a password.
   - Workflow: text-range-extraction
@@ -188,46 +190,65 @@ Use the simplest workflow that satisfies the task.
 ## Common failure patterns and preferred agent fixes
 
 - **Cross-document node insertion**
-  - Symptom: Runtime throws ArgumentException: "The newChild was created from a different document than the one that created this node."
-  - Root cause: Nodes from the source Document are inserted directly into a destination Document without using NodeImporter, leaving them bound to the original document.
-  - Preferred fix: Create a NodeImporter (ImportFormatMode.KeepSourceFormatting) and import each node before appending or inserting it into the target document.
-  - Prevention: Always import or clone nodes via NodeImporter whenever a node moves between documents.
+  - Symptom: Runtime ArgumentException: "The newChild was created from a different document than the one that created this node."
+  - Root cause: Nodes are appended directly from the source document without being imported into the destination document.
+  - Preferred fix: Create a NodeImporter (new NodeImporter(sourceDoc, destDoc, ImportFormatMode.KeepSourceFormatting)) and call ImportNode for each node before insertion.
+  - Prevention: Always import or clone nodes before adding them to a different Document instance.
 
-- **Missing API members**
-  - Symptom: Compile errors CS1061 or CS0234 indicating undefined members such as FieldStart.EndNode, Document.ExtractContent, or DocumentImporter.
-  - Root cause: Code references members that do not exist in the current Aspose.Words version or omits required namespaces.
-  - Preferred fix: Replace invalid members with the correct API (e.g., use Field.StartNode, Document.Range, and avoid non-existent extension methods) and add the proper using directives.
-  - Prevention: Consult the official Aspose.Words documentation for the exact member names and required namespaces before coding.
+- **Missing Importing namespace**
+  - Symptom: Compile error CS0234: "The type or namespace name 'Importing' does not exist in the namespace 'Aspose.Words'."
+  - Root cause: The source code references NodeImporter without adding the required using directive or assembly reference.
+  - Preferred fix: Add `using Aspose.Words.Importing;` and ensure the Aspose.Words assembly version includes the Importing namespace.
+  - Prevention: Reference the correct namespace whenever NodeImporter is used.
 
-- **Incorrect type casting**
-  - Symptom: Compiler reports CS0266: cannot implicitly convert type 'Node' to 'Paragraph'.
-  - Root cause: Assuming a generic Node is a Paragraph without checking its NodeType.
-  - Preferred fix: Verify node.NodeType == NodeType.Paragraph and cast explicitly (e.g., (Paragraph)node) or use pattern matching.
-  - Prevention: Validate node types before casting and use explicit casts only after confirming the type.
+- **Table type namespace omission**
+  - Symptom: Compile errors CS1061 or CS0246 when using Table, Row, or Cell types.
+  - Root cause: The code does not import Aspose.Words.Tables, so table-related classes are undefined.
+  - Preferred fix: Add `using Aspose.Words.Tables;` at the top of the file.
+  - Prevention: Include the Tables namespace whenever table structures are manipulated.
 
-- **Table namespace omission**
-  - Symptom: Compile errors because Table, Row, or Cell types are not recognized.
-  - Root cause: Missing the Aspose.Words.Tables namespace in the source file.
-  - Preferred fix: Add `using Aspose.Words.Tables;` or fully qualify the types (e.g., Aspose.Words.Tables.Table).
-  - Prevention: Include all required Aspose.Words sub-namespaces at the top of each file.
+- **Undefined paragraph style**
+  - Symptom: InvalidOperationException: "Cannot find style 'StartStyle'."
+  - Root cause: The extraction logic searches for a style that has not been created in the document.
+  - Preferred fix: Create the custom style programmatically before applying it, or verify that the style name exists in the document's Styles collection.
+  - Prevention: Always ensure custom styles are defined prior to lookup.
 
-- **Bookmark boundary misuse**
-  - Symptom: InvalidOperationException when extracting between bookmarks or when inserting placeholder paragraphs.
-  - Root cause: Using incorrect start/end nodes (e.g., BookmarkStart vs. BookmarkEnd) or inserting a Paragraph into a non-block container.
-  - Preferred fix: Reference BookmarkStart and BookmarkEnd correctly and insert placeholder Paragraphs only into a Body or Section.
-  - Prevention: Validate bookmark boundaries and ensure placeholder nodes are added to a block-level container.
+- **Invalid bookmark insertion point**
+  - Symptom: InvalidOperationException: "The node must be a block or an inline." when moving DocumentBuilder to a bookmark node.
+  - Root cause: DocumentBuilder.MoveTo is called with a BookmarkStart node instead of its containing Paragraph.
+  - Preferred fix: Move to `bookmark.BookmarkStart.ParentParagraph` or another block-level node.
+  - Prevention: Only pass block or inline nodes to DocumentBuilder.MoveTo.
+
+- **Comments API missing**
+  - Symptom: Compile error CS0234: "The type or namespace name 'Comments' does not exist in the namespace 'Aspose.Words'."
+  - Root cause: The code attempts to use a Comments namespace that is not part of the referenced Aspose.Words version.
+  - Preferred fix: Use `using Aspose.Words.Comments;` (or the correct namespace for the version) and reference the Comments assembly if required.
+  - Prevention: Verify the Aspose.Words version supports comment APIs and import the proper namespace.
+
+- **Incorrect NodeImporter method name**
+  - Symptom: CS1061: 'NodeImporter' does not contain a definition for 'Import'.
+  - Root cause: The code calls a non-existent Import method instead of the correct ImportNode method.
+  - Preferred fix: Replace calls to `importer.Import(...)` with `importer.ImportNode(node, true)`.
+  - Prevention: Consult the API reference for the exact method signature of NodeImporter.
+
+- **ImageData format property misuse**
+  - Symptom: CS1061: 'ImageData' does not contain a definition for 'ImageFormat'.
+  - Root cause: The code accesses a property that was removed or renamed in the current Aspose.Words version.
+  - Preferred fix: Use `imageData.ImageBytes` together with `imageData.ImageType` to determine the format, or call `imageData.Save` with a desired SaveFormat.
+  - Prevention: Refer to the latest Aspose.Words documentation for image handling properties.
 
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Primary package: `Aspose.Words` `26.10.0`
+- Primary package: `Aspose.Words` `26.11.0`
 
 ## Command reference
 
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.10.0
+dotnet add package Aspose.Words --version 26.11.0
+dotnet add package Aspose.Drawing.Common --version 26.10.0
 dotnet add package Newtonsoft.Json
 ```
 
@@ -242,4 +263,4 @@ dotnet run --configuration Release --no-build
 
 ## Category update guidance
 
-- Update all sample snippets to use NodeImporter for every node transfer and verify that the Aspose.Words version (26.10.0) matches the API signatures used.
+- Periodically verify that the Aspose.Words version used in the examples still contains the referenced namespaces and method signatures, updating using directives and API calls as needed.

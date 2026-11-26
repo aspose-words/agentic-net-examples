@@ -8,73 +8,60 @@ public class Program
     public static void Main()
     {
         // ------------------------------------------------------------
-        // Create a sample source document with several paragraphs.
+        // Create a source document with sample paragraphs.
         // ------------------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
-        srcBuilder.Writeln("First paragraph in source.");
-        srcBuilder.Writeln("Second paragraph in source.");
-        srcBuilder.Writeln("Third paragraph in source.");
+        srcBuilder.Writeln("Paragraph A");
+        srcBuilder.Writeln("Paragraph B");
+        srcBuilder.Writeln("Paragraph C");
         sourceDoc.Save("source.docx");
 
         // ------------------------------------------------------------
-        // Load the source document.
+        // Load the source document (already in memory) and collect its paragraphs.
         // ------------------------------------------------------------
-        Document loadedSource = new Document("source.docx");
+        ParagraphCollection sourceParagraphs = sourceDoc.FirstSection.Body.Paragraphs;
+        if (sourceParagraphs.Count == 0)
+            throw new InvalidOperationException("No paragraphs found in the source document.");
 
         // ------------------------------------------------------------
-        // Extract all paragraphs from the source document.
+        // Create a new empty document with a clean Section/Body hierarchy.
         // ------------------------------------------------------------
-        ParagraphCollection sourceParagraphs = loadedSource.FirstSection.Body.Paragraphs;
-        if (sourceParagraphs == null || sourceParagraphs.Count == 0)
-            throw new InvalidOperationException("No paragraphs were found in the source document.");
+        Document newDoc = new Document();
+        newDoc.RemoveAllChildren(); // Remove the default empty section.
 
-        // ------------------------------------------------------------
-        // Create a new destination document with an explicit Section/Body.
-        // ------------------------------------------------------------
-        Document destDoc = new Document();
-        destDoc.RemoveAllChildren();
-
-        Section destSection = new Section(destDoc);
-        destDoc.AppendChild(destSection);
-
-        Body destBody = new Body(destDoc);
-        destSection.AppendChild(destBody);
-
-        // Add an initial paragraph to demonstrate prepend operation.
-        DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
-        destBuilder.Writeln("Existing paragraph in destination document.");
+        Section section = new Section(newDoc);
+        newDoc.AppendChild(section);
+        Body body = new Body(newDoc);
+        section.AppendChild(body);
 
         // ------------------------------------------------------------
-        // Prepare an importer to move nodes from the source document to the destination.
+        // Add an initial paragraph to the new document.
         // ------------------------------------------------------------
-        NodeImporter importer = new NodeImporter(loadedSource, destDoc, ImportFormatMode.KeepSourceFormatting);
+        DocumentBuilder newBuilder = new DocumentBuilder(newDoc);
+        newBuilder.Writeln("Original content");
+        Paragraph originalParagraph = newDoc.FirstSection.Body.LastParagraph;
 
-        // Prepend the extracted paragraphs to the beginning of the destination body.
-        foreach (Paragraph para in sourceParagraphs)
+        // ------------------------------------------------------------
+        // Prepend each extracted paragraph before the original paragraph.
+        // Use NodeImporter to import nodes from the source document into the destination document.
+        // ------------------------------------------------------------
+        foreach (Paragraph srcPara in sourceParagraphs)
         {
-            // Import the paragraph into the destination document.
-            Node importedNode = importer.ImportNode(para, true);
-            if (importedNode == null)
-                continue; // Safety check.
+            // Import the source paragraph into the destination document, preserving formatting.
+            NodeImporter importer = new NodeImporter(srcPara.Document, newDoc, ImportFormatMode.KeepSourceFormatting);
+            Node importedNode = importer.ImportNode(srcPara, true);
 
-            // Insert before the current first node (or append if the body is empty).
-            Node firstNode = destBody.FirstChild;
-            if (firstNode != null)
-                destBody.InsertBefore(importedNode, firstNode);
-            else
-                destBody.AppendChild(importedNode);
+            // The imported node is a Paragraph; insert it before the original paragraph.
+            body.InsertBefore(importedNode, originalParagraph);
         }
 
         // ------------------------------------------------------------
-        // Save the resulting document.
+        // Save the resulting document and verify its creation.
         // ------------------------------------------------------------
-        destDoc.Save("result.docx");
+        newDoc.Save("result.docx");
 
-        // Validate that the output file was created.
         if (!File.Exists("result.docx"))
             throw new InvalidOperationException("The result document was not created.");
-
-        Console.WriteLine("Extraction and prepend operation completed successfully.");
     }
 }

@@ -4,15 +4,15 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class ImageExtractionAndEmbedding
+public class Program
 {
     public static void Main()
     {
-        // Create a sample source document with an embedded image.
+        // Step 1: Create a source document containing an image shape.
         Document sourceDoc = new Document();
         DocumentBuilder sourceBuilder = new DocumentBuilder(sourceDoc);
 
-        // 1x1 pixel PNG image (transparent) encoded in Base64.
+        // A tiny 1x1 PNG image encoded in Base64.
         string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9yhl4AAAAASUVORK5CYII=";
         byte[] pngBytes = Convert.FromBase64String(base64Png);
         using (MemoryStream imageStream = new MemoryStream(pngBytes))
@@ -20,50 +20,40 @@ public class ImageExtractionAndEmbedding
             sourceBuilder.InsertImage(imageStream);
         }
 
-        const string sourcePath = "source.docx";
-        sourceDoc.Save(sourcePath);
+        sourceDoc.Save("source.docx");
 
-        // Load the source document.
-        Document loadedSource = new Document(sourcePath);
+        // Step 2: Load the source document.
+        Document loadedSource = new Document("source.docx");
 
-        // Find all shape nodes that contain images.
-        var imageShapes = loadedSource.GetChildNodes(NodeType.Shape, true)
-                                      .OfType<Shape>()
-                                      .Where(s => s.HasImage)
-                                      .ToList();
+        // Step 3: Locate the first shape that contains an image.
+        Shape imageShape = loadedSource
+            .GetChildNodes(NodeType.Shape, true)
+            .OfType<Shape>()
+            .FirstOrDefault(s => s.HasImage);
 
-        if (!imageShapes.Any())
-            throw new InvalidOperationException("No image shapes were found in the source document.");
+        if (imageShape is null)
+            throw new InvalidOperationException("No image shape found in the source document.");
 
-        // Create a new destination document.
+        // Step 4: Extract the image bytes from the shape.
+        byte[] extractedImageBytes = imageShape.ImageData.ImageBytes;
+        if (extractedImageBytes == null || extractedImageBytes.Length == 0)
+            throw new InvalidOperationException("Failed to extract image bytes.");
+
+        // (Optional) Save the extracted image to verify extraction.
+        File.WriteAllBytes("extracted-image.png", extractedImageBytes);
+        if (!File.Exists("extracted-image.png"))
+            throw new InvalidOperationException("Extracted image file was not created.");
+
+        // Step 5: Create a new destination document and embed the extracted image.
         Document destDoc = new Document();
         DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
-
-        // Embed each extracted image into the destination document.
-        foreach (Shape shape in imageShapes)
+        using (MemoryStream destImageStream = new MemoryStream(extractedImageBytes))
         {
-            byte[] extractedBytes = shape.ImageData.ImageBytes;
-            using (MemoryStream extractedStream = new MemoryStream(extractedBytes))
-            {
-                destBuilder.InsertImage(extractedStream);
-                // Add a line break between images for readability.
-                destBuilder.Writeln();
-            }
+            destBuilder.InsertImage(destImageStream);
         }
 
-        const string destPath = "extracted-images.docx";
-        destDoc.Save(destPath);
-
-        // Validate that the destination document contains the embedded images.
-        Document validateDoc = new Document(destPath);
-        var embeddedImages = validateDoc.GetChildNodes(NodeType.Shape, true)
-                                        .OfType<Shape>()
-                                        .Where(s => s.HasImage)
-                                        .Count();
-
-        if (embeddedImages == 0)
-            throw new InvalidOperationException("No images were embedded into the destination document.");
-
-        // Cleanup: optional removal of temporary files can be added here if desired.
+        destDoc.Save("output.docx");
+        if (!File.Exists("output.docx"))
+            throw new InvalidOperationException("Destination document was not created.");
     }
 }

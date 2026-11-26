@@ -4,29 +4,32 @@
     "slug": "extraction",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Create a realistic sample document locally, locate the exact start and end nodes, import each node into a freshly constructed destination document via NodeImporter, and finally save the result while confirming the output file exists.",
+    "preferred_workflow": "Generate a local source document (DOCX, DOCM, etc.) that contains the required elements, locate start and end nodes via explicit type checks (Paragraph, Run, Bookmark, Table, etc.), use a NodeImporter with ImportFormatMode.KeepSourceFormatting to import each node into a fresh destination document, assemble the imported nodes in the correct order, and finally save the destination document in the target format.",
     "required_packages": [
       "Aspose.Words",
-      "Newtonsoft.Json"
+      "Newtonsoft.Json",
+      "Aspose.Drawing.Common"
     ],
     "package_versions": {
-      "Aspose.Words": "26.10.0",
-      "Newtonsoft.Json": ""
+      "Aspose.Words": "26.11.0",
+      "Newtonsoft.Json": "",
+      "Aspose.Drawing.Common": "26.10.0"
     },
     "required_namespaces": [
       "System",
       "System.IO",
       "Aspose.Words",
       "Aspose.Words.Tables",
-      "Aspose.Words.Fields",
-      "Aspose.Words.Saving",
       "System.Linq",
+      "Aspose.Words.Fields",
       "System.Collections.Generic",
+      "Aspose.Words.Markup",
       "Aspose.Words.Drawing",
+      "Aspose.Words.Saving",
       "Newtonsoft.Json",
       "System.IO.Compression",
+      "Aspose.Drawing",
       "Aspose.Words.Notes",
-      "Aspose.Words.Fonts",
       "System.Threading.Tasks"
     ],
     "key_apis": [
@@ -38,19 +41,19 @@
       "NodeType",
       "SaveFormat",
       "Range",
+      "Table",
       "Field",
       "FieldType",
       "Run",
-      "Table",
-      "StyleIdentifier",
+      "Style",
+      "Font",
       "Cell",
       "MemoryStream",
-      "Shape",
-      "Path",
-      "CompositeNode",
+      "StyleIdentifier",
       "Directory",
-      "ImageData",
-      "Font"
+      "Path",
+      "Shape",
+      "ImageData"
     ]
   },
   "stats": {
@@ -66,50 +69,77 @@
   },
   "rules_summary": {
     "strict_api_bans": [
-      "Do not reference System.Drawing, assume no pre-existing files, and avoid inventing custom extraction helpers."
+      "Do not reference System.Drawing; use Aspose.Drawing for all drawing operations.",
+      "Do not assume external files exist; always create sample documents or streams within the example.",
+      "Do not fabricate helper APIs; rely solely on documented Aspose.Words types such as DocumentBuilder, NodeImporter, and the classes in Aspose.Words.Tables."
     ],
     "canonical_patterns": [
-      "Enumerate actual document nodes, validate their NodeType, and use Aspose.Words.Tables for table structures; serialize JSON with Newtonsoft.Json when required."
+      "Enumerate actual document nodes and verify NodeType before processing.",
+      "When extracting a range, import each node with NodeImporter before appending it to the destination body.",
+      "Use Aspose.Words.Tables for Table, Row, and Cell handling, and Aspose.Words.Drawing for image manipulation."
     ],
     "nullable_warning_prevention": [
-      "Initialize all non-nullable members, guard against null values before dereferencing, and declare locals as nullable when a null result is legitimate."
+      "Initialize all non-nullable reference-type fields (e.g., Document, Section) at declaration to silence CS8618.",
+      "Guard any potentially null node lookups with explicit null checks before dereferencing.",
+      "Declare locals as nullable when a null value is a legitimate outcome and test for null before use."
     ]
   },
   "common_failure_patterns": [
     {
       "pattern": "Cross-document node insertion",
-      "symptom": "Runtime throws ArgumentException: \"The newChild was created from a different document than the one that created this node.\"",
-      "cause": "Nodes from the source Document are inserted directly into a destination Document without using NodeImporter, leaving them bound to the original document.",
-      "fix": "Create a NodeImporter (ImportFormatMode.KeepSourceFormatting) and import each node before appending or inserting it into the target document.",
-      "prevention": "Always import or clone nodes via NodeImporter whenever a node moves between documents."
+      "symptom": "Runtime ArgumentException: \"The newChild was created from a different document than the one that created this node.\"",
+      "cause": "Nodes are appended directly from the source document without being imported into the destination document.",
+      "fix": "Create a NodeImporter (new NodeImporter(sourceDoc, destDoc, ImportFormatMode.KeepSourceFormatting)) and call ImportNode for each node before insertion.",
+      "prevention": "Always import or clone nodes before adding them to a different Document instance."
     },
     {
-      "pattern": "Missing API members",
-      "symptom": "Compile errors CS1061 or CS0234 indicating undefined members such as FieldStart.EndNode, Document.ExtractContent, or DocumentImporter.",
-      "cause": "Code references members that do not exist in the current Aspose.Words version or omits required namespaces.",
-      "fix": "Replace invalid members with the correct API (e.g., use Field.StartNode, Document.Range, and avoid non-existent extension methods) and add the proper using directives.",
-      "prevention": "Consult the official Aspose.Words documentation for the exact member names and required namespaces before coding."
+      "pattern": "Missing Importing namespace",
+      "symptom": "Compile error CS0234: \"The type or namespace name 'Importing' does not exist in the namespace 'Aspose.Words'.\"",
+      "cause": "The source code references NodeImporter without adding the required using directive or assembly reference.",
+      "fix": "Add `using Aspose.Words.Importing;` and ensure the Aspose.Words assembly version includes the Importing namespace.",
+      "prevention": "Reference the correct namespace whenever NodeImporter is used."
     },
     {
-      "pattern": "Incorrect type casting",
-      "symptom": "Compiler reports CS0266: cannot implicitly convert type 'Node' to 'Paragraph'.",
-      "cause": "Assuming a generic Node is a Paragraph without checking its NodeType.",
-      "fix": "Verify node.NodeType == NodeType.Paragraph and cast explicitly (e.g., (Paragraph)node) or use pattern matching.",
-      "prevention": "Validate node types before casting and use explicit casts only after confirming the type."
+      "pattern": "Table type namespace omission",
+      "symptom": "Compile errors CS1061 or CS0246 when using Table, Row, or Cell types.",
+      "cause": "The code does not import Aspose.Words.Tables, so table-related classes are undefined.",
+      "fix": "Add `using Aspose.Words.Tables;` at the top of the file.",
+      "prevention": "Include the Tables namespace whenever table structures are manipulated."
     },
     {
-      "pattern": "Table namespace omission",
-      "symptom": "Compile errors because Table, Row, or Cell types are not recognized.",
-      "cause": "Missing the Aspose.Words.Tables namespace in the source file.",
-      "fix": "Add `using Aspose.Words.Tables;` or fully qualify the types (e.g., Aspose.Words.Tables.Table).",
-      "prevention": "Include all required Aspose.Words sub-namespaces at the top of each file."
+      "pattern": "Undefined paragraph style",
+      "symptom": "InvalidOperationException: \"Cannot find style 'StartStyle'.\"",
+      "cause": "The extraction logic searches for a style that has not been created in the document.",
+      "fix": "Create the custom style programmatically before applying it, or verify that the style name exists in the document's Styles collection.",
+      "prevention": "Always ensure custom styles are defined prior to lookup."
     },
     {
-      "pattern": "Bookmark boundary misuse",
-      "symptom": "InvalidOperationException when extracting between bookmarks or when inserting placeholder paragraphs.",
-      "cause": "Using incorrect start/end nodes (e.g., BookmarkStart vs. BookmarkEnd) or inserting a Paragraph into a non-block container.",
-      "fix": "Reference BookmarkStart and BookmarkEnd correctly and insert placeholder Paragraphs only into a Body or Section.",
-      "prevention": "Validate bookmark boundaries and ensure placeholder nodes are added to a block-level container."
+      "pattern": "Invalid bookmark insertion point",
+      "symptom": "InvalidOperationException: \"The node must be a block or an inline.\" when moving DocumentBuilder to a bookmark node.",
+      "cause": "DocumentBuilder.MoveTo is called with a BookmarkStart node instead of its containing Paragraph.",
+      "fix": "Move to `bookmark.BookmarkStart.ParentParagraph` or another block-level node.",
+      "prevention": "Only pass block or inline nodes to DocumentBuilder.MoveTo."
+    },
+    {
+      "pattern": "Comments API missing",
+      "symptom": "Compile error CS0234: \"The type or namespace name 'Comments' does not exist in the namespace 'Aspose.Words'.\"",
+      "cause": "The code attempts to use a Comments namespace that is not part of the referenced Aspose.Words version.",
+      "fix": "Use `using Aspose.Words.Comments;` (or the correct namespace for the version) and reference the Comments assembly if required.",
+      "prevention": "Verify the Aspose.Words version supports comment APIs and import the proper namespace."
+    },
+    {
+      "pattern": "Incorrect NodeImporter method name",
+      "symptom": "CS1061: 'NodeImporter' does not contain a definition for 'Import'.",
+      "cause": "The code calls a non-existent Import method instead of the correct ImportNode method.",
+      "fix": "Replace calls to `importer.Import(...)` with `importer.ImportNode(node, true)`.",
+      "prevention": "Consult the API reference for the exact method signature of NodeImporter."
+    },
+    {
+      "pattern": "ImageData format property misuse",
+      "symptom": "CS1061: 'ImageData' does not contain a definition for 'ImageFormat'.",
+      "cause": "The code accesses a property that was removed or renamed in the current Aspose.Words version.",
+      "fix": "Use `imageData.ImageBytes` together with `imageData.ImageType` to determine the format, or call `imageData.Save` with a desired SaveFormat.",
+      "prevention": "Refer to the latest Aspose.Words documentation for image handling properties."
     }
   ],
   "examples": [
@@ -133,8 +163,8 @@
         "docx",
         "doc"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 3,
@@ -177,8 +207,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 7,
@@ -210,8 +240,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 10,
@@ -232,8 +262,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 12,
@@ -243,8 +273,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 13,
@@ -254,8 +284,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 14,
@@ -265,8 +295,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 15,
@@ -342,8 +372,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 22,
@@ -375,8 +405,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 25,
@@ -408,8 +438,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 28,
@@ -446,13 +476,13 @@
     }
   ],
   "narrative": {
-    "overview": "The Extraction category for Aspose.Words demonstrates how to isolate and copy specific node ranges-such as paragraphs, tables, runs, and bookmarks-into new documents. Verified examples show correct handling of source creation, node importing, and output validation for DOCX, DOCM, HTML, and XPS targets.",
-    "purpose": "Provide an AI coding assistant with a concise, end-to-end reference for building reliable extraction utilities that locate start and end markers, import nodes safely, and persist the result using only supported Aspose.Words APIs.",
+    "overview": "The Extraction category demonstrates how to isolate and copy specific node ranges from Word documents using Aspose.Words APIs. Verified examples show end-to-end workflows that create sample inputs, locate start and end boundaries, import nodes safely, and persist the result in the desired format.",
+    "purpose": "Provide an AI coding assistant with concise guidance for building reliable node-range extraction utilities that respect Aspose.Words document hierarchies, avoid cross-document node insertion errors, and produce correctly formatted output files.",
     "validation_priorities": [
-      "Ensure every extracted node is imported before insertion and that the saved file is present on disk."
+      "Validate that the extracted document contains the expected number of nodes and that the output file exists on disk."
     ],
     "maintenance_notes": [
-      "Update all sample snippets to use NodeImporter for every node transfer and verify that the Aspose.Words version (26.10.0) matches the API signatures used."
+      "Periodically verify that the Aspose.Words version used in the examples still contains the referenced namespaces and method signatures, updating using directives and API calls as needed."
     ]
   }
 }

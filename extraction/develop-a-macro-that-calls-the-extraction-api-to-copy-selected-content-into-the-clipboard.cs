@@ -1,46 +1,48 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
 
 public class Program
 {
-    [STAThread]
     public static void Main()
     {
-        // Create a sample source document with three paragraphs.
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
-        builder.Writeln("First paragraph.");
-        builder.Writeln("Second paragraph to copy.");
-        builder.Writeln("Third paragraph.");
-        source.Save("source.docx");
+        // Create a sample document with three paragraphs.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("First paragraph - not selected.");
+        builder.Writeln("Second paragraph - will be copied to clipboard.");
+        builder.Writeln("Third paragraph - not selected.");
 
-        // Load the document we just created.
-        Document loaded = new Document("source.docx");
+        // Save the sample document locally.
+        const string sourcePath = "sample.docx";
+        doc.Save(sourcePath);
 
-        // Select the second paragraph (index 1) as the content to extract.
-        Paragraph paragraphToCopy = loaded.FirstSection.Body.Paragraphs[1];
+        // Load the document from the file system.
+        Document loaded = new Document(sourcePath);
+
+        // Locate the second paragraph (index 1) that we want to copy.
+        Paragraph paragraphToCopy = loaded.FirstSection?.Body?.Paragraphs[1];
         if (paragraphToCopy == null)
-            throw new InvalidOperationException("The paragraph to copy was not found.");
+            throw new InvalidOperationException("The target paragraph was not found.");
 
-        // Extract the paragraph text.
+        // Extract the text of the selected paragraph.
         string extractedText = paragraphToCopy.GetText();
 
-        // Instead of using System.Windows.Forms.Clipboard (which requires additional references),
-        // write the extracted text to a deterministic file that represents the clipboard content.
-        const string clipboardFile = "clipboard.txt";
-        File.WriteAllText(clipboardFile, extractedText);
+        // In a typical desktop environment we would place the text on the system clipboard.
+        // Since this example runs in a console without UI libraries, we simulate the clipboard
+        // by writing the extracted text to a deterministic output file.
+        const string clipboardPath = "clipboard.txt";
+        File.WriteAllText(clipboardPath, extractedText);
 
-        // Verify that the file was created and contains the expected text.
-        if (!File.Exists(clipboardFile))
-            throw new InvalidOperationException("Failed to create the clipboard representation file.");
+        // Verify that the simulated clipboard file was created and contains the expected text.
+        if (!File.Exists(clipboardPath))
+            throw new InvalidOperationException("Expected clipboard output file was not created.");
 
-        string fileContent = File.ReadAllText(clipboardFile);
-        if (fileContent != extractedText)
-            throw new InvalidOperationException("The clipboard representation does not match the extracted content.");
+        string clipboardText = File.ReadAllText(clipboardPath);
+        if (clipboardText != extractedText)
+            throw new InvalidOperationException("Simulated clipboard content does not match the extracted text.");
 
-        // Optional: output a confirmation message.
-        Console.WriteLine("Paragraph extracted and written to '" + clipboardFile + "'.");
+        // The example completes successfully if no exception is thrown.
+        Console.WriteLine("Paragraph extracted and written to '" + clipboardPath + "'.");
     }
 }

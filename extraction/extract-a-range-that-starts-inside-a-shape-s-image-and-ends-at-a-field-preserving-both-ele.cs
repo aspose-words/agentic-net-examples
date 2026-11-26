@@ -5,21 +5,18 @@ using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Fields;
 using Aspose.Words.Tables;
-using Newtonsoft.Json;
 
-public class ExtractionExample
+public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create a sample document containing an image (inside a shape) and a field.
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
+        // 1. Create a sample source document with an image and a field.
+        // -------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        builder.Writeln("Paragraph before image.");
-
-        // Insert a tiny PNG image (inline shape).
+        // Insert a tiny PNG image.
         byte[] pngBytes = Convert.FromBase64String(
             "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9yhl4AAAAASUVORK5CYII=");
         using (MemoryStream imgStream = new MemoryStream(pngBytes))
@@ -27,81 +24,93 @@ public class ExtractionExample
             builder.InsertImage(imgStream);
         }
 
-        builder.Writeln("Paragraph after image, before field.");
+        // End the paragraph that contains the image.
+        builder.Writeln();
 
-        // Insert a DATE field.
-        builder.InsertField(FieldType.FieldDate, true);
-        builder.Writeln("Paragraph after field.");
+        // Insert a MERGEFIELD field.
+        builder.InsertField("MERGEFIELD MyField", "Field Result");
 
+        // Save the source document.
         const string sourcePath = "source.docx";
         sourceDoc.Save(sourcePath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the document and locate the start (image) and end (field) nodes.
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
+        // 2. Load the document (follow load rule).
+        // -------------------------------------------------
         Document loadedDoc = new Document(sourcePath);
 
+        // -------------------------------------------------
+        // 3. Locate the image‑bearing shape.
+        // -------------------------------------------------
         Shape imageShape = loadedDoc.GetChildNodes(NodeType.Shape, true)
             .OfType<Shape>()
             .FirstOrDefault(s => s.HasImage);
         if (imageShape == null)
-            throw new InvalidOperationException("No image shape found in the document.");
+            throw new InvalidOperationException("Image shape not found.");
 
-        FieldStart fieldStart = loadedDoc.GetChildNodes(NodeType.FieldStart, true)
-            .OfType<FieldStart>()
-            .FirstOrDefault();
-        if (fieldStart == null)
-            throw new InvalidOperationException("No field start node found in the document.");
+        // -------------------------------------------------
+        // 4. Locate the first field.
+        // -------------------------------------------------
+        Field field = loadedDoc.Range.Fields.FirstOrDefault();
+        if (field == null)
+            throw new InvalidOperationException("Field not found.");
 
+        // -------------------------------------------------
+        // 5. Determine the containing paragraphs.
+        // -------------------------------------------------
         Paragraph startParagraph = imageShape.ParentNode as Paragraph;
-        Paragraph endParagraph = fieldStart.ParentNode as Paragraph;
+        Paragraph endParagraph = field.Start.ParentNode as Paragraph;
         if (startParagraph == null || endParagraph == null)
-            throw new InvalidOperationException("Unable to locate parent paragraphs for extraction.");
+            throw new InvalidOperationException("Unable to determine paragraph boundaries.");
 
-        // -----------------------------------------------------------------
-        // 3. Build a new document that will contain the extracted range.
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
+        // 6. Build a new document that contains the range
+        //    from the start paragraph (inclusive) to the end paragraph (inclusive).
+        // -------------------------------------------------
         Document resultDoc = new Document();
         resultDoc.RemoveAllChildren();
 
         Section resultSection = new Section(resultDoc);
         resultDoc.AppendChild(resultSection);
+
         Body resultBody = new Body(resultDoc);
         resultSection.AppendChild(resultBody);
 
-        // Use NodeImporter to copy nodes from the source document to the result document.
-        NodeImporter importer = new NodeImporter(loadedDoc, resultDoc, ImportFormatMode.KeepSourceFormatting);
-
-        Node importedStart = importer.ImportNode(startParagraph, true);
+        // Import the start paragraph into the result document.
+        Node importedStart = resultDoc.ImportNode(startParagraph, true);
         resultBody.AppendChild(importedStart);
 
-        if (!ReferenceEquals(startParagraph, endParagraph))
+        // If the end paragraph is different, import it as well.
+        if (!ReferenceEquals(endParagraph, startParagraph))
         {
-            Node importedEnd = importer.ImportNode(endParagraph, true);
+            Node importedEnd = resultDoc.ImportNode(endParagraph, true);
             resultBody.AppendChild(importedEnd);
         }
 
-        // -----------------------------------------------------------------
-        // 4. Save the extracted content.
-        // -----------------------------------------------------------------
-        const string resultPath = "extracted-range.docx";
+        // -------------------------------------------------
+        // 7. Save the extracted content.
+        // -------------------------------------------------
+        const string resultPath = "extracted.docx";
         resultDoc.Save(resultPath);
 
+        // -------------------------------------------------
+        // 8. Validation: ensure the extracted document contains both the image and the field.
+        // -------------------------------------------------
+        Document validationDoc = new Document(resultPath);
+        bool hasImage = validationDoc.GetChildNodes(NodeType.Shape, true)
+            .OfType<Shape>()
+            .Any(s => s.HasImage);
+        bool hasField = validationDoc.Range.Fields.Count > 0;
+
+        if (!hasImage)
+            throw new InvalidOperationException("Extracted document does not contain the expected image.");
+        if (!hasField)
+            throw new InvalidOperationException("Extracted document does not contain the expected field.");
+
+        // Ensure the output file was created.
         if (!File.Exists(resultPath))
-            throw new InvalidOperationException("The extracted document was not created.");
+            throw new InvalidOperationException("Result file was not created.");
 
-        // -----------------------------------------------------------------
-        // 5. Optional: write a JSON report about the extraction.
-        // -----------------------------------------------------------------
-        var report = new
-        {
-            SourceDocument = sourcePath,
-            ExtractedDocument = resultPath,
-            ExtractedElements = new[] { "ImageShape", "Field" },
-            ExtractionTimeUtc = DateTime.UtcNow
-        };
-
-        string jsonReport = JsonConvert.SerializeObject(report, Formatting.Indented);
-        File.WriteAllText("extraction-report.json", jsonReport);
+        // Example completed successfully.
     }
 }
