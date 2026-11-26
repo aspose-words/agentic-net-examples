@@ -1,47 +1,64 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Tables;
 
-public class Program
+namespace ResetLineSpacingExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-
-        // Add a paragraph with a custom line spacing value.
-        Paragraph para = new Paragraph(doc);
-        Run run = new Run(doc, "This is a sample paragraph with custom line spacing.");
-        // Set a non‑default line spacing via ParagraphFormat.
-        para.ParagraphFormat.LineSpacing = 20.0;
-        para.AppendChild(run);
-        doc.FirstSection.Body.AppendChild(para);
-
-        // Add another paragraph that uses the default spacing.
-        Paragraph para2 = new Paragraph(doc);
-        para2.AppendChild(new Run(doc, "Another paragraph with default spacing."));
-        doc.FirstSection.Body.AppendChild(para2);
-
-        // Reset line spacing to the default for all paragraphs.
-        // Setting LineSpacing to 0 restores the automatic (default) line‑spacing rule.
-        foreach (Paragraph p in doc.GetChildNodes(NodeType.Paragraph, true))
+        public static void Main()
         {
-            p.ParagraphFormat.LineSpacing = 0;
-            // No need to set LineSpacingRule explicitly; a value of 0 makes it Auto.
-        }
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Save the document to disk.
-        string outputPath = "Output.docx";
-        doc.Save(outputPath);
+            // Get the first (and only) section and its body.
+            Section section = doc.Sections[0];
+            Body body = section.Body;
 
-        // Verify that the file was saved successfully.
-        if (File.Exists(outputPath))
-        {
-            Console.WriteLine("Document saved successfully.");
-        }
-        else
-        {
-            Console.WriteLine("Failed to save document.");
+            // Paragraph with custom line spacing (30 points, exactly).
+            Paragraph para1 = new Paragraph(doc);
+            Run run1 = new Run(doc, "This paragraph has custom line spacing.");
+            para1.ParagraphFormat.LineSpacing = 30.0;
+            para1.ParagraphFormat.LineSpacingRule = Aspose.Words.LineSpacingRule.Exactly;
+            para1.AppendChild(run1);
+            body.AppendChild(para1);
+
+            // Paragraph that uses the default line spacing.
+            Paragraph para2 = new Paragraph(doc);
+            Run run2 = new Run(doc, "This paragraph uses the default line spacing.");
+            para2.AppendChild(run2);
+            body.AppendChild(para2);
+
+            // Reset line spacing for all paragraphs to the default behavior.
+            // Setting LineSpacing to 0 restores the default; the rule does not need to be set explicitly.
+            foreach (Paragraph paragraph in doc.GetChildNodes(NodeType.Paragraph, true))
+            {
+                paragraph.ParagraphFormat.LineSpacing = 0;
+                // No need to set LineSpacingRule because a value of 0 makes the rule irrelevant.
+            }
+
+            // Validate that every paragraph now has the default line‑spacing setting (LineSpacing == 0).
+            foreach (Paragraph paragraph in doc.GetChildNodes(NodeType.Paragraph, true))
+            {
+                if (paragraph.ParagraphFormat.LineSpacing != 0)
+                {
+                    throw new InvalidOperationException("Line spacing reset validation failed.");
+                }
+            }
+
+            // Save the document to the current directory.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
+            doc.Save(outputPath);
+
+            // Ensure the file was created.
+            if (!File.Exists(outputPath))
+            {
+                throw new FileNotFoundException("The output document was not created.", outputPath);
+            }
+
+            // Indicate success.
+            Console.WriteLine("Document saved successfully to: " + outputPath);
         }
     }
 }

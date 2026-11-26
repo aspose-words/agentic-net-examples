@@ -7,40 +7,36 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a paragraph with sample text.
-        builder.Writeln("Sample text with red fill and 30% transparency.");
+        builder.Writeln("Sample text for font fill color and transparency.");
 
         // Retrieve the first Run node that contains the text.
-        Run run = (Run)doc.GetChild(NodeType.Run, 0, true);
+        Run run = (Run)doc.GetChildNodes(NodeType.Run, true)[0];
 
-        // Create Aspose.Drawing.Color red and convert to System.Drawing.Color.
-        Aspose.Drawing.Color asposeRed = Aspose.Drawing.Color.Red;
-        System.Drawing.Color sysRed = System.Drawing.Color.FromArgb(asposeRed.ToArgb());
+        // Set the fill color to red using Aspose.Drawing.Color,
+        // converting it to System.Drawing.Color as required by the API.
+        run.Font.Fill.Color = System.Drawing.Color.FromArgb(Color.Red.ToArgb());
 
-        // Apply fill color and transparency to the font.
-        run.Font.Fill.Color = sysRed;
-        run.Font.Fill.Transparency = 0.3; // 30% transparency
+        // Set the fill transparency to 30% (0.3).
+        run.Font.Fill.Transparency = 0.3f;
 
         // Validate that the properties were set correctly.
-        bool colorMatches = run.Font.Fill.Color.ToArgb() == sysRed.ToArgb();
-        bool transparencyMatches = Math.Abs(run.Font.Fill.Transparency - 0.3) < 0.0001;
+        bool colorMatches = run.Font.Fill.Color.ToArgb() == System.Drawing.Color.FromArgb(Color.Red.ToArgb()).ToArgb();
+        bool transparencyMatches = Math.Abs(run.Font.Fill.Transparency - 0.3f) < 0.0001f;
 
-        // Save the document to disk.
+        if (!colorMatches || !transparencyMatches)
+            throw new Exception("Font fill properties were not set correctly.");
+
+        // Save the document to a file.
         string outputPath = "Output.docx";
         doc.Save(outputPath);
 
-        // Verify that the file exists and properties are correct.
-        if (System.IO.File.Exists(outputPath) && colorMatches && transparencyMatches)
-        {
-            Console.WriteLine("Document created successfully with the specified font fill.");
-        }
-        else
-        {
-            Console.WriteLine("Document creation failed or properties not set correctly.");
-        }
+        // Ensure the output file exists.
+        if (!System.IO.File.Exists(outputPath))
+            throw new Exception("Failed to create the output document.");
     }
 }

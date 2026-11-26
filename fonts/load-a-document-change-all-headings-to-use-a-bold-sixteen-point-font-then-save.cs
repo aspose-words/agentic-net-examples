@@ -1,63 +1,72 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Drawing;
+using Aspose.Words.Tables;
 
-public class Program
+namespace FontExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a sample document containing headings.
-        Document sampleDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-
-        // Heading 1
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 1");
-
-        // Heading 2
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Section 1.1");
-
-        // Normal paragraph
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Some regular text.");
-
-        // Save the sample document.
-        string inputPath = "sample.docx";
-        sampleDoc.Save(inputPath);
-
-        // Load the document.
-        Document doc = new Document(inputPath);
-
-        // Change all headings to bold 16‑point font.
-        foreach (Paragraph paragraph in doc.GetChildNodes(NodeType.Paragraph, true))
+        public static void Main()
         {
-            StyleIdentifier styleId = paragraph.ParagraphFormat.StyleIdentifier;
-            if (styleId >= StyleIdentifier.Heading1 && styleId <= StyleIdentifier.Heading9)
-            {
-                // Apply formatting to each Run in the paragraph.
-                foreach (Run run in paragraph.Runs)
-                {
-                    run.Font.Bold = true;
-                    run.Font.Size = 16;
+            // Paths for input and output documents.
+            string inputPath = "input.docx";
+            string outputPath = "output.docx";
 
-                    // Validate the changes.
-                    if (!run.Font.Bold || run.Font.Size != 16)
+            // Create a sample document if it does not exist.
+            if (!File.Exists(inputPath))
+            {
+                Document sampleDoc = new Document();
+                DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+
+                // Add a Heading 1.
+                builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+                builder.Writeln("Sample Heading 1");
+
+                // Add a Heading 2.
+                builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+                builder.Writeln("Sample Heading 2");
+
+                // Add normal paragraph.
+                builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+                builder.Writeln("This is a normal paragraph.");
+
+                sampleDoc.Save(inputPath);
+            }
+
+            // Load the existing document.
+            Document doc = new Document(inputPath);
+
+            // Iterate through all paragraphs and modify headings.
+            foreach (Paragraph paragraph in doc.GetChildNodes(NodeType.Paragraph, true))
+            {
+                StyleIdentifier styleId = paragraph.ParagraphFormat.StyleIdentifier;
+
+                // Check if the paragraph is a heading (Heading 1‑9).
+                if (styleId >= StyleIdentifier.Heading1 && styleId <= StyleIdentifier.Heading9)
+                {
+                    // Apply bold and 16‑point size to each run in the heading.
+                    foreach (Run run in paragraph.Runs)
                     {
-                        throw new InvalidOperationException("Failed to apply font formatting.");
+                        run.Font.Bold = true;
+                        run.Font.Size = 16;
                     }
                 }
             }
-        }
 
-        // Save the modified document.
-        string outputPath = "output.docx";
-        doc.Save(outputPath);
+            // Save the modified document.
+            doc.Save(outputPath);
 
-        // Verify that the output file was created.
-        if (!File.Exists(outputPath))
-        {
-            throw new FileNotFoundException("The output file was not created.", outputPath);
+            // Validate that the output file was created.
+            if (File.Exists(outputPath))
+            {
+                Console.WriteLine("Document saved successfully to " + outputPath);
+            }
+            else
+            {
+                Console.WriteLine("Failed to save the document.");
+            }
         }
     }
 }

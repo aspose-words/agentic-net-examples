@@ -2,50 +2,47 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Drawing;
+using Aspose.Drawing; // For Aspose.Drawing.Color
 
-namespace FontFillExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Add a line of text.
+        builder.Writeln("Hello, semi‑transparent world!");
+
+        // Retrieve the first run (the text we just added).
+        Run run = (Run)doc.FirstSection.Body.FirstParagraph.Runs[0];
+
+        // Access the font of the run.
+        Aspose.Words.Font font = run.Font;
+
+        // Define a blue color using Aspose.Drawing.Color.
+        Aspose.Drawing.Color asposeColor = Aspose.Drawing.Color.FromArgb(255, 0, 0, 255); // Opaque blue.
+
+        // Convert Aspose.Drawing.Color to System.Drawing.Color as required by the API.
+        System.Drawing.Color sysColor = System.Drawing.Color.FromArgb(asposeColor.ToArgb());
+
+        // Apply the fill color and set 50 % transparency.
+        font.Fill.Color = sysColor;
+        font.Fill.Transparency = 0.5; // 0 = opaque, 1 = fully transparent.
+
+        // Validate that the properties were set correctly.
+        bool colorMatches = font.Fill.Color.ToArgb() == sysColor.ToArgb();
+        bool transparencyMatches = Math.Abs(font.Fill.Transparency - 0.5) < 0.0001;
+
+        // Save the document to disk.
+        string outputPath = "SemiTransparentText.docx";
+        doc.Save(outputPath);
+
+        // Ensure the file was created and properties are as expected.
+        if (File.Exists(outputPath) && colorMatches && transparencyMatches)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-
-            // Initialize DocumentBuilder for the document.
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Create a semi‑transparent fill color using Aspose.Drawing.Color.
-            Aspose.Drawing.Color asposeColor = Aspose.Drawing.Color.FromArgb(255, 0, 0); // Red.
-
-            // Convert Aspose.Drawing.Color to System.Drawing.Color because Font.Fill.Color expects System.Drawing.Color.
-            builder.Font.Fill.Color = System.Drawing.Color.FromArgb(asposeColor.ToArgb());
-
-            // Set transparency (0.0 = opaque, 1.0 = fully transparent).
-            builder.Font.Fill.Transparency = 0.5; // 50% transparent.
-
-            // Write a line of text with the specified fill.
-            builder.Writeln("Semi‑transparent filled text");
-
-            // Validate that the properties were applied.
-            var fill = builder.Font.Fill;
-            Console.WriteLine("Fill Color ARGB: " + fill.Color.ToArgb());
-            Console.WriteLine("Transparency: " + fill.Transparency);
-
-            // Save the document to disk.
-            string outputPath = "Output.docx";
-            doc.Save(outputPath);
-
-            // Verify that the file was created.
-            if (File.Exists(outputPath))
-            {
-                Console.WriteLine("Document saved successfully: " + Path.GetFullPath(outputPath));
-            }
-            else
-            {
-                Console.WriteLine("Failed to save the document.");
-            }
+            // Execution completed successfully.
         }
     }
 }

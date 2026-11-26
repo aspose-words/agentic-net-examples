@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 
 public class Program
@@ -12,29 +13,38 @@ public class Program
         Paragraph paragraph = new Paragraph(doc);
         doc.FirstSection.Body.AppendChild(paragraph);
 
-        // Add a run with sample text.
-        Run run = new Run(doc, "Sample text for font retrieval.");
+        // Create a run with some text.
+        Run run = new Run(doc, "Hello Aspose.Words!");
+
+        // Set font properties for the run.
+        Aspose.Words.Font runFont = run.Font;
+        runFont.Name = "Arial";
+        runFont.Size = 16;
+
+        // Add the run to the paragraph.
         paragraph.AppendChild(run);
 
-        // Retrieve the Font object from the first run of the paragraph.
-        Aspose.Words.Font font = paragraph.Runs[0].Font;
-
-        // Optionally modify font properties.
-        font.Name = "Arial";
-        font.Size = 14;
-
-        // Output font properties to the console.
-        Console.WriteLine("Font Name: " + font.Name);
-        Console.WriteLine("Font Size: " + font.Size);
-
-        // Save the document to verify output.
+        // Save the document to a file.
         string outputPath = "Output.docx";
         doc.Save(outputPath);
 
-        // Confirm that the file was created.
-        if (System.IO.File.Exists(outputPath))
+        // Retrieve the Font object from the paragraph's first run.
+        if (paragraph.Runs.Count > 0)
         {
-            Console.WriteLine("Document saved successfully to " + outputPath);
+            Aspose.Words.Font firstRunFont = paragraph.Runs[0].Font;
+            // Output font properties to the console.
+            Console.WriteLine("Font Name: " + firstRunFont.Name);
+            Console.WriteLine("Font Size: " + firstRunFont.Size);
+        }
+
+        // Verify that the output file exists.
+        if (File.Exists(outputPath))
+        {
+            Console.WriteLine("Document saved successfully.");
+        }
+        else
+        {
+            Console.WriteLine("Failed to save document.");
         }
     }
 }

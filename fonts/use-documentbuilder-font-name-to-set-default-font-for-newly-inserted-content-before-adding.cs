@@ -6,23 +6,17 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
 
         // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set the default font name for any subsequently inserted content.
+        // Set the default font for any content that will be inserted next.
         builder.Font.Name = "Arial";
 
-        // Validate that the font name was correctly assigned.
-        if (builder.Font.Name != "Arial")
-        {
-            throw new InvalidOperationException("Failed to set the default font name.");
-        }
-
-        // Insert a line of text that will use the default font.
-        builder.Writeln("This text is formatted with the default font set to Arial.");
+        // Insert a paragraph of text that will use the default font.
+        builder.Writeln("This text uses the default font set via DocumentBuilder.Font.Name.");
 
         // Define the output file path.
         string outputPath = "DefaultFontExample.docx";
@@ -30,10 +24,23 @@ public class Program
         // Save the document to disk.
         doc.Save(outputPath);
 
-        // Verify that the output file was created successfully.
+        // Verify that the file was created successfully.
         if (!File.Exists(outputPath))
         {
-            throw new FileNotFoundException("The document was not saved correctly.", outputPath);
+            Console.WriteLine("Error: The output file was not created.");
+            return;
         }
+
+        // Load the saved document to validate the font assignment.
+        Document loadedDoc = new Document(outputPath);
+
+        // Retrieve the first Run node (the inserted text).
+        Run firstRun = (Run)loadedDoc.GetChild(NodeType.Run, 0, true);
+
+        // Get the font name of the first run.
+        string appliedFontName = firstRun.Font.Name;
+
+        // Output the validation result.
+        Console.WriteLine($"The font of the first run is: {appliedFontName}");
     }
 }

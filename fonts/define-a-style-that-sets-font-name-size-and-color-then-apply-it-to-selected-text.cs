@@ -7,54 +7,48 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a new paragraph style named "MyCustomStyle".
-        Style style = doc.Styles.Add(StyleType.Paragraph, "MyCustomStyle");
+        // Define a new character style named "MyCustomStyle".
+        Style charStyle = doc.Styles.Add(StyleType.Character, "MyCustomStyle");
 
-        // Set the font name for the style.
-        style.Font.Name = "Arial";
+        // Set font name and size.
+        charStyle.Font.Name = "Arial";
+        charStyle.Font.Size = 16;
 
-        // Set the font size (points) for the style.
-        style.Font.Size = 16;
+        // Create an Aspose.Drawing.Color and convert it to System.Drawing.Color.
+        Aspose.Drawing.Color aspColor = Aspose.Drawing.Color.Blue;
+        System.Drawing.Color sysColor = System.Drawing.Color.FromArgb(aspColor.ToArgb());
 
-        // Define a color using Aspose.Drawing.Color (red in this case).
-        Aspose.Drawing.Color asposeColor = Aspose.Drawing.Color.FromArgb(255, 0, 0);
+        // Assign the color to the style's font.
+        charStyle.Font.Color = sysColor;
 
-        // Convert Aspose.Drawing.Color to System.Drawing.Color.
-        System.Drawing.Color sysColor = System.Drawing.Color.FromArgb(asposeColor.ToArgb());
+        // Add normal text.
+        builder.Writeln("This text is normal.");
 
-        // Apply the color to the style's font.
-        style.Font.Color = sysColor;
+        // Add text that will use the custom style.
+        builder.Font.StyleName = "MyCustomStyle";
+        builder.Writeln("This text uses MyCustomStyle.");
 
-        // Validate that the font properties were set correctly.
-        if (style.Font.Name != "Arial" ||
-            style.Font.Size != 16 ||
-            style.Font.Color.ToArgb() != sysColor.ToArgb())
+        // Validate that the style's font properties were set correctly.
+        Aspose.Words.Font styleFont = charStyle.Font;
+        if (styleFont.Name != "Arial" ||
+            styleFont.Size != 16 ||
+            styleFont.Color.ToArgb() != sysColor.ToArgb())
         {
-            throw new InvalidOperationException("Font properties were not set correctly.");
+            throw new Exception("Font properties were not set correctly on the style.");
         }
 
-        // Create a paragraph and add a run of text.
-        Paragraph paragraph = new Paragraph(doc);
-        Run run = new Run(doc, "This text uses the custom style.");
-        paragraph.AppendChild(run);
-
-        // Apply the custom style to the paragraph.
-        paragraph.ParagraphFormat.Style = style;
-
-        // Add the paragraph to the document body.
-        doc.FirstSection.Body.AppendChild(paragraph);
-
-        // Save the document to a file.
+        // Save the document.
         string outputPath = "StyledDocument.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
         {
-            throw new FileNotFoundException("The document was not saved.", outputPath);
+            throw new Exception("The output file was not created.");
         }
     }
 }

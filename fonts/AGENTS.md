@@ -10,12 +10,12 @@ product: Aspose.Words
 
 ## Purpose
 
-Provide concise, reproducible code snippets that illustrate proper font manipulation in Aspose.Words, enabling AI agents to generate reliable examples that compile, run, and validate the intended visual changes.
+Provide an AI coding assistant with clear guidance on applying font-related properties in Aspose.Words while avoiding common pitfalls such as type ambiguity, incorrect enum usage, and missing resource validation.
 
 ## Non-negotiable conventions
 
-- Do not import System.Drawing in this category; use Aspose.Drawing only when a drawing-specific color is required.
-- Never reference bare Font or Color types without disambiguation when both Aspose.Words and Aspose.Drawing define them.
+- Do not import System.Drawing in this category; use Aspose.Drawing only for true drawing scenarios.
+- Never reference a bare Font or Color type when both Aspose.Drawing and Aspose.Words provide definitions.
 - Bootstrap local sample inputs for existing-file, folder, stream, image, and data workflows.
 - Prefer simple, verifiable workflows over speculative formatting shortcuts.
 
@@ -31,7 +31,7 @@ Use the simplest workflow that satisfies the task.
 
 ## Validation priorities
 
-1. Always assert that the expected Font property (e.g., Underline, LineSpacingRule, EmphasisMark) matches the value set before saving the document.
+1. Validate that each formatting change is reflected in the document model and that the output file exists before completing the example.
 
 ## File-to-task reference
 
@@ -89,7 +89,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply bold, italic, and underline simultaneously to a Run using respective Font properties.
   - Workflow: document-formatting
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `set-text-fill-color-to-red-and-thirty-percent-transparency-using-font-fill-color-and-font.cs`
   - Task: Set text fill color to red and thirty percent transparency using Font.Fill.Color and Font.Fill.Transparency.
   - Workflow: document-formatting
@@ -104,7 +104,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Set the underline type to double wave for a Run by assigning Font.Underline to UnderlineType.DoubleWave.
   - Workflow: document-formatting
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `adjust-a-paragraph-s-line-spacing-to-1-5-lines-by-assigning-font-linespacing-to-1-5.cs`
   - Task: Adjust a paragraph's line spacing to 1.5 lines by assigning Font.LineSpacing to 1.5.
   - Workflow: document-formatting
@@ -134,7 +134,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Retrieve and display the EmphasisMark value of a Run for debugging East Asian formatting.
   - Workflow: document-formatting
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `retrieve-and-display-the-current-font-size-of-a-run-for-debugging-purposes.cs`
   - Task: Retrieve and display the current font size of a Run for debugging purposes.
   - Workflow: document-formatting
@@ -144,12 +144,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Define a custom font substitution rule that replaces missing Times New Roman with Calibri.
   - Workflow: font-settings-and-sources
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `configure-font-substitution-to-map-missing-garamond-to-a-locally-installed-georgia-font.cs`
   - Task: Configure font substitution to map missing Garamond to a locally installed Georgia font.
   - Workflow: font-settings-and-sources
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `enable-automatic-font-substitution-for-missing-fonts-during-document-loading-by-configurin.cs`
   - Task: Enable automatic font substitution for missing fonts during document loading by configuring FontSettings.
   - Workflow: font-settings-and-sources
@@ -164,7 +164,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Embed all used fonts into the document when saving by enabling the EmbedFullFonts option.
   - Workflow: embedding-and-rendering
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `enable-font-embedding-when-saving-documents-to-pdf-to-ensure-visual-fidelity-across-platfo.cs`
   - Task: Enable font embedding when saving documents to PDF to ensure visual fidelity across platforms.
   - Workflow: embedding-and-rendering
@@ -213,53 +213,53 @@ Use the simplest workflow that satisfies the task.
 
 ## Common failure patterns and preferred agent fixes
 
-- **Underline enum misuse**
-  - Symptom: Compilation fails because UnderlineType is not defined in Aspose.Words.
-  - Root cause: The code references a non-existent UnderlineType enum instead of the correct Aspose.Words.Underline enum.
-  - Preferred fix: Replace UnderlineType with Aspose.Words.Underline and assign values such as Underline.Single or Underline.WavyDouble.
-  - Prevention: Consult the Aspose.Words API reference for the exact enum name and use IntelliSense to select the correct member.
-
-- **Line spacing property misuse**
-  - Symptom: The compiler reports that Font.LineSpacing is read-only and cannot be assigned.
-  - Root cause: Line spacing is a paragraph-level attribute, not a font attribute.
-  - Preferred fix: Set ParagraphFormat.LineSpacingRule to Multiple and ParagraphFormat.LineSpacing to the desired multiplier (e.g., 1.5 or 2.0).
-  - Prevention: Apply line-spacing changes through ParagraphFormat rather than Font, and reset to default by assigning 0 to ParagraphFormat.LineSpacing.
-
-- **EmphasisMark enum mismatch**
-  - Symptom: Compilation fails because EmphasisMark does not contain a member named Dot.
-  - Root cause: The Aspose.Words.Fonts.EmphasisMark enum does not define a Dot value; the closest supported value is OverSolidCircle.
-  - Preferred fix: Use EmphasisMark.OverSolidCircle (or another valid member) from Aspose.Words.Fonts.
-  - Prevention: Reference the Aspose.Words.Fonts namespace and verify available enum members before coding.
-
-- **Font substitution API misuse**
-  - Symptom: Compilation fails due to missing members such as FontSubstitutionSettings.FontSubstitutes or DefaultFontName.
-  - Root cause: The code uses outdated or non-existent properties of FontSettings; the current API exposes FontSettings.SubstitutionSettings.
-  - Preferred fix: Configure substitution via FontSettings.SubstitutionSettings.DefaultFontName and SubstitutionSettings.AddSubstitutes.
-  - Prevention: Review the latest Aspose.Words documentation for FontSettings and use the SubstitutionSettings property for custom mappings.
+- **Font type ambiguity**
+  - Symptom: CS0104 reports an ambiguous reference between Aspose.Drawing.Font and Aspose.Words.Font.
+  - Root cause: Both namespaces are imported without disambiguation, causing the compiler to be unable to choose the correct Font type.
+  - Preferred fix: Remove the conflicting using directive or qualify the type explicitly (e.g., Aspose.Words.Font).
+  - Prevention: Always import only Aspose.Words for font operations and use fully qualified names when a conflict is possible.
 
 - **Color type ambiguity**
-  - Symptom: Compilation errors arise from implicit conversion between Aspose.Drawing.Color and System.Drawing.Color.
-  - Root cause: Font.Color and Font.Fill.Color expect System.Drawing.Color, while sample code creates Aspose.Drawing.Color objects.
-  - Preferred fix: Convert Aspose.Drawing.Color to System.Drawing.Color using System.Drawing.Color.FromArgb(asposeColor.ToArgb()).
-  - Prevention: Always create the final color value as System.Drawing.Color before assigning it to Font properties.
+  - Symptom: Compile errors arise because the Color identifier resolves to multiple types.
+  - Root cause: Simultaneous inclusion of System.Drawing and Aspose.Drawing leads to ambiguous Color references.
+  - Preferred fix: Use Aspose.Drawing.Color for color creation and convert to System.Drawing.Color only when required by an API.
+  - Prevention: Declare the intended Color namespace explicitly and avoid generic using statements for System.Drawing.
 
-- **Namespace directive misuse**
-  - Symptom: CS0138 errors indicate that a using directive targets a type rather than a namespace.
-  - Root cause: The code attempts to write "using Font;" or "using Style;" instead of proper namespace imports.
-  - Preferred fix: Remove type-level using statements; import only namespaces such as Aspose.Words, Aspose.Words.Fonts, or use fully qualified type names.
-  - Prevention: Limit using directives to namespaces and rely on fully qualified names when type name collisions exist.
+- **Incorrect enum or property usage**
+  - Symptom: CS0103, CS0234, CS0117, or CS0200 errors indicate missing members such as UnderlineType, EmphasisMark, or read-only Font.LineSpacing.
+  - Root cause: The code references enums or properties that do not exist in the Aspose.Words version or are read-only.
+  - Preferred fix: Use Aspose.Words.Underline for underline styles, Aspose.Words.EmphasisMark for East-Asian emphasis, and adjust line spacing via ParagraphFormat.LineSpacing and LineSpacingRule.
+  - Prevention: Consult the Aspose.Words API reference for the correct enum names and mutable properties before coding.
+
+- **Missing FontSettings API**
+  - Symptom: CS0246 and CS1061 errors show that FontSettings, FontSubstitutionSettings, or LoadOptions cannot be found.
+  - Root cause: The required types reside in the Aspose.Words.Fonts namespace and may require a newer package version.
+  - Preferred fix: Add a reference to Aspose.Words.Fonts, include `using Aspose.Words.Fonts;`, and ensure the project references a version that contains FontSettings.
+  - Prevention: Verify the availability of font-substitution classes in the target Aspose.Words version before implementing substitution logic.
+
+- **NullReference at runtime**
+  - Symptom: A NullReferenceException occurs when accessing a previous sibling or builder property.
+  - Root cause: The code assumes that a paragraph or run exists without checking for null after document modifications.
+  - Preferred fix: Retrieve the Run directly after insertion or test for null before dereferencing.
+  - Prevention: Always validate that the target node is non-null before accessing its members.
+
+- **Missing local bootstrap inputs and weak validation**
+  - Symptom: Examples fail because they assume external files or folders exist and do not confirm that formatting changes took effect.
+  - Root cause: The sample code does not create required resources or verify the document state before saving.
+  - Preferred fix: Create temporary documents, apply formatting, and assert property values and file existence within the example.
+  - Prevention: Include deterministic setup and explicit validation steps in every sample.
 
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Primary package: `Aspose.Words` `26.10.0`
+- Primary package: `Aspose.Words` `26.11.0`
 
 ## Command reference
 
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.10.0
+dotnet add package Aspose.Words --version 26.11.0
 dotnet add package Aspose.Drawing.Common --version 26.10.0
 dotnet add package Newtonsoft.Json
 ```
@@ -275,4 +275,4 @@ dotnet run --configuration Release --no-build
 
 ## Category update guidance
 
-- Update examples when new Aspose.Words versions introduce renamed enums or additional font-related properties.
+- Update the examples whenever a new Aspose.Words version changes enum names or introduces new font-related APIs, and revise the strict API bans accordingly.

@@ -6,16 +6,14 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
 
-        // Add a paragraph to the document.
-        Paragraph paragraph = new Paragraph(doc);
-        doc.FirstSection.Body.AppendChild(paragraph);
+        // Create a DocumentBuilder to work with the document.
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a Run with some text.
-        Run run = new Run(doc, "Hello, Aspose.Words!");
-        paragraph.AppendChild(run);
+        // Create a Run with some sample text.
+        Run run = new Run(doc, "Sample text");
 
         // Set the font name of the Run to Arial.
         run.Font.Name = "Arial";
@@ -26,14 +24,18 @@ public class Program
             throw new InvalidOperationException("Font name was not set to Arial.");
         }
 
-        // Save the document to disk.
+        // Append the Run to the document.
+        builder.Writeln(); // Ensure we are in a new paragraph.
+        builder.CurrentParagraph.AppendChild(run);
+
+        // Save the document to a file.
         string outputPath = "Output.docx";
         doc.Save(outputPath);
 
-        // Ensure the output file exists.
+        // Verify that the output file exists.
         if (!File.Exists(outputPath))
         {
-            throw new FileNotFoundException("The document was not saved correctly.", outputPath);
+            throw new FileNotFoundException("The output file was not created.", outputPath);
         }
     }
 }

@@ -1,63 +1,67 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new paragraph.
-        builder.Writeln();
+        // Create a paragraph to hold the runs.
+        Paragraph paragraph = new Paragraph(doc);
 
-        // Create a source run with specific font formatting.
+        // Create the source run with specific font formatting.
         Run sourceRun = new Run(doc, "Source text");
         sourceRun.Font.Name = "Arial";
         sourceRun.Font.Size = 16;
         sourceRun.Font.Bold = true;
         sourceRun.Font.Italic = true;
-        sourceRun.Font.Underline = Underline.Double;
+        // Use Aspose.Drawing.Color for creation, then convert to System.Drawing.Color.
+        sourceRun.Font.Color = System.Drawing.Color.FromArgb(Color.Blue.ToArgb());
 
-        // Add the source run to the current paragraph.
-        builder.CurrentParagraph.AppendChild(sourceRun);
+        // Create the target run with default formatting.
+        Run targetRun = new Run(doc, "Target text");
 
-        // Create a destination run with default formatting.
-        Run destRun = new Run(doc, "Destination text");
-        builder.CurrentParagraph.AppendChild(destRun);
+        // Copy font formatting from sourceRun to targetRun property by property.
+        targetRun.Font.Name = sourceRun.Font.Name;
+        targetRun.Font.Size = sourceRun.Font.Size;
+        targetRun.Font.Bold = sourceRun.Font.Bold;
+        targetRun.Font.Italic = sourceRun.Font.Italic;
+        targetRun.Font.Color = sourceRun.Font.Color;
 
-        // Copy font formatting from the source run to the destination run.
-        destRun.Font.Name = sourceRun.Font.Name;
-        destRun.Font.Size = sourceRun.Font.Size;
-        destRun.Font.Bold = sourceRun.Font.Bold;
-        destRun.Font.Italic = sourceRun.Font.Italic;
-        destRun.Font.Underline = sourceRun.Font.Underline;
+        // Add both runs to the paragraph.
+        paragraph.AppendChild(sourceRun);
+        paragraph.AppendChild(targetRun);
 
-        // Validate that the font properties were copied correctly.
-        bool fontsMatch =
-            destRun.Font.Name == sourceRun.Font.Name &&
-            destRun.Font.Size == sourceRun.Font.Size &&
-            destRun.Font.Bold == sourceRun.Font.Bold &&
-            destRun.Font.Italic == sourceRun.Font.Italic &&
-            destRun.Font.Underline == sourceRun.Font.Underline;
+        // Add the paragraph to the document body.
+        doc.FirstSection.Body.AppendChild(paragraph);
 
-        if (fontsMatch)
+        // Validate that the font properties have been copied.
+        if (targetRun.Font.Name != sourceRun.Font.Name ||
+            targetRun.Font.Size != sourceRun.Font.Size ||
+            targetRun.Font.Bold != sourceRun.Font.Bold ||
+            targetRun.Font.Italic != sourceRun.Font.Italic ||
+            targetRun.Font.Color.ToArgb() != sourceRun.Font.Color.ToArgb())
         {
-            // Save the document to disk.
-            string outputPath = "CopyFontFormatting.docx";
-            doc.Save(outputPath);
+            throw new InvalidOperationException("Font properties were not copied correctly.");
+        }
 
-            // Verify that the file was created.
-            if (File.Exists(outputPath))
-            {
-                Console.WriteLine("Document saved successfully to " + outputPath);
-            }
-        }
-        else
+        // Define output file path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FontCopyExample.docx");
+
+        // Save the document.
+        doc.Save(outputPath);
+
+        // Ensure the file was created.
+        if (!File.Exists(outputPath))
         {
-            Console.WriteLine("Font properties were not copied correctly.");
+            throw new FileNotFoundException("The output document was not created.", outputPath);
         }
+
+        // Log success.
+        Console.WriteLine("Document created successfully at: " + outputPath);
     }
 }
