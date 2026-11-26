@@ -1,19 +1,18 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Replacing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and add initial text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add initial content.
         builder.Writeln("Original paragraph.");
 
         // Enable track changes.
-        doc.StartTrackRevisions("Author", DateTime.Now);
+        doc.StartTrackRevisions("Author1", DateTime.Now);
 
         // Make a change that will generate a revision (insertion).
         builder.Writeln("Inserted paragraph while tracking.");
@@ -21,7 +20,7 @@ public class Program
         // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Ensure there is at least one revision.
+        // Ensure a revision was created.
         if (doc.Revisions.Count == 0)
             throw new InvalidOperationException("No revisions were generated.");
 
@@ -35,15 +34,18 @@ public class Program
         try
         {
             revision.Accept();
+            Console.WriteLine("Revision accepted unexpectedly.");
         }
-        catch (InvalidOperationException ex)
+        catch (ObjectDisposedException ex)
         {
-            // Expected error handling for already rejected revision.
-            Console.WriteLine("Error: Cannot accept a revision that has already been rejected.");
-            Console.WriteLine("Exception message: " + ex.Message);
+            Console.WriteLine("Caught expected exception: " + ex.Message);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Caught unexpected exception: " + ex.Message);
         }
 
         // Save the resulting document.
-        doc.Save("TrackChangesResult.docx");
+        doc.Save("Result.docx");
     }
 }

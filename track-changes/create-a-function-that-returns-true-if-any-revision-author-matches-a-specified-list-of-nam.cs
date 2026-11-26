@@ -1,17 +1,22 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Aspose.Words;
 
 public class Program
 {
-    // Returns true if any revision in the document was made by an author in the provided list.
-    public static bool HasRevisionByAuthors(Document doc, List<string> authorNames)
+    // Returns true if any revision in the document was made by an author whose name is in the provided list.
+    public static bool AnyRevisionAuthorMatches(Document doc, IEnumerable<string> authorNames)
     {
+        // Normalize author names for case‑insensitive comparison.
+        var normalizedAuthors = new HashSet<string>(authorNames.Select(a => a?.Trim().ToLowerInvariant() ?? string.Empty));
+
         foreach (Revision rev in doc.Revisions)
         {
-            if (authorNames.Contains(rev.Author))
+            if (rev.Author != null && normalizedAuthors.Contains(rev.Author.Trim().ToLowerInvariant()))
                 return true;
         }
+
         return false;
     }
 
@@ -20,27 +25,29 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Original paragraph.");
 
-        // First set of revisions by author "Alice".
+        // Enable tracking with author "Alice".
         doc.StartTrackRevisions("Alice", DateTime.Now);
-        builder.Writeln("First paragraph added by Alice.");
+
+        // Make some changes that will be recorded as revisions.
+        builder.Writeln("Inserted paragraph while tracking.");
+        builder.Writeln("Another inserted line.");
+
+        // Stop tracking.
         doc.StopTrackRevisions();
 
-        // Second set of revisions by author "Bob".
-        doc.StartTrackRevisions("Bob", DateTime.Now);
-        builder.Writeln("Second paragraph added by Bob.");
-        doc.StopTrackRevisions();
+        // Example usage of the function.
+        var authorsToCheck = new List<string> { "Alice", "Bob" };
+        bool hasMatchingAuthor = AnyRevisionAuthorMatches(doc, authorsToCheck);
+        Console.WriteLine($"Any revision authored by Alice or Bob? {hasMatchingAuthor}");
 
-        // Save the document (optional for inspection).
-        doc.Save("TrackedRevisions.docx");
+        // Check with a list that does not contain the actual author.
+        var otherAuthors = new List<string> { "Charlie", "Dave" };
+        bool hasOtherAuthor = AnyRevisionAuthorMatches(doc, otherAuthors);
+        Console.WriteLine($"Any revision authored by Charlie or Dave? {hasOtherAuthor}");
 
-        // Define authors to check.
-        List<string> authorsToCheck = new List<string> { "Bob", "Charlie" };
-
-        // Evaluate whether any revision matches the specified authors.
-        bool hasMatchingRevision = HasRevisionByAuthors(doc, authorsToCheck);
-
-        // Output the result.
-        Console.WriteLine($"Document contains revision by specified author(s): {hasMatchingRevision}");
+        // Save the document (optional, demonstrates file output).
+        doc.Save("TrackedDocument.docx");
     }
 }

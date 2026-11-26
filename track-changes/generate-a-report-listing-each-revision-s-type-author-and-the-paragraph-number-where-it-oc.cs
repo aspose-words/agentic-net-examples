@@ -1,62 +1,60 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Replacing;
 
-public class Program
+namespace TrackChangesReport
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add initial paragraphs.
-        builder.Writeln("Paragraph 1");
-        builder.Writeln("Paragraph 2");
-        builder.Writeln("Paragraph 3");
-
-        // Start tracking revisions.
-        doc.StartTrackRevisions("John Doe", DateTime.Now);
-
-        // 1. Insert a new paragraph after the first one.
-        Paragraph firstPara = (Paragraph)doc.GetChild(NodeType.Paragraph, 0, true);
-        builder.MoveTo(firstPara);
-        builder.Writeln("Inserted Paragraph");
-
-        // 2. Delete the original second paragraph.
-        Paragraph secondPara = (Paragraph)doc.GetChild(NodeType.Paragraph, 1, true);
-        secondPara.Remove();
-
-        // 3. Change formatting of the third paragraph (make it bold).
-        // The third paragraph is now at index 2 because we removed one paragraph.
-        Paragraph thirdPara = (Paragraph)doc.GetChild(NodeType.Paragraph, 2, true);
-        foreach (Run run in thirdPara.Runs)
+        public static void Main()
         {
-            run.Font.Bold = true; // This creates a format‑change revision.
-        }
+            // Create a new document and add three paragraphs.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("Paragraph 1");
+            builder.Writeln("Paragraph 2");
+            builder.Writeln("Paragraph 3");
 
-        // Stop tracking revisions.
-        doc.StopTrackRevisions();
+            // Enable track changes.
+            doc.StartTrackRevisions("Author1", DateTime.Now);
 
-        // Generate report of revisions.
-        Console.WriteLine("Revision Report:");
-        foreach (Revision rev in doc.Revisions)
-        {
-            // Find the paragraph that contains the revision.
-            Node node = rev.ParentNode;
-            while (node != null && !(node is Paragraph))
-                node = node.ParentNode;
+            // 1) Insert a new paragraph (creates an insertion revision).
+            builder.Writeln("Inserted paragraph");
 
-            int paragraphNumber = -1;
-            if (node != null)
+            // 2) Delete the second original paragraph (creates a deletion revision).
+            Paragraph paraToDelete = (Paragraph)doc.GetChild(NodeType.Paragraph, 1, true);
+            paraToDelete.Remove();
+
+            // 3) Change formatting of the third original paragraph (creates a format change revision).
+            Paragraph paraToFormat = (Paragraph)doc.GetChild(NodeType.Paragraph, 2, true);
+            // Apply bold formatting to the first run in the paragraph.
+            Run run = (Run)paraToFormat.GetChild(NodeType.Run, 0, true);
+            run.Font.Bold = true;
+
+            // Stop tracking revisions.
+            doc.StopTrackRevisions();
+
+            // Save the document (demonstrates that revisions are persisted).
+            doc.Save("TrackedDocument.docx");
+
+            // Generate report: list each revision's type, author, and paragraph number.
+            RevisionCollection revisions = doc.Revisions;
+            NodeCollection allParagraphs = doc.GetChildNodes(NodeType.Paragraph, true);
+
+            for (int i = 0; i < revisions.Count; i++)
             {
-                NodeCollection allParagraphs = doc.GetChildNodes(NodeType.Paragraph, true);
-                paragraphNumber = allParagraphs.IndexOf(node) + 1; // 1‑based index
+                Revision rev = revisions[i];
+
+                // Determine the paragraph that contains the revision.
+                Paragraph containingParagraph = rev.ParentNode as Paragraph ??
+                                                rev.ParentNode.GetAncestor(NodeType.Paragraph) as Paragraph;
+
+                int paragraphNumber = containingParagraph != null
+                    ? allParagraphs.IndexOf(containingParagraph) + 1 // 1‑based index
+                    : -1; // Not inside a paragraph (should not happen for this example)
+
+                Console.WriteLine($"Revision {i + 1}: Type={rev.RevisionType}, Author={rev.Author}, Paragraph={paragraphNumber}");
             }
-
-            Console.WriteLine($"Type: {rev.RevisionType}, Author: {rev.Author}, Paragraph: {paragraphNumber}");
         }
-
-        // Save the document to verify revisions visually.
-        doc.Save("TrackedDocument.docx");
     }
 }

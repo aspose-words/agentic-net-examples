@@ -10,47 +10,49 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a simple 2x2 table.
+        // Insert a table with one row and two cells.
         Table table = builder.StartTable();
         builder.InsertCell();
-        builder.Write("Original");
+        builder.Write("Original"); // First cell content.
         builder.InsertCell();
-        builder.Write("Cell 2");
-        builder.EndRow();
-        builder.InsertCell();
-        builder.Write("Cell 3");
-        builder.InsertCell();
-        builder.Write("Cell 4");
+        builder.Write("Second Cell");
         builder.EndRow();
         builder.EndTable();
 
         // Enable revision tracking.
         doc.StartTrackRevisions("Demo Author", DateTime.Now);
 
-        // Modify the first cell while tracking is enabled.
-        Cell firstCell = table.FirstRow.FirstCell;
-        builder.MoveTo(firstCell.FirstParagraph);
-        builder.Writeln("Inserted while tracking");
+        // Modify the text in the first cell.
+        Table firstTable = (Table)doc.GetChild(NodeType.Table, 0, true);
+        Cell firstCell = firstTable.FirstRow.FirstCell;
+        // Replace the existing text with new text.
+        if (firstCell.FirstParagraph.Runs.Count > 0)
+        {
+            firstCell.FirstParagraph.Runs[0].Text = "Modified";
+        }
+        else
+        {
+            // If there are no runs, simply write new text.
+            firstCell.FirstParagraph.AppendChild(new Run(doc, "Modified"));
+        }
 
-        // Stop tracking revisions.
+        // Stop revision tracking.
         doc.StopTrackRevisions();
 
-        // Save the document.
-        doc.Save("TrackedDocument.docx");
-
-        // Inspect the revisions collection.
+        // Verify that at least one revision was created.
         RevisionCollection revisions = doc.Revisions;
         if (revisions.Count == 0)
         {
-            throw new InvalidOperationException("No revisions were detected after modifying the table cell.");
+            throw new Exception("Expected revisions were not found.");
         }
 
-        // Output revision details.
-        Console.WriteLine($"Revision count: {revisions.Count}");
+        // Optional: output revision details to the console.
         foreach (Revision rev in revisions)
         {
-            // RevisionDateTime property may not be available in older versions; omit if not present.
-            Console.WriteLine($"Type: {rev.RevisionType}, Author: {rev.Author}");
+            Console.WriteLine($"Revision Type: {rev.RevisionType}, Author: {rev.Author}, Date: {rev.DateTime}");
         }
+
+        // Save the document to verify the changes and revisions are persisted.
+        doc.Save("TrackedDocument.docx");
     }
 }

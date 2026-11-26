@@ -1,45 +1,50 @@
 using System;
 using Aspose.Words;
 
-public class Program
+namespace TrackChangesDemo
 {
-    public static void Main()
+    class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add three separate paragraphs (sentences).
-        builder.Writeln("This is the first sentence.");
-        builder.Writeln("This is the sentence to delete.");
-        builder.Writeln("This is the last sentence.");
-
-        // Enable track changes.
-        doc.StartTrackRevisions("Author", DateTime.Now);
-
-        // Delete the second paragraph while tracking is enabled.
-        Paragraph paragraphToDelete = (Paragraph)doc.GetChildNodes(NodeType.Paragraph, true)[1];
-        paragraphToDelete.Remove();
-
-        // Stop tracking changes.
-        doc.StopTrackRevisions();
-
-        // Verify that a deletion revision exists and accept it individually.
-        bool deletionFound = false;
-        foreach (Revision rev in doc.Revisions)
+        static void Main()
         {
-            if (rev.RevisionType == RevisionType.Deletion)
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Add three separate paragraphs (sentences).
+            builder.Writeln("This is the first sentence.");
+            builder.Writeln("This is the second sentence.");
+            builder.Writeln("This is the third sentence.");
+
+            // Start tracking revisions.
+            doc.StartTrackRevisions("DemoAuthor", DateTime.Now);
+
+            // Delete the second paragraph while tracking is enabled.
+            Paragraph secondParagraph = doc.FirstSection.Body.Paragraphs[1];
+            secondParagraph.Remove(); // Generates a deletion revision.
+
+            // Stop tracking revisions.
+            doc.StopTrackRevisions();
+
+            // Find a deletion revision.
+            Revision deletionRevision = null;
+            foreach (Revision rev in doc.Revisions)
             {
-                rev.Accept(); // Accept this specific deletion revision.
-                deletionFound = true;
-                break;
+                if (rev.RevisionType == RevisionType.Deletion)
+                {
+                    deletionRevision = rev;
+                    break;
+                }
             }
+
+            if (deletionRevision == null)
+                throw new InvalidOperationException("Expected a deletion revision was not found.");
+
+            // Accept the deletion revision individually.
+            deletionRevision.Accept();
+
+            // Save the resulting document.
+            doc.Save("Result.docx");
         }
-
-        if (!deletionFound)
-            throw new InvalidOperationException("Expected deletion revision was not found.");
-
-        // Save the resulting document.
-        doc.Save("Result.docx");
     }
 }

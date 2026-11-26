@@ -5,43 +5,38 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and add initial content.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Original paragraph.");
 
-        // Add initial content (these will be the original paragraphs).
-        builder.Writeln("Original paragraph 1.");
-        builder.Writeln("Original paragraph 2.");
-
-        // Enable tracking of revisions.
+        // Enable track changes with a specific author and timestamp.
         doc.StartTrackRevisions("John Doe", DateTime.Now);
 
-        // 1. Insert a new paragraph – this will create an insertion revision.
+        // Insert a new paragraph (creates an insertion revision).
         builder.Writeln("Inserted paragraph.");
 
-        // 2. Delete the first original paragraph – this will create a deletion revision.
-        Paragraph firstParagraph = (Paragraph)doc.GetChild(NodeType.Paragraph, 0, true);
-        firstParagraph?.Remove();
+        // Delete the original paragraph (creates a deletion revision).
+        Node originalParagraph = doc.FirstSection.Body.FirstParagraph;
+        originalParagraph.Remove();
 
-        // 3. Change formatting of the remaining original paragraph – this will create a format change revision.
-        Paragraph remainingParagraph = (Paragraph)doc.GetChild(NodeType.Paragraph, 0, true);
-        if (remainingParagraph != null)
+        // Change formatting of the inserted paragraph (creates a format change revision).
+        Node insertedParagraph = doc.FirstSection.Body.FirstParagraph;
+        if (insertedParagraph is Paragraph para)
         {
-            Run run = (Run)remainingParagraph.GetChild(NodeType.Run, 0, true);
-            if (run != null)
-                run.Font.Bold = true;
+            para.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         }
 
         // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Save the document (required by the rules when output is expected).
+        // Save the document (optional, demonstrates that revisions are persisted).
         doc.Save("Revisions.docx");
 
-        // Iterate through all revisions and log author and timestamp.
+        // Iterate through all revisions and log each revision's author and timestamp.
         foreach (Revision rev in doc.Revisions)
         {
-            Console.WriteLine($"Revision Type: {rev.RevisionType}, Author: {rev.Author}, Date: {rev.DateTime}");
+            Console.WriteLine($"Author: {rev.Author}, Timestamp: {rev.DateTime}");
         }
     }
 }

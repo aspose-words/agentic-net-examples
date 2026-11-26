@@ -1,38 +1,53 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Replacing;
 
-public class Program
+class Program
 {
-    public static void Main()
+    static void Main()
     {
-        // Create the first sample document.
-        Document doc1 = new Document();
-        DocumentBuilder builder1 = new DocumentBuilder(doc1);
-        builder1.Writeln("Hello world!");
-        builder1.Writeln("This is the first document.");
-        doc1.Save("doc1.docx");
+        // Paths for the sample documents.
+        const string originalPath = "Original.docx";
+        const string revisedPath = "Revised.docx";
+        const string comparedPath = "Compared.docx";
 
-        // Create the second sample document with a modification.
-        Document doc2 = new Document();
-        DocumentBuilder builder2 = new DocumentBuilder(doc2);
-        builder2.Writeln("Hello world!");
-        builder2.Writeln("This is the second document with changes.");
-        doc2.Save("doc2.docx");
+        // Create the original document.
+        Document originalDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(originalDoc);
+        builder.Writeln("This is the first paragraph.");
+        builder.Writeln("This is the second paragraph.");
+        originalDoc.Save(originalPath);
 
-        // Compare the two documents.
-        // The comparison will generate revisions in doc1.
+        // Create the revised document with some changes.
+        Document revisedDoc = new Document();
+        builder = new DocumentBuilder(revisedDoc);
+        builder.Writeln("This is the first paragraph with an edit."); // Modified text.
+        builder.Writeln("This is the second paragraph."); // Same as original.
+        builder.Writeln("This is an added third paragraph."); // New paragraph.
+        revisedDoc.Save(revisedPath);
+
+        // Load the original document again to perform comparison.
+        Document compareDoc = new Document(originalPath);
+
+        // Compare the revised document against the original.
+        // The comparison creates revision marks in compareDoc.
         string authorName = "John Doe";
-        DateTime comparisonDate = new DateTime(2023, 1, 1);
-        doc1.Compare(doc2, authorName, comparisonDate);
+        DateTime comparisonDate = DateTime.Now;
+        compareDoc.Compare(revisedDoc, authorName, comparisonDate);
+        compareDoc.Save(comparedPath);
 
-        // Save the document that now contains revision differences.
-        doc1.Save("Compared.docx");
-
-        // Output revision details to the console.
-        foreach (Revision rev in doc1.Revisions)
+        // Output revision details.
+        Console.WriteLine("Revisions found after comparison:");
+        foreach (Revision rev in compareDoc.Revisions)
         {
-            string revisionText = rev.ParentNode?.GetText()?.Trim() ?? string.Empty;
-            Console.WriteLine($"Type: {rev.RevisionType}, Author: {rev.Author}, Date: {rev.DateTime}, Text: \"{revisionText}\"");
+            Console.WriteLine($"- Type: {rev.RevisionType}");
+            Console.WriteLine($"  Author: {rev.Author}");
+            Console.WriteLine($"  Date: {rev.DateTime}");
+            Console.WriteLine($"  Text: \"{rev.ParentNode.GetText().Trim()}\"");
         }
+
+        // Optionally accept all revisions to produce a clean document.
+        // compareDoc.AcceptAllRevisions();
+        // compareDoc.Save("Accepted.docx");
     }
 }

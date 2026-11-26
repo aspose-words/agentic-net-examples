@@ -1,49 +1,59 @@
 using System;
+using System.Collections.Generic;
 using Aspose.Words;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document with two paragraphs.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Original paragraph 1.");
+        builder.Writeln("Original paragraph 2.");
 
-        // Write initial content with separate runs for "Hello " and "world."
-        builder.Write("Hello ");
-        builder.Write("world.");
+        // Start tracking revisions.
+        doc.StartTrackRevisions("DemoAuthor", DateTime.Now);
 
-        // Enable track changes.
-        doc.StartTrackRevisions("Author", DateTime.Now);
+        // 1. Delete the first paragraph (creates a deletion revision).
+        Paragraph firstParagraph = doc.FirstSection.Body.Paragraphs[0];
+        firstParagraph.Remove();
 
-        // ----- Deletion: remove the run that contains "world."
-        // This creates a deletion revision.
-        Run worldRun = doc.FirstSection.Body.FirstParagraph.Runs[1];
-        worldRun.Remove();
+        // 2. Insert a new paragraph (creates an insertion revision).
+        builder.Writeln("This is an inserted paragraph.");
 
-        // ----- Insertion: add new text.
-        // This creates an insertion revision.
-        builder.MoveTo(doc.FirstSection.Body.FirstParagraph);
-        builder.Write("Inserted text ");
-
-        // ----- Formatting change: make "Hello " bold.
-        // This creates a format change revision.
-        Run helloRun = doc.FirstSection.Body.FirstParagraph.Runs[0];
-        helloRun.Font.Bold = true;
+        // 3. Change formatting of the original second paragraph (creates a format change revision).
+        Paragraph secondParagraph = doc.FirstSection.Body.Paragraphs[0]; // after removal, this is the original second paragraph.
+        builder.MoveTo(secondParagraph);
+        builder.Font.Italic = true;
+        builder.Write(" (now italic)");
 
         // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Reject only deletions, keep insertions and formatting changes.
-        // Iterate backwards to avoid modifying the collection during enumeration.
-        for (int i = doc.Revisions.Count - 1; i >= 0; i--)
+        // Reject only deletions, keep insertions and format changes.
+        List<Revision> deletions = new List<Revision>();
+        foreach (Revision rev in doc.Revisions)
         {
-            Revision rev = doc.Revisions[i];
             if (rev.RevisionType == RevisionType.Deletion)
-                rev.Reject();
+                deletions.Add(rev);
+        }
+
+        foreach (Revision rev in deletions)
+        {
+            rev.Reject();
         }
 
         // Save the resulting document.
-        doc.Save("Output.docx");
+        string outputPath = "TrackChangesResult.docx";
+        doc.Save(outputPath);
+
+        // Output summary.
+        Console.WriteLine($"Revisions processed. Document saved to '{outputPath}'.");
+        Console.WriteLine($"Total revisions remaining: {doc.Revisions.Count}");
+        foreach (Revision rev in doc.Revisions)
+        {
+            Console.WriteLine($"- Type: {rev.RevisionType}, Author: {rev.Author}, Date: {rev.DateTime}");
+        }
     }
 }

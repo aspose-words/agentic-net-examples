@@ -1,43 +1,54 @@
 using System;
+using System.IO;
 using Aspose.Words;
 
 public class Program
 {
     public static void Main()
     {
-        // Create the first (original) document.
+        // Define file names in the current directory.
+        string originalPath = Path.Combine(Directory.GetCurrentDirectory(), "Original.docx");
+        string revisedPath = Path.Combine(Directory.GetCurrentDirectory(), "Revised.docx");
+        string resultPath = Path.Combine(Directory.GetCurrentDirectory(), "ComparisonResult.docx");
+
+        // -----------------------------------------------------------------
+        // Create the original document.
+        // -----------------------------------------------------------------
         Document originalDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(originalDoc);
-        builder.Writeln("This is the first paragraph.");
-        builder.Writeln("This paragraph will stay the same.");
-        builder.Writeln("This is the third paragraph.");
-        originalDoc.Save("Original.docx");
+        builder.Writeln("Hello world!");
+        builder.Writeln("This is the original document.");
+        originalDoc.Save(originalPath);
 
-        // Create the second (modified) document.
-        Document modifiedDoc = new Document();
-        builder = new DocumentBuilder(modifiedDoc);
-        builder.Writeln("This is the first paragraph."); // unchanged
-        builder.Writeln("This paragraph has been modified."); // changed text
-        builder.Writeln("This is the third paragraph."); // unchanged
-        builder.Writeln("An additional paragraph is added."); // new paragraph
-        modifiedDoc.Save("Modified.docx");
+        // -----------------------------------------------------------------
+        // Create the revised document with some changes.
+        // -----------------------------------------------------------------
+        Document revisedDoc = new Document();
+        DocumentBuilder builder2 = new DocumentBuilder(revisedDoc);
+        builder2.Writeln("Hello world!"); // unchanged line
+        builder2.Writeln("This is the modified document."); // changed line
+        builder2.Writeln("Additional line."); // new line
+        revisedDoc.Save(revisedPath);
 
-        // Load the documents for comparison.
-        Document docToCompare = new Document("Original.docx");
-        Document docModified = new Document("Modified.docx");
+        // -----------------------------------------------------------------
+        // Load the original document again (could reuse originalDoc) and compare.
+        // The Compare method adds revisions to the original document.
+        // -----------------------------------------------------------------
+        Document compareDoc = new Document(originalPath);
+        compareDoc.Compare(revisedDoc, "Comparer", DateTime.Now);
+        compareDoc.Save(resultPath);
 
-        // Compare the documents. The result (revisions) are stored in docToCompare.
-        docToCompare.Compare(docModified, "Comparer", DateTime.Now);
-
-        // Save the comparison result which contains revision marks.
-        docToCompare.Save("ComparisonResult.docx");
-
-        // Output revision information to the console.
-        RevisionCollection revisions = docToCompare.Revisions;
+        // -----------------------------------------------------------------
+        // Inspect the revisions created by the comparison.
+        // -----------------------------------------------------------------
+        RevisionCollection revisions = compareDoc.Revisions;
         Console.WriteLine($"Total revisions detected: {revisions.Count}");
+
         foreach (Revision rev in revisions)
         {
             Console.WriteLine($"Type: {rev.RevisionType}, Author: {rev.Author}, Date: {rev.DateTime}");
         }
+
+        // The program finishes here without waiting for user input.
     }
 }

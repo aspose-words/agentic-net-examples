@@ -4,67 +4,71 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-namespace BatchRejectRevisions
+namespace BatchRevisionRejector
 {
     public class Program
     {
-        // Entry point
+        // Entry point of the console application.
         public static void Main()
         {
-            // Folder that will contain sample documents
+            // Folder that will contain sample documents.
             string folderPath = Path.Combine(Directory.GetCurrentDirectory(), "Docs");
             Directory.CreateDirectory(folderPath);
 
-            // Create sample documents with revisions from two different authors
+            // Create sample documents with revisions from different authors.
             CreateSampleDocument(Path.Combine(folderPath, "Sample1.docx"));
             CreateSampleDocument(Path.Combine(folderPath, "Sample2.docx"));
 
-            // Author whose revisions should be rejected
+            // Author whose revisions should be rejected.
             string targetAuthor = "UserA";
 
-            // Process each .docx file in the folder
+            // Process each .docx file in the folder.
             foreach (string filePath in Directory.GetFiles(folderPath, "*.docx"))
             {
-                // Load the document
+                // Load the document.
                 Document doc = new Document(filePath);
 
-                // Collect revisions authored by the target user
-                var revisionsToReject = doc.Revisions
-                                            .Where(r => string.Equals(r.Author, targetAuthor, StringComparison.OrdinalIgnoreCase))
-                                            .ToList();
+                // Collect revisions to avoid modifying the collection while iterating.
+                var revisions = doc.Revisions.Cast<Revision>().ToList();
 
-                // Reject each matching revision
-                foreach (Revision rev in revisionsToReject)
+                // Reject revisions authored by the target user.
+                foreach (Revision rev in revisions)
                 {
-                    rev.Reject();
+                    if (string.Equals(rev.Author, targetAuthor, StringComparison.OrdinalIgnoreCase))
+                    {
+                        rev.Reject();
+                    }
                 }
 
-                // Save the modified document (overwrite original)
+                // Save the modified document (overwrite original).
                 doc.Save(filePath);
             }
+
+            // Optional: indicate processing is complete.
+            Console.WriteLine("Revision rejection completed for author: " + targetAuthor);
         }
 
-        // Creates a sample document with revisions from two authors
+        // Creates a sample document with revisions from two different authors.
         private static void CreateSampleDocument(string filePath)
         {
-            // Start with a clean document
+            // Initialize a new blank document.
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Initial content (no revisions)
+            // Add initial content (no revisions).
             builder.Writeln("Original paragraph.");
 
-            // First set of revisions by UserA
+            // First set of revisions by UserA.
             doc.StartTrackRevisions("UserA", DateTime.Now);
             builder.Writeln("Paragraph added by UserA.");
             doc.StopTrackRevisions();
 
-            // Second set of revisions by UserB
+            // Second set of revisions by UserB.
             doc.StartTrackRevisions("UserB", DateTime.Now);
             builder.Writeln("Paragraph added by UserB.");
             doc.StopTrackRevisions();
 
-            // Save the document
+            // Save the document to the specified path.
             doc.Save(filePath);
         }
     }

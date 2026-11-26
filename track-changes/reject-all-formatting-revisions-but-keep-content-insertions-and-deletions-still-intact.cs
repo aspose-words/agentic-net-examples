@@ -9,34 +9,40 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add an initial paragraph that will later be deleted.
-        builder.Writeln("This paragraph will be deleted.");
+        // Add initial content.
+        builder.Writeln("This is the original paragraph.");
 
-        // Start tracking revisions.
-        doc.StartTrackRevisions("Demo Author", DateTime.Now);
+        // Enable track changes.
+        doc.StartTrackRevisions("John Doe", DateTime.Now);
 
-        // Insert a new paragraph – this creates an insertion revision.
-        builder.Writeln("This is an inserted paragraph.");
+        // ----- Insertion revision -----
+        // Insert a new paragraph at the end of the document.
+        builder.Writeln("Inserted paragraph.");
 
-        // Apply a formatting change to the inserted paragraph – creates a format change revision.
-        // The builder is positioned at the end of the inserted paragraph, so the formatting change
-        // will be recorded as a revision.
-        builder.Font.Bold = true;
-
-        // Delete the first paragraph – creates a deletion revision.
+        // ----- Deletion revision -----
+        // Delete the first paragraph (the original one) while tracking is active.
         Paragraph firstParagraph = (Paragraph)doc.GetChild(NodeType.Paragraph, 0, true);
+        // Use Remove() to correctly generate a deletion revision.
         firstParagraph.Remove();
+
+        // ----- Formatting revision -----
+        // Add another paragraph that will receive a formatting change.
+        builder.Writeln("Paragraph to format.");
+        // Apply a style change (formatting) to the newly added paragraph.
+        Paragraph lastParagraph = (Paragraph)doc.GetChild(
+            NodeType.Paragraph,
+            doc.GetChildNodes(NodeType.Paragraph, true).Count - 1,
+            true);
+        lastParagraph.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1; // Creates a format‑change revision.
 
         // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Reject only formatting revisions, keep insertions and deletions intact.
+        // Reject only formatting revisions, keep insertions and deletions.
         foreach (Revision rev in doc.Revisions)
         {
             if (rev.RevisionType == RevisionType.FormatChange)
-            {
                 rev.Reject();
-            }
         }
 
         // Save the resulting document.

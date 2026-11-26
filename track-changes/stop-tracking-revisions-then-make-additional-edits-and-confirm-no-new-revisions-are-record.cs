@@ -1,6 +1,5 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Replacing;
 
 public class Program
 {
@@ -10,33 +9,35 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add initial paragraph.
-        builder.Writeln("This is the original paragraph.");
+        // Add initial content (not tracked).
+        builder.Writeln("Original paragraph.");
 
-        // Enable tracking of revisions.
-        doc.StartTrackRevisions("DemoAuthor", DateTime.Now);
+        // Enable track changes.
+        doc.StartTrackRevisions("John Doe", DateTime.Now);
 
         // Make a change while tracking is enabled – this will create a revision.
-        builder.Writeln("This line is added while tracking is ON.");
+        builder.Writeln("Inserted while tracking.");
 
         // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Capture the number of revisions after the first change.
-        int revisionsAfterFirstEdit = doc.Revisions.Count;
-        Console.WriteLine($"Revisions after first edit (tracking ON): {revisionsAfterFirstEdit}");
+        // Record the number of revisions after stopping tracking.
+        int revisionsAfterStop = doc.Revisions.Count;
 
-        // Make another change after tracking has been stopped.
-        builder.Writeln("This line is added after tracking is OFF.");
+        // Make another change after tracking has been stopped – this should NOT create a revision.
+        builder.Writeln("Inserted after tracking stopped.");
 
-        // Verify that no new revisions were recorded.
-        int revisionsAfterSecondEdit = doc.Revisions.Count;
-        Console.WriteLine($"Revisions after second edit (tracking OFF): {revisionsAfterSecondEdit}");
+        // Verify that no new revisions were added.
+        int revisionsAfterEdit = doc.Revisions.Count;
+        if (revisionsAfterEdit != revisionsAfterStop)
+        {
+            throw new InvalidOperationException("A new revision was recorded after tracking was stopped.");
+        }
 
-        if (revisionsAfterSecondEdit != revisionsAfterFirstEdit)
-            throw new InvalidOperationException("New revisions were recorded after stopping tracking.");
+        // Output the final revision count.
+        Console.WriteLine($"Final revision count: {revisionsAfterEdit}");
 
-        // Save the document to verify the result manually if needed.
+        // Save the document to verify the result (optional for the task).
         doc.Save("TrackChangesDemo.docx");
     }
 }

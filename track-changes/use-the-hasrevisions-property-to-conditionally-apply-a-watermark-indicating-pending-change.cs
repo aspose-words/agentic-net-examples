@@ -7,46 +7,29 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and add initial content.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Original paragraph.");
 
-        // Add initial content.
-        builder.Writeln("This is the original paragraph.");
+        // Enable track changes.
+        doc.StartTrackRevisions("John Doe", DateTime.Now);
 
-        // Start tracking revisions.
-        doc.StartTrackRevisions("DemoAuthor", DateTime.Now);
-
-        // Make some changes while tracking is enabled.
-        builder.Writeln("This paragraph was added while tracking changes.");
+        // Perform modifications while tracking is enabled.
+        builder.Writeln("Added paragraph while tracking.");
         builder.MoveToDocumentStart();
-        builder.Write("Inserted at the beginning. ");
+        builder.Write("Inserted at start. ");
 
-        // Stop tracking revisions.
+        // Stop tracking changes.
         doc.StopTrackRevisions();
 
-        // If the document has any revisions, add a watermark indicating pending changes.
+        // If the document contains any revisions, add a watermark.
         if (doc.HasRevisions)
         {
-            // Create a watermark shape.
-            Shape watermark = new Shape(doc, ShapeType.TextPlainText);
-            watermark.TextPath.Text = "PENDING CHANGES";
-            watermark.TextPath.FontFamily = "Arial";
-            watermark.Width = 500;
-            watermark.Height = 100;
-            watermark.Rotation = -40;
-            watermark.FillColor = Color.LightGray;
-            watermark.StrokeColor = Color.LightGray;
-            watermark.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-            watermark.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-            watermark.WrapType = WrapType.None;
-            watermark.VerticalAlignment = VerticalAlignment.Center;
-            watermark.HorizontalAlignment = HorizontalAlignment.Center;
-            watermark.BehindText = true;
-
-            // Insert the watermark into each header of each section.
+            // Add watermark to each section's primary header.
             foreach (Section section in doc.Sections)
             {
+                // Ensure the primary header exists.
                 HeaderFooter header = section.HeadersFooters[HeaderFooterType.HeaderPrimary];
                 if (header == null)
                 {
@@ -54,18 +37,31 @@ public class Program
                     section.HeadersFooters.Add(header);
                 }
 
-                // The header must contain a paragraph; add the shape to a new paragraph.
-                Paragraph para = new Paragraph(doc);
-                para.AppendChild(watermark.Clone(true));
-                header.AppendChild(para);
+                // Move the builder to the header.
+                DocumentBuilder watermarkBuilder = new DocumentBuilder(doc);
+                watermarkBuilder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+
+                // Create a text shape that will act as the watermark.
+                Shape watermark = new Shape(doc, ShapeType.TextPlainText);
+                watermark.TextPath.Text = "Pending Changes";
+                watermark.TextPath.FontFamily = "Arial";
+                watermark.Width = 500;
+                watermark.Height = 100;
+                watermark.Rotation = -40;
+                watermark.Fill.Color = Color.LightGray;
+                watermark.StrokeColor = Color.LightGray;
+                watermark.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
+                watermark.RelativeVerticalPosition = RelativeVerticalPosition.Page;
+                watermark.WrapType = WrapType.None;
+                watermark.VerticalAlignment = VerticalAlignment.Center;
+                watermark.HorizontalAlignment = HorizontalAlignment.Center;
+
+                // Insert the watermark shape into the header.
+                watermarkBuilder.InsertNode(watermark);
             }
         }
 
-        // Save the document.
-        string outputPath = "Output.docx";
-        doc.Save(outputPath);
-
-        // Indicate completion.
-        Console.WriteLine($"Document saved to '{outputPath}'. Watermark applied: {doc.HasRevisions}");
+        // Save the resulting document.
+        doc.Save("Result.docx");
     }
 }
