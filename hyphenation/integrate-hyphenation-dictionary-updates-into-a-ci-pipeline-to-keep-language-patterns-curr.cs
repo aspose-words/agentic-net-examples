@@ -1,61 +1,66 @@
 using System;
-using System.Globalization;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the dictionary and the output PDF.
+        // Paths for artifacts
         const string dictionaryPath = "hyph_en_US.dic";
-        const string outputPath = "hyphenated.pdf";
+        const string firstPdfPath = "hyphenated_v1.pdf";
+        const string secondPdfPath = "hyphenated_v2.pdf";
 
-        // Create a minimal hyphenation dictionary for English (US).
-        // The first line must be the encoding identifier.
-        // Subsequent lines contain word=hyphenation-patterns.
-        string dictionaryContent =
+        // Step 1: Create initial hyphenation dictionary
+        string initialDictionaryContent =
             "UTF-8\n" +
-            "extraordinarycharacteristically=ex-tra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
+            "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
             "internationalization=in-ter-na-tion-al-i-za-tion\n" +
             "communication=com-mu-ni-ca-tion\n";
+        File.WriteAllText(dictionaryPath, initialDictionaryContent);
 
-        File.WriteAllText(dictionaryPath, dictionaryContent);
+        // Step 2: Register the dictionary for en-US locale
+        Aspose.Words.Hyphenation.RegisterDictionary("en-US", dictionaryPath);
 
-        // Register the dictionary with Aspose.Words.
-        Hyphenation.RegisterDictionary("en-US", dictionaryPath);
+        // Step 3: Build a document that will trigger hyphenation
+        Document docV1 = new Document();
+        DocumentBuilder builderV1 = new DocumentBuilder(docV1);
+        // Narrow page width to force line breaks
+        docV1.FirstSection.PageSetup.PageWidth = 200;
+        docV1.FirstSection.PageSetup.LeftMargin = 20;
+        docV1.FirstSection.PageSetup.RightMargin = 20;
+        // Sample text containing words from the dictionary
+        builderV1.Writeln("extraordinarycharacteristically internationalization communication");
 
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Step 4: Save the first PDF
+        docV1.Save(firstPdfPath, SaveFormat.Pdf);
+        if (!File.Exists(firstPdfPath))
+            throw new InvalidOperationException($"Failed to create {firstPdfPath}");
 
-        // Set the document locale to English (US) so that the registered dictionary is used.
-        builder.Font.LocaleId = new CultureInfo("en-US").LCID;
+        // Step 5: Simulate CI pipeline dictionary update
+        string updatedDictionaryContent =
+            initialDictionaryContent +
+            "hyperresponsibility=hy-per-re-spon-si-bil-i-ty\n";
+        File.WriteAllText(dictionaryPath, updatedDictionaryContent);
 
-        // Write a paragraph containing long words that can be hyphenated.
-        builder.Writeln(
-            "extraordinarycharacteristically internationalization communication " +
-            "extraordinarycharacteristically internationalization communication");
+        // Re‑register the updated dictionary
+        Aspose.Words.Hyphenation.RegisterDictionary("en-US", dictionaryPath);
 
-        // Narrow the page width to force line wrapping and enable hyphenation.
-        doc.FirstSection.PageSetup.PageWidth = 200; // points
-        doc.FirstSection.PageSetup.LeftMargin = 20;
-        doc.FirstSection.PageSetup.RightMargin = 20;
+        // Step 6: Build a second document that uses the new word
+        Document docV2 = new Document();
+        DocumentBuilder builderV2 = new DocumentBuilder(docV2);
+        docV2.FirstSection.PageSetup.PageWidth = 200;
+        docV2.FirstSection.PageSetup.LeftMargin = 20;
+        docV2.FirstSection.PageSetup.RightMargin = 20;
+        builderV2.Writeln("hyperresponsibility extraordinarycharacteristically");
 
-        // Enable automatic hyphenation.
-        doc.HyphenationOptions.AutoHyphenation = true;
-        doc.HyphenationOptions.HyphenationZone = 360; // default
-        doc.HyphenationOptions.HyphenateCaps = true;
-        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;
+        // Step 7: Save the second PDF
+        docV2.Save(secondPdfPath, SaveFormat.Pdf);
+        if (!File.Exists(secondPdfPath))
+            throw new InvalidOperationException($"Failed to create {secondPdfPath}");
 
-        // Save the document as PDF.
-        doc.Save(outputPath, SaveFormat.Pdf);
-
-        // Validate that the output file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"Expected output file '{outputPath}' was not created.");
-
-        // Clean up temporary dictionary file (optional).
+        // Cleanup (optional)
         // File.Delete(dictionaryPath);
     }
 }

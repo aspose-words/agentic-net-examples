@@ -10,11 +10,11 @@ product: Aspose.Words
 
 ## Purpose
 
-Provide an AI coding agent with a clear, reproducible pattern for implementing hyphenation in Aspose.Words projects, including dictionary registration, locale selection, layout preparation, and output verification.
+Provide an AI coding agent with concise guidance for implementing reliable hyphenation features in Aspose.Words, including dictionary registration, language configuration, layout preparation, and verification of generated artifacts.
 
 ## Non-negotiable conventions
 
-- Do not reference non-existent Aspose.Words types or invent hyphenation properties that are not part of the public API.
+- Do not reference non-existent Hyphenation members, external dictionary URLs, or assume pre-existing files.
 - Bootstrap local sample inputs for existing-file, folder, stream, image, and data workflows.
 - Prefer simple, verifiable workflows over speculative formatting shortcuts.
 
@@ -28,7 +28,7 @@ Use the simplest workflow that satisfies the task.
 
 ## Validation priorities
 
-1. Verify that the hyphenation dictionary is registered, the document is saved, and the expected output file exists on disk.
+1. After processing, verify that the expected output file (DOCX, PDF, or image) exists on disk before the program terminates.
 
 ## File-to-task reference
 
@@ -41,12 +41,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Register an external LibreOffice dictionary from GitHub and apply it to documents written in Spanish.
   - Workflow: dictionary-registration
   - Outputs: doc
-  - Selected engine: mcp
+  - Selected engine: llm
 - `create-a-script-that-downloads-the-latest-libreoffice-hyphenation-dictionaries-and-registe.cs`
   - Task: Create a script that downloads the latest LibreOffice hyphenation dictionaries and registers them automatically.
   - Workflow: document-setup-and-validation
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `update-an-existing-hunspell-dictionary-by-adding-custom-hyphenation-patterns-for-technical.cs`
   - Task: Update an existing Hunspell dictionary by adding custom hyphenation patterns for technical terminology.
   - Workflow: dictionary-registration
@@ -61,7 +61,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Load a DOCX containing mixed languages, set appropriate hyphenation language for each section.
   - Workflow: dictionary-registration
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `set-hyphenation-to-respect-word-boundaries-in-arabic-script-by-loading-appropriate-right-t.cs`
   - Task: Set hyphenation to respect word boundaries in Arabic script by loading appropriate right-to-left dictionary.
   - Workflow: dictionary-registration
@@ -71,7 +71,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Configure hyphenation to respect compound-word rules of Microsoft Word for German language documents.
   - Workflow: dictionary-registration
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `set-minimum-word-length-for-hyphenation-to-five-characters-and-observe-its-effect-on-short.cs`
   - Task: Set minimum word length for hyphenation to five characters and observe its effect on short words.
   - Workflow: document-setup-and-validation
@@ -106,7 +106,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Load a PDF file, enable hyphenation, and render the result to an image for visual inspection.
   - Workflow: rendering-and-export
   - Outputs: pdf
-  - Selected engine: llm
+  - Selected engine: mcp
 - `use-the-api-to-query-hyphenation-status-of-each-word-in-a-paragraph-and-log-the-results.cs`
   - Task: Use the API to query hyphenation status of each word in a paragraph and log the results.
   - Workflow: document-setup-and-validation
@@ -126,12 +126,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Retrieve the hyphenation patterns for French language and log them for debugging purposes.
   - Workflow: dictionary-registration
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `list-all-available-hyphenation-dictionaries-on-the-system-and-display-their-language-codes.cs`
   - Task: List all available hyphenation dictionaries on the system and display their language codes.
   - Workflow: dictionary-registration
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `programmatically-adjust-paragraph-justification-after-hyphenation-to-prevent-excessive-whi.cs`
   - Task: Programmatically adjust paragraph justification after hyphenation to prevent excessive white space gaps.
   - Workflow: document-setup-and-validation
@@ -156,17 +156,17 @@ Use the simplest workflow that satisfies the task.
   - Task: Load multiple documents from a folder, enable hyphenation, and save each as a hyphenated PDF.
   - Workflow: rendering-and-export
   - Outputs: pdf
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `batch-process-a-collection-of-docx-files-applying-language-specific-hyphenation-and-export.cs`
   - Task: Batch process a collection of DOCX files, applying language-specific hyphenation and exporting each to PDF.
   - Workflow: dictionary-registration
   - Outputs: docx, pdf
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `batch-convert-docx-files-to-pdf-while-preserving-hyphenation-and-log-any-documents-that-fa.cs`
   - Task: Batch convert DOCX files to PDF while preserving hyphenation, and log any documents that fail.
   - Workflow: rendering-and-export
   - Outputs: docx, pdf
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `create-a-new-document-enable-automatic-hyphenation-from-the-start-and-save-it-as-a-docx-fi.cs`
   - Task: Create a new document, enable automatic hyphenation from the start, and save it as a DOCX file.
   - Workflow: document-setup-and-validation
@@ -186,7 +186,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Export a hyphenated document to PDF and compare file size with a non-hyphenated version.
   - Workflow: rendering-and-export
   - Outputs: pdf
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `generate-a-pdf-from-a-hyphenated-document-and-ensure-that-hyphenation-marks-are-not-visibl.cs`
   - Task: Generate a PDF from a hyphenated document and ensure that hyphenation marks are not visible in the output.
   - Workflow: rendering-and-export
@@ -201,22 +201,22 @@ Use the simplest workflow that satisfies the task.
   - Task: Measure rendering time differences between PDF generation with and without hyphenation enabled.
   - Workflow: rendering-and-export
   - Outputs: pdf
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `create-a-console-application-that-accepts-a-document-path-hyphenation-language-code-and-ou.cs`
   - Task: Create a console application that accepts a document path, hyphenation language code, and outputs a hyphenated PDF.
   - Workflow: dictionary-registration
   - Outputs: pdf
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `implement-error-handling-for-loading-incompatible-hyphenation-dictionaries-and-provide-des.cs`
   - Task: Implement error handling for loading incompatible hyphenation dictionaries and provide descriptive messages.
   - Workflow: document-setup-and-validation
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `integrate-hyphenation-dictionary-updates-into-a-ci-pipeline-to-keep-language-patterns-curr.cs`
   - Task: Integrate hyphenation dictionary updates into a CI pipeline to keep language patterns current.
   - Workflow: dictionary-registration
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `test-hyphenation-impact-on-page-count-by-generating-a-long-report-with-and-without-hyphena.cs`
   - Task: Test hyphenation impact on page count by generating a long report with and without hyphenation.
   - Workflow: document-setup-and-validation
@@ -231,33 +231,27 @@ Use the simplest workflow that satisfies the task.
   - Task: Create a unit test that verifies hyphenation patterns are applied correctly for Italian language documents.
   - Workflow: dictionary-registration
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 
 ## Common failure patterns and preferred agent fixes
 
-- **Incorrect API usage**
-  - Symptom: Compilation fails because properties such as HyphenationLanguage, LanguageId, or static using directives are referenced on non-existent types.
-  - Root cause: The code attempts to use legacy or undocumented members that were removed or never existed in Aspose.Words 26.10.0.
-  - Preferred fix: Replace the invalid members with the current Hyphenation.RegisterDictionary method and the Document.HyphenationOptions.AutoHyphenation flag.
-  - Prevention: Consult the official Aspose.Words API reference and limit code to members that appear in IntelliSense for the target version.
-
-- **Missing local resources**
-  - Symptom: Runtime throws InvalidOperationException because a hyphenation dictionary file cannot be found or registered.
-  - Root cause: The example assumes external dictionary files or source documents exist without creating them locally.
-  - Preferred fix: Generate deterministic dictionary files and sample documents within the example before registration and processing.
-  - Prevention: Always create required files in the code base and verify their existence with File.Exists checks before use.
+- **Incorrect or invented Hyphenation API usage**
+  - Symptom: Compilation fails because members such as Hyphenation.IsAutoHyphenation, HyphenationOptions.HyphenationLanguage, or Document.HyphenationOptions are missing, read-only, or undefined.
+  - Root cause: The code was written against a non-existent Hyphenation class or older API versions that are not present in Aspose.Words 26.11.0.
+  - Preferred fix: Replace the invalid members with the documented API: register dictionaries via Hyphenation.RegisterDictionary, enable hyphenation through Document.HyphenationOptions.AutoHyphenation, adjust HyphenationZone if needed, and set ParagraphFormat.LocaleId for language selection.
+  - Prevention: Always consult the current Aspose.Words API reference and limit code to members that exist in the installed package version.
 
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Primary package: `Aspose.Words` `26.10.0`
+- Primary package: `Aspose.Words` `26.11.0`
 
 ## Command reference
 
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.10.0
+dotnet add package Aspose.Words --version 26.11.0
 ```
 
 ```powershell
@@ -271,4 +265,4 @@ dotnet run --configuration Release --no-build
 
 ## Category update guidance
 
-- Update dictionary file contents and registration calls when newer Aspose.Words versions introduce changes to the Hyphenation API.
+- Store sample dictionary files alongside the source code and register them before any document processing to prevent missing-dictionary errors.

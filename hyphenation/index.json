@@ -4,33 +4,32 @@
     "slug": "hyphenation",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Create a local sample document, write a minimal Hunspell dictionary file, register the dictionary with Hyphenation.RegisterDictionary, enable doc.HyphenationOptions.AutoHyphenation, adjust page setup to force line breaks, and save the result while asserting that the output file exists.",
+    "preferred_workflow": "Create a deterministic sample document, generate a minimal Hunspell or LibreOffice dictionary locally, register the dictionary with Hyphenation.RegisterDictionary, configure Document.HyphenationOptions (AutoHyphenation, HyphenationZone, etc.), optionally set ParagraphFormat.LocaleId for language-specific behavior, narrow the page layout to trigger hyphenation, and finally save the document while asserting that the output file exists.",
     "required_packages": [
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.10.0"
+      "Aspose.Words": "26.11.0"
     },
     "required_namespaces": [
       "System",
       "System.IO",
       "Aspose.Words",
       "System.Globalization",
-      "Aspose.Words.Saving",
       "Aspose.Words.Settings",
+      "Aspose.Words.Saving",
       "Aspose.Words.Tables",
       "System.Collections.Generic",
       "System.Linq",
       "System.Diagnostics",
-      "Aspose.Words.Loading",
       "Aspose.Words.Notes"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
       "File",
-      "Font",
       "SaveFormat",
+      "Font",
       "Directory",
       "Path",
       "Paragraph",
@@ -38,8 +37,7 @@
       "Cell",
       "StyleIdentifier",
       "ImageSaveOptions",
-      "NodeType",
-      "Run"
+      "NodeType"
     ]
   },
   "stats": {
@@ -53,29 +51,22 @@
   },
   "rules_summary": {
     "strict_api_bans": [
-      "Do not reference non-existent Aspose.Words types or invent hyphenation properties that are not part of the public API."
+      "Do not reference non-existent Hyphenation members, external dictionary URLs, or assume pre-existing files."
     ],
     "canonical_patterns": [
-      "Use the Hyphenation class for dictionary registration and the HyphenationOptions property on Document to control automatic hyphenation."
+      "Use only the documented Hyphenation static class and Document.HyphenationOptions for configuration, and create all required input files within the example."
     ],
     "nullable_warning_prevention": [
-      "Initialize all file paths and objects before use and guard any potentially null values with explicit checks."
+      "Initialize all reference-type variables before use and guard any potentially null values with explicit checks."
     ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "Incorrect API usage",
-      "symptom": "Compilation fails because properties such as HyphenationLanguage, LanguageId, or static using directives are referenced on non-existent types.",
-      "cause": "The code attempts to use legacy or undocumented members that were removed or never existed in Aspose.Words 26.10.0.",
-      "fix": "Replace the invalid members with the current Hyphenation.RegisterDictionary method and the Document.HyphenationOptions.AutoHyphenation flag.",
-      "prevention": "Consult the official Aspose.Words API reference and limit code to members that appear in IntelliSense for the target version."
-    },
-    {
-      "pattern": "Missing local resources",
-      "symptom": "Runtime throws InvalidOperationException because a hyphenation dictionary file cannot be found or registered.",
-      "cause": "The example assumes external dictionary files or source documents exist without creating them locally.",
-      "fix": "Generate deterministic dictionary files and sample documents within the example before registration and processing.",
-      "prevention": "Always create required files in the code base and verify their existence with File.Exists checks before use."
+      "pattern": "Incorrect or invented Hyphenation API usage",
+      "symptom": "Compilation fails because members such as Hyphenation.IsAutoHyphenation, HyphenationOptions.HyphenationLanguage, or Document.HyphenationOptions are missing, read-only, or undefined.",
+      "cause": "The code was written against a non-existent Hyphenation class or older API versions that are not present in Aspose.Words 26.11.0.",
+      "fix": "Replace the invalid members with the documented API: register dictionaries via Hyphenation.RegisterDictionary, enable hyphenation through Document.HyphenationOptions.AutoHyphenation, adjust HyphenationZone if needed, and set ParagraphFormat.LocaleId for language selection.",
+      "prevention": "Always consult the current Aspose.Words API reference and limit code to members that exist in the installed package version."
     }
   ],
   "examples": [
@@ -98,8 +89,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 3,
@@ -109,8 +100,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 4,
@@ -142,8 +133,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 7,
@@ -164,8 +155,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 9,
@@ -241,8 +232,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 16,
@@ -285,8 +276,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 20,
@@ -296,8 +287,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 21,
@@ -351,8 +342,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 26,
@@ -363,8 +354,8 @@
         "docx",
         "pdf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 27,
@@ -375,8 +366,8 @@
         "docx",
         "pdf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 28,
@@ -421,8 +412,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 32,
@@ -455,8 +446,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 35,
@@ -466,8 +457,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 36,
@@ -477,8 +468,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 37,
@@ -488,8 +479,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 38,
@@ -521,18 +512,18 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     }
   ],
   "narrative": {
-    "overview": "The Hyphenation category demonstrates how to enable and control automatic hyphenation in Aspose.Words using the documented Hyphenation API. Verified examples show document creation, custom Hunspell dictionary registration, language-specific configuration, and PDF export without external dependencies.",
-    "purpose": "Provide an AI coding agent with a clear, reproducible pattern for implementing hyphenation in Aspose.Words projects, including dictionary registration, locale selection, layout preparation, and output verification.",
+    "overview": "The Hyphenation category demonstrates how to enable and control automatic hyphenation in Aspose.Words using documented APIs and local dictionary files. Verified examples show document creation, dictionary registration, language selection, and output validation without external dependencies.",
+    "purpose": "Provide an AI coding agent with concise guidance for implementing reliable hyphenation features in Aspose.Words, including dictionary registration, language configuration, layout preparation, and verification of generated artifacts.",
     "validation_priorities": [
-      "Verify that the hyphenation dictionary is registered, the document is saved, and the expected output file exists on disk."
+      "After processing, verify that the expected output file (DOCX, PDF, or image) exists on disk before the program terminates."
     ],
     "maintenance_notes": [
-      "Update dictionary file contents and registration calls when newer Aspose.Words versions introduce changes to the Hyphenation API."
+      "Store sample dictionary files alongside the source code and register them before any document processing to prevent missing-dictionary errors."
     ]
   }
 }

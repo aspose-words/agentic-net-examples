@@ -1,52 +1,55 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
         // Create a minimal hyphenation dictionary for English (en-US).
-        string dictionaryPath = "hyph_en_US.dic";
-        string dictionaryContent =
+        const string dictFileName = "hyph_en_US.dic";
+        string dictContent =
             "UTF-8\n" +
             "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
             "internationalization=in-ter-na-tion-al-i-za-tion\n" +
             "communication=com-mu-ni-ca-tion\n";
-        File.WriteAllText(dictionaryPath, dictionaryContent);
+
+        File.WriteAllText(dictFileName, dictContent);
 
         // Register the dictionary with Aspose.Words.
-        Hyphenation.RegisterDictionary("en-US", dictionaryPath);
+        Aspose.Words.Hyphenation.RegisterDictionary("en-US", dictFileName);
 
         // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Configure a narrow page width to force line wrapping and hyphenation.
+        // Narrow the page width to force line wrapping and hyphenation.
         Section section = doc.FirstSection;
-        PageSetup pageSetup = section.PageSetup;
-        pageSetup.PageWidth = 200; // points
-        pageSetup.LeftMargin = 20;
-        pageSetup.RightMargin = 20;
+        section.PageSetup.PageWidth = 200; // points (~2.78 inches)
+        section.PageSetup.LeftMargin = 20;
+        section.PageSetup.RightMargin = 20;
 
-        // Enable automatic hyphenation and set a small hyphenation zone
-        // to reduce large white‑space gaps in justified text.
+        // Enable automatic hyphenation.
         doc.HyphenationOptions.AutoHyphenation = true;
-        doc.HyphenationOptions.HyphenationZone = 5; // points from the right margin
 
-        // Write a paragraph with words that can be hyphenated.
+        // Write a paragraph with long words that can be hyphenated.
         builder.ParagraphFormat.Alignment = ParagraphAlignment.Justify;
-        builder.Writeln(
-            "extraordinarycharacteristically internationalization communication " +
-            "extraordinarycharacteristically internationalization communication");
+        builder.Writeln("extraordinarycharacteristically internationalization communication");
 
         // Save the document as PDF.
-        string outputPath = "JustifiedHyphenated.pdf";
-        doc.Save(outputPath, SaveFormat.Pdf);
+        const string outputFile = "hyphenated.pdf";
+        doc.Save(outputFile, SaveFormat.Pdf);
 
-        // Verify that the output file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Expected PDF output was not created.");
+        // Validate that the output file was created.
+        if (!File.Exists(outputFile))
+        {
+            throw new InvalidOperationException($"Expected output file '{outputFile}' was not created.");
+        }
+
+        // Clean up temporary dictionary file (optional).
+        if (File.Exists(dictFileName))
+        {
+            File.Delete(dictFileName);
+        }
     }
 }
