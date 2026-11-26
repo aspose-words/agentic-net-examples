@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -7,52 +8,64 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some content.
-        builder.Writeln("This is the first paragraph.");
-        builder.Writeln("This paragraph will have a comment attached.");
+        // First paragraph with a comment.
+        builder.Writeln("This is the first paragraph that will have a comment.");
+        AddCommentToCurrentParagraph(doc, builder, "John Doe", "JD", "First comment text.");
 
-        // Retrieve the paragraph that will hold the comment.
-        Paragraph? targetParagraph = doc.FirstSection?.Body?.LastParagraph;
-        if (targetParagraph == null)
+        // Second paragraph with a comment.
+        builder.Writeln("This is the second paragraph with another comment.");
+        AddCommentToCurrentParagraph(doc, builder, "Jane Smith", "JS", "Second comment text.");
+
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
+
+        // Save the document as XPS. Comments are preserved as markup annotations.
+        string xpsPath = Path.Combine(outputDir, "DocumentWithComments.xps");
+        doc.Save(xpsPath, SaveFormat.Xps);
+
+        // Enumerate comments and write their details to the console.
+        var comments = doc.GetChildNodes(NodeType.Comment, true)
+                          .OfType<Comment>()
+                          .ToList();
+
+        foreach (Comment comment in comments)
         {
-            Console.WriteLine("Unable to locate the target paragraph.");
-            return;
+            string text = comment.GetText().Trim();
+            Console.WriteLine($"Author: {comment.Author}, Initials: {comment.Initial}, Date: {comment.DateTime:u}");
+            Console.WriteLine($"Comment Text: {text}");
+            Console.WriteLine();
         }
 
-        // Create a comment node with metadata.
+        // Indicate completion.
+        Console.WriteLine($"Document saved to: {xpsPath}");
+    }
+
+    private static void AddCommentToCurrentParagraph(Document doc, DocumentBuilder builder, string author, string initial, string commentText)
+    {
+        // Safely get the paragraph that the builder is currently on.
+        Paragraph? paragraph = builder.CurrentParagraph;
+        if (paragraph == null)
+            return;
+
+        // Create a new comment node.
         Comment comment = new Comment(doc)
         {
-            Author = "John Doe",
-            Initial = "JD",
+            Author = author,
+            Initial = initial,
             DateTime = DateTime.Now
         };
 
-        // Add visible text to the comment.
+        // Add a paragraph and run inside the comment to hold the comment text.
         Paragraph commentParagraph = new Paragraph(doc);
-        commentParagraph.AppendChild(new Run(doc, "Please review this paragraph."));
+        commentParagraph.AppendChild(new Run(doc, commentText));
         comment.AppendChild(commentParagraph);
 
-        // Attach the comment to the target paragraph.
-        targetParagraph.AppendChild(comment);
-
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Save the document as DOCX (optional verification).
-        string docxPath = Path.Combine(outputDir, "CommentedDocument.docx");
-        doc.Save(docxPath, SaveFormat.Docx);
-
-        // Save the document as XPS. Comments are rendered as markup annotations.
-        string xpsPath = Path.Combine(outputDir, "CommentedDocument.xps");
-        doc.Save(xpsPath, SaveFormat.Xps);
-
-        // Indicate that processing is complete.
-        Console.WriteLine($"DOCX saved to: {docxPath}");
-        Console.WriteLine($"XPS saved to: {xpsPath}");
+        // Append the comment to the current paragraph.
+        paragraph.AppendChild(comment);
     }
 }

@@ -2,64 +2,64 @@ using System;
 using System.IO;
 using System.Linq;
 using Aspose.Words;
+using Aspose.Words.Drawing;
+using Aspose.Words.Notes;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample source document with several comments.
+        // Create a source document with several comments from different authors.
         Document sourceDoc = new Document();
         DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
 
-        // First paragraph with a comment by John Doe.
+        // First paragraph with a comment from Alice.
         srcBuilder.Writeln("First paragraph with a comment.");
-        Comment comment1 = new Comment(sourceDoc)
+        Comment commentAlice = new Comment(sourceDoc)
         {
-            Author = "John Doe",
-            Initial = "JD",
+            Author = "Alice",
+            Initial = "A",
             DateTime = DateTime.Now
         };
-        comment1.AppendChild(new Paragraph(sourceDoc));
-        comment1.FirstParagraph?.AppendChild(new Run(sourceDoc, "Please review this paragraph."));
-        Paragraph? para1 = sourceDoc.FirstSection?.Body?.LastParagraph;
-        para1?.AppendChild(comment1);
+        commentAlice.AppendChild(new Paragraph(sourceDoc));
+        commentAlice.FirstParagraph?.AppendChild(new Run(sourceDoc, "Alice's review note."));
+        // Attach the comment to the first paragraph.
+        sourceDoc.FirstSection?.Body?.FirstParagraph?.AppendChild(commentAlice);
 
-        // Second paragraph with a comment by Jane Smith.
-        srcBuilder.Writeln("Second paragraph with a different comment.");
-        Comment comment2 = new Comment(sourceDoc)
+        // Second paragraph with a comment from Bob.
+        srcBuilder.Writeln("Second paragraph with a comment.");
+        Comment commentBob = new Comment(sourceDoc)
         {
-            Author = "Jane Smith",
-            Initial = "JS",
-            DateTime = DateTime.Now.AddMinutes(-5)
+            Author = "Bob",
+            Initial = "B",
+            DateTime = DateTime.Now.AddMinutes(-10)
         };
-        comment2.AppendChild(new Paragraph(sourceDoc));
-        comment2.FirstParagraph?.AppendChild(new Run(sourceDoc, "Consider rephrasing this sentence."));
-        Paragraph? para2 = sourceDoc.FirstSection?.Body?.LastParagraph;
-        para2?.AppendChild(comment2);
+        commentBob.AppendChild(new Paragraph(sourceDoc));
+        commentBob.FirstParagraph?.AppendChild(new Run(sourceDoc, "Bob's suggestion."));
+        sourceDoc.FirstSection?.Body?.LastParagraph?.AppendChild(commentBob);
 
-        // Third paragraph with another comment by John Doe.
-        srcBuilder.Writeln("Third paragraph, another note.");
-        Comment comment3 = new Comment(sourceDoc)
+        // Third paragraph with another comment from Alice.
+        srcBuilder.Writeln("Third paragraph with another comment.");
+        Comment commentAlice2 = new Comment(sourceDoc)
         {
-            Author = "John Doe",
-            Initial = "JD",
+            Author = "Alice",
+            Initial = "A",
             DateTime = DateTime.Now.AddHours(-1)
         };
-        comment3.AppendChild(new Paragraph(sourceDoc));
-        comment3.FirstParagraph?.AppendChild(new Run(sourceDoc, "Add a citation here."));
-        Paragraph? para3 = sourceDoc.FirstSection?.Body?.LastParagraph;
-        para3?.AppendChild(comment3);
+        commentAlice2.AppendChild(new Paragraph(sourceDoc));
+        commentAlice2.FirstParagraph?.AppendChild(new Run(sourceDoc, "Second note from Alice."));
+        sourceDoc.FirstSection?.Body?.LastParagraph?.AppendChild(commentAlice2);
 
-        // Define the author to filter.
-        const string targetAuthor = "John Doe";
+        // Save the source document (optional, for inspection).
+        sourceDoc.Save("source.docx");
 
-        // Retrieve all comments from the source document.
-        var allComments = sourceDoc.GetChildNodes(NodeType.Comment, true)
-                                   .OfType<Comment>()
-                                   .ToList();
+        // Define the author whose comments we want to export.
+        const string targetAuthor = "Alice";
 
-        // Filter comments by the specified author (case‑insensitive).
-        var filteredComments = allComments
+        // Enumerate all comments and filter by author.
+        var filteredComments = sourceDoc
+            .GetChildNodes(NodeType.Comment, true)
+            .OfType<Comment>()
             .Where(c => string.Equals(c.Author, targetAuthor, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
@@ -67,23 +67,23 @@ public class Program
         Document reportDoc = new Document();
         DocumentBuilder reportBuilder = new DocumentBuilder(reportDoc);
 
-        // Write a header.
         reportBuilder.Writeln($"Comments authored by \"{targetAuthor}\":");
         reportBuilder.Writeln();
 
-        // Add each filtered comment to the report document.
         foreach (Comment c in filteredComments)
         {
-            string commentText = c.GetText().Trim();
-            reportBuilder.Writeln($"Author : {c.Author}");
-            reportBuilder.Writeln($"Date   : {c.DateTime:O}");
-            reportBuilder.Writeln($"Text   : {commentText}");
-            reportBuilder.Writeln(); // Blank line between comments.
+            reportBuilder.Writeln($"Author: {c.Author}");
+            reportBuilder.Writeln($"Date: {c.DateTime:O}");
+            reportBuilder.Writeln($"Text: {c.GetText().Trim()}");
+            reportBuilder.Writeln(); // Add an empty line between comments.
         }
 
-        // Ensure the output directory exists and save the report.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FilteredComments.docx");
-        reportDoc.Save(outputPath);
-        Console.WriteLine($"Filtered comments saved to: {outputPath}");
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
+
+        // Save the report document.
+        string reportPath = Path.Combine(outputDir, "filtered-comments.docx");
+        reportDoc.Save(reportPath);
     }
 }

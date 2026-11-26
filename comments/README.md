@@ -1,6 +1,6 @@
 # Comments Examples for Aspose.Words for .NET
 
-The Comments category covers all operations that create, enumerate, modify, and export Aspose.Words comment nodes. Verified examples demonstrate reliable techniques for adding top-level comments, replying, filtering by author, exporting to CSV, highlighting, and generating printable reports.
+The Comments category for Aspose.Words focuses on programmatic handling of comment nodes, including enumeration, creation, updating, deletion, and export. Verified examples illustrate adding nested replies, filtering comments by date, and exporting comment data to CSV, JSON, and PDF while preserving formatting.
 
 ## Snapshot
 
@@ -8,7 +8,7 @@ The Comments category covers all operations that create, enumerate, modify, and 
 - Slug: comments
 - Total examples: 30
 - Publish-ready successful examples: 30 / 30
-- Source run: 20261102_031946_08fb5b
+- Source run: 20261124_190740_1c00f5
 - Native Comment API examples: 15
 - Export Report examples: 7
 - Rendered Output examples: 5
@@ -16,20 +16,22 @@ The Comments category covers all operations that create, enumerate, modify, and 
 
 ## Category rules that shaped these examples
 
-- Do not reference a non-existent Document.Comments collection or an invented Aspose.Words.Comments namespace.
-- Do not call DocumentBuilder.StartComment, EndComment, InsertComment, AddComment, or any similar shortcut that is not part of the official API.
-- Do not use CommentReference, HtmlSaveOptions.ExportComments, or any undocumented save-option flags.
+- Do not reference a non-existent Document.Comments collection; use GetChildNodes instead.
+- Do not invent a Aspose.Words.Comments namespace or builder shortcuts such as StartComment or EndComment.
+- Do not use CommentReference, HtmlSaveOptions.ExportComments, or PdfSaveOptions.ExportComments as they are not part of the API.
 - Enumerate comments with doc.GetChildNodes(NodeType.Comment, true).OfType<Comment>().
-- When creating a comment, always add at least one Paragraph and one Run to hold visible text.
-- Create a ToList() snapshot before deleting or bulk-updating comments to avoid mutating a live collection.
-- Declare locals as nullable (e.g., Paragraph? para) when a value may be absent and check for null before dereferencing.
-- Guard results of FirstOrDefault, CurrentParagraph, or similar queries with explicit null checks.
-- Avoid assigning maybe-null expressions directly to non-nullable variables.
+- When creating a comment, append at least one Paragraph and one Run to provide visible content.
+- Copy a live comment collection to a List before performing bulk updates or deletions.
+- Extract plain comment data first and rebuild destination documents from that data for export scenarios.
+- Reset MemoryStream.Position to zero before reloading a document from a stream.
+- Check for null before dereferencing objects such as Paragraph? or Comment? to avoid CS8602.
+- Assign maybe-null values only to nullable locals; declare variables as nullable when appropriate.
+- Guard FirstOrDefault results and other potentially null expressions before use.
 
 ## Prerequisites
 
 - .NET SDK 8.0 or later
-- Aspose.Words for .NET `26.10.0`
+- Aspose.Words for .NET `26.11.0`
 
 ## Running Examples
 
@@ -39,7 +41,7 @@ Each file in this folder is a **single, standalone `.cs` console example**. To r
 # From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.10.0
+dotnet add package Aspose.Words --version 26.11.0
 
 # Copy one example from this folder into the project as Program.cs
 # PowerShell:
@@ -60,7 +62,7 @@ Example:
 # From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.10.0
+dotnet add package Aspose.Words --version 26.11.0
 
 # PowerShell example
 Copy-Item ..\comments\load-a-docx-file-enumerate-all-comments-and-print-each-author-and-text-to-console.cs .\Program.cs
@@ -92,54 +94,54 @@ dotnet run --configuration Release --no-build
 | 17 | `convert-a-doc-file-to-pdf-while-retaining-all-comment-annotations-visible-in-the-output.cs` | Convert a DOC file to PDF while retaining all comment annotations visible in the output. | rendered-output | docx, pdf, doc | mcp |
 | 18 | `convert-a-document-with-comments-to-xps-format-ensuring-comments-appear-as-markup-annotati.cs` | Convert a document with comments to XPS format, ensuring comments appear as markup annotations. | rendered-output | xps | mcp |
 | 19 | `add-a-comment-containing-a-hyperlink-to-an-external-resource-and-verify-the-link-functions.cs` | Add a comment containing a hyperlink to an external resource and verify the link functions in PDF. | rendered-output | pdf | mcp |
-| 20 | `validate-that-comment-reference-ids-update-correctly-after-inserting-new-paragraphs-into-t.cs` | Validate that comment reference IDs update correctly after inserting new paragraphs into the document. | native-comment-api | docx | mcp |
-| 21 | `synchronize-comment-positions-after-document-sections-are-reordered-to-maintain-accurate-c.cs` | Synchronize comment positions after document sections are reordered to maintain accurate comment anchoring. | native-comment-api | docx | mcp |
-| 22 | `use-comment-collection-events-to-trigger-custom-logging-whenever-a-comment-is-added-or-rem.cs` | Use comment collection events to trigger custom logging whenever a comment is added or removed. | native-comment-api | docx | llm |
+| 20 | `validate-that-comment-reference-ids-update-correctly-after-inserting-new-paragraphs-into-t.cs` | Validate that comment reference IDs update correctly after inserting new paragraphs into the document. | native-comment-api | docx | llm |
+| 21 | `synchronize-comment-positions-after-document-sections-are-reordered-to-maintain-accurate-c.cs` | Synchronize comment positions after document sections are reordered to maintain accurate comment anchoring. | native-comment-api | docx | llm |
+| 22 | `use-comment-collection-events-to-trigger-custom-logging-whenever-a-comment-is-added-or-rem.cs` | Use comment collection events to trigger custom logging whenever a comment is added or removed. | native-comment-api | docx | mcp |
 | 23 | `programmatically-accept-or-reject-comments-based-on-author-name-and-generate-a-revised-doc.cs` | Programmatically accept or reject comments based on author name and generate a revised document version. | native-comment-api | docx | mcp |
 | 24 | `load-a-document-from-a-stream-add-comments-and-save-the-modified-document-back-to-a-memory.cs` | Load a document from a stream, add comments, and save the modified document back to a memory stream. | stream-batch-io | docx, doc | mcp |
 | 25 | `create-a-batch-process-that-adds-a-standardized-disclaimer-comment-to-every-document-in-a.cs` | Create a batch process that adds a standardized disclaimer comment to every document in a directory. | stream-batch-io | docx | mcp |
 | 26 | `load-a-document-change-comment-author-names-to-uppercase-and-save-the-updated-file.cs` | Load a document, change comment author names to uppercase, and save the updated file. | native-comment-api | docx | mcp |
 | 27 | `extract-comment-text-and-embed-it-as-footnotes-within-the-same-document-for-alternative-pr.cs` | Extract comment text and embed it as footnotes within the same document for alternative presentation. | native-comment-api | docx | mcp |
-| 28 | `implement-a-feature-that-hides-all-comments-in-the-document-view-without-removing-them-fro.cs` | Implement a feature that hides all comments in the document view without removing them from the file. | rendered-output | docx, pdf | mcp |
+| 28 | `implement-a-feature-that-hides-all-comments-in-the-document-view-without-removing-them-fro.cs` | Implement a feature that hides all comments in the document view without removing them from the file. | rendered-output | docx, pdf | llm |
 | 29 | `compare-two-versions-of-a-document-and-list-comments-that-were-added-modified-or-deleted.cs` | Compare two versions of a document and list comments that were added, modified, or deleted. | native-comment-api | docx | mcp |
 | 30 | `create-a-utility-that-reads-comment-data-from-a-database-and-inserts-corresponding-comment.cs` | Create a utility that reads comment data from a database and inserts corresponding comments into a template document. | stream-batch-io | docx | mcp |
 
 ## Common failure patterns seen during generation and how they were corrected
 
-### Use of non-existent comment APIs
+### Incorrect Node.Text usage
 
-- Symptom: Compile errors such as CS0234 or CS1061 referencing Document.Comments, Aspose.Words.Comments, DocumentBuilder.StartComment/EndComment, or HtmlSaveOptions.ExportComments.
-- Root cause: The referenced members are not defined in the Aspose.Words 26.10.0 API.
-- Preferred fix: Replace invented calls with the supported pattern doc.GetChildNodes(NodeType.Comment, true).OfType<Comment>() and manipulate Comment objects directly.
-- Prevention: Consult the official Aspose.Words documentation and restrict code to members that appear in IntelliSense.
+- Symptom: CS1061: 'Node' does not contain a definition for 'Text'.
+- Root cause: The code attempts to read .Text on the abstract Node type instead of a concrete Run or using Comment.GetText().
+- Preferred fix: Replace Node.Text with Comment.GetText() for whole-comment content or cast to Run before accessing .Text.
+- Prevention: Always access text through Run.Text or Comment.GetText() and avoid using Node.Text on non-text nodes.
 
-### Mutating a live comment collection
+### Invented comment collection APIs
 
-- Symptom: Runtime NotSupportedException stating that adding nodes is not supported for deep node collections, or unstable behavior when deleting during forward iteration.
-- Root cause: NodeCollection.Add or removal is performed on the original comment collection, which Aspose.Words treats as read-only for deep hierarchies.
-- Preferred fix: Create a snapshot with .ToList() and perform all Add, Remove, or Update operations on that list.
-- Prevention: Never iterate over a live NodeCollection while modifying it; always work on a copied list.
+- Symptom: CS0234: The type or namespace name 'Comments' does not exist in the namespace 'Aspose.Words'.
+- Root cause: The code references a non-existent Document.Comments property or Aspose.Words.Comments namespace.
+- Preferred fix: Enumerate comments using doc.GetChildNodes(NodeType.Comment, true).OfType<Comment>().
+- Prevention: Never use undocumented comment collection shortcuts; rely on the official GetChildNodes method.
 
-### Incorrect member access on base Node
+### Unsupported comment-reference or save-option APIs
 
-- Symptom: Compile errors CS1061 for members like .Text, .InsertAfter, or .ParentComment on a Node instance.
-- Root cause: Node is an abstract base class; those members exist only on derived types such as Run, Paragraph, or Comment.
-- Preferred fix: Cast to the appropriate derived type or use Comment.GetText() for comment content; use Paragraph.InsertAfter only on Paragraph objects.
-- Prevention: Inspect the concrete type before accessing members and rely on type-specific APIs.
+- Symptom: CS1061 or CS0117 errors for CommentReference, HtmlSaveOptions.ExportComments, PdfSaveOptions.ExportComments.
+- Root cause: The code calls members that are not defined in the current Aspose.Words version.
+- Preferred fix: Remove the unsupported calls and use only documented properties; comments are exported by default in PDF and HTML saves.
+- Prevention: Consult the official API reference for supported members before adding comment-related options.
 
-### Nullable reference warnings
+### Unsafe live-collection mutation
 
-- Symptom: CS8600, CS8602, or CS8604 warnings about possible null dereference or assignment.
-- Root cause: Code assigns or dereferences values that may be null without null checks.
-- Preferred fix: Declare variables as nullable, add explicit null checks, and use the null-conditional operator where appropriate.
-- Prevention: Enable nullable reference types and consistently validate results of queries that can return null.
+- Symptom: Runtime NotSupportedException when adding or removing nodes while iterating a live NodeCollection.
+- Root cause: The code modifies the comment collection during forward iteration, causing the underlying collection to change.
+- Preferred fix: Create a ToList copy of the comment collection before performing deletions or additions.
+- Prevention: Always work on a detached List copy when mutating comment nodes in bulk.
 
-### Improper reply handling
+### Nullable-reference warnings
 
-- Symptom: Compile errors for missing Comment.ParentComment property and runtime NotSupportedException when trying to add a reply via NodeCollection.Add.
-- Root cause: Replies must be added using the Comment.AddReply method; treating replies as regular nodes in a deep collection is unsupported.
-- Preferred fix: Create a reply with topComment.AddReply(author, initials, date, text) and avoid manual insertion into the comment collection.
-- Prevention: Use the dedicated AddReply API for nested comments and do not manipulate reply nodes directly.
+- Symptom: CS8600, CS8602, CS8604 warnings around maybe-null values such as CurrentParagraph or FirstOrDefault results.
+- Root cause: The code assigns or dereferences values that may be null without null checks or nullable annotations.
+- Preferred fix: Introduce nullable locals (e.g., Paragraph?) and guard them with if (variable != null) before use.
+- Prevention: Enable nullable reference analysis and add explicit null checks for all potentially null API returns.
 
 ## See Also
 
@@ -152,5 +154,5 @@ dotnet run --configuration Release --no-build
 
 ## Notes for maintainers
 
-- This category is 100% publish-ready for the 26.10.0 run.
-- Periodically verify that the Aspose.Words version used in the repository matches the version documented in the rules; update the strict API bans and canonical patterns when new comment features are added.
+- This category is 100% publish-ready for the 26.11.0 run.
+- Review and update this documentation whenever a new Aspose.Words version adds, changes, or deprecates comment-related members.

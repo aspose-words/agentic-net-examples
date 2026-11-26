@@ -4,7 +4,7 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Layout;
 
-public class Program
+public class CommentsReportExample
 {
     public static void Main()
     {
@@ -14,26 +14,41 @@ public class Program
 
         // First paragraph with a comment.
         builder.Writeln("This is the first paragraph of the document.");
-        AddCommentToCurrentParagraph(sourceDoc, builder, "Alice", "AL", "First comment on the first paragraph.");
+        Comment comment1 = new Comment(sourceDoc)
+        {
+            Author = "Alice",
+            Initial = "A",
+            DateTime = DateTime.Now.AddDays(-2)
+        };
+        comment1.AppendChild(new Paragraph(sourceDoc));
+        comment1.FirstParagraph.AppendChild(new Run(sourceDoc, "Please review the first paragraph."));
+        // Attach the comment to the paragraph that was just written.
+        sourceDoc.FirstSection.Body.FirstParagraph.AppendChild(comment1);
 
         // Second paragraph with a comment.
-        builder.Writeln("This is the second paragraph, containing important information.");
-        AddCommentToCurrentParagraph(sourceDoc, builder, "Bob", "BO", "Second comment, reviewing the second paragraph.");
+        builder.Writeln("Second paragraph contains important information.");
+        Comment comment2 = new Comment(sourceDoc)
+        {
+            Author = "Bob",
+            Initial = "B",
+            DateTime = DateTime.Now.AddDays(-1)
+        };
+        comment2.AppendChild(new Paragraph(sourceDoc));
+        comment2.FirstParagraph.AppendChild(new Run(sourceDoc, "Check the data accuracy here."));
+        // Attach the comment to the newly added paragraph.
+        Paragraph secondPara = sourceDoc.FirstSection.Body.LastParagraph;
+        secondPara.AppendChild(comment2);
 
         // Third paragraph without a comment.
-        builder.Writeln("This paragraph has no comments attached.");
+        builder.Writeln("A paragraph without any comments.");
 
-        // Fourth paragraph with a comment.
-        builder.Writeln("Final paragraph before the report generation.");
-        AddCommentToCurrentParagraph(sourceDoc, builder, "Charlie", "CH", "Final comment for the report.");
-
-        // Ensure layout is up‑to‑date so page numbers can be retrieved.
+        // Ensure layout is up‑to‑date so page numbers are correct.
         sourceDoc.UpdatePageLayout();
 
-        // Prepare a layout collector to obtain page numbers.
-        LayoutCollector layoutCollector = new LayoutCollector(sourceDoc);
+        // Collector to retrieve page numbers of nodes.
+        LayoutCollector collector = new LayoutCollector(sourceDoc);
 
-        // Enumerate all comments in the document.
+        // Enumerate all comments safely.
         var comments = sourceDoc.GetChildNodes(NodeType.Comment, true)
                                 .OfType<Comment>()
                                 .ToList();
@@ -43,63 +58,39 @@ public class Program
         DocumentBuilder reportBuilder = new DocumentBuilder(reportDoc);
 
         reportBuilder.Writeln("Comments Report");
-        reportBuilder.Writeln(new string('=', 20));
+        reportBuilder.Writeln("================");
         reportBuilder.Writeln();
 
-        foreach (Comment comment in comments)
+        foreach (Comment c in comments)
         {
-            // Get the page number where the comment starts.
-            int pageNumber = layoutCollector.GetStartPageIndex(comment);
+            // Find the paragraph that the comment is attached to.
+            Paragraph? anchorParagraph = c.GetAncestor(NodeType.Paragraph) as Paragraph;
+            if (anchorParagraph == null)
+                continue; // Skip if we cannot locate the paragraph.
 
-            // Find the paragraph that the comment is associated with.
-            Paragraph? associatedParagraph = FindAssociatedParagraph(comment);
+            // Retrieve the page number where the paragraph starts.
+            int pageNumber = collector.GetStartPageIndex(anchorParagraph);
 
-            // Write comment details to the report.
-            reportBuilder.Writeln($"Page Number : {pageNumber}");
-            reportBuilder.Writeln($"Paragraph   : {(associatedParagraph != null ? associatedParagraph.GetText().Trim() : "N/A")}");
-            reportBuilder.Writeln($"Author      : {comment.Author}");
-            reportBuilder.Writeln($"Date        : {comment.DateTime:O}");
-            reportBuilder.Writeln($"Comment Text: {comment.GetText().Trim()}");
+            // Gather required information.
+            string paragraphText = anchorParagraph.GetText().Trim();
+            string commentText = c.GetText().Trim();
+            string author = c.Author;
+            DateTime date = c.DateTime;
+
+            // Write the information into the report.
+            reportBuilder.Writeln($"Page: {pageNumber}");
+            reportBuilder.Writeln($"Paragraph: {paragraphText}");
+            reportBuilder.Writeln($"Author: {author}");
+            reportBuilder.Writeln($"Date: {date:yyyy-MM-dd HH:mm}");
+            reportBuilder.Writeln($"Comment: {commentText}");
             reportBuilder.Writeln();
         }
 
-        // Ensure output directory exists.
+        // Save the source document and the report.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
         Directory.CreateDirectory(outputDir);
 
-        // Save the source document and the generated report.
         sourceDoc.Save(Path.Combine(outputDir, "SourceDocument.docx"));
         reportDoc.Save(Path.Combine(outputDir, "CommentsReport.docx"));
-    }
-
-    // Helper method to add a comment to the paragraph that was just written.
-    private static void AddCommentToCurrentParagraph(Document doc, DocumentBuilder builder, string author, string initials, string commentText)
-    {
-        // The paragraph that was just added is the current paragraph of the builder.
-        Paragraph? paragraph = builder.CurrentParagraph;
-        if (paragraph == null)
-            return;
-
-        // Create the comment node with metadata.
-        Comment comment = new Comment(doc)
-        {
-            Author = author,
-            Initial = initials,
-            DateTime = DateTime.Now
-        };
-
-        // Add a paragraph and run inside the comment so it contains visible text.
-        comment.AppendChild(new Paragraph(doc));
-        comment.FirstParagraph?.AppendChild(new Run(doc, commentText));
-
-        // Insert the comment as a child of the paragraph (allowed location).
-        paragraph.AppendChild(comment);
-    }
-
-    // Helper method to locate the paragraph that a given comment is attached to.
-    private static Paragraph? FindAssociatedParagraph(Comment comment)
-    {
-        // In this example the comment is a child of its associated paragraph.
-        return comment.ParentNode as Paragraph;
     }
 }

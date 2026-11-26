@@ -1,19 +1,21 @@
 using System;
+using System.IO;
+using System.Text;
 using Aspose.Words;
-using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write a paragraph that will hold the comment.
+        // Add a paragraph that will hold the comment.
         builder.Writeln("This paragraph will have a comment with a hyperlink.");
 
-        // Create a comment node with metadata.
+        // Create a comment node with required metadata.
         Comment comment = new Comment(doc)
         {
             Author = "John Doe",
@@ -21,36 +23,44 @@ public class Program
             DateTime = DateTime.Now
         };
 
-        // Add a paragraph inside the comment.
+        // The comment must contain at least one paragraph.
         Paragraph commentParagraph = new Paragraph(doc);
         comment.AppendChild(commentParagraph);
 
-        // Add introductory text before the hyperlink.
-        commentParagraph.AppendChild(new Run(doc, "For more information visit "));
-
-        // Insert a hyperlink field inside the comment using a temporary builder.
+        // Insert a hyperlink into the comment's paragraph.
         DocumentBuilder commentBuilder = new DocumentBuilder(doc);
         commentBuilder.MoveTo(commentParagraph);
-        commentBuilder.InsertHyperlink("https://example.com", "example.com", false);
+        commentBuilder.InsertHyperlink(
+            "Aspose.Words Documentation",
+            "https://docs.aspose.com/words/net/",
+            false);
 
-        // Append the comment to the first paragraph of the document body.
+        // Attach the comment to the first paragraph of the main story.
         Paragraph? firstParagraph = doc.FirstSection?.Body?.FirstParagraph;
-        if (firstParagraph == null)
-            throw new InvalidOperationException("The document does not contain a first paragraph.");
+        if (firstParagraph != null)
+        {
+            firstParagraph.AppendChild(comment);
+        }
 
-        firstParagraph.AppendChild(comment);
+        // Prepare PDF save options (default options will export comments as annotations).
+        PdfSaveOptions pdfOptions = new PdfSaveOptions();
 
         // Save the document as PDF.
         string pdfPath = "CommentWithHyperlink.pdf";
-        doc.Save(pdfPath, SaveFormat.Pdf);
+        doc.Save(pdfPath, pdfOptions);
 
-        // Load the saved PDF back into Aspose.Words to verify the hyperlink text is present.
-        Document pdfDoc = new Document(pdfPath);
-        string pdfText = pdfDoc.GetText();
+        // Verify that the hyperlink URL is present in the generated PDF file.
+        bool linkFound = false;
+        if (File.Exists(pdfPath))
+        {
+            byte[] pdfBytes = File.ReadAllBytes(pdfPath);
+            string pdfText = Encoding.UTF8.GetString(pdfBytes);
+            linkFound = pdfText.Contains("https://docs.aspose.com/words/net/");
+        }
 
-        bool containsLink = pdfText.Contains("example.com");
-        Console.WriteLine(containsLink
-            ? "Hyperlink text was found in the PDF."
-            : "Hyperlink text was NOT found in the PDF.");
+        // Output verification result.
+        Console.WriteLine(linkFound
+            ? "Hyperlink verified in the PDF."
+            : "Hyperlink not found in the PDF.");
     }
 }

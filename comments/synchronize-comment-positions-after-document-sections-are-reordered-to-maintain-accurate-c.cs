@@ -2,8 +2,6 @@ using System;
 using System.IO;
 using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Drawing;
-using Aspose.Words.Tables;
 
 public class Program
 {
@@ -14,41 +12,39 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // ---------- Section 1 ----------
-        builder.Writeln("Section 1 - Paragraph 1.");
+        // Write a paragraph in the first section.
+        builder.Writeln("This is the first paragraph in Section 1.");
 
-        // Create a comment for the first paragraph.
+        // Create a comment for the paragraph we just added.
+        Paragraph para1 = doc.FirstSection.Body.LastParagraph;
         Comment comment1 = new Comment(doc)
         {
             Author = "Alice",
             Initial = "A",
             DateTime = DateTime.Now
         };
-        // Add visible text to the comment.
         comment1.AppendChild(new Paragraph(doc));
-        comment1.FirstParagraph?.AppendChild(new Run(doc, "Comment for Section 1."));
-
-        // Anchor the comment to the current paragraph.
-        Paragraph para1 = builder.CurrentParagraph;
+        comment1.FirstParagraph?.AppendChild(new Run(doc, "First section comment."));
         para1?.AppendChild(comment1);
 
         // Insert a section break to start Section 2.
         builder.InsertBreak(BreakType.SectionBreakNewPage);
 
         // ---------- Section 2 ----------
-        builder.Writeln("Section 2 - Paragraph 1.");
+        // Write a paragraph in the second section.
+        builder.Writeln("This is the first paragraph in Section 2.");
 
-        // Create a comment for the second paragraph.
+        // Create a comment for the paragraph we just added.
+        // The new paragraph is the last paragraph of the second section.
+        Paragraph para2 = doc.Sections[1].Body.LastParagraph;
         Comment comment2 = new Comment(doc)
         {
             Author = "Bob",
             Initial = "B",
-            DateTime = DateTime.Now
+            DateTime = DateTime.Now.AddMinutes(-5)
         };
         comment2.AppendChild(new Paragraph(doc));
-        comment2.FirstParagraph?.AppendChild(new Run(doc, "Comment for Section 2."));
-
-        // Anchor the comment to the current paragraph.
-        Paragraph para2 = builder.CurrentParagraph;
+        comment2.FirstParagraph?.AppendChild(new Run(doc, "Second section comment."));
         para2?.AppendChild(comment2);
 
         // Save the original document.
@@ -56,40 +52,25 @@ public class Program
         doc.Save(originalPath);
 
         // ---------- Reorder Sections ----------
-        // Capture references to the existing sections.
-        Section firstSection = doc.Sections[0];
-        Section secondSection = doc.Sections[1];
+        // Move the first section to the end of the document.
+        if (doc.Sections.Count >= 2)
+        {
+            Section firstSection = doc.Sections[0];
+            doc.Sections.RemoveAt(0);
+            doc.Sections.Add(firstSection);
+        }
 
-        // Remove sections from the document (order matters).
-        doc.Sections.RemoveAt(1); // Remove second section.
-        doc.Sections.RemoveAt(0); // Remove first section.
-
-        // Insert them back in swapped order.
-        doc.Sections.Insert(0, secondSection);
-        doc.Sections.Insert(1, firstSection);
-
-        // After reordering, verify that each comment is still anchored to a paragraph
-        // within the correct (new) section.
+        // Verify that comments are still correctly anchored.
         var comments = doc.GetChildNodes(NodeType.Comment, true)
                           .OfType<Comment>()
                           .ToList();
 
-        Console.WriteLine("Comments after section reordering:");
         foreach (Comment c in comments)
         {
-            // The comment should be a child of a Paragraph.
-            Paragraph? parentParagraph = c.ParentNode as Paragraph;
-            if (parentParagraph == null)
-            {
-                Console.WriteLine($"Comment by {c.Author} is not attached to a paragraph.");
-                continue;
-            }
-
-            // Find the section that contains this paragraph.
-            Section? parentSection = parentParagraph.ParentNode as Section;
-            int sectionIndex = parentSection != null ? doc.Sections.IndexOf(parentSection) + 1 : -1;
-
-            Console.WriteLine($"Author: {c.Author}, Section: {sectionIndex}, Text: {c.GetText().Trim()}");
+            // The comment is attached to a paragraph (its parent node).
+            Paragraph? attachedParagraph = c.ParentNode as Paragraph;
+            string paragraphText = attachedParagraph?.GetText().Trim() ?? "(no paragraph found)";
+            Console.WriteLine($"Comment by {c.Author} attached to paragraph: \"{paragraphText}\"");
         }
 
         // Save the reordered document.

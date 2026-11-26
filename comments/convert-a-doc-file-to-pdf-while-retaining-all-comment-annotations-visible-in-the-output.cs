@@ -2,31 +2,19 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Drawing;
-using Aspose.Words.Notes;
 
 public class Program
 {
     public static void Main()
     {
-        // Create an output folder in the current working directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
-
-        // Paths for the intermediate DOC file and the final PDF file.
-        string docPath = Path.Combine(outputDir, "sample.doc");
-        string pdfPath = Path.Combine(outputDir, "sample.pdf");
-
-        // -----------------------------------------------------------------
-        // Create a new document and add a paragraph with a comment.
-        // -----------------------------------------------------------------
+        // Create a new document and a builder to add content.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a paragraph that will contain the comment.
-        builder.Writeln("This is a paragraph that will have a comment.");
+        // Add a paragraph that will contain a comment.
+        builder.Writeln("This is a paragraph that will contain a comment.");
 
-        // Create a comment node.
+        // Create a comment node with author information.
         Comment comment = new Comment(doc)
         {
             Author = "John Doe",
@@ -34,25 +22,30 @@ public class Program
             DateTime = DateTime.Now
         };
 
-        // The comment must contain at least one paragraph and run with visible text.
+        // Add visible text to the comment (a paragraph with a run).
         comment.AppendChild(new Paragraph(doc));
-        comment.FirstParagraph?.AppendChild(new Run(doc, "Please review this paragraph for accuracy."));
+        comment.FirstParagraph?.AppendChild(new Run(doc, "Please review this paragraph."));
 
-        // Attach the comment to the paragraph that was just created.
-        Paragraph? targetParagraph = builder.CurrentParagraph;
-        if (targetParagraph != null)
+        // Attach the comment to the first paragraph of the document.
+        Paragraph firstParagraph = doc.FirstSection?.Body?.FirstParagraph;
+        if (firstParagraph != null)
         {
-            targetParagraph.AppendChild(comment);
+            firstParagraph.AppendChild(comment);
         }
 
-        // Save the document as a temporary DOC file.
-        doc.Save(docPath, SaveFormat.Doc);
+        // Save the document as a DOC file.
+        const string docPath = "sample.doc";
+        doc.Save(docPath);
 
-        // -----------------------------------------------------------------
-        // Load the DOC file and convert it to PDF.
-        // Comments are preserved as PDF annotations by default.
-        // -----------------------------------------------------------------
+        // Load the document back from the file (demonstrates loading).
         Document loadedDoc = new Document(docPath);
-        loadedDoc.Save(pdfPath, SaveFormat.Pdf);
+
+        // Prepare PDF save options. In recent versions comments are exported
+        // as PDF annotations by default, so no special flag is required.
+        PdfSaveOptions pdfOptions = new PdfSaveOptions();
+
+        // Save the document as PDF with comments preserved.
+        const string pdfPath = "sample_with_comments.pdf";
+        loadedDoc.Save(pdfPath, pdfOptions);
     }
 }
