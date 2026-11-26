@@ -4,61 +4,64 @@ using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Math;
 
-public class Program
+public class SetOfficeMathJustification
 {
     public static void Main()
     {
-        // Create a new blank document and a DocumentBuilder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a field equation (EQ field) that will later be converted to a real OfficeMath node.
-        FieldEQ field = builder.InsertField(FieldType.FieldEquation, true) as FieldEQ;
+        // Add a paragraph that introduces the equation.
+        builder.Writeln("Equation below:");
 
-        // Move to the field separator and write a simple fraction equation.
-        builder.MoveTo(field.Separator);
-        builder.Write(@"\f(1,2)"); // Fraction 1/2
+        // Insert a deterministic EQ field that will be converted to a real OfficeMath node.
+        Field field = builder.InsertField(FieldType.FieldEquation, true);
+        FieldEQ fieldEQ = field as FieldEQ;
+        if (fieldEQ == null)
+            throw new InvalidOperationException("Failed to create FieldEQ.");
 
-        // Update the field so that the EQ switch is processed.
+        // Write a simple fraction equation into the field separator.
+        builder.MoveTo(fieldEQ.Separator);
+        builder.Write(@"\f(1,2)");
+
+        // Update the field so that Aspose.Words can convert it to OfficeMath.
         field.Update();
 
         // Convert the field to a real OfficeMath node.
-        OfficeMath officeMath = field.AsOfficeMath();
+        OfficeMath officeMath = fieldEQ.AsOfficeMath();
         if (officeMath == null)
-            throw new InvalidOperationException("Failed to convert field to OfficeMath.");
+            throw new InvalidOperationException("EQ field could not be converted to OfficeMath.");
 
         // Insert the OfficeMath node before the field start and remove the original field.
-        Node fieldStart = field.Start;
+        Node fieldStart = fieldEQ.Start;
         fieldStart.ParentNode.InsertBefore(officeMath, fieldStart);
-        field.Remove();
+        fieldEQ.Remove();
 
-        // Apply center justification to top‑level equations only.
+        // Ensure we are dealing with a top‑level equation (OMathPara) and set its justification to center.
         if (officeMath.MathObjectType == MathObjectType.OMathPara)
+        {
             officeMath.Justification = OfficeMathJustification.Center;
+        }
+        else
+        {
+            throw new InvalidOperationException("Created OfficeMath is not a top‑level paragraph.");
+        }
 
         // Save the document.
-        string outputPath = "OfficeMathJustified.docx";
+        string outputPath = "Output.docx";
         doc.Save(outputPath, SaveFormat.Docx);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Output file was not created.");
+            throw new FileNotFoundException("Output file was not created.", outputPath);
 
         // Reload the document and confirm the justification.
         Document loadedDoc = new Document(outputPath);
-        NodeCollection omaths = loadedDoc.GetChildNodes(NodeType.OfficeMath, true);
-        bool centeredFound = false;
-        foreach (OfficeMath om in omaths)
-        {
-            if (om.MathObjectType == MathObjectType.OMathPara &&
-                om.Justification == OfficeMathJustification.Center)
-            {
-                centeredFound = true;
-                break;
-            }
-        }
+        OfficeMath loadedMath = (OfficeMath)loadedDoc.GetChildNodes(NodeType.OfficeMath, true)[0];
+        if (loadedMath.Justification != OfficeMathJustification.Center)
+            throw new InvalidOperationException("Justification was not set to center.");
 
-        if (!centeredFound)
-            throw new InvalidOperationException("OfficeMath justification was not set to center.");
+        // Example completed successfully.
     }
 }

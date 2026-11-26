@@ -1,72 +1,113 @@
 using System;
 using System.IO;
+using System.Linq;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Math;
+using Aspose.Words.Saving;
 
 public class OfficeMathBatchInsert
 {
     public static void Main()
     {
-        // Create a sample document with several paragraphs.
+        // Prepare folders.
+        string baseDir = Directory.GetCurrentDirectory();
+        string inputFolder = Path.Combine(baseDir, "InputDocs");
+        string outputFolder = Path.Combine(baseDir, "OutputDocs");
+        Directory.CreateDirectory(inputFolder);
+        Directory.CreateDirectory(outputFolder);
+
+        // Create a sample DOCX with several paragraphs.
+        string samplePath = Path.Combine(inputFolder, "Sample.docx");
+        CreateSampleDocument(samplePath);
+
+        // Process each DOCX in the input folder.
+        foreach (string filePath in Directory.GetFiles(inputFolder, "*.docx"))
+        {
+            Document doc = new Document(filePath);
+            InsertEquationIntoEachParagraph(doc);
+            string outputPath = Path.Combine(outputFolder, Path.GetFileName(filePath));
+            doc.Save(outputPath, SaveFormat.Docx);
+
+            // Validate the result.
+            ValidateDocument(outputPath);
+        }
+    }
+
+    // Creates a simple document with three paragraphs.
+    private static void CreateSampleDocument(string path)
+    {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        for (int i = 1; i <= 5; i++)
+        for (int i = 1; i <= 3; i++)
         {
-            builder.Writeln($"This is paragraph {i}.");
+            builder.Writeln($"Paragraph {i}");
         }
+        doc.Save(path, SaveFormat.Docx);
+    }
 
-        // Save the sample input document.
-        string inputPath = "Input.docx";
-        doc.Save(inputPath, SaveFormat.Docx);
+    // Inserts a simple OfficeMath equation into every paragraph of the document.
+    private static void InsertEquationIntoEachParagraph(Document doc)
+    {
+        // Gather paragraphs first to avoid modifying the collection while iterating.
+        List<Paragraph> paragraphs = doc.GetChildNodes(NodeType.Paragraph, true)
+                                        .Cast<Paragraph>()
+                                        .ToList();
 
-        // Load the document for batch processing.
-        Document processedDoc = new Document(inputPath);
-        DocumentBuilder procBuilder = new DocumentBuilder(processedDoc);
-
-        // Retrieve all paragraph nodes.
-        NodeCollection paragraphs = processedDoc.GetChildNodes(NodeType.Paragraph, true);
-
-        // Predefined EQ argument for the OfficeMath equation.
-        const string eqArgument = @"\f(1,2)";
-
-        foreach (Paragraph para in paragraphs)
+        foreach (Paragraph paragraph in paragraphs)
         {
-            // Position the builder at the start of the current paragraph.
-            procBuilder.MoveTo(para);
+            // Use a builder tied to the same document.
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.MoveTo(paragraph);
 
-            // Insert an EQ field which will be converted to OfficeMath.
-            Field field = procBuilder.InsertField(FieldType.FieldEquation, true);
+            // Insert an EQ field (the bootstrap for a real OfficeMath object).
+            Field field = builder.InsertField(FieldType.FieldEquation, true);
             FieldEQ fieldEq = field as FieldEQ;
             if (fieldEq == null)
-                continue; // Safety check; should not occur.
+                continue; // Safety check.
 
-            // Write the EQ argument into the field separator.
-            procBuilder.MoveTo(fieldEq.Separator);
-            procBuilder.Write(eqArgument);
+            // Write a simple EQ argument at the field separator.
+            builder.MoveTo(fieldEq.Separator);
+            builder.Write(@"\f(1,2)");
+
+            // Update the field so that Aspose can convert it.
+            field.Update();
 
             // Convert the field to a real OfficeMath node.
             OfficeMath officeMath = fieldEq.AsOfficeMath();
-            if (officeMath != null)
-            {
-                // Insert the OfficeMath node before the field start node.
-                CompositeNode parent = field.Start.ParentNode as CompositeNode;
-                if (parent != null)
-                {
-                    parent.InsertBefore(officeMath, field.Start);
-                }
+            if (officeMath == null)
+                continue; // Conversion failed; skip this paragraph.
 
-                // Remove the original field, leaving only the OfficeMath node.
-                field.Remove();
-            }
+            // Insert the OfficeMath node before the field start node.
+            Node fieldStart = fieldEq.Start;
+            CompositeNode parent = fieldStart.ParentNode as CompositeNode;
+            if (parent != null)
+                parent.InsertBefore(officeMath, fieldStart);
+
+            // Remove the original field, leaving only the real OfficeMath node.
+            fieldEq.Remove();
         }
+    }
 
-        // Save the processed document.
-        string outputPath = "Output.docx";
-        processedDoc.Save(outputPath, SaveFormat.Docx);
+    // Validates that each paragraph now contains exactly one top‑level OfficeMath node.
+    private static void ValidateDocument(string path)
+    {
+        if (!File.Exists(path))
+            throw new FileNotFoundException("Output file was not created.", path);
 
-        // Validate that the output file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not created.");
+        Document doc = new Document(path);
+
+        // Count top‑level OfficeMath nodes (MathObjectType.OMathPara).
+        int topLevelCount = doc.GetChildNodes(NodeType.OfficeMath, true)
+                               .Cast<OfficeMath>()
+                               .Count(om => om.MathObjectType == MathObjectType.OMathPara);
+
+        // Count paragraphs (each should contain one equation).
+        int paragraphCount = doc.GetChildNodes(NodeType.Paragraph, true).Count;
+
+        if (topLevelCount != paragraphCount)
+            throw new InvalidOperationException(
+                $"Validation failed: expected {paragraphCount} top‑level equations, but found {topLevelCount}.");
     }
 }

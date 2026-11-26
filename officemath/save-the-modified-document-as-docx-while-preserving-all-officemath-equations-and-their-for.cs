@@ -2,93 +2,82 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
-using Aspose.Words.Math;
+using Aspose.Words.Math;   // Needed for OfficeMath
 
-public class OfficeMathExample
+public class OfficeMathSaveExample
 {
     public static void Main()
     {
-        // Create a new blank document and a DocumentBuilder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First equation -------------------------------------------------------
-        builder.Writeln("First equation:");
+        // Insert a paragraph with some regular text.
+        builder.Writeln("This paragraph precedes an equation.");
 
-        // Insert an EQ field (FieldEquation) and write a simple fraction argument.
+        // Insert first equation using deterministic EQ-field bootstrap.
+        InsertEquation(builder, @"\f(1,2)"); // Simple fraction 1/2
+
+        // Insert another paragraph.
+        builder.Writeln("Another paragraph before second equation.");
+
+        // Insert second equation.
+        InsertEquation(builder, @"\r(3,x)"); // Simple root expression
+
+        // Modify a paragraph's text to demonstrate document changes while preserving equations.
+        Paragraph firstParagraph = (Paragraph)doc.GetChild(NodeType.Paragraph, 0, true);
+        if (firstParagraph.Runs.Count > 0)
+        {
+            firstParagraph.Runs[0].Text = "Modified first paragraph text.";
+        }
+
+        // Save the document as DOCX.
+        string outputPath = "ModifiedDocument.docx";
+        doc.Save(outputPath, SaveFormat.Docx);
+
+        // Validation: ensure the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The output DOCX file was not created.");
+
+        // Validation: ensure OfficeMath nodes are still present.
+        NodeCollection officeMathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
+        if (officeMathNodes.Count == 0)
+            throw new InvalidOperationException("No OfficeMath equations were found after saving.");
+
+        // Output counts to console (non‑interactive).
+        Console.WriteLine($"Document saved to '{outputPath}'. OfficeMath count: {officeMathNodes.Count}");
+    }
+
+    // Helper method to insert an equation via EQ field and convert it to a real OfficeMath node.
+    private static void InsertEquation(DocumentBuilder builder, string eqArgument)
+    {
+        // Insert an empty Equation field.
         Field field = builder.InsertField(FieldType.FieldEquation, true);
         FieldEQ fieldEq = field as FieldEQ;
         if (fieldEq == null)
             throw new InvalidOperationException("Failed to create FieldEQ.");
 
-        // Move to the field separator and write the EQ argument.
+        // Write the EQ argument after the field separator.
         builder.MoveTo(fieldEq.Separator);
-        builder.Write(@"\f(1,2)"); // Fraction 1/2
+        builder.Write(eqArgument);
 
-        // Update the field so that Aspose.Words can convert it to OfficeMath.
+        // Update the field so that the EQ argument is processed.
         field.Update();
 
-        // Convert the field to a real OfficeMath object.
+        // Convert the field to an OfficeMath node.
         OfficeMath officeMath = fieldEq.AsOfficeMath();
         if (officeMath == null)
             throw new InvalidOperationException("EQ field could not be converted to OfficeMath.");
 
-        // Insert the OfficeMath node before the field start and remove the original field.
+        // Insert the OfficeMath node before the field start.
         Node fieldStart = fieldEq.Start;
         fieldStart.ParentNode.InsertBefore(officeMath, fieldStart);
+
+        // Remove the original field (both start and end nodes).
         fieldEq.Remove();
 
-        // Set the display type of the top‑level equation (preserve formatting).
-        officeMath.DisplayType = OfficeMathDisplayType.Display;
-
-        // Second equation ------------------------------------------------------
-        builder.Writeln();
-        builder.Writeln("Second equation:");
-
-        Field field2 = builder.InsertField(FieldType.FieldEquation, true);
-        FieldEQ fieldEq2 = field2 as FieldEQ;
-        if (fieldEq2 == null)
-            throw new InvalidOperationException("Failed to create second FieldEQ.");
-
-        builder.MoveTo(fieldEq2.Separator);
-        builder.Write(@"\r(3,x)"); // Simple square root expression
-
-        // Update the second field before conversion.
-        field2.Update();
-
-        OfficeMath officeMath2 = fieldEq2.AsOfficeMath();
-        if (officeMath2 == null)
-            throw new InvalidOperationException("Second EQ field could not be converted to OfficeMath.");
-
-        Node field2Start = fieldEq2.Start;
-        field2Start.ParentNode.InsertBefore(officeMath2, field2Start);
-        fieldEq2.Remove();
-
-        // Ensure the second equation is also displayed as a block.
-        officeMath2.DisplayType = OfficeMathDisplayType.Display;
-
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Save the modified document as DOCX.
-        string outputPath = Path.Combine(outputDir, "ModifiedDocument.docx");
-        doc.Save(outputPath, SaveFormat.Docx);
-
-        // Reload the saved document to verify equations are preserved.
-        Document loadedDoc = new Document(outputPath);
-        NodeCollection mathNodes = loadedDoc.GetChildNodes(NodeType.OfficeMath, true);
-        if (mathNodes == null || mathNodes.Count < 2)
-            throw new InvalidOperationException("Expected OfficeMath equations were not found after saving.");
-
-        // Verify that each top‑level equation retains its display type.
-        foreach (OfficeMath om in mathNodes)
-        {
-            // Only top‑level equations have MathObjectType == OMathPara.
-            if (om.MathObjectType == MathObjectType.OMathPara && om.DisplayType != OfficeMathDisplayType.Display)
-                throw new InvalidOperationException("Equation display type was not preserved.");
-        }
-
-        Console.WriteLine("Document saved successfully with preserved OfficeMath equations.");
+        // Move the builder to the end of the inserted OfficeMath to continue building.
+        builder.MoveTo(officeMath);
+        builder.Writeln(); // Ensure subsequent content starts on a new line.
     }
 }

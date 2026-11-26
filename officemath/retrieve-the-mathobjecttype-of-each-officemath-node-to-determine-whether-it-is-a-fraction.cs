@@ -3,115 +3,99 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Math;
+using Aspose.Words.Saving;
 
 public class OfficeMathTypeDemo
 {
     public static void Main()
     {
-        // Create a new document and a builder.
+        // Create a sample document containing a fraction and a radical equation.
+        string sourcePath = "Sample.docx";
+        CreateSampleDocument(sourcePath);
+
+        // Load the document.
+        Document doc = new Document(sourcePath);
+
+        // Retrieve all OfficeMath nodes.
+        NodeCollection officeMathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
+
+        // Report the MathObjectType of each node.
+        foreach (OfficeMath om in officeMathNodes)
+        {
+            string typeDescription = om.MathObjectType switch
+            {
+                MathObjectType.Fraction => "Fraction",
+                MathObjectType.Radical => "Radical",
+                _ => "Other"
+            };
+
+            Console.WriteLine($"OfficeMath node: MathObjectType = {om.MathObjectType}, Determined type = {typeDescription}");
+        }
+
+        // Save the processed document.
+        string outputPath = "Processed.docx";
+        doc.Save(outputPath, SaveFormat.Docx);
+
+        // Validate that the output file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException($"The output file '{outputPath}' was not created.");
+    }
+
+    private static void CreateSampleDocument(string filePath)
+    {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a fraction equation: \f(1,2)
+        // Insert a paragraph describing the fraction.
+        builder.Writeln("Fraction equation:");
         InsertEquation(builder, @"\f(1,2)");
 
-        // Insert a radical equation: \r(3,x)
+        // Insert a paragraph describing the radical.
+        builder.Writeln("Radical equation:");
         InsertEquation(builder, @"\r(3,x)");
 
-        // Save the document.
-        string docPath = "OfficeMathDemo.docx";
-        doc.Save(docPath);
+        // Save the sample document.
+        doc.Save(filePath, SaveFormat.Docx);
 
-        // Reload the document.
-        Document loadedDoc = new Document(docPath);
-
-        // Traverse OfficeMath nodes.
-        NodeCollection officeMathNodes = loadedDoc.GetChildNodes(NodeType.OfficeMath, true);
-        int index = 0;
-        foreach (OfficeMath om in officeMathNodes)
-        {
-            string typeDescription;
-            switch (om.MathObjectType)
-            {
-                case MathObjectType.Fraction:
-                    typeDescription = "Fraction";
-                    break;
-                case MathObjectType.Radical:
-                    typeDescription = "Radical";
-                    break;
-                default:
-                    typeDescription = "Other (" + om.MathObjectType + ")";
-                    break;
-            }
-
-            Console.WriteLine($"OfficeMath node {index}: {typeDescription}");
-            index++;
-        }
-
-        // Validate presence of both fraction and radical.
-        bool hasFraction = false;
-        bool hasRadical = false;
-        foreach (OfficeMath om in officeMathNodes)
-        {
-            if (om.MathObjectType == MathObjectType.Fraction) hasFraction = true;
-            if (om.MathObjectType == MathObjectType.Radical) hasRadical = true;
-        }
-
-        if (!hasFraction || !hasRadical)
-            throw new InvalidOperationException("Expected both fraction and radical OfficeMath nodes.");
-
-        // Write a simple report file.
-        string reportPath = "OfficeMathReport.txt";
-        using (StreamWriter writer = new StreamWriter(reportPath))
-        {
-            writer.WriteLine("OfficeMath nodes analysis:");
-            index = 0;
-            foreach (OfficeMath om in officeMathNodes)
-            {
-                writer.WriteLine($"Node {index}: MathObjectType = {om.MathObjectType}");
-                index++;
-            }
-        }
-
-        // Verify report file creation.
-        if (!File.Exists(reportPath))
-            throw new FileNotFoundException("Report file was not created.", reportPath);
+        // Validate that the source file was created.
+        if (!File.Exists(filePath))
+            throw new InvalidOperationException($"The source file '{filePath}' was not created.");
     }
 
-    // Helper that inserts an EQ field, writes the equation argument, updates the field,
-    // converts it to OfficeMath, inserts the OfficeMath node, and removes the original field.
     private static void InsertEquation(DocumentBuilder builder, string eqArgument)
     {
         // Insert an EQ field.
         Field field = builder.InsertField(FieldType.FieldEquation, true);
+        if (field is not FieldEQ eqField)
+            throw new InvalidOperationException("Failed to create a FieldEQ.");
 
-        // Move to the field separator node and write the EQ argument.
-        builder.MoveTo(field.Separator);
+        // Move to the separator and write the EQ argument.
+        builder.MoveTo(eqField.Separator);
         builder.Write(eqArgument);
 
-        // Update the field so that Aspose.Words can convert it to OfficeMath.
+        // Update the field so that it can be converted to OfficeMath.
         field.Update();
 
-        // Convert the field to OfficeMath.
-        FieldEQ fieldEQ = field as FieldEQ;
-        OfficeMath officeMath = fieldEQ?.AsOfficeMath();
+        // Convert the field to a real OfficeMath node.
+        OfficeMath officeMath = eqField.AsOfficeMath();
 
+        // Insert the OfficeMath node before the field start and remove the field.
         if (officeMath != null)
         {
-            // Insert the OfficeMath node before the field start.
-            Node fieldStart = field.Start;
-            fieldStart.ParentNode.InsertBefore(officeMath, fieldStart);
-
-            // Remove the original field.
-            field.Remove();
-
-            // Move the builder after the inserted OfficeMath and start a new line.
-            builder.MoveTo(officeMath);
-            builder.Writeln();
+            Node startNode = eqField.Start;
+            if (startNode?.ParentNode is CompositeNode parent)
+            {
+                parent.InsertBefore(officeMath, startNode);
+                eqField.Remove();
+            }
+            else
+            {
+                throw new InvalidOperationException("Unable to locate a valid parent for the OfficeMath node.");
+            }
         }
         else
         {
-            throw new InvalidOperationException("Failed to convert EQ field to OfficeMath.");
+            throw new InvalidOperationException("EQ field conversion to OfficeMath returned null.");
         }
     }
 }

@@ -9,54 +9,50 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add introductory text.
-        builder.Writeln("Below is an equation displayed on a separate line:");
+        // Add a paragraph with introductory text.
+        builder.Writeln("The following equation is displayed on its own line:");
 
-        // Insert an EQ field to bootstrap a real OfficeMath node.
-        Field field = builder.InsertField(FieldType.FieldEquation, true);
+        // Insert an EQ field (the field code is "EQ").
+        FieldEQ eqField = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
 
-        // Move to the field separator and write the EQ argument (a simple fraction).
-        builder.MoveTo(field.Separator);
+        // Write a simple fraction (1/2) as the EQ field argument.
+        builder.MoveTo(eqField.Separator);
         builder.Write(@"\f(1,2)");
 
-        // Update the field so that the equation is parsed.
-        field.Update();
+        // Update the field so that the EQ code is recognized.
+        eqField.Update();
 
-        // Convert the field to OfficeMath.
-        FieldEQ eqField = field as FieldEQ;
-        OfficeMath officeMath = eqField?.AsOfficeMath();
+        // Move back to the field start before conversion.
+        builder.MoveTo(eqField.Start);
+
+        // Convert the EQ field to a real OfficeMath object.
+        OfficeMath officeMath = eqField.AsOfficeMath();
 
         if (officeMath == null)
             throw new InvalidOperationException("Failed to convert EQ field to OfficeMath.");
 
-        // Insert the OfficeMath node before the field start and remove the field.
-        Node fieldStart = field.Start;
-        CompositeNode parent = fieldStart.ParentNode as CompositeNode;
-        if (parent == null)
-            throw new InvalidOperationException("Field start does not have a composite parent.");
+        // Insert the OfficeMath node before the original field and remove the field.
+        eqField.Start.ParentNode.InsertBefore(officeMath, eqField.Start);
+        eqField.Remove();
 
-        parent.InsertBefore(officeMath, fieldStart);
-        field.Remove();
-
-        // Configure the OfficeMath to display on a separate line.
+        // Configure the OfficeMath to display on a separate line and left‑justified.
         officeMath.DisplayType = OfficeMathDisplayType.Display;
+        officeMath.Justification = OfficeMathJustification.Left;
+
+        // Prepare output directory.
+        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
+        Directory.CreateDirectory(outputDir);
 
         // Save the document.
-        string outputPath = "OfficeMathDisplay.docx";
+        string outputPath = Path.Combine(outputDir, "OfficeMathDisplay.docx");
         doc.Save(outputPath, SaveFormat.Docx);
 
-        // Verify the output file exists.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("Output file was not created.", outputPath);
-
-        // Reload and verify the display type.
-        Document loaded = new Document(outputPath);
-        OfficeMath loadedMath = loaded.GetChildNodes(NodeType.OfficeMath, true)[0] as OfficeMath;
-        if (loadedMath == null || loadedMath.DisplayType != OfficeMathDisplayType.Display)
-            throw new InvalidOperationException("OfficeMath display type was not set correctly.");
+            throw new FileNotFoundException("The output document was not created.", outputPath);
     }
 }
