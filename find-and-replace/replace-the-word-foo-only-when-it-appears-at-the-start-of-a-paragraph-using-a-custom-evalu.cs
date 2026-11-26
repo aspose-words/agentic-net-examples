@@ -1,9 +1,7 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
+using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Newtonsoft.Json;
 
 public class Program
 {
@@ -13,70 +11,61 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("foo is at the start of this paragraph.");
-        builder.Writeln("This paragraph contains foo in the middle.");
-        builder.Writeln("foo appears again at the beginning.");
-        builder.Writeln("No keyword here.");
-        builder.Writeln("   foo with leading spaces should not be replaced.");
+        builder.Writeln("This paragraph contains foo but not at the start.");
+        builder.Writeln("foo");
+        builder.Writeln("Another line without the keyword.");
 
-        // Set up the custom callback that replaces only when 'foo' is at the start of a paragraph.
-        var callback = new StartOfParagraphCallback();
+        // Save the input document (optional, just for demonstration).
+        const string inputPath = "input.docx";
+        doc.Save(inputPath);
+
+        // Prepare the find‑replace options with a custom callback.
         FindReplaceOptions options = new FindReplaceOptions
         {
-            ReplacingCallback = callback
+            ReplacingCallback = new StartParagraphCallback()
         };
 
-        // Perform the replacement.
-        int replacedCount = doc.Range.Replace("foo", "bar", options);
+        // Use a regex to find the word "foo" as a whole word.
+        Regex regex = new Regex(@"\bfoo\b", RegexOptions.None);
 
+        // Perform the replacement, changing "foo" to "bar" only at paragraph starts.
+        int replacedCount = doc.Range.Replace(regex, "bar", options);
+
+        // Validate that at least one replacement occurred.
         if (replacedCount == 0)
-        {
-            throw new InvalidOperationException("Expected at least one replacement, but none occurred.");
-        }
+            throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
         // Save the modified document.
         const string outputPath = "output.docx";
         doc.Save(outputPath);
-
-        // Create a simple JSON report of the replacements.
-        var report = new
-        {
-            Replacements = replacedCount,
-            ParagraphsModified = callback.ModifiedParagraphTexts
-        };
-        string json = JsonConvert.SerializeObject(report, Formatting.Indented);
-        File.WriteAllText("report.json", json);
     }
 
-    private class StartOfParagraphCallback : IReplacingCallback
+    // Custom callback that replaces only when the match is at the start of a paragraph.
+    private class StartParagraphCallback : IReplacingCallback
     {
-        public List<string> ModifiedParagraphTexts { get; } = new List<string>();
-
         public ReplaceAction Replacing(ReplacingArgs args)
         {
-            // The match node is expected to be a Run.
-            if (args.MatchNode is not Run run)
-                return ReplaceAction.Skip;
+            // Ensure the match node is a Run.
+            if (args.MatchNode is Run runNode)
+            {
+                // Get the paragraph that contains this run.
+                Paragraph paragraph = runNode.ParentParagraph;
 
-            // Get the paragraph that contains this run.
-            Paragraph paragraph = run.ParentParagraph;
-            if (paragraph == null)
-                return ReplaceAction.Skip;
+                // Guard against nulls (should not happen, but defensive programming).
+                if (paragraph == null || args.Match == null)
+                    return ReplaceAction.Skip;
 
-            // Verify that the run is the first node in the paragraph.
-            if (paragraph.FirstChild != run)
-                return ReplaceAction.Skip;
+                // Determine if the paragraph text starts with the matched word.
+                // Paragraph.GetText() includes the paragraph mark at the end, so we trim it.
+                string paragraphText = paragraph.GetText().TrimEnd('\r', '\a');
 
-            // Ensure the run's text actually starts with the matched word.
-            if (!run.Text.StartsWith(args.Match.Value, StringComparison.Ordinal))
-                return ReplaceAction.Skip;
+                // If the paragraph starts exactly with the matched value, allow replacement.
+                if (paragraphText.StartsWith(args.Match.Value, StringComparison.Ordinal))
+                    return ReplaceAction.Replace;
+            }
 
-            // Perform the replacement.
-            args.Replacement = "bar";
-
-            // Record the paragraph's text for reporting.
-            ModifiedParagraphTexts.Add(paragraph.GetText());
-
-            return ReplaceAction.Replace;
+            // Skip replacement for all other cases.
+            return ReplaceAction.Skip;
         }
     }
 }

@@ -2,64 +2,70 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 using Aspose.Drawing;
-using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document and add sample paragraphs.
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a target paragraph one.");
-        builder.Writeln("Another line without the keyword.");
-        builder.Writeln("Second target paragraph is here.");
-        builder.Writeln("target appears multiple times in this target paragraph.");
 
         // Define a custom paragraph style.
-        Style customStyle = doc.Styles.Add(StyleType.Paragraph, "MyCustomStyle");
-        customStyle.Font.Color = System.Drawing.Color.Blue; // Use fully qualified System.Drawing type without importing the namespace.
+        const string customStyleName = "MyCustomStyle";
+        Style customStyle = doc.Styles.Add(StyleType.Paragraph, customStyleName);
+        // Set style properties (avoid System.Drawing types).
         customStyle.Font.Size = 14;
         customStyle.Font.Bold = true;
 
+        // Add sample paragraphs containing the target text.
+        builder.Writeln("This is the first paragraph with PLACEHOLDER text.");
+        builder.Writeln("Second paragraph without the keyword.");
+        builder.Writeln("Third paragraph also has PLACEHOLDER inside.");
+        builder.Writeln("PLACEHOLDER at the start of a paragraph.");
+        builder.Writeln("End of document.");
+
         // Set up find‑replace with a callback that applies the custom style.
         FindReplaceOptions options = new FindReplaceOptions();
-        options.ReplacingCallback = new StyleApplyingCallback(doc, customStyle);
+        options.ReplacingCallback = new StyleApplyingCallback(customStyleName);
 
         // Perform the replacement.
-        int replacedCount = doc.Range.Replace("target", "replaced", options);
+        int replacedCount = doc.Range.Replace("PLACEHOLDER", "REPLACED", options);
+
+        // Validate that at least one replacement occurred.
         if (replacedCount == 0)
-            throw new InvalidOperationException("No replacements were made.");
+            throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
         // Save the modified document.
-        doc.Save("styled-output.docx");
-    }
-}
-
-// Callback that applies the custom style to each paragraph containing a replacement.
-class StyleApplyingCallback : IReplacingCallback
-{
-    private readonly Document _document;
-    private readonly Style _style;
-
-    public StyleApplyingCallback(Document document, Style style)
-    {
-        _document = document;
-        _style = style;
+        doc.Save("output.docx");
     }
 
-    public ReplaceAction Replacing(ReplacingArgs args)
+    // Callback that replaces the matched text and applies a custom style to the containing paragraph.
+    private class StyleApplyingCallback : IReplacingCallback
     {
-        Node matchNode = args.MatchNode;
-        if (matchNode != null)
+        private readonly string _styleName;
+
+        public StyleApplyingCallback(string styleName)
         {
-            Paragraph paragraph = matchNode.GetAncestor(NodeType.Paragraph) as Paragraph;
+            _styleName = styleName;
+        }
+
+        public ReplaceAction Replacing(ReplacingArgs args)
+        {
+            // Replace the matched text.
+            args.Replacement = "REPLACED";
+
+            // Locate the paragraph that contains the match.
+            Paragraph? paragraph = args.MatchNode?.ParentNode?.GetAncestor(NodeType.Paragraph) as Paragraph;
             if (paragraph != null)
             {
-                // Apply the custom style to the whole paragraph.
-                paragraph.ParagraphFormat.Style = _style;
+                // Use DocumentBuilder to apply the custom style to the paragraph.
+                DocumentBuilder builder = new DocumentBuilder((Document)paragraph.Document);
+                builder.MoveTo(paragraph);
+                builder.ParagraphFormat.Style = builder.Document.Styles[_styleName];
             }
+
+            return ReplaceAction.Replace;
         }
-        return ReplaceAction.Replace;
     }
 }

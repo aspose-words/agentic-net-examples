@@ -3,57 +3,63 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 using Newtonsoft.Json;
+using System.Collections.Generic;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with header and footer containing an old year.
+        // Define file names.
+        const string inputPath = "sample.docx";
+        const string outputPath = "updated.docx";
+
+        // Step 1: Create a sample document with header and footer containing an old year.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Header with old year.
+        // Add header with old year.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
         builder.Writeln("© 2022 My Company");
 
-        // Footer with old year.
+        // Add footer with old year.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.Writeln("© 2022 My Company - All rights reserved");
+        builder.Writeln("Confidential - 2022");
 
-        // Body content.
+        // Return to main body and add some content.
         builder.MoveToDocumentEnd();
-        builder.Writeln("Document body content.");
+        builder.Writeln("This is a sample document.");
+        builder.Writeln("All rights reserved.");
 
-        // Save the initial document.
-        const string inputPath = "input.docx";
+        // Save the sample document.
         doc.Save(inputPath);
 
-        // Load the document as if it were an existing file.
+        // Step 2: Load the document and replace the old year with the current year.
         Document loaded = new Document(inputPath);
 
-        // Define the old year to replace and the new current year.
         string oldYear = "2022";
         string newYear = DateTime.Now.Year.ToString();
 
-        // Perform the replacement throughout the document (including headers/footers).
+        // Perform the replacement in the whole document (including headers/footers).
         int replacedCount = loaded.Range.Replace(oldYear, newYear, new FindReplaceOptions());
 
         // Validate that at least one replacement occurred.
         if (replacedCount == 0)
             throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
-        // Save the modified document.
-        const string outputPath = "output.docx";
+        // Save the updated document.
         loaded.Save(outputPath);
 
-        // Create a simple JSON report of the operation.
+        // Optional: Write a simple JSON report of the operation.
         var report = new
         {
-            Replacements = replacedCount,
+            InputFile = Path.GetFullPath(inputPath),
+            OutputFile = Path.GetFullPath(outputPath),
             OldYear = oldYear,
             NewYear = newYear,
-            OutputDocument = outputPath
+            ReplacementsMade = replacedCount,
+            Timestamp = DateTime.UtcNow
         };
+
         string jsonReport = JsonConvert.SerializeObject(report, Formatting.Indented);
         File.WriteAllText("report.json", jsonReport);
     }

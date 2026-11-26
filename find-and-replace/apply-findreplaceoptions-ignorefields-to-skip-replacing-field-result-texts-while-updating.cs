@@ -1,49 +1,61 @@
 using System;
-using Aspose.Words;
-using Aspose.Words.Replacing;
 using System.IO;
+using Aspose.Words;
+using Aspose.Words.Fields;
+using Aspose.Words.Replacing;
 
-public class FindReplaceIgnoreFieldsExample
+public class Program
 {
     public static void Main()
     {
-        // Create a sample document with a MERGEFIELD that contains the text "OldName".
+        // Create a new document and insert a MERGEFIELD.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Document before replacement:");
-        // Insert a MERGEFIELD. The field code contains "OldName".
-        builder.InsertField("MERGEFIELD OldName \\* MERGEFORMAT");
+        builder.Writeln("Document with a field:");
+        builder.InsertField("MERGEFIELD MyField \\* MERGEFORMAT");
         builder.Writeln(); // Add a line break.
-        // Add normal text that also contains "OldName" to demonstrate that it will be replaced.
-        builder.Writeln("This is a normal paragraph with OldName inside.");
 
-        // Save the initial document.
-        const string inputPath = "input.docx";
+        // Save the initial document (optional, for inspection).
+        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
         doc.Save(inputPath);
 
-        // Load the document for processing.
-        Document loadedDoc = new Document(inputPath);
+        // Capture the field before replacement.
+        Field? fieldBefore = doc.Range.Fields.Count > 0 ? doc.Range.Fields[0] : null;
+        if (fieldBefore == null)
+            throw new InvalidOperationException("Expected a field in the document.");
 
-        // Configure FindReplaceOptions to ignore field result texts.
+        string codeBefore = fieldBefore.GetFieldCode();
+        string resultBefore = fieldBefore.Result;
+
+        // Set up FindReplaceOptions to include fields (default behavior).
         FindReplaceOptions options = new FindReplaceOptions
         {
-            IgnoreFields = true
+            // IgnoreFields = false is the default; explicitly set for clarity.
+            IgnoreFields = false
         };
 
-        // Replace "OldName" with "NewName". This will affect the field code but not the displayed result.
-        int replacedCount = loadedDoc.Range.Replace("OldName", "NewName", options);
+        // Replace "MyField" with "YourField" only in field codes.
+        int replacedCount = doc.Range.Replace("MyField", "YourField", options);
         if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one replacement, but none occurred.");
+            throw new InvalidOperationException("Expected at least one replacement in field codes.");
 
-        // Update fields so that the field result reflects the new field code.
-        loadedDoc.UpdateFields();
+        // Capture the field after replacement.
+        Field? fieldAfter = doc.Range.Fields.Count > 0 ? doc.Range.Fields[0] : null;
+        if (fieldAfter == null)
+            throw new InvalidOperationException("Field disappeared after replacement.");
+
+        string codeAfter = fieldAfter.GetFieldCode();
+        string resultAfter = fieldAfter.Result;
+
+        // Output verification information.
+        Console.WriteLine($"Replacements performed: {replacedCount}");
+        Console.WriteLine($"Field code before: {codeBefore}");
+        Console.WriteLine($"Field result before: {resultBefore}");
+        Console.WriteLine($"Field code after: {codeAfter}");
+        Console.WriteLine($"Field result after (should be unchanged): {resultAfter}");
 
         // Save the modified document.
-        const string outputPath = "output.docx";
-        loadedDoc.Save(outputPath);
-
-        // Simple validation: ensure the output file exists.
-        if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not created.", outputPath);
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
+        doc.Save(outputPath);
     }
 }

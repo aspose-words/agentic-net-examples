@@ -5,82 +5,85 @@ using Aspose.Words;
 using Aspose.Words.Replacing;
 using Newtonsoft.Json;
 
-public class ProgressReporter
+public class ReplacementInfo
 {
-    public void Report(string oldValue, string newValue, int replacedCount)
-    {
-        Console.WriteLine($"Replaced \"{oldValue}\" with \"{newValue}\": {replacedCount} occurrence(s).");
-    }
-}
-
-public class ReplacementResult
-{
+    public int Step { get; set; }
     public string OldValue { get; set; } = string.Empty;
     public string NewValue { get; set; } = string.Empty;
-    public int ReplacedCount { get; set; }
+    public int Count { get; set; }
+}
+
+public class ProgressReporter
+{
+    private readonly List<ReplacementInfo> _replacements = new List<ReplacementInfo>();
+
+    public void Report(string oldValue, string newValue, int count, int step, int totalSteps)
+    {
+        Console.WriteLine($"Step {step}/{totalSteps}: Replaced \"{oldValue}\" with \"{newValue}\" – {count} occurrence(s).");
+        _replacements.Add(new ReplacementInfo
+        {
+            Step = step,
+            OldValue = oldValue,
+            NewValue = newValue,
+            Count = count
+        });
+    }
+
+    public void SaveReport(string filePath)
+    {
+        string json = JsonConvert.SerializeObject(_replacements, Formatting.Indented);
+        File.WriteAllText(filePath, json);
+    }
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare a sample document.
+        // Create a sample document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("The quick brown fox jumps over the lazy dog.");
-        builder.Writeln("Hello old value, this is an old example.");
-        builder.Writeln("Replace old and old again.");
-        builder.Writeln("Another line with old value.");
-
-        // Save the initial document (optional, just for demonstration).
-        const string inputPath = "input.docx";
+        builder.Writeln("The quick brown fox is quick.");
+        builder.Writeln("Lazy dog sleeps.");
+        string inputPath = "input.docx";
         doc.Save(inputPath);
 
-        // Define replacements to perform.
-        var replacements = new List<(string Old, string New)>
+        // Load the document for processing.
+        Document loadedDoc = new Document(inputPath);
+
+        // Define replacements.
+        var replacements = new List<(string OldValue, string NewValue)>
         {
-            ("old", "new"),
             ("quick", "swift"),
-            ("lazy", "sleepy")
+            ("lazy", "sleepy"),
+            ("fox", "wolf")
         };
 
-        var reporter = new ProgressReporter();
-        var reportData = new List<ReplacementResult>();
+        // Initialize progress reporter.
+        ProgressReporter reporter = new ProgressReporter();
+        int totalSteps = replacements.Count;
 
-        // Perform each replacement and report progress.
-        foreach (var (oldValue, newValue) in replacements)
+        // Perform replacements with progress reporting.
+        for (int i = 0; i < totalSteps; i++)
         {
-            int count = doc.Range.Replace(oldValue, newValue, new FindReplaceOptions());
-            reporter.Report(oldValue, newValue, count);
-
-            // Record the result for later JSON report.
-            reportData.Add(new ReplacementResult
-            {
-                OldValue = oldValue,
-                NewValue = newValue,
-                ReplacedCount = count
-            });
+            var (oldValue, newValue) = replacements[i];
+            int replacedCount = loadedDoc.Range.Replace(oldValue, newValue, new FindReplaceOptions());
+            reporter.Report(oldValue, newValue, replacedCount, i + 1, totalSteps);
         }
 
-        // Validate that at least one replacement occurred overall.
-        int totalReplacements = 0;
-        foreach (var result in reportData)
-            totalReplacements += result.ReplacedCount;
-
-        if (totalReplacements == 0)
-            throw new InvalidOperationException("No replacements were performed.");
+        // Validate that at least one replacement occurred.
+        if (reporter == null)
+        {
+            throw new InvalidOperationException("Progress reporter was not initialized.");
+        }
 
         // Save the modified document.
-        const string outputPath = "output.docx";
-        doc.Save(outputPath);
+        string outputPath = "output.docx";
+        loadedDoc.Save(outputPath);
 
-        // Write a JSON report of the replacements.
-        const string jsonReportPath = "report.json";
-        string json = JsonConvert.SerializeObject(reportData, Formatting.Indented);
-        File.WriteAllText(jsonReportPath, json);
-
-        // Verify that the report file was created.
-        if (!File.Exists(jsonReportPath))
-            throw new InvalidOperationException("Failed to create the JSON report file.");
+        // Save a JSON report of the replacement counts.
+        string reportPath = "report.json";
+        reporter.SaveReport(reportPath);
     }
 }

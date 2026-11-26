@@ -6,27 +6,38 @@ using Aspose.Words;
 using Aspose.Words.Replacing;
 using Newtonsoft.Json;
 
-public class ReplacementRecord
+public class ReplacementInfo
 {
     public string Language { get; set; } = string.Empty;
-    public string OldValue { get; set; } = string.Empty;
-    public string NewValue { get; set; } = string.Empty;
+    public string Original { get; set; } = string.Empty;
+    public string Replacement { get; set; } = string.Empty;
 }
 
 public class ReplacementLogger : IReplacingCallback
 {
-    public List<ReplacementRecord> Records { get; } = new List<ReplacementRecord>();
-    public string CurrentLanguage { get; set; } = string.Empty;
-    public string NewValue { get; set; } = string.Empty;
+    private readonly string _language;
+    private readonly string _replacement;
+    private readonly List<ReplacementInfo> _log;
 
-    ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
+    public ReplacementLogger(string language, string replacement, List<ReplacementInfo> log)
     {
-        Records.Add(new ReplacementRecord
+        _language = language;
+        _replacement = replacement;
+        _log = log;
+    }
+
+    public ReplaceAction Replacing(ReplacingArgs args)
+    {
+        // Log the original match and the intended replacement.
+        _log.Add(new ReplacementInfo
         {
-            Language = CurrentLanguage,
-            OldValue = args.Match.Value,
-            NewValue = NewValue
+            Language = _language,
+            Original = args.Match.Value,
+            Replacement = _replacement
         });
+
+        // Perform the replacement with the provided replacement string.
+        args.Replacement = _replacement;
         return ReplaceAction.Replace;
     }
 }
@@ -35,58 +46,59 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with deprecated terms in different languages.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("The old term foo is deprecated.");
-        builder.Writeln("Le terme ancien est obsolète."); // French: "ancien"
-        builder.Writeln("Der alte Begriff veraltet ist veraltet."); // German: "veraltet"
-        builder.Writeln("El término viejo foo está obsoleto."); // Spanish: "foo"
-        doc.Save("input.docx");
+        // Prepare a list to collect replacement details for reporting.
+        var replacementLog = new List<ReplacementInfo>();
+
+        // Create a sample document containing deprecated terms in different languages.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("The old term 'foobar' is deprecated.");               // English
+        builder.Writeln("Le terme ancien 'ancien' est obsolète.");            // French
+        builder.Writeln("Der alte Begriff 'alt' ist veraltet.");              // German
+        builder.Writeln("El término viejo 'viejo' está obsoleto.");           // Spanish (extra example)
+
+        // Save the initial document.
+        const string inputPath = "input.docx";
+        doc.Save(inputPath);
 
         // Load the document for processing.
-        Document loadedDoc = new Document("input.docx");
+        var loadedDoc = new Document(inputPath);
 
-        // Define language‑specific patterns and replacements.
-        var replacements = new List<(string Language, Regex Pattern, string NewTerm)>
+        // Define culture‑specific patterns and their replacements.
+        var replacements = new[]
         {
-            ("English", new Regex(@"\bfoo\b", RegexOptions.IgnoreCase), "bar"),
-            ("French", new Regex(@"\ban(ancien|cien)\b", RegexOptions.IgnoreCase), "nouveau"),
-            ("German", new Regex(@"\bveraltet\b", RegexOptions.IgnoreCase), "aktuell"),
-            ("Spanish", new Regex(@"\bfoo\b", RegexOptions.IgnoreCase), "bar")
+            new { Language = "English", Pattern = new Regex(@"\bfoobar\b", RegexOptions.IgnoreCase), Replacement = "newfoo" },
+            new { Language = "French",  Pattern = new Regex(@"\bancien\b", RegexOptions.IgnoreCase), Replacement = "nouveau" },
+            new { Language = "German",  Pattern = new Regex(@"\balt\b",    RegexOptions.IgnoreCase), Replacement = "neu" },
+            new { Language = "Spanish", Pattern = new Regex(@"\bviejo\b",  RegexOptions.IgnoreCase), Replacement = "nuevo" }
         };
 
-        var logger = new ReplacementLogger();
         int totalReplacements = 0;
 
-        foreach (var (language, pattern, newTerm) in replacements)
+        // Perform replacements using regex and a callback to log each match.
+        foreach (var item in replacements)
         {
-            logger.CurrentLanguage = language;
-            logger.NewValue = newTerm;
-
-            FindReplaceOptions options = new FindReplaceOptions
-            {
-                ReplacingCallback = logger,
-                MatchCase = false,
-                FindWholeWordsOnly = true
-            };
-
-            int replaced = loadedDoc.Range.Replace(pattern, newTerm, options);
+            var options = new FindReplaceOptions();
+            options.ReplacingCallback = new ReplacementLogger(item.Language, item.Replacement, replacementLog);
+            int replaced = loadedDoc.Range.Replace(item.Pattern, item.Replacement, options);
             totalReplacements += replaced;
         }
 
+        // Validate that at least one replacement occurred.
         if (totalReplacements == 0)
-            throw new InvalidOperationException("Expected at least one replacement, but none were made.");
+            throw new InvalidOperationException("No replacements were performed.");
 
         // Save the modified document.
-        loadedDoc.Save("output.docx");
+        const string outputPath = "output.docx";
+        loadedDoc.Save(outputPath);
 
-        // Serialize replacement log to JSON.
-        string jsonReport = JsonConvert.SerializeObject(logger.Records, Formatting.Indented);
-        File.WriteAllText("report.json", jsonReport);
+        // Serialize the replacement log to JSON.
+        const string reportPath = "report.json";
+        string json = JsonConvert.SerializeObject(replacementLog, Formatting.Indented);
+        File.WriteAllText(reportPath, json);
 
-        // Validate that the report file was created.
-        if (!File.Exists("report.json"))
+        // Verify that the report file was created.
+        if (!File.Exists(reportPath))
             throw new InvalidOperationException("Report file was not created.");
     }
 }

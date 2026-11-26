@@ -4,56 +4,70 @@ using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-public class Program
-{
-    public static void Main()
-    {
-        // Create a sample document with date strings in the format "January 1, 2020".
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("The conference starts on January 1, 2020 and ends on February 12, 2021.");
-        builder.Writeln("Another date: March 3, 2022.");
-
-        // Regular expression to match month name, day and year.
-        Regex dateRegex = new Regex(@"\b(January|February|March|April|May|June|July|August|September|October|November|December) (\d{1,2}), (\d{4})\b");
-
-        // Set up find‑replace options with a custom callback to format the date.
-        FindReplaceOptions options = new FindReplaceOptions();
-        options.ReplacingCallback = new DateReplacer();
-
-        // Perform the replacement. The replacement string argument is ignored when using a callback.
-        int replacedCount = doc.Range.Replace(dateRegex, string.Empty, options);
-
-        // Validate that at least one replacement occurred.
-        if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one date replacement, but none were made.");
-
-        // Save the modified document.
-        doc.Save("output.docx");
-    }
-}
-
-// Callback that converts a matched date string to "MM/dd/yyyy" format.
 public class DateReplacer : IReplacingCallback
 {
-    private static readonly Dictionary<string, int> MonthNumbers = new()
+    // Mapping from month name to its two‑digit number.
+    private static readonly Dictionary<string, string> MonthMap = new()
     {
-        { "January", 1 }, { "February", 2 }, { "March", 3 }, { "April", 4 },
-        { "May", 5 }, { "June", 6 }, { "July", 7 }, { "August", 8 },
-        { "September", 9 }, { "October", 10 }, { "November", 11 }, { "December", 12 }
+        { "January",   "01" },
+        { "February",  "02" },
+        { "March",     "03" },
+        { "April",     "04" },
+        { "May",       "05" },
+        { "June",      "06" },
+        { "July",      "07" },
+        { "August",    "08" },
+        { "September", "09" },
+        { "October",   "10" },
+        { "November",  "11" },
+        { "December",  "12" }
     };
 
     public ReplaceAction Replacing(ReplacingArgs args)
     {
+        // Extract the captured groups from the regex match.
         Match match = args.Match;
         string monthName = match.Groups[1].Value;
         int day = int.Parse(match.Groups[2].Value);
-        int year = int.Parse(match.Groups[3].Value);
+        string year = match.Groups[3].Value;
 
-        int monthNumber = MonthNumbers[monthName];
-        string formattedDate = $"{monthNumber:D2}/{day:D2}/{year}";
+        // Build the replacement string in MM/dd/yyyy format.
+        string monthNumber = MonthMap[monthName];
+        string dayString = day.ToString("D2");
+        string replacementText = $"{monthNumber}/{dayString}/{year}";
 
-        args.Replacement = formattedDate;
+        // Assign the replacement text. Using a string keeps the code compatible with all Aspose.Words versions.
+        args.Replacement = replacementText;
         return ReplaceAction.Replace;
+    }
+}
+
+public class Program
+{
+    public static void Main()
+    {
+        // Create a sample document containing dates in the long format.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("The first date is January 1, 2020.");
+        builder.Writeln("Another date: February 12, 2021.");
+        builder.Writeln("And March 5, 2022 appears here.");
+
+        // Regular expression that captures month name, day and year.
+        Regex dateRegex = new Regex(@"\b(January|February|March|April|May|June|July|August|September|October|November|December) (\d{1,2}), (\d{4})\b");
+
+        // Set up find‑replace options with the custom callback.
+        FindReplaceOptions options = new FindReplaceOptions
+        {
+            ReplacingCallback = new DateReplacer()
+        };
+
+        // Perform the replacement using the regex and callback.
+        int replacedCount = doc.Range.Replace(dateRegex, string.Empty, options);
+        if (replacedCount == 0)
+            throw new InvalidOperationException("Expected at least one date replacement.");
+
+        // Save the modified document.
+        doc.Save("output.docx");
     }
 }

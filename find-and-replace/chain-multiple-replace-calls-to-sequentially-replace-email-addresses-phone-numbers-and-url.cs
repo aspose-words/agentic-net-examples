@@ -8,46 +8,34 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with email, phone number, and URL.
-        Document sampleDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-        builder.Writeln("Contact us at john.doe@example.com or call 123-456-7890.");
-        builder.Writeln("Visit https://example.com for more information.");
+        // Create a sample document with email addresses, phone numbers, and URLs.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello team,");
+        builder.Writeln("Please contact John Doe at john.doe@example.com or Jane Smith at jane.smith@domain.org.");
+        builder.Writeln("You can also reach us by phone: 123-456-7890 or 987.654.3210.");
+        builder.Writeln("Visit our website at https://www.example.com or http://legacy-site.net for details.");
+        builder.Writeln("Thank you.");
+
+        // Save the original document (optional, just for reference).
         const string inputPath = "input.docx";
-        sampleDoc.Save(inputPath);
+        doc.Save(inputPath);
 
-        // Load the document for processing.
-        Document doc = new Document(inputPath);
+        // Define regex patterns for email, phone number, and URL.
+        Regex emailRegex = new Regex(@"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b", RegexOptions.Compiled);
+        Regex phoneRegex = new Regex(@"\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b", RegexOptions.Compiled);
+        Regex urlRegex = new Regex(@"\bhttps?://[^\s]+", RegexOptions.Compiled);
 
-        // Define regex patterns.
-        const string emailPattern = @"\b[\w\.-]+@[\w\.-]+\.\w{2,}\b";
-        const string phonePattern = @"\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b";
-        const string urlPattern   = @"\bhttps?://[^\s]+";
-
-        // Replace email addresses.
-        int emailReplacements = doc.Range.Replace(
-            new Regex(emailPattern),
-            "[email redacted]",
-            new FindReplaceOptions());
-
+        // Chain replacements: emails → phones → URLs.
+        int emailReplacements = doc.Range.Replace(emailRegex, "[email]", new FindReplaceOptions());
         if (emailReplacements == 0)
-            throw new InvalidOperationException("Expected at least one email replacement.");
+            throw new InvalidOperationException("Expected at least one email address replacement.");
 
-        // Replace phone numbers.
-        int phoneReplacements = doc.Range.Replace(
-            new Regex(phonePattern),
-            "[phone redacted]",
-            new FindReplaceOptions());
-
+        int phoneReplacements = doc.Range.Replace(phoneRegex, "[phone]", new FindReplaceOptions());
         if (phoneReplacements == 0)
             throw new InvalidOperationException("Expected at least one phone number replacement.");
 
-        // Replace URLs.
-        int urlReplacements = doc.Range.Replace(
-            new Regex(urlPattern),
-            "[url redacted]",
-            new FindReplaceOptions());
-
+        int urlReplacements = doc.Range.Replace(urlRegex, "[url]", new FindReplaceOptions());
         if (urlReplacements == 0)
             throw new InvalidOperationException("Expected at least one URL replacement.");
 

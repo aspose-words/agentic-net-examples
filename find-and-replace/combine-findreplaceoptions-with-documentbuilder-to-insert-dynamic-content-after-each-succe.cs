@@ -3,82 +3,97 @@ using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Aspose.Words.Drawing;
 using Newtonsoft.Json;
+
+public class InsertAfterCallback : IReplacingCallback
+{
+    public List<ReplacementRecord> Records { get; } = new List<ReplacementRecord>();
+
+    public ReplaceAction Replacing(ReplacingArgs args)
+    {
+        // Store original matched text.
+        string originalText = args.Match.Value;
+
+        // Define the replacement text.
+        string replacementText = "REPLACED";
+
+        // Set the replacement.
+        args.Replacement = replacementText;
+
+        // Insert dynamic content after the replaced node.
+        // Cast DocumentBase to Document for the builder constructor.
+        DocumentBuilder builder = new DocumentBuilder((Document)args.MatchNode.Document);
+        // Move the builder to the node that was replaced.
+        builder.MoveTo(args.MatchNode);
+        // Insert a new paragraph after the current node.
+        builder.InsertParagraph();
+        // Write dynamic content (e.g., timestamp) into the newly inserted paragraph.
+        string dynamicContent = $"[Inserted at {DateTime.Now:O}]";
+        builder.Writeln(dynamicContent);
+
+        // Record the operation for reporting.
+        Records.Add(new ReplacementRecord
+        {
+            OriginalText = originalText,
+            ReplacementText = replacementText,
+            InsertedContent = dynamicContent
+        });
+
+        // Continue with the replacement.
+        return ReplaceAction.Replace;
+    }
+}
+
+public class ReplacementRecord
+{
+    public string OriginalText { get; set; } = string.Empty;
+    public string ReplacementText { get; set; } = string.Empty;
+    public string InsertedContent { get; set; } = string.Empty;
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with multiple placeholders.
+        // Create a sample document with placeholders.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a PLACEHOLDER text.");
-        builder.Writeln("Another PLACEHOLDER appears here.");
-        builder.Writeln("PLACEHOLDER at the start of a line.");
-        builder.Writeln("No placeholder on this line.");
+        builder.Writeln("This is a sample document.");
+        builder.Writeln("Find and replace the word PLACEHOLDER multiple times.");
+        builder.Writeln("PLACEHOLDER appears here.");
+        builder.Writeln("Another PLACEHOLDER is here.");
 
-        // Save the input document (optional, just for demonstration).
-        const string inputPath = "input.docx";
-        doc.Save(inputPath);
+        // Save the initial document (optional, for inspection).
+        doc.Save("input.docx");
 
-        // Callback to count replacements.
-        var replaceCounter = new ReplaceCounter();
+        // Load the document for processing.
+        Document loadedDoc = new Document("input.docx");
 
-        // Set up FindReplaceOptions with the callback.
+        // Set up the find-replace options with a callback.
+        InsertAfterCallback callback = new InsertAfterCallback();
         FindReplaceOptions options = new FindReplaceOptions
         {
-            ReplacingCallback = replaceCounter
+            ReplacingCallback = callback,
+            MatchCase = false,
+            FindWholeWordsOnly = true
         };
 
         // Perform the replacement.
-        int replacedCount = doc.Range.Replace("PLACEHOLDER", "REPLACED", options);
-        if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one replacement.");
+        int replacedCount = loadedDoc.Range.Replace("PLACEHOLDER", "REPLACED", options);
 
-        // Insert dynamic content after each successful replacement using DocumentBuilder logic.
-        int insertionIndex = 1;
-        foreach (Run run in doc.GetChildNodes(NodeType.Run, true))
-        {
-            if (run.Text == "REPLACED")
-            {
-                // Create a new run with dynamic content.
-                Run insertedRun = new Run(doc, $"[Inserted {insertionIndex}]");
-                // Insert the new run after the replaced run.
-                run.ParentNode.InsertAfter(insertedRun, run);
-                insertionIndex++;
-            }
-        }
+        // Validate that at least one replacement occurred.
+        if (replacedCount == 0)
+            throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
         // Save the modified document.
-        const string outputPath = "output.docx";
-        doc.Save(outputPath);
+        loadedDoc.Save("output.docx");
 
-        // Create a simple JSON report of the operation.
-        var report = new
-        {
-            OriginalPlaceholdersFound = replaceCounter.MatchCount,
-            PlaceholdersReplaced = replacedCount,
-            DynamicInsertionsMade = insertionIndex - 1,
-            InputDocument = Path.GetFullPath(inputPath),
-            OutputDocument = Path.GetFullPath(outputPath)
-        };
+        // Serialize replacement records to JSON.
+        string jsonReport = JsonConvert.SerializeObject(callback.Records, Formatting.Indented);
+        File.WriteAllText("report.json", jsonReport);
 
-        string jsonReport = JsonConvert.SerializeObject(report, Formatting.Indented);
-        const string reportPath = "report.json";
-        File.WriteAllText(reportPath, jsonReport);
-    }
-
-    // Callback implementation that counts matches.
-    private class ReplaceCounter : IReplacingCallback
-    {
-        public int MatchCount { get; private set; }
-
-        public ReplaceAction Replacing(ReplacingArgs args)
-        {
-            MatchCount++;
-            // Use the default replacement behavior.
-            return ReplaceAction.Replace;
-        }
+        // Validate that the report file was created.
+        if (!File.Exists("report.json"))
+            throw new InvalidOperationException("Failed to create the JSON report file.");
     }
 }

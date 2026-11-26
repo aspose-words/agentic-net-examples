@@ -1,53 +1,53 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-public class HeaderFindReplaceExample
+public class Program
 {
     public static void Main()
     {
-        // Create a new document.
+        // Create a sample document with two sections, each having a primary header.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First section header (does NOT contain the keyword).
+        // First section header contains the keyword "Special".
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Write("Company Report");
-        builder.MoveToDocumentEnd();
-        builder.Writeln("Body content of the first section.");
+        builder.Writeln("Special Header: OldValue");
+        builder.MoveToDocumentEnd(); // Return to the main body.
+        builder.Writeln("Body text in first section.");
 
-        // Insert a new section.
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
+        // Add a second section.
+        Section secondSection = new Section(doc);
+        doc.Sections.Add(secondSection);
 
-        // Second section header (contains the keyword "Special").
-        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Write("Special Company Overview");
-        builder.MoveToDocumentEnd();
-        builder.Writeln("Body content of the second section.");
+        // Use a builder to edit the second section.
+        DocumentBuilder secBuilder = new DocumentBuilder(doc);
+        // Move the builder to the newly added section.
+        secBuilder.MoveToSection(doc.Sections.Count - 1);
+        // Edit the primary header of the second section.
+        secBuilder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        secBuilder.Writeln("Regular Header: OldValue");
+        secBuilder.MoveToDocumentEnd(); // Return to the main body of the second section.
+        secBuilder.Writeln("Body text in second section.");
 
-        // Save the original document (optional, for verification).
-        string inputPath = "input.docx";
+        // Save the input document.
+        const string inputPath = "input.docx";
         doc.Save(inputPath);
 
-        // Define the keyword to identify target headers and the text to replace.
-        const string keyword = "Special";
-        const string oldText = "Company";
-        const string newText = "Enterprise";
-
+        // Load the document for processing.
+        Document loadedDoc = new Document(inputPath);
         int totalReplacements = 0;
+        const string keyword = "Special";
+        const string oldText = "OldValue";
+        const string newText = "NewValue";
 
-        // Iterate through each section's primary header.
-        foreach (Section section in doc.Sections)
+        // Iterate through all sections and their primary headers.
+        foreach (Section section in loadedDoc.Sections)
         {
-            HeaderFooter header = section.HeadersFooters[HeaderFooterType.HeaderPrimary];
-            if (header == null)
-                continue;
-
-            // Check if the header contains the specific keyword.
-            if (header.Range.Text.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+            HeaderFooter? header = section.HeadersFooters[HeaderFooterType.HeaderPrimary];
+            if (header != null && header.Range.Text.Contains(keyword, StringComparison.Ordinal))
             {
-                // Perform replacement only within this header.
+                // Perform replacement only in headers that contain the keyword.
                 int replaced = header.Range.Replace(oldText, newText, new FindReplaceOptions());
                 totalReplacements += replaced;
             }
@@ -58,7 +58,7 @@ public class HeaderFindReplaceExample
             throw new InvalidOperationException("Expected at least one replacement in headers containing the keyword.");
 
         // Save the modified document.
-        string outputPath = "output.docx";
-        doc.Save(outputPath);
+        const string outputPath = "output.docx";
+        loadedDoc.Save(outputPath);
     }
 }

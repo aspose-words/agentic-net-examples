@@ -1,56 +1,60 @@
 using System;
+using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-
-public class NumericSuffixReplacer : IReplacingCallback
-{
-    private readonly string _suffix;
-
-    public NumericSuffixReplacer(string suffix) => _suffix = suffix;
-
-    public ReplaceAction Replacing(ReplacingArgs args)
-    {
-        // Append the suffix to the matched numeric value.
-        string original = args.Match.Value;
-        args.Replacement = original + _suffix;
-        return ReplaceAction.Replace;
-    }
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document with sample text containing numbers.
+        // Create a sample document containing numeric values.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Invoice numbers: 1001, 1002, and 1003.");
-        builder.Writeln("Reference dates: 2021-09-30 and 2022-01-15.");
+        builder.Writeln("The order numbers are 1001, 1002, and 1003.");
+        const string inputPath = "input.docx";
+        doc.Save(inputPath);
 
-        // Define the suffix to add to each numeric match.
-        const string suffix = "_SUF";
+        // Load the document for processing.
+        Document loaded = new Document(inputPath);
 
-        // Set up find‑replace options with the custom callback.
+        // Regular expression that matches numeric values.
+        Regex numericRegex = new Regex(@"\d+");
+
+        // Suffix to append to each numeric match.
+        const string suffix = "_suffix";
+
+        // Set up find‑replace options with a custom callback that appends the suffix.
         FindReplaceOptions options = new FindReplaceOptions();
-        options.ReplacingCallback = new NumericSuffixReplacer(suffix);
+        options.ReplacingCallback = new AppendSuffixCallback(suffix);
 
-        // Regex pattern to match one or more digits.
-        Regex regex = new Regex(@"\d+");
+        // Perform the replacement. The replacement string argument is ignored because the callback supplies the new text.
+        int replacedCount = loaded.Range.Replace(numericRegex, string.Empty, options);
 
-        // Perform the replace operation using the overload that accepts a regex,
-        // a dummy replacement string (ignored by the callback), and the options.
-        int replacedCount = doc.Range.Replace(regex, string.Empty, options);
-
+        // Verify that at least one replacement occurred.
         if (replacedCount == 0)
             throw new InvalidOperationException("Expected at least one numeric replacement.");
 
         // Save the modified document.
         const string outputPath = "output.docx";
-        doc.Save(outputPath);
+        loaded.Save(outputPath);
+    }
 
-        // Output a simple confirmation.
-        Console.WriteLine($"Replacements performed: {replacedCount}");
-        Console.WriteLine($"Modified document saved to '{outputPath}'.");
+    // Custom callback that appends a suffix to each regex match.
+    private class AppendSuffixCallback : IReplacingCallback
+    {
+        private readonly string _suffix;
+
+        public AppendSuffixCallback(string suffix)
+        {
+            _suffix = suffix;
+        }
+
+        public ReplaceAction Replacing(ReplacingArgs args)
+        {
+            // Append the suffix to the matched text.
+            args.Replacement = args.Match.Value + _suffix;
+            return ReplaceAction.Replace;
+        }
     }
 }

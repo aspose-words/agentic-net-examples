@@ -5,102 +5,99 @@ using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 using Aspose.Words.Saving;
-using Aspose.Drawing; // Required by Aspose.Words for drawing types
 using Newtonsoft.Json;
-
-public class MacroReplacingCallback : IReplacingCallback
-{
-    private readonly Dictionary<string, string> _macros;
-
-    public MacroReplacingCallback(Dictionary<string, string> macros)
-    {
-        _macros = macros ?? throw new ArgumentNullException(nameof(macros));
-    }
-
-    public ReplaceAction Replacing(ReplacingArgs args)
-    {
-        // The matched macro text, e.g. {{DATE}}
-        string key = args.Match.Value;
-
-        // Look up the replacement value; if not found, keep the original macro.
-        if (_macros.TryGetValue(key, out string replacement))
-        {
-            args.Replacement = replacement;
-        }
-        else
-        {
-            args.Replacement = key;
-        }
-
-        return ReplaceAction.Replace;
-    }
-}
 
 public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create a sample document containing macro placeholders.
-        // -----------------------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Report generated on {{DATE}} by {{USER}}.");
-        builder.Writeln("Contact: {{EMAIL}}.");
+        // Create a sample document containing macros.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello ${NAME}, today is ${DATE}.");
+        builder.Writeln("Your order number is ${ORDER_ID}.");
         const string inputPath = "input.docx";
         doc.Save(inputPath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // 2. Load the document for processing.
-        // -----------------------------------------------------------------
-        Document loaded = new Document(inputPath);
+        // Load the document for processing.
+        var loadedDoc = new Document(inputPath);
 
-        // -----------------------------------------------------------------
-        // 3. Define macro expansions.
-        // -----------------------------------------------------------------
-        var macroValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            { "{{DATE}}", DateTime.Now.ToString("yyyy-MM-dd") },
-            { "{{USER}}", Environment.UserName },
-            { "{{EMAIL}}", $"{Environment.UserName}@example.com" }
-        };
+        // Regex to locate macros like ${MACRO_NAME}
+        var macroRegex = new Regex(@"\$\{(\w+)\}", RegexOptions.Compiled);
 
-        // -----------------------------------------------------------------
-        // 4. Set up regex to locate macros and the callback that expands them.
-        // -----------------------------------------------------------------
-        Regex macroRegex = new Regex(@"{{\w+}}", RegexOptions.Compiled);
-        FindReplaceOptions options = new FindReplaceOptions
-        {
-            ReplacingCallback = new MacroReplacingCallback(macroValues)
-        };
+        // Collect information about each replacement for reporting.
+        var replacements = new List<ReplacementInfo>();
 
-        // -----------------------------------------------------------------
-        // 5. Perform the replacement using the callback.
-        // -----------------------------------------------------------------
-        // The replacement string is ignored because the callback supplies the actual text.
-        int replacedCount = loaded.Range.Replace(macroRegex, string.Empty, options);
+        // Set up the callback that will expand macros and record the operation.
+        var callback = new MacroReplacingCallback(replacements);
+        var options = new FindReplaceOptions { ReplacingCallback = callback };
 
-        // Validate that at least one replacement occurred.
+        // Perform the replace operation using the callback.
+        int replacedCount = loadedDoc.Range.Replace(macroRegex, string.Empty, options);
+
         if (replacedCount == 0)
-            throw new InvalidOperationException("No macros were expanded; expected at least one replacement.");
-
-        // -----------------------------------------------------------------
-        // 6. Save the modified document.
-        // -----------------------------------------------------------------
-        const string outputPath = "output.docx";
-        loaded.Save(outputPath, SaveFormat.Docx);
-
-        // -----------------------------------------------------------------
-        // 7. Write a JSON report of the performed replacements.
-        // -----------------------------------------------------------------
-        var report = new
         {
-            InputFile = Path.GetFullPath(inputPath),
-            OutputFile = Path.GetFullPath(outputPath),
-            ReplacementsMade = replacedCount,
-            ExpandedMacros = macroValues
-        };
-        string jsonReport = JsonConvert.SerializeObject(report, Formatting.Indented);
-        File.WriteAllText("replacement-report.json", jsonReport);
+            throw new InvalidOperationException("Expected at least one macro replacement, but none occurred.");
+        }
+
+        // Save the modified document.
+        const string outputPath = "output.docx";
+        loadedDoc.Save(outputPath, SaveFormat.Docx);
+
+        // Serialize replacement report to JSON.
+        const string reportPath = "replacements.json";
+        var json = JsonConvert.SerializeObject(replacements, Formatting.Indented);
+        File.WriteAllText(reportPath, json);
+
+        // Validate that the report file was created.
+        if (!File.Exists(reportPath))
+        {
+            throw new InvalidOperationException("Failed to create the replacements report file.");
+        }
+
+        // Example completed – no interactive prompts.
+    }
+
+    private class ReplacementInfo
+    {
+        public string Macro { get; set; } = string.Empty;
+        public string Replacement { get; set; } = string.Empty;
+    }
+
+    private class MacroReplacingCallback : IReplacingCallback
+    {
+        private readonly List<ReplacementInfo> _replacements;
+
+        public MacroReplacingCallback(List<ReplacementInfo> replacements)
+        {
+            _replacements = replacements ?? throw new ArgumentNullException(nameof(replacements));
+        }
+
+        public ReplaceAction Replacing(ReplacingArgs args)
+        {
+            // Extract macro name from the match.
+            var match = args.Match;
+            var macroName = match.Groups[1].Value;
+
+            // Determine replacement text.
+            string replacement = macroName switch
+            {
+                "NAME" => "John Doe",
+                "DATE" => DateTime.Now.ToString("yyyy-MM-dd"),
+                "ORDER_ID" => "12345",
+                _ => match.Value // Unknown macro – leave unchanged.
+            };
+
+            // Record the replacement.
+            _replacements.Add(new ReplacementInfo
+            {
+                Macro = macroName,
+                Replacement = replacement
+            });
+
+            // Apply the replacement.
+            args.Replacement = replacement;
+            return ReplaceAction.Replace;
+        }
     }
 }

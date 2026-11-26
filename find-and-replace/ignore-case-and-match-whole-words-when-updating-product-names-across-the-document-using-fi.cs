@@ -1,39 +1,49 @@
 using System;
-using System.Text.RegularExpressions;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using Newtonsoft.Json;
+using Aspose.Drawing; // Included to satisfy package requirement
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with product names.
+        // Create a new document and add sample text containing product names.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Our product SuperWidget is great.");
-        builder.Writeln("We also have superwidget in stock.");
-        builder.Writeln("The SuperWidgetPro version is premium.");
+        builder.Writeln("Our new Widget is great.");
+        builder.Writeln("The widget is available.");
+        builder.Writeln("Widgets are popular.");          // Should NOT be replaced (not a whole word).
+        builder.Writeln("SuperWidget is a brand.");      // Should NOT be replaced (part of a larger word).
 
-        // Save the source document locally.
-        const string inputPath = "input.docx";
-        doc.Save(inputPath);
+        // Configure FindReplaceOptions to ignore case and match whole words only.
+        FindReplaceOptions options = new FindReplaceOptions
+        {
+            MatchCase = false,          // Ignore case.
+            FindWholeWordsOnly = true   // Replace only whole-word matches.
+        };
 
-        // Load the document for processing.
-        Document loaded = new Document(inputPath);
+        // Perform the replacement: replace "Widget" with "Gadget".
+        int replacedCount = doc.Range.Replace("Widget", "Gadget", options);
 
-        // Configure a regular expression to match the whole word "SuperWidget"
-        // ignoring case. \b ensures whole‑word matching.
-        Regex regex = new Regex(@"\bSuperWidget\b", RegexOptions.IgnoreCase);
-
-        // Perform the replacement.
-        int replacedCount = loaded.Range.Replace(regex, "MegaWidget", new FindReplaceOptions());
-
-        // Ensure that at least one replacement occurred.
+        // Validate that at least one replacement occurred.
         if (replacedCount == 0)
             throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
         // Save the updated document.
-        const string outputPath = "output.docx";
-        loaded.Save(outputPath);
+        const string outputPath = "updated-product-names.docx";
+        doc.Save(outputPath);
+
+        // Optional: write a simple JSON report of the operation.
+        var report = new
+        {
+            SearchTerm = "Widget",
+            Replacement = "Gadget",
+            ReplacementsMade = replacedCount,
+            OutputFile = Path.GetFullPath(outputPath)
+        };
+        string jsonReport = JsonConvert.SerializeObject(report, Formatting.Indented);
+        File.WriteAllText("replacement-report.json", jsonReport);
     }
 }

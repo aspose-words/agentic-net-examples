@@ -8,38 +8,35 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document containing custom tag attributes.
+        // Create a sample document with a custom tag that contains an attribute.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("<customTag attr=\"oldValue1\">Content 1</customTag>");
-        builder.Writeln("<customTag attr=\"oldValue2\">Content 2</customTag>");
-        builder.Writeln("Some other text without the tag.");
+        builder.Writeln("<customTag attr=\"oldValue\">Sample content</customTag>");
+        builder.Writeln("<customTag attr=\"anotherOldValue\">More content</customTag>");
 
-        // Save the source document.
+        // Save the sample document to a local file.
         const string inputPath = "input.docx";
         doc.Save(inputPath);
 
         // Load the document for processing.
-        Document loaded = new Document(inputPath);
+        Document loadedDoc = new Document(inputPath);
 
-        // Regex to match the attribute value of <customTag attr="...">.
-        // Captures the part before the value, the value itself, and the trailing quote.
-        Regex regex = new Regex(@"(<customTag\s+[^>]*attr="")([^""]*)("")", RegexOptions.IgnoreCase);
+        // Define a regular expression that matches the attribute value of the custom tag.
+        // This pattern matches attr="any characters except a quote".
+        Regex regex = new Regex(@"attr=""[^""]*""", RegexOptions.Compiled);
 
-        // Replacement keeps the surrounding groups and substitutes a new value.
-        string replacement = "$1newValue$3";
+        // Replace the matched attribute value with the new desired value.
+        const string replacement = @"attr=""newValue""";
+        int replacedCount = loadedDoc.Range.Replace(regex, replacement, new FindReplaceOptions());
 
-        // Perform the replacement across the entire document.
-        int replacedCount = loaded.Range.Replace(regex, replacement, new FindReplaceOptions());
-
-        // Ensure that at least one replacement was made.
+        // Validate that at least one replacement occurred.
         if (replacedCount == 0)
         {
-            throw new InvalidOperationException("No attribute values were replaced.");
+            throw new InvalidOperationException("Expected at least one attribute replacement, but none were made.");
         }
 
         // Save the modified document.
         const string outputPath = "output.docx";
-        loaded.Save(outputPath);
+        loadedDoc.Save(outputPath);
     }
 }

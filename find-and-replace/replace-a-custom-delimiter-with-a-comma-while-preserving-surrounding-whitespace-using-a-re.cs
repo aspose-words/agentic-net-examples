@@ -3,50 +3,38 @@ using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Aspose.Drawing; // Required by the category rules
-using Newtonsoft.Json; // Required by the category rules
 
-namespace FindAndReplaceExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a sample document with custom delimiters (e.g., '|')
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln("Item1|Item2");
-            builder.Writeln("ValueA | ValueB");
-            builder.Writeln("DataX| DataY");
-            builder.Writeln("Alpha |Beta|Gamma");
-            // Save the initial document (optional, just for reference)
-            doc.Save("input.docx");
+        // Create a sample document with custom delimiters (pipe character) and surrounding whitespace.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Item1 | Item2|Item3 |Item4  |  Item5");
+        // Save the input document (optional, just for demonstration).
+        const string inputPath = "input.docx";
+        doc.Save(inputPath);
 
-            // Define a regular expression that matches the custom delimiter '|'
-            Regex delimiterRegex = new Regex(@"\|");
+        // Load the document to perform find-and-replace.
+        Document loaded = new Document(inputPath);
 
-            // Perform the replacement: replace each '|' with a comma ',' while preserving surrounding whitespace
-            FindReplaceOptions options = new FindReplaceOptions();
-            int replacedCount = doc.Range.Replace(delimiterRegex, ",", options);
+        // Define a regex that matches a pipe delimiter with any surrounding whitespace,
+        // capturing the whitespace before and after the pipe.
+        Regex delimiterRegex = new Regex(@"(?<pre>\s*)\|(?<post>\s*)");
 
-            // Validate that at least one replacement occurred
-            if (replacedCount == 0)
-                throw new InvalidOperationException("Expected at least one delimiter replacement, but none were made.");
+        // Replacement string uses the captured whitespace groups and inserts a comma.
+        string replacement = "${pre},${post}";
 
-            // Save the modified document
-            doc.Save("output.docx");
+        // Perform the replacement.
+        int replacedCount = loaded.Range.Replace(delimiterRegex, replacement, new FindReplaceOptions());
 
-            // Optionally, write a simple JSON report of the operation (demonstrating required package usage)
-            var report = new
-            {
-                InputFile = Path.GetFullPath("input.docx"),
-                OutputFile = Path.GetFullPath("output.docx"),
-                DelimiterReplaced = "|",
-                Replacement = ",",
-                ReplacementsMade = replacedCount
-            };
-            string jsonReport = JsonConvert.SerializeObject(report, Formatting.Indented);
-            File.WriteAllText("report.json", jsonReport);
-        }
+        // Validate that at least one replacement occurred.
+        if (replacedCount == 0)
+            throw new InvalidOperationException("Expected at least one delimiter replacement.");
+
+        // Save the modified document.
+        const string outputPath = "output.docx";
+        loaded.Save(outputPath);
     }
 }
