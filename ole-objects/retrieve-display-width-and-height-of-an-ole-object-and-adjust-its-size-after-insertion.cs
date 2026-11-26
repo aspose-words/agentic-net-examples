@@ -1,76 +1,47 @@
 using System;
 using System.IO;
-using System.Runtime.InteropServices;
+using Aspose.Words;
+using Aspose.Words.Drawing;
 
-public class OleObjectExample
+public class Program
 {
     public static void Main()
     {
-        // Create temporary text file to embed as OLE object
-        string tempTextPath = Path.Combine(Path.GetTempPath(), "OleSample.txt");
-        File.WriteAllText(tempTextPath, "This is sample text for an OLE object.");
+        // Create a new empty document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Path for the generated Word document
-        string docPath = Path.Combine(Path.GetTempPath(), "OleExample.docx");
+        // Prepare a temporary file to be used as the OLE object source.
+        string tempFilePath = Path.Combine(Path.GetTempPath(), "sample.txt");
+        File.WriteAllText(tempFilePath, "This is a sample OLE object content.");
 
-        dynamic wordApp = null;
-        dynamic doc = null;
-        dynamic inlineShape = null;
+        // Insert the OLE object into the document.
+        // The overload requires a fourth parameter for the icon file name; we pass null to use the default icon.
+        Shape oleShape = builder.InsertOleObject(tempFilePath, false, false, null);
 
-        try
+        // Retrieve the current display width and height of the OLE object (in points).
+        double originalWidth = oleShape.Width;
+        double originalHeight = oleShape.Height;
+
+        // Output the original dimensions to the console.
+        Console.WriteLine($"Original OLE size: Width = {originalWidth} pt, Height = {originalHeight} pt");
+
+        // Adjust the size of the OLE object (e.g., double its dimensions).
+        oleShape.Width = originalWidth * 2;
+        oleShape.Height = originalHeight * 2;
+
+        // Output the new dimensions to the console.
+        Console.WriteLine($"Adjusted OLE size: Width = {oleShape.Width} pt, Height = {oleShape.Height} pt");
+
+        // Save the document to a file.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
+        doc.Save(outputPath);
+        Console.WriteLine($"Document saved to: {outputPath}");
+
+        // Clean up the temporary file.
+        if (File.Exists(tempFilePath))
         {
-            // Start Word application (invisible)
-            Type wordType = Type.GetTypeFromProgID("Word.Application");
-            wordApp = Activator.CreateInstance(wordType);
-            wordApp.Visible = false;
-
-            // Add a new document
-            doc = wordApp.Documents.Add();
-
-            // Insert the OLE object (the text file) into the document
-            // Parameters: ClassType, FileName, LinkToFile, DisplayAsIcon, IconFileName, IconIndex, IconLabel, Range
-            inlineShape = doc.InlineShapes.AddOLEObject(
-                "Package",                 // ClassType
-                tempTextPath,              // FileName
-                false,                     // LinkToFile
-                false,                     // DisplayAsIcon
-                Type.Missing,              // IconFileName
-                Type.Missing,              // IconIndex
-                Type.Missing,              // IconLabel
-                Type.Missing               // Range
-            );
-
-            // Retrieve original dimensions (points)
-            double originalWidth = inlineShape.Width;
-            double originalHeight = inlineShape.Height;
-            Console.WriteLine($"Original Width: {originalWidth} pt, Height: {originalHeight} pt");
-
-            // Adjust size (double the dimensions)
-            inlineShape.Width = originalWidth * 2;
-            inlineShape.Height = originalHeight * 2;
-            Console.WriteLine($"Adjusted Width: {inlineShape.Width} pt, Height: {inlineShape.Height} pt");
-
-            // Save the document
-            doc.SaveAs2(docPath);
+            File.Delete(tempFilePath);
         }
-        finally
-        {
-            // Clean up COM objects
-            if (inlineShape != null) Marshal.ReleaseComObject(inlineShape);
-            if (doc != null) Marshal.ReleaseComObject(doc);
-            if (wordApp != null)
-            {
-                wordApp.Quit();
-                Marshal.ReleaseComObject(wordApp);
-            }
-
-            // Delete temporary files
-            if (File.Exists(tempTextPath))
-                File.Delete(tempTextPath);
-        }
-
-        // Optionally, delete the generated document (uncomment if desired)
-        // if (File.Exists(docPath))
-        //     File.Delete(docPath);
     }
 }

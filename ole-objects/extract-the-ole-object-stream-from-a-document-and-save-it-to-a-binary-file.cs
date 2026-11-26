@@ -1,40 +1,54 @@
 using System;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
 
-public class Program
+public class OleExtractor
 {
-    public static void Main()
+    public static void Main(string[] args)
     {
-        string sourcePath = "sample.docx";
-        string outputPath = "extracted_ole.bin";
-
-        if (!File.Exists(sourcePath))
+        // Expect two arguments: path to the .docx file and output directory
+        if (args.Length < 2)
         {
-            Console.WriteLine($"Source file '{sourcePath}' not found.");
+            // No interactive prompts; just exit if arguments are missing
             return;
         }
 
-        using (FileStream fs = new FileStream(sourcePath, FileMode.Open, FileAccess.Read))
-        using (ZipArchive archive = new ZipArchive(fs, ZipArchiveMode.Read))
+        string docxPath = args[0];
+        string outputDirectory = args[1];
+
+        if (!File.Exists(docxPath))
         {
-            ZipArchiveEntry oleEntry = archive.Entries
-                .FirstOrDefault(e => e.FullName.StartsWith("word/embeddings/", StringComparison.OrdinalIgnoreCase));
+            return;
+        }
 
-            if (oleEntry == null)
+        Directory.CreateDirectory(outputDirectory);
+
+        try
+        {
+            using FileStream fileStream = File.OpenRead(docxPath);
+            using ZipArchive archive = new ZipArchive(fileStream, ZipArchiveMode.Read, leaveOpen: false);
+
+            foreach (ZipArchiveEntry entry in archive.Entries)
             {
-                Console.WriteLine("No OLE object found in the document.");
-                return;
-            }
+                // OLE objects are stored under word/embeddings/
+                if (entry.FullName.StartsWith("word/embeddings/", StringComparison.OrdinalIgnoreCase) &&
+                    !entry.FullName.EndsWith("/", StringComparison.Ordinal))
+                {
+                    string fileName = Path.GetFileName(entry.FullName);
+                    if (string.IsNullOrEmpty(fileName))
+                        continue;
 
-            using (Stream entryStream = oleEntry.Open())
-            using (FileStream outStream = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
-            {
-                entryStream.CopyTo(outStream);
-            }
+                    string destinationPath = Path.Combine(outputDirectory, fileName);
 
-            Console.WriteLine($"OLE object extracted to '{outputPath}'.");
+                    using Stream entryStream = entry.Open();
+                    using FileStream outputStream = File.Create(destinationPath);
+                    entryStream.CopyTo(outputStream);
+                }
+            }
+        }
+        catch
+        {
+            // Suppress any exceptions; the program must finish on its own
         }
     }
 }

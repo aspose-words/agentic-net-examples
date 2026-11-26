@@ -1,165 +1,200 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a temporary working directory
-        string workDir = Path.Combine(Path.GetTempPath(), "WordOleBatch_" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(workDir);
+        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "BatchDemo");
+        string wordDir = Path.Combine(baseDir, "WordDocs");
+        string excelPath = Path.Combine(baseDir, "Sample.xlsx");
 
-        // Prepare a list of Word file paths
-        List<string> wordFiles = new List<string>();
-        for (int i = 1; i <= 3; i++)
+        // Prepare directories
+        Directory.CreateDirectory(wordDir);
+
+        // Create a minimal Excel file if it does not exist
+        if (!File.Exists(excelPath))
         {
-            string filePath = Path.Combine(workDir, $"Document{i}.docx");
-            CreateWordDocument(filePath);
-            wordFiles.Add(filePath);
+            CreateMinimalExcel(excelPath);
         }
 
-        // Create a single minimal Excel file (empty zip) in memory (identical for all documents)
-        byte[] excelBytes = CreateEmptyExcelPackage();
-
-        // Insert the Excel OLE object into each Word document
-        foreach (string docPath in wordFiles)
+        // Create sample Word documents if none exist
+        if (!Directory.EnumerateFiles(wordDir, "*.docx").Any())
         {
-            // Open the existing .docx (zip) and add the embedded Excel part and relationships
-            using (FileStream fs = new FileStream(docPath, FileMode.Open, FileAccess.ReadWrite))
-            using (ZipArchive archive = new ZipArchive(fs, ZipArchiveMode.Update))
+            for (int i = 1; i <= 3; i++)
             {
-                // Add the embedded Excel file
-                string embedPath = "word/embeddings/embedded.xlsx";
-                ZipArchiveEntry embedEntry = archive.GetEntry(embedPath) ?? archive.CreateEntry(embedPath);
-                using (Stream es = embedEntry.Open())
-                {
-                    es.SetLength(0);
-                    es.Write(excelBytes, 0, excelBytes.Length);
-                }
-
-                // Add /word/_rels/document.xml.rels if it does not exist
-                string relsPath = "word/_rels/document.xml.rels";
-                ZipArchiveEntry relsEntry = archive.GetEntry(relsPath) ?? archive.CreateEntry(relsPath);
-                using (Stream rs = relsEntry.Open())
-                using (StreamWriter writer = new StreamWriter(rs))
-                {
-                    rs.SetLength(0);
-                    writer.Write(GetDocumentRelsXml());
-                }
-
-                // Update /word/document.xml to reference the OLE object
-                string docXmlPath = "word/document.xml";
-                ZipArchiveEntry docXmlEntry = archive.GetEntry(docXmlPath) ?? archive.CreateEntry(docXmlPath);
-                using (Stream ds = docXmlEntry.Open())
-                using (StreamWriter writer = new StreamWriter(ds))
-                {
-                    ds.SetLength(0);
-                    writer.Write(GetDocumentXml());
-                }
+                string docPath = Path.Combine(wordDir, $"Document{i}.docx");
+                CreateMinimalWord(docPath, $"This is document {i}.");
             }
         }
 
-        // Clean up: delete the temporary directory and its contents
-        // (Comment out the following line if you want to inspect the generated files)
-        Directory.Delete(workDir, true);
+        // Batch "embed" the Excel file into each Word document
+        foreach (string docFile in Directory.EnumerateFiles(wordDir, "*.docx"))
+        {
+            // Open the .docx (which is a zip package) for update
+            using (ZipArchive zip = ZipFile.Open(docFile, ZipArchiveMode.Update))
+            {
+                // 1. Add the Excel file under word/embeddings/
+                string embedEntryPath = $"word/embeddings/{Path.GetFileName(excelPath)}";
+                ZipArchiveEntry existingEmbed = zip.GetEntry(embedEntryPath);
+                existingEmbed?.Delete();
+
+                ZipArchiveEntry embedEntry = zip.CreateEntry(embedEntryPath, CompressionLevel.NoCompression);
+                using (Stream embedStream = embedEntry.Open())
+                using (FileStream src = new FileStream(excelPath, FileMode.Open, FileAccess.Read))
+                {
+                    src.CopyTo(embedStream);
+                }
+
+                // 2. Insert a simple placeholder paragraph into document.xml
+                const string documentXmlPath = "word/document.xml";
+                ZipArchiveEntry docXmlEntry = zip.GetEntry(documentXmlPath);
+                if (docXmlEntry != null)
+                {
+                    string xmlContent;
+                    using (StreamReader reader = new StreamReader(docXmlEntry.Open()))
+                    {
+                        xmlContent = reader.ReadToEnd();
+                    }
+
+                    // Simple paragraph that indicates an embedded Excel object
+                    string placeholderParagraph =
+                        "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\">" +
+                        "<w:r><w:t>[Embedded Excel]</w:t></w:r></w:p>";
+
+                    int bodyCloseIndex = xmlContent.IndexOf("</w:body>", StringComparison.Ordinal);
+                    if (bodyCloseIndex >= 0)
+                    {
+                        xmlContent = xmlContent.Insert(bodyCloseIndex, placeholderParagraph);
+
+                        // Replace the old document.xml entry
+                        docXmlEntry.Delete();
+                        ZipArchiveEntry newDocXmlEntry = zip.CreateEntry(documentXmlPath, CompressionLevel.NoCompression);
+                        using (StreamWriter writer = new StreamWriter(newDocXmlEntry.Open()))
+                        {
+                            writer.Write(xmlContent);
+                        }
+                    }
+                }
+            }
+
+            Console.WriteLine($"Processed: {Path.GetFileName(docFile)}");
+        }
+
+        Console.WriteLine("Batch embedding completed.");
     }
 
-    // Creates a minimal .docx file with the required parts but without the embedded object.
-    private static void CreateWordDocument(string filePath)
+    private static void CreateMinimalExcel(string path)
     {
-        using (FileStream fs = new FileStream(filePath, FileMode.Create))
-        using (ZipArchive archive = new ZipArchive(fs, ZipArchiveMode.Create))
+        // Create a very small, valid XLSX file using the Open Packaging Conventions.
+        // The file will contain the minimal parts required for Excel to open it.
+        using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write))
+        using (ZipArchive zip = new ZipArchive(fs, ZipArchiveMode.Create))
         {
             // [Content_Types].xml
-            var ctEntry = archive.CreateEntry("[Content_Types].xml");
-            using (var writer = new StreamWriter(ctEntry.Open()))
+            var ct = zip.CreateEntry("[Content_Types].xml", CompressionLevel.NoCompression);
+            using (var writer = new StreamWriter(ct.Open()))
             {
-                writer.Write(GetContentTypesXml());
+                writer.Write(@"<?xml version=""1.0"" encoding=""UTF-8""?>
+<Types xmlns=""http://schemas.openxmlformats.org/package/2006/content-types"">
+  <Default Extension=""rels"" ContentType=""application/vnd.openxmlformats-package.relationships+xml""/>
+  <Default Extension=""xml"" ContentType=""application/xml""/>
+  <Override PartName=""/xl/workbook.xml"" ContentType=""application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml""/>
+  <Override PartName=""/xl/worksheets/sheet1.xml"" ContentType=""application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml""/>
+</Types>");
             }
 
             // _rels/.rels
-            var relsEntry = archive.CreateEntry("_rels/.rels");
-            using (var writer = new StreamWriter(relsEntry.Open()))
+            var rels = zip.CreateEntry("_rels/.rels", CompressionLevel.NoCompression);
+            using (var writer = new StreamWriter(rels.Open()))
             {
-                writer.Write(GetPackageRelsXml());
+                writer.Write(@"<?xml version=""1.0"" encoding=""UTF-8""?>
+<Relationships xmlns=""http://schemas.openxmlformats.org/package/2006/relationships"">
+  <Relationship Id=""rId1"" Type=""http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"" Target=""xl/workbook.xml""/>
+</Relationships>");
             }
 
-            // word/document.xml (placeholder without OLE)
-            var docEntry = archive.CreateEntry("word/document.xml");
-            using (var writer = new StreamWriter(docEntry.Open()))
+            // xl/workbook.xml
+            var workbook = zip.CreateEntry("xl/workbook.xml", CompressionLevel.NoCompression);
+            using (var writer = new StreamWriter(workbook.Open()))
             {
-                writer.Write(GetDocumentXml());
+                writer.Write(@"<?xml version=""1.0"" encoding=""UTF-8""?>
+<workbook xmlns=""http://schemas.openxmlformats.org/spreadsheetml/2006/main""
+          xmlns:r=""http://schemas.openxmlformats.org/officeDocument/2006/relationships"">
+  <sheets>
+    <sheet name=""Sheet1"" sheetId=""1"" r:id=""rId1""/>
+  </sheets>
+</workbook>");
             }
 
-            // word/_rels/document.xml.rels (placeholder)
-            var docRelsEntry = archive.CreateEntry("word/_rels/document.xml.rels");
-            using (var writer = new StreamWriter(docRelsEntry.Open()))
+            // xl/_rels/workbook.xml.rels
+            var wbRels = zip.CreateEntry("xl/_rels/workbook.xml.rels", CompressionLevel.NoCompression);
+            using (var writer = new StreamWriter(wbRels.Open()))
             {
-                writer.Write(GetDocumentRelsXml());
+                writer.Write(@"<?xml version=""1.0"" encoding=""UTF-8""?>
+<Relationships xmlns=""http://schemas.openxmlformats.org/package/2006/relationships"">
+  <Relationship Id=""rId1"" Type=""http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"" Target=""worksheets/sheet1.xml""/>
+</Relationships>");
+            }
+
+            // xl/worksheets/sheet1.xml
+            var sheet = zip.CreateEntry("xl/worksheets/sheet1.xml", CompressionLevel.NoCompression);
+            using (var writer = new StreamWriter(sheet.Open()))
+            {
+                writer.Write(@"<?xml version=""1.0"" encoding=""UTF-8""?>
+<worksheet xmlns=""http://schemas.openxmlformats.org/spreadsheetml/2006/main"">
+  <sheetData/>
+</worksheet>");
             }
         }
     }
 
-    // Returns a minimal empty Excel file (just the ZIP EOCD record)
-    private static byte[] CreateEmptyExcelPackage()
+    private static void CreateMinimalWord(string path, string text)
     {
-        // An empty .xlsx is essentially an empty zip file. This byte array represents a minimal zip.
-        return new byte[] { 0x50, 0x4B, 0x05, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-    }
-
-    // XML for [Content_Types].xml
-    private static string GetContentTypesXml()
-    {
-        return @"<?xml version=""1.0"" encoding=""UTF-8""?>
+        // Create a very small, valid DOCX file using the Open Packaging Conventions.
+        using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write))
+        using (ZipArchive zip = new ZipArchive(fs, ZipArchiveMode.Create))
+        {
+            // [Content_Types].xml
+            var ct = zip.CreateEntry("[Content_Types].xml", CompressionLevel.NoCompression);
+            using (var writer = new StreamWriter(ct.Open()))
+            {
+                writer.Write(@"<?xml version=""1.0"" encoding=""UTF-8""?>
 <Types xmlns=""http://schemas.openxmlformats.org/package/2006/content-types"">
   <Default Extension=""rels"" ContentType=""application/vnd.openxmlformats-package.relationships+xml""/>
   <Default Extension=""xml"" ContentType=""application/xml""/>
   <Override PartName=""/word/document.xml"" ContentType=""application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml""/>
-  <Override PartName=""/word/embeddings/embedded.xlsx"" ContentType=""application/vnd.openxmlformats-officedocument.spreadsheetml.sheet""/>
-</Types>";
-    }
+</Types>");
+            }
 
-    // XML for _rels/.rels
-    private static string GetPackageRelsXml()
-    {
-        return @"<?xml version=""1.0"" encoding=""UTF-8""?>
+            // _rels/.rels
+            var rels = zip.CreateEntry("_rels/.rels", CompressionLevel.NoCompression);
+            using (var writer = new StreamWriter(rels.Open()))
+            {
+                writer.Write(@"<?xml version=""1.0"" encoding=""UTF-8""?>
 <Relationships xmlns=""http://schemas.openxmlformats.org/package/2006/relationships"">
   <Relationship Id=""rId1"" Type=""http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"" Target=""word/document.xml""/>
-</Relationships>";
-    }
+</Relationships>");
+            }
 
-    // XML for word/document.xml (includes a placeholder for the OLE object)
-    private static string GetDocumentXml()
-    {
-        return @"<?xml version=""1.0"" encoding=""UTF-8""?>
-<w:document xmlns:w=""http://schemas.openxmlformats.org/wordprocessingml/2006/main""
-            xmlns:r=""http://schemas.openxmlformats.org/officeDocument/2006/relationships""
-            xmlns:v=""urn:schemas-microsoft-com:vml"">
+            // word/document.xml
+            var doc = zip.CreateEntry("word/document.xml", CompressionLevel.NoCompression);
+            using (var writer = new StreamWriter(doc.Open()))
+            {
+                writer.Write($@"<?xml version=""1.0"" encoding=""UTF-8""?>
+<w:document xmlns:w=""http://schemas.openxmlformats.org/wordprocessingml/2006/main"">
   <w:body>
-    <w:p><w:r><w:t>Embedded Excel OLE Object:</w:t></w:r></w:p>
     <w:p>
       <w:r>
-        <w:object>
-          <v:shape id=""obj1"" type=""#_x0000_t75"" style=""width:100pt;height:100pt"">
-            <v:imagedata r:id=""rId1""/>
-          </v:shape>
-        </w:object>
+        <w:t>{System.Security.SecurityElement.Escape(text)}</w:t>
       </w:r>
     </w:p>
-    <w:p><w:r><w:t>End of embedded object.</w:t></w:r></w:p>
     <w:sectPr/>
   </w:body>
-</w:document>";
-    }
-
-    // XML for word/_rels/document.xml.rels (relationship to the embedded Excel file)
-    private static string GetDocumentRelsXml()
-    {
-        return @"<?xml version=""1.0"" encoding=""UTF-8""?>
-<Relationships xmlns=""http://schemas.openxmlformats.org/package/2006/relationships"">
-  <Relationship Id=""rId1"" Type=""http://schemas.openxmlformats.org/officeDocument/2006/relationships/oleObject"" Target=""embeddings/embedded.xlsx""/>
-</Relationships>";
+</w:document>");
+            }
+        }
     }
 }

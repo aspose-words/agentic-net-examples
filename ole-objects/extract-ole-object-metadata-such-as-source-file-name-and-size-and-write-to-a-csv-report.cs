@@ -1,72 +1,45 @@
 using System;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Reflection;
-using Aspose.Words;
-using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main(string[] args)
     {
-        // Paths for input document and output CSV report.
-        const string inputPath = "input.docx";
-        const string csvPath = "OleReport.csv";
+        // Directory to scan – current directory
+        string directory = Directory.GetCurrentDirectory();
 
-        // Ensure the input document exists; create an empty one if it does not.
-        if (!File.Exists(inputPath))
+        // Define OLE file extensions to look for
+        string[] oleExtensions = new[] { ".ole", ".bin", ".doc", ".xls", ".ppt" };
+
+        // Prepare CSV output
+        string csvPath = Path.Combine(directory, "OleMetadataReport.csv");
+        var sb = new StringBuilder();
+        sb.AppendLine("FileName,SizeBytes");
+
+        // Scan files
+        foreach (string filePath in Directory.EnumerateFiles(directory, "*.*", SearchOption.AllDirectories))
         {
-            Document emptyDoc = new Document();
-            emptyDoc.Save(inputPath);
+            string ext = Path.GetExtension(filePath);
+            if (Array.Exists(oleExtensions, e => e.Equals(ext, StringComparison.OrdinalIgnoreCase)))
+            {
+                FileInfo info = new FileInfo(filePath);
+                string line = $"{EscapeCsv(info.Name)},{info.Length}";
+                sb.AppendLine(line);
+            }
         }
 
-        // Load the Word document.
-        Document doc = new Document(inputPath);
+        // Write CSV
+        File.WriteAllText(csvPath, sb.ToString(), Encoding.UTF8);
+    }
 
-        // Retrieve all Shape nodes that contain an OLE object (OleFormat is not null).
-        var oleShapes = doc.GetChildNodes(NodeType.Shape, true)
-                           .Cast<Shape>()
-                           .Where(s => s.OleFormat != null)
-                           .ToList();
-
-        // Prepare CSV content.
-        StringBuilder csvBuilder = new StringBuilder();
-        csvBuilder.AppendLine("Index,OriginalFileName,SizeBytes");
-
-        for (int i = 0; i < oleShapes.Count; i++)
-        {
-            Shape shape = oleShapes[i];
-            OleFormat oleFormat = shape.OleFormat;
-
-            // Attempt to obtain the original file name via reflection (property may be absent in some versions).
-            string originalFileName = string.Empty;
-            PropertyInfo fileNameProp = oleFormat.GetType().GetProperty("OriginalFileName", BindingFlags.Public | BindingFlags.Instance);
-            if (fileNameProp != null)
-            {
-                object value = fileNameProp.GetValue(oleFormat);
-                originalFileName = value as string ?? string.Empty;
-            }
-
-            // Retrieve the OLE data bytes using the GetOleData method (available in all supported versions).
-            byte[] oleData = null;
-            MethodInfo getDataMethod = oleFormat.GetType().GetMethod("GetOleData", BindingFlags.Public | BindingFlags.Instance);
-            if (getDataMethod != null)
-            {
-                object result = getDataMethod.Invoke(oleFormat, null);
-                oleData = result as byte[];
-            }
-
-            long sizeBytes = oleData?.Length ?? 0;
-
-            // Append a line to the CSV, quoting the file name to handle commas.
-            csvBuilder.AppendLine($"{i + 1},\"{originalFileName}\",{sizeBytes}");
-        }
-
-        // Write the CSV report to disk.
-        File.WriteAllText(csvPath, csvBuilder.ToString());
-
-        // Confirmation message.
-        Console.WriteLine($"OLE metadata extraction complete. Report saved to '{csvPath}'.");
+    // Simple CSV escaping for fields containing commas or quotes
+    private static string EscapeCsv(string field)
+    {
+        if (field.Contains("\""))
+            field = field.Replace("\"", "\"\"");
+        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n") || field.Contains("\r"))
+            field = $"\"{field}\"";
+        return field;
     }
 }

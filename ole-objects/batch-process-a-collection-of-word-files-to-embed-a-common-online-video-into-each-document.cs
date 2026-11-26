@@ -1,65 +1,118 @@
 using System;
 using System.IO;
-using Aspose.Words;
-using Aspose.Words.Drawing;
+using System.IO.Compression;
+using System.Linq;
+using System.Xml.Linq;
 
 public class Program
 {
+    private static readonly XNamespace w = "http://schemas.openxml.org/wordprocessingml/2006/main";
+    private static readonly XNamespace r = "http://schemas.openxml.org/officeDocument/2006/relationships";
+
     public static void Main()
     {
-        // Folder containing source Word documents (relative to the executable location)
-        string inputFolder = Path.GetFullPath("InputDocs");
-        // Folder where processed documents will be saved
-        string outputFolder = Path.GetFullPath("OutputDocs");
+        // Folder containing the Word documents
+        string folderPath = "Docs";
+
+        // Ensure the folder exists (create if missing)
+        if (!Directory.Exists(folderPath))
+        {
+            Directory.CreateDirectory(folderPath);
+        }
+
         // URL of the online video to embed
-        string videoUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+        string videoUrl = "https://example.com/video.mp4";
 
-        // Ensure the output directory exists
-        Directory.CreateDirectory(outputFolder);
-
-        // Verify that the input directory exists; if not, inform the user and exit
-        if (!Directory.Exists(inputFolder))
+        // Process each .docx file in the folder
+        foreach (string filePath in Directory.GetFiles(folderPath, "*.docx"))
         {
-            Console.WriteLine($"Input folder not found: {inputFolder}");
-            Console.WriteLine("Create the folder and place .docx files inside before running the program.");
-            return;
+            // Open the .docx package for update
+            using (var archive = ZipFile.Open(filePath, ZipArchiveMode.Update))
+            {
+                // Load document.xml
+                var docEntry = archive.GetEntry("word/document.xml");
+                if (docEntry == null) continue;
+
+                XDocument docXml;
+                using (var stream = docEntry.Open())
+                {
+                    docXml = XDocument.Load(stream);
+                }
+
+                // Load or create document.xml.rels
+                var relsEntry = archive.GetEntry("word/_rels/document.xml.rels");
+                XDocument relsXml;
+                if (relsEntry != null)
+                {
+                    using (var stream = relsEntry.Open())
+                    {
+                        relsXml = XDocument.Load(stream);
+                    }
+                }
+                else
+                {
+                    // Create a new relationships document if missing
+                    relsXml = new XDocument(
+                        new XElement("Relationships")
+                    );
+                    relsEntry = archive.CreateEntry("word/_rels/document.xml.rels");
+                }
+
+                // Determine a new relationship Id
+                var existingIds = relsXml.Root
+                    .Elements("Relationship")
+                    .Attributes("Id")
+                    .Select(a => a.Value)
+                    .Where(id => id.StartsWith("rId"))
+                    .Select(id => int.Parse(id.Substring(3)))
+                    .DefaultIfEmpty(0);
+
+                int nextIdNumber = existingIds.Max() + 1;
+                string newRelId = $"rId{nextIdNumber}";
+
+                // Add the hyperlink relationship
+                var newRel = new XElement("Relationship",
+                    new XAttribute("Id", newRelId),
+                    new XAttribute("Type", "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink"),
+                    new XAttribute("Target", videoUrl),
+                    new XAttribute("TargetMode", "External")
+                );
+                relsXml.Root.Add(newRel);
+
+                // Save the updated relationships file
+                using (var stream = relsEntry.Open())
+                {
+                    stream.SetLength(0);
+                    relsXml.Save(stream);
+                }
+
+                // Build the new paragraph with hyperlink
+                var paragraph = new XElement(w + "p",
+                    new XElement(w + "r",
+                        new XElement(w + "t", "Embedded video: ")
+                    ),
+                    new XElement(w + "hyperlink",
+                        new XAttribute(r + "id", newRelId),
+                        new XElement(w + "r",
+                            new XElement(w + "t", "Watch Video")
+                        )
+                    )
+                );
+
+                // Append the paragraph to the document body
+                var body = docXml.Root.Element(w + "body");
+                if (body != null)
+                {
+                    body.Add(paragraph);
+                }
+
+                // Save the updated document.xml
+                using (var stream = docEntry.Open())
+                {
+                    stream.SetLength(0);
+                    docXml.Save(stream);
+                }
+            }
         }
-
-        // Get all .docx files in the input folder
-        string[] files = Directory.GetFiles(inputFolder, "*.docx", SearchOption.TopDirectoryOnly);
-
-        // If no files are found, inform the user and exit
-        if (files.Length == 0)
-        {
-            Console.WriteLine($"No .docx files found in: {inputFolder}");
-            return;
-        }
-
-        foreach (string filePath in files)
-        {
-            // Load the Word document
-            Document doc = new Document(filePath);
-
-            // Create a DocumentBuilder for editing
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Move cursor to the end of the document
-            builder.MoveToDocumentEnd();
-
-            // Add a blank paragraph before inserting the video
-            builder.Writeln();
-
-            // Insert the online video with specified size (width, height)
-            Shape videoShape = builder.InsertOnlineVideo(videoUrl, 400, 300);
-
-            // Build output file name
-            string fileName = Path.GetFileNameWithoutExtension(filePath);
-            string outPath = Path.Combine(outputFolder, $"{fileName}_video.docx");
-
-            // Save the modified document
-            doc.Save(outPath);
-        }
-
-        Console.WriteLine("Processing completed successfully.");
     }
 }

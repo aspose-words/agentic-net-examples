@@ -1,39 +1,53 @@
 using System;
+using System.IO;
 using System.Runtime.InteropServices;
+using Aspose.Words;
+using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        string[] progIds = { "Word.Application", "Excel.Application", "NonExistent.ProgID" };
+        // Define the ProgId to validate.
+        string progId = "Word.Document";
 
-        foreach (var progId in progIds)
-        {
-            bool isValid = IsProgIdRegistered(progId);
-            Console.WriteLine($"{progId}: {(isValid ? "Valid" : "Invalid")}");
-
-            if (isValid)
-            {
-                // Simulate safe insertion of the OLE object
-                Console.WriteLine($"Simulating insertion of OLE object with ProgID '{progId}'.");
-            }
-        }
-    }
-
-    private static bool IsProgIdRegistered(string progId)
-    {
+        // Validate the ProgId by attempting to get its COM type.
+        bool isProgIdValid = false;
         try
         {
             Type comType = Type.GetTypeFromProgID(progId);
-            return comType != null;
+            isProgIdValid = comType != null;
         }
         catch (COMException)
         {
-            return false;
+            isProgIdValid = false;
         }
-        catch (Exception)
+
+        // Create a new document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        if (isProgIdValid)
         {
-            return false;
+            // Create a temporary text file to embed as an OLE object.
+            string tempFilePath = Path.Combine(Path.GetTempPath(), "SampleText.txt");
+            File.WriteAllText(tempFilePath, "This is sample text for OLE embedding.");
+
+            // Insert the OLE object using the validated ProgId.
+            // Parameters: filePath, progId, isLink (false), isIcon (false), iconCaption (null)
+            builder.InsertOleObject(tempFilePath, progId, false, false, null);
+
+            // Clean up the temporary file.
+            File.Delete(tempFilePath);
         }
+        else
+        {
+            // If the ProgId is invalid, write a note into the document.
+            builder.Writeln($"The ProgId \"{progId}\" is not valid on this system. OLE object was not inserted.");
+        }
+
+        // Save the document to the output file.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
+        doc.Save(outputPath);
     }
 }
