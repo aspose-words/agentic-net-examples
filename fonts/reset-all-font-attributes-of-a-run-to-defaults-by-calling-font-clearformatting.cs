@@ -1,68 +1,63 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Fonts;
-using Aspose.Drawing; // For Aspose.Drawing.Color
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to add a paragraph with a Run.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample run with custom font settings.");
+        // Add a paragraph to the first (and only) section.
+        Paragraph para = new Paragraph(doc);
+        doc.FirstSection.Body.AppendChild(para);
 
-        // Retrieve the Run that was just added.
-        // After Writeln, the builder's current paragraph is a new empty paragraph,
-        // so we need to get the previous paragraph which contains the run.
-        Paragraph previousParagraph = builder.CurrentParagraph.PreviousSibling as Paragraph;
-        if (previousParagraph == null || previousParagraph.Runs.Count == 0)
-        {
-            Console.WriteLine("Failed to locate the run.");
-            return;
-        }
+        // Create a Run with some text.
+        Run run = new Run(doc, "Sample text with custom font attributes.");
+        para.AppendChild(run);
 
-        Run run = previousParagraph.Runs[0];
-
-        // Apply some custom font formatting.
+        // Apply custom font formatting.
         run.Font.Name = "Arial";
         run.Font.Size = 16;
         run.Font.Bold = true;
         run.Font.Italic = true;
-        run.Font.Underline = Underline.Single;
+        run.Font.Underline = Underline.Double;
+        run.Font.Color = System.Drawing.Color.Blue; // System.Drawing.Color used explicitly.
 
-        // Use Aspose.Drawing.Color for creation and convert to System.Drawing.Color.
-        Aspose.Drawing.Color asposeColor = Aspose.Drawing.Color.Black;
-        run.Font.Color = System.Drawing.Color.FromArgb(asposeColor.ToArgb());
+        // Output font properties before clearing.
+        Console.WriteLine("Before ClearFormatting:");
+        Console.WriteLine($"Name: {run.Font.Name}");
+        Console.WriteLine($"Size: {run.Font.Size}");
+        Console.WriteLine($"Bold: {run.Font.Bold}");
+        Console.WriteLine($"Italic: {run.Font.Italic}");
+        Console.WriteLine($"Underline: {run.Font.Underline}");
+        Console.WriteLine($"Color: {run.Font.Color}");
 
         // Reset all font attributes to defaults.
         run.Font.ClearFormatting();
 
-        // Validate that the font properties have been reset to defaults.
-        // Default values: Name = null, Size = 0, Bold = false, Italic = false, Underline = None, Color = Empty.
-        Console.WriteLine("After ClearFormatting:");
+        // Output font properties after clearing.
+        Console.WriteLine("\nAfter ClearFormatting:");
         Console.WriteLine($"Name: {(run.Font.Name ?? "null")}");
         Console.WriteLine($"Size: {run.Font.Size}");
         Console.WriteLine($"Bold: {run.Font.Bold}");
         Console.WriteLine($"Italic: {run.Font.Italic}");
         Console.WriteLine($"Underline: {run.Font.Underline}");
-        Console.WriteLine($"Color is empty: {run.Font.Color.IsEmpty}");
+        Console.WriteLine($"Color: {run.Font.Color}");
 
-        // Save the document to disk.
+        // Save the document.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
         doc.Save(outputPath);
 
-        // Ensure the file was created.
+        // Verify that the file was created.
         if (File.Exists(outputPath))
         {
-            Console.WriteLine($"Document saved successfully to: {outputPath}");
+            Console.WriteLine($"\nDocument saved successfully to: {outputPath}");
         }
         else
         {
-            Console.WriteLine("Failed to save the document.");
+            Console.WriteLine("\nFailed to save the document.");
         }
     }
 }

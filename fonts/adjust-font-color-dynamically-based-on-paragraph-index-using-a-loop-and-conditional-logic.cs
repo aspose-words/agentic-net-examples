@@ -1,39 +1,34 @@
 using System;
-using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
-using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
-using Aspose.Drawing; // For Aspose.Drawing.Color
-using System.Drawing; // Only for System.Drawing.Color conversion (fully qualified usage)
+using Aspose.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add several paragraphs with sample text.
-        for (int i = 0; i < 6; i++)
+        // Add several paragraphs to the document.
+        for (int i = 0; i < 5; i++)
         {
-            builder.Writeln($"This is paragraph number {i + 1}.");
+            builder.Writeln($"Paragraph {i + 1}");
         }
 
-        // Loop through all paragraphs and set font color based on the paragraph index.
-        NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
+        // Loop through each paragraph and set its font color based on the paragraph index.
+        var paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
         for (int i = 0; i < paragraphs.Count; i++)
         {
             Paragraph para = (Paragraph)paragraphs[i];
 
-            // Determine color: even index -> Blue, odd index -> Red.
-            Aspose.Drawing.Color aspColor = (i % 2 == 0) ? Aspose.Drawing.Color.Blue : Aspose.Drawing.Color.Red;
+            // Choose a color: even index -> Red, odd index -> Blue.
+            Aspose.Drawing.Color aspColor = (i % 2 == 0) ? Aspose.Drawing.Color.Red : Aspose.Drawing.Color.Blue;
 
-            // Convert Aspose.Drawing.Color to System.Drawing.Color.
+            // Convert Aspose.Drawing.Color to System.Drawing.Color as required by Font.Color.
             System.Drawing.Color sysColor = System.Drawing.Color.FromArgb(aspColor.ToArgb());
 
-            // Apply the color to all runs within the paragraph.
+            // Apply the color to all runs (text portions) in the paragraph.
             foreach (Run run in para.Runs)
             {
                 run.Font.Color = sysColor;
@@ -42,12 +37,12 @@ public class Program
 
         // Save the document.
         string outputPath = "DynamicFontColors.docx";
-        doc.Save(outputPath, SaveFormat.Docx);
+        doc.Save(outputPath);
 
-        // Validate that the file was created.
-        if (File.Exists(outputPath))
+        // Verify that the file was created.
+        if (System.IO.File.Exists(outputPath))
         {
-            Console.WriteLine($"Document saved successfully to '{outputPath}'.");
+            Console.WriteLine($"Document saved successfully to {outputPath}");
         }
         else
         {

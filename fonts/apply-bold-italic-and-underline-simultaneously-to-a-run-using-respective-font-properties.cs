@@ -2,54 +2,53 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fonts;
+using Newtonsoft.Json; // Required package, kept for compliance
 
-public class Program
+namespace FontFormattingExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert a paragraph with a single run of text.
-        builder.Write("Sample text for font styling.");
-
-        // Retrieve the run we just added.
-        Paragraph paragraph = doc.FirstSection.Body.Paragraphs[0];
-        Run run = (Run)paragraph.Runs[0];
-
-        // Apply bold, italic, and underline formatting.
-        run.Font.Bold = true;
-        run.Font.Italic = true;
-        // The correct enum for underline style is Underline (not UnderlineType).
-        run.Font.Underline = Underline.Single;
-
-        // Validate that the properties were set correctly.
-        bool isBold = run.Font.Bold;
-        bool isItalic = run.Font.Italic;
-        bool isUnderline = run.Font.Underline == Underline.Single;
-
-        if (isBold && isItalic && isUnderline)
+        public static void Main()
         {
-            Console.WriteLine("Bold, italic, and underline applied successfully.");
-        }
-        else
-        {
-            Console.WriteLine("Font formatting validation failed.");
-        }
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Save the document to disk.
-        string outputPath = "FormattedRun.docx";
-        doc.Save(outputPath);
+            // Create a paragraph to hold the run.
+            Paragraph paragraph = new Paragraph(doc);
 
-        // Verify that the file was created.
-        if (File.Exists(outputPath))
-        {
-            Console.WriteLine($"Document saved successfully at: {Path.GetFullPath(outputPath)}");
-        }
-        else
-        {
-            Console.WriteLine("Failed to save the document.");
+            // Create a run with sample text.
+            Run run = new Run(doc, "Bold, Italic, and Underline");
+
+            // Apply bold, italic, and underline formatting.
+            run.Font.Bold = true;
+            run.Font.Italic = true;
+            run.Font.Underline = Aspose.Words.Underline.Single;
+
+            // Validate that the properties were set correctly.
+            bool isBold = run.Font.Bold;
+            bool isItalic = run.Font.Italic;
+            bool isUnderline = run.Font.Underline == Aspose.Words.Underline.Single;
+
+            // Append the run to the paragraph and the paragraph to the document body.
+            paragraph.AppendChild(run);
+            doc.FirstSection.Body.AppendChild(paragraph);
+
+            // Define output file path.
+            string outputPath = "FormattedRun.docx";
+
+            // Save the document.
+            doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (File.Exists(outputPath))
+            {
+                Console.WriteLine("Document saved successfully.");
+                Console.WriteLine($"Bold: {isBold}, Italic: {isItalic}, Underline: {isUnderline}");
+            }
+            else
+            {
+                Console.WriteLine("Failed to save the document.");
+            }
         }
     }
 }

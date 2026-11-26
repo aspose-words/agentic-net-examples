@@ -1,6 +1,8 @@
 using System;
 using System.IO;
+using System.Reflection;
 using Aspose.Words;
+using Aspose.Words.Fonts;
 
 public class Program
 {
@@ -8,26 +10,47 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a run with some text.
-        builder.Write("East Asian text");
+        // Create a paragraph and a run with some East Asian text.
+        Paragraph paragraph = new Paragraph(doc);
+        Run run = new Run(doc, "東アジアのテキスト");
 
-        // Retrieve the run we just added.
-        Run run = doc.FirstSection.Body.FirstParagraph.Runs[0];
+        // Set an East Asian emphasis mark for debugging purposes.
+        // The EmphasisMark enum may not be available in older versions of Aspose.Words,
+        // so we set the property via reflection using the underlying integer value.
+        // In the current API, the value '0' corresponds to EmphasisMark.None.
+        PropertyInfo emphasisProp = typeof(Font).GetProperty("EmphasisMark");
+        if (emphasisProp != null && emphasisProp.CanWrite)
+        {
+            // 0 = None
+            emphasisProp.SetValue(run.Font, 0);
+        }
 
-        // Set an emphasis mark for East Asian typography.
-        // Use a value that exists in the current Aspose.Words version.
-        run.Font.EmphasisMark = Aspose.Words.EmphasisMark.None;
+        // Add the run to the paragraph and the paragraph to the document.
+        paragraph.AppendChild(run);
+        doc.FirstSection.Body.AppendChild(paragraph);
 
-        // Output the emphasis mark value.
-        Console.WriteLine($"EmphasisMark value: {run.Font.EmphasisMark}");
+        // Retrieve and display the EmphasisMark value.
+        object emphasisValue = null;
+        if (emphasisProp != null && emphasisProp.CanRead)
+        {
+            emphasisValue = emphasisProp.GetValue(run.Font);
+        }
 
-        // Save the document to verify output.
+        Console.WriteLine($"EmphasisMark value (numeric): {emphasisValue}");
+
+        // Save the document to a file.
         string outputPath = "Output.docx";
         doc.Save(outputPath);
 
-        // Confirm the file exists.
-        Console.WriteLine($"Document saved successfully: {File.Exists(outputPath)}");
+        // Verify that the file was created.
+        if (File.Exists(outputPath))
+        {
+            Console.WriteLine($"Document saved successfully to '{outputPath}'.");
+        }
+        else
+        {
+            Console.WriteLine("Failed to save the document.");
+        }
     }
 }

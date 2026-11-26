@@ -9,30 +9,37 @@ public class Program
         // Create a new empty document.
         Document doc = new Document();
 
-        // Add a new paragraph to the document body.
-        Paragraph paragraph = new Paragraph(doc);
-        doc.FirstSection.Body.AppendChild(paragraph);
+        // Use DocumentBuilder to add a paragraph with a single run.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Sample text for font styling.");
 
-        // Create a run with sample text.
-        Run run = new Run(doc, "This text is bold and italic.");
+        // Retrieve the first run from the paragraph that contains the text.
+        // After Writeln the builder is positioned on a new empty paragraph,
+        // so we need to access the previous paragraph.
+        Paragraph paragraphWithRun = (Paragraph)builder.CurrentParagraph.PreviousSibling;
+        Run run = paragraphWithRun.Runs[0];
 
-        // Apply bold and italic styles using the Font properties.
+        // Apply bold and italic styles.
         run.Font.Bold = true;
         run.Font.Italic = true;
 
-        // Append the run to the paragraph.
-        paragraph.AppendChild(run);
-
         // Validate that the styles were applied.
-        bool isBold = run.Font.Bold;
-        bool isItalic = run.Font.Italic;
-        Console.WriteLine($"Bold applied: {isBold}, Italic applied: {isItalic}");
+        if (!run.Font.Bold || !run.Font.Italic)
+        {
+            throw new InvalidOperationException("Failed to set font styles.");
+        }
 
-        // Save the document to a file.
-        string outputPath = "StyledText.docx";
+        // Save the document to disk.
+        string outputPath = "Output.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
-        Console.WriteLine(File.Exists(outputPath) ? "Document saved successfully." : "Failed to save document.");
+        // Ensure the file was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new FileNotFoundException("The output file was not created.", outputPath);
+        }
+
+        // Indicate success.
+        Console.WriteLine("Document created successfully at " + Path.GetFullPath(outputPath));
     }
 }

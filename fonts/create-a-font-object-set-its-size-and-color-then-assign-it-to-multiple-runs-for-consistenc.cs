@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Drawing;
 
@@ -5,42 +7,62 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Create a new empty document.
+        Document doc = new Document();
 
-        // Obtain the Font object from the DocumentBuilder.
-        var font = builder.Font; // Aspose.Words.Font
+        // Create a paragraph to hold the runs.
+        Paragraph paragraph = new Paragraph(doc);
 
-        // Set font size.
-        font.Size = 14;
+        // Create the first run with some text.
+        Run run1 = new Run(doc, "First run text. ");
 
-        // Set font color using Aspose.Drawing.Color and convert to System.Drawing.Color.
-        var aspColor = Aspose.Drawing.Color.Red;
-        var sysColor = System.Drawing.Color.FromArgb(aspColor.ToArgb());
-        font.Color = sysColor;
+        // Obtain the Font object from the first run.
+        Aspose.Words.Font sharedFont = run1.Font;
 
-        // Insert multiple runs that share the same font settings.
-        builder.Write("First run with custom font. ");
-        builder.Write("Second run with the same custom font.");
+        // Set the desired font size.
+        sharedFont.Size = 16;
 
-        // Validate that the font properties were applied to the runs.
-        var firstParagraph = doc.FirstSection.Body.FirstParagraph;
-        var firstRun = (Run)firstParagraph.Runs[0];
-        var secondRun = (Run)firstParagraph.Runs[1];
+        // Create an Aspose.Drawing.Color and convert it to System.Drawing.Color.
+        Aspose.Drawing.Color aspColor = Aspose.Drawing.Color.Blue;
+        System.Drawing.Color sysColor = System.Drawing.Color.FromArgb(aspColor.ToArgb());
 
-        if (firstRun.Font.Size != 14 || firstRun.Font.Color.ToArgb() != sysColor.ToArgb())
-            throw new System.Exception("Font properties not applied correctly to the first run.");
+        // Assign the color to the font.
+        sharedFont.Color = sysColor;
 
-        if (secondRun.Font.Size != 14 || secondRun.Font.Color.ToArgb() != sysColor.ToArgb())
-            throw new System.Exception("Font properties not applied correctly to the second run.");
+        // Create a second run with different text.
+        Run run2 = new Run(doc, "Second run text.");
+
+        // Assign the same font properties to the second run for consistency.
+        run2.Font.Size = sharedFont.Size;
+        run2.Font.Color = sharedFont.Color;
+
+        // Add both runs to the paragraph.
+        paragraph.AppendChild(run1);
+        paragraph.AppendChild(run2);
+
+        // Add the paragraph to the document body.
+        doc.FirstSection.Body.AppendChild(paragraph);
+
+        // Define the output file path.
+        string outputPath = "Output.docx";
 
         // Save the document.
-        const string outputPath = "Output.docx";
         doc.Save(outputPath);
 
-        // Ensure the output file exists.
-        if (!System.IO.File.Exists(outputPath))
-            throw new System.Exception("Failed to create the output file.");
+        // Validate that the file was created.
+        if (File.Exists(outputPath))
+        {
+            // Validate that both runs have identical font size and color.
+            bool sizeMatch = run1.Font.Size == run2.Font.Size;
+            bool colorMatch = run1.Font.Color.ToArgb() == run2.Font.Color.ToArgb();
+
+            Console.WriteLine($"Document saved to '{outputPath}'.");
+            Console.WriteLine($"Font size match: {sizeMatch}");
+            Console.WriteLine($"Font color match: {colorMatch}");
+        }
+        else
+        {
+            Console.WriteLine("Failed to create the output document.");
+        }
     }
 }

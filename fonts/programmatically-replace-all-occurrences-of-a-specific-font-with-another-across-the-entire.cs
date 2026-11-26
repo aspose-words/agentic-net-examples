@@ -6,55 +6,59 @@ public class Program
 {
     public static void Main()
     {
-        // Define the font names to replace.
-        string oldFontName = "Arial";
-        string newFontName = "Times New Roman";
-
-        // Create a new document and add sample text.
+        // Create a sample document with mixed fonts.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Paragraph with the old font.
-        builder.Font.Name = oldFontName;
-        builder.Writeln($"This line uses the old font: {oldFontName}.");
+        builder.Font.Name = "OldFont";
+        builder.Writeln("This paragraph uses OldFont.");
 
-        // Paragraph with a different font that should remain unchanged.
-        builder.Font.Name = "Calibri";
-        builder.Writeln("This line uses Calibri and should stay unchanged.");
+        builder.Font.Name = "Times New Roman";
+        builder.Writeln("This paragraph uses Times New Roman.");
 
-        // Another paragraph with the old font.
-        builder.Font.Name = oldFontName;
-        builder.Writeln($"Another occurrence of the old font: {oldFontName}.");
+        builder.Font.Name = "OldFont";
+        builder.Writeln("Another line with OldFont.");
+
+        // Save the initial document (optional, demonstrates load/save lifecycle).
+        string inputPath = "input.docx";
+        doc.Save(inputPath);
+
+        // Define fonts to replace.
+        string oldFontName = "OldFont";
+        string newFontName = "NewFont";
 
         // Replace all occurrences of the old font with the new font.
-        foreach (Node node in doc.GetChildNodes(NodeType.Run, true))
+        foreach (Run run in doc.GetChildNodes(NodeType.Run, true))
         {
-            Run run = (Run)node;
-            if (!string.IsNullOrEmpty(run.Font.Name) &&
-                run.Font.Name.Equals(oldFontName, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(run.Font.Name, oldFontName, StringComparison.OrdinalIgnoreCase))
             {
                 run.Font.Name = newFontName;
+            }
+        }
 
-                // Validate that the font was set correctly.
-                if (!run.Font.Name.Equals(newFontName, StringComparison.OrdinalIgnoreCase))
-                {
-                    Console.WriteLine("Warning: Failed to set the new font on a run.");
-                }
+        // Validate that no run still uses the old font.
+        bool replacementSuccessful = true;
+        foreach (Run run in doc.GetChildNodes(NodeType.Run, true))
+        {
+            if (string.Equals(run.Font.Name, oldFontName, StringComparison.OrdinalIgnoreCase))
+            {
+                replacementSuccessful = false;
+                break;
             }
         }
 
         // Save the modified document.
-        string outputPath = "Output.docx";
+        string outputPath = "output.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
-        if (File.Exists(outputPath))
+        // Ensure the output file exists and report the result.
+        if (File.Exists(outputPath) && replacementSuccessful)
         {
-            Console.WriteLine("Document saved successfully: " + Path.GetFullPath(outputPath));
+            Console.WriteLine("Font replacement completed successfully.");
         }
         else
         {
-            Console.WriteLine("Failed to save the document.");
+            Console.WriteLine("Font replacement failed.");
         }
     }
 }

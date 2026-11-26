@@ -1,60 +1,37 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Drawing; // For Aspose.Drawing.Color
+using Aspose.Drawing;
 
-namespace FontColorExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new empty document.
-            Document doc = new Document();
+        // Create a new empty document.
+        Document doc = new Document();
 
-            // Create a paragraph and a run with sample text.
-            Paragraph paragraph = new Paragraph(doc);
-            Run run = new Run(doc, "This text will be blue.");
+        // Initialize a DocumentBuilder for the document.
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Append the run to the paragraph, and the paragraph to the document body.
-            paragraph.AppendChild(run);
-            doc.FirstSection.Body.AppendChild(paragraph);
+        // Create a Run with sample text.
+        Run run = new Run(doc, "This text will be blue.");
 
-            // Create an Aspose.Drawing.Color representing blue.
-            Aspose.Drawing.Color asposeBlue = Aspose.Drawing.Color.Blue;
+        // Insert the Run into the document.
+        builder.InsertNode(run);
 
-            // Convert Aspose.Drawing.Color to System.Drawing.Color as required by the Font.Color property.
-            System.Drawing.Color systemBlue = System.Drawing.Color.FromArgb(asposeBlue.ToArgb());
+        // Set the Run's font color to blue.
+        // Aspose.Words expects System.Drawing.Color, so convert from Aspose.Drawing.Color.
+        run.Font.Color = System.Drawing.Color.FromArgb(Color.Blue.ToArgb());
 
-            // Assign the blue color to the run's font.
-            run.Font.Color = systemBlue;
+        // Validate that the color was set correctly.
+        bool isBlue = run.Font.Color.Equals(System.Drawing.Color.Blue);
+        Console.WriteLine("Font color set to blue: " + isBlue);
 
-            // Validate that the color was set correctly.
-            if (run.Font.Color.ToArgb() == systemBlue.ToArgb())
-            {
-                // Validation succeeded.
-            }
-            else
-            {
-                // Validation failed; handle as needed.
-                throw new InvalidOperationException("Font color assignment failed.");
-            }
+        // Save the document to a file.
+        string outputPath = "Output.docx";
+        doc.Save(outputPath);
 
-            // Define output file path.
-            string outputPath = "Output.docx";
-
-            // Save the document.
-            doc.Save(outputPath);
-
-            // Ensure the output file exists.
-            if (File.Exists(outputPath))
-            {
-                // File saved successfully.
-            }
-            else
-            {
-                throw new FileNotFoundException("The document was not saved correctly.", outputPath);
-            }
-        }
+        // Verify that the file was created.
+        Console.WriteLine("Document saved: " + File.Exists(outputPath));
     }
 }

@@ -2,43 +2,43 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fonts;
-using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Apply a font that may be missing on the system.
+        // Set the font to Times New Roman (assumed to be missing on the system).
         builder.Font.Name = "Times New Roman";
-        builder.Writeln("This paragraph is initially set to Times New Roman.");
+        builder.Writeln("This text is originally set to Times New Roman.");
 
-        // Define a custom font substitution rule: use Calibri when the requested font is unavailable.
+        // Configure font substitution: replace missing Times New Roman with Calibri.
         FontSettings fontSettings = new FontSettings();
-        // When a font cannot be found, Aspose.Words will fall back to the default font specified here.
-        fontSettings.SubstitutionSettings.DefaultFontSubstitution.DefaultFontName = "Calibri";
 
-        // Assign the font settings to the document.
+        // The correct API for adding a substitution uses the TableSubstitution property.
+        // It maps an unavailable font name to a list of fallback fonts.
+        fontSettings.SubstitutionSettings.TableSubstitution.AddSubstitutes(
+            "Times New Roman",
+            new string[] { "Calibri" });
+
+        // Apply the font settings to the document.
         doc.FontSettings = fontSettings;
 
-        // Save the document.
+        // Save the document to disk.
         string outputPath = "Output.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
-        bool fileExists = File.Exists(outputPath);
-
-        // Output verification results as JSON.
-        var verificationInfo = new
+        if (File.Exists(outputPath))
         {
-            OutputFileExists = fileExists,
-            DefaultFontSubstitution = fontSettings.SubstitutionSettings.DefaultFontSubstitution.DefaultFontName
-        };
-
-        string json = JsonConvert.SerializeObject(verificationInfo, Formatting.Indented);
-        Console.WriteLine(json);
+            Console.WriteLine("Document saved successfully.");
+        }
+        else
+        {
+            Console.WriteLine("Failed to save document.");
+        }
     }
 }

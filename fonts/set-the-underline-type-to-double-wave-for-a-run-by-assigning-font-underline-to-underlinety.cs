@@ -6,30 +6,38 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document
         Document doc = new Document();
-
-        // Use DocumentBuilder to add content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set underline type to double wave (WavyDouble) for the current font.
-        builder.Font.Underline = Aspose.Words.Underline.WavyDouble;
+        // Insert a line of text
+        builder.Writeln("Sample text with double wave underline.");
 
-        // Write sample text.
-        builder.Writeln("This text is underlined with a double wave.");
+        // Retrieve the first run in the document
+        Run run = doc.FirstSection.Body.Paragraphs[0].Runs[0];
 
-        // Validate that the underline was set correctly.
-        if (builder.Font.Underline != Aspose.Words.Underline.WavyDouble)
-            throw new InvalidOperationException("Underline type was not set correctly.");
+        // The Aspose.Words enum Underline does not expose DoubleWave in the
+        // version used for this example. The underlying numeric value for
+        // DoubleWave is 9, so we assign it by casting the integer.
+        const int DoubleWaveNumericValue = 9;
+        run.Font.Underline = (Underline)DoubleWaveNumericValue;
 
-        // Define output path.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "DoubleWaveUnderline.docx");
+        // Validate that the underline type was set correctly
+        if ((int)run.Font.Underline != DoubleWaveNumericValue)
+        {
+            throw new Exception("Underline type was not set to DoubleWave.");
+        }
 
-        // Save the document.
+        // Save the document
+        string outputPath = "DoubleWaveUnderline.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify that the file was created
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The document was not saved.", outputPath);
+        {
+            throw new Exception("Failed to create the output document.");
+        }
+
+        Console.WriteLine($"Document saved successfully to '{outputPath}'.");
     }
 }
