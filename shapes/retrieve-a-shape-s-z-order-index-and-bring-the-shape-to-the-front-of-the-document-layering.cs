@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Tables;
 
 public class Program
 {
@@ -11,67 +12,56 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert three overlapping rectangle shapes.
-        Shape shape1 = builder.InsertShape(ShapeType.Rectangle, 150, 100);
-        shape1.Name = "Shape1";
-        shape1.WrapType = WrapType.None;
-        shape1.Left = 100;
-        shape1.Top = 100;
+        // Insert first shape (rectangle) and keep a reference.
+        Shape rect = builder.InsertShape(ShapeType.Rectangle, 150, 100);
+        rect.WrapType = WrapType.None; // Ensure shape is floating.
+        rect.Left = 0;
+        rect.Top = 0;
+        rect.StrokeColor = System.Drawing.Color.Blue;
+        rect.FillColor = System.Drawing.Color.LightBlue;
 
-        Shape shape2 = builder.InsertShape(ShapeType.Rectangle, 150, 100);
-        shape2.Name = "TargetShape";
-        shape2.WrapType = WrapType.None;
-        shape2.Left = 120; // Overlap with shape1
-        shape2.Top = 120;
+        // Insert second shape (ellipse) that overlaps the first one.
+        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 150, 100);
+        ellipse.WrapType = WrapType.None;
+        ellipse.Left = 50; // Overlap with rectangle.
+        ellipse.Top = 30;
+        ellipse.StrokeColor = System.Drawing.Color.Red;
+        ellipse.FillColor = System.Drawing.Color.Pink;
 
-        Shape shape3 = builder.InsertShape(ShapeType.Rectangle, 150, 100);
-        shape3.Name = "Shape3";
-        shape3.WrapType = WrapType.None;
-        shape3.Left = 140; // Overlap with previous shapes
-        shape3.Top = 140;
+        // Shapes are inserted into the same paragraph. Retrieve their positions within that paragraph.
+        Paragraph parentParagraph = (Paragraph)rect.ParentNode;
 
-        // Retrieve the target shape via traversal.
-        Shape target = null;
-        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
-        foreach (Shape s in shapes)
+        // Get the collection of shape nodes within the paragraph.
+        NodeCollection shapeNodes = parentParagraph.GetChildNodes(NodeType.Shape, true);
+        int initialRectIndex = shapeNodes.IndexOf(rect);
+        int initialEllipseIndex = shapeNodes.IndexOf(ellipse);
+
+        // Bring the rectangle to the front by moving it after the ellipse in the node collection.
+        rect.Remove(); // Detach from its current position.
+        parentParagraph.InsertAfter(rect, ellipse); // Insert after the ellipse.
+
+        // Verify that the rectangle now has a higher index (i.e., is on top).
+        NodeCollection updatedShapeNodes = parentParagraph.GetChildNodes(NodeType.Shape, true);
+        int finalRectIndex = updatedShapeNodes.IndexOf(rect);
+        int finalEllipseIndex = updatedShapeNodes.IndexOf(ellipse);
+
+        if (finalRectIndex <= finalEllipseIndex)
         {
-            if (s.Name == "TargetShape")
-            {
-                target = s;
-                break;
-            }
+            throw new InvalidOperationException("Failed to bring the shape to the front.");
         }
-
-        if (target == null)
-            throw new InvalidOperationException("Target shape not found.");
-
-        // Get the current Z‑order index of the target shape.
-        int originalZOrder = target.ZOrder;
-        Console.WriteLine($"Original Z‑order index of target shape: {originalZOrder}");
-
-        // Bring the target shape to the front of the layering.
-        // Move the shape node to the end of its parent composite node's child collection.
-        Node parent = target.ParentNode;
-        if (parent is CompositeNode compositeParent)
-        {
-            target.Remove();               // Detach from current position.
-            compositeParent.AppendChild(target); // Re‑append as the last child (frontmost).
-        }
-        else
-        {
-            throw new InvalidOperationException("Unexpected parent node type for the shape.");
-        }
-
-        // Verify that the Z‑order index has changed (it should now be the highest).
-        int newZOrder = target.ZOrder;
-        Console.WriteLine($"New Z‑order index of target shape after BringToFront: {newZOrder}");
 
         // Save the document.
-        string outputPath = "Output.docx";
+        string outputPath = "ZOrderExample.docx";
         doc.Save(outputPath);
 
         // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not saved.", outputPath);
+        {
+            throw new FileNotFoundException("The output document was not created.", outputPath);
+        }
+
+        // Output result to console (no user interaction required).
+        Console.WriteLine($"Initial rectangle index: {initialRectIndex}, Final rectangle index: {finalRectIndex}");
+        Console.WriteLine($"Document saved to: {Path.GetFullPath(outputPath)}");
     }
 }

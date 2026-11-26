@@ -3,7 +3,7 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class Program
+public class SetVerticalAnchorExample
 {
     public static void Main()
     {
@@ -11,17 +11,26 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a rectangle shape positioned at the top of the page.
+        // Insert first shape and set its vertical alignment to Top.
         Shape topShape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
-        ConfigureFloatingShape(topShape, 0, 0);
+        topShape.WrapType = WrapType.None; // Make the shape floating.
+        topShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
+        topShape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
+        topShape.VerticalAlignment = VerticalAlignment.Top; // Anchor at the top of the page.
 
-        // Insert a rectangle shape positioned in the middle (approximate) of the page.
+        // Insert second shape and set its vertical alignment to Center (middle).
         Shape middleShape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
-        ConfigureFloatingShape(middleShape, 0, 200); // Adjust the top offset as needed.
+        middleShape.WrapType = WrapType.None;
+        middleShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
+        middleShape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
+        middleShape.VerticalAlignment = VerticalAlignment.Center; // Anchor at the middle of the page.
 
-        // Insert a rectangle shape positioned at the bottom of the page.
+        // Insert third shape and set its vertical alignment to Bottom.
         Shape bottomShape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
-        ConfigureFloatingShape(bottomShape, 0, 400); // Adjust the top offset as needed.
+        bottomShape.WrapType = WrapType.None;
+        bottomShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
+        bottomShape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
+        bottomShape.VerticalAlignment = VerticalAlignment.Bottom; // Anchor at the bottom of the page.
 
         // Save the document.
         string outputPath = "VerticalAnchorShapes.docx";
@@ -29,19 +38,6 @@ public class Program
 
         // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"Failed to create output file: {outputPath}");
-    }
-
-    // Helper method to configure a shape as a floating shape with the specified position.
-    private static void ConfigureFloatingShape(Shape shape, double left, double top)
-    {
-        // Make the shape floating.
-        shape.WrapType = WrapType.None;
-        shape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        shape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-
-        // Set absolute position on the page.
-        shape.Left = left;
-        shape.Top = top;
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
     }
 }

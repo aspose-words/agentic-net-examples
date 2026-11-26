@@ -3,37 +3,44 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class ShapeHyperlinkExample
+public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Output document path
+        string outputPath = "HyperlinkShape.docx";
+
+        // URL to be applied to the shape
+        string expectedUrl = "https://example.com";
+
+        // Create a new document and a DocumentBuilder
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a simple rectangle shape.
-        Shape shape = builder.InsertShape(ShapeType.Rectangle, 200, 100);
-        // Apply a hyperlink that points to an external website.
-        shape.HRef = "https://www.example.com/";
-        // Open the link in a new window/tab.
-        shape.Target = "New Window";
-        // Optional tooltip shown when hovering over the shape.
-        shape.ScreenTip = "Visit Example.com";
+        // Insert a rectangle shape and apply a hyperlink to it
+        Shape shape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
+        shape.HRef = expectedUrl; // Apply hyperlink
 
-        // Define the output path.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "ShapeWithHyperlink.docx");
-
-        // Save the document.
+        // Save the document
         doc.Save(outputPath);
 
-        // Validate that the file was created.
+        // Verify that the file was created
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not saved.");
+            throw new Exception("The output document was not created.");
 
-        // Validate that the shape contains the expected hyperlink.
-        if (shape.HRef != "https://www.example.com/")
-            throw new InvalidOperationException("The shape hyperlink was not set correctly.");
+        // Reload the document and locate the shape
+        Document loadedDoc = new Document(outputPath);
+        NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        if (shapes.Count == 0)
+            throw new Exception("No shapes were found in the document.");
+
+        Shape loadedShape = (Shape)shapes[0];
+
+        // Verify that the shape contains the expected hyperlink
+        if (loadedShape.HRef != expectedUrl)
+            throw new Exception($"Hyperlink to '{expectedUrl}' was not found on the shape.");
+
+        // Indicate success
+        Console.WriteLine("Shape hyperlink applied and verified successfully.");
     }
 }

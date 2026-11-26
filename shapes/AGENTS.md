@@ -10,12 +10,12 @@ product: Aspose.Words
 
 ## Purpose
 
-Provide an AI coding assistant with concise, reliable guidance for creating, configuring, and manipulating shapes in Word documents using Aspose.Words 26.10.0 while avoiding common pitfalls and unsupported APIs.
+Provide an AI coding assistant with concise, reliable patterns for inserting and formatting shapes in Aspose.Words documents while avoiding unsupported APIs and ensuring that all required resources are created locally.
 
 ## Non-negotiable conventions
 
-- Never reference System.Drawing types such as Bitmap, Graphics, or Color unless the System.Drawing.Common package is explicitly added and supported on the target platform.
-- Do not use Shape members that are not present in Aspose.Words 26.10.0, such as LockAspectRatio, GetActualBounds, CornerRadius, UpdateGroupShapeBounds, BringToFront, SendToBack, Hyperlink, or TextBoxContent.
+- Never call members that are not defined in Aspose.Words 26.11.0, such as Shape.StrokeDashStyle, Shape.GetActualBounds, or ShapeType.SnipCornerRectangle.
+- Do not reference System.Drawing types without adding the System.Drawing.Common package.
 - Bootstrap local sample inputs for existing-file, folder, stream, image, and data workflows.
 - Prefer simple, verifiable workflows over speculative formatting shortcuts.
 
@@ -27,7 +27,8 @@ Use the simplest workflow that satisfies the task.
 
 ## Validation priorities
 
-1. After each operation, verify that the document file exists and that any shape-specific property (e.g., IsLayoutInCell, AspectRatioLocked) has the expected value.
+1. Confirm that the output file exists on disk.
+2. Assert that the created shape's ShapeType equals the intended type (e.g., Image, TextBox, Rectangle).
 
 ## File-to-task reference
 
@@ -50,7 +51,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Insert an OLE object shape and lock its aspect ratio to preserve original proportions.
   - Workflow: shape-workflow
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `insert-a-picture-shape-into-a-table-cell-and-enable-islayoutincell-for-proper-layout.cs`
   - Task: Insert a picture shape into a table cell and enable IsLayoutInCell for proper layout.
   - Workflow: shape-workflow
@@ -70,7 +71,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Create a custom snip corner rectangle shape with defined corner radius and light gray fill.
   - Workflow: shape-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `retrieve-actual-bounds-of-a-shape-using-shape-getactualbounds-and-log-coordinate-points.cs`
   - Task: Retrieve actual bounds of a shape using Shape.GetActualBounds and log coordinate points.
   - Workflow: shape-workflow
@@ -85,7 +86,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Detect SmartArt shapes using Shape.IsSmartArt property and replace them with alternative diagrams.
   - Workflow: shape-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `insert-a-horizontal-rule-shape-with-custom-width-thickness-and-color-to-separate-sections.cs`
   - Task: Insert a horizontal rule shape with custom width, thickness, and color to separate sections.
   - Workflow: shape-workflow
@@ -95,7 +96,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Import MathML content as shapes, position them inline, and adjust baseline alignment.
   - Workflow: shape-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `create-a-groupshape-instance-add-a-picture-textbox-and-autoshape-then-arrange-them.cs`
   - Task: Create a GroupShape instance, add a picture, textbox, and AutoShape, then arrange them.
   - Workflow: shape-workflow
@@ -115,7 +116,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Change a picture shape to an AutoShape programmatically by setting ShapeType while preserving size.
   - Workflow: shape-workflow
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `apply-a-uniform-fill-color-to-every-shape-in-a-document-for-consistent-visual-branding.cs`
   - Task: Apply a uniform fill color to every shape in a document for consistent visual branding.
   - Workflow: shape-workflow
@@ -140,7 +141,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Batch process a folder of DOCX files, inserting a semi-transparent watermark shape into each document.
   - Workflow: shape-workflow
   - Outputs: docx, doc
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `move-documentbuilder-cursor-to-a-bookmark-before-inserting-a-shape-at-the-bookmarked-locat.cs`
   - Task: Move DocumentBuilder cursor to a bookmark before inserting a shape at the bookmarked location.
   - Workflow: shape-workflow
@@ -180,7 +181,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply a hyperlink to a shape that points to an external website and test navigation functionality.
   - Workflow: shape-workflow
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `set-alternative-text-for-a-shape-to-improve-accessibility-for-screen-readers-and-assistive.cs`
   - Task: Set alternative text for a shape to improve accessibility for screen readers and assistive technologies.
   - Workflow: shape-workflow
@@ -209,53 +210,47 @@ Use the simplest workflow that satisfies the task.
 
 ## Common failure patterns and preferred agent fixes
 
+- **Unsupported API invention**
+  - Symptom: The compiler reports missing members or enumerations such as Shape.StrokeDashStyle or ShapeType.SnipCornerRectangle.
+  - Root cause: Code references APIs that were never implemented in the selected Aspose.Words version.
+  - Preferred fix: Replace the invented members with documented alternatives like Shape.StrokeColor, Shape.StrokeWeight, or use ShapeType.Rectangle for custom rectangles.
+  - Prevention: Consult the official Aspose.Words API reference for the exact version before using any member.
+
 - **Missing System.Drawing reference**
-  - Symptom: Compilation fails with CS1069 errors for Bitmap, Graphics, or Color types.
-  - Root cause: The code imports System.Drawing types that are not available without the System.Drawing.Common package, which is unsupported on non-Windows runtimes.
-  - Preferred fix: Replace System.Drawing usage with raw image byte arrays or use Aspose.Words image insertion APIs that accept a file path or stream.
-  - Prevention: Never add System.Drawing namespaces in examples; generate sample images as byte arrays or embed pre-created PNG data.
+  - Symptom: Compilation fails with CS1069 indicating that Bitmap or Graphics cannot be found.
+  - Root cause: The project does not reference the System.Drawing.Common assembly required for image creation.
+  - Preferred fix: Add a reference to System.Drawing.Common via NuGet and use the provided types only for temporary image generation.
+  - Prevention: Include System.Drawing.Common in the project file whenever the sample creates bitmap files.
 
-- **Use of non-existent Shape members**
-  - Symptom: Compilation fails with CS1061 errors for members such as LockAspectRatio, GetActualBounds, CornerRadius, UpdateGroupShapeBounds, BringToFront, SendToBack, Hyperlink, or TextBoxContent.
-  - Root cause: The code references APIs that are not part of Aspose.Words 26.10.0.
-  - Preferred fix: Replace invented members with documented alternatives (e.g., AspectRatioLocked, Bounds, FillColor, StrokeColor, HyperlinkInfo via Shape.HyperlinkInfo property if needed).
-  - Prevention: Consult the official Aspose.Words API reference for the exact version before using any Shape property or method.
+- **Incorrect method overload**
+  - Symptom: CS1501 errors show that InsertOleObject is called with an unsupported number or type of arguments.
+  - Root cause: The code supplies parameters that do not match any overload defined in Aspose.Words.
+  - Preferred fix: Call InsertOleObject with the signature (string fileName, bool isLinked, bool asIcon, string iconFileName) and omit unsupported arguments.
+  - Prevention: Verify overload signatures in the API documentation before passing arguments.
 
-- **Invalid DocumentBuilder table methods**
-  - Symptom: Compilation fails with CS1061 errors for EndCell, EndRow, or similar methods.
-  - Root cause: Older examples use DocumentBuilder.EndCell/EndRow which were removed in recent versions.
-  - Preferred fix: Construct tables using the Table, Row, and Cell classes and append them to the document body; use builder.MoveTo(cell.FirstParagraph) to position the cursor.
-  - Prevention: Follow the current table-building pattern documented for Aspose.Words 26.x.
+- **Read-only property misuse**
+  - Symptom: CS0200 errors indicate attempts to assign to ShapeBase.ShapeType or Shape.AspectRatioLocked.
+  - Root cause: The properties are read-only; shape type cannot be changed after creation, and aspect ratio is controlled via Shape.AspectRatioLocked (available) rather than a non-existent setter.
+  - Preferred fix: Create the shape with the desired ShapeType initially and set AspectRatioLocked = true after insertion.
+  - Prevention: Set shape characteristics only through mutable properties; do not attempt to reassign read-only members.
 
-- **Incorrect InsertOleObject overload**
-  - Symptom: Compilation fails with CS1501 or CS1503 errors because the arguments do not match any overload.
-  - Root cause: The code supplies a file path string or mismatched parameter types to InsertOleObject.
-  - Preferred fix: Use the overload that takes (Stream oleStream, string progId, bool isIconic, Stream? iconStream) and pass a FileStream for the OLE content.
-  - Prevention: Check the method signature in the API docs and always provide a Stream for the OLE data.
-
-- **Unsupported positioning enums**
-  - Symptom: Compilation fails with CS0246 or CS0234 errors for VerticalAnchor, RelativeVerticalPosition, etc.
-  - Root cause: The code references enums that are not defined in Aspose.Words.Drawing for the current version.
-  - Preferred fix: Use RelativeHorizontalPosition and RelativeVerticalPosition enums together with Left and Top properties to control shape placement.
-  - Prevention: Reference only the positioning enums listed in the official documentation.
-
-- **Invalid node insertion location**
-  - Symptom: Runtime throws System.ArgumentException: Cannot insert a node of this type at this location.
-  - Root cause: The builder attempts to insert a shape when the cursor is not positioned inside a valid paragraph or cell.
-  - Preferred fix: Move the DocumentBuilder to a paragraph within the target cell (builder.MoveTo(cell.FirstParagraph)) before calling InsertShape or InsertImage.
-  - Prevention: Always ensure the insertion point is a CompositeNode that accepts Shape children.
+- **Invalid node insertion**
+  - Symptom: Runtime ArgumentException states that a node of this type cannot be inserted at the current location.
+  - Root cause: A shape or GroupShape is appended to a node that does not accept child nodes of that type (e.g., inserting a GroupShape directly into the document body).
+  - Preferred fix: Insert shapes using DocumentBuilder methods or append them to a Paragraph node, which is a valid container for Shape nodes.
+  - Prevention: Always use DocumentBuilder or Paragraph.AppendChild to add Shape objects.
 
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Primary package: `Aspose.Words` `26.10.0`
+- Primary package: `Aspose.Words` `26.11.0`
 
 ## Command reference
 
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.10.0
+dotnet add package Aspose.Words --version 26.11.0
 ```
 
 ```powershell
@@ -269,5 +264,4 @@ dotnet run --configuration Release --no-build
 
 ## Category update guidance
 
-- Periodically review Aspose.Words release notes to update the list of supported Shape members and adjust examples accordingly.
-- Run the verification suite after each library upgrade to catch newly introduced API changes.
+- Periodically review the Aspose.Words release notes to update the list of supported shape properties and enumerations.

@@ -1,6 +1,6 @@
 using System;
-using System.IO;
 using System.Drawing;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -12,32 +12,41 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a textbox shape with defined dimensions.
-        double width = 200;   // Width in points.
-        double height = 100;  // Height in points.
-        Shape textbox = builder.InsertShape(ShapeType.TextBox, width, height);
+        // Define dimensions for the textbox (in points).
+        const double width = 200.0;   // 200 points (~2.78 inches)
+        const double height = 100.0;  // 100 points (~1.39 inches)
 
-        // Apply border (stroke) formatting.
-        textbox.Stroke.Color = Color.Black;
-        textbox.Stroke.Weight = 1.5;               // Border thickness in points.
-        textbox.Stroke.DashStyle = DashStyle.Dash; // Dashed border.
+        // Insert a textbox shape.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, width, height);
 
-        // Apply interior fill formatting.
-        textbox.Fill.Color = Color.LightYellow;
+        // Configure border (stroke) style.
+        textBox.StrokeColor = Color.DarkBlue;          // Border color.
+        textBox.StrokeWeight = 2.0;                    // Border thickness (points).
+        textBox.Stroke.DashStyle = DashStyle.Solid;    // Solid line.
 
-        // Insert text into the textbox.
-        builder.MoveTo(textbox.FirstParagraph);
+        // Configure interior fill.
+        textBox.FillColor = Color.LightYellow;        // Background color.
+
+        // Add formatted text inside the textbox.
+        // Move the builder cursor to the first paragraph of the textbox.
+        builder.MoveTo(textBox.FirstParagraph);
+        // Center the paragraph horizontally.
+        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        // Write the text.
         builder.Font.Size = 12;
-        builder.Write("This is a textbox shape.");
+        builder.Writeln("Hello, Aspose.Words!");
 
-        // Save the document to disk.
-        string outputPath = "TextboxShape.docx";
+        // Save the document.
+        string outputPath = "TextboxExample.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Validate that the file was created.
         if (!File.Exists(outputPath))
         {
-            throw new Exception("The output document was not created.");
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
         }
+
+        // Inform that the process completed.
+        Console.WriteLine($"Document saved successfully to '{Path.GetFullPath(outputPath)}'.");
     }
 }

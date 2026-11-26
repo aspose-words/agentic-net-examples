@@ -2,8 +2,9 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 
-public class RotatedShapeExample
+public class Program
 {
     public static void Main()
     {
@@ -12,26 +13,43 @@ public class RotatedShapeExample
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a rectangle shape.
-        Shape shape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
-        // Set the rotation angle to 45 degrees.
-        shape.Rotation = 45f;
+        Shape shape = builder.InsertShape(ShapeType.Rectangle, 150, 100);
 
-        // Verify that the rotation property was set correctly.
-        if (Math.Abs(shape.Rotation - 45f) > 0.001f)
-            throw new Exception("Shape rotation was not set to 45 degrees.");
+        // Make the shape floating so that rotation is applied.
+        shape.WrapType = WrapType.None;
+        shape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
+        shape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
 
-        // Save the document to DOCX.
-        string docxPath = "RotatedShape.docx";
-        doc.Save(docxPath);
+        // Rotate the shape by 45 degrees using the correct property.
+        shape.Rotation = 45;
 
-        // Save the document to PDF for visual verification.
-        string pdfPath = "RotatedShape.pdf";
-        doc.Save(pdfPath);
+        // Save the document.
+        const string docPath = "RotatedShape.docx";
+        doc.Save(docPath);
 
-        // Validate that the output files exist.
-        if (!File.Exists(docxPath))
-            throw new FileNotFoundException("DOCX file was not created.", docxPath);
-        if (!File.Exists(pdfPath))
-            throw new FileNotFoundException("PDF file was not created.", pdfPath);
+        // Render the first page to PNG to verify the visual result.
+        const string pngPath = "RotatedShape.png";
+        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png)
+        {
+            PageSet = new PageSet(0) // render only the first page
+        };
+        doc.Save(pngPath, options);
+
+        // Validate that the files were created.
+        if (!File.Exists(docPath))
+            throw new Exception("The document file was not saved.");
+
+        if (!File.Exists(pngPath))
+            throw new Exception("The rendered image file was not saved.");
+
+        // Validate that the shape's rotation angle is set correctly.
+        if (Math.Abs(shape.Rotation - 45) > 0.001)
+            throw new Exception($"Shape rotation is {shape.Rotation}, expected 45.");
+
+        // Ensure the rendered image is not empty.
+        if (new FileInfo(pngPath).Length == 0)
+            throw new Exception("The rendered image file is empty.");
+
+        Console.WriteLine("Shape rotation applied and document rendered successfully.");
     }
 }

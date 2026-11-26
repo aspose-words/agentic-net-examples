@@ -2,54 +2,62 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using System.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a rectangle shape.
-        Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 150, 100);
-        rectangle.StrokeColor = Color.Blue;
-        rectangle.FillColor = Color.LightBlue;
-        rectangle.WrapType = WrapType.None; // Keep exact layout.
-
-        // Insert a line break.
+        // Insert a paragraph to hold the shapes.
+        builder.Writeln("Document with shapes saved as PDF:");
         builder.Writeln();
 
-        // Insert an ellipse shape.
-        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 120, 80);
-        ellipse.StrokeColor = Color.Green;
-        ellipse.FillColor = Color.LightGreen;
-        ellipse.WrapType = WrapType.None;
+        // Insert a rectangle shape (floating) with explicit size and position.
+        Shape rectangle = new Shape(doc, ShapeType.Rectangle);
+        rectangle.Width = 200;
+        rectangle.Height = 100;
+        rectangle.Left = 100;   // points from the left margin
+        rectangle.Top = 50;     // points from the top margin
+        rectangle.WrapType = WrapType.None; // floating shape
+        rectangle.StrokeColor = System.Drawing.Color.Blue;
+        rectangle.FillColor = System.Drawing.Color.LightYellow;
 
-        // Insert a line break.
-        builder.Writeln();
+        // Append the rectangle to the document body.
+        doc.FirstSection.Body.FirstParagraph.AppendChild(rectangle);
 
-        // Insert a text box shape.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 100);
-        textBox.WrapType = WrapType.None;
-        // Add text inside the text box.
-        builder.MoveTo(textBox.FirstParagraph);
-        builder.Writeln("Sample text inside a text box.");
+        // Insert a text box shape (floating) with some text inside.
+        Shape textBox = new Shape(doc, ShapeType.TextBox);
+        textBox.Width = 250;
+        textBox.Height = 80;
+        textBox.Left = 350;
+        textBox.Top = 150;
+        textBox.WrapType = WrapType.Square;
+        textBox.StrokeColor = System.Drawing.Color.Green;
+        textBox.FillColor = System.Drawing.Color.LightCyan;
 
-        // Define output PDF path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ShapesOutput.pdf");
+        // Add text to the text box.
+        Paragraph tbParagraph = new Paragraph(doc);
+        Run tbRun = new Run(doc, "This is a text box shape.");
+        tbParagraph.AppendChild(tbRun);
+        textBox.AppendChild(tbParagraph);
+
+        // Append the text box to the document.
+        doc.FirstSection.Body.FirstParagraph.AppendChild(textBox);
 
         // Save the document as PDF.
+        string outputPath = "ShapesOutput.pdf";
         doc.Save(outputPath, SaveFormat.Pdf);
 
         // Validate that the PDF file was created.
         if (!File.Exists(outputPath))
         {
-            throw new Exception("Failed to create the PDF file.");
+            throw new Exception($"Failed to create PDF file at '{outputPath}'.");
         }
 
-        // Optionally, clean up (not required for the task).
-        // Console.WriteLine($"PDF saved to: {outputPath}");
+        // Optionally, clean up (not required for this example).
+        // Console.WriteLine("PDF saved successfully.");
     }
 }

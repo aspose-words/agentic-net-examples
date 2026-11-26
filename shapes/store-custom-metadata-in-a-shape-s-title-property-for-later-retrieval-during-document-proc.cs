@@ -7,35 +7,38 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a rectangle shape.
-        Shape shape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
+        // Insert a rectangle shape and set its size.
+        Shape shape = builder.InsertShape(ShapeType.Rectangle, 150, 80);
 
         // Store custom metadata in the shape's Title property.
-        shape.Title = "CustomId:ABC123";
+        shape.Title = "CustomMetadata:ABC123";
 
-        // Save the document.
-        string filePath = "ShapeMetadata.docx";
+        // Save the document to a temporary file.
+        string filePath = Path.Combine(Path.GetTempPath(), "ShapeMetadata.docx");
         doc.Save(filePath);
-
-        // Verify that the file was saved.
-        if (!File.Exists(filePath))
-            throw new Exception("The document was not saved correctly.");
 
         // Load the document for later processing.
         Document loadedDoc = new Document(filePath);
 
-        // Traverse all shapes and retrieve the Title property.
+        // Traverse all shapes in the document and look for the stored metadata.
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        foreach (Shape s in shapeNodes)
+        bool metadataFound = false;
+
+        foreach (Node node in shapeNodes)
         {
-            if (!string.IsNullOrEmpty(s.Title))
+            if (node is Shape s && s.Title == "CustomMetadata:ABC123")
             {
-                Console.WriteLine($"Found shape with Title: {s.Title}");
+                metadataFound = true;
+                break;
             }
         }
+
+        // Validate that the metadata was retrieved successfully.
+        if (!metadataFound)
+            throw new InvalidOperationException("The custom metadata was not found in any shape.");
     }
 }
