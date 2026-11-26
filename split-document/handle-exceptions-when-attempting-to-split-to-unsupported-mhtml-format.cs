@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -6,35 +7,42 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with two sections (two pages).
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Section 1 - Page 1");
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
-        builder.Writeln("Section 2 - Page 2");
+        // Create a sample document with two pages.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("This is the first page.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("This is the second page.");
 
-        // Save the source document (optional, just to have a file on disk).
-        const string sourcePath = "Source.docx";
+        // Save the source document locally.
+        string sourcePath = "Sample.docx";
         doc.Save(sourcePath);
 
-        // Attempt to split the document by extracting the first page
-        // and then saving the extracted part as MHTML, which is not supported.
+        // Attempt to split the first page and save it as MHTML.
         try
         {
-            // Extract the first page into a new Document instance.
-            Document pageDoc = doc.ExtractPages(1, 1);
+            var sourceDoc = new Document(sourcePath);
+            // Extract the first page (page numbers are 1‑based).
+            var splitDoc = sourceDoc.ExtractPages(1, 1);
 
-            // Try to save the extracted page as MHTML.
-            const string mhtmlPath = "Page1.mhtml";
-            pageDoc.Save(mhtmlPath, SaveFormat.Mhtml);
+            string mhtmlPath = "Page1.mhtml";
+            // Saving to MHTML format. This may throw if the format does not support page‑based splitting.
+            splitDoc.Save(mhtmlPath, SaveFormat.Mhtml);
 
-            // If no exception is thrown, indicate unexpected success.
-            Console.WriteLine("Unexpectedly saved the split page as MHTML.");
+            // Verify that the file was created.
+            if (File.Exists(mhtmlPath))
+            {
+                Console.WriteLine($"Split page saved successfully as MHTML: {mhtmlPath}");
+            }
+            else
+            {
+                throw new FileNotFoundException("Expected MHTML file was not created.", mhtmlPath);
+            }
         }
         catch (Exception ex)
         {
-            // Expected path: handle the exception for unsupported MHTML format.
-            Console.WriteLine($"Caught exception while saving split document as MHTML: {ex.Message}");
+            // Handle any exception that occurs during the split or save operation.
+            Console.WriteLine($"Exception occurred while attempting to split to MHTML: {ex.Message}");
         }
     }
 }

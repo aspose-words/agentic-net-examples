@@ -1,55 +1,43 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with two pages.
+        // Create a simple document with two pages.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Page 1 content.");
+        builder.Writeln("Content of page 1.");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 2 content.");
+        builder.Writeln("Content of page 2.");
 
-        const string sourcePath = "Sample.docx";
-        doc.Save(sourcePath);
+        const string sourceFile = "Sample.docx";
+        doc.Save(sourceFile);
 
-        // Ensure layout is up‑to‑date so we can obtain the page count.
+        // Ensure layout information (page count) is up‑to‑date.
         doc.UpdatePageLayout();
-        int pageCount = doc.PageCount;
-        Console.WriteLine($"Document contains {pageCount} page(s).");
 
-        // Split the document into individual pages.
-        for (int i = 1; i <= pageCount; i++)
+        // Split the document by individual pages using ExtractPages.
+        // ExtractPages uses a zero‑based start page index.
+        int totalPages = doc.PageCount;
+        for (int i = 0; i < totalPages; i++)
         {
-            // ExtractPages uses zero‑based start page index and a page count.
-            Document pageDoc = doc.ExtractPages(i - 1, 1);
-            string pagePath = $"Page_{i}.docx";
-            pageDoc.Save(pagePath);
-            Console.WriteLine($"Saved page {i} to '{pagePath}'.");
+            Document pageDoc = doc.ExtractPages(i, 1);
+            string pageFile = $"Sample_page{i + 1}.docx";
+            pageDoc.Save(pageFile);
+            Console.WriteLine($"Saved page {i + 1} to '{pageFile}'.");
         }
 
-        // Verify that each split file was created.
-        for (int i = 1; i <= pageCount; i++)
+        // Simple validation that the split files exist.
+        for (int i = 0; i < totalPages; i++)
         {
-            string pagePath = $"Page_{i}.docx";
-            if (!File.Exists(pagePath))
-                throw new FileNotFoundException($"Expected split file not found: {pagePath}");
+            string pageFile = $"Sample_page{i + 1}.docx";
+            if (!File.Exists(pageFile))
+                throw new InvalidOperationException($"Expected split file '{pageFile}' was not created.");
         }
 
-        // Clean up temporary files.
-        if (File.Exists(sourcePath))
-            File.Delete(sourcePath);
-        for (int i = 1; i <= pageCount; i++)
-        {
-            string pagePath = $"Page_{i}.docx";
-            if (File.Exists(pagePath))
-                File.Delete(pagePath);
-        }
-
-        Console.WriteLine("Document split into individual pages completed successfully.");
+        Console.WriteLine("Split mode set to: individual pages (extracted via ExtractPages).");
     }
 }

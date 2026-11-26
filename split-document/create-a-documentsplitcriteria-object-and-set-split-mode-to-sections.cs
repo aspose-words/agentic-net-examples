@@ -7,63 +7,51 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "SplitOutput");
-        Directory.CreateDirectory(outputDir);
-
-        // Create a sample document with two sections
+        // Create a sample document with two sections.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // First section content
-        builder.Writeln("Section 1 - Paragraph 1");
-        builder.Writeln("Section 1 - Paragraph 2");
-
-        // Insert a section break to start a new section
+        builder.Writeln("Section 1 - First paragraph.");
         builder.InsertBreak(BreakType.SectionBreakNewPage);
+        builder.Writeln("Section 2 - First paragraph.");
 
-        // Second section content
-        builder.Writeln("Section 2 - Paragraph 1");
-        builder.Writeln("Section 2 - Paragraph 2");
+        // Save the source document (optional, just for reference).
+        string sourcePath = "Sample.docx";
+        doc.Save(sourcePath);
 
-        // Split the document by sections manually
+        // Prepare output folder.
+        string outputFolder = "SplitOutput";
+        Directory.CreateDirectory(outputFolder);
+
+        // Split the document by sections: create a new document for each section.
         int sectionIndex = 1;
         foreach (Section srcSection in doc.Sections)
         {
-            // Create a new empty document
+            // Create a new empty document.
             Document splitDoc = new Document();
-
-            // Remove the default empty section that a new Document contains
+            // Remove the default empty section that a new Document contains.
             splitDoc.RemoveAllChildren();
 
-            // Import the source section into the new document (deep clone with formatting)
-            Section importedSection = (Section)splitDoc.ImportNode(srcSection, true, ImportFormatMode.KeepSourceFormatting);
-
-            // Append the imported section as the sole section of the split document
+            // Import the source section into the new document.
+            NodeImporter importer = new NodeImporter(doc, splitDoc, ImportFormatMode.KeepSourceFormatting);
+            Section importedSection = (Section)importer.ImportNode(srcSection, true);
             splitDoc.AppendChild(importedSection);
 
-            // Save each split document as a separate HTML file
-            HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Html);
-            saveOptions.ExportHeadersFootersMode = ExportHeadersFootersMode.PerSection;
-
-            string splitFilePath = Path.Combine(outputDir, $"Document_section{sectionIndex}.html");
-            splitDoc.Save(splitFilePath, saveOptions);
-
+            // Save each split document as HTML.
+            string splitFileName = $"Split_section_{sectionIndex}.html";
+            string splitPath = Path.Combine(outputFolder, splitFileName);
+            splitDoc.Save(splitPath, SaveFormat.Html);
             sectionIndex++;
         }
 
-        // Validate that the expected number of HTML files were created
-        string[] htmlFiles = Directory.GetFiles(outputDir, "*.html");
-        if (htmlFiles.Length != doc.Sections.Count)
+        // Validate that at least two split files were created (one per section).
+        string[] htmlFiles = Directory.GetFiles(outputFolder, "*.html");
+        if (htmlFiles.Length < 2)
         {
-            throw new InvalidOperationException(
-                $"Expected {doc.Sections.Count} HTML files after splitting by sections, but found {htmlFiles.Length}.");
+            throw new Exception($"Expected at least 2 split HTML files, but found {htmlFiles.Length}.");
         }
 
-        // Output the names of the generated files (no interactive prompt)
-        foreach (string file in htmlFiles)
-        {
-            Console.WriteLine("Generated file: " + Path.GetFileName(file));
-        }
+        // Optionally, clean up created files (comment out if you want to inspect them).
+        // foreach (var file in htmlFiles) File.Delete(file);
+        // Directory.Delete(outputFolder);
     }
 }

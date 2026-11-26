@@ -2,100 +2,112 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Layout;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static void Main()
     {
-        // Create a sample source document with headings and page breaks.
-        string sourcePath = "Source.docx";
-        CreateSampleDocument(sourcePath);
+        // ------------------------------------------------------------
+        // 1. Create a sample document with several Heading1 sections.
+        // ------------------------------------------------------------
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        // Load the source document.
-        Document sourceDoc = new Document(sourcePath);
+        // Helper that adds a Heading1 followed by a number of normal paragraphs.
+        void AddHeading(string text, int paragraphsAfter)
+        {
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+            builder.Writeln(text);
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+            for (int i = 0; i < paragraphsAfter; i++)
+            {
+                builder.Writeln($"Paragraph {i + 1} after {text}. Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
+                                 "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
+            }
+        }
 
-        // Collect all Heading 1 paragraphs.
-        NodeCollection paragraphs = sourceDoc.GetChildNodes(NodeType.Paragraph, true);
-        List<Paragraph> headingNodes = new List<Paragraph>();
+        // Build the document – each heading will span several pages.
+        AddHeading("Chapter 1", 30);
+        AddHeading("Chapter 2", 25);
+        AddHeading("Chapter 3", 35);
+        AddHeading("Chapter 4", 20);
 
-        foreach (Paragraph para in paragraphs)
+        // Save the source document (optional, for manual inspection).
+        string sourcePath = "SourceDocument.docx";
+        sourceDoc.Save(sourcePath);
+
+        // ------------------------------------------------------------
+        // 2. Map each Heading1 paragraph to its start page number.
+        // ------------------------------------------------------------
+        LayoutCollector collector = new LayoutCollector(sourceDoc);
+        List<Paragraph> headingParagraphs = new List<Paragraph>();
+
+        foreach (Paragraph para in sourceDoc.GetChildNodes(NodeType.Paragraph, true))
         {
             if (para.ParagraphFormat.StyleIdentifier == StyleIdentifier.Heading1)
-                headingNodes.Add(para);
+                headingParagraphs.Add(para);
         }
 
-        if (headingNodes.Count == 0)
-            throw new InvalidOperationException("No Heading 1 paragraphs found in the source document.");
-
-        // Split the document at each heading.
-        for (int i = 0; i < headingNodes.Count; i++)
+        // Store the 1‑based start page for each heading.
+        List<int> headingStartPages = new List<int>();
+        foreach (Paragraph heading in headingParagraphs)
         {
-            Paragraph startHeading = headingNodes[i];
-            // Node that marks the end of the current part (the next heading or null for the last part).
-            Node endNode = (i + 1 < headingNodes.Count) ? headingNodes[i + 1] : null;
+            int page = collector.GetStartPageIndex(heading); // 1‑based
+            headingStartPages.Add(page);
+        }
 
-            // Create a new empty document for the part.
-            Document partDoc = new Document();
-            Body destBody = partDoc.FirstSection.Body;
+        // ------------------------------------------------------------
+        // 3. Split the document – each part starts at a heading that
+        //    begins on a *new* page (different from the previous heading).
+        // ------------------------------------------------------------
+        int totalPages = sourceDoc.PageCount;
+        int partIndex = 0;
 
-            // Import nodes from the start heading up to (but not including) the end node.
-            Node currentNode = startHeading;
-            NodeImporter importer = new NodeImporter(sourceDoc, partDoc, ImportFormatMode.KeepSourceFormatting);
+        for (int i = 0; i < headingParagraphs.Count; i++)
+        {
+            int startPage = headingStartPages[i];
 
-            while (currentNode != null && currentNode != endNode)
-            {
-                Node importedNode = importer.ImportNode(currentNode, true);
-                destBody.AppendChild(importedNode);
-                currentNode = currentNode.NextSibling;
-            }
+            // Skip headings that do NOT start on a new page.
+            if (i > 0 && startPage == headingStartPages[i - 1])
+                continue;
+
+            // Determine the end page for this part.
+            int endPage;
+            if (i + 1 < headingStartPages.Count)
+                endPage = headingStartPages[i + 1] - 1;
+            else
+                endPage = totalPages;
+
+            // Guard against invalid ranges.
+            if (startPage > endPage)
+                continue;
+
+            // Convert to zero‑based indices required by ExtractPages.
+            int startIndexZero = startPage - 1;
+            int pageCount = endPage - startPage + 1;
+
+            // Extract the required pages.
+            Document part = sourceDoc.ExtractPages(startIndexZero, pageCount);
 
             // Save the split part.
-            string partPath = $"Part_{i + 1}.docx";
-            partDoc.Save(partPath);
+            partIndex++;
+            string partPath = $"Part_{partIndex}.docx";
+            part.Save(partPath);
 
-            // Verify that the file was created.
+            // Simple validation that the file was created.
             if (!File.Exists(partPath))
-                throw new InvalidOperationException($"Failed to create split part file: {partPath}");
+                throw new InvalidOperationException($"Failed to create split part: {partPath}");
         }
 
-        // All parts created successfully.
-    }
+        // ------------------------------------------------------------
+        // 4. Verify that at least one part was generated.
+        // ------------------------------------------------------------
+        string[] createdParts = Directory.GetFiles(Directory.GetCurrentDirectory(), "Part_*.docx");
+        if (createdParts.Length == 0)
+            throw new InvalidOperationException("No split parts were generated.");
 
-    // Helper method to create a sample document containing three chapters,
-    // each starting with a Heading 1 paragraph and separated by page breaks.
-    private static void CreateSampleDocument(string filePath)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Chapter 1
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 1");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Content of chapter 1. This paragraph will span multiple lines to increase page count.");
-        builder.Writeln("More content in chapter 1.");
-
-        // Page break before Chapter 2
-        builder.InsertBreak(BreakType.PageBreak);
-
-        // Chapter 2
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 2");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Content of chapter 2.");
-        builder.Writeln("Additional content for chapter 2.");
-
-        // Page break before Chapter 3
-        builder.InsertBreak(BreakType.PageBreak);
-
-        // Chapter 3
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 3");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Content of chapter 3.");
-        builder.Writeln("Final content.");
-
-        // Save the sample document.
-        doc.Save(filePath);
+        // Optional cleanup can be performed here if desired.
+        // foreach (var file in createdParts) File.Delete(file);
     }
 }

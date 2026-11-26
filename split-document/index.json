@@ -4,37 +4,39 @@
     "slug": "split-document",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Create a deterministic source document locally, select a supported split strategy (section, heading, page, or custom range), use Document, Section, NodeImporter, or Document.ExtractPages to produce separate Document objects, and save each part with explicit file-system checks. Keep validation focused on the existence and basic integrity of the generated files.",
+    "preferred_workflow": "Create a deterministic source document, choose a native split approach (section import, HtmlSaveOptions.DocumentSplitCriteria, or Document.ExtractPages), use NodeImporter when moving nodes between documents, optionally define a DocumentPartSavingCallback for custom naming or format selection, save each part, and verify that the expected files exist.",
     "required_packages": [
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.10.0"
+      "Aspose.Words": "26.11.0"
     },
     "required_namespaces": [
       "System",
       "System.IO",
       "Aspose.Words",
       "Aspose.Words.Saving",
-      "Aspose.Words.BuildingBlocks",
       "System.Collections.Generic",
+      "System.Linq",
+      "Aspose.Words.BuildingBlocks",
       "Aspose.Words.Tables",
-      "System.Linq"
+      "Aspose.Words.Layout"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
       "File",
-      "Path",
       "Paragraph",
-      "NodeType",
       "SaveFormat",
       "Directory",
+      "Path",
       "StyleIdentifier",
       "HtmlSaveOptions",
       "Node",
+      "NodeType",
       "Table",
-      "Row"
+      "Row",
+      "Run"
     ]
   },
   "stats": {
@@ -46,54 +48,50 @@
   },
   "rules_summary": {
     "strict_api_bans": [
-      "Never reference Aspose.Words members that are absent from version 26.10.0.",
-      "Do not import or use namespaces that are not part of the official package."
+      "Do not reference members, types, or namespaces that are not present in Aspose.Words 26.11.0."
     ],
     "canonical_patterns": [
-      "Use Document, Section, NodeImporter, and HtmlSaveOptions for all splitting scenarios.",
-      "When splitting by pages, call Document.ExtractPages with zero-based start index and validated page count.",
-      "For heading-based splitting, iterate over Paragraph nodes and import the desired range into a new Document."
+      "Use documented split mechanisms such as HtmlSaveOptions.DocumentSplitCriteria, Document.ExtractPages, or manual section import with NodeImporter."
     ],
     "nullable_warning_prevention": [
-      "Create all source files, folders, and streams before they are accessed.",
-      "Validate that output directories exist and are writable prior to saving split parts."
+      "Validate that all objects (Document, DocumentBuilder, NodeImporter, callbacks) are instantiated before use and that page indices are within the document's page count."
     ]
   },
   "common_failure_patterns": [
     {
       "pattern": "Unsupported API usage",
-      "symptom": "Code references members such as DocumentSplitCriteria.SplitMode, DocumentSplitMode, or Aspose.Words.Import that do not exist in the installed library.",
-      "cause": "The example invents APIs that were never released in Aspose.Words 26.10.0.",
-      "fix": "Replace invented members with documented alternatives, for example HtmlSaveOptions.DocumentSplitCriteria and HtmlSaveOptions.DocumentSplitHeadingLevel for heading-based splitting.",
-      "prevention": "Consult the official Aspose.Words API reference for the exact class and member names before writing code."
+      "symptom": "The code references types or members such as DocumentSplitCriteria.Heading, Importing namespace, or SplitDocumentOptions that do not exist in the selected package version.",
+      "cause": "Invented or outdated API names were used instead of the documented members available in Aspose.Words 26.11.0.",
+      "fix": "Replace the nonexistent members with the correct documented equivalents, e.g., use HtmlSaveOptions.DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph and remove any Importing namespace references.",
+      "prevention": "Consult the official Aspose.Words API reference for the exact member names before writing split logic."
     },
     {
-      "pattern": "Invalid page range arguments",
-      "symptom": "ExtractPages throws ArgumentOutOfRangeException because the start or end page index exceeds the document's page count.",
-      "cause": "Page numbers are calculated incorrectly or zero-based indices are mixed with one-based values.",
-      "fix": "Call Document.UpdatePageLayout() first, verify that 1 ≤ startPage ≤ endPage ≤ doc.PageCount, then invoke ExtractPages(startPage-1, pageCount).",
-      "prevention": "Always validate page numbers against the actual PageCount and use consistent zero-based indexing."
+      "pattern": "Invalid page range",
+      "symptom": "Runtime throws ArgumentOutOfRangeException indicating that a page index or end index is out of range.",
+      "cause": "Page-based splitting used zero-based indices without adjusting for the document's actual page count, or supplied ranges exceeded the document's total pages.",
+      "fix": "Validate the document's PageCount and ensure start indices are zero-based while end indices do not exceed PageCount; adjust custom ranges accordingly.",
+      "prevention": "Always compute and check page boundaries before calling Document.ExtractPages."
     },
     {
-      "pattern": "Cross-document node import errors",
-      "symptom": "Runtime exception reports that a new child node was created from a different document than the target.",
-      "cause": "Nodes are appended directly without using NodeImporter or cloning, violating Aspose.Words ownership rules.",
-      "fix": "Import nodes with NodeImporter (ImportFormatMode.KeepSourceFormatting) or clone them before insertion.",
-      "prevention": "Never mix nodes from different Document instances without proper import or cloning."
+      "pattern": "Cross-document node insertion without import",
+      "symptom": "Runtime throws ArgumentException or InvalidOperationException when inserting a node created from a different Document instance.",
+      "cause": "Nodes were appended directly to a target document without using NodeImporter, violating Aspose.Words' ownership rules.",
+      "fix": "Import each node with NodeImporter (ImportFormatMode.KeepSourceFormatting) before appending it to the destination document.",
+      "prevention": "Never mix nodes from different Document objects without explicit import."
     },
     {
-      "pattern": "Missing required namespaces or types",
-      "symptom": "CS0234 errors indicate that namespaces such as Aspose.Words.Import, Aspose.Words.Building, or Aspose.Words.Splitting cannot be found.",
-      "cause": "The code assumes the existence of non-existent sub-namespaces.",
-      "fix": "Remove invalid using directives and reference only the namespaces listed in the package documentation (e.g., Aspose.Words, Aspose.Words.Saving).",
-      "prevention": "Rely on IDE intellisense or the official documentation to determine available namespaces."
+      "pattern": "Uninitialized object",
+      "symptom": "NullReferenceException occurs during split processing, typically when accessing a DocumentBuilder, Section, or callback that was never instantiated.",
+      "cause": "The workflow omitted required object creation steps or relied on external files that were not generated locally.",
+      "fix": "Instantiate all required objects explicitly and create any sample source files before loading or processing them.",
+      "prevention": "Follow the rule to create local bootstrap inputs for every task that references a file, folder, or stream."
     },
     {
-      "pattern": "Incorrect DocumentPartSavingCallback usage",
-      "symptom": "CS1061 errors show that SaveOptions does not contain a DocumentPartSavingCallback property in the current version.",
-      "cause": "The example attempts to assign a callback to a property that was removed or never existed.",
-      "fix": "Omit the callback or implement IDocumentPartSavingCallback only where the property is supported, using the correct SaveOptions subclass.",
-      "prevention": "Verify the presence of callback properties in the specific Aspose.Words version before using them."
+      "pattern": "Incorrect callback implementation",
+      "symptom": "Compilation fails because IDocumentPartSavingCallback or related members are missing or mismatched, or runtime errors occur when the callback is invoked.",
+      "cause": "The example attempted to assign a lambda or set a property that does not exist on SaveOptions, or the callback class did not implement the required interface members.",
+      "fix": "Define a class that implements IDocumentPartSavingCallback with the DocumentPartSaving method, and pass an instance to the appropriate SaveOptions property (e.g., HtmlSaveOptions.DocumentPartSavingCallback).",
+      "prevention": "Use the documented callback pattern and verify the interface signature against the Aspose.Words version in use."
     }
   ],
   "examples": [
@@ -150,8 +148,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 6,
@@ -161,8 +159,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 7,
@@ -194,8 +192,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 10,
@@ -205,8 +203,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 11,
@@ -230,8 +228,8 @@
         "doc",
         "pdf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 13,
@@ -314,8 +312,8 @@
         "doc",
         "html"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 20,
@@ -381,8 +379,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 26,
@@ -392,8 +390,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 27,
@@ -442,13 +440,13 @@
     }
   ],
   "narrative": {
-    "overview": "The Split Document category demonstrates how to divide Word, HTML, EPUB, and other supported formats into smaller parts using only the native Aspose.Words 26.10.0 APIs. Verified examples show section-based splitting, heading-based manual splitting, page extraction, custom page-range extraction, and conditional format selection.",
-    "purpose": "Provide an AI coding assistant with concise, version-accurate guidance for implementing reliable document-splitting workflows that rely on documented Aspose.Words classes, avoid invented APIs, and include deterministic input creation and output validation.",
+    "overview": "The Split Document category illustrates how to divide Word, HTML, EPUB, and other source files into separate parts using Aspose.Words 26.11.0. Verified examples demonstrate loading a DOCX, configuring HtmlSaveOptions with DocumentSplitCriteria, extracting pages, and manually importing sections while preserving formatting and layout.",
+    "purpose": "Equip an AI coding assistant with concise, reproducible patterns for splitting documents by sections, headings, pages, or custom ranges, and for saving each part with optional callbacks, ensuring full compatibility with the documented Aspose.Words API.",
     "validation_priorities": [
-      "Confirm that each expected split file exists on disk after the operation."
+      "Prioritize confirming that each expected output file exists and that its content matches the intended split scope."
     ],
     "maintenance_notes": [
-      "Review and update examples whenever a new Aspose.Words version adds or deprecates splitting-related members."
+      "Update the examples whenever a new Aspose.Words version adds, renames, or deprecates split-related members to keep the documentation current."
     ]
   }
 }

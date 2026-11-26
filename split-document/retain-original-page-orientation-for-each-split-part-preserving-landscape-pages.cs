@@ -1,65 +1,70 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Layout;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with a portrait page followed by a landscape page.
-        string sourcePath = "Source.docx";
-        CreateSampleDocument(sourcePath);
+        // -----------------------------------------------------------------
+        // Create a sample document with mixed orientations.
+        // -----------------------------------------------------------------
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        // Load the source document.
-        Document sourceDoc = new Document(sourcePath);
-        int sectionCount = sourceDoc.Sections.Count;
+        // First page – portrait (default).
+        builder.Writeln("This is the portrait page.");
+        builder.InsertBreak(BreakType.PageBreak);
 
-        // Split each section (each page) into a separate document while preserving its orientation.
-        for (int i = 0; i < sectionCount; i++)
+        // Insert a new section so that the next page can have a different orientation.
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
+        builder.PageSetup.Orientation = Orientation.Landscape;
+        builder.Writeln("This is the landscape page.");
+
+        // Save the source document.
+        const string sourcePath = "Source.docx";
+        sourceDoc.Save(sourcePath);
+
+        // -----------------------------------------------------------------
+        // Reload the document to work with it.
+        // -----------------------------------------------------------------
+        Document doc = new Document(sourcePath);
+
+        // -----------------------------------------------------------------
+        // Split the document by sections and preserve each section's orientation.
+        // -----------------------------------------------------------------
+        int sectionIndex = 0;
+        foreach (Section sec in doc.Sections)
         {
-            Section srcSection = sourceDoc.Sections[i];
-
-            // Create a new empty document and remove the default empty section.
+            // Create a new empty document and remove its default empty section.
             Document splitDoc = new Document();
-            splitDoc.RemoveAllChildren();
+            splitDoc.RemoveAllChildren(); // ensures the imported section becomes the first one.
 
-            // Import the source section into the new document.
-            NodeImporter importer = new NodeImporter(sourceDoc, splitDoc, ImportFormatMode.KeepSourceFormatting);
-            Section importedSection = (Section)importer.ImportNode(srcSection, true);
+            // Import the current section into the new document.
+            NodeImporter importer = new NodeImporter(doc, splitDoc, ImportFormatMode.KeepSourceFormatting);
+            Section importedSection = (Section)importer.ImportNode(sec, true);
             splitDoc.AppendChild(importedSection);
 
             // Save the split document.
-            string outPath = $"Page_{i + 1}.docx";
+            string outPath = $"Section_{sectionIndex + 1}.docx";
             splitDoc.Save(outPath);
 
-            // Verify the file was created.
+            // Validate that the file was created.
             if (!File.Exists(outPath))
-                throw new InvalidOperationException($"Failed to save split document for page {i + 1}.");
+                throw new Exception($"Failed to create split file for section {sectionIndex + 1}.");
 
-            // Verify orientation is preserved.
-            Orientation actualOrientation = splitDoc.Sections[0].PageSetup.Orientation;
-            Orientation expectedOrientation = srcSection.PageSetup.Orientation;
-            if (actualOrientation != expectedOrientation)
-                throw new InvalidOperationException(
-                    $"Orientation mismatch on page {i + 1}. Expected {expectedOrientation}, got {actualOrientation}.");
+            // Validate that the orientation matches the original.
+            Document checkDoc = new Document(outPath);
+            Orientation expected = sec.PageSetup.Orientation;
+            Orientation actual = checkDoc.FirstSection.PageSetup.Orientation;
+            if (expected != actual)
+                throw new Exception($"Orientation mismatch on section {sectionIndex + 1}. Expected: {expected}, Actual: {actual}.");
+
+            sectionIndex++;
         }
-    }
 
-    private static void CreateSampleDocument(string path)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // First section – portrait orientation.
-        builder.PageSetup.Orientation = Orientation.Portrait;
-        builder.Writeln("This is a portrait page.");
-        // Force a new section on a new page.
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
-
-        // Second section – landscape orientation.
-        builder.PageSetup.Orientation = Orientation.Landscape;
-        builder.Writeln("This is a landscape page.");
-
-        doc.Save(path);
+        // All sections split successfully.
+        Console.WriteLine("Document split completed successfully.");
     }
 }

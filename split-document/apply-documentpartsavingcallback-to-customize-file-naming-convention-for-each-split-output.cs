@@ -1,71 +1,82 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+namespace SplitDocumentWithCallback
 {
-    public static void Main()
+    // Callback implementation that prefixes part file names with the section index.
+    public class SectionPartSavingCallback : IDocumentPartSavingCallback
     {
-        // Create a sample document with two heading sections.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        private readonly int _sectionIndex;
 
-        builder.Writeln("Sample Document");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 1");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("This is the content of chapter 1.");
-
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 2");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("This is the content of chapter 2.");
-
-        // Prepare output folder.
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputFolder);
-
-        // Configure HtmlSaveOptions to split by heading.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions
+        public SectionPartSavingCallback(int sectionIndex)
         {
-            DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph,
-            DocumentSplitHeadingLevel = 1,
-            DocumentPartSavingCallback = new CustomPartSavingCallback()
-        };
+            _sectionIndex = sectionIndex;
+        }
 
-        // Save the document; it will be split into separate HTML files.
-        string mainFilePath = Path.Combine(outputFolder, "MainDocument.html");
-        doc.Save(mainFilePath, saveOptions);
-
-        // After saving, rename the generated split files to the desired convention.
-        // Aspose.Words creates files named "MainDocument.html", "MainDocument_1.html", etc.
-        var generatedFiles = Directory.GetFiles(outputFolder, "MainDocument*.html")
-                                      .Where(f => !f.Equals(mainFilePath, StringComparison.OrdinalIgnoreCase))
-                                      .OrderBy(f => f)
-                                      .ToList();
-
-        if (generatedFiles.Count == 0)
-            throw new InvalidOperationException("No split HTML files were generated.");
-
-        int chapterIndex = 1;
-        foreach (string filePath in generatedFiles)
+        // The interface method signature does not include a sender parameter.
+        public void DocumentPartSaving(DocumentPartSavingArgs args)
         {
-            string newFileName = $"Chapter_{chapterIndex}.html";
-            string newPath = Path.Combine(outputFolder, newFileName);
-            File.Move(filePath, newPath);
-            Console.WriteLine($"Generated: {newFileName}");
-            chapterIndex++;
+            // Prefix each part file name with the section identifier.
+            args.DocumentPartFileName = $"Section{_sectionIndex}_{args.DocumentPartFileName}";
         }
     }
 
-    // Empty callback – required by the API but does not modify naming directly.
-    private class CustomPartSavingCallback : IDocumentPartSavingCallback
+    public class Program
     {
-        public void DocumentPartSaving(DocumentPartSavingArgs args)
+        public static void Main()
         {
-            // No custom handling needed; naming will be adjusted after the save operation.
+            // Prepare output directory.
+            string outputDir = "SplitOutputs";
+            Directory.CreateDirectory(outputDir);
+
+            // Create a sample source document with three sections.
+            Document sourceDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+
+            for (int sec = 1; sec <= 3; sec++)
+            {
+                // Add a new section (except for the first one which already exists).
+                if (sec > 1)
+                    builder.InsertBreak(BreakType.SectionBreakNewPage);
+
+                // Write some text indicating the section number.
+                builder.Writeln($"This is content of Section {sec}.");
+            }
+
+            // Split the document by sections.
+            for (int i = 0; i < sourceDoc.Sections.Count; i++)
+            {
+                // Create a new empty document to hold the split section.
+                Document splitDoc = new Document();
+                // Remove the default empty section that a new Document contains.
+                splitDoc.RemoveAllChildren();
+
+                // Import the current section from the source document.
+                NodeImporter importer = new NodeImporter(sourceDoc, splitDoc, ImportFormatMode.KeepSourceFormatting);
+                Section importedSection = (Section)importer.ImportNode(sourceDoc.Sections[i], true);
+                splitDoc.AppendChild(importedSection);
+
+                // Configure HTML save options with a DocumentPartSavingCallback to customize part file names.
+                HtmlSaveOptions saveOptions = new HtmlSaveOptions();
+                int sectionIndex = i + 1; // Capture the current section number for the callback.
+                saveOptions.DocumentPartSavingCallback = new SectionPartSavingCallback(sectionIndex);
+
+                // Save the split document as HTML.
+                string outFile = Path.Combine(outputDir, $"Section{sectionIndex}.html");
+                splitDoc.Save(outFile, saveOptions);
+            }
+
+            // Verify that the expected split files were created.
+            for (int i = 1; i <= 3; i++)
+            {
+                string expectedFile = Path.Combine(outputDir, $"Section{i}.html");
+                if (!File.Exists(expectedFile))
+                    throw new FileNotFoundException($"Expected split file not found: {expectedFile}");
+            }
+
+            // Execution completed.
         }
     }
 }

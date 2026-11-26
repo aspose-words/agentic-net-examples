@@ -1,51 +1,75 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample large document (e.g., 200 pages).
-        const int totalPagesToCreate = 200;
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        // Paths for the source document and output folder.
+        string sourcePath = "source.docx";
+        string outputFolder = "output";
 
-        for (int i = 1; i <= totalPagesToCreate; i++)
-        {
-            builder.Writeln($"This is page {i}.");
-            // Insert a page break after each page except the last one.
-            if (i < totalPagesToCreate)
-                builder.InsertBreak(BreakType.PageBreak);
-        }
-
-        // Ensure layout is up‑to‑date so PageCount is accurate.
-        sourceDoc.UpdatePageLayout();
-        int totalPageCount = sourceDoc.PageCount;
-
-        // Prepare output folder.
-        string outputFolder = "Output";
+        // Ensure the output directory exists.
         Directory.CreateDirectory(outputFolder);
 
+        // Create a sample source document with many pages (e.g., 200 pages).
+        CreateSampleDocument(sourcePath, 200);
+
+        // Load the source document.
+        Document sourceDoc = new Document(sourcePath);
+
+        // Total pages in the source document.
+        int totalPages = sourceDoc.PageCount;
+        int chunkSize = 50; // Number of pages per split chunk.
+
         // Split the document into 50‑page chunks and save each chunk as PDF.
-        const int chunkSize = 50;
-        int chunkIndex = 1;
-        for (int startPageZeroBased = 0; startPageZeroBased < totalPageCount; startPageZeroBased += chunkSize)
+        int partNumber = 1;
+        for (int startPage = 1; startPage <= totalPages; startPage += chunkSize)
         {
-            int pagesToExtract = Math.Min(chunkSize, totalPageCount - startPageZeroBased);
-            Document chunk = sourceDoc.ExtractPages(startPageZeroBased, pagesToExtract);
-            string pdfPath = Path.Combine(outputFolder, $"Chunk_{chunkIndex}.pdf");
-            chunk.Save(pdfPath); // Format inferred from .pdf extension.
-            chunkIndex++;
+            // Calculate how many pages to extract for this chunk.
+            int pagesToExtract = Math.Min(chunkSize, totalPages - startPage + 1);
+
+            // Aspose.Words uses zero‑based page indexes for ExtractPages.
+            int zeroBasedStart = startPage - 1;
+
+            // Extract the required pages.
+            Document partDoc = sourceDoc.ExtractPages(zeroBasedStart, pagesToExtract);
+
+            // Save the extracted part as PDF.
+            string outputPath = Path.Combine(outputFolder, $"Part_{partNumber}.pdf");
+            partDoc.Save(outputPath, SaveFormat.Pdf);
+
+            partNumber++;
         }
 
         // Validate that the expected number of PDF files were created.
-        int expectedChunkCount = (int)Math.Ceiling((double)totalPageCount / chunkSize);
-        string[] pdfFiles = Directory.GetFiles(outputFolder, "*.pdf");
-        if (pdfFiles.Length != expectedChunkCount)
+        int expectedFiles = (totalPages + chunkSize - 1) / chunkSize;
+        int actualFiles = Directory.GetFiles(outputFolder, "*.pdf").Length;
+        if (actualFiles != expectedFiles)
         {
             throw new InvalidOperationException(
-                $"Expected {expectedChunkCount} PDF files, but found {pdfFiles.Length}.");
+                $"Expected {expectedFiles} PDF files, but found {actualFiles}.");
         }
+    }
+
+    // Helper method to create a sample document with a specified number of pages.
+    private static void CreateSampleDocument(string filePath, int pageCount)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        for (int i = 1; i <= pageCount; i++)
+        {
+            builder.Writeln($"This is page {i}.");
+            if (i < pageCount)
+            {
+                // Insert a page break to start a new page.
+                builder.InsertBreak(BreakType.PageBreak);
+            }
+        }
+
+        doc.Save(filePath);
     }
 }

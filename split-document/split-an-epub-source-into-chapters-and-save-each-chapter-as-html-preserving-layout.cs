@@ -2,90 +2,93 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
+using Aspose.Words.BuildingBlocks;
 
-public class Program
+namespace SplitEpubIntoHtmlChapters
 {
-    public static void Main()
+    public class Program
     {
-        // Prepare output directory
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Create a sample EPUB with two chapters
-        string epubPath = Path.Combine(outputDir, "sample.epub");
-        CreateSampleEpub(epubPath);
-
-        // Load the EPUB document
-        Document srcDoc = new Document(epubPath);
-
-        // Find all Heading 1 paragraphs (treated as chapter titles)
-        List<Paragraph> chapterHeadings = new List<Paragraph>();
-        foreach (Paragraph para in srcDoc.GetChildNodes(NodeType.Paragraph, true))
+        public static void Main()
         {
-            if (para.ParagraphFormat.StyleIdentifier == StyleIdentifier.Heading1)
-                chapterHeadings.Add(para);
-        }
+            // Create a sample EPUB with three chapters.
+            string epubPath = "sample.epub";
+            CreateSampleEpub(epubPath);
 
-        if (chapterHeadings.Count == 0)
-            throw new InvalidOperationException("No chapter headings (Heading 1) were found in the EPUB.");
+            // Load the EPUB document.
+            Document epubDoc = new Document(epubPath);
 
-        // Split the document by chapters and save each as HTML
-        for (int i = 0; i < chapterHeadings.Count; i++)
-        {
-            Paragraph startHeading = chapterHeadings[i];
-            Paragraph endHeading = (i + 1 < chapterHeadings.Count) ? chapterHeadings[i + 1] : null;
+            // Split the document into chapters based on Heading 1 paragraphs.
+            List<Document> chapterDocs = SplitIntoChaptersByHeading(epubDoc, StyleIdentifier.Heading1);
 
-            // Create a new empty document for the chapter
-            Document chapterDoc = new Document();
-            // Ensure the document has a section to receive imported nodes
-            Section targetSection = chapterDoc.FirstSection;
-            Body targetBody = targetSection.Body;
-
-            // Prepare an importer to copy nodes from source to target
-            NodeImporter importer = new NodeImporter(srcDoc, chapterDoc, ImportFormatMode.KeepSourceFormatting);
-
-            // Iterate over nodes from startHeading up to (but not including) endHeading
-            Node curNode = startHeading;
-            while (curNode != null && curNode != endHeading)
+            // Save each chapter as an individual HTML file.
+            for (int i = 0; i < chapterDocs.Count; i++)
             {
-                Node importedNode = importer.ImportNode(curNode, true);
-                targetBody.AppendChild(importedNode);
-                curNode = curNode.NextSibling;
+                string htmlFile = $"Chapter_{i + 1}.html";
+                chapterDocs[i].Save(htmlFile, SaveFormat.Html);
+                if (!File.Exists(htmlFile))
+                    throw new InvalidOperationException($"Failed to create {htmlFile}");
             }
 
-            // Save the chapter as HTML
-            string chapterFileName = Path.Combine(outputDir, $"Chapter_{i + 1}.html");
-            HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Html);
-            // Preserve layout as much as possible
-            saveOptions.ExportHeadersFootersMode = ExportHeadersFootersMode.PerSection;
-            chapterDoc.Save(chapterFileName, saveOptions);
-
-            // Validate that the file was created
-            if (!File.Exists(chapterFileName))
-                throw new InvalidOperationException($"Failed to create chapter file: {chapterFileName}");
+            // Verify that the expected number of HTML files were created.
+            int expectedCount = chapterDocs.Count;
+            int actualCount = Directory.GetFiles(Directory.GetCurrentDirectory(), "Chapter_*.html").Length;
+            if (actualCount != expectedCount)
+                throw new InvalidOperationException($"Expected {expectedCount} HTML files, but found {actualCount}.");
         }
-    }
 
-    // Helper method to create a simple EPUB with two chapters
-    private static void CreateSampleEpub(string path)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        private static void CreateSampleEpub(string path)
+        {
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Chapter 1
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 1");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("This is the content of the first chapter. It contains some sample text.");
+            for (int chapter = 1; chapter <= 3; chapter++)
+            {
+                // Heading for the chapter.
+                builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+                builder.Writeln($"Chapter {chapter}");
 
-        // Chapter 2
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 2");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("This is the content of the second chapter. More sample text goes here.");
+                // Normal content paragraphs.
+                builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+                builder.Writeln($"This is the first paragraph of chapter {chapter}.");
+                builder.Writeln($"This is the second paragraph of chapter {chapter}.");
+            }
 
-        // Save as EPUB
-        doc.Save(path, SaveFormat.Epub);
+            doc.Save(path, SaveFormat.Epub);
+            if (!File.Exists(path))
+                throw new InvalidOperationException($"Failed to create sample EPUB at {path}");
+        }
+
+        private static List<Document> SplitIntoChaptersByHeading(Document source, StyleIdentifier headingStyle)
+        {
+            List<Document> chapters = new List<Document>();
+            Document currentChapter = null;
+
+            // Retrieve all paragraphs in document order.
+            NodeCollection paragraphs = source.GetChildNodes(NodeType.Paragraph, true);
+
+            foreach (Paragraph para in paragraphs)
+            {
+                if (para.ParagraphFormat.StyleIdentifier == headingStyle)
+                {
+                    // Start a new chapter document.
+                    currentChapter = new Document();
+                    // Import the heading paragraph into the new document.
+                    Node importedHeading = currentChapter.ImportNode(para, true);
+                    currentChapter.FirstSection.Body.AppendChild(importedHeading);
+                    chapters.Add(currentChapter);
+                }
+                else if (currentChapter != null)
+                {
+                    // Import regular paragraph into the current chapter.
+                    Node importedPara = currentChapter.ImportNode(para, true);
+                    currentChapter.FirstSection.Body.AppendChild(importedPara);
+                }
+            }
+
+            if (chapters.Count == 0)
+                throw new InvalidOperationException("No chapters were found based on the specified heading style.");
+
+            return chapters;
+        }
     }
 }
