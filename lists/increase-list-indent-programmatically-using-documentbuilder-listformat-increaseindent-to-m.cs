@@ -2,51 +2,44 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
-namespace ListIndentExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Create a numbered list and assign it to the builder.
+        List list = doc.Lists.Add(ListTemplate.NumberDefault);
+        builder.ListFormat.List = list;
+
+        // First level list item.
+        builder.ListFormat.ListLevelNumber = 0; // top level
+        builder.Writeln("Item 1");
+
+        // Increase indent to move to a deeper level within the same list.
+        builder.ListFormat.ListLevelNumber = 1; // second level
+        builder.Writeln("Item 1.1");
+
+        // Decrease indent back to the original level.
+        builder.ListFormat.ListLevelNumber = 0; // back to top level
+        builder.Writeln("Item 2");
+
+        // Finish the list and remove list formatting from subsequent paragraphs.
+        builder.ListFormat.RemoveNumbers();
+
+        // Validation: count paragraphs that are part of the list.
+        int listParagraphCount = 0;
+        foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Create a numbered list using a built‑in list template.
-            List list = doc.Lists.Add(ListTemplate.NumberDefault);
-
-            // Apply the list to the builder.
-            builder.ListFormat.List = list;
-
-            // First level items (level 0).
-            builder.ListFormat.ListLevelNumber = 0;
-            builder.Writeln("Item 1");
-            builder.Writeln("Item 2");
-
-            // Sub‑level items (level 1).
-            builder.ListFormat.ListLevelNumber = 1;
-            builder.Writeln("Subitem 2.1");
-            builder.Writeln("Subitem 2.2");
-
-            // Return to the original level (level 0).
-            builder.ListFormat.ListLevelNumber = 0;
-            builder.Writeln("Item 3");
-
-            // End the list formatting.
-            builder.ListFormat.RemoveNumbers();
-
-            // Validate the number of list paragraphs.
-            int listParagraphCount = 0;
-            foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
-            {
-                if (para.ListFormat.IsListItem)
-                    listParagraphCount++;
-            }
-
-            Console.WriteLine($"Document contains {listParagraphCount} list paragraphs.");
-
-            // Save the document to a file.
-            doc.Save("ListIndent.docx");
+            if (para.ListFormat.IsListItem)
+                listParagraphCount++;
         }
+
+        Console.WriteLine($"The document contains {listParagraphCount} list paragraphs.");
+
+        // Save the document to a file.
+        doc.Save("ListIndent.docx");
     }
 }

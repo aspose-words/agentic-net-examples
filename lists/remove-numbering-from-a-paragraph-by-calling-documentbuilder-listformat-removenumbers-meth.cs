@@ -10,21 +10,18 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a numbered list using a built‑in list template.
+        // Create a numbered list and assign it to the builder.
         List numberedList = doc.Lists.Add(ListTemplate.NumberDefault);
-
-        // Apply the list to the builder so that subsequent paragraphs become list items.
         builder.ListFormat.List = numberedList;
 
-        // Write several items that will be numbered.
+        // Add list items.
         builder.Writeln("First item");
         builder.Writeln("Second item");
-        builder.Writeln("Third item");
 
-        // Stop list formatting. This removes numbering from the next paragraph.
+        // Stop list formatting – subsequent paragraphs will not be numbered.
         builder.ListFormat.RemoveNumbers();
 
-        // Write a normal paragraph that is not part of the list.
+        // Add a regular paragraph that is not part of the list.
         builder.Writeln("This paragraph is not part of the list.");
 
         // Save the document to disk.

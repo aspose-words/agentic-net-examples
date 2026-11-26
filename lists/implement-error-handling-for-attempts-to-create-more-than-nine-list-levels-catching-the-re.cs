@@ -6,38 +6,36 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a DocumentBuilder.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a numbered list using a built‑in list template.
+        // Create a list using a built‑in template.
         List list = doc.Lists.Add(ListTemplate.NumberDefault);
-        builder.ListFormat.List = list; // Apply the list to the builder.
 
-        // Attempt to write list items with increasing nesting levels.
-        // Aspose.Words supports a maximum of 9 levels (0‑8). Level 9 will throw.
-        for (int level = 0; level <= 9; level++)
+        // Apply the list to the builder.
+        builder.ListFormat.List = list;
+
+        // Write a normal list item at level 0.
+        builder.ListFormat.ListLevelNumber = 0;
+        builder.Writeln("Item level 0");
+
+        // Attempt to set an invalid list level (greater than the maximum of 8).
+        try
         {
-            try
-            {
-                // Set the current list level.
-                builder.ListFormat.ListLevelNumber = level;
-
-                // Write a paragraph for this level.
-                builder.Writeln($"List item at level {level}");
-            }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                // Catch the exception that occurs when the level exceeds the allowed range.
-                Console.WriteLine($"Caught exception for level {level}: {ex.Message}");
-                break; // Exit the loop after handling the error.
-            }
+            builder.ListFormat.ListLevelNumber = 9; // Invalid level.
+            builder.Writeln("This text will not be added.");
+        }
+        catch (ArgumentOutOfRangeException ex)
+        {
+            // Handle the exception thrown by Aspose.Words.
+            Console.WriteLine("Caught exception: " + ex.Message);
         }
 
-        // Remove list formatting to return the builder to normal paragraph mode.
+        // Remove list formatting after the list is complete.
         builder.ListFormat.RemoveNumbers();
 
-        // Save the document (optional, demonstrates that the file is created).
-        doc.Save("Output.docx");
+        // Save the document.
+        doc.Save("output.docx");
     }
 }

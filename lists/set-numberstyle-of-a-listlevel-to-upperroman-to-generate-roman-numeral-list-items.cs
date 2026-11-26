@@ -1,37 +1,48 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Lists;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a new list based on the default numbered template.
+        // Create a list based on a built‑in template.
         List list = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // Configure the first list level to use uppercase Roman numerals.
+        // Configure the first level to use Upper Roman numerals.
         ListLevel level = list.ListLevels[0];
         level.NumberStyle = NumberStyle.UppercaseRoman;
-        // Use the default placeholder for the number format.
-        level.NumberFormat = "\x0000.";
+        level.NumberFormat = "%1.";
+        level.Alignment = ListLevelAlignment.Left;
 
-        // Use DocumentBuilder to write list items.
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Apply the list to the builder.
         builder.ListFormat.List = list;
+        builder.ListFormat.ListLevelNumber = 0;
 
-        // Add several paragraphs that will be formatted as list items.
-        for (int i = 0; i < 5; i++)
-        {
-            builder.Writeln($"Item {i + 1}");
-        }
+        // Write list items.
+        builder.Writeln("First item");
+        builder.Writeln("Second item");
+        builder.Writeln("Third item");
 
         // End the list.
         builder.ListFormat.RemoveNumbers();
 
-        // Save the document.
-        doc.Save("RomanList.docx");
+        // Validation: count paragraphs that are part of the list.
+        int listParagraphCount = 0;
+        foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
+        {
+            if (para.ListFormat.IsListItem)
+                listParagraphCount++;
+        }
+
+        Console.WriteLine($"List paragraphs count: {listParagraphCount}");
+
+        // Save the document to a file.
+        doc.Save("ListUpperRoman.docx");
     }
 }

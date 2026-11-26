@@ -2,45 +2,48 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
-public class Program
+namespace ListRetrievalExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new document and a builder.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new empty document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a numbered list using a built‑in template.
-        List list = doc.Lists.Add(ListTemplate.NumberDefault);
-        int listId = list.ListId; // Store the list ID for later retrieval.
+            // Create a bullet list using a predefined template.
+            List list = doc.Lists.Add(ListTemplate.BulletDefault);
 
-        // Apply the list to the builder.
-        builder.ListFormat.List = list;
-        builder.ListFormat.ListLevelNumber = 0; // Top level.
+            // Apply the list to the builder.
+            builder.ListFormat.List = list;
 
-        // Add initial list items.
-        builder.Writeln("Item 1");
-        builder.Writeln("Item 2");
+            // Write some list items.
+            builder.Writeln("First item");
+            builder.Writeln("Second item");
+            builder.Writeln("Third item");
 
-        // End the first list.
-        builder.ListFormat.RemoveNumbers();
+            // End the list formatting.
+            builder.ListFormat.RemoveNumbers();
 
-        // Retrieve the same list by its ID.
-        List retrievedList = doc.Lists.GetListByListId(listId);
+            // Retrieve the same list by its unique ListId.
+            int listId = list.ListId;
+            List retrievedList = doc.Lists.GetListByListId(listId);
 
-        // Adjust level properties of the retrieved list.
-        ListLevel level0 = retrievedList.ListLevels[0];
-        level0.NumberStyle = NumberStyle.UppercaseRoman;          // Change numbering to I, II, III...
-        level0.Alignment = ListLevelAlignment.Right;              // Align numbers to the right.
+            // Adjust level properties of the first level (index 0).
+            ListLevel level = retrievedList.ListLevels[0];
+            level.Font.Name = "Arial";
+            level.Font.Size = 12;
+            level.Alignment = ListLevelAlignment.Right; // Align the bullet/number to the right.
+            level.NumberStyle = NumberStyle.Bullet; // Ensure bullet style remains.
+            level.NumberPosition = 20; // Position of the bullet.
+            level.TextPosition = 40;   // Position of the text after the bullet.
 
-        // Use the modified list again.
-        builder.ListFormat.List = retrievedList;
-        builder.ListFormat.ListLevelNumber = 0;
-        builder.Writeln("Modified Item 1");
-        builder.Writeln("Modified Item 2");
-        builder.ListFormat.RemoveNumbers();
+            // Save the document to a file.
+            doc.Save("AdjustedList.docx");
 
-        // Save the document.
-        doc.Save("Result.docx");
+            // Indicate completion.
+            Console.WriteLine("Document created and list level adjusted successfully.");
+        }
     }
 }

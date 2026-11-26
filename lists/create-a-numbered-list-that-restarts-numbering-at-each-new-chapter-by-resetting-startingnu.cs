@@ -1,61 +1,65 @@
 using System;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
-public class Program
+namespace NumberedListRestartExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new document and a DocumentBuilder.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new empty document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // ---------- Chapter 1 ----------
-        builder.Writeln("Chapter 1");
+            // -------------------- Chapter 1 --------------------
+            builder.Writeln("Chapter 1");
 
-        // Create a new list for Chapter 1. A fresh list automatically starts numbering at 1.
-        List chapter1List = doc.Lists.Add(ListTemplate.NumberDefault);
+            // Create a numbered list for Chapter 1.
+            List chapter1List = doc.Lists.Add(ListTemplate.NumberDefault);
+            builder.ListFormat.List = chapter1List;
+            builder.ListFormat.ListLevelNumber = 0; // Top level.
 
-        // Apply the list to the builder and set the level (top level = 0).
-        builder.ListFormat.List = chapter1List;
-        builder.ListFormat.ListLevelNumber = 0;
+            // Add list items.
+            builder.Writeln("First item of Chapter 1");
+            builder.Writeln("Second item of Chapter 1");
+            builder.Writeln("Third item of Chapter 1");
 
-        // Write list items for Chapter 1.
-        builder.Writeln("Item 1");
-        builder.Writeln("Item 2");
-        builder.Writeln("Item 3");
+            // End of Chapter 1 list.
+            builder.ListFormat.RemoveNumbers();
 
-        // End the list for Chapter 1.
-        builder.ListFormat.RemoveNumbers();
+            // Add some spacing between chapters.
+            builder.Writeln();
 
-        // ---------- Chapter 2 ----------
-        builder.Writeln("Chapter 2");
+            // -------------------- Chapter 2 --------------------
+            builder.Writeln("Chapter 2");
 
-        // Create a new list for Chapter 2 to restart numbering.
-        List chapter2List = doc.Lists.Add(ListTemplate.NumberDefault);
+            // Create a new numbered list for Chapter 2 to restart numbering.
+            List chapter2List = doc.Lists.Add(ListTemplate.NumberDefault);
+            builder.ListFormat.List = chapter2List;
+            builder.ListFormat.ListLevelNumber = 0; // Top level.
 
-        // Apply the new list.
-        builder.ListFormat.List = chapter2List;
-        builder.ListFormat.ListLevelNumber = 0;
+            // Add list items.
+            builder.Writeln("First item of Chapter 2");
+            builder.Writeln("Second item of Chapter 2");
 
-        // Write list items for Chapter 2.
-        builder.Writeln("Item A");
-        builder.Writeln("Item B");
-        builder.Writeln("Item C");
+            // End of Chapter 2 list.
+            builder.ListFormat.RemoveNumbers();
 
-        // End the list for Chapter 2.
-        builder.ListFormat.RemoveNumbers();
+            // -------------------- Validation --------------------
+            // Count paragraphs that are part of a list.
+            int listParagraphCount = 0;
+            NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
+            foreach (Paragraph para in paragraphs)
+            {
+                if (para.ListFormat.IsListItem)
+                    listParagraphCount++;
+            }
 
-        // Save the document.
-        doc.Save("NumberedListsByChapter.docx");
+            Console.WriteLine($"Document contains {listParagraphCount} list paragraphs.");
 
-        // Validation: count paragraphs that are part of a list.
-        int listParagraphCount = doc.GetChildNodes(NodeType.Paragraph, true)
-                                    .Cast<Paragraph>()
-                                    .Count(p => p.ListFormat.IsListItem);
-
-        // Expected number of list items: 6.
-        Console.WriteLine($"List paragraphs count: {listParagraphCount}");
+            // Save the document to a file.
+            doc.Save("NumberedList.docx");
+        }
     }
 }

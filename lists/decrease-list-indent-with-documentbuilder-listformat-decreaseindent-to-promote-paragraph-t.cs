@@ -6,49 +6,42 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a numbered list and assign it to the builder.
+        // Create a numbered list using a built‑in list template.
         List list = doc.Lists.Add(ListTemplate.NumberDefault);
+
+        // Apply the list to the builder.
         builder.ListFormat.List = list;
 
-        // First level item.
-        builder.ListFormat.ListLevelNumber = 0;
+        // Write a top‑level list item.
+        builder.ListFormat.ListLevelNumber = 0; // top level
         builder.Writeln("Item 1");
 
-        // Second level (nested) item.
-        builder.ListFormat.ListLevelNumber = 1;
+        // Increase indent to create a sub‑item (level 1).
+        builder.ListFormat.ListLevelNumber = 1; // now level 1
         builder.Writeln("Item 1.1");
 
-        // Third level item.
-        builder.ListFormat.ListLevelNumber = 2;
-        builder.Writeln("Item 1.1.1");
-
-        // Promote the last item to a higher level by decreasing the level number.
-        builder.ListFormat.ListLevelNumber = 1; // Moves from level 2 to level 1.
-        builder.Writeln("Item 1.2 (promoted)");
-
-        // Return to top level for the next item.
-        builder.ListFormat.ListLevelNumber = 0;
+        // Decrease indent to promote back to the top level.
+        builder.ListFormat.ListLevelNumber = 0; // back to level 0
         builder.Writeln("Item 2");
 
-        // End the list formatting.
+        // Finish the list and remove list formatting from the builder.
         builder.ListFormat.RemoveNumbers();
 
-        // Validation: count paragraphs that are part of the list.
-        int listParagraphs = 0;
-        foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
+        // Validation: count paragraphs that are part of a list.
+        int listParagraphCount = 0;
+        foreach (Paragraph para in doc.FirstSection.Body.Paragraphs)
         {
             if (para.ListFormat.IsListItem)
-                listParagraphs++;
+                listParagraphCount++;
         }
 
-        // Output validation result.
-        builder.Writeln($"List paragraphs count: {listParagraphs}");
+        Console.WriteLine($"Document contains {listParagraphCount} list paragraphs.");
 
-        // Save the document to disk.
-        doc.Save("ListIndentExample.docx");
+        // Save the document to a file.
+        doc.Save("Output.docx");
     }
 }

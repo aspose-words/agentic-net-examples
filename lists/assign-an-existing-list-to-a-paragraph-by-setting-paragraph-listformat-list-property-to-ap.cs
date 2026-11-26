@@ -1,45 +1,47 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Lists;
-using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document and a DocumentBuilder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // -------------------------------------------------
-        // Create a bullet list and assign it to paragraphs.
-        // -------------------------------------------------
+        // Create a bulleted list using a built‑in template.
         List bulletList = doc.Lists.Add(ListTemplate.BulletDefault);
 
-        // Apply the existing list to the builder.
+        // Assign the list to the builder.
         builder.ListFormat.List = bulletList;
-        builder.Writeln("Bullet item 1");
-        builder.Writeln("Bullet item 2");
 
-        // Finish the bullet list.
+        // Write top‑level list items.
+        builder.Writeln("First bullet item");
+        builder.Writeln("Second bullet item");
+
+        // Switch to second level (nested list).
+        builder.ListFormat.ListLevelNumber = 1; // Level index is zero‑based.
+        builder.Writeln("Nested bullet item");
+
+        // Return to top level.
+        builder.ListFormat.ListLevelNumber = 0;
+        builder.Writeln("Third bullet item");
+
+        // End the first list.
         builder.ListFormat.RemoveNumbers();
 
-        // -------------------------------------------------
-        // Create a numbered list and assign it to paragraphs.
-        // -------------------------------------------------
-        List numberList = doc.Lists.Add(ListTemplate.NumberDefault);
+        // Normal paragraph outside the list.
+        builder.Writeln("This is a normal paragraph.");
 
-        // Apply the existing numbered list.
-        builder.ListFormat.List = numberList;
-        builder.Writeln("Numbered item 1");
-        builder.Writeln("Numbered item 2");
+        // Reuse the same list for another bullet.
+        builder.ListFormat.List = bulletList;
+        builder.Writeln("Another bullet after normal paragraph.");
 
-        // Finish the numbered list.
+        // End the second list.
         builder.ListFormat.RemoveNumbers();
 
-        // -------------------------------------------------
         // Validation: count paragraphs that are part of a list.
-        // -------------------------------------------------
         int listParagraphCount = 0;
         foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
         {
@@ -47,9 +49,10 @@ public class Program
                 listParagraphCount++;
         }
 
-        Console.WriteLine($"Document contains {listParagraphCount} list paragraphs.");
+        // Output validation result.
+        Console.WriteLine($"Number of list paragraphs: {listParagraphCount}");
 
-        // Save the document to a file.
-        doc.Save("Output.docx");
+        // Save the document.
+        doc.Save("ListExample.docx");
     }
 }

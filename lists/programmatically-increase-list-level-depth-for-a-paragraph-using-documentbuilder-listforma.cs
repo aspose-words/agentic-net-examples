@@ -1,50 +1,49 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Lists;
-using Aspose.Words.Tables;
 
-namespace ListIndentExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Create a numbered list and assign it to the builder.
+        List list = doc.Lists.Add(ListTemplate.NumberDefault);
+        builder.ListFormat.List = list;
+
+        // Write the first (top‑level) list item (level 0).
+        builder.Writeln("Item 1");
+
+        // Increase the list level inside a loop to create nested items.
+        for (int i = 2; i <= 5; i++)
         {
-            // Create a new document and a DocumentBuilder.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            // Set the desired list level (zero‑based). Level 1 for Item 2, level 2 for Item 3, etc.
+            builder.ListFormat.ListLevelNumber = i - 1;
 
-            // Create a numbered list using a ListTemplate.
-            List list = doc.Lists.Add(ListTemplate.NumberDefault);
-
-            // Apply the list to the builder.
-            builder.ListFormat.List = list;
-
-            // Write list items, increasing the indent (list level) in each loop iteration.
-            // ListLevelNumber is zero‑based: 0 = top level, 1 = first sub‑level, etc.
-            for (int i = 1; i <= 5; i++)
-            {
-                // Set the desired list level before writing the paragraph.
-                builder.ListFormat.ListLevelNumber = i - 1;
-
-                // Write the current list item.
-                builder.Writeln($"Item {i} at level {builder.ListFormat.ListLevelNumber}");
-            }
-
-            // Remove list formatting after the list is complete.
-            builder.ListFormat.RemoveNumbers();
-
-            // Validation: count the number of paragraphs that are part of the list.
-            int listParagraphCount = 0;
-            foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
-            {
-                if (para.ListFormat.IsListItem)
-                    listParagraphCount++;
-            }
-
-            Console.WriteLine($"Number of list paragraphs: {listParagraphCount}");
-
-            // Save the document to a file.
-            doc.Save("ListIndentExample.docx");
+            // Write a nested list item.
+            builder.Writeln($"Item {i}");
         }
+
+        // Remove list formatting after the list is complete.
+        builder.ListFormat.RemoveNumbers();
+
+        // Save the document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "NestedList.docx");
+        doc.Save(outputPath);
+
+        // Validation: count paragraphs that are part of the list.
+        int listParagraphCount = 0;
+        foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
+        {
+            if (para.IsListItem)
+                listParagraphCount++;
+        }
+
+        // Output validation result.
+        Console.WriteLine($"Document created with {listParagraphCount} list paragraphs.");
     }
 }
