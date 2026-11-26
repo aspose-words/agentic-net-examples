@@ -6,11 +6,11 @@
 
 | Metric | Value |
 |--------|-------|
-| Total Examples | 1793 |
+| Total Examples | 1794 |
 | Categories | 29 |
 | Overall Pass Rate | 100.0% |
-| Source Run | 20261102_031946_08fb5b |
-| Last Updated | 2026-11-05 |
+| Source Run | 20261124_190740_1c00f5 |
+| Last Updated | 2026-11-25 |
 
 ## Repository Structure
 
@@ -71,7 +71,7 @@ llm.txt
 | [Lists](./lists/) | 30 | 100.0% | [AGENTS.md](./lists/AGENTS.md) |
 | [Mail Merge](./mail-merge/) | 30 | 100.0% | [AGENTS.md](./mail-merge/AGENTS.md) |
 | [OfficeMath](./officemath/) | 30 | 100.0% | [AGENTS.md](./officemath/AGENTS.md) |
-| [OLE Objects](./ole-objects/) | 29 | 100.0% | [AGENTS.md](./ole-objects/AGENTS.md) |
+| [OLE Objects](./ole-objects/) | 30 | 100.0% | [AGENTS.md](./ole-objects/AGENTS.md) |
 | [Paragraphs](./paragraphs/) | 35 | 100.0% | [AGENTS.md](./paragraphs/AGENTS.md) |
 | [Programming With Documents](./programming-with-documents/) | 110 | 100.0% | [AGENTS.md](./programming-with-documents/AGENTS.md) |
 | [Range](./range/) | 30 | 100.0% | [AGENTS.md](./range/AGENTS.md) |
@@ -86,19 +86,19 @@ llm.txt
 
 ## How to Use
 
-To explore any feature, select the appropriate category, set up a temporary .NET console project, add the required NuGet packages, copy the example code, run it, and verify the produced output.
+All examples follow a common workflow: select the relevant feature category, review its metadata, set up a temporary .NET console project, install the required NuGet packages, copy the example code, and verify the output.
 
 1. Choose the category that matches the document-processing task.
 2. Read the category README.md, AGENTS.md, and index.json before selecting an example.
 3. Create a temporary console project targeting the repository's configured .NET framework.
-4. Install Aspose.Words and any additional packages listed by the selected category.
-5. Copy the selected standalone .cs file into the temporary project as Program.cs.
+4. Install Aspose.Words and any additional packages listed for the chosen category.
+5. Copy the standalone .cs file into the project as Program.cs.
 6. Build and run the project, then inspect the expected output files or console result.
 
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.10.0
+dotnet add package Aspose.Words --version 26.11.0
 ```
 
 ```powershell
@@ -158,4 +158,4 @@ All examples use [Aspose.Words for .NET](https://products.aspose.com/words/net/)
 
 ---
 
-*Maintained by an [agentic example generation workflow](https://metrics.aspose.com/agents/sections/examples) | For AI-friendly guidance, see [AGENTS.md](./AGENTS.md) | Last updated: 2026-11-05*
+*Maintained by an [agentic example generation workflow](https://metrics.aspose.com/agents/sections/examples) | For AI-friendly guidance, see [AGENTS.md](./AGENTS.md) | Last updated: 2026-11-25*
