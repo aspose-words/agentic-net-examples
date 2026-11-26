@@ -16,7 +16,7 @@ public class Program
         field.ForegroundColor = "0x000000";
         field.BackgroundColor = "0xFFFFFF";
 
-        // Update fields to render the barcode.
+        // Update fields to apply the barcode settings.
         doc.UpdateFields();
 
         // Save the document as DOCX.

@@ -3,37 +3,38 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.BarCode.Generation;
-using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
 
 public sealed class CustomBarcodeGenerator : IBarcodeGenerator
 {
+    // Minimal 1x1 transparent PNG.
+    private static readonly byte[] BlankPng = new byte[]
+    {
+        0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,
+        0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52,
+        0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,
+        0x08,0x06,0x00,0x00,0x00,0x1F,0x15,0xC4,
+        0x89,0x00,0x00,0x00,0x0A,0x49,0x44,0x41,
+        0x54,0x78,0x9C,0x63,0x00,0x01,0x00,0x00,
+        0x05,0x00,0x01,0x0D,0x0A,0x2D,0xB4,0x00,
+        0x00,0x00,0x00,0x49,0x45,0x4E,0x44,0xAE,
+        0x42,0x60,0x82
+    };
+
     public Stream GetBarcodeImage(Aspose.Words.Fields.BarcodeParameters parameters)
     {
-        // If the barcode value starts with the disable marker, return a blank PNG.
-        if (parameters.BarcodeValue != null && parameters.BarcodeValue.StartsWith("DISABLE:", StringComparison.Ordinal))
+        // Disable rendering for values prefixed with "DISABLE:".
+        if (parameters.BarcodeValue != null && parameters.BarcodeValue.StartsWith("DISABLE:"))
         {
-            // Create a 1x1 white pixel image.
-            using (var bitmap = new Bitmap(1, 1))
-            {
-                using (var graphics = Graphics.FromImage(bitmap))
-                {
-                    graphics.Clear(Color.White);
-                }
-
-                var blankStream = new MemoryStream();
-                bitmap.Save(blankStream, ImageFormat.Png);
-                blankStream.Position = 0;
-                return blankStream;
-            }
+            var blankStream = new MemoryStream();
+            blankStream.Write(BlankPng, 0, BlankPng.Length);
+            blankStream.Position = 0;
+            return blankStream;
         }
 
         // Normal barcode generation.
         var stream = new MemoryStream();
         using (var generator = new BarcodeGenerator(EncodeTypes.Code128, parameters.BarcodeValue))
         {
-            generator.Parameters.Barcode.BarColor = Aspose.Drawing.Color.Black;
-            generator.Parameters.BackColor = Aspose.Drawing.Color.White;
             generator.Save(stream, BarCodeImageFormat.Png);
         }
         stream.Position = 0;
@@ -42,7 +43,6 @@ public sealed class CustomBarcodeGenerator : IBarcodeGenerator
 
     public Stream GetOldBarcodeImage(Aspose.Words.Fields.BarcodeParameters parameters)
     {
-        // Delegate to the primary method.
         return GetBarcodeImage(parameters);
     }
 }
@@ -65,21 +65,23 @@ public class Program
         // Insert a barcode field that should be disabled in PDF.
         FieldDisplayBarcode disabledField = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
         disabledField.BarcodeType = "CODE128";
-        disabledField.BarcodeValue = "DISABLE:1234567890";
-        disabledField.ForegroundColor = "0x000000";
+        disabledField.BarcodeValue = "DISABLE:987654321";
+        disabledField.ForegroundColor = "0xFF0000";
         disabledField.BackgroundColor = "0xFFFFFF";
 
-        // Update fields and save as DOCX (barcode fields remain as Word fields).
+        // Update fields for DOCX.
         doc.UpdateFields();
+
+        // Save as DOCX (both barcodes visible as fields).
         doc.Save("output.docx");
 
-        // Register the custom barcode generator for rendered outputs (PDF).
+        // Register custom barcode generator for rendered outputs.
         doc.FieldOptions.BarcodeGenerator = new CustomBarcodeGenerator();
 
-        // Update fields again to render barcodes using the custom generator.
+        // Re-update fields to apply custom generator.
         doc.UpdateFields();
 
-        // Save the document as PDF; the disabled field will render as a blank image.
+        // Save as PDF (disabled barcode will appear blank).
         doc.Save("output.pdf");
     }
 }

@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
+using Aspose.Words.Replacing;
 using Aspose.BarCode.Generation;
 using Aspose.Drawing;
 
@@ -10,21 +11,21 @@ public sealed class CustomBarcodeGenerator : IBarcodeGenerator
     // Generates a PNG barcode image using Aspose.BarCode and returns it as a stream.
     public Stream GetBarcodeImage(Aspose.Words.Fields.BarcodeParameters parameters)
     {
-        var stream = new MemoryStream();
-        using (var generator = new BarcodeGenerator(EncodeTypes.Code128, parameters.BarcodeValue))
+        MemoryStream stream = new MemoryStream();
+        // Use Code128 symbology; the barcode value comes from the field parameters.
+        using (BarcodeGenerator generator = new BarcodeGenerator(EncodeTypes.Code128, parameters.BarcodeValue))
         {
-            // Set barcode and background colors.
-            generator.Parameters.Barcode.BarColor = Color.Black;
-            generator.Parameters.BackColor = Color.White;
+            // Optional: set colors if needed (commented out because BarcodeParameters does not expose color properties).
+            // generator.Parameters.Barcode.BarColor = Color.Black;
+            // generator.Parameters.BackColor = Color.White;
 
-            // Save the barcode as PNG into the stream.
             generator.Save(stream, BarCodeImageFormat.Png);
         }
         stream.Position = 0;
         return stream;
     }
 
-    // Legacy method delegates to the main implementation.
+    // Legacy method delegates to the primary implementation.
     public Stream GetOldBarcodeImage(Aspose.Words.Fields.BarcodeParameters parameters)
     {
         return GetBarcodeImage(parameters);
@@ -36,45 +37,41 @@ public class Program
     public static void Main()
     {
         // Input strings for which barcodes will be generated.
-        string[] inputs = new string[]
-        {
-            "A",
-            "ABCD",
-            "1234567890",
-            "LongerBarcodeValueExample"
-        };
+        string[] values = new[] { "A", "AB", "ABC", "ABCD", "ABCDE" };
 
-        // Create a new blank document.
+        // Determine the maximum length to calculate scaling factors.
+        int maxLength = 0;
+        foreach (var v in values)
+            if (v.Length > maxLength) maxLength = v.Length;
+
+        // Create a new Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Register the custom barcode generator for rendered output (PDF).
         doc.FieldOptions.BarcodeGenerator = new CustomBarcodeGenerator();
 
-        const int baseScaling = 100; // Base scaling factor (percentage).
-
-        foreach (string text in inputs)
+        // Generate a DISPLAYBARCODE field for each input string.
+        foreach (var value in values)
         {
             // Insert a new paragraph for each barcode.
             builder.Writeln();
 
-            // Insert a DISPLAYBARCODE field using typed insertion.
+            // Insert a typed DISPLAYBARCODE field.
             FieldDisplayBarcode field = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
-
-            // Set barcode type and value.
             field.BarcodeType = "CODE128";
-            field.BarcodeValue = text;
+            field.BarcodeValue = value;
 
-            // Adjust scaling factor based on the length of the input string.
-            int scaling = baseScaling + text.Length * 10;
-            field.ScalingFactor = scaling.ToString();
+            // Compute scaling factor based on length (range 80–150).
+            int scale = 80 + (value.Length * 70) / maxLength; // simple linear scaling.
+            field.ScalingFactor = scale.ToString();
 
-            // Optional colors.
+            // Set colors (black on white) using the field's string color properties.
             field.ForegroundColor = "0x000000";
             field.BackgroundColor = "0xFFFFFF";
         }
 
-        // Update fields to generate barcode images.
+        // Render the fields so that the custom generator creates the barcode images.
         doc.UpdateFields();
 
         // Save the document as PDF (rendered barcodes).

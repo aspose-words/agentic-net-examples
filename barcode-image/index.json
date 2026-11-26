@@ -4,14 +4,14 @@
     "slug": "barcode-image",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Use the typed FieldDisplayBarcode API for all Word-field scenarios, call doc.UpdateFields() after setting properties, and register a custom IBarcodeGenerator for any rendered output such as PDF, PNG, or high-resolution images. Reserve plain DISPLAYBARCODE string switches for the limited Word-only DOCX cases that do not require rendering.",
+    "preferred_workflow": "Insert a typed FieldDisplayBarcode via DocumentBuilder.InsertField(FieldType.FieldDisplayBarcode, true), set explicit properties (BarcodeType, BarcodeValue, ForegroundColor, BackgroundColor, ScalingFactor), assign a custom IBarcodeGenerator to Document.FieldOptions.BarcodeGenerator for non-DOCX outputs, call doc.UpdateFields(), and finally save the document in the desired format.",
     "required_packages": [
       "Aspose.Words",
       "Aspose.BarCode",
       "Aspose.Drawing.Common"
     ],
     "package_versions": {
-      "Aspose.Words": "26.10.0",
+      "Aspose.Words": "26.11.0",
       "Aspose.BarCode": "26.10.0",
       "Aspose.Drawing.Common": "26.10.0"
     },
@@ -21,15 +21,13 @@
       "System",
       "System.IO",
       "Aspose.BarCode.Generation",
-      "Aspose.Drawing",
       "Aspose.Words.Replacing",
+      "Aspose.Words.Drawing",
+      "Aspose.Drawing",
       "Aspose.Drawing.Imaging",
       "System.Collections.Generic",
-      "System.Text",
-      "Aspose.Words.Loading",
-      "Aspose.Words.Saving",
       "System.Threading.Tasks",
-      "Aspose.Words.Drawing"
+      "Aspose.Words.Saving"
     ],
     "key_apis": [
       "Document",
@@ -39,17 +37,16 @@
       "MemoryStream",
       "BarcodeParameters",
       "IBarcodeGenerator",
-      "File",
-      "Path",
-      "Font",
+      "NodeType",
+      "Shape",
+      "Paragraph",
       "Range",
       "FindReplaceOptions",
       "Field",
-      "LoadOptions",
-      "SaveFormat",
+      "File",
+      "Path",
       "Directory",
-      "NodeType",
-      "Shape",
+      "SaveFormat",
       "ImageData",
       "PdfSaveOptions",
       "Node"
@@ -65,63 +62,75 @@
   },
   "rules_summary": {
     "strict_api_bans": [
-      "Never reference Font, Color, or BarcodeParameters without their full Aspose.Drawing or Aspose.Words.Fields qualification.",
-      "Do not use builder.InsertField with a raw DISPLAYBARCODE string or any string-based field switches.",
-      "Never rely on the DISPLAYBARCODE field rendering path when the target format is PDF or an image."
+      "Never use unqualified BarcodeParameters; always reference Aspose.Words.Fields.BarcodeParameters.",
+      "Never use unqualified Font; always reference Aspose.Drawing.Font.",
+      "Never use unqualified Color; always reference Aspose.Drawing.Color.",
+      "Never import System.Drawing types in this category.",
+      "Do not insert DISPLAYBARCODE fields using string syntax or builder.InsertField with a raw field code."
     ],
     "canonical_patterns": [
-      "Create a barcode field via DocumentBuilder.InsertField(FieldType.FieldDisplayBarcode, true) and cast to FieldDisplayBarcode.",
-      "Assign barcode properties (BarcodeType, BarcodeValue, ForegroundColor, BackgroundColor, ScalingFactor, SymbolRotation) directly on the FieldDisplayBarcode instance.",
-      "Register a custom IBarcodeGenerator on doc.FieldOptions.BarcodeGenerator for all non-DOCX rendered outputs."
+      "Create barcode fields with the typed FieldDisplayBarcode object, assign properties directly, register a custom IBarcodeGenerator, update fields, and save the document."
     ],
     "nullable_warning_prevention": [
-      "Always check that BarcodeValue and BarcodeType are non-empty before updating fields.",
-      "Guard file-system paths with existence checks before loading templates or assets.",
-      "Validate that enum values used with EncodeTypes or SymbologyEncodeType exist in the referenced Aspose.BarCode version."
+      "Validate that BarcodeValue, BarcodeType, and color strings are non-null before assigning them to a FieldDisplayBarcode."
     ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "Ambiguous type references",
-      "symptom": "Compiler reports an ambiguous reference for Font or BarcodeParameters.",
-      "cause": "Both Aspose.Drawing and Aspose.Words (or Aspose.BarCode) define types with the same name, and the code uses an unqualified identifier.",
-      "fix": "Qualify the type with its full namespace (Aspose.Drawing.Font, Aspose.Words.Fields.BarcodeParameters) everywhere barcode code is written.",
-      "prevention": "Avoid adding broad using directives for conflicting namespaces; always use fully qualified names for Font, Color, and BarcodeParameters."
+      "pattern": "Ambiguous type reference",
+      "symptom": "Compiler reports an ambiguous reference for 'Font' or 'BarcodeParameters' between Aspose.Drawing and Aspose.Words namespaces.",
+      "cause": "Unqualified type names cause the C# compiler to see multiple matching types from different assemblies.",
+      "fix": "Qualify the type with its full namespace (e.g., Aspose.Drawing.Font, Aspose.Words.Fields.BarcodeParameters).",
+      "prevention": "Always use fully qualified names or explicit using aliases for these types."
     },
     {
-      "pattern": "Use of non-existent FieldDisplayBarcode members",
-      "symptom": "CS1061 errors such as \"FieldDisplayBarcode does not contain a definition for 'Height'\" or \"'Switches'\".",
-      "cause": "Legacy examples rely on field-code string switches that are not exposed as properties on the typed FieldDisplayBarcode class.",
-      "fix": "Set only the supported typed properties (BarcodeType, BarcodeValue, ForegroundColor, BackgroundColor, ScalingFactor, SymbolRotation) and let the custom generator handle size and orientation.",
-      "prevention": "Consult the Aspose.Words API reference for FieldDisplayBarcode and remove any code that accesses undefined members."
+      "pattern": "Invalid FieldDisplayBarcode member usage",
+      "symptom": "CS1061 errors for Height, Width, SetSwitch, SetFieldCode, or Orientation members that do not exist on FieldDisplayBarcode.",
+      "cause": "Attempting to control barcode appearance through legacy field switches instead of the typed API.",
+      "fix": "Use supported typed properties such as ScalingFactor, ForegroundColor, BackgroundColor, and rely on a custom generator for size adjustments.",
+      "prevention": "Do not call non-existent members; consult the API reference for available FieldDisplayBarcode properties."
     },
     {
-      "pattern": "Incorrect namespace usage",
-      "symptom": "CS0234 errors indicating that namespaces such as Aspose.Words.Building, Aspose.Words.Nodes, or Aspose.Words.Builder do not exist.",
-      "cause": "Typographical errors or outdated documentation introduced invalid namespace names.",
-      "fix": "Replace the incorrect namespaces with the correct ones (e.g., Aspose.Words.Loading, Aspose.Words.Saving, Aspose.Words.Replacing).",
-      "prevention": "Reference the official Aspose.Words documentation for the exact namespace hierarchy before adding using directives."
+      "pattern": "EncodeTypes enum misuse",
+      "symptom": "CS0117 or CS0723 errors when assigning SymbologyEncodeType values to EncodeTypes or using undefined EncodeTypes members.",
+      "cause": "Confusing the static EncodeTypes class with the SymbologyEncodeType enum used by Aspose.BarCode.",
+      "fix": "Map barcode type strings to SymbologyEncodeType values (e.g., EncodeTypes.Code128) and avoid treating EncodeTypes as an enum.",
+      "prevention": "Always use SymbologyEncodeType for generator construction and keep the mapping logic isolated."
     },
     {
-      "pattern": "Invalid EncodeTypes enum members",
-      "symptom": "CS0117 or CS0722 errors stating that EncodeTypes does not contain definitions such as Code39Standard or that EncodeTypes is used as a static type.",
-      "cause": "The code uses obsolete or non-existent enum members from an older version of Aspose.BarCode.",
-      "fix": "Use the current enum members (e.g., EncodeTypes.Code39, EncodeTypes.QR, SymbologyEncodeType) that exist in version 26.10.0.",
-      "prevention": "Verify enum members against the installed Aspose.BarCode package version and avoid hard-coding values that are not present."
+      "pattern": "Missing Aspose.Words namespace",
+      "symptom": "CS0234 errors for namespaces such as Aspose.Words.Building, Aspose.Words.Nodes, or Aspose.Words.LoadOptions.",
+      "cause": "Incorrect or outdated using directives referencing non-existent namespaces in the installed package version.",
+      "fix": "Remove invalid namespaces and import only existing ones like Aspose.Words.Drawing and Aspose.Words.Replacing.",
+      "prevention": "Verify namespace availability against the current Aspose.Words version before adding using statements."
     },
     {
-      "pattern": "Missing input assets at runtime",
-      "symptom": "FileNotFoundException or DirectoryNotFoundException when loading template.docx, input.docx, or processing a folder of documents.",
-      "cause": "Sample code assumes external files exist in the execution directory without creating or checking them.",
-      "fix": "Create temporary sample files programmatically before loading, or add existence checks and fallback sample content.",
-      "prevention": "Always bootstrap required assets in examples or guard file-system operations with File.Exists / Directory.Exists checks."
+      "pattern": "Missing input file or directory",
+      "symptom": "Runtime FileNotFoundException or DirectoryNotFoundException when loading template documents or processing folders.",
+      "cause": "Example code assumes external assets without creating or checking them.",
+      "fix": "Create temporary sample files/folders within the example or guard file-system operations with existence checks.",
+      "prevention": "Ensure all required assets are provisioned programmatically before they are accessed."
     },
     {
-      "pattern": "Transient MCP gateway timeout",
-      "symptom": "504 Gateway Time-out errors during generation.",
-      "cause": "Intermittent network or service availability issues unrelated to the source code.",
-      "fix": "Retry the generation or allow the alternative engine to produce the output when the primary engine fails.",
-      "prevention": "Implement retry logic with exponential back-off for network-bound operations; this does not require code changes to the barcode logic."
+      "pattern": "Undefined ImageFormat",
+      "symptom": "CS0103 error indicating that 'ImageFormat' does not exist in the current context.",
+      "cause": "Missing reference to Aspose.Drawing.Imaging or accidental reliance on System.Drawing types.",
+      "fix": "Add 'using Aspose.Drawing.Imaging;' and reference Aspose.Drawing.Imaging.ImageFormat.",
+      "prevention": "Always import the Aspose.Drawing.Imaging namespace when working with image formats."
+    },
+    {
+      "pattern": "BarcodeParameters property mismatch",
+      "symptom": "CS1061 errors for missing members such as BarcodeSymbology, BarcodeForeColor, or FieldName on BarcodeParameters.",
+      "cause": "Using the wrong BarcodeParameters type (Aspose.BarCode.Generation) or assuming properties that are not part of Aspose.Words.Fields.BarcodeParameters.",
+      "fix": "Reference Aspose.Words.Fields.BarcodeParameters and set only the properties defined there.",
+      "prevention": "Consult the Aspose.Words.Fields.BarcodeParameters documentation to use supported members only."
+    },
+    {
+      "pattern": "Transient gateway timeout",
+      "symptom": "504 Gateway Time-out during code generation or execution.",
+      "cause": "Temporary network or service latency unrelated to the source code.",
+      "fix": "Retry the operation or allow the alternate engine result when the example otherwise passes verification.",
+      "prevention": "Implement retry logic with exponential back-off for external service calls."
     }
   ],
   "examples": [
@@ -199,8 +208,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 8,
@@ -389,8 +398,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 25,
@@ -433,8 +442,8 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 29,
@@ -461,14 +470,13 @@
     }
   ],
   "narrative": {
-    "overview": "The BarCode Image category demonstrates how to generate and render barcodes in Aspose.Words documents using the typed FieldDisplayBarcode API and a custom IBarcodeGenerator implementation. Verified examples cover inserting barcode fields, configuring visual properties, handling orientation, caching images, and exporting to PDF with high-resolution output.",
-    "purpose": "Provide an AI coding assistant with clear guidance on creating, configuring, and rendering barcode fields in Aspose.Words documents while avoiding common compilation and runtime pitfalls, and ensuring that generated PDFs contain correctly rendered barcode images.",
+    "overview": "The BarCode Image category demonstrates how to embed and render barcodes in Word documents using Aspose.Words and Aspose.BarCode. Verified examples show typed FieldDisplayBarcode usage, custom IBarcodeGenerator implementations, and PDF export with correctly rendered barcode images.",
+    "purpose": "Guide an AI coding agent to generate, customize, and validate barcode fields in Word documents while adhering to strict API usage rules and employing a custom barcode generator for rendered outputs such as PDF.",
     "validation_priorities": [
-      "Compile the sample with the exact package versions listed; any ambiguous type or missing member error must be resolved before runtime testing."
+      "After updating fields, verify that the generated PDF contains barcode images of the expected type and dimensions."
     ],
     "maintenance_notes": [
-      "Update the fully qualified type references if future Aspose releases introduce new conflicting namespaces.",
-      "Periodically verify that the custom IBarcodeGenerator implementation still matches the latest Aspose.BarCode API signatures."
+      "Keep the Aspose.Words, Aspose.BarCode, and Aspose.Drawing.Common package versions synchronized and update using directives when libraries are upgraded."
     ]
   }
 }
