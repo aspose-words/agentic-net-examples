@@ -3,15 +3,18 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Saving;
+using Aspose.Words.Tables; // For CompositeNode
 
 public class PreserveCommentFormatting
 {
     public static void Main()
     {
-        // Create a new document and add a paragraph.
+        // Create a new document and a builder for adding content.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This paragraph will have a comment with formatted text.");
+
+        // Add a paragraph that will have a comment attached.
+        builder.Writeln("This is a sample paragraph with a comment.");
 
         // Create a comment with bold and italic runs.
         Comment comment = new Comment(doc)
@@ -20,68 +23,72 @@ public class PreserveCommentFormatting
             Initial = "JD",
             DateTime = DateTime.Now
         };
-
         // The comment must contain at least one paragraph.
-        Paragraph commentParagraph = new Paragraph(doc);
+        comment.AppendChild(new Paragraph(doc));
+
+        // Add a bold run.
         Run boldRun = new Run(doc, "Bold text");
         boldRun.Font.Bold = true;
-        Run italicRun = new Run(doc, " and italic text");
+        comment.FirstParagraph?.AppendChild(boldRun);
+
+        // Add an italic run.
+        Run italicRun = new Run(doc, " Italic text");
         italicRun.Font.Italic = true;
+        comment.FirstParagraph?.AppendChild(italicRun);
 
-        commentParagraph.AppendChild(boldRun);
-        commentParagraph.AppendChild(italicRun);
-        comment.AppendChild(commentParagraph);
-
-        // Attach the comment to the current paragraph.
-        Paragraph? anchorParagraph = builder.CurrentParagraph;
-        if (anchorParagraph != null)
+        // Attach the comment to the last paragraph of the document.
+        Paragraph targetParagraph = doc.FirstSection?.Body?.LastParagraph;
+        if (targetParagraph != null)
         {
-            anchorParagraph.AppendChild(comment);
+            targetParagraph.AppendChild(comment);
         }
 
-        // Make the comment content visible in the document by copying its formatted runs.
+        // -----------------------------------------------------------------
+        // Preserve comment formatting by copying the comment content into a
+        // visible paragraph placed after the paragraph that contains the comment.
+        // -----------------------------------------------------------------
         var comments = doc.GetChildNodes(NodeType.Comment, true)
-            .OfType<Comment>()
-            .ToList();
+                          .OfType<Comment>()
+                          .ToList();
 
         foreach (Comment c in comments)
         {
-            // The comment is attached to a paragraph.
-            Paragraph? parentPara = c.ParentNode as Paragraph;
-            if (parentPara == null)
+            // The comment is anchored to a paragraph (its parent node).
+            Paragraph anchorParagraph = c.ParentNode as Paragraph;
+            if (anchorParagraph == null)
                 continue;
 
-            // The comment's first paragraph holds the formatted runs.
-            Paragraph? sourcePara = c.FirstParagraph;
-            if (sourcePara == null)
-                continue;
+            // Create a new paragraph that will hold the comment text.
+            Paragraph visibleCommentParagraph = new Paragraph(doc);
 
-            // Create a new paragraph that will hold the copied runs.
-            Paragraph visiblePara = new Paragraph(doc);
-            foreach (Node runNode in sourcePara.GetChildNodes(NodeType.Run, true))
+            // Optional label for the comment.
+            Run labelRun = new Run(doc, "Comment: ");
+            labelRun.Font.Bold = true;
+            visibleCommentParagraph.AppendChild(labelRun);
+
+            // Copy each run from the comment's first paragraph, preserving formatting.
+            Paragraph commentParagraph = c.FirstParagraph;
+            if (commentParagraph != null)
             {
-                visiblePara.AppendChild(runNode.Clone(true));
+                foreach (Run run in commentParagraph.Runs.OfType<Run>())
+                {
+                    // Clone the run to keep its formatting.
+                    Run clonedRun = (Run)run.Clone(true);
+                    visibleCommentParagraph.AppendChild(clonedRun);
+                }
             }
 
-            // Insert the new paragraph after the paragraph that contains the comment.
-            Node? parentNode = parentPara.ParentNode;
-            if (parentNode is CompositeNode compositeParent)
+            // Insert the new paragraph after the anchor paragraph.
+            CompositeNode parentNode = anchorParagraph.ParentNode as CompositeNode;
+            if (parentNode != null)
             {
-                compositeParent.InsertAfter(visiblePara, parentPara);
+                parentNode.InsertAfter(visibleCommentParagraph, anchorParagraph);
             }
         }
 
-        // Ensure output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
-
-        // Save the document as HTML (comments are preserved with formatting).
-        HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html);
-        string htmlPath = Path.Combine(outputDir, "DocumentWithComments.html");
-        doc.Save(htmlPath, htmlOptions);
-
-        // Also save as DOCX for reference.
-        string docxPath = Path.Combine(outputDir, "DocumentWithComments.docx");
-        doc.Save(docxPath);
+        // Save the document as HTML. The visible comment paragraph retains bold/italic formatting.
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions();
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.html");
+        doc.Save(outputPath, saveOptions);
     }
 }

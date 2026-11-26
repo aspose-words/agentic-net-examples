@@ -4,64 +4,67 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace CommentRemovalExample
+public class Program
 {
-    class Program
+    public static void Main()
     {
-        static void Main()
+        // Create a new document and a builder to add content.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // First paragraph with an old comment (40 days ago).
+        builder.Writeln("First paragraph with an old comment.");
+        Paragraph firstParagraph = builder.CurrentParagraph;
+
+        Comment oldComment = new Comment(doc)
         {
-            // Create a new document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            Author = "Alice",
+            Initial = "A",
+            DateTime = DateTime.Now.AddDays(-40)
+        };
+        // Add visible text to the comment.
+        oldComment.AppendChild(new Paragraph(doc));
+        oldComment.FirstParagraph?.AppendChild(new Run(doc, "This comment is older than the threshold."));
+        // Attach the comment to the paragraph.
+        firstParagraph.AppendChild(oldComment);
 
-            // Add first paragraph with a recent comment.
-            builder.Writeln("First paragraph with a recent comment.");
-            Comment recentComment = new Comment(doc)
+        // Second paragraph with a recent comment (10 days ago).
+        builder.Writeln("Second paragraph with a recent comment.");
+        Paragraph secondParagraph = builder.CurrentParagraph;
+
+        Comment recentComment = new Comment(doc)
+        {
+            Author = "Bob",
+            Initial = "B",
+            DateTime = DateTime.Now.AddDays(-10)
+        };
+        recentComment.AppendChild(new Paragraph(doc));
+        recentComment.FirstParagraph?.AppendChild(new Run(doc, "This comment is newer than the threshold."));
+        secondParagraph.AppendChild(recentComment);
+
+        // Define the date threshold (30 days ago).
+        DateTime threshold = DateTime.Now.AddDays(-30);
+
+        // Safely collect all comments in the document.
+        var comments = doc.GetChildNodes(NodeType.Comment, true)
+            .OfType<Comment>()
+            .ToList();
+
+        // Remove comments older than the threshold.
+        foreach (Comment c in comments)
+        {
+            if (c.DateTime < threshold)
             {
-                Author = "Alice",
-                Initial = "A",
-                DateTime = DateTime.Now.AddDays(-2) // Recent comment.
-            };
-            // Add visible text to the comment.
-            recentComment.AppendChild(new Paragraph(doc));
-            recentComment.FirstParagraph?.AppendChild(new Run(doc, "This is a recent comment."));
-            // Attach the comment to the first paragraph.
-            doc.FirstSection?.Body?.FirstParagraph?.AppendChild(recentComment);
-
-            // Add second paragraph with an old comment.
-            builder.Writeln("Second paragraph with an old comment.");
-            Comment oldComment = new Comment(doc)
-            {
-                Author = "Bob",
-                Initial = "B",
-                DateTime = DateTime.Now.AddDays(-10) // Old comment.
-            };
-            oldComment.AppendChild(new Paragraph(doc));
-            oldComment.FirstParagraph?.AppendChild(new Run(doc, "This is an old comment."));
-            // Attach the comment to the second paragraph.
-            Paragraph? secondParagraph = doc.FirstSection?.Body?.LastParagraph;
-            secondParagraph?.AppendChild(oldComment);
-
-            // Define the date threshold: comments older than this will be removed.
-            DateTime threshold = DateTime.Now.AddDays(-5);
-
-            // Enumerate all comments safely.
-            var allComments = doc.GetChildNodes(NodeType.Comment, true)
-                                 .OfType<Comment>()
-                                 .ToList();
-
-            // Remove comments older than the threshold.
-            foreach (Comment comment in allComments)
-            {
-                if (comment.DateTime < threshold)
-                {
-                    comment.Remove();
-                }
+                c.Remove();
             }
-
-            // Ensure output directory exists.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
-            doc.Save(outputPath);
         }
+
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
+
+        // Save the filtered document.
+        string outputPath = Path.Combine(outputDir, "filtered-comments.docx");
+        doc.Save(outputPath);
     }
 }

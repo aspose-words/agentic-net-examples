@@ -5,123 +5,123 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-#nullable enable
-
 namespace CommentInsertionExample
 {
-    // Simple record that mimics a row read from a database.
-    public class CommentRecord
+    // Simple POCO representing a comment record that might come from a database.
+    public class CommentData
     {
-        public int ParagraphIndex { get; set; }   // Zero‑based index of the paragraph to comment.
         public string Author { get; set; } = "";
         public string Initial { get; set; } = "";
         public DateTime DateTime { get; set; }
         public string Text { get; set; } = "";
+        // Zero‑based index of the paragraph in the main body to which the comment will be attached.
+        public int ParagraphIndex { get; set; }
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Ensure output directory exists.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-            Directory.CreateDirectory(outputDir);
+            // 1. Simulate reading comment data from a database.
+            List<CommentData> commentDataList = GetSampleCommentData();
 
-            // 1. Create a template document with a few paragraphs.
-            string templatePath = Path.Combine(outputDir, "template.docx");
+            // 2. Create a simple template document with a few paragraphs.
+            string templatePath = "template.docx";
             CreateTemplateDocument(templatePath);
-
-            // 2. Simulate reading comment data from a database.
-            List<CommentRecord> commentData = GetSampleCommentData();
 
             // 3. Load the template document.
             Document doc = new Document(templatePath);
 
-            // 4. Insert comments based on the simulated data.
-            foreach (CommentRecord record in commentData)
-            {
-                // Validate paragraph index.
-                Paragraph? targetParagraph = GetParagraphByIndex(doc, record.ParagraphIndex);
-                if (targetParagraph == null)
-                    continue; // Skip invalid indices.
-
-                // Create a new comment.
-                Comment comment = new Comment(doc)
-                {
-                    Author = record.Author,
-                    Initial = record.Initial,
-                    DateTime = record.DateTime
-                };
-
-                // Add a paragraph and run so the comment has visible text.
-                Paragraph commentParagraph = new Paragraph(doc);
-                commentParagraph.AppendChild(new Run(doc, record.Text));
-                comment.AppendChild(commentParagraph);
-
-                // Append the comment to the target paragraph.
-                targetParagraph.AppendChild(comment);
-            }
+            // 4. Insert comments based on the simulated database records.
+            InsertCommentsIntoDocument(doc, commentDataList);
 
             // 5. Save the resulting document.
-            string resultPath = Path.Combine(outputDir, "filled.docx");
-            doc.Save(resultPath);
+            string outputPath = "output-with-comments.docx";
+            doc.Save(outputPath);
         }
 
-        // Creates a simple template document with three paragraphs.
-        private static void CreateTemplateDocument(string path)
+        // Simulated database retrieval.
+        private static List<CommentData> GetSampleCommentData()
         {
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
-
-            builder.Writeln("First paragraph of the template.");
-            builder.Writeln("Second paragraph of the template.");
-            builder.Writeln("Third paragraph of the template.");
-
-            template.Save(path);
-        }
-
-        // Returns a list of comment records that would normally come from a database.
-        private static List<CommentRecord> GetSampleCommentData()
-        {
-            return new List<CommentRecord>
+            return new List<CommentData>
             {
-                new CommentRecord
+                new CommentData
                 {
-                    ParagraphIndex = 0,
                     Author = "Alice",
                     Initial = "AL",
-                    DateTime = DateTime.Now.AddMinutes(-15),
-                    Text = "Please review the opening statement."
+                    DateTime = DateTime.Now.AddDays(-2),
+                    Text = "Please review this opening paragraph.",
+                    ParagraphIndex = 0
                 },
-                new CommentRecord
+                new CommentData
                 {
-                    ParagraphIndex = 1,
                     Author = "Bob",
                     Initial = "BO",
-                    DateTime = DateTime.Now.AddMinutes(-10),
-                    Text = "Consider adding more details here."
+                    DateTime = DateTime.Now.AddDays(-1),
+                    Text = "Consider adding more details here.",
+                    ParagraphIndex = 1
                 },
-                new CommentRecord
+                new CommentData
                 {
-                    ParagraphIndex = 2,
-                    Author = "Carol",
-                    Initial = "CA",
-                    DateTime = DateTime.Now.AddMinutes(-5),
-                    Text = "Check the formatting of this paragraph."
+                    Author = "Charlie",
+                    Initial = "CH",
+                    DateTime = DateTime.Now,
+                    Text = "Typo detected.",
+                    ParagraphIndex = 2
                 }
             };
         }
 
-        // Retrieves a paragraph by its zero‑based index safely.
-        private static Paragraph? GetParagraphByIndex(Document doc, int index)
+        // Creates a basic template document with three paragraphs.
+        private static void CreateTemplateDocument(string filePath)
         {
-            if (doc.FirstSection?.Body?.Paragraphs == null)
-                return null;
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
 
-            if (index < 0 || index >= doc.FirstSection.Body.Paragraphs.Count)
-                return null;
+            builder.Writeln("This is the first paragraph of the template.");
+            builder.Writeln("This is the second paragraph of the template.");
+            builder.Writeln("This is the third paragraph of the template.");
 
-            return doc.FirstSection.Body.Paragraphs[index];
+            template.Save(filePath);
+        }
+
+        // Inserts comments into the specified document.
+        private static void InsertCommentsIntoDocument(Document doc, List<CommentData> comments)
+        {
+            // Ensure the document has at least one section and a body.
+            if (doc.FirstSection?.Body == null)
+                return;
+
+            // Retrieve all paragraphs in the main story.
+            List<Paragraph> paragraphs = doc.FirstSection.Body.Paragraphs.Cast<Paragraph>().ToList();
+
+            foreach (CommentData data in comments)
+            {
+                // Validate the target paragraph index.
+                if (data.ParagraphIndex < 0 || data.ParagraphIndex >= paragraphs.Count)
+                    continue; // Skip invalid indices.
+
+                Paragraph targetParagraph = paragraphs[data.ParagraphIndex];
+                if (targetParagraph == null)
+                    continue;
+
+                // Create a new comment node.
+                Comment comment = new Comment(doc)
+                {
+                    Author = data.Author,
+                    Initial = data.Initial,
+                    DateTime = data.DateTime
+                };
+
+                // The comment must contain at least one paragraph and run with visible text.
+                Paragraph commentParagraph = new Paragraph(doc);
+                Run commentRun = new Run(doc, data.Text);
+                commentParagraph.AppendChild(commentRun);
+                comment.AppendChild(commentParagraph);
+
+                // Attach the comment to the target paragraph.
+                targetParagraph.AppendChild(comment);
+            }
         }
     }
 }

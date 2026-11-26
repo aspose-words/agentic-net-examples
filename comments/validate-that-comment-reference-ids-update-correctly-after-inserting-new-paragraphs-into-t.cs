@@ -2,59 +2,87 @@ using System;
 using System.IO;
 using System.Linq;
 using Aspose.Words;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder.
+        // Create a new document and add initial content with a comment.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add an initial paragraph.
-        builder.Writeln("Paragraph 1.");
+        // First paragraph that will receive the comment.
+        builder.Writeln("Original paragraph with comment.");
 
-        // Create a comment and attach it to the first paragraph.
+        // Retrieve the paragraph we just created.
+        Paragraph? originalParagraph = doc.FirstSection?.Body?.LastParagraph;
+        if (originalParagraph == null)
+        {
+            Console.WriteLine("Failed to locate the original paragraph.");
+            return;
+        }
+
+        // Create a comment and attach it to the original paragraph.
         Comment comment = new Comment(doc)
         {
-            Author = "Alice",
-            Initial = "AL",
+            Author = "John Doe",
+            Initial = "JD",
             DateTime = DateTime.Now
         };
-        // Add visible text to the comment.
         comment.AppendChild(new Paragraph(doc));
-        comment.FirstParagraph?.AppendChild(new Run(doc, "This is a comment."));
+        comment.FirstParagraph?.AppendChild(new Run(doc, "This is a review comment."));
+        originalParagraph.AppendChild(comment);
 
-        // Append the comment node to the first paragraph.
-        Paragraph? firstParagraph = doc.FirstSection?.Body?.FirstParagraph;
-        firstParagraph?.AppendChild(comment);
+        // Another paragraph after the comment.
+        builder.Writeln("Paragraph after the comment.");
 
-        // Add a second paragraph after the comment.
-        builder.Writeln("Paragraph 2.");
+        // Save the initial document.
+        const string initialFile = "initial.docx";
+        doc.Save(initialFile);
 
-        // Capture the comment's Id before inserting a new paragraph.
-        Comment? commentBefore = doc.GetChildNodes(NodeType.Comment, true)
+        // Retrieve the comment we just created.
+        Comment? retrievedComment = doc.GetChildNodes(NodeType.Comment, true)
+                                      .OfType<Comment>()
+                                      .FirstOrDefault();
+
+        if (retrievedComment == null)
+        {
+            Console.WriteLine("No comment found in the document.");
+            return;
+        }
+
+        int originalCommentId = retrievedComment.Id;
+
+        // Insert a new paragraph BEFORE the original paragraph.
+        Paragraph newParagraph = new Paragraph(doc);
+        newParagraph.AppendChild(new Run(doc, "Inserted new paragraph before the commented paragraph."));
+        doc.FirstSection?.Body?.InsertBefore(newParagraph, originalParagraph);
+
+        // After insertion, locate the comment again and verify its parent paragraph.
+        Comment? updatedComment = doc.GetChildNodes(NodeType.Comment, true)
                                     .OfType<Comment>()
-                                    .FirstOrDefault();
-        int? idBefore = commentBefore?.Id;
+                                    .FirstOrDefault(c => c.Id == originalCommentId);
 
-        // Insert a new paragraph at the very beginning of the document.
-        builder.MoveToDocumentStart();
-        builder.Writeln("Inserted paragraph before the original comment.");
+        if (updatedComment == null)
+        {
+            Console.WriteLine("Comment disappeared after insertion.");
+            return;
+        }
 
-        // Capture the comment's Id after the insertion.
-        Comment? commentAfter = doc.GetChildNodes(NodeType.Comment, true)
-                                   .OfType<Comment>()
-                                   .FirstOrDefault();
-        int? idAfter = commentAfter?.Id;
+        // The comment's ID should remain unchanged.
+        bool idUnchanged = updatedComment.Id == originalCommentId;
 
-        // Output the Ids to verify they are unchanged.
-        Console.WriteLine($"Comment Id before insertion: {idBefore}");
-        Console.WriteLine($"Comment Id after insertion:  {idAfter}");
-        Console.WriteLine($"Ids are {(idBefore == idAfter ? "consistent" : "different")} after insertion.");
+        // The comment should still be attached to the original paragraph.
+        bool parentCorrect = updatedComment.ParentNode is Paragraph parentPara &&
+                             parentPara.GetText().Contains("Original paragraph with comment.");
 
-        // Save the document to verify the result manually if needed.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CommentReferenceUpdate.docx");
-        doc.Save(outputPath);
+        // Output validation results.
+        Console.WriteLine($"Comment ID unchanged: {idUnchanged}");
+        Console.WriteLine($"Comment attached to correct paragraph after insertion: {parentCorrect}");
+
+        // Save the modified document.
+        const string modifiedFile = "modified.docx";
+        doc.Save(modifiedFile);
     }
 }

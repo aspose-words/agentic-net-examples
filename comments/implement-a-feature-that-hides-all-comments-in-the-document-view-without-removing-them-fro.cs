@@ -2,19 +2,22 @@ using System;
 using System.IO;
 using System.Linq;
 using Aspose.Words;
+using Aspose.Words.Drawing;
+using Aspose.Words.Tables;
+using Aspose.Words.Fonts;
 
 public class HideCommentsExample
 {
     public static void Main()
     {
-        // Create output folder.
+        // Ensure the output directory exists.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
         Directory.CreateDirectory(outputDir);
 
         // Create a new document and add a paragraph.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This paragraph will have a comment attached.");
+        builder.Writeln("This is a paragraph that will have a comment.");
 
         // Create a comment with visible text.
         Comment comment = new Comment(doc)
@@ -23,42 +26,42 @@ public class HideCommentsExample
             Initial = "JD",
             DateTime = DateTime.Now
         };
-        // Add a paragraph and a run inside the comment so it contains text.
+        // Add a paragraph and run inside the comment so it has content.
         Paragraph commentParagraph = new Paragraph(doc);
-        commentParagraph.AppendChild(new Run(doc, "Please review this paragraph."));
+        Run commentRun = new Run(doc, "Please review this paragraph.");
+        commentParagraph.AppendChild(commentRun);
         comment.AppendChild(commentParagraph);
 
-        // Attach the comment to the current paragraph (the one we just wrote).
-        Paragraph? targetParagraph = builder.CurrentParagraph;
+        // Attach the comment to the last paragraph of the main story.
+        Paragraph? targetParagraph = doc.FirstSection?.Body?.LastParagraph;
         if (targetParagraph != null)
         {
             targetParagraph.AppendChild(comment);
         }
 
-        // Save the document with visible comments.
-        string originalPath = Path.Combine(outputDir, "original-with-comments.docx");
+        // Save the original document (comments are visible).
+        string originalPath = Path.Combine(outputDir, "original.docx");
         doc.Save(originalPath);
+        Console.WriteLine($"Original document saved to: {originalPath}");
 
-        // NOTE: Aspose.Words does not provide a direct API to hide comments in a DOCX file
-        // while keeping them in the document. The typical approach is to control comment
-        // visibility in the Word UI (e.g., via Word's "Show Comments" option). Therefore,
-        // we simply save a copy of the same document to demonstrate that comments are
-        // still present and can be inspected programmatically.
+        // Hide all comments by setting the hidden formatting on their runs.
+        var allComments = doc.GetChildNodes(NodeType.Comment, true)
+                             .OfType<Comment>()
+                             .ToList();
 
+        foreach (Comment c in allComments)
+        {
+            var runs = c.GetChildNodes(NodeType.Run, true).OfType<Run>();
+            foreach (Run r in runs)
+            {
+                // Set the hidden attribute; hidden text is not shown in the view.
+                r.Font.Hidden = true;
+            }
+        }
+
+        // Save the document with hidden comments.
         string hiddenPath = Path.Combine(outputDir, "hidden-comments.docx");
         doc.Save(hiddenPath);
-
-        // Reload the saved document to verify comments still exist.
-        Document reloaded = new Document(hiddenPath);
-        var comments = reloaded.GetChildNodes(NodeType.Comment, true)
-                               .OfType<Comment>()
-                               .ToList();
-
-        // Output verification information.
-        Console.WriteLine($"Total comments in the saved document: {comments.Count}");
-        foreach (Comment c in comments)
-        {
-            Console.WriteLine($"{c.Author}: {c.GetText().Trim()}");
-        }
+        Console.WriteLine($"Document with hidden comments saved to: {hiddenPath}");
     }
 }

@@ -1,85 +1,71 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 
-namespace BatchCommentAdder
+public class BatchAddDisclaimer
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Define input and output folders relative to the current directory.
+        string baseDir = Directory.GetCurrentDirectory();
+        string inputDir = Path.Combine(baseDir, "InputDocs");
+        string outputDir = Path.Combine(baseDir, "OutputDocs");
+
+        // Ensure a clean environment.
+        if (Directory.Exists(inputDir))
+            Directory.Delete(inputDir, true);
+        if (Directory.Exists(outputDir))
+            Directory.Delete(outputDir, true);
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(outputDir);
+
+        // Create sample documents for the batch process.
+        CreateSampleDocument(Path.Combine(inputDir, "Sample1.docx"),
+            "First sample document.");
+        CreateSampleDocument(Path.Combine(inputDir, "Sample2.docx"),
+            "Second sample document with more text.");
+
+        // Standardized disclaimer text to be added as a comment.
+        const string disclaimer = "This document is confidential. Do not distribute.";
+
+        // Process each .docx file in the input folder.
+        foreach (string filePath in Directory.GetFiles(inputDir, "*.docx"))
         {
-            // Define folders for input and output documents.
-            string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
-            string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputDocs");
+            // Load the document.
+            Document doc = new Document(filePath);
 
-            // Ensure the folders exist.
-            Directory.CreateDirectory(inputFolder);
-            Directory.CreateDirectory(outputFolder);
-
-            // Create a few sample documents to demonstrate the batch process.
-            CreateSampleDocuments(inputFolder);
-
-            // Standardized disclaimer text to be added as a comment.
-            const string disclaimerText = "This document is confidential and intended for the designated recipient only.";
-
-            // Process each DOCX file in the input folder.
-            foreach (string filePath in Directory.GetFiles(inputFolder, "*.docx"))
+            // Create a new comment node.
+            Comment comment = new Comment(doc)
             {
-                // Load the document.
-                Document doc = new Document(filePath);
+                Author = "System",
+                Initial = "SYS",
+                DateTime = DateTime.Now
+            };
 
-                // Use DocumentBuilder to navigate to the start of the document.
-                DocumentBuilder builder = new DocumentBuilder(doc);
-                builder.MoveToDocumentStart();
+            // Add a paragraph with the disclaimer text inside the comment.
+            Paragraph commentParagraph = new Paragraph(doc);
+            commentParagraph.AppendChild(new Run(doc, disclaimer));
+            comment.AppendChild(commentParagraph);
 
-                // Insert a paragraph that will host the disclaimer comment.
-                builder.Writeln("Disclaimer:");
-
-                // Ensure we have a paragraph to attach the comment to.
-                Paragraph? targetParagraph = builder.CurrentParagraph;
-                if (targetParagraph == null)
-                {
-                    // If for some reason there is no current paragraph, skip this document.
-                    continue;
-                }
-
-                // Create the comment node.
-                Comment disclaimerComment = new Comment(doc)
-                {
-                    Author = "System",
-                    Initial = "SYS",
-                    DateTime = DateTime.Now
-                };
-
-                // Add a paragraph and run inside the comment so it contains visible text.
-                Paragraph commentParagraph = new Paragraph(doc);
-                Run commentRun = new Run(doc, disclaimerText);
-                commentParagraph.AppendChild(commentRun);
-                disclaimerComment.AppendChild(commentParagraph);
-
-                // Attach the comment to the target paragraph.
-                targetParagraph.AppendChild(disclaimerComment);
-
-                // Save the modified document to the output folder, preserving the original file name.
-                string outputPath = Path.Combine(outputFolder, Path.GetFileName(filePath));
-                doc.Save(outputPath);
-            }
-        }
-
-        // Helper method to generate sample DOCX files.
-        private static void CreateSampleDocuments(string folderPath)
-        {
-            for (int i = 1; i <= 3; i++)
+            // Anchor the comment to the first paragraph of the document, if it exists.
+            Paragraph? targetParagraph = doc.FirstSection?.Body?.FirstParagraph;
+            if (targetParagraph != null)
             {
-                Document sampleDoc = new Document();
-                DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-                builder.Writeln($"This is sample document {i}.");
-                string fileName = $"Sample{i}.docx";
-                string fullPath = Path.Combine(folderPath, fileName);
-                sampleDoc.Save(fullPath);
+                targetParagraph.AppendChild(comment);
             }
+
+            // Save the modified document to the output folder.
+            string outputPath = Path.Combine(outputDir, Path.GetFileName(filePath));
+            doc.Save(outputPath);
         }
+    }
+
+    // Helper method that creates a simple one‑paragraph document with the supplied text.
+    private static void CreateSampleDocument(string filePath, string bodyText)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln(bodyText);
+        doc.Save(filePath);
     }
 }
