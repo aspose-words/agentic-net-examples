@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
@@ -7,25 +8,25 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a 3‑D column chart.
-        Shape chartShape = builder.InsertChart(ChartType.Column3D, 432, 252);
+        // Insert a column chart.
+        Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
         Chart chart = chartShape.Chart;
 
-        // Remove the default demo series.
+        // Aspose.Words does not expose direct 3‑D rotation properties.
+        // The chart will be rendered with its default 3‑D perspective.
+
+        // Populate the chart with sample data.
         chart.Series.Clear();
-
-        // Add sample data.
-        string[] categories = { "Q1", "Q2", "Q3", "Q4" };
-        chart.Series.Add("Sales", categories, new double[] { 150, 200, 180, 220 });
-
-        // Note: Aspose.Words does not expose direct RotationX/RotationY properties for charts.
-        // The 3‑D effect is already applied by using the Column3D chart type.
+        chart.Series.Add("Q1 Sales", new double[] { 12000, 15000, 18000 });
+        chart.Series.Add("Q2 Sales", new double[] { 14000, 16000, 19000 });
 
         // Save the document.
-        doc.Save("3DColumnChart.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ColumnChart3D.docx");
+        doc.Save(outputPath);
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

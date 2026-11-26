@@ -4,12 +4,12 @@
     "slug": "charts",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Always call DocumentBuilder.InsertChart with a valid ChartType, verify shape.HasChart before accessing the Chart property, clear any default series, then populate data using Chart.Series.Add overloads that accept category labels and value arrays; when placing a chart inside a table, balance the table constructs (StartTable, InsertCell, EndRow, EndTable) before saving; bootstrap any required DOCX, folder, or stream inputs locally at the start of the example.",
+    "preferred_workflow": "Always bootstrap a local DOCX (or stream) when a task mentions an existing file, then locate a Shape with HasChart == true before accessing its Chart property; use DocumentBuilder.InsertChart with a supported ChartType, clear any default series, add series via the overload that accepts category labels and values, and finally save the document.",
     "required_packages": [
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.10.0"
+      "Aspose.Words": "26.11.0"
     },
     "required_namespaces": [
       "System",
@@ -20,21 +20,18 @@
       "Aspose.Words.Drawing.Charts",
       "Aspose.Words.Tables",
       "System.Drawing",
-      "System.Reflection",
-      "Aspose.Words.Saving"
+      "System.Reflection"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
       "NodeType",
-      "File",
       "Shape",
       "Chart",
       "ChartType",
       "Paragraph",
       "Directory",
       "Path",
-      "Cell",
       "CellFormat",
       "ChartSeries",
       "Font",
@@ -54,57 +51,49 @@
   },
   "rules_summary": {
     "strict_api_bans": [
-      "Do not treat a generic Shape as a chart unless shape.HasChart is true.",
-      "Do not reference members that are not part of Aspose.Words.Chart, such as CategoryAxis, ChartLegend.IsVisible, or Trendline APIs.",
-      "Do not add or remove series without first clearing or validating the existing series collection."
+      "Never treat a generic Shape as a chart without first checking Shape.HasChart.",
+      "Do not reference ChartType, Chart, or any chart members that are not present in the installed Aspose.Words version.",
+      "Do not add or remove series without first clearing the default series collection."
     ],
     "canonical_patterns": [
-      "Insert charts with DocumentBuilder.InsertChart using the required ChartType enumeration.",
-      "When a task mentions an existing file, paragraph, chart, stream, or folder, create a local sample DOCX or directory at the beginning of the example.",
-      "Validate that each series has a matching number of category labels and values before saving.",
-      "Balance table state (StartTable, InsertCell, EndRow, EndTable) before document save."
+      "Insert charts with DocumentBuilder.InsertChart specifying a valid ChartType enum value.",
+      "When a task references an existing file, folder, or stream, create a minimal sample DOCX in the example before proceeding.",
+      "Validate that each series has the same number of category labels before saving the document."
     ],
     "nullable_warning_prevention": [
-      "Initialize all non-nullable reference-type fields or use the null-forgiving operator to satisfy the compiler.",
-      "Guard any potentially null nodes (e.g., builder.CurrentParagraph?.ParentNode) with explicit null checks before dereferencing.",
-      "Declare locals as nullable when a value may be absent and perform a null-check prior to use."
+      "Initialize all non-nullable reference-type fields or properties to satisfy the compiler.",
+      "Declare variables that may be null as nullable and guard their use with explicit null checks.",
+      "Prefer pattern matching (e.g., if (shape?.HasChart == true) ...) to avoid CS8602 warnings."
     ]
   },
   "common_failure_patterns": [
     {
-      "pattern": "Invalid chart shape assumption",
-      "symptom": "Code accesses Shape.Chart without confirming shape.HasChart, leading to CS1061 errors.",
-      "cause": "The example treats any Shape as a chart regardless of its actual content.",
-      "fix": "Add a shape.HasChart check and throw a clear exception if the shape does not contain a chart.",
-      "prevention": "Always guard chart access with if (shape.HasChart) { ... } else { throw new InvalidOperationException(...); }."
+      "pattern": "Invalid chart type reference",
+      "symptom": "The compiler reports CS0103 for 'ChartType' and CS0246 for missing 'Chart' namespace.",
+      "cause": "The example uses a ChartType enum or Chart class that is not part of the referenced Aspose.Words version.",
+      "fix": "Import Aspose.Words.Drawing.Charts and use only the ChartType values documented for version 26.11.0; replace missing types with the correct enum members.",
+      "prevention": "Consult the Aspose.Words API reference for the exact enum names before writing code and add the required using directive."
     },
     {
-      "pattern": "Use of non-existent chart members",
-      "symptom": "Compilation fails with CS1061 or CS0246 for members such as CategoryAxis, ChartLegend.IsVisible, Trendline, or DataLabel properties that do not exist in Aspose.Words.",
-      "cause": "The code references API members that are part of other libraries (e.g., Aspose.Slides) or older versions of Aspose.Words.",
-      "fix": "Replace the invalid members with the supported Aspose.Words equivalents, or omit the unsupported functionality.",
-      "prevention": "Consult the Aspose.Words 26.10.0 documentation for the exact Chart API surface before writing code."
+      "pattern": "Missing chart API members",
+      "symptom": "CS1061 errors appear for members such as CategoryAxis, DataLabel, Trendlines, Fill, or NumberFormat.",
+      "cause": "The code attempts to access properties or methods that were removed or never existed in the current library.",
+      "fix": "Remove calls to unavailable members and use the supported alternatives, such as ChartSeries.HasDataLabels, ChartSeries.DataLabels, and ChartSeries.DataPoints[i].Format.Fill for coloring.",
+      "prevention": "Reference the official Aspose.Words chart documentation and verify member availability with IntelliSense or the API browser."
     },
     {
-      "pattern": "Table insertion state imbalance",
-      "symptom": "Saving the document throws runtime errors because the table construction (StartTable/InsertCell/EndRow/EndTable) is not balanced.",
-      "cause": "The example leaves an open table row or cell when inserting a chart.",
-      "fix": "Ensure that every StartTable is paired with EndTable and that each InsertCell is followed by EndRow before saving.",
-      "prevention": "Wrap chart insertion inside a clearly delimited table block and call builder.EndRow() and builder.EndTable() after the chart is placed."
+      "pattern": "Assuming shape contains a chart",
+      "symptom": "Runtime or compile-time errors occur when accessing shape.Chart without checking HasChart.",
+      "cause": "The example treats any Shape as a chart, violating the strict API ban.",
+      "fix": "Guard chart access with if (shape.HasChart) { Chart chart = shape.Chart; ... } and throw a clear exception when the condition fails.",
+      "prevention": "Always include a HasChart check before dereferencing the Chart property."
     },
     {
-      "pattern": "Missing local bootstrap inputs",
-      "symptom": "Examples that reference external DOCX files, folders, or streams fail at runtime because the inputs do not exist.",
-      "cause": "The code assumes pre-existing files or directories without creating them in the sample.",
-      "fix": "Create a minimal DOCX, directory, or memory stream at the start of the example and use it for subsequent operations.",
-      "prevention": "Always include a self-contained bootstrap section that generates any required input artifacts."
-    },
-    {
-      "pattern": "Incorrect overload usage for builder navigation",
-      "symptom": "CS7036 errors occur when calling DocumentBuilder.MoveToParagraph without providing the required characterIndex argument.",
-      "cause": "The example uses an overload that no longer exists or omits required parameters.",
-      "fix": "Use the overload MoveToParagraph(paragraphIndex, characterIndex) with both arguments, or move the builder by referencing the target Paragraph node directly.",
-      "prevention": "Refer to the current Aspose.Words API for the correct overload signatures before invoking navigation methods."
+      "pattern": "Incorrect series/data API usage",
+      "symptom": "CS1061 errors for missing Values, CategoryNames, or Add overloads; data misalignment warnings during rendering.",
+      "cause": "The code uses outdated overload signatures or mismatched arrays for categories and values.",
+      "fix": "Clear the default series collection, then add series using the overload that accepts (string seriesName, string[] categories, double[] values) or (string seriesName, double[] xValues, double[] yValues) for scatter charts.",
+      "prevention": "Validate that the length of category and value arrays match before calling Add, and always clear existing series first."
     }
   ],
   "examples": [
@@ -149,8 +138,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 5,
@@ -215,8 +204,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 11,
@@ -314,8 +303,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 20,
@@ -347,8 +336,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 23,
@@ -391,8 +380,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 27,
@@ -402,8 +391,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 28,
@@ -424,8 +413,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 30,
@@ -468,8 +457,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 34,
@@ -490,8 +479,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 36,
@@ -540,13 +529,13 @@
     }
   ],
   "narrative": {
-    "overview": "The Charts category of Aspose.Words supplies native APIs for creating, customizing, and exporting chart objects inside Word documents. The verified examples illustrate inserting various chart types, populating data from arrays, cloning chart shapes, embedding charts in table cells, and dynamically swapping chart types while respecting the library's supported API surface.",
-    "purpose": "Guide the AI coding agent to produce correct, compile-time-safe Aspose.Words chart code by enforcing the native chart workflow, applying documented API contracts, and avoiding the common misuse patterns that cause compilation failures.",
+    "overview": "The Charts category of Aspose.Words enables programmatic creation, manipulation, and export of Word chart objects. Verified examples demonstrate loading documents, inserting various chart types, customizing series, cloning shapes, and handling data labels using the native Aspose.Words chart API.",
+    "purpose": "Provide an AI coding assistant with concise guidance to generate correct, compilable C# snippets that work with Aspose.Words 26.11.0 chart features, ensuring proper document bootstrap, API usage, and null-safety.",
     "validation_priorities": [
-      "Prioritize compile-time validation of API members and nullability before runtime execution."
+      "Ensure the code compiles against Aspose.Words 26.11.0 and that every accessed chart member exists in that version."
     ],
     "maintenance_notes": [
-      "Periodically review Aspose.Words release notes to update the list of supported chart members and adjust the strict API bans accordingly."
+      "Periodically verify that all chart members used in examples still exist in the latest Aspose.Words release and update the code accordingly."
     ]
   }
 }

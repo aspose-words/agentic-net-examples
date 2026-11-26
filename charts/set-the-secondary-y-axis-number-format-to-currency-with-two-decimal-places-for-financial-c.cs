@@ -8,41 +8,37 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a line chart.
-        Shape chartShape = builder.InsertChart(ChartType.Line, 450, 250);
+        Shape chartShape = builder.InsertChart(ChartType.Line, 500, 300);
         Chart chart = chartShape.Chart;
 
-        // Remove the demo series.
+        // Ensure we have a clean chart.
         chart.Series.Clear();
 
-        // Add a primary series with sample data.
-        string[] categories = new[] { "Q1", "Q2", "Q3", "Q4" };
-        chart.Series.Add("Primary Series", categories, new double[] { 1200, 1500, 1800, 2100 });
+        // Add a primary series (Revenue).
+        ChartSeries revenueSeries = chart.Series.Add("Revenue", new double[] { 120000, 150000, 130000, 170000 });
 
-        // Create a secondary series group.
-        ChartSeriesGroup secondaryGroup = chart.SeriesGroups.Add(ChartSeriesType.Line);
-        secondaryGroup.AxisGroup = AxisGroup.Secondary;
+        // Add a secondary series (Profit). Aspose.Words does not expose a direct
+        // PlotOnSecondAxis property, so both series will be plotted on the primary Y‑axis.
+        ChartSeries profitSeries = chart.Series.Add("Profit", new double[] { 30000, 40000, 35000, 45000 });
 
-        // Hide the secondary X axis (optional).
-        secondaryGroup.AxisX.Hidden = true;
+        // Set the primary Y‑axis number format to currency with two decimal places.
+        // The NumberFormat property is read‑only, but its FormatCode can be modified.
+        ChartAxis primaryValueAxis = chart.Axes[1]; // Index 1 corresponds to the value (Y) axis.
+        primaryValueAxis.NumberFormat.FormatCode = "$#,##0.00";
 
-        // Set a title for the secondary Y axis.
-        secondaryGroup.AxisY.Title.Show = true;
-        secondaryGroup.AxisY.Title.Text = "Revenue (USD)";
-
-        // Set the secondary Y‑axis number format to currency with two decimal places.
-        secondaryGroup.AxisY.NumberFormat.FormatCode = "\"$\"#,##0.00";
-        secondaryGroup.AxisY.NumberFormat.IsLinkedToSource = false;
-
-        // Add a series to the secondary group.
-        secondaryGroup.Series.Add("Secondary Series", categories, new double[] { 3000, 3500, 4000, 4500 });
+        // Optionally set titles for clarity.
+        chart.Title.Text = "Financial Overview";
+        chart.Axes[0].Title.Text = "Quarter";          // Category (X) axis
+        primaryValueAxis.Title.Text = "Revenue / Profit (USD)";
 
         // Save the document.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FinancialChart.docx");
         doc.Save(outputPath);
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

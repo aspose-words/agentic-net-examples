@@ -14,13 +14,20 @@ public class Program
         // Insert a column chart into the document.
         Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
 
-        // Retrieve the Chart object from the inserted shape.
+        // Verify that the inserted shape actually contains a chart.
+        if (!chartShape.HasChart)
+        {
+            throw new InvalidOperationException("The inserted shape does not contain a chart.");
+        }
+
+        // Retrieve the Chart object from the shape.
         Chart chart = chartShape.Chart;
 
-        // Modify the chart title text.
-        chart.Title.Text = "Quarterly Sales";
+        // Modify the chart title.
+        chart.Title.Text = "Sales Overview";
+        chart.Title.Show = true;
 
-        // Save the document with the updated chart title.
-        doc.Save("ChartTitleModified.docx");
+        // Save the document with the updated chart.
+        doc.Save("chart-with-title.docx");
     }
 }

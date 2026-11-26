@@ -15,43 +15,34 @@ public class Program
         // Insert a column chart.
         Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
         if (!chartShape.HasChart)
-        {
-            throw new InvalidOperationException("Inserted shape does not contain a chart.");
-        }
+            throw new InvalidOperationException("The inserted shape does not contain a chart.");
 
-        // Access the chart.
         Chart chart = chartShape.Chart;
 
-        // Clear any default series and add our own data.
+        // Remove any default series.
         chart.Series.Clear();
+
+        // Expected counts.
+        int expectedSeriesCount = 2;
+        int expectedPointsPerSeries = 3;
+
+        // Add series with the expected number of data points.
         chart.Series.Add("Series 1", new double[] { 10, 20, 30 });
         chart.Series.Add("Series 2", new double[] { 15, 25, 35 });
 
-        // Expected counts.
-        const int expectedSeriesCount = 2;
-        const int expectedPointsPerSeries = 3;
-
         // Validate series count.
         if (chart.Series.Count != expectedSeriesCount)
-        {
-            throw new InvalidOperationException(
-                $"Chart must contain {expectedSeriesCount} series, but found {chart.Series.Count}.");
-        }
+            throw new InvalidOperationException($"Chart must contain {expectedSeriesCount} series, but found {chart.Series.Count}.");
 
         // Validate data point count for each series.
         foreach (ChartSeries series in chart.Series)
         {
-            int pointsCount = series.DataPoints?.Count ?? 0;
-            if (pointsCount != expectedPointsPerSeries)
-            {
-                throw new InvalidOperationException(
-                    $"Series '{series.Name}' must contain {expectedPointsPerSeries} data points, but found {pointsCount}.");
-            }
+            if (series.DataPoints.Count != expectedPointsPerSeries)
+                throw new InvalidOperationException($"Series '{series.Name}' must contain {expectedPointsPerSeries} data points, but found {series.DataPoints.Count}.");
         }
 
         // Save the document.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "validated-chart.docx");
         doc.Save(outputPath);
-        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

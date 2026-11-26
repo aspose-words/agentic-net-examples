@@ -1,27 +1,30 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Drawing.Charts;   // Required for Chart, ChartType, etc.
+using Aspose.Words.Drawing.Charts;
 
-public class Program
+namespace ChartSeriesExample
 {
-    public static void Main()
+    class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart with the desired size.
-        Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
-        Chart chart = chartShape.Chart;
+            // Insert a column chart with specific dimensions.
+            Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
+            Chart chart = chartShape.Chart;
 
-        // Remove any automatically added default series.
-        chart.Series.Clear();
+            // Clear any default series that were added automatically.
+            chart.Series.Clear();
 
-        // Add a labeled series in a single call using the overload that accepts a name and values.
-        chart.Series.Add("Quarterly Sales", new double[] { 15000, 20000, 18000, 22000 });
+            // Add a labeled series in one step using the overload that accepts a name and values.
+            chart.Series.Add("Quarterly Sales", new double[] { 15000, 20000, 25000, 30000 });
 
-        // Save the document.
-        doc.Save("LabeledSeriesChart.docx");
+            // Save the document to a file.
+            doc.Save("ChartSeriesLabeled.docx");
+        }
     }
 }

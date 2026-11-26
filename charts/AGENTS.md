@@ -10,13 +10,13 @@ product: Aspose.Words
 
 ## Purpose
 
-Guide the AI coding agent to produce correct, compile-time-safe Aspose.Words chart code by enforcing the native chart workflow, applying documented API contracts, and avoiding the common misuse patterns that cause compilation failures.
+Provide an AI coding assistant with concise guidance to generate correct, compilable C# snippets that work with Aspose.Words 26.11.0 chart features, ensuring proper document bootstrap, API usage, and null-safety.
 
 ## Non-negotiable conventions
 
-- Do not treat a generic Shape as a chart unless shape.HasChart is true.
-- Do not reference members that are not part of Aspose.Words.Chart, such as CategoryAxis, ChartLegend.IsVisible, or Trendline APIs.
-- Do not add or remove series without first clearing or validating the existing series collection.
+- Never treat a generic Shape as a chart without first checking Shape.HasChart.
+- Do not reference ChartType, Chart, or any chart members that are not present in the installed Aspose.Words version.
+- Do not add or remove series without first clearing the default series collection.
 - Bootstrap local sample inputs for existing-file, folder, stream, image, and data workflows.
 - Prefer simple, verifiable workflows over speculative formatting shortcuts.
 
@@ -31,7 +31,7 @@ Use the simplest workflow that satisfies the task.
 
 ## Validation priorities
 
-1. Prioritize compile-time validation of API members and nullability before runtime execution.
+1. Ensure the code compiles against Aspose.Words 26.11.0 and that every accessed chart member exists in that version.
 
 ## File-to-task reference
 
@@ -54,7 +54,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Insert a chart using a two-dimensional array as a custom data source, mapping series and categories.
   - Workflow: native-chart-api
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `insert-a-chart-into-a-table-cell-and-ensure-it-scales-proportionally-with-the-cell-dimensi.cs`
   - Task: Insert a chart into a table cell and ensure it scales proportionally with the cell dimensions.
   - Workflow: validation
@@ -84,7 +84,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Add multiple ChartDataPoint objects to a series and set each point's color using the Fill property.
   - Workflow: stream-batch-io
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `change-the-chart-type-from-column-to-line-after-populating-data-to-demonstrate-dynamic-tra.cs`
   - Task: Change the chart type from column to line after populating data to demonstrate dynamic transformation.
   - Workflow: native-chart-api
@@ -129,7 +129,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Set major gridlines visibility on the primary X-axis and customize their line color and thickness.
   - Workflow: native-chart-api
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `adjust-the-primary-y-axis-scaling-to-fixed-minimum-and-maximum-values-and-set-major-unit-i.cs`
   - Task: Adjust the primary Y-axis scaling to fixed minimum and maximum values and set major unit intervals.
   - Workflow: native-chart-api
@@ -144,7 +144,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Set the secondary Y-axis number format to currency with two decimal places for financial charts.
   - Workflow: native-chart-api
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `apply-a-solid-fill-color-to-the-chart-plot-area-and-add-a-gradient-overlay-for-visual-dept.cs`
   - Task: Apply a solid fill color to the chart plot area and add a gradient overlay for visual depth.
   - Workflow: native-chart-api
@@ -164,12 +164,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Adjust the chart legend position to the top right corner and set its background fill to light gray.
   - Workflow: native-chart-api
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `update-the-chart-title-text-and-toggle-legend-visibility-based-on-user-preferences.cs`
   - Task: Update the chart title text and toggle legend visibility based on user preferences.
   - Workflow: native-chart-api
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `apply-a-predefined-chart-style-template-to-a-newly-inserted-chart-to-ensure-consistent-vis.cs`
   - Task: Apply a predefined chart style template to a newly inserted chart to ensure consistent visual branding.
   - Workflow: validation
@@ -179,7 +179,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Apply a three-dimensional rotation effect to a column chart to enhance visual perspective.
   - Workflow: native-chart-api
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `programmatically-change-the-chart-s-plot-area-border-to-a-dashed-line-with-specific-color.cs`
   - Task: Programmatically change the chart's plot area border to a dashed line with specific color and width.
   - Workflow: native-chart-api
@@ -199,7 +199,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Retrieve existing chart series, modify their data points, and refresh the chart display.
   - Workflow: existing-docx-and-export
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `remove-a-specific-series-from-a-chart-using-chartseriescollection-removeat-with-the-correc.cs`
   - Task: Remove a specific series from a chart using ChartSeriesCollection.RemoveAt with the correct index.
   - Workflow: native-chart-api
@@ -209,7 +209,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Validate that a chart contains the expected number of series and data points before saving.
   - Workflow: validation
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `validate-that-all-chart-series-have-matching-category-counts-to-prevent-data-misalignment.cs`
   - Task: Validate that all chart series have matching category counts to prevent data misalignment errors during rendering.
   - Workflow: existing-docx-and-export
@@ -233,47 +233,41 @@ Use the simplest workflow that satisfies the task.
 
 ## Common failure patterns and preferred agent fixes
 
-- **Invalid chart shape assumption**
-  - Symptom: Code accesses Shape.Chart without confirming shape.HasChart, leading to CS1061 errors.
-  - Root cause: The example treats any Shape as a chart regardless of its actual content.
-  - Preferred fix: Add a shape.HasChart check and throw a clear exception if the shape does not contain a chart.
-  - Prevention: Always guard chart access with if (shape.HasChart) { ... } else { throw new InvalidOperationException(...); }.
+- **Invalid chart type reference**
+  - Symptom: The compiler reports CS0103 for 'ChartType' and CS0246 for missing 'Chart' namespace.
+  - Root cause: The example uses a ChartType enum or Chart class that is not part of the referenced Aspose.Words version.
+  - Preferred fix: Import Aspose.Words.Drawing.Charts and use only the ChartType values documented for version 26.11.0; replace missing types with the correct enum members.
+  - Prevention: Consult the Aspose.Words API reference for the exact enum names before writing code and add the required using directive.
 
-- **Use of non-existent chart members**
-  - Symptom: Compilation fails with CS1061 or CS0246 for members such as CategoryAxis, ChartLegend.IsVisible, Trendline, or DataLabel properties that do not exist in Aspose.Words.
-  - Root cause: The code references API members that are part of other libraries (e.g., Aspose.Slides) or older versions of Aspose.Words.
-  - Preferred fix: Replace the invalid members with the supported Aspose.Words equivalents, or omit the unsupported functionality.
-  - Prevention: Consult the Aspose.Words 26.10.0 documentation for the exact Chart API surface before writing code.
+- **Missing chart API members**
+  - Symptom: CS1061 errors appear for members such as CategoryAxis, DataLabel, Trendlines, Fill, or NumberFormat.
+  - Root cause: The code attempts to access properties or methods that were removed or never existed in the current library.
+  - Preferred fix: Remove calls to unavailable members and use the supported alternatives, such as ChartSeries.HasDataLabels, ChartSeries.DataLabels, and ChartSeries.DataPoints[i].Format.Fill for coloring.
+  - Prevention: Reference the official Aspose.Words chart documentation and verify member availability with IntelliSense or the API browser.
 
-- **Table insertion state imbalance**
-  - Symptom: Saving the document throws runtime errors because the table construction (StartTable/InsertCell/EndRow/EndTable) is not balanced.
-  - Root cause: The example leaves an open table row or cell when inserting a chart.
-  - Preferred fix: Ensure that every StartTable is paired with EndTable and that each InsertCell is followed by EndRow before saving.
-  - Prevention: Wrap chart insertion inside a clearly delimited table block and call builder.EndRow() and builder.EndTable() after the chart is placed.
+- **Assuming shape contains a chart**
+  - Symptom: Runtime or compile-time errors occur when accessing shape.Chart without checking HasChart.
+  - Root cause: The example treats any Shape as a chart, violating the strict API ban.
+  - Preferred fix: Guard chart access with if (shape.HasChart) { Chart chart = shape.Chart; ... } and throw a clear exception when the condition fails.
+  - Prevention: Always include a HasChart check before dereferencing the Chart property.
 
-- **Missing local bootstrap inputs**
-  - Symptom: Examples that reference external DOCX files, folders, or streams fail at runtime because the inputs do not exist.
-  - Root cause: The code assumes pre-existing files or directories without creating them in the sample.
-  - Preferred fix: Create a minimal DOCX, directory, or memory stream at the start of the example and use it for subsequent operations.
-  - Prevention: Always include a self-contained bootstrap section that generates any required input artifacts.
-
-- **Incorrect overload usage for builder navigation**
-  - Symptom: CS7036 errors occur when calling DocumentBuilder.MoveToParagraph without providing the required characterIndex argument.
-  - Root cause: The example uses an overload that no longer exists or omits required parameters.
-  - Preferred fix: Use the overload MoveToParagraph(paragraphIndex, characterIndex) with both arguments, or move the builder by referencing the target Paragraph node directly.
-  - Prevention: Refer to the current Aspose.Words API for the correct overload signatures before invoking navigation methods.
+- **Incorrect series/data API usage**
+  - Symptom: CS1061 errors for missing Values, CategoryNames, or Add overloads; data misalignment warnings during rendering.
+  - Root cause: The code uses outdated overload signatures or mismatched arrays for categories and values.
+  - Preferred fix: Clear the default series collection, then add series using the overload that accepts (string seriesName, string[] categories, double[] values) or (string seriesName, double[] xValues, double[] yValues) for scatter charts.
+  - Prevention: Validate that the length of category and value arrays match before calling Add, and always clear existing series first.
 
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Primary package: `Aspose.Words` `26.10.0`
+- Primary package: `Aspose.Words` `26.11.0`
 
 ## Command reference
 
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.10.0
+dotnet add package Aspose.Words --version 26.11.0
 ```
 
 ```powershell
@@ -287,4 +281,4 @@ dotnet run --configuration Release --no-build
 
 ## Category update guidance
 
-- Periodically review Aspose.Words release notes to update the list of supported chart members and adjust the strict API bans accordingly.
+- Periodically verify that all chart members used in examples still exist in the latest Aspose.Words release and update the code accordingly.

@@ -3,47 +3,52 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new document and insert an initial column chart.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertChart(ChartType.Column, 400, 300);
-
-        // Save the document to a memory stream.
-        using (MemoryStream tempStream = new MemoryStream())
+        // 1. Create a simple document and save it to a writable memory stream.
+        Document initialDoc = new Document();
+        using (MemoryStream writableStream = new MemoryStream())
         {
-            doc.Save(tempStream, SaveFormat.Docx);
-            byte[] docBytes = tempStream.ToArray();
+            initialDoc.Save(writableStream, SaveFormat.Docx);
 
-            // Create a read‑only stream from the saved bytes.
+            // 2. Obtain the byte array of the document.
+            byte[] docBytes = writableStream.ToArray();
+
+            // 3. Create a read‑only memory stream from the byte array.
             using (MemoryStream readOnlyStream = new MemoryStream(docBytes, writable: false))
             {
-                // Load the document from the read‑only stream.
-                Document readOnlyDoc = new Document(readOnlyStream);
-                DocumentBuilder readOnlyBuilder = new DocumentBuilder(readOnlyDoc);
+                // 4. Load the document from the read‑only stream.
+                Document doc = new Document(readOnlyStream);
 
                 try
                 {
-                    // Attempt to insert another chart (pie chart) into the read‑only document.
-                    readOnlyBuilder.InsertChart(ChartType.Pie, 400, 300);
+                    // 5. Insert a chart into the document.
+                    DocumentBuilder builder = new DocumentBuilder(doc);
+                    Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
+                    Chart chart = chartShape.Chart;
 
-                    // Attempt to save changes back to the read‑only stream.
+                    // (Optional) Add a simple series to the chart.
+                    chart.Series.Clear();
+                    chart.Series.Add("Sample", new double[] { 10, 20, 30 });
+
+                    // 6. Attempt to save the modified document back to the same read‑only stream.
                     // This will throw because the stream does not support writing.
-                    readOnlyDoc.Save(readOnlyStream, SaveFormat.Docx);
+                    doc.Save(readOnlyStream, SaveFormat.Docx);
                 }
                 catch (Exception ex)
                 {
-                    // Display the exception that occurs due to the read‑only stream.
-                    Console.WriteLine($"Exception caught while saving to a read‑only stream: {ex.Message}");
+                    // 7. Handle the exception that occurs due to the read‑only stream.
+                    Console.WriteLine("An error occurred while inserting a chart into a read‑only document stream:");
+                    Console.WriteLine($"{ex.GetType().Name}: {ex.Message}");
                 }
 
-                // Save the modified document to a regular file to demonstrate a successful save.
-                readOnlyDoc.Save("modified.docx");
+                // 8. Save the successfully modified document to a regular file for verification (optional).
+                string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
+                doc.Save(outputPath);
+                Console.WriteLine($"Document saved to: {outputPath}");
             }
         }
     }
