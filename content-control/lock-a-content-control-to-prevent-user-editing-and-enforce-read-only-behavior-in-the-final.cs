@@ -1,6 +1,8 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Markup;
+using Newtonsoft.Json;
 
 public class Program
 {
@@ -9,7 +11,7 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Get the first paragraph of the document.
+        // Get the first paragraph of the document body (it always exists in a new document).
         Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
 
         // Create an inline plain‑text content control.
@@ -17,19 +19,23 @@ public class Program
         contentControl.Title = "ReadOnlyInfo";
         contentControl.Tag = "readonly-info";
 
-        // Set the text inside the content control.
+        // Lock the content control so the user cannot edit its contents or its properties.
+        contentControl.LockContents = true;
+        contentControl.LockContentControl = true;
+
+        // Set the displayed text inside the content control.
         contentControl.RemoveAllChildren();
         contentControl.AppendChild(new Run(doc, "This text is read‑only."));
 
-        // Lock the content control to make it read‑only.
-        contentControl.LockContents = true;          // Prevent editing of the content.
-        contentControl.LockContentControl = true;    // Prevent deletion or moving of the control.
-
-        // Insert the locked content control into the paragraph.
+        // Insert the content control into the paragraph.
         paragraph.AppendChild(contentControl);
 
-        // Save the resulting document.
-        const string outputFileName = "locked-content-control.docx";
-        doc.Save(outputFileName);
+        // Ensure the output directory exists.
+        string outputDir = "output";
+        Directory.CreateDirectory(outputDir);
+
+        // Save the document.
+        string outputPath = Path.Combine(outputDir, "locked-content-control.docx");
+        doc.Save(outputPath);
     }
 }

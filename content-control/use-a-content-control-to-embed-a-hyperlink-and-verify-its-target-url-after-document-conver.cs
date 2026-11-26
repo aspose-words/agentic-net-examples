@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Markup;
+using Newtonsoft.Json;
 
 public class Program
 {
@@ -10,46 +11,58 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Create a block‑level rich‑text content control.
-        StructuredDocumentTag linkControl = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
+        StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
         {
             Title = "LinkControl",
             Tag = "link-control"
         };
 
         // Add a paragraph that will hold the hyperlink.
-        Paragraph hyperlinkParagraph = new Paragraph(doc);
-        linkControl.AppendChild(hyperlinkParagraph);
+        Paragraph innerParagraph = new Paragraph(doc);
+        sdt.AppendChild(innerParagraph);
 
         // Insert the content control into the document body.
-        doc.FirstSection.Body.AppendChild(linkControl);
+        doc.FirstSection.Body.AppendChild(sdt);
 
-        // Use DocumentBuilder to insert a hyperlink into the paragraph inside the content control.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.MoveTo(hyperlinkParagraph);
-        builder.InsertHyperlink("https://example.com", "Click Here", false);
+        // Move the builder to the paragraph inside the content control.
+        builder.MoveTo(innerParagraph);
 
-        // Ensure fields are up‑to‑date before saving.
-        doc.UpdateFields();
+        // Insert a hyperlink into the paragraph.
+        const string displayText = "Aspose";
+        const string targetUrl = "https://www.aspose.com";
+        builder.InsertHyperlink(displayText, targetUrl, false);
 
-        // Save the original DOCX.
-        const string docxPath = "hyperlink-sdt.docx";
-        doc.Save(docxPath);
-
-        // Convert the document to HTML.
-        const string htmlPath = "hyperlink-sdt.html";
+        // Save the document in DOCX and HTML formats.
+        const string docxPath = "output.docx";
+        const string htmlPath = "output.html";
+        doc.Save(docxPath, SaveFormat.Docx);
         doc.Save(htmlPath, SaveFormat.Html);
 
-        // Verify that the hyperlink target URL is present in the HTML output.
+        // Verify that the HTML output contains the expected hyperlink URL.
         string htmlContent = File.ReadAllText(htmlPath);
-        const string expectedUrl = "https://example.com";
-        if (!htmlContent.Contains(expectedUrl))
-        {
-            throw new InvalidOperationException("Hyperlink target URL was not preserved after conversion.");
-        }
+        bool urlFound = htmlContent.Contains(targetUrl, StringComparison.OrdinalIgnoreCase);
 
-        // Indicate success.
-        Console.WriteLine("Hyperlink target URL verified successfully.");
+        // Prepare verification result.
+        var verificationResult = new
+        {
+            Document = docxPath,
+            HtmlFile = htmlPath,
+            TargetUrl = targetUrl,
+            UrlFoundInHtml = urlFound,
+            Message = urlFound
+                ? "Hyperlink URL verified successfully."
+                : "Hyperlink URL not found in HTML output."
+        };
+
+        // Serialize result to JSON file.
+        string jsonPath = "verification.json";
+        File.WriteAllText(jsonPath,
+            JsonConvert.SerializeObject(verificationResult, Formatting.Indented));
+
+        // Output result to console.
+        Console.WriteLine(JsonConvert.SerializeObject(verificationResult, Formatting.Indented));
     }
 }

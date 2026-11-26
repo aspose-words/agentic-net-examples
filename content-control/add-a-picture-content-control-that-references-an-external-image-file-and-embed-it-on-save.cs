@@ -5,56 +5,67 @@ using Aspose.Words.Markup;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
-using Aspose.Drawing.Drawing2D;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a simple PNG image using Aspose.Drawing.
+        // Create a simple PNG image programmatically.
         const string imageFileName = "sample.png";
-        using (Bitmap bitmap = new Bitmap(200, 100))
+        CreateSampleImage(imageFileName);
+
+        // Create a new blank document.
+        Document doc = new Document();
+
+        // Use DocumentBuilder to add introductory text.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Below is a picture content control:");
+
+        // Create a block‑level picture content control.
+        StructuredDocumentTag pictureSdt = new StructuredDocumentTag(doc, SdtType.Picture, MarkupLevel.Block);
+        pictureSdt.Title = "SamplePicture";
+        pictureSdt.Tag = "sample-picture";
+
+        // Append the content control to the document body.
+        doc.FirstSection.Body.AppendChild(pictureSdt);
+
+        // The picture content control must contain a paragraph that holds the image.
+        Paragraph pictureParagraph = new Paragraph(doc);
+        pictureSdt.AppendChild(pictureParagraph);
+
+        // Insert the image into the paragraph.
+        DocumentBuilder imageBuilder = new DocumentBuilder(doc);
+        imageBuilder.MoveTo(pictureParagraph);
+        Shape pictureShape = imageBuilder.InsertImage(imageFileName);
+        pictureShape.WrapType = WrapType.Inline; // Ensure the picture stays inline within the control.
+
+        // Save the resulting document. The image will be embedded automatically.
+        const string outputFileName = "picture-content-control.docx";
+        doc.Save(outputFileName);
+
+        // Clean up the temporary image file.
+        if (File.Exists(imageFileName))
         {
-            // Obtain a Graphics object for the bitmap.
+            File.Delete(imageFileName);
+        }
+    }
+
+    private static void CreateSampleImage(string path)
+    {
+        // Create a 100x100 pixel bitmap with a simple drawing.
+        using (Bitmap bitmap = new Bitmap(100, 100))
+        {
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
                 graphics.Clear(Color.LightBlue);
-                // Use Aspose.Drawing.Font to avoid ambiguity with Aspose.Words.Font.
-                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 20, FontStyle.Bold))
+                using (Pen pen = new Pen(Color.DarkBlue, 3))
                 {
-                    graphics.DrawString("Aspose", font, Brushes.DarkBlue, new PointF(10, 30));
+                    graphics.DrawEllipse(pen, 10, 10, 80, 80);
                 }
             }
 
-            bitmap.Save(imageFileName, ImageFormat.Png);
+            // Save the bitmap as a PNG file.
+            bitmap.Save(path, ImageFormat.Png);
         }
-
-        // Create a new Word document.
-        Document doc = new Document();
-
-        // Create a paragraph to hold the content control.
-        Paragraph paragraph = new Paragraph(doc);
-        doc.FirstSection.Body.AppendChild(paragraph);
-
-        // Create a picture content control (inline).
-        StructuredDocumentTag pictureSdt = new StructuredDocumentTag(doc, SdtType.Picture, MarkupLevel.Inline)
-        {
-            Title = "SampleImage",
-            Tag = "sample-image"
-        };
-
-        // Create a shape (image) and load the external image file.
-        Shape pictureShape = new Shape(doc, ShapeType.Image);
-        pictureShape.ImageData.SetImage(imageFileName); // Embeds the image data.
-
-        // Add the picture shape to the content control.
-        pictureSdt.AppendChild(pictureShape);
-
-        // Add the content control to the paragraph.
-        paragraph.AppendChild(pictureSdt);
-
-        // Save the document; the image will be embedded.
-        const string outputFileName = "PictureContentControl.docx";
-        doc.Save(outputFileName);
     }
 }

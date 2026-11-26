@@ -10,66 +10,78 @@ public class Program
     public static void Main()
     {
         // Create a sample document with several checkbox content controls.
-        Document doc = new Document();
-        // First checkbox
-        Paragraph para1 = new Paragraph(doc);
-        StructuredDocumentTag checkbox1 = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Inline);
+        Document sampleDoc = new Document();
+        Paragraph para = sampleDoc.FirstSection.Body.FirstParagraph;
+
+        // First checkbox (checked) – inline.
+        StructuredDocumentTag checkbox1 = new StructuredDocumentTag(sampleDoc, SdtType.Checkbox, MarkupLevel.Inline);
         checkbox1.Title = "AcceptTerms";
-        checkbox1.Tag = "accept-terms";
+        checkbox1.Tag = "accept_terms";
         checkbox1.Checked = true;
-        para1.AppendChild(checkbox1);
-        doc.FirstSection.Body.AppendChild(para1);
-        // Second checkbox
-        Paragraph para2 = new Paragraph(doc);
-        StructuredDocumentTag checkbox2 = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Inline);
+        para.AppendChild(checkbox1);
+        para.AppendChild(new Run(sampleDoc, " ")); // space separator
+
+        // Second checkbox (unchecked) – inline.
+        StructuredDocumentTag checkbox2 = new StructuredDocumentTag(sampleDoc, SdtType.Checkbox, MarkupLevel.Inline);
         checkbox2.Title = "SubscribeNewsletter";
-        checkbox2.Tag = "subscribe-newsletter";
+        checkbox2.Tag = "subscribe_newsletter";
         checkbox2.Checked = false;
-        para2.AppendChild(checkbox2);
-        doc.FirstSection.Body.AppendChild(para2);
-        // Third checkbox
-        Paragraph para3 = new Paragraph(doc);
-        StructuredDocumentTag checkbox3 = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Inline);
-        checkbox3.Title = "EnableNotifications";
-        checkbox3.Tag = "enable-notifications";
+        para.AppendChild(checkbox2);
+        para.AppendChild(new Run(sampleDoc, " "));
+
+        // Third checkbox (checked) – block level.
+        StructuredDocumentTag checkbox3 = new StructuredDocumentTag(sampleDoc, SdtType.Checkbox, MarkupLevel.Block);
+        checkbox3.Title = "ReceiveUpdates";
+        checkbox3.Tag = "receive_updates";
         checkbox3.Checked = true;
-        para3.AppendChild(checkbox3);
-        doc.FirstSection.Body.AppendChild(para3);
-        // Save the sample document (optional, demonstrates persistence).
+
+        // Block‑level SDT must contain at least one paragraph.
+        Paragraph innerPara = new Paragraph(sampleDoc);
+        innerPara.AppendChild(new Run(sampleDoc, " "));
+        checkbox3.AppendChild(innerPara);
+
+        // Append the block‑level SDT directly to the document body (not inside a paragraph).
+        sampleDoc.FirstSection.Body.AppendChild(checkbox3);
+
+        // Save the sample document.
         const string samplePath = "sample.docx";
-        doc.Save(samplePath);
-        // Load the document (could reuse the same instance, but loading demonstrates typical workflow).
-        Document loadedDoc = new Document(samplePath);
+        sampleDoc.Save(samplePath);
+
+        // Load the document for processing.
+        Document doc = new Document(samplePath);
+
         // Find all checkbox content controls.
-        var checkboxes = loadedDoc.GetChildNodes(NodeType.StructuredDocumentTag, true)
+        var checkboxes = doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
             .OfType<StructuredDocumentTag>()
             .Where(sdt => sdt.SdtType == SdtType.Checkbox)
+            .Select(sdt => new
+            {
+                Title = sdt.Title ?? string.Empty,
+                Tag = sdt.Tag ?? string.Empty,
+                Checked = sdt.Checked
+            })
             .ToList();
+
         // Prepare CSV content.
         StringBuilder csvBuilder = new StringBuilder();
         csvBuilder.AppendLine("Title,Tag,Checked");
+
+        // Helper to escape CSV fields.
+        string Escape(string field)
+        {
+            if (field.Contains('"') || field.Contains(','))
+                return $"\"{field.Replace("\"", "\"\"")}\"";
+            return field;
+        }
+
         foreach (var cb in checkboxes)
         {
-            string title = EscapeForCsv(cb.Title ?? string.Empty);
-            string tag = EscapeForCsv(cb.Tag ?? string.Empty);
-            string checkedValue = cb.Checked.ToString();
-            csvBuilder.AppendLine($"{title},{tag},{checkedValue}");
+            string line = $"{Escape(cb.Title)},{Escape(cb.Tag)},{cb.Checked}";
+            csvBuilder.AppendLine(line);
         }
+
         // Write CSV to file.
         const string csvPath = "checkboxes.csv";
         File.WriteAllText(csvPath, csvBuilder.ToString(), Encoding.UTF8);
-    }
-    // Helper to escape CSV fields containing commas or quotes.
-    private static string EscapeForCsv(string field)
-    {
-        if (field.Contains('"'))
-        {
-            field = field.Replace("\"", "\"\"");
-        }
-        if (field.Contains(',') || field.Contains('"') || field.Contains('\n') || field.Contains('\r'))
-        {
-            field = $"\"{field}\"";
-        }
-        return field;
     }
 }

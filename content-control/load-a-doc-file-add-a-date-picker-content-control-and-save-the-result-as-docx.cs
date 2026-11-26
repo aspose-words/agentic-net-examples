@@ -6,33 +6,49 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple DOC (legacy Word 97-2003) document as the source file.
-        var sourceDoc = new Document();
-        var builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("This is a sample document.");
+        // -----------------------------------------------------------------
+        // 1. Create a sample DOC file that will act as the existing source.
+        // -----------------------------------------------------------------
+        Document sourceDoc = new Document();
+        Paragraph sourceParagraph = new Paragraph(sourceDoc);
+        sourceParagraph.AppendChild(new Run(sourceDoc, "This is a sample DOC file."));
+        sourceDoc.FirstSection.Body.AppendChild(sourceParagraph);
         sourceDoc.Save("input.doc", SaveFormat.Doc);
 
-        // Load the DOC file.
-        var doc = new Document("input.doc");
+        // --------------------------------------------------------------
+        // 2. Load the existing DOC file that we just created.
+        // --------------------------------------------------------------
+        Document doc = new Document("input.doc");
 
-        // Create an inline content control that will hold a date string.
-        // The older Aspose.Words versions do not expose a dedicated DateTime SDT type,
-        // so we use a plain text (inline) content control and populate it with the current date.
-        var dateSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
-        {
-            Title = "SampleDate",
-            Tag = "sample-date"
-        };
+        // --------------------------------------------------------------
+        // 3. Create an inline plain‑text content control that will hold a
+        //    date value (Aspose.Words versions prior to supporting a
+        //    dedicated DateTime SDT use a plain‑text SDT for this purpose).
+        // --------------------------------------------------------------
+        StructuredDocumentTag dateControl = new StructuredDocumentTag(
+            doc,
+            SdtType.PlainText,          // Use a plain‑text SDT as a fallback.
+            MarkupLevel.Inline);
 
-        // Remove any default children and add a Run with the formatted date.
-        dateSdt.RemoveAllChildren();
-        dateSdt.AppendChild(new Run(doc, DateTime.Now.ToString("yyyy-MM-dd")));
+        dateControl.Title = "DatePicker";
+        dateControl.Tag = "date-picker";
 
-        // Insert the content control into the first paragraph.
-        var firstParagraph = doc.FirstSection.Body.FirstParagraph;
-        firstParagraph.AppendChild(dateSdt);
+        // Remove any default children and insert the formatted date string.
+        dateControl.RemoveAllChildren();
+        string formattedDate = DateTime.Today.ToString("yyyy-MM-dd");
+        dateControl.AppendChild(new Run(doc, formattedDate));
 
-        // Save the result as DOCX.
+        // --------------------------------------------------------------
+        // 4. Insert the content control into a new paragraph.
+        // --------------------------------------------------------------
+        Paragraph paragraph = new Paragraph(doc);
+        paragraph.AppendChild(new Run(doc, "Selected date: "));
+        paragraph.AppendChild(dateControl);
+        doc.FirstSection.Body.AppendChild(paragraph);
+
+        // --------------------------------------------------------------
+        // 5. Save the modified document as DOCX.
+        // --------------------------------------------------------------
         doc.Save("output.docx", SaveFormat.Docx);
     }
 }

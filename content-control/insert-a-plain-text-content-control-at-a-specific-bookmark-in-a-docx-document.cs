@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Markup;
 
@@ -9,42 +10,50 @@ public class Program
     {
         // Create a sample document with a bookmark.
         Document seedDoc = new Document();
-        DocumentBuilder seedBuilder = new DocumentBuilder(seedDoc);
-        seedBuilder.Writeln("This is a sample paragraph before the bookmark.");
-        seedBuilder.StartBookmark("MyBookmark");
-        seedBuilder.Writeln("Text inside the bookmark.");
-        seedBuilder.EndBookmark("MyBookmark");
-        seedBuilder.Writeln("This is a sample paragraph after the bookmark.");
-
-        const string inputPath = "input.docx";
+        DocumentBuilder builder = new DocumentBuilder(seedDoc);
+        builder.Writeln("Paragraph before the bookmark.");
+        builder.StartBookmark("TargetBookmark");
+        builder.Writeln("Placeholder text inside bookmark.");
+        builder.EndBookmark("TargetBookmark");
+        builder.Writeln("Paragraph after the bookmark.");
+        const string inputPath = "sample.docx";
         seedDoc.Save(inputPath);
 
         // Load the document that contains the bookmark.
         Document doc = new Document(inputPath);
 
-        // Verify that the bookmark exists.
-        if (doc.Range.Bookmarks["MyBookmark"] == null)
-        {
-            throw new InvalidOperationException("Bookmark 'MyBookmark' was not found.");
-        }
+        // Locate the bookmark by name.
+        Bookmark bookmark = doc.Range.Bookmarks["TargetBookmark"];
+        if (bookmark == null)
+            throw new InvalidOperationException("Bookmark not found.");
 
-        // Move the builder to the bookmark location.
-        DocumentBuilder docBuilder = new DocumentBuilder(doc);
-        docBuilder.MoveToBookmark("MyBookmark");
+        // The bookmark spans nodes inside a paragraph.
+        Paragraph parentParagraph = (Paragraph)bookmark.BookmarkStart.ParentNode;
 
-        // Create a plain text content control (StructuredDocumentTag).
+        // Create a plain‑text content control (structured document tag).
         StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
         {
-            Title = "InsertedControl",
-            Tag = "inserted-control"
+            Title = "InsertedPlainText",
+            Tag = "inserted-plain-text"
         };
         sdt.RemoveAllChildren();
-        sdt.AppendChild(new Run(doc, "Inserted Text"));
+        sdt.AppendChild(new Run(doc, "Inserted content control text."));
 
-        // Insert the content control at the bookmark position.
-        docBuilder.InsertNode(sdt);
+        // Insert the content control before the bookmark start node.
+        parentParagraph.InsertBefore(sdt, bookmark.BookmarkStart);
 
-        // Save the updated document.
+        // Remove all nodes that belong to the bookmark (start, end, and any content between them).
+        Node current = bookmark.BookmarkStart;
+        while (current != null)
+        {
+            Node next = current.NextSibling;
+            parentParagraph.RemoveChild(current);
+            if (current == bookmark.BookmarkEnd)
+                break;
+            current = next;
+        }
+
+        // Save the modified document.
         const string outputPath = "output.docx";
         doc.Save(outputPath);
     }

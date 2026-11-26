@@ -1,63 +1,61 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Markup;
-using Newtonsoft.Json;
+using Aspose.Words.Saving;
 
-public class Program
+public class ExportContentControlsToXps
 {
     public static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
 
-        // Get the first paragraph of the document (created by default).
-        Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
+        // -------------------------
+        // Insert an inline plain‑text content control.
+        // -------------------------
+        Paragraph para1 = doc.FirstSection.Body.FirstParagraph;
+        StructuredDocumentTag plainTextSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        {
+            Title = "CustomerName",
+            Tag = "customer-name"
+        };
+        plainTextSdt.RemoveAllChildren();
+        plainTextSdt.AppendChild(new Run(doc, "Contoso"));
+        para1.AppendChild(plainTextSdt);
 
-        // ----- Inline plain text content control -----
-        StructuredDocumentTag plainSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline);
-        plainSdt.Title = "CustomerName";
-        plainSdt.Tag = "customer-name";
-        plainSdt.RemoveAllChildren();
-        plainSdt.AppendChild(new Run(doc, "Contoso"));
-        firstParagraph.AppendChild(plainSdt);
+        // -------------------------
+        // Insert a block‑level rich‑text content control.
+        // -------------------------
+        StructuredDocumentTag richTextSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
+        {
+            Title = "SectionContent",
+            Tag = "section-content"
+        };
+        Paragraph richPara = new Paragraph(doc);
+        richPara.AppendChild(new Run(doc, "This is a block‑level rich text content control."));
+        richTextSdt.AppendChild(richPara);
+        doc.FirstSection.Body.AppendChild(richTextSdt);
 
-        // ----- Block-level rich text content control -----
-        StructuredDocumentTag richSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block);
-        Paragraph richParagraph = new Paragraph(doc);
-        richParagraph.AppendChild(new Run(doc, "This is a block-level rich text content control."));
-        richSdt.AppendChild(richParagraph);
-        doc.FirstSection.Body.AppendChild(richSdt);
+        // -------------------------
+        // Insert an inline checkbox content control.
+        // -------------------------
+        Paragraph para2 = new Paragraph(doc);
+        doc.FirstSection.Body.AppendChild(para2);
+        StructuredDocumentTag checkboxSdt = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Inline)
+        {
+            Title = "AgreeTerms",
+            Tag = "agree-terms",
+            Checked = true
+        };
+        para2.AppendChild(checkboxSdt);
 
-        // ----- Inline checkbox content control -----
-        StructuredDocumentTag checkSdt = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Inline);
-        checkSdt.Title = "AcceptTerms";
-        checkSdt.Checked = true;
-        // Add a space before the checkbox for readability.
-        firstParagraph.AppendChild(new Run(doc, " "));
-        firstParagraph.AppendChild(checkSdt);
-        firstParagraph.AppendChild(new Run(doc, " I accept the terms."));
-
-        // Save the document as DOCX (optional verification).
-        doc.Save("ContentControls.docx");
-
-        // Export the document to XPS format while preserving content control boundaries.
-        doc.Save("ContentControls.xps", SaveFormat.Xps);
-
-        // Serialize basic information about the content controls to JSON.
-        var sdtInfo = doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
-            .OfType<StructuredDocumentTag>()
-            .Select(s => new
-            {
-                Title = s.Title,
-                Tag = s.Tag,
-                Type = s.SdtType.ToString(),
-                Text = s.GetText().Trim()
-            })
-            .ToList();
-
-        File.WriteAllText("ContentControlsInfo.json",
-            JsonConvert.SerializeObject(sdtInfo, Formatting.Indented));
+        // -------------------------
+        // Save the document to XPS format while preserving content control boundaries.
+        // -------------------------
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ContentControlsOutput.xps");
+        XpsSaveOptions xpsOptions = new XpsSaveOptions(SaveFormat.Xps);
+        // The default behavior preserves content control boundaries; no extra options required.
+        doc.Save(outputPath, xpsOptions);
     }
 }

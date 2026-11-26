@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Markup;
-using Newtonsoft.Json;
 
 public class Program
 {
@@ -12,60 +11,60 @@ public class Program
     {
         // Step 1: Create a template document with placeholder content controls.
         Document template = new Document();
-        Paragraph templateParagraph = template.FirstSection.Body.FirstParagraph;
+        Paragraph para = template.FirstSection.Body.FirstParagraph;
 
-        // Placeholder for First Name
-        StructuredDocumentTag firstNameSdt = new StructuredDocumentTag(template, SdtType.PlainText, MarkupLevel.Inline);
-        firstNameSdt.Title = "FirstName";
-        firstNameSdt.Tag = "first-name";
-        firstNameSdt.RemoveAllChildren();
-        firstNameSdt.AppendChild(new Run(template, "<<FirstName>>"));
-        templateParagraph.AppendChild(firstNameSdt);
+        // Placeholder for "Name"
+        StructuredDocumentTag nameSdt = new StructuredDocumentTag(template, SdtType.PlainText, MarkupLevel.Inline);
+        nameSdt.Title = "Name";
+        nameSdt.Tag = "name";
+        nameSdt.RemoveAllChildren();
+        nameSdt.AppendChild(new Run(template, "{{Name}}"));
+        para.AppendChild(nameSdt);
 
-        // Placeholder for Last Name
-        StructuredDocumentTag lastNameSdt = new StructuredDocumentTag(template, SdtType.PlainText, MarkupLevel.Inline);
-        lastNameSdt.Title = "LastName";
-        lastNameSdt.Tag = "last-name";
-        lastNameSdt.RemoveAllChildren();
-        lastNameSdt.AppendChild(new Run(template, "<<LastName>>"));
-        templateParagraph.AppendChild(lastNameSdt);
+        // Add a space between placeholders.
+        para.AppendChild(new Run(template, " "));
 
-        // Save the template document.
+        // Placeholder for "Email"
+        StructuredDocumentTag emailSdt = new StructuredDocumentTag(template, SdtType.PlainText, MarkupLevel.Inline);
+        emailSdt.Title = "Email";
+        emailSdt.Tag = "email";
+        emailSdt.RemoveAllChildren();
+        emailSdt.AppendChild(new Run(template, "{{Email}}"));
+        para.AppendChild(emailSdt);
+
+        // Save the template.
         const string templatePath = "template.docx";
         template.Save(templatePath);
 
-        // Step 2: Define user input values.
+        // Step 2: Load the template and replace placeholders with user input values.
+        Document doc = new Document(templatePath);
+
+        // Simulated user inputs.
         var userInputs = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            { "FirstName", "John" },
-            { "LastName", "Doe" }
+            { "Name", "Alice Johnson" },
+            { "Email", "alice.johnson@example.com" }
         };
 
-        // Step 3: Load the template and replace placeholders.
-        Document doc = new Document(templatePath);
+        // Find all content controls in the document.
         var sdtNodes = doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
                           .OfType<StructuredDocumentTag>();
 
-        foreach (StructuredDocumentTag sdt in sdtNodes)
+        foreach (var entry in userInputs)
         {
-            if (sdt.Title != null && userInputs.TryGetValue(sdt.Title, out string replacement))
+            // Locate the content control by its Title (case‑insensitive).
+            StructuredDocumentTag? targetSdt = sdtNodes.FirstOrDefault(s => string.Equals(s.Title, entry.Key, StringComparison.OrdinalIgnoreCase));
+
+            if (targetSdt != null)
             {
-                sdt.RemoveAllChildren();
-                sdt.AppendChild(new Run(doc, replacement));
+                // Replace the placeholder text with the actual value.
+                targetSdt.RemoveAllChildren();
+                targetSdt.AppendChild(new Run(doc, entry.Value));
             }
         }
 
-        // Step 4: Save the updated document.
+        // Save the result.
         const string outputPath = "output.docx";
         doc.Save(outputPath);
-
-        // Optional: Write a JSON file summarizing the replacements.
-        var summary = sdtNodes
-            .Where(s => s.Title != null && userInputs.ContainsKey(s.Title))
-            .Select(s => new { Title = s.Title, ReplacedWith = userInputs[s.Title] })
-            .ToList();
-
-        string json = JsonConvert.SerializeObject(summary, Formatting.Indented);
-        File.WriteAllText("replacements.json", json);
     }
 }

@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Text;
 using System.Xml;
 using System.Xml.Xsl;
 using Aspose.Words;
@@ -13,63 +12,73 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Add a custom XML part that will be mapped to a content control.
-        string xmlPartContent = "<root><greeting>Hello, World!</greeting></root>";
-        CustomXmlPart xmlPart = doc.CustomXmlParts.Add(Guid.NewGuid().ToString("B"), xmlPartContent);
+        // Create a block‑level rich‑text content control.
+        StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block);
+        sdt.Title = "SampleControl";
+        sdt.Tag = "sample";
 
-        // Create an inline plain‑text content control and map it to the <greeting> element.
-        StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        // Add a paragraph with some text inside the content control.
+        Paragraph innerParagraph = new Paragraph(doc);
+        innerParagraph.AppendChild(new Run(doc, "Hello, World!"));
+        sdt.AppendChild(innerParagraph);
+
+        // Insert the content control into the document body.
+        doc.FirstSection.Body.AppendChild(sdt);
+
+        // Save the document in Flat OPC format to a memory stream.
+        using (MemoryStream flatOpcStream = new MemoryStream())
         {
-            Title = "GreetingControl",
-            Tag = "greeting"
-        };
-        sdt.XmlMapping.SetMapping(xmlPart, "/root[1]/greeting[1]", string.Empty);
+            doc.Save(flatOpcStream, SaveFormat.FlatOpc);
+            flatOpcStream.Position = 0;
 
-        // Insert the content control into the first paragraph of the document.
-        Paragraph para = doc.FirstSection.Body.FirstParagraph;
-        para.AppendChild(sdt);
+            // Load the Flat OPC XML.
+            XmlDocument flatOpcXml = new XmlDocument();
+            flatOpcXml.Load(flatOpcStream);
 
-        // Save the document (optional, just to demonstrate the full lifecycle).
-        doc.Save("ContentControl.docx");
-
-        // Retrieve the XML that is mapped to the content control.
-        string mappedXml = Encoding.UTF8.GetString(sdt.XmlMapping.CustomXmlPart.Data);
-
-        // Define a simple XSLT that renames <greeting> to <message>.
-        string xsltString = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<xsl:stylesheet version=""1.0"" xmlns:xsl=""http://www.w3.org/1999/XSL/Transform"">
+            // XSLT stylesheet that extracts the inner content of the SDT.
+            string xsltString = @"<?xml version=""1.0"" encoding=""UTF-8""?>
+<xsl:stylesheet version=""1.0"" xmlns:xsl=""http://www.w3.org/1999/XSL/Transform""
+                xmlns:w=""http://schemas.openxmlformats.org/wordprocessingml/2006/main"">
   <xsl:output method=""xml"" indent=""yes""/>
-  <xsl:template match=""/root"">
-    <root>
-      <message><xsl:value-of select=""greeting""/></message>
-    </root>
+  <!-- Match the SDT element and output its inner content -->
+  <xsl:template match=""/w:sdt"">
+    <TransformedContent>
+      <xsl:apply-templates select=""w:sdtContent/*""/>
+    </TransformedContent>
+  </xsl:template>
+  <!-- Copy all other elements and text nodes unchanged -->
+  <xsl:template match=""*"">
+    <xsl:copy>
+      <xsl:apply-templates select=""@*|node()""/>
+    </xsl:copy>
+  </xsl:template>
+  <xsl:template match=""@*|text()"">
+    <xsl:copy/>
   </xsl:template>
 </xsl:stylesheet>";
 
-        // Load the XSLT from the string.
-        XslCompiledTransform xslt = new XslCompiledTransform();
-        using (StringReader xsltReader = new StringReader(xsltString))
-        using (XmlReader xsltXmlReader = XmlReader.Create(xsltReader))
-        {
-            xslt.Load(xsltXmlReader);
+            // Load the XSLT from the string.
+            XslCompiledTransform xslt = new XslCompiledTransform();
+            using (StringReader xsltReader = new StringReader(xsltString))
+            using (XmlReader xsltXmlReader = XmlReader.Create(xsltReader))
+            {
+                xslt.Load(xsltXmlReader);
+            }
+
+            // Perform the transformation on the Flat OPC XML.
+            string transformedXml;
+            using (StringWriter resultWriter = new StringWriter())
+            using (XmlReader xmlReader = new XmlNodeReader(flatOpcXml))
+            {
+                xslt.Transform(xmlReader, null, resultWriter);
+                transformedXml = resultWriter.ToString();
+            }
+
+            // Write the transformed XML to a file.
+            File.WriteAllText("transformed.xml", transformedXml);
         }
 
-        // Perform the transformation.
-        string transformedXml;
-        using (StringReader xmlReader = new StringReader(mappedXml))
-        using (XmlReader inputReader = XmlReader.Create(xmlReader))
-        using (StringWriter resultWriter = new StringWriter())
-        using (XmlWriter outputWriter = XmlWriter.Create(resultWriter, xslt.OutputSettings))
-        {
-            xslt.Transform(inputReader, outputWriter);
-            transformedXml = resultWriter.ToString();
-        }
-
-        // Output the transformed XML to the console.
-        Console.WriteLine("Transformed XML:");
-        Console.WriteLine(transformedXml);
-
-        // Optionally, save the transformed XML to a file.
-        File.WriteAllText("Transformed.xml", transformedXml, Encoding.UTF8);
+        // Optionally save the original document for inspection.
+        doc.Save("sample.docx");
     }
 }
