@@ -2,45 +2,30 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-// Alias to avoid ambiguity with System.Range
-using AsposeRange = Aspose.Words.Range;
-
 public class Program
 {
     public static void Main()
     {
-        // Path for the sample document.
-        string filePath = "FormFields.docx";
-
-        // -----------------------------------------------------------------
-        // Create a sample document containing different types of form fields.
-        // -----------------------------------------------------------------
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        builder.Writeln("Form fields:");
-        // Text input field.
+        // Add a regular text input form field.
+        // The last parameter is maxLength (0 = no limit).
         builder.InsertTextInput("TextField1", TextFormFieldType.Regular, "", "Default text", 0);
-        // Check box field.
-        builder.InsertCheckBox("CheckBox1", true, 0);
-        // Combo box (drop‑down) field. Use named arguments to guarantee correct overload.
-        builder.InsertComboBox(name: "DropDown1", selectedIndex: 0,
-            items: new string[] { "Option1", "Option2", "Option3" });
 
-        // Save the document to disk.
-        doc.Save(filePath);
+        // Add a checkbox form field.
+        builder.InsertCheckBox("CheckBox1", false, 0);
 
-        // -----------------------------------------------------------------
-        // Load the document back and obtain its whole‑document range.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(filePath);
-        AsposeRange range = loadedDoc.Range;
+        // Add a combo box form field with two items.
+        // Provide the list of items and the initially selected index.
+        builder.InsertComboBox("ComboBox1", new string[] { "Option1", "Option2" }, 0);
 
-        // -----------------------------------------------------------------
-        // Iterate over all form fields that belong to the range and output
-        // their names and types.
-        // -----------------------------------------------------------------
-        foreach (FormField field in range.FormFields)
+        // Save the document (optional, demonstrates that the document can be persisted).
+        doc.Save("FormFields.docx");
+
+        // Iterate over all form fields in the document's range and output their name and type.
+        foreach (FormField field in doc.Range.FormFields)
         {
             Console.WriteLine($"Name: {field.Name}, Type: {field.Type}");
         }

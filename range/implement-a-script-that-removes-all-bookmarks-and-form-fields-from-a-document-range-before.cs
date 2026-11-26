@@ -1,58 +1,48 @@
 using System;
 using System.Collections.Generic;
 using Aspose.Words;
-using Aspose.Words.Fields;
+using Aspose.Words.Markup;
+using Aspose.Words.Fields;   // Required for TextFormFieldType and FormFieldCollection
 
-public class Program
+namespace RemoveBookmarksAndFormFields
 {
-    public static void Main()
+    public class Program
     {
-        // Create a sample document containing bookmarks and form fields.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document.");
-
-        // Insert a bookmark.
-        builder.StartBookmark("SampleBookmark");
-        builder.Writeln("Text inside the bookmark.");
-        builder.EndBookmark("SampleBookmark");
-
-        // Insert a text input form field (maxLength set to 0 for unlimited length).
-        builder.InsertTextInput("TextInputField", TextFormFieldType.Regular, "", "Default value", 0);
-
-        // Insert a checkbox form field.
-        builder.InsertCheckBox("CheckBoxField", true, 0);
-
-        // Save the original document.
-        string originalPath = "Original.docx";
-        doc.Save(originalPath);
-
-        // Load the document for cleanup.
-        Document cleanDoc = new Document(originalPath);
-
-        // Remove all bookmarks from the document range.
-        List<string> bookmarkNames = new List<string>();
-        foreach (Bookmark bm in cleanDoc.Range.Bookmarks)
+        public static void Main()
         {
-            bookmarkNames.Add(bm.Name);
-        }
-        foreach (string name in bookmarkNames)
-        {
-            cleanDoc.Range.Bookmarks.Remove(name);
-        }
+            // Create a new document and a builder for adding content.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Remove all form fields from the document range.
-        FormFieldCollection formFields = cleanDoc.Range.FormFields;
-        for (int i = formFields.Count - 1; i >= 0; i--)
-        {
-            formFields.RemoveAt(i);
+            // Insert a paragraph wrapped in a bookmark.
+            builder.StartBookmark("SampleBookmark");
+            builder.Writeln("This text is inside a bookmark.");
+            builder.EndBookmark("SampleBookmark");
+
+            // Insert a text input form field.
+            builder.InsertTextInput("SampleFormField", TextFormFieldType.Regular, "", "Default value", 0);
+            builder.Writeln(); // Add a line break after the form field.
+
+            // Save the original document (optional, for reference).
+            doc.Save("Original.docx");
+
+            // ---------- Remove all bookmarks ----------
+            // Collect bookmark names first because removing while iterating changes the collection.
+            List<string> bookmarkNames = new List<string>();
+            foreach (Bookmark bm in doc.Range.Bookmarks)
+                bookmarkNames.Add(bm.Name);
+
+            foreach (string name in bookmarkNames)
+                doc.Range.Bookmarks.Remove(name);
+
+            // ---------- Remove all form fields ----------
+            FormFieldCollection formFields = doc.Range.FormFields;
+            // Remove from the end to avoid index shifting.
+            for (int i = formFields.Count - 1; i >= 0; i--)
+                formFields.RemoveAt(i);
+
+            // Save the cleaned document.
+            doc.Save("Cleaned.docx");
         }
-
-        // Save the cleaned document.
-        string cleanedPath = "Cleaned.docx";
-        cleanDoc.Save(cleanedPath);
-
-        // Indicate completion.
-        Console.WriteLine($"Cleaned document saved to '{cleanedPath}'.");
     }
 }

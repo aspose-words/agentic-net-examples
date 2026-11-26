@@ -10,12 +10,12 @@ product: Aspose.Words
 
 ## Purpose
 
-Provide an AI coding agent with clear guidance to generate reliable Aspose.Words snippets that manipulate document ranges without invoking unsupported members, ambiguous types, or external resources.
+Provide an AI coding assistant with concise, reproducible patterns for safe Range operations, ensuring that all inputs are created locally, only documented APIs are used, and output files are persisted.
 
 ## Non-negotiable conventions
 
-- Do not reference members that are read-only or absent in Aspose.Words 26.10.0.
-- Never use System.Range in place of Aspose.Words.Range.
+- Do not reference members that are not present in Aspose.Words 26.11.0.
+- Do not import or use System.Range when Aspose.Words.Range is required.
 - Bootstrap local sample inputs for existing-file, folder, stream, image, and data workflows.
 - Prefer simple, verifiable workflows over speculative formatting shortcuts.
 
@@ -27,7 +27,7 @@ Use the simplest workflow that satisfies the task.
 
 ## Validation priorities
 
-1. Confirm that the generated code compiles against Aspose.Words 26.10.0 and that the expected output file is created.
+1. Confirm that the generated code compiles against Aspose.Words 26.11.0 and that the expected output file exists after execution.
 
 ## File-to-task reference
 
@@ -40,7 +40,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Extract plain text of each section via each section's Range.Text property.
   - Workflow: range-workflow
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `use-the-range-object-to-extract-plain-text-from-a-header-and-footer-for-indexing.cs`
   - Task: Use the Range object to extract plain text from a header and footer for indexing.
   - Workflow: range-workflow
@@ -50,17 +50,17 @@ Use the simplest workflow that satisfies the task.
   - Task: Generate a plain-text version of a document by extracting each section's Range.Text.
   - Workflow: range-workflow
   - Outputs: doc
-  - Selected engine: llm
+  - Selected engine: mcp
 - `retrieve-the-count-of-bookmarks-within-a-range.cs`
   - Task: Retrieve the count of bookmarks within a range.
   - Workflow: range-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `retrieve-the-count-of-form-fields-within-a-range.cs`
   - Task: Retrieve the count of form fields within a range.
   - Workflow: range-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `iterate-through-each-bookmark-in-a-range-and-output-its-name.cs`
   - Task: Iterate through each bookmark in a range and output its name.
   - Workflow: range-workflow
@@ -105,12 +105,12 @@ Use the simplest workflow that satisfies the task.
   - Task: Insert new text at the beginning of a range.
   - Workflow: range-workflow
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `append-text-to-the-end-of-a-range.cs`
   - Task: Append text to the end of a range.
   - Workflow: range-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `copy-paragraph-s-range-content-into-a-string-variable-for-further-processing.cs`
   - Task: Copy paragraph's range content into a string variable for further processing.
   - Workflow: range-workflow
@@ -140,7 +140,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Create a checkbox form field inside a specific range and set its default state.
   - Workflow: range-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `update-the-value-of-a-text-input-form-field-located-in-a-given-range.cs`
   - Task: Update the value of a text input form field located in a given range.
   - Workflow: range-workflow
@@ -170,7 +170,7 @@ Use the simplest workflow that satisfies the task.
   - Task: Implement a script that removes all bookmarks and form fields from a document range before publishing.
   - Workflow: range-workflow
   - Outputs: doc
-  - Selected engine: llm
+  - Selected engine: mcp
 - `log-the-names-of-all-bookmarks-found-in-a-range-for-debugging.cs`
   - Task: Log the names of all bookmarks found in a range for debugging.
   - Workflow: range-workflow
@@ -184,53 +184,47 @@ Use the simplest workflow that satisfies the task.
 
 ## Common failure patterns and preferred agent fixes
 
-- **Read-only member assignment**
-  - Symptom: Compilation fails with CS0200 because Section.Body or Range.Text is assigned a value.
-  - Root cause: Attempting to set properties that are defined as read-only in the Aspose.Words API.
-  - Preferred fix: Use the appropriate insertion methods (e.g., DocumentBuilder, InsertBefore) instead of assigning to read-only members.
-  - Prevention: Consult the API reference to verify mutability before writing to a property.
-
 - **Ambiguous Range reference**
-  - Symptom: Compilation fails with CS0104 due to a conflict between System.Range and Aspose.Words.Range.
-  - Root cause: The code imports both namespaces without aliasing, causing the compiler to treat Range as ambiguous.
-  - Preferred fix: Alias Aspose.Words.Range (e.g., using AsposeRange = Aspose.Words.Range) or fully qualify the type.
-  - Prevention: Avoid importing System.Range or always qualify the Aspose.Words.Range type.
+  - Symptom: The compiler reports "'Range' is an ambiguous reference between 'Aspose.Words.Range' and 'System.Range'".
+  - Root cause: Both System.Range (C# 8) and Aspose.Words.Range are imported, and the code does not qualify the type.
+  - Preferred fix: Fully qualify the Aspose.Words.Range type or add an alias (e.g., using AwRange = Aspose.Words.Range).
+  - Prevention: Always import Aspose.Words.Range with an explicit alias when System.Range is also in scope.
 
-- **Non-existent member usage**
-  - Symptom: CS1061 errors appear for methods such as BookmarkCollection.Add, Range.InsertBefore, Range.Search, or FormField.StartNode.
-  - Root cause: The code calls members that do not exist in the selected Aspose.Words version.
-  - Preferred fix: Replace the call with the documented alternative (e.g., DocumentBuilder.StartBookmark, parentNode.InsertBefore, doc.Range.Replace).
-  - Prevention: Reference the official Aspose.Words documentation for the exact method signatures.
+- **Invocation of non-existent members**
+  - Symptom: Compilation fails with CS1061 or CS1729 indicating missing methods such as HeaderFooter.IsFooter, BookmarkCollection.Add, Range.InsertBefore, or assigning to Range.Text.
+  - Root cause: The code assumes APIs that were never part of the documented library version.
+  - Preferred fix: Replace the call with the correct documented alternative (e.g., use HeaderFooter.HeaderFooterType to identify footers, use DocumentBuilder.StartBookmark/EndBookmark instead of BookmarkCollection.Add, use DocumentBuilder.Write or InsertAfter on a Paragraph for insertion, and use Range.Replace for text changes).
+  - Prevention: Consult the official Aspose.Words API reference for the exact member signatures before coding.
 
-- **Missing overload arguments**
-  - Symptom: CS7036 errors indicate required parameters (e.g., maxLength for InsertTextInput) are omitted.
-  - Root cause: The code supplies an overload that does not match any available signature.
-  - Preferred fix: Provide all required arguments as defined in the API, using named parameters when helpful.
-  - Prevention: Review method overloads in the API reference before coding.
+- **Incorrect enum or missing namespace**
+  - Symptom: CS0234 or CS0103 errors for types like TextFormFieldType, Builders, or BuildingBlocks.
+  - Root cause: The code references enums or namespaces that either belong to a different version or were misspelled.
+  - Preferred fix: Import Aspose.Words.Fields and use the correct enum values (e.g., TextFormFieldType.Regular) and correct namespaces (Aspose.Words.BuildingBlocks).
+  - Prevention: Verify enum names and namespaces against the 26.11.0 documentation and enable IntelliSense to avoid typographical errors.
 
-- **Assumed external resources**
-  - Symptom: Runtime NullReferenceException occurs because a source file or document node was never created.
-  - Root cause: The example expects an existing file or document structure that was not bootstrapped locally.
-  - Preferred fix: Create deterministic sample documents, sections, and files within the code before processing them.
-  - Prevention: Always include local input creation steps as part of the workflow.
+- **Missing local bootstrap inputs**
+  - Symptom: Runtime NullReferenceException or compile-time errors when loading a document that has not been saved first.
+  - Root cause: The example attempts to load or process a file that was never created in the sandbox.
+  - Preferred fix: Create the required document, sections, or other resources programmatically before loading or processing them.
+  - Prevention: Always generate a deterministic sample document at the start of the program and reference that file for subsequent operations.
 
 - **Over-broad validation**
-  - Symptom: Runtime checks examine unrelated document internals, causing failures unrelated to the task.
-  - Root cause: Validation logic is too generic and touches nodes that are not part of the requested operation.
-  - Preferred fix: Validate only the existence of the output file and the specific range result required by the task.
-  - Prevention: Scope assertions to the exact behavior being demonstrated.
+  - Symptom: The program checks unrelated document internals, causing failures unrelated to the task.
+  - Root cause: Validation logic is not scoped to the specific operation being demonstrated.
+  - Preferred fix: Limit assertions to the existence of the output file and to the direct result of the performed Range operation.
+  - Prevention: Design validation steps that verify only the behavior described in the task.
 
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Primary package: `Aspose.Words` `26.10.0`
+- Primary package: `Aspose.Words` `26.11.0`
 
 ## Command reference
 
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.10.0
+dotnet add package Aspose.Words --version 26.11.0
 ```
 
 ```powershell
@@ -244,4 +238,4 @@ dotnet run --configuration Release --no-build
 
 ## Category update guidance
 
-- Periodically verify that all referenced Aspose.Words members remain unchanged in future package releases.
+- Periodically run the verified examples against the latest Aspose.Words package to detect API deprecations and update the canonical patterns accordingly.

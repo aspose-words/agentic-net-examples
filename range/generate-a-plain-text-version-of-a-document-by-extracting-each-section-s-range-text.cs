@@ -1,47 +1,56 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
+using Aspose.Words.BuildingBlocks;
 
-public class Program
+namespace RangePlainTextExtraction
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new document with multiple sections.
-        Document doc = new Document();
-        doc.Sections.Clear();
-
-        for (int i = 1; i <= 3; i++)
+        public static void Main()
         {
-            // Create a new section.
-            Section section = new Section(doc);
-            // Add a body to the section.
-            Body body = new Body(doc);
-            section.AppendChild(body);
-            // Add a paragraph with some text.
-            Paragraph para = new Paragraph(doc);
-            Run run = new Run(doc, $"This is the text of section {i}.");
-            para.AppendChild(run);
-            body.AppendChild(para);
-            // Add the section to the document.
-            doc.Sections.Add(section);
+            // Create a sample document with two sections.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // First section content.
+            builder.Writeln("Section 1 - Paragraph 1");
+            builder.Writeln("Section 1 - Paragraph 2");
+
+            // Insert a new section.
+            builder.InsertBreak(BreakType.SectionBreakNewPage);
+
+            // Second section content.
+            builder.Writeln("Section 2 - Paragraph 1");
+            builder.Writeln("Section 2 - Paragraph 2");
+
+            // Save the sample document locally.
+            string docPath = "Sample.docx";
+            doc.Save(docPath);
+
+            // Load the document from the saved file.
+            Document loadedDoc = new Document(docPath);
+
+            // Extract plain text from each section's Range.Text.
+            StringBuilder plainTextBuilder = new StringBuilder();
+
+            foreach (Section section in loadedDoc.Sections)
+            {
+                // Trim to remove leading/trailing whitespace that may be added by Aspose.Words.
+                string sectionText = section.Range.Text.Trim();
+                plainTextBuilder.AppendLine(sectionText);
+                // Optional separator between sections.
+                plainTextBuilder.AppendLine("--- End of Section ---");
+                plainTextBuilder.AppendLine();
+            }
+
+            // Write the extracted plain text to a .txt file.
+            string txtPath = "PlainText.txt";
+            File.WriteAllText(txtPath, plainTextBuilder.ToString());
+
+            // Indicate completion.
+            Console.WriteLine($"Plain‑text extraction completed. Output saved to '{txtPath}'.");
         }
-
-        // Extract plain text from each section's Range.
-        StringWriter plainTextWriter = new StringWriter();
-        foreach (Section sec in doc.Sections)
-        {
-            plainTextWriter.WriteLine(sec.Range.Text.Trim());
-        }
-
-        string plainText = plainTextWriter.ToString();
-
-        // Write the extracted text to a file.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "PlainTextOutput.txt");
-        File.WriteAllText(outputPath, plainText);
-
-        // Also output to console for verification.
-        Console.WriteLine("Extracted plain‑text content:");
-        Console.WriteLine(plainText);
-        Console.WriteLine($"Plain‑text file saved to: {outputPath}");
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using Aspose.Words;
+using AsposeRange = Aspose.Words.Range;
 
 namespace BookmarkLogger
 {
@@ -7,31 +8,31 @@ namespace BookmarkLogger
     {
         public static void Main()
         {
-            // Create a new document and a builder to add content.
+            // Create a new blank document.
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Add first bookmark.
+            // Insert first bookmark.
             builder.StartBookmark("FirstBookmark");
             builder.Writeln("This is the first bookmarked text.");
             builder.EndBookmark("FirstBookmark");
 
-            // Add second bookmark.
+            // Insert second bookmark.
             builder.StartBookmark("SecondBookmark");
             builder.Writeln("This is the second bookmarked text.");
             builder.EndBookmark("SecondBookmark");
 
-            // Get the document's range (fully qualified to avoid ambiguity with System.Range).
-            Aspose.Words.Range range = doc.Range;
+            // Save the document so we can verify the bookmarks exist if needed.
+            doc.Save("SampleWithBookmarks.docx");
 
-            // Log all bookmark names found in the range.
+            // Retrieve the range that represents the whole document.
+            AsposeRange range = doc.Range;
+
+            // Log the names of all bookmarks found in the range.
             foreach (Bookmark bookmark in range.Bookmarks)
             {
                 Console.WriteLine($"Bookmark name: {bookmark.Name}");
             }
-
-            // Save the document for verification.
-            doc.Save("SampleDocument.docx");
         }
     }
 }

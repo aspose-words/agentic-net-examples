@@ -5,20 +5,18 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
 
-        // Create a paragraph and add a run of text.
+        // Add a paragraph with sample text.
         Paragraph paragraph = new Paragraph(doc);
-        paragraph.AppendChild(new Run(doc, "Hello, Aspose.Words! This is a sample paragraph."));
-
-        // Insert the paragraph into the document body.
+        paragraph.AppendChild(new Run(doc, "This is a sample paragraph."));
         doc.FirstSection.Body.AppendChild(paragraph);
 
         // Copy the paragraph's range content into a string variable.
-        string paragraphText = paragraph.Range.Text;
+        string paragraphContent = paragraph.Range.Text;
 
-        // Output the extracted text (optional, for verification).
-        Console.WriteLine(paragraphText);
+        // Example further processing: output the extracted text.
+        Console.WriteLine(paragraphContent);
     }
 }

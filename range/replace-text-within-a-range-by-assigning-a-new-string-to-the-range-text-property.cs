@@ -1,31 +1,38 @@
 using System;
 using Aspose.Words;
 
-public class Program
+namespace RangeReplaceExample
 {
-    public static void Main()
+    class Program
     {
-        // Create a new document and add initial text.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is the original text.");
+        static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Save the original document (optional, just to demonstrate loading).
-        string originalPath = "Original.docx";
-        doc.Save(originalPath);
+            // Add a paragraph with some initial text.
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("This is the original paragraph text.");
 
-        // Load the document from the saved file.
-        Document loadedDoc = new Document(originalPath);
+            // Get the range of the first paragraph.
+            Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
+            Aspose.Words.Range paragraphRange = firstParagraph.Range;
 
-        // Remove all existing content from the document.
-        loadedDoc.Range.Delete();
+            // Replace the paragraph's text using Range.Replace (Range.Text is read‑only).
+            string originalText = paragraphRange.Text; // Includes the paragraph mark.
+            paragraphRange.Replace(originalText, "This is the replaced paragraph text.");
 
-        // Insert the replacement text into the now‑empty document.
-        DocumentBuilder replaceBuilder = new DocumentBuilder(loadedDoc);
-        replaceBuilder.Writeln("This is the replaced text.");
+            // Save the modified document.
+            string outputPath = "Output.docx";
+            doc.Save(outputPath);
 
-        // Save the modified document.
-        string modifiedPath = "Modified.docx";
-        loadedDoc.Save(modifiedPath);
+            // Load the saved document to verify the replacement.
+            Document loadedDoc = new Document(outputPath);
+            string resultText = loadedDoc.FirstSection.Body.FirstParagraph.GetText();
+
+            // Output the result to the console.
+            Console.WriteLine("Resulting paragraph text:");
+            Console.WriteLine(resultText);
+        }
     }
 }
