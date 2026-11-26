@@ -1,45 +1,35 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 
-public class Program
+namespace WatermarkRemovalExample
 {
-    public static void Main()
+    class Program
     {
-        // Paths for the sample input and output documents.
-        string inputPath = "SampleWithWatermark.docx";
-        string outputPath = "SampleWithoutWatermark.docx";
-
-        // -----------------------------------------------------------------
-        // Create a sample document and add a text watermark.
-        // -----------------------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document containing a watermark.");
-
-        // Apply a text watermark using the Document.Watermark API.
-        doc.Watermark.SetText("Sample Watermark");
-
-        // Save the document that contains the watermark.
-        doc.Save(inputPath);
-
-        // -----------------------------------------------------------------
-        // Load the document and remove all existing watermarks.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(inputPath);
-        loadedDoc.Watermark.Remove();
-
-        // Save the document after watermark removal.
-        loadedDoc.Save(outputPath);
-
-        // Simple validation that the output file was created.
-        if (File.Exists(outputPath))
+        static void Main()
         {
-            Console.WriteLine($"Watermark removed successfully. Output saved to '{outputPath}'.");
-        }
-        else
-        {
-            Console.WriteLine("Failed to save the output document.");
+            // Create a sample document with a text watermark.
+            string sourcePath = "Sample.docx";
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("This is a sample document with a watermark.");
+            doc.Watermark.SetText("CONFIDENTIAL");
+            doc.Save(sourcePath);
+
+            // Load the document.
+            Document loadedDoc = new Document(sourcePath);
+            // Remove all watermarks.
+            loadedDoc.Watermark.Remove();
+            // Save the result.
+            string outputPath = "Output.docx";
+            loadedDoc.Save(outputPath);
+
+            // Validate that the output file was created.
+            if (File.Exists(outputPath))
+            {
+                Console.WriteLine("Watermark removed and document saved to " + outputPath);
+            }
         }
     }
 }

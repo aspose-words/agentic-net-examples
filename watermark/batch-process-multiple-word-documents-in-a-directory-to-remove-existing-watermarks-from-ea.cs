@@ -6,30 +6,33 @@ public class Program
 {
     public static void Main()
     {
-        // Define input and output folders relative to the executable directory.
-        string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-        string inputFolder = Path.Combine(baseDir, "InputDocs");
-        string outputFolder = Path.Combine(baseDir, "OutputDocs");
+        // Define folders for sample input documents and processed output documents.
+        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputDocs");
 
-        // Ensure the folders exist.
+        // Ensure the directories exist.
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Create sample documents with a text watermark.
+        // Create a few sample Word documents with a text watermark.
         for (int i = 1; i <= 3; i++)
         {
+            // Create a new blank document.
             Document doc = new Document();
+
+            // Add a simple paragraph so the document is not empty.
             DocumentBuilder builder = new DocumentBuilder(doc);
             builder.Writeln($"This is sample document {i}.");
 
             // Apply a text watermark using the native API.
             doc.Watermark.SetText("Sample Watermark");
 
+            // Save the document to the input folder.
             string inputPath = Path.Combine(inputFolder, $"Doc{i}.docx");
             doc.Save(inputPath);
         }
 
-        // Process each .docx file in the input folder to remove watermarks.
+        // Batch process each .docx file in the input folder to remove watermarks.
         foreach (string filePath in Directory.GetFiles(inputFolder, "*.docx"))
         {
             // Load the document.
@@ -38,13 +41,12 @@ public class Program
             // Remove any existing watermark.
             doc.Watermark.Remove();
 
-            // Save the cleaned document to the output folder, preserving the original name.
-            string fileName = Path.GetFileName(filePath);
-            string outputPath = Path.Combine(outputFolder, fileName);
+            // Save the cleaned document to the output folder, preserving the original file name.
+            string outputPath = Path.Combine(outputFolder, Path.GetFileName(filePath));
             doc.Save(outputPath);
         }
 
-        // Optional: Verify that output files were created.
-        // (No console output as per requirements.)
+        // Optional: Verify that output files were created (no console output required).
+        // The program ends here.
     }
 }

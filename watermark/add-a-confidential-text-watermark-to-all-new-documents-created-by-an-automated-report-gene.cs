@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 
 public class Program
 {
@@ -8,24 +9,20 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Add a simple paragraph to demonstrate content.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Automated report generated on " + DateTime.Now);
+        builder.Writeln("Automated report content goes here.");
 
-        // Apply a confidential text watermark to the entire document.
+        // Apply a confidential text watermark to the document.
         doc.Watermark.SetText("CONFIDENTIAL");
 
-        // Define output path.
-        string outputPath = "ReportWithWatermark.docx";
-
-        // Save the document.
+        // Save the document with the watermark.
+        string outputPath = "ReportWithConfidentialWatermark.docx";
         doc.Save(outputPath);
 
-        // Simple validation: ensure the file was created.
+        // Simple validation that the file was created.
         if (File.Exists(outputPath))
         {
-            Console.WriteLine("Document saved successfully with watermark: " + outputPath);
+            Console.WriteLine($"Document saved successfully: {outputPath}");
         }
         else
         {

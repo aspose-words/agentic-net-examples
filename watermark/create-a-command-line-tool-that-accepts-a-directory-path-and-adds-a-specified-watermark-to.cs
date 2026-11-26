@@ -2,50 +2,58 @@ using System;
 using System.IO;
 using Aspose.Words;
 
-public class WatermarkTool
+public class Program
 {
     public static void Main(string[] args)
     {
-        // Determine the target directory and watermark text from command‑line arguments.
-        string targetDirectory = args.Length > 0 ? args[0] : "InputDocs";
-        string watermarkText = args.Length > 1 ? args[1] : "Sample Watermark";
+        // Determine the target directory and watermark text.
+        string targetDirectory;
+        string watermarkText;
+
+        if (args.Length >= 2)
+        {
+            targetDirectory = args[0];
+            watermarkText = args[1];
+        }
+        else
+        {
+            // Fallback: create a temporary directory with a sample document.
+            targetDirectory = Path.Combine(Path.GetTempPath(), "AsposeWatermarkDemo");
+            watermarkText = "Sample Watermark";
+
+            if (!Directory.Exists(targetDirectory))
+                Directory.CreateDirectory(targetDirectory);
+
+            // Create a simple sample document if none exist.
+            string samplePath = Path.Combine(targetDirectory, "Sample.docx");
+            if (!File.Exists(samplePath))
+            {
+                Document sampleDoc = new Document();
+                DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+                builder.Writeln("This is a sample document.");
+                sampleDoc.Save(samplePath);
+            }
+        }
 
         // Ensure the directory exists.
         if (!Directory.Exists(targetDirectory))
-        {
             Directory.CreateDirectory(targetDirectory);
-        }
-
-        // If the directory contains no Word documents, create a sample document.
-        if (Directory.GetFiles(targetDirectory, "*.docx").Length == 0)
-        {
-            var sampleDoc = new Document();
-            var builder = new DocumentBuilder(sampleDoc);
-            builder.Writeln("This is a sample document.");
-            string samplePath = Path.Combine(targetDirectory, "Sample.docx");
-            sampleDoc.Save(samplePath);
-        }
 
         // Process each .docx file in the directory.
-        foreach (string filePath in Directory.GetFiles(targetDirectory, "*.docx"))
+        string[] docFiles = Directory.GetFiles(targetDirectory, "*.docx", SearchOption.TopDirectoryOnly);
+        foreach (string filePath in docFiles)
         {
             // Load the document.
-            var doc = new Document(filePath);
+            Document doc = new Document(filePath);
 
-            // Apply a text watermark using the native API.
+            // Apply the text watermark.
             doc.Watermark.SetText(watermarkText);
 
-            // Overwrite the original file with the watermarked version.
+            // Save the document, overwriting the original file.
             doc.Save(filePath);
         }
 
-        // Optional: simple validation that files exist after processing.
-        foreach (string filePath in Directory.GetFiles(targetDirectory, "*.docx"))
-        {
-            if (!File.Exists(filePath))
-            {
-                throw new FileNotFoundException($"Failed to save watermarked file: {filePath}");
-            }
-        }
+        // Optionally, indicate completion (no interactive prompts).
+        Console.WriteLine($"Processed {docFiles.Length} document(s) in \"{targetDirectory}\".");
     }
 }

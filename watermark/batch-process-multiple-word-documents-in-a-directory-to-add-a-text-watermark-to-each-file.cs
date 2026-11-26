@@ -6,51 +6,40 @@ public class Program
 {
     public static void Main()
     {
-        // Create a temporary working directory.
-        string workDir = Path.Combine(Path.GetTempPath(), "WatermarkBatchDemo");
-        Directory.CreateDirectory(workDir);
+        // Create a folder to hold sample documents.
+        string docsFolder = Path.Combine(Directory.GetCurrentDirectory(), "Docs");
+        Directory.CreateDirectory(docsFolder);
 
-        // Create a subfolder for input documents.
-        string inputDir = Path.Combine(workDir, "Input");
-        Directory.CreateDirectory(inputDir);
-
-        // Create a subfolder for output documents.
-        string outputDir = Path.Combine(workDir, "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Generate sample Word documents.
+        // Generate a few sample Word documents.
         for (int i = 1; i <= 3; i++)
         {
+            string samplePath = Path.Combine(docsFolder, $"Sample{i}.docx");
             Document sampleDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-            builder.Writeln($"Sample document {i}");
-            string inputPath = Path.Combine(inputDir, $"Sample{i}.docx");
-            sampleDoc.Save(inputPath);
+            builder.Writeln($"This is sample document {i}.");
+            sampleDoc.Save(samplePath);
         }
 
-        // Define the watermark text.
-        string watermarkText = "CONFIDENTIAL";
-
-        // Process each .docx file in the input directory.
-        foreach (string inputFile in Directory.GetFiles(inputDir, "*.docx"))
+        // Process each .docx file in the folder and add a text watermark.
+        foreach (string filePath in Directory.GetFiles(docsFolder, "*.docx"))
         {
             // Load the document.
-            Document doc = new Document(inputFile);
+            Document doc = new Document(filePath);
 
-            // Apply the text watermark.
-            doc.Watermark.SetText(watermarkText);
+            // Add a text watermark.
+            doc.Watermark.SetText("CONFIDENTIAL");
 
-            // Save the watermarked document to the output directory.
-            string outputPath = Path.Combine(outputDir, Path.GetFileName(inputFile));
+            // Save the watermarked document with a new name.
+            string outputPath = Path.Combine(
+                docsFolder,
+                Path.GetFileNameWithoutExtension(filePath) + "_watermarked.docx");
+
             doc.Save(outputPath);
-        }
 
-        // Simple validation: ensure each output file exists.
-        foreach (string outputFile in Directory.GetFiles(outputDir, "*.docx"))
-        {
-            if (File.Exists(outputFile))
+            // Simple validation that the output file was created.
+            if (File.Exists(outputPath))
             {
-                Console.WriteLine($"Watermarked file created: {outputFile}");
+                Console.WriteLine($"Watermark added to: {Path.GetFileName(outputPath)}");
             }
         }
     }

@@ -1,27 +1,24 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document and add some text.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Sample document content.");
 
-        // Verify that the document does not already contain a watermark.
+        // Verify that the document currently has no watermark.
         if (doc.Watermark.Type == WatermarkType.None)
         {
-            // Add a text watermark because none exists.
+            // Since no watermark exists, add a text watermark.
             doc.Watermark.SetText("CONFIDENTIAL");
         }
 
-        // Save the document with the new watermark.
-        string outputPath = "output.docx";
+        // Save the resulting document.
+        const string outputPath = "WatermarkedDocument.docx";
         doc.Save(outputPath);
-
-        // Simple validation that the file was created.
-        bool fileExists = File.Exists(outputPath);
-        Console.WriteLine($"Document saved: {fileExists}");
     }
 }
