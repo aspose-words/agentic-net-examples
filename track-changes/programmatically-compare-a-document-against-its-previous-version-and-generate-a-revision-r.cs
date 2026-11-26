@@ -10,7 +10,7 @@ public class Program
         // Create the original document.
         Document originalDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(originalDoc);
-        builder.Writeln("Hello world.");
+        builder.Writeln("Hello World");
         builder.Writeln("This is a sample document.");
 
         // Save the original document to a memory stream.
@@ -19,34 +19,40 @@ public class Program
             originalDoc.Save(originalStream, SaveFormat.Docx);
             originalStream.Position = 0;
 
-            // Load the original content into a new document that will be modified.
-            Document revisedDoc = new Document(originalStream);
+            // Load two separate copies: one will stay unchanged, the other will be modified.
+            Document unchangedDoc = new Document(originalStream);
+            originalStream.Position = 0;
+            Document modifiedDoc = new Document(originalStream);
 
-            // Make some changes to the revised document.
-            DocumentBuilder revBuilder = new DocumentBuilder(revisedDoc);
+            // Enable track changes and make modifications.
+            modifiedDoc.StartTrackRevisions("User1", DateTime.Now);
+            DocumentBuilder modBuilder = new DocumentBuilder(modifiedDoc);
+            modBuilder.Writeln("Added a new paragraph.");
 
-            // Modify existing text.
-            Paragraph firstParagraph = revisedDoc.FirstSection.Body.Paragraphs[0];
-            if (firstParagraph.Runs.Count > 0)
-                firstParagraph.Runs[0].Text = "Hello Aspose.Words!";
+            // Delete the first paragraph to generate a deletion revision.
+            Paragraph firstParagraph = (Paragraph)modifiedDoc.FirstSection.Body.FirstParagraph;
+            firstParagraph.Remove();
 
-            // Add a new paragraph.
-            revBuilder.MoveToDocumentEnd();
-            revBuilder.Writeln("Added a new paragraph.");
+            modifiedDoc.StopTrackRevisions();
 
-            // Compare the revised document against the original to generate revisions.
-            revisedDoc.Compare(originalDoc, "Comparer", DateTime.Now);
+            // Compare the unchanged document against the modified one.
+            // The comparison result (with revisions) is stored in unchangedDoc.
+            unchangedDoc.Compare(modifiedDoc, "Comparer", DateTime.Now);
 
             // Build a revision report in memory.
             StringBuilder report = new StringBuilder();
-            foreach (Revision rev in revisedDoc.Revisions)
+            report.AppendLine("Revision Report:");
+            foreach (Revision rev in unchangedDoc.Revisions)
             {
-                string revText = rev.ParentNode?.GetText()?.Trim() ?? string.Empty;
-                report.AppendLine(
-                    $"Type: {rev.RevisionType}, Author: {rev.Author}, Date: {rev.DateTime}, Text: \"{revText}\"");
+                report.AppendLine($"Type: {rev.RevisionType}");
+                report.AppendLine($"Author: {rev.Author}");
+                report.AppendLine($"Date: {rev.DateTime}");
+                string text = rev.ParentNode?.GetText()?.Trim() ?? string.Empty;
+                report.AppendLine($"Text: {text}");
+                report.AppendLine("---");
             }
 
-            // Output the revision report.
+            // Output the report.
             Console.WriteLine(report.ToString());
         }
     }

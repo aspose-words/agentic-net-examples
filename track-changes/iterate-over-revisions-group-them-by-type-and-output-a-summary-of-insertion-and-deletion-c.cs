@@ -5,28 +5,27 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and add initial paragraphs.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add initial content that will later be deleted.
-        builder.Writeln("Original paragraph that will be deleted.");
+        builder.Writeln("Original paragraph 1.");
+        builder.Writeln("Original paragraph 2.");
 
         // Enable track changes.
-        doc.StartTrackRevisions("Demo Author", DateTime.Now);
+        doc.StartTrackRevisions("John Doe", DateTime.Now);
 
-        // Insert a new paragraph – this creates an insertion revision.
+        // Insert a new paragraph (this will be recorded as an insertion revision).
         builder.Writeln("Inserted paragraph.");
 
-        // Delete the original paragraph – this creates a deletion revision.
-        Paragraph paragraphToDelete = doc.FirstSection.Body.Paragraphs[0];
-        paragraphToDelete.Remove();
+        // Delete the first paragraph (this will be recorded as a deletion revision).
+        Paragraph firstParagraph = (Paragraph)doc.GetChild(NodeType.Paragraph, 0, true);
+        firstParagraph.Remove();
 
         // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Save the document (demonstrates file output).
-        doc.Save("RevisionsDemo.docx");
+        // Save the document (optional, but ensures revisions are persisted).
+        doc.Save("Revisions.docx");
 
         // Iterate over revisions and count insertions and deletions.
         int insertionCount = 0;

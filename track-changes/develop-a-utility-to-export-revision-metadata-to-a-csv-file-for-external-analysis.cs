@@ -1,69 +1,77 @@
 using System;
 using System.IO;
 using System.Text;
-using System.Text.RegularExpressions;
 using Aspose.Words;
-using Aspose.Words.Replacing;
 
-public class Program
+namespace RevisionExportUtility
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add initial content.
-        builder.Writeln("This is the original paragraph.");
-
-        // Start tracking revisions.
-        string author = "John Doe";
-        DateTime revisionDate = DateTime.Now;
-        doc.StartTrackRevisions(author, revisionDate);
-
-        // Insert a new paragraph – this will be recorded as an insertion revision.
-        builder.Writeln("This paragraph was inserted while tracking changes.");
-
-        // Delete a word from the original paragraph – this will be recorded as a deletion revision.
-        // Move the cursor to the first paragraph.
-        builder.MoveToParagraph(0, 0);
-        // Replace the word "original" with an empty string.
-        doc.Range.Replace(new Regex("original"), "", new FindReplaceOptions(FindReplaceDirection.Forward));
-
-        // Change formatting of a word – this will be recorded as a format‑change revision.
-        builder.MoveToDocumentEnd();
-        builder.Font.Bold = true;
-        builder.Writeln("Bold text added.");
-
-        // Stop tracking revisions.
-        doc.StopTrackRevisions();
-
-        // Save the document that contains the revisions.
-        string docPath = "TrackedDocument.docx";
-        doc.Save(docPath);
-
-        // Export revision metadata to CSV.
-        string csvPath = "Revisions.csv";
-        using (var writer = new StreamWriter(csvPath, false, Encoding.UTF8))
+        public static void Main()
         {
-            // Write CSV header.
-            writer.WriteLine("Index,Type,Author,DateTime,ParentNodeText");
+            // Create a new document and add initial content.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("This is the original paragraph.");
 
-            int index = 0;
-            foreach (Revision rev in doc.Revisions)
+            // Enable track changes.
+            string author = "SampleAuthor";
+            DateTime revisionDate = DateTime.Now;
+            doc.StartTrackRevisions(author, revisionDate);
+
+            // 1. Insert a new paragraph while tracking.
+            builder.Writeln("This paragraph was inserted while tracking changes.");
+
+            // 2. Delete the original paragraph while tracking.
+            Paragraph originalParagraph = doc.FirstSection.Body.Paragraphs[0];
+            originalParagraph.Remove();
+
+            // 3. Change formatting of the inserted paragraph while tracking.
+            Paragraph insertedParagraph = doc.FirstSection.Body.Paragraphs[0];
+            insertedParagraph.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+            insertedParagraph.Runs[0].Font.Size = 16;
+
+            // Stop tracking revisions.
+            doc.StopTrackRevisions();
+
+            // Export revision metadata to CSV.
+            string csvPath = "revisions.csv";
+            using (var writer = new StreamWriter(csvPath, false, Encoding.UTF8))
             {
-                // Get the text of the parent node for context and escape quotes.
-                string parentText = rev.ParentNode?.GetText()?.Replace("\"", "\"\"") ?? string.Empty;
-                parentText = $"\"{parentText}\"";
+                // Write CSV header.
+                writer.WriteLine("RevisionType,Author,DateTime,NodeType,Text");
 
-                string line = $"{index},{rev.RevisionType},{rev.Author},{rev.DateTime:o},{parentText}";
-                writer.WriteLine(line);
-                index++;
+                // Iterate through all revisions.
+                foreach (Revision rev in doc.Revisions)
+                {
+                    string revType = rev.RevisionType.ToString();
+                    string revAuthor = rev.Author;
+                    // Use the correct property for revision date/time.
+                    string revDate = rev.DateTime.ToString("o"); // ISO 8601 format
+                    string nodeType = rev.ParentNode.NodeType.ToString();
+
+                    // Get the text associated with the revision, if any.
+                    string text = string.Empty;
+                    if (rev.ParentNode is Run run)
+                    {
+                        text = run.Text;
+                    }
+                    else if (rev.ParentNode is Paragraph para)
+                    {
+                        text = para.GetText().TrimEnd('\r', '\n');
+                    }
+
+                    // Escape commas in text.
+                    if (text.Contains(","))
+                        text = $"\"{text}\"";
+
+                    writer.WriteLine($"{revType},{revAuthor},{revDate},{nodeType},{text}");
+                }
             }
-        }
 
-        // Accept all revisions and save the final document.
-        doc.AcceptAllRevisions();
-        doc.Save("FinalDocument.docx");
+            // Accept all revisions and save the final document.
+            doc.AcceptAllRevisions();
+            doc.Save("final_document.docx");
+        }
     }
 }

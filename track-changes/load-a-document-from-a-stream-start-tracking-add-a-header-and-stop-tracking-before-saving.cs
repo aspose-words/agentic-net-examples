@@ -16,8 +16,7 @@ public class Program
         using (MemoryStream stream = new MemoryStream())
         {
             initialDoc.Save(stream, SaveFormat.Docx);
-            // Reset stream position for reading.
-            stream.Position = 0;
+            stream.Position = 0; // Reset stream for reading.
 
             // Load the document from the stream.
             Document doc = new Document(stream);
@@ -28,12 +27,12 @@ public class Program
             // Add a header while tracking is enabled.
             DocumentBuilder builder = new DocumentBuilder(doc);
             builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-            builder.Writeln("Added Header While Tracking");
+            builder.Writeln("This is the header added under tracking.");
 
             // Stop tracking revisions.
             doc.StopTrackRevisions();
 
-            // Save the resulting document to a file.
+            // Save the final document to a file.
             doc.Save("TrackedDocument.docx");
         }
     }

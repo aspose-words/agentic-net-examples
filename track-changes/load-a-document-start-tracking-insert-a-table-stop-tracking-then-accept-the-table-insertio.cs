@@ -1,5 +1,5 @@
 using System;
-using System.Linq;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -7,57 +7,47 @@ public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create a blank document that will serve as the starting point.
-        // -----------------------------------------------------------------
-        const string initialPath = "initial.docx";
-        var initialDoc = new Document();
-        initialDoc.Save(initialPath);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Initial paragraph.");
 
-        // -----------------------------------------------------------------
-        // 2. Load the document and start tracking revisions.
-        // -----------------------------------------------------------------
-        var doc = new Document(initialPath);
-        doc.StartTrackRevisions("John Doe", DateTime.Now);
+        // Start tracking revisions.
+        doc.StartTrackRevisions("DemoUser", DateTime.Now);
 
-        // -----------------------------------------------------------------
-        // 3. Insert a table while tracking is enabled – this will generate
-        //    insertion revisions.
-        // -----------------------------------------------------------------
-        var builder = new DocumentBuilder(doc);
-        builder.Writeln("Paragraph before the table.");
+        // Insert a 2x2 table while tracking is enabled.
         builder.StartTable();
-        builder.InsertCell();
-        builder.Write("Cell 1");
-        builder.EndRow();
-        builder.InsertCell();
-        builder.Write("Cell 2");
-        builder.EndTable();
 
-        // -----------------------------------------------------------------
-        // 4. Stop tracking revisions.
-        // -----------------------------------------------------------------
-        doc.StopTrackRevisions();
-
-        // -----------------------------------------------------------------
-        // 5. Accept only the insertion revisions that were created for the
-        //    table.  We copy the collection to an array first to avoid
-        //    modifying the collection while iterating.
-        // -----------------------------------------------------------------
-        var revisions = doc.Revisions.Cast<Revision>().ToArray();
-
-        foreach (var rev in revisions)
+        for (int row = 1; row <= 2; row++)
         {
-            if (rev.RevisionType == RevisionType.Insertion)
-                rev.Accept();
+            for (int col = 1; col <= 2; col++)
+            {
+                builder.InsertCell();
+                builder.Write($"Cell {row},{col}");
+            }
+
+            builder.EndRow();
         }
 
-        // -----------------------------------------------------------------
-        // 6. Save the final document.
-        // -----------------------------------------------------------------
-        const string resultPath = "result.docx";
-        doc.Save(resultPath);
+        builder.EndTable();
 
-        Console.WriteLine($"Document processed and saved to {resultPath}");
+        // Stop tracking revisions.
+        doc.StopTrackRevisions();
+
+        // Accept the table insertion revision(s).
+        foreach (Revision rev in doc.Revisions)
+        {
+            // The insertion of the table itself is represented by a revision whose
+            // ParentNode is a Table node.
+            if (rev.RevisionType == RevisionType.Insertion && rev.ParentNode is Table)
+            {
+                rev.Accept();
+            }
+        }
+
+        // Save the resulting document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.docx");
+        doc.Save(outputPath);
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

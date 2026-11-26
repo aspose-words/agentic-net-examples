@@ -5,46 +5,55 @@ public class Program
 {
     public static void Main()
     {
-        // 1. Create a new blank document and add initial content.
+        // 1. Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello World!");
 
-        // Save the original document (no revisions).
-        doc.Save("Original.docx");
+        // Add initial content.
+        builder.Writeln("Paragraph 1: Original text.");
+        builder.Writeln("Paragraph 2: Original text.");
 
-        // 2. Enable track changes to generate revisions.
+        // 2. Enable tracking to generate first set of revisions.
         doc.StartTrackRevisions("Author1", DateTime.Now);
 
-        // Make some modifications while tracking is enabled.
-        builder.MoveToDocumentEnd();
-        builder.Writeln("This paragraph was added while tracking changes.");
+        // Make some changes while tracking is enabled.
+        // Insert a new paragraph.
+        builder.Writeln("Paragraph 3: Inserted while tracking.");
+        // Modify existing paragraph.
         builder.MoveToDocumentStart();
-        builder.Write("Modified ");
+        builder.Writeln("Paragraph 0: Inserted at the beginning.");
 
-        // Stop tracking changes.
+        // Stop tracking.
         doc.StopTrackRevisions();
 
-        // Save the document that now contains revisions.
-        doc.Save("WithRevisions.docx");
+        // At this point the document contains revisions.
+        Console.WriteLine($"Revisions after first edit: {doc.Revisions.Count}");
 
-        // 3. Accept all revisions that were generated.
+        // 3. Accept all existing revisions.
         doc.AcceptAllRevisions();
 
-        // Save the document after accepting revisions.
-        doc.Save("Accepted.docx");
+        // Verify that revisions have been cleared.
+        Console.WriteLine($"Revisions after acceptance: {doc.Revisions.Count}");
 
         // 4. Re‑enable tracking to capture subsequent changes separately.
         doc.StartTrackRevisions("Author2", DateTime.Now);
 
-        // Add more content while tracking is active.
-        builder.MoveToDocumentEnd();
-        builder.Writeln("Another paragraph added after accepting previous revisions.");
+        // Make additional changes.
+        // Delete the second paragraph (original Paragraph 1).
+        Paragraph paraToDelete = (Paragraph)doc.GetChild(NodeType.Paragraph, 1, true);
+        paraToDelete.Remove();
+
+        // Change formatting of the first paragraph.
+        Paragraph firstPara = (Paragraph)doc.GetChild(NodeType.Paragraph, 0, true);
+        firstPara.ParagraphFormat.Alignment = ParagraphAlignment.Center;
 
         // Stop tracking again.
         doc.StopTrackRevisions();
 
-        // Save the final document which contains the new set of revisions.
-        doc.Save("Final.docx");
+        // Final revision count should reflect only the second set of changes.
+        Console.WriteLine($"Revisions after second edit: {doc.Revisions.Count}");
+
+        // 5. Save the final document.
+        doc.Save("TrackChangesDemo.docx");
     }
 }

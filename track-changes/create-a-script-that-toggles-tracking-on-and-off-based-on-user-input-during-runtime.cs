@@ -1,57 +1,50 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Replacing;
 
 public class Program
 {
     public static void Main(string[] args)
     {
-        // Determine initial tracking state from the first argument (true/false). Default is false.
-        bool startTracking = false;
-        if (args.Length > 0 && bool.TryParse(args[0], out bool parsed))
-            startTracking = parsed;
-
-        // Create a new document with an initial paragraph.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Original paragraph.");
 
-        // ---------- First phase ----------
-        // Enable tracking if requested.
-        if (startTracking)
-            doc.StartTrackRevisions("User", DateTime.Now);
+        // Determine whether tracking should be enabled based on the first command‑line argument.
+        bool enableTracking = args.Length > 0 && args[0].Equals("on", StringComparison.OrdinalIgnoreCase);
 
-        // Make a change that will be recorded as a revision when tracking is on.
-        builder.Writeln("First change - may be a revision.");
-
-        // Stop tracking if it was started.
-        if (startTracking)
-            doc.StopTrackRevisions();
-
-        // ---------- Second phase ----------
-        // Toggle tracking to the opposite state.
-        if (!startTracking)
-            doc.StartTrackRevisions("User", DateTime.Now);
-
-        // Make another change.
-        builder.Writeln("Second change - may be a revision.");
-
-        // Ensure tracking is stopped at the end of the document modifications.
-        if (!startTracking)
-            doc.StopTrackRevisions();
-
-        // Save the document containing the revisions.
-        string filePath = "TrackedDocument.docx";
-        doc.Save(filePath);
-
-        // Inspect and output revision information.
-        Console.WriteLine($"Total revisions in document: {doc.Revisions.Count}");
-        foreach (Revision rev in doc.Revisions)
+        if (enableTracking)
         {
-            Console.WriteLine($"Type: {rev.RevisionType}, Author: {rev.Author}, Date: {rev.DateTime}");
+            // Start tracking revisions.
+            doc.StartTrackRevisions("DemoUser", DateTime.Now);
+
+            // Make a change that will be recorded as a revision.
+            builder.Writeln("Paragraph added while tracking is enabled.");
+
+            // Stop tracking revisions.
+            doc.StopTrackRevisions();
+        }
+        else
+        {
+            // Tracking is not enabled; make a change that will NOT be recorded.
+            builder.Writeln("Paragraph added while tracking is disabled.");
         }
 
-        // Accept all revisions and save the final version.
-        doc.AcceptAllRevisions();
-        doc.Save("TrackedDocument_Accepted.docx");
+        // Inspect revisions.
+        RevisionCollection revisions = doc.Revisions;
+        Console.WriteLine($"Tracking enabled: {enableTracking}");
+        Console.WriteLine($"Number of revisions in the document: {revisions.Count}");
+
+        // Output details of each revision (if any).
+        foreach (Revision rev in revisions)
+        {
+            Console.WriteLine($"Revision Type: {rev.RevisionType}, Author: {rev.Author}, Date: {rev.DateTime}");
+        }
+
+        // Save the document to the output file.
+        string outputPath = "Output.docx";
+        doc.Save(outputPath);
+        Console.WriteLine($"Document saved to {outputPath}");
     }
 }

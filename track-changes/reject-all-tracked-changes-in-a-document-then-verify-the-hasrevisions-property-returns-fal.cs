@@ -1,9 +1,5 @@
 using System;
-using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
-using Aspose.Words.Drawing;
-using Aspose.Words.Replacing;
 
 public class Program
 {
@@ -14,39 +10,31 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Add initial content.
-        builder.Writeln("This is the original paragraph.");
+        builder.Writeln("Original paragraph.");
 
-        // Start tracking revisions.
-        doc.StartTrackRevisions("SampleAuthor", DateTime.Now);
+        // Enable track changes.
+        doc.StartTrackRevisions("DemoAuthor", DateTime.Now);
 
-        // Make some changes while tracking is enabled.
-        builder.Writeln("This paragraph is added while tracking.");
-
-        // Delete the first paragraph (will be recorded as a deletion revision).
-        Paragraph firstParagraph = (Paragraph)doc.GetChild(NodeType.Paragraph, 0, true);
-        firstParagraph.Remove();
+        // Make some modifications that will be tracked as revisions.
+        builder.Writeln("This paragraph was added while tracking changes.");
+        builder.MoveTo(doc.FirstSection.Body.FirstParagraph);
+        builder.Write("Modified ");
 
         // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Verify that revisions were created.
+        // At this point the document should contain revisions.
         if (!doc.HasRevisions)
-            throw new Exception("Expected revisions were not created.");
+            throw new InvalidOperationException("Expected revisions were not created.");
 
-        // Reject all revisions.
-        // If Document.RejectAllRevisions() is unavailable, reject each revision individually.
-        Revision[] revisions = doc.Revisions.ToArray();
-        foreach (Revision rev in revisions)
-        {
-            rev.Reject();
-        }
+        // Reject all tracked changes using the RevisionCollection API.
+        doc.Revisions.RejectAll();
 
         // Verify that no revisions remain.
         if (doc.HasRevisions)
-            throw new Exception("Revisions were not successfully rejected.");
+            throw new InvalidOperationException("Revisions were not fully rejected.");
 
-        // Save the resulting document.
-        string outputPath = Path.Combine(Path.GetTempPath(), "TrackChangesReject.docx");
-        doc.Save(outputPath);
+        // Save the final document (optional, demonstrates that the file is valid).
+        doc.Save("RejectedDocument.docx");
     }
 }

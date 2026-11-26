@@ -8,27 +8,38 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is the original paragraph.");
+
+        // Add initial content.
+        builder.Writeln("Original paragraph.");
 
         // Start tracking revisions.
-        doc.StartTrackRevisions("Author", DateTime.Now);
+        doc.StartTrackRevisions("DemoAuthor", DateTime.Now);
 
-        // Make some changes while tracking is enabled.
-        builder.Writeln("This paragraph is added while tracking.");
-        // Delete the original paragraph to generate a deletion revision.
-        Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
-        firstParagraph.Remove();
+        // Make some changes that will be recorded as revisions.
+        builder.Writeln("This line is added while tracking is enabled.");
+        builder.MoveToDocumentStart();
+        builder.Writeln("Inserted at the beginning.");
 
         // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Accept all revisions that were generated.
+        // Accept all revisions.
         doc.AcceptAllRevisions();
 
-        // Protect the document to prevent further editing without tracking.
-        doc.Protect(ProtectionType.ReadOnly, "password");
+        // Verify that revisions have been accepted.
+        if (doc.Revisions.Count != 0)
+        {
+            throw new InvalidOperationException("Revisions were not fully accepted.");
+        }
+
+        // Lock the document to prevent further editing without tracking.
+        doc.Protect(ProtectionType.ReadOnly, "securePassword");
 
         // Save the resulting document.
-        doc.Save("LockedDocument.docx");
+        string outputPath = "TrackedAndLocked.docx";
+        doc.Save(outputPath);
+
+        // Output confirmation.
+        Console.WriteLine($"Document saved to '{outputPath}'. Protection applied: {doc.ProtectionType != ProtectionType.NoProtection}");
     }
 }

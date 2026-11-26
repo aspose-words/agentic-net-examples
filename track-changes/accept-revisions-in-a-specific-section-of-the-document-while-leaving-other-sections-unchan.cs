@@ -1,54 +1,65 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Aspose.Words;
+using Aspose.Words.Tables;
 
-public class Program
+namespace TrackChangesSelectiveAccept
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Build two sections with some initial content.
-        builder.Writeln("Section 1");
-        builder.Writeln("Original text in section 1.");
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
-        builder.Writeln("Section 2");
-        builder.Writeln("Original text in section 2.");
-
-        // Enable track changes.
-        doc.StartTrackRevisions("Demo Author", DateTime.Now);
-
-        // Insert a paragraph in Section 1 (revision will be tracked).
-        builder.MoveTo(doc.Sections[0].Body.LastParagraph);
-        builder.Writeln("Inserted revision in Section 1.");
-
-        // Insert a paragraph in Section 2 (revision will be tracked).
-        builder.MoveTo(doc.Sections[1].Body.LastParagraph);
-        builder.Writeln("Inserted revision in Section 2.");
-
-        // Stop tracking.
-        doc.StopTrackRevisions();
-
-        // Accept revisions only in Section 1, leave others unchanged.
-        Section targetSection = doc.Sections[0];
-
-        // Copy revisions to a list because we will modify the collection while iterating.
-        List<Revision> revisions = doc.Revisions.Cast<Revision>().ToList();
-
-        foreach (Revision rev in revisions)
+        public static void Main()
         {
-            // Find the section that contains this revision.
-            Section revSection = rev.ParentNode.GetAncestor(NodeType.Section) as Section;
-            if (revSection == targetSection)
-            {
-                rev.Accept();
-            }
-        }
+            // Create a new document and a builder.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Save the resulting document.
-        doc.Save("Result.docx");
+            // Section 1 content.
+            builder.Writeln("Section 1 - Original text.");
+
+            // Insert a section break to start Section 2.
+            builder.InsertBreak(BreakType.SectionBreakNewPage);
+            builder.Writeln("Section 2 - Original text.");
+
+            // Enable track changes.
+            doc.StartTrackRevisions("Demo Author", DateTime.Now);
+
+            // Make a change in Section 1 (insertion).
+            builder.MoveToDocumentStart();
+            builder.Writeln("Inserted line in Section 1.");
+
+            // Make a change in Section 2 (insertion).
+            builder.MoveToDocumentEnd();
+            builder.Writeln("Inserted line in Section 2.");
+
+            // Stop tracking.
+            doc.StopTrackRevisions();
+
+            // Save the document with revisions for reference.
+            doc.Save("RevisionsDocument.docx");
+
+            // Collect revisions that belong to Section 1.
+            List<Revision> revisionsToAccept = new List<Revision>();
+            foreach (Revision rev in doc.Revisions)
+            {
+                // Find the section that contains the revision.
+                Section revSection = rev.ParentNode?.GetAncestor(NodeType.Section) as Section;
+                if (revSection == null)
+                    continue;
+
+                // Determine the index of the section in the document.
+                int sectionIndex = doc.Sections.IndexOf(revSection);
+
+                // Accept revisions only in the first section (index 0).
+                if (sectionIndex == 0)
+                    revisionsToAccept.Add(rev);
+            }
+
+            // Accept the collected revisions.
+            foreach (Revision rev in revisionsToAccept)
+                rev.Accept();
+
+            // Save the resulting document.
+            doc.Save("SelectiveAccepted.docx");
+        }
     }
 }

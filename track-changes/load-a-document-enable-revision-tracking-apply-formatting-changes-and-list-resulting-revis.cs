@@ -1,52 +1,65 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Replacing;
 
-public class Program
+namespace TrackChangesDemo
 {
-    public static void Main()
+    public class Program
     {
-        // -----------------------------------------------------------------
-        // 1. Create a sample document locally.
-        // -----------------------------------------------------------------
-        var sampleDoc = new Document();
-        var builder = new DocumentBuilder(sampleDoc);
-        // Write an initial line of text.
-        builder.Writeln("Hello World!");
-        const string samplePath = "Sample.docx";
-        sampleDoc.Save(samplePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the document and start tracking revisions.
-        // -----------------------------------------------------------------
-        var loadedDoc = new Document(samplePath);
-        loadedDoc.StartTrackRevisions("AuthorName", DateTime.Now);
-
-        // -----------------------------------------------------------------
-        // 3. Perform a change while tracking is enabled.
-        //    Adding a new paragraph generates an Insertion revision.
-        // -----------------------------------------------------------------
-        var revBuilder = new DocumentBuilder(loadedDoc);
-        revBuilder.Writeln("This line was added while tracking revisions.");
-
-        // -----------------------------------------------------------------
-        // 4. Stop tracking and save the revised document.
-        // -----------------------------------------------------------------
-        loadedDoc.StopTrackRevisions();
-        const string revisedPath = "Revised.docx";
-        loadedDoc.Save(revisedPath);
-
-        // -----------------------------------------------------------------
-        // 5. List all revisions with their type, author and date.
-        // -----------------------------------------------------------------
-        foreach (Revision rev in loadedDoc.Revisions)
+        public static void Main()
         {
-            Console.WriteLine($"Revision Type: {rev.RevisionType}, Author: {rev.Author}, Date: {rev.DateTime}");
-        }
+            // Paths for the sample documents.
+            string originalPath = "Sample.docx";
+            string revisedPath = "Revised.docx";
 
-        // -----------------------------------------------------------------
-        // 6. Validate that at least one revision was generated.
-        // -----------------------------------------------------------------
-        if (loadedDoc.Revisions.Count == 0)
-            throw new InvalidOperationException("No revisions were generated.");
+            // 1. Create a simple document with initial content.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("This is a sample paragraph for revision tracking.");
+            doc.Save(originalPath);
+
+            // 2. Load the document that was just created.
+            Document loadedDoc = new Document(originalPath);
+
+            // 3. Enable revision tracking.
+            string author = "John Doe";
+            DateTime revisionDate = DateTime.Now;
+            loadedDoc.StartTrackRevisions(author, revisionDate);
+
+            // 4. Apply changes while tracking is enabled.
+
+            // a) Change the style of the first paragraph (format revision).
+            Paragraph firstParagraph = loadedDoc.FirstSection.Body.FirstParagraph;
+            firstParagraph.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+
+            // b) Make all runs in the first paragraph bold (format revision).
+            foreach (Run run in firstParagraph.GetChildNodes(NodeType.Run, true))
+            {
+                run.Font.Bold = true;
+            }
+
+            // c) Insert a new paragraph (insertion revision) to guarantee at least one revision.
+            DocumentBuilder editBuilder = new DocumentBuilder(loadedDoc);
+            editBuilder.MoveTo(firstParagraph);
+            editBuilder.Writeln("Additional text added while tracking is on.");
+
+            // 5. Stop tracking revisions.
+            loadedDoc.StopTrackRevisions();
+
+            // 6. Save the revised document.
+            loadedDoc.Save(revisedPath);
+
+            // 7. List the resulting revisions (type, author, and date).
+            RevisionCollection revisions = loadedDoc.Revisions;
+            if (revisions.Count == 0)
+                throw new InvalidOperationException("No revisions were generated.");
+
+            Console.WriteLine("Revisions found:");
+            foreach (Revision rev in revisions)
+            {
+                // Output revision type, author and date.
+                Console.WriteLine($"Type: {rev.RevisionType}, Author: {rev.Author}, Date: {rev.DateTime}");
+            }
+        }
     }
 }
