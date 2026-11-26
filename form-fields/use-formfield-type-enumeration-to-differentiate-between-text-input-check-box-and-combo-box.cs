@@ -6,75 +6,87 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder to add form fields.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a text input form field. Provide maxLength (0 = unlimited).
-        builder.InsertTextInput("TextField", TextFormFieldType.Regular, "", "Default Text", 0);
-        builder.Writeln(); // Add a line break.
+        // Insert a text input form field.
+        builder.InsertTextInput(
+            "TextField",                     // name
+            TextFormFieldType.Regular,       // type
+            "",                              // format
+            "Default Text",                  // default text
+            0);                              // max length (0 = no limit)
 
         // Insert a checkbox form field.
-        builder.InsertCheckBox("CheckBoxField", false, 0);
-        builder.Writeln();
+        builder.InsertCheckBox(
+            "CheckBoxField",                 // name
+            false,                           // isChecked
+            0);                              // size (0 = default)
 
-        // Insert a combo box (drop‑down) form field with three items.
-        string[] items = { "Option1", "Option2", "Option3" };
-        builder.InsertComboBox("ComboBoxField", items, 1); // Default selected index = 1 ("Option2")
-        builder.Writeln();
+        // Insert a combo box (drop‑down) form field.
+        builder.InsertComboBox(
+            "ComboBoxField",                 // name
+            new string[] { "Option1", "Option2", "Option3" }, // items
+            0);                              // selected index
 
         // Save the initial document.
-        const string initialPath = "FormFields.docx";
-        doc.Save(initialPath);
+        const string initialFile = "FormFieldsExample.docx";
+        doc.Save(initialFile);
 
-        // Load the document to demonstrate reading and updating.
-        Document loadedDoc = new Document(initialPath);
-        FormFieldCollection fields = loadedDoc.Range.FormFields;
+        // Access the form fields collection.
+        FormFieldCollection fields = doc.Range.FormFields;
+        if (fields == null || fields.Count == 0)
+            throw new InvalidOperationException("No form fields were found in the document.");
 
-        // Validate that required fields exist.
-        FormField textField = fields["TextField"];
-        FormField checkBoxField = fields["CheckBoxField"];
-        FormField comboBoxField = fields["ComboBoxField"];
-
-        if (textField == null) throw new InvalidOperationException("TextField not found.");
-        if (checkBoxField == null) throw new InvalidOperationException("CheckBoxField not found.");
-        if (comboBoxField == null) throw new InvalidOperationException("ComboBoxField not found.");
-
-        // Differentiate fields using FormField.Type enumeration and display current values.
+        // Display each field's type and current value.
         foreach (FormField field in fields)
         {
             switch (field.Type)
             {
                 case FieldType.FieldFormTextInput:
-                    Console.WriteLine($"Text field '{field.Name}' has value: '{field.Result}'");
+                    Console.WriteLine($"Text Input - Name: {field.Name}, Value: {field.Result}");
                     break;
                 case FieldType.FieldFormCheckBox:
-                    Console.WriteLine($"Checkbox field '{field.Name}' is checked: {field.Checked}");
+                    Console.WriteLine($"Check Box   - Name: {field.Name}, Checked: {field.Checked}");
                     break;
                 case FieldType.FieldFormDropDown:
-                    Console.WriteLine($"Combo box field '{field.Name}' selected value: '{field.Result}'");
+                    Console.WriteLine($"Combo Box   - Name: {field.Name}, Selected: {field.Result}");
                     break;
                 default:
-                    Console.WriteLine($"Field '{field.Name}' has unhandled type.");
+                    Console.WriteLine($"Unknown field type for {field.Name}");
                     break;
             }
         }
 
-        // Update field values.
+        // Update the fields with new values.
+        FormField textField = fields["TextField"];
+        if (textField == null)
+            throw new InvalidOperationException("TextField not found.");
         textField.Result = "Updated Text";
+
+        FormField checkBoxField = fields["CheckBoxField"];
+        if (checkBoxField == null)
+            throw new InvalidOperationException("CheckBoxField not found.");
         checkBoxField.Checked = true;
-        comboBoxField.Result = "Option3"; // Set to the third item.
+
+        FormField comboBoxField = fields["ComboBoxField"];
+        if (comboBoxField == null)
+            throw new InvalidOperationException("ComboBoxField not found.");
+        comboBoxField.Result = "Option2";
 
         // Validate updates.
         if (textField.Result != "Updated Text")
-            throw new InvalidOperationException("Failed to update text field.");
+            throw new InvalidOperationException("Text field update failed.");
         if (!checkBoxField.Checked)
-            throw new InvalidOperationException("Failed to update checkbox field.");
-        if (comboBoxField.Result != "Option3")
-            throw new InvalidOperationException("Failed to update combo box field.");
+            throw new InvalidOperationException("Check box update failed.");
+        if (comboBoxField.Result != "Option2")
+            throw new InvalidOperationException("Combo box update failed.");
 
         // Save the updated document.
-        const string updatedPath = "FormFieldsUpdated.docx";
-        loadedDoc.Save(updatedPath);
+        const string updatedFile = "FormFieldsExample_Updated.docx";
+        doc.Save(updatedFile);
+
+        Console.WriteLine("Form fields processed and documents saved successfully.");
     }
 }

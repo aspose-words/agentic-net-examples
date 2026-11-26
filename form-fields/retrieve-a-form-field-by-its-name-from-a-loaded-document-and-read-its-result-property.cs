@@ -1,46 +1,45 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Fields;
+using Aspose.Words.Fields; // Provides FormField, TextFormFieldType, etc.
 
-public class Program
+namespace FormFieldReader
 {
-    public static void Main()
+    public class Program
     {
-        const string fileName = "FormFields.docx";
-        const string updatedFileName = "FormFieldsUpdated.docx";
-        const string fieldName = "CustomerName";
-
-        // Create a new document and insert a text input form field
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Please enter your name:");
-        builder.InsertTextInput(fieldName, TextFormFieldType.Regular, "", "John Doe", 0);
-        doc.Save(fileName);
-
-        // Load the document
-        Document loadedDoc = new Document(fileName);
-        FormFieldCollection fields = loadedDoc.Range.FormFields;
-        FormField field = fields[fieldName];
-        if (field == null)
+        public static void Main()
         {
-            throw new InvalidOperationException($"Form field '{fieldName}' not found.");
+            // Path for the temporary document.
+            const string filePath = "FormFields.docx";
+
+            // 1. Create a new document and insert a text input form field.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Insert a text input form field named "MyTextField" with default value "Default".
+            // Use the overload that requires TextFormFieldType and maxLength.
+            builder.InsertTextInput("MyTextField", TextFormFieldType.Regular, "", "Default", 0);
+
+            // Save the document so it can be loaded later.
+            doc.Save(filePath);
+
+            // 2. Load the document from disk.
+            Document loadedDoc = new Document(filePath);
+
+            // 3. Retrieve the form field by its name.
+            FormField formField = loadedDoc.Range.FormFields["MyTextField"];
+            if (formField == null)
+            {
+                throw new InvalidOperationException("Form field 'MyTextField' was not found in the document.");
+            }
+
+            // 4. Read the Result property (the current value of the text input field).
+            string fieldResult = formField.Result;
+
+            // Output the result to the console.
+            Console.WriteLine($"The result of the form field 'MyTextField' is: \"{fieldResult}\"");
+
+            // 5. Save the document after reading (optional but satisfies saving rule).
+            loadedDoc.Save("FormFieldsResult.docx");
         }
-
-        // Read the Result property
-        string originalResult = field.Result;
-        Console.WriteLine($"Original value of '{fieldName}': {originalResult}");
-
-        // Update the field value
-        field.Result = "Jane Smith";
-
-        // Validate the update
-        if (field.Result != "Jane Smith")
-        {
-            throw new InvalidOperationException("Failed to update the form field value.");
-        }
-
-        // Save the updated document
-        loadedDoc.Save(updatedFileName);
-        Console.WriteLine($"Updated document saved as '{updatedFileName}'.");
     }
 }

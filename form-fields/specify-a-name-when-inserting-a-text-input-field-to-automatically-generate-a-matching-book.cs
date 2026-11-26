@@ -10,23 +10,28 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a text input form field named "CustomerName".
-        // This automatically creates a bookmark with the same name.
-        builder.InsertTextInput("CustomerName", TextFormFieldType.Regular, "", "John Doe", 0);
+        // Insert a text input form field and give it a name.
+        // Aspose.Words automatically creates a bookmark with the same name.
+        string fieldName = "CustomerName";
+        string defaultText = "Enter name";
+        builder.InsertTextInput(fieldName, TextFormFieldType.Regular, "", defaultText, 0);
 
-        // Verify that the bookmark was created.
-        Bookmark bookmark = doc.Range.Bookmarks["CustomerName"];
+        // Verify that the bookmark with the same name exists.
+        Bookmark bookmark = doc.Range.Bookmarks[fieldName];
         if (bookmark == null)
-            throw new InvalidOperationException("Bookmark 'CustomerName' was not created.");
+        {
+            throw new InvalidOperationException($"Bookmark '{fieldName}' was not created.");
+        }
 
-        // Access the form field by name and update its value.
-        FormField formField = doc.Range.FormFields["CustomerName"];
-        if (formField == null)
-            throw new InvalidOperationException("Form field 'CustomerName' was not found.");
+        // Access the form field via the FormFields collection and update its value.
+        FormField textField = doc.Range.FormFields[fieldName];
+        if (textField == null)
+        {
+            throw new InvalidOperationException($"Form field '{fieldName}' was not found.");
+        }
+        textField.Result = "John Doe";
 
-        formField.Result = "Jane Smith";
-
-        // Save the document.
+        // Save the document to disk.
         doc.Save("FormFieldWithBookmark.docx");
     }
 }

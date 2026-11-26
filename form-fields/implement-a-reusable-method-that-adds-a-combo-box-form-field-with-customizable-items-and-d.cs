@@ -1,45 +1,44 @@
 using System;
-using System.Collections.Generic;
 using Aspose.Words;
 
-public class Program
+namespace FormFieldExample
 {
-    // Reusable method to add a combo box form field.
-    public static void AddComboBoxFormField(Document doc, string fieldName, List<string> items, int defaultIndex)
+    class Program
     {
-        if (doc == null) throw new ArgumentNullException(nameof(doc));
-        if (string.IsNullOrEmpty(fieldName)) throw new ArgumentException("Field name must be provided.", nameof(fieldName));
-        if (items == null) throw new ArgumentNullException(nameof(items));
-        if (items.Count == 0) throw new ArgumentException("At least one item must be supplied.", nameof(items));
-        if (defaultIndex < 0 || defaultIndex >= items.Count)
-            throw new ArgumentOutOfRangeException(nameof(defaultIndex), "Default index is out of range.");
+        static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Use DocumentBuilder to insert the combo box.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertComboBox(fieldName, items.ToArray(), defaultIndex);
-    }
+            // Define combo box parameters.
+            string comboBoxName = "CountryComboBox";
+            string[] items = { "USA", "Canada", "Mexico", "Germany", "France" };
+            int defaultIndex = 2; // Select "Mexico" by default.
 
-    public static void Main()
-    {
-        // Create a new blank document.
-        Document doc = new Document();
+            // Add the combo box to the document.
+            AddComboBox(doc, comboBoxName, items, defaultIndex);
 
-        // Define combo box items.
-        List<string> comboItems = new List<string> { "Red", "Green", "Blue", "Yellow" };
-        int defaultItemIndex = 2; // "Blue"
+            // Save the document.
+            doc.Save("ComboBoxFormField.docx");
+        }
 
-        // Add the combo box form field.
-        AddComboBoxFormField(doc, "ColorChoice", comboItems, defaultItemIndex);
+        /// <summary>
+        /// Adds a combo box (dropdown) form field to the specified document.
+        /// </summary>
+        /// <param name="doc">The document to modify.</param>
+        /// <param name="fieldName">The name of the form field.</param>
+        /// <param name="items">Array of items to display in the dropdown.</param>
+        /// <param name="defaultIndex">Zero‑based index of the item that should be selected by default.</param>
+        static void AddComboBox(Document doc, string fieldName, string[] items, int defaultIndex)
+        {
+            if (doc == null) throw new ArgumentNullException(nameof(doc));
+            if (string.IsNullOrEmpty(fieldName)) throw new ArgumentException("Field name must be provided.", nameof(fieldName));
+            if (items == null || items.Length == 0) throw new ArgumentException("At least one item must be supplied.", nameof(items));
+            if (defaultIndex < 0 || defaultIndex >= items.Length) throw new ArgumentOutOfRangeException(nameof(defaultIndex), "Default index is out of range.");
 
-        // Validate that the field was added.
-        var comboField = doc.Range.FormFields["ColorChoice"];
-        if (comboField == null)
-            throw new InvalidOperationException("Combo box form field was not created.");
-
-        // Output the default selected value to the console.
-        Console.WriteLine($"Combo box '{comboField.Name}' default selected value: {comboField.Result}");
-
-        // Save the document.
-        doc.Save("ComboBoxFormField.docx");
+            // Use DocumentBuilder to insert the combo box at the current cursor position.
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.InsertComboBox(fieldName, items, defaultIndex);
+        }
     }
 }

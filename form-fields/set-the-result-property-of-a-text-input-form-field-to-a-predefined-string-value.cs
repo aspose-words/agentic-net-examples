@@ -2,37 +2,41 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-public class Program
+namespace FormFieldExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a text input form field with a name and a default value.
-        string fieldName = "MyTextField";
-        builder.InsertTextInput(fieldName, TextFormFieldType.Regular, "", "Default", 0);
+            // Insert a text input form field with a name and default value.
+            // Parameters: name, text type, format, default text, max length (0 = unlimited).
+            builder.InsertTextInput("MyTextField", TextFormFieldType.Regular, "", "Default", 0);
 
-        // Save the document that contains the form field.
-        string initialPath = "FormFieldDemo.docx";
-        doc.Save(initialPath);
+            // Save the initial document (optional, demonstrates creation step).
+            doc.Save("FormFieldDemo.docx");
 
-        // Retrieve the form field from the document.
-        FormField? formField = doc.Range.FormFields[fieldName];
-        if (formField == null)
-            throw new InvalidOperationException($"Form field '{fieldName}' was not found.");
+            // Access the form field collection and locate the field by name.
+            FormField? textField = doc.Range.FormFields["MyTextField"];
+            if (textField == null)
+                throw new InvalidOperationException("The expected form field 'MyTextField' was not found.");
 
-        // Set the Result property to a predefined string.
-        string predefinedValue = "Predefined string value";
-        formField.Result = predefinedValue;
+            // Set the Result property to a predefined string value.
+            const string predefinedValue = "Predefined string value";
+            textField.Result = predefinedValue;
 
-        // Validate that the value was set correctly.
-        if (formField.Result != predefinedValue)
-            throw new InvalidOperationException("Failed to set the form field result.");
+            // Validate that the value was set correctly.
+            if (textField.Result != predefinedValue)
+                throw new InvalidOperationException("Failed to set the form field result.");
 
-        // Save the updated document.
-        string outputPath = "FormFieldResult.docx";
-        doc.Save(outputPath);
+            // Save the document with the updated form field.
+            doc.Save("FormFieldResult.docx");
+
+            // Indicate successful completion.
+            Console.WriteLine("Form field result set and document saved successfully.");
+        }
     }
 }

@@ -8,60 +8,56 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a DocumentBuilder.
+        // Create a new document and a builder to add content.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a paragraph with several checkbox form fields.
-        builder.Writeln("Please review the following options:");
-        InsertCheckBox(builder, "OptionA", false);
-        InsertCheckBox(builder, "OptionB", true);
-        InsertCheckBox(builder, "OptionC", false);
+        // Insert several checkbox form fields with default values.
+        builder.Writeln("Please select the options below:");
+        builder.InsertCheckBox("CheckBox1", false, 20);
+        builder.Writeln(" Option 1");
+        builder.InsertCheckBox("CheckBox2", true, 20);
+        builder.Writeln(" Option 2");
+        builder.InsertCheckBox("CheckBox3", false, 20);
+        builder.Writeln(" Option 3");
 
-        // Save the initial document (optional, can be omitted).
-        doc.Save("FormFieldsTemplate.docx");
+        // Ensure at least one form field exists.
+        if (doc.Range.FormFields.Count == 0)
+            throw new InvalidOperationException("No form fields were created in the document.");
 
-        // External JSON configuration that determines which checkboxes should be checked.
+        // External JSON configuration (could be read from a file or service).
         string jsonConfig = @"{
-            ""OptionA"": true,
-            ""OptionB"": false,
-            ""OptionC"": true
+            ""CheckBox1"": true,
+            ""CheckBox2"": false,
+            ""CheckBox3"": true
         }";
 
-        // Parse the JSON into a dictionary.
+        // Parse JSON into a dictionary.
         Dictionary<string, bool> config = JsonSerializer.Deserialize<Dictionary<string, bool>>(jsonConfig)
                                             ?? throw new InvalidOperationException("Failed to parse JSON configuration.");
 
-        // Update checkbox form fields based on the configuration.
-        foreach (KeyValuePair<string, bool> entry in config)
+        // Update each checkbox based on the configuration.
+        foreach (KeyValuePair<string, bool> kvp in config)
         {
             // Retrieve the form field by name.
-            FormField field = doc.Range.FormFields[entry.Key];
+            FormField field = doc.Range.FormFields[kvp.Key];
             if (field == null)
-                throw new InvalidOperationException($"Form field '{entry.Key}' was not found in the document.");
+                throw new KeyNotFoundException($"Form field '{kvp.Key}' was not found in the document.");
 
-            // Ensure the field is a checkbox.
+            // Verify that the field is a checkbox.
             if (field.Type != FieldType.FieldFormCheckBox)
-                throw new InvalidOperationException($"Form field '{entry.Key}' is not a checkbox.");
+                throw new InvalidOperationException($"Form field '{kvp.Key}' is not a checkbox.");
 
             // Update the checked state.
-            field.Checked = entry.Value;
+            field.Checked = kvp.Value;
 
             // Validate the update.
-            if (field.Checked != entry.Value)
-                throw new InvalidOperationException($"Failed to set the checked state for field '{entry.Key}'.");
+            if (field.Checked != kvp.Value)
+                throw new InvalidOperationException($"Failed to set checkbox '{kvp.Key}' to '{kvp.Value}'.");
         }
 
         // Save the updated document.
-        doc.Save("FormFieldsUpdated.docx");
-    }
-
-    // Helper method to insert a checkbox with a given name and default state.
-    private static void InsertCheckBox(DocumentBuilder builder, string name, bool isChecked)
-    {
-        // Insert the checkbox form field.
-        builder.InsertCheckBox(name, isChecked, 20);
-        // Add a space after the checkbox for readability.
-        builder.Writeln($" {name}");
+        const string outputPath = "UpdatedFormFields.docx";
+        doc.Save(outputPath);
     }
 }

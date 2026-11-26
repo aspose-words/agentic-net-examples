@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
@@ -6,44 +7,58 @@ public class Program
 {
     public static void Main()
     {
-        const string originalPath = "ComboBoxForm.docx";
-        const string modifiedPath = "ComboBoxForm_Modified.docx";
-        const string comboName = "MyCombo";
+        // Define file names in the current directory.
+        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
 
-        // -----------------------------------------------------------------
-        // Create a new document and insert a combo box (drop‑down) form field.
-        // -----------------------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // --------------------------------------------------------------
+        // Step 1: Create a DOCX file that contains a combo box form field.
+        // --------------------------------------------------------------
+        Document createDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(createDoc);
 
-        // Insert a combo box with three items and select the first one by default.
-        builder.InsertComboBox(comboName, new[] { "Option1", "Option2", "Option3" }, 0);
+        // Add explanatory text.
+        builder.Writeln("Please select a fruit from the list below:");
 
-        // Save the document that now contains the form field.
-        doc.Save(originalPath);
+        // Insert a combo box named "FruitCombo".
+        // The second argument is the list of items, the third argument is the zero‑based index of the default item.
+        string[] fruitItems = { "Apple", "Banana", "Cherry" };
+        builder.InsertComboBox("FruitCombo", fruitItems, 0);
 
-        // ---------------------------------------------------------------
-        // Load the document from disk and modify the combo box selection.
-        // ---------------------------------------------------------------
-        Document loadedDoc = new Document(originalPath);
+        // Save the document that will be used as the input file.
+        createDoc.Save(inputPath);
+
+        // --------------------------------------------------------------
+        // Step 2: Load the document and modify the combo box selection.
+        // --------------------------------------------------------------
+        Document loadDoc = new Document(inputPath);
 
         // Retrieve the combo box form field by its name.
-        FormField comboField = loadedDoc.Range.FormFields[comboName];
+        FormField comboField = loadDoc.Range.FormFields["FruitCombo"];
         if (comboField == null)
         {
-            throw new InvalidOperationException($"Form field '{comboName}' was not found in the document.");
+            throw new InvalidOperationException("The combo box form field 'FruitCombo' was not found.");
         }
 
-        // Change the selected value of the combo box.
-        comboField.Result = "Option3";
-
-        // Verify that the value was updated correctly.
-        if (comboField.Result != "Option3")
+        // Verify that the field is a combo box (legacy drop‑down).
+        if (comboField.Type != FieldType.FieldFormDropDown)
         {
-            throw new InvalidOperationException("Failed to update the combo box selection.");
+            throw new InvalidOperationException("The form field 'FruitCombo' is not a combo box.");
         }
 
-        // Save the modified document.
-        loadedDoc.Save(modifiedPath);
+        // Change the selected value to "Banana". The value must exist in the items list.
+        const string newSelection = "Banana";
+        comboField.Result = newSelection;
+
+        // Validate that the assignment succeeded.
+        if (!string.Equals(comboField.Result, newSelection, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException($"Failed to set the combo box value to '{newSelection}'.");
+        }
+
+        // --------------------------------------------------------------
+        // Step 3: Save the modified document.
+        // --------------------------------------------------------------
+        loadDoc.Save(outputPath);
     }
 }

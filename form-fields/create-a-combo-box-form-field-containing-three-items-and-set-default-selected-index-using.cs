@@ -1,22 +1,27 @@
 using System;
 using Aspose.Words;
 
-public class Program
+namespace ComboBoxFormFieldExample
 {
-    public static void Main()
+    class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Define the items that will appear in the combo box.
-        string[] comboItems = new string[] { "Option A", "Option B", "Option C" };
+            // Define the items for the combo box.
+            string[] items = { "Option A", "Option B", "Option C" };
 
-        // Insert a combo box form field named "SampleComboBox" with the items above.
-        // The third parameter sets the default selected index (0‑based). Here we select "Option B".
-        builder.InsertComboBox("SampleComboBox", comboItems, 1);
+            // Set the default selected index (0‑based). Here we select "Option B".
+            int defaultSelectedIndex = 1;
 
-        // Save the document to disk.
-        doc.Save("ComboBoxFormField.docx");
+            // Insert the combo box form field with a name, the items, and the default index.
+            builder.InsertComboBox("SampleComboBox", items, defaultSelectedIndex);
+
+            // Save the document to disk.
+            doc.Save("ComboBoxFormField.docx");
+        }
     }
 }
