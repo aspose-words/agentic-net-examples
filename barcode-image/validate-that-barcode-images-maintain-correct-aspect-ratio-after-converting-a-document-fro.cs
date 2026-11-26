@@ -3,15 +3,13 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Drawing;
-using Aspose.Words.Loading;
 using Aspose.Words.Saving;
-using Aspose.Words.Replacing;
 using Aspose.BarCode.Generation;
 using Aspose.Drawing;
 
 public sealed class CustomBarcodeGenerator : IBarcodeGenerator
 {
-    // Generates a barcode image stream based on the provided parameters.
+    // Generates a PNG barcode image based on the provided parameters.
     public Stream GetBarcodeImage(Aspose.Words.Fields.BarcodeParameters parameters)
     {
         var stream = new MemoryStream();
@@ -23,7 +21,7 @@ public sealed class CustomBarcodeGenerator : IBarcodeGenerator
         return stream;
     }
 
-    // Legacy method – delegate to the main implementation.
+    // Legacy method – delegates to the main generator.
     public Stream GetOldBarcodeImage(Aspose.Words.Fields.BarcodeParameters parameters)
     {
         return GetBarcodeImage(parameters);
@@ -34,31 +32,27 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and insert a barcode field.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        FieldDisplayBarcode field = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
+        // Create a new document and insert a DISPLAYBARCODE field.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        var field = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
         field.BarcodeType = "CODE128";
         field.BarcodeValue = "1234567890";
-        field.ForegroundColor = "0x000000";
-        field.BackgroundColor = "0xFFFFFF";
 
         // Register the custom barcode generator for rendered output (PDF).
         doc.FieldOptions.BarcodeGenerator = new CustomBarcodeGenerator();
 
-        // Update fields to render the barcode.
+        // Render the barcode.
         doc.UpdateFields();
 
-        // Save the document as PDF.
+        // Save as PDF.
         const string pdfPath = "output.pdf";
         doc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Load the generated PDF back into a document.
-        Document pdfDoc = new Document(pdfPath);
-
-        // Find the first image shape (the rendered barcode).
+        // Load the PDF to inspect the rendered barcode image.
+        var pdfDoc = new Document(pdfPath);
         Shape barcodeShape = null;
-        NodeCollection shapes = pdfDoc.GetChildNodes(NodeType.Shape, true);
+        var shapes = pdfDoc.GetChildNodes(NodeType.Shape, true);
         foreach (Shape shape in shapes)
         {
             if (shape.HasImage)
@@ -74,50 +68,34 @@ public class Program
             return;
         }
 
-        // Extract the image bytes from the shape.
+        // Extract the rendered barcode image from the PDF.
         byte[] pdfImageBytes = barcodeShape.ImageData.ImageBytes;
-
-        // Load the image using Aspose.Drawing to get its dimensions.
-        float pdfWidth, pdfHeight;
+        double pdfAspectRatio;
         using (var ms = new MemoryStream(pdfImageBytes))
-        using (var img = Image.FromStream(ms))
+        using (var pdfImage = Image.FromStream(ms))
         {
-            pdfWidth = img.Width;
-            pdfHeight = img.Height;
+            pdfAspectRatio = (double)pdfImage.Width / pdfImage.Height;
         }
 
-        // Generate the original barcode image using the same generator.
-        byte[] originalImageBytes;
-        using (var genStream = new MemoryStream())
+        // Generate the expected barcode image using the custom generator.
+        var parameters = new Aspose.Words.Fields.BarcodeParameters
         {
-            using (var generator = new BarcodeGenerator(EncodeTypes.Code128, "1234567890"))
-            {
-                generator.Save(genStream, BarCodeImageFormat.Png);
-            }
-            originalImageBytes = genStream.ToArray();
+            BarcodeType = "CODE128",
+            BarcodeValue = "1234567890"
+        };
+        double expectedAspectRatio;
+        using (var genStream = new CustomBarcodeGenerator().GetBarcodeImage(parameters))
+        using (var genImage = Image.FromStream(genStream))
+        {
+            expectedAspectRatio = (double)genImage.Width / genImage.Height;
         }
 
-        // Load the original image to obtain its dimensions.
-        float originalWidth, originalHeight;
-        using (var ms = new MemoryStream(originalImageBytes))
-        using (var img = Image.FromStream(ms))
-        {
-            originalWidth = img.Width;
-            originalHeight = img.Height;
-        }
+        // Compare aspect ratios with a tolerance.
+        const double tolerance = 0.01;
+        bool aspectRatioValid = Math.Abs(pdfAspectRatio - expectedAspectRatio) <= tolerance;
 
-        // Compute aspect ratios.
-        double pdfAspect = pdfWidth / pdfHeight;
-        double originalAspect = originalWidth / originalHeight;
-        double tolerance = 0.01; // Allow 1% difference.
-
-        if (Math.Abs(pdfAspect - originalAspect) <= tolerance)
-        {
-            Console.WriteLine("Aspect ratio matches.");
-        }
-        else
-        {
-            Console.WriteLine($"Aspect ratio mismatch. PDF: {pdfAspect:F4}, Original: {originalAspect:F4}");
-        }
+        Console.WriteLine($"PDF barcode aspect ratio: {pdfAspectRatio:F4}");
+        Console.WriteLine($"Expected barcode aspect ratio: {expectedAspectRatio:F4}");
+        Console.WriteLine($"Aspect ratio valid: {aspectRatioValid}");
     }
 }

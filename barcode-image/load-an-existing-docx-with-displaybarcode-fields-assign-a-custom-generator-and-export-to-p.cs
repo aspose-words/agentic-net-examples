@@ -7,27 +7,54 @@ using Aspose.Drawing;
 
 public sealed class CustomBarcodeGenerator : IBarcodeGenerator
 {
-    // Generates a barcode image using Aspose.BarCode and returns it as a PNG stream.
+    // Generates a barcode image based on the parameters supplied by Aspose.Words.
     public Stream GetBarcodeImage(Aspose.Words.Fields.BarcodeParameters parameters)
     {
-        var stream = new MemoryStream();
-        using (var generator = new BarcodeGenerator(EncodeTypes.Code128, parameters.BarcodeValue))
-        {
-            // Set barcode colors.
-            generator.Parameters.Barcode.BarColor = Color.Black;
-            generator.Parameters.BackColor = Color.White;
+        // Map the Word barcode type string to a SymbologyEncodeType used by Aspose.BarCode.
+        SymbologyEncodeType encodeType = MapBarcodeType(parameters.BarcodeType);
 
-            // Save the barcode as PNG to the stream.
+        MemoryStream stream = new MemoryStream();
+        using (BarcodeGenerator generator = new BarcodeGenerator(encodeType, parameters.BarcodeValue))
+        {
+            // Optional: set barcode colors.
+            generator.Parameters.Barcode.BarColor = Aspose.Drawing.Color.Black;
+            generator.Parameters.BackColor = Aspose.Drawing.Color.White;
+
+            // Save the generated barcode as PNG into the stream.
             generator.Save(stream, BarCodeImageFormat.Png);
         }
+
+        // Reset stream position for reading.
         stream.Position = 0;
         return stream;
     }
 
-    // Legacy method delegates to the main implementation.
+    // Legacy method – simply forwards to the primary implementation.
     public Stream GetOldBarcodeImage(Aspose.Words.Fields.BarcodeParameters parameters)
     {
         return GetBarcodeImage(parameters);
+    }
+
+    // Maps the string value from the DISPLAYBARCODE field to a SymbologyEncodeType.
+    private static SymbologyEncodeType MapBarcodeType(string barcodeType)
+    {
+        if (string.IsNullOrEmpty(barcodeType))
+            return EncodeTypes.Code128; // Default fallback.
+
+        switch (barcodeType.Trim().ToUpperInvariant())
+        {
+            case "CODE128":
+                return EncodeTypes.Code128;
+            case "QR":
+                return EncodeTypes.QR;
+            case "CODE39":
+                return EncodeTypes.Code39;
+            case "EAN13":
+                return EncodeTypes.EAN13;
+            default:
+                // Fallback to Code128 for unsupported types.
+                return EncodeTypes.Code128;
+        }
     }
 }
 
@@ -38,34 +65,40 @@ public class Program
         const string inputPath = "input.docx";
         const string outputPath = "output.pdf";
 
-        // -----------------------------------------------------------------
-        // Step 1: Create a sample DOCX containing a DISPLAYBARCODE field.
-        // -----------------------------------------------------------------
-        Document docCreate = new Document();
-        DocumentBuilder builder = new DocumentBuilder(docCreate);
+        Document doc;
 
-        // Insert a typed DISPLAYBARCODE field.
-        FieldDisplayBarcode barcodeField = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
-        barcodeField.BarcodeType = "CODE128";
-        barcodeField.BarcodeValue = "1234567890";
-        barcodeField.ForegroundColor = "0x000000"; // Black
-        barcodeField.BackgroundColor = "0xFFFFFF"; // White
+        // If the input DOCX does not exist, create a simple document with a DISPLAYBARCODE field.
+        if (!File.Exists(inputPath))
+        {
+            doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        docCreate.UpdateFields();
-        docCreate.Save(inputPath);
+            // Insert a typed DISPLAYBARCODE field.
+            FieldDisplayBarcode field = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
+            field.BarcodeType = "CODE128";
+            field.BarcodeValue = "1234567890";
+            // Optional color settings (hex string format as required by the field).
+            field.ForegroundColor = "0x000000";
+            field.BackgroundColor = "0xFFFFFF";
 
-        // -----------------------------------------------------------------
-        // Step 2: Load the existing DOCX, register the custom generator, and export to PDF.
-        // -----------------------------------------------------------------
-        Document doc = new Document(inputPath);
+            doc.UpdateFields();
 
-        // Register custom barcode generator for rendered output (PDF).
+            // Save the temporary DOCX so that the rest of the workflow works with a file.
+            doc.Save(inputPath);
+        }
+        else
+        {
+            // Load the existing DOCX containing DISPLAYBARCODE fields.
+            doc = new Document(inputPath);
+        }
+
+        // Register the custom barcode generator for rendered output (PDF).
         doc.FieldOptions.BarcodeGenerator = new CustomBarcodeGenerator();
 
-        // Render barcodes using the custom generator.
+        // Ensure all fields are up‑to‑date so that barcode images are generated.
         doc.UpdateFields();
 
-        // Save as PDF.
+        // Export the document to PDF.
         doc.Save(outputPath);
     }
 }

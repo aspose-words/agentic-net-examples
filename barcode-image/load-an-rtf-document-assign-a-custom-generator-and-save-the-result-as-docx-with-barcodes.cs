@@ -1,10 +1,10 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Fields;
-using Aspose.Words.Loading;
+using Aspose.Words.Replacing;
 using Aspose.BarCode.Generation;
+using Aspose.Drawing;
 
 public sealed class CustomBarcodeGenerator : IBarcodeGenerator
 {
@@ -13,9 +13,9 @@ public sealed class CustomBarcodeGenerator : IBarcodeGenerator
         var stream = new MemoryStream();
         using (var generator = new BarcodeGenerator(EncodeTypes.Code128, parameters.BarcodeValue))
         {
-            // Set colors if needed
-            generator.Parameters.Barcode.BarColor = Aspose.Drawing.Color.Black;
-            generator.Parameters.BackColor = Aspose.Drawing.Color.White;
+            // Optional: set colors if needed
+            generator.Parameters.Barcode.BarColor = Color.Black;
+            generator.Parameters.BackColor = Color.White;
             generator.Save(stream, BarCodeImageFormat.Png);
         }
         stream.Position = 0;
@@ -32,30 +32,29 @@ public class Program
 {
     public static void Main()
     {
-        // Sample RTF content with a simple paragraph.
-        string rtfContent = @"{\rtf1\ansi\deff0{\fonttbl{\f0\fswiss Helvetica;}}\viewkind4\uc1\pard\fs20 Sample RTF document.\par}";
-        // Load the RTF document from a memory stream.
-        using (var rtfStream = new MemoryStream(Encoding.UTF8.GetBytes(rtfContent)))
-        {
-            var loadOptions = new LoadOptions { LoadFormat = LoadFormat.Rtf };
-            Document doc = new Document(rtfStream, loadOptions);
+        // Prepare a simple RTF file to load
+        string tempRtfPath = Path.Combine(Path.GetTempPath(), "input.rtf");
+        File.WriteAllText(tempRtfPath, @"{\rtf1\ansi\deff0{\fonttbl{\f0\fswiss Helvetica;}}\f0\fs24 Sample RTF document.}");
 
-            // Insert a barcode field.
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            FieldDisplayBarcode barcodeField = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
-            barcodeField.BarcodeType = "CODE128";
-            barcodeField.BarcodeValue = "1234567890";
-            barcodeField.ForegroundColor = "0x000000";
-            barcodeField.BackgroundColor = "0xFFFFFF";
+        // Load the RTF document
+        Document doc = new Document(tempRtfPath);
 
-            // Register the custom barcode generator.
-            doc.FieldOptions.BarcodeGenerator = new CustomBarcodeGenerator();
+        // Register the custom barcode generator
+        doc.FieldOptions.BarcodeGenerator = new CustomBarcodeGenerator();
 
-            // Update fields to render the barcode.
-            doc.UpdateFields();
+        // Insert a barcode field using typed construction
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        FieldDisplayBarcode barcodeField = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
+        barcodeField.BarcodeType = "CODE128";
+        barcodeField.BarcodeValue = "1234567890";
+        barcodeField.ForegroundColor = "0x000000";
+        barcodeField.BackgroundColor = "0xFFFFFF";
 
-            // Save the document as DOCX.
-            doc.Save("output.docx");
-        }
+        // Update fields to render the barcode
+        doc.UpdateFields();
+
+        // Save as DOCX
+        string outputPath = Path.Combine(Path.GetTempPath(), "output.docx");
+        doc.Save(outputPath);
     }
 }

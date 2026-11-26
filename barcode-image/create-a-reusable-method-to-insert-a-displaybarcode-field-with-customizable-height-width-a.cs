@@ -4,38 +4,43 @@ using Aspose.Words.Fields;
 
 public class Program
 {
-    public static void Main()
-    {
-        // Create a new document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert a barcode with custom height, width and type.
-        InsertDisplayBarcode(builder, "1234567890", "CODE128", 50, 200);
-
-        // Update fields to render the barcode.
-        doc.UpdateFields();
-
-        // Save the document.
-        doc.Save("BarcodeOutput.docx");
-    }
-
-    // Reusable method to insert a DISPLAYBARCODE field with customizable parameters.
-    private static void InsertDisplayBarcode(DocumentBuilder builder, string value, string type, int height, int width)
+    // Inserts a DISPLAYBARCODE field with customizable type, value, height and width.
+    // Height and width are approximated via the ScalingFactor property (percentage).
+    public static void InsertDisplayBarcode(DocumentBuilder builder, string barcodeValue, string barcodeType, int height, int width)
     {
         // Insert a typed DISPLAYBARCODE field.
         FieldDisplayBarcode field = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
 
-        // Set barcode type and value.
-        field.BarcodeType = type;      // e.g., "CODE128", "QR", "EAN13", etc.
-        field.BarcodeValue = value;    // Text to encode.
+        // Set mandatory properties.
+        field.BarcodeValue = barcodeValue;
+        field.BarcodeType = barcodeType;
 
-        // Approximate size using the scaling factor (percentage). This is a simple heuristic.
+        // Approximate size using ScalingFactor (percentage as string).
+        // Here we take the average of height and width as a simple scaling heuristic.
         int scaling = (height + width) / 2;
+        if (scaling <= 0)
+            scaling = 100; // default 100%
+
         field.ScalingFactor = scaling.ToString();
 
-        // Optional: set foreground and background colors.
-        field.ForegroundColor = "0x000000"; // Black.
-        field.BackgroundColor = "0xFFFFFF"; // White.
+        // Optional visual settings.
+        field.ForegroundColor = "0x000000"; // black
+        field.BackgroundColor = "0xFFFFFF"; // white
+    }
+
+    public static void Main()
+    {
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert a barcode: Code128, value "1234567890", size 150x150 (approx.).
+        InsertDisplayBarcode(builder, "1234567890", "CODE128", 150, 150);
+
+        // Update fields so the barcode is rendered in the document.
+        doc.UpdateFields();
+
+        // Save the document.
+        doc.Save("output.docx");
     }
 }
