@@ -1,11 +1,11 @@
 using System;
 using Aspose.Words;
 
-public class Program
+class Program
 {
-    public static void Main()
+    static void Main()
     {
-        // Create a new document and add some text.
+        // Create a sample document with some text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Hello, Aspose.Words!");
@@ -18,11 +18,10 @@ public class Program
         // Load the document from the saved file.
         Document loadedDoc = new Document(filePath);
 
-        // Extract plain, unformatted text using the Range.Text property.
-        string extractedText = loadedDoc.Range.Text;
+        // Extract plain unformatted text using the Range.Text property.
+        string plainText = loadedDoc.Range.Text;
 
-        // Write the extracted text to the console.
-        Console.WriteLine("Extracted text:");
-        Console.WriteLine(extractedText);
+        // Output the extracted text.
+        Console.WriteLine(plainText);
     }
 }

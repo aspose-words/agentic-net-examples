@@ -8,20 +8,24 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Add a paragraph with some text to the document body.
-        Paragraph paragraph = new Paragraph(doc);
-        paragraph.AppendChild(new Run(doc, "Hello Aspose.Words!"));
-        doc.FirstSection.Body.AppendChild(paragraph);
-
-        // Insert a bookmark at the start of the document using DocumentBuilder.
+        // Use DocumentBuilder to add content and the bookmark.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        // Move the cursor to the beginning of the first paragraph.
-        builder.MoveTo(paragraph.FirstChild);
-        // Start and end the bookmark at the same position.
+
+        // Start the bookmark at the beginning of the document.
         builder.StartBookmark("StartBookmark");
+
+        // Add a paragraph with sample text.
+        builder.Writeln("Hello World!");
+
+        // End the bookmark immediately after the inserted text.
         builder.EndBookmark("StartBookmark");
 
         // Save the document to a file.
-        doc.Save("Output.docx");
+        string outputPath = "Output.docx";
+        doc.Save(outputPath);
+
+        // Verify that the bookmark was added.
+        Bookmark bookmark = doc.Range.Bookmarks["StartBookmark"];
+        Console.WriteLine($"Bookmark '{bookmark.Name}' has been added.");
     }
 }

@@ -1,35 +1,49 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Markup;
 
-public class Program
+namespace BookmarkClearExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a sample document with a bookmark.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Document start.");
-        builder.StartBookmark("MyBookmark");
-        builder.Writeln("This text will be cleared.");
-        builder.EndBookmark("MyBookmark");
-        builder.Writeln("Document end.");
-
-        // Save the original document.
-        string originalPath = "Original.docx";
-        doc.Save(originalPath);
-
-        // Load the document from the saved file.
-        Document loadedDoc = new Document(originalPath);
-
-        // Clear the text of the specific bookmark without deleting the bookmark itself.
-        Bookmark bookmark = loadedDoc.Range.Bookmarks["MyBookmark"];
-        if (bookmark != null)
+        public static void Main()
         {
-            bookmark.Text = string.Empty;
-        }
+            // Create a new document and add a bookmark with some text.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("Paragraph before bookmark.");
+            builder.StartBookmark("MyBookmark");
+            builder.Writeln("This text is inside the bookmark.");
+            builder.EndBookmark("MyBookmark");
+            builder.Writeln("Paragraph after bookmark.");
 
-        // Save the modified document.
-        string outputPath = "ClearedBookmark.docx";
-        loadedDoc.Save(outputPath);
+            // Save the original document.
+            string originalPath = "Original.docx";
+            doc.Save(originalPath);
+
+            // Load the document to demonstrate clearing the bookmark's content.
+            Document loadedDoc = new Document(originalPath);
+
+            // Retrieve the bookmark.
+            Bookmark bookmark = loadedDoc.Range.Bookmarks["MyBookmark"];
+            if (bookmark != null)
+            {
+                // Remove all nodes that are between the bookmark start and end nodes.
+                Node startNode = bookmark.BookmarkStart;
+                Node endNode = bookmark.BookmarkEnd;
+
+                Node currentNode = startNode.NextSibling;
+                while (currentNode != null && currentNode != endNode)
+                {
+                    Node nextNode = currentNode.NextSibling;
+                    currentNode.Remove();
+                    currentNode = nextNode;
+                }
+            }
+
+            // Save the document after clearing the bookmark's text.
+            string clearedPath = "Cleared.docx";
+            loadedDoc.Save(clearedPath);
+        }
     }
 }

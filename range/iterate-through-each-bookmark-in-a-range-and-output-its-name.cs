@@ -5,30 +5,28 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and add bookmarks.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add first bookmark.
-        builder.StartBookmark("Bookmark1");
+        builder.StartBookmark("FirstBookmark");
         builder.Writeln("This is the first bookmarked text.");
-        builder.EndBookmark("Bookmark1");
+        builder.EndBookmark("FirstBookmark");
 
-        // Add second bookmark.
-        builder.StartBookmark("Bookmark2");
-        builder.Writeln("This is the second bookmarked text.");
-        builder.EndBookmark("Bookmark2");
+        builder.StartBookmark("SecondBookmark");
+        builder.Writeln("Second bookmarked text here.");
+        builder.EndBookmark("SecondBookmark");
 
-        // Save the document (optional, demonstrates lifecycle usage).
-        doc.Save("SampleDocument.docx");
+        // Save the document.
+        doc.Save("Bookmarks.docx");
 
-        // Get the range that represents the whole document.
-        Aspose.Words.Range range = doc.Range;
+        // Load the document.
+        Document loadedDoc = new Document("Bookmarks.docx");
 
-        // Iterate through each bookmark in the range and output its name.
-        foreach (Bookmark bookmark in range.Bookmarks)
+        // Iterate through each bookmark in the document's range and output its name.
+        foreach (Bookmark bookmark in loadedDoc.Range.Bookmarks)
         {
-            Console.WriteLine(bookmark.Name);
+            Console.WriteLine($"Bookmark name: {bookmark.Name}");
         }
     }
 }

@@ -1,30 +1,30 @@
 using System;
 using Aspose.Words;
 
-namespace AppendTextRangeExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new document.
-            Document doc = new Document();
+        // Create a new document.
+        Document doc = new Document();
 
-            // Add a paragraph with initial text.
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln("This is the original content.");
+        // Add a paragraph with initial text.
+        Paragraph paragraph = new Paragraph(doc);
+        Run run = new Run(doc, "Hello world.");
+        paragraph.AppendChild(run);
+        doc.FirstSection.Body.AppendChild(paragraph);
 
-            // Move the builder to the end of the document and append additional text.
-            builder.MoveToDocumentEnd();
-            builder.Write(" This is the appended text.");
+        // Append text to the end of the document's range.
+        // Get the last paragraph in the body and add a new Run with the desired text.
+        Paragraph lastParagraph = doc.FirstSection.Body.LastParagraph;
+        lastParagraph.AppendChild(new Run(doc, " Appended text."));
 
-            // Save the document.
-            string outputPath = "AppendedDocument.docx";
-            doc.Save(outputPath);
+        // Save the document.
+        const string outputPath = "Output.docx";
+        doc.Save(outputPath);
 
-            // Load the saved document and output its text to verify the append operation.
-            Document loadedDoc = new Document(outputPath);
-            Console.WriteLine(loadedDoc.Range.Text);
-        }
+        // Output the final document text.
+        Console.WriteLine("Document text after appending:");
+        Console.WriteLine(doc.GetText());
     }
 }

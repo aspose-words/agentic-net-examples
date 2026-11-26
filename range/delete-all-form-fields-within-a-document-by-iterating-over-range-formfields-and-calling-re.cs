@@ -6,26 +6,28 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder for editing.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a couple of form fields for demonstration.
-        builder.InsertTextInput("TextField1", TextFormFieldType.Regular, "", "Default1", 0);
-        builder.Writeln(); // Add a line break.
-        builder.InsertCheckBox("CheckBox1", true, 0);
+        // Add some sample form fields.
+        builder.Writeln("Please fill the form below:");
+        builder.InsertField("FORMTEXT Name", "John Doe");
+        builder.Writeln();
+        builder.InsertField("FORMCHECKBOX Agree", "0");
 
-        // Save the original document (optional, shows before removal).
+        // Save the original document (optional, for verification).
         doc.Save("Original.docx");
 
-        // Delete all form fields by iterating over the FormFields collection.
-        // Iterate backwards because removing a field changes the collection indices.
-        for (int i = doc.Range.FormFields.Count - 1; i >= 0; i--)
+        // Delete all form fields by iterating over the document's range.
+        FormFieldCollection formFields = doc.Range.FormFields;
+        while (formFields.Count > 0)
         {
-            doc.Range.FormFields[i].Remove();
+            // Remove the first form field; the collection updates automatically.
+            formFields[0].Remove();
         }
 
-        // Save the document after all form fields have been removed.
-        doc.Save("NoFormFields.docx");
+        // Save the document after removal of form fields.
+        doc.Save("Cleaned.docx");
     }
 }

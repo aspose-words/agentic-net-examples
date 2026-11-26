@@ -1,36 +1,35 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-
-// Alias to avoid conflict with System.Range
-using AsposeRange = Aspose.Words.Range;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with some text.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Add sample text to the document.
         builder.Writeln("Hello world! This is a sample document.");
 
-        // Save the source document locally.
-        const string sourcePath = "Source.docx";
-        doc.Save(sourcePath);
+        // Define the output file path.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "Output.docx");
 
-        // Load the document to work with its range.
-        Document loadedDoc = new Document(sourcePath);
-        AsposeRange range = loadedDoc.Range;
-
-        // Validate that the range contains no form fields.
-        if (range.FormFields.Count == 0)
+        // Validate that the document's range contains no form fields.
+        if (doc.Range.FormFields.Count == 0)
         {
-            // Since there are no form fields, perform a text replacement.
-            range.Replace("Hello", "Hi", new FindReplaceOptions(FindReplaceDirection.Forward));
-        }
+            // Perform a simple text replacement because no form fields are present.
+            doc.Range.Replace("Hello", "Hi", new FindReplaceOptions());
 
-        // Save the resulting document.
-        const string outputPath = "Result.docx";
-        loadedDoc.Save(outputPath);
+            // Save the modified document.
+            doc.Save(outputPath);
+        }
+        else
+        {
+            // If form fields exist, skip replacement and still save the original document.
+            doc.Save(outputPath);
+        }
     }
 }

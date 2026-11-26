@@ -11,50 +11,57 @@ namespace RangeHeaderFooterExtraction
             // Create a new blank document.
             Document doc = new Document();
 
-            // Add a new section to the document.
-            Section section = new Section(doc);
-            doc.Sections.Add(section);
+            // Get the first (and only) section of the document.
+            Section section = doc.FirstSection;
 
-            // Create a header and add a paragraph with sample text.
+            // Ensure the section has a header/footer collection.
+            HeaderFooterCollection hfCollection = section.HeadersFooters;
+
+            // Add a primary header with sample text.
             HeaderFooter header = new HeaderFooter(doc, HeaderFooterType.HeaderPrimary);
             Paragraph headerPara = new Paragraph(doc);
-            headerPara.AppendChild(new Run(doc, "This is the header text for indexing."));
+            headerPara.AppendChild(new Run(doc, "Sample Header Text"));
             header.AppendChild(headerPara);
-            section.HeadersFooters.Add(header);
+            hfCollection.Add(header);
 
-            // Create a footer and add a paragraph with sample text.
+            // Add a primary footer with sample text.
             HeaderFooter footer = new HeaderFooter(doc, HeaderFooterType.FooterPrimary);
             Paragraph footerPara = new Paragraph(doc);
-            footerPara.AppendChild(new Run(doc, "This is the footer text for indexing."));
+            footerPara.AppendChild(new Run(doc, "Sample Footer Text"));
             footer.AppendChild(footerPara);
-            section.HeadersFooters.Add(footer);
+            hfCollection.Add(footer);
 
-            // Save the document to a temporary file.
+            // Save the document to disk.
             string filePath = "Sample.docx";
             doc.Save(filePath);
 
-            // Load the document back from the file.
+            // Load the document back (demonstrates loading rule).
             Document loadedDoc = new Document(filePath);
 
-            // Iterate through each section and extract plain text from its header and footer using Range.
-            foreach (Section sec in loadedDoc.Sections)
+            // Extract plain text from all headers.
+            foreach (HeaderFooter hf in loadedDoc.FirstSection.HeadersFooters)
             {
-                // Header extraction.
-                HeaderFooter primaryHeader = sec.HeadersFooters[HeaderFooterType.HeaderPrimary];
-                if (primaryHeader != null)
+                if (hf.IsHeader)
                 {
-                    string headerText = primaryHeader.Range.Text;
-                    Console.WriteLine("Header Text: " + headerText);
-                }
-
-                // Footer extraction.
-                HeaderFooter primaryFooter = sec.HeadersFooters[HeaderFooterType.FooterPrimary];
-                if (primaryFooter != null)
-                {
-                    string footerText = primaryFooter.Range.Text;
-                    Console.WriteLine("Footer Text: " + footerText);
+                    string headerText = hf.Range.Text.Trim();
+                    Console.WriteLine("Header text extracted: " + headerText);
                 }
             }
+
+            // Extract plain text from all footers.
+            foreach (HeaderFooter hf in loadedDoc.FirstSection.HeadersFooters)
+            {
+                // HeaderFooter does not have IsFooter; check the type instead.
+                if (hf.HeaderFooterType == HeaderFooterType.FooterPrimary ||
+                    hf.HeaderFooterType == HeaderFooterType.FooterFirst ||
+                    hf.HeaderFooterType == HeaderFooterType.FooterEven)
+                {
+                    string footerText = hf.Range.Text.Trim();
+                    Console.WriteLine("Footer text extracted: " + footerText);
+                }
+            }
+
+            // The program ends here without waiting for user input.
         }
     }
 }

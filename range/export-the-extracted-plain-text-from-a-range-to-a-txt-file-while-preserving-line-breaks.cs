@@ -6,24 +6,26 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and add some paragraphs.
+        // Create a new document.
         Document doc = new Document();
+
+        // Use DocumentBuilder to add some paragraphs with line breaks.
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("First line of text.");
         builder.Writeln("Second line of text.");
         builder.Writeln("Third line of text.");
 
         // Extract plain text from the whole document range.
-        string extractedText = doc.Range.Text;
+        string plainText = doc.Range.Text;
 
         // Save the extracted text to a .txt file, preserving line breaks.
         string outputPath = "ExtractedText.txt";
-        File.WriteAllText(outputPath, extractedText);
+        File.WriteAllText(outputPath, plainText);
 
-        // Optional: confirm the file was created (no console output required).
-        if (!File.Exists(outputPath))
+        // Optional: confirm that the file was created.
+        if (File.Exists(outputPath))
         {
-            throw new InvalidOperationException("Failed to create the output text file.");
+            Console.WriteLine($"Text successfully exported to '{outputPath}'.");
         }
     }
 }

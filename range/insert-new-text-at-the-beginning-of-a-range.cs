@@ -5,28 +5,20 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and add a paragraph with some text.
+        // Create a new blank document.
         Document doc = new Document();
+
+        // Add a paragraph with initial text.
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Original text.");
 
-        // Insert new text at the beginning of the document's range.
-        // Use the first paragraph as the reference node.
-        Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
+        // Move the builder to the very start of the document (the beginning of the document's range).
+        builder.MoveToDocumentStart();
 
-        // Create a new paragraph that contains the inserted text.
-        Paragraph insertedParagraph = new Paragraph(doc);
-        insertedParagraph.AppendChild(new Run(doc, "Inserted text. "));
+        // Insert the new text at that position.
+        builder.Write("Inserted text. ");
 
-        // Insert the new paragraph before the first existing paragraph.
-        firstParagraph.ParentNode.InsertBefore(insertedParagraph, firstParagraph);
-
-        // Save the modified document.
-        string outputPath = "Output.docx";
-        doc.Save(outputPath);
-
-        // Output the resulting document text to the console for verification.
-        Console.WriteLine("Document text after insertion:");
-        Console.WriteLine(doc.Range.Text);
+        // Save the document.
+        doc.Save("Result.docx");
     }
 }

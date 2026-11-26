@@ -6,25 +6,31 @@ public class Program
 {
     public static void Main()
     {
-        // Define source document file names.
-        string[] sourceFiles = { "Doc1.docx", "Doc2.docx" };
+        // Define input and output folders.
+        string inputFolder = "InputDocs";
+        string outputFolder = "OutputDocs";
 
-        // Create sample documents with some content.
-        CreateSampleDocument(sourceFiles[0], "Hello World in Document 1.");
-        CreateSampleDocument(sourceFiles[1], "Sample text for Document 2.");
+        // Ensure folders exist.
+        Directory.CreateDirectory(inputFolder);
+        Directory.CreateDirectory(outputFolder);
 
-        // Batch process: clear the content of each document.
-        foreach (string filePath in sourceFiles)
+        // Create sample source documents.
+        CreateSampleDocument(Path.Combine(inputFolder, "Doc1.docx"), "This is the first sample document.");
+        CreateSampleDocument(Path.Combine(inputFolder, "Doc2.docx"), "Second document with different content.");
+
+        // Batch process: clear content of each document and save the result.
+        foreach (string filePath in Directory.GetFiles(inputFolder, "*.docx"))
         {
             // Load the document.
             Document doc = new Document(filePath);
 
-            // Delete all content in the document's range.
+            // Clear all content using the Range API.
             doc.Range.Delete();
 
-            // Save the cleared document with a new name.
-            string clearedPath = Path.GetFileNameWithoutExtension(filePath) + "_cleared.docx";
-            doc.Save(clearedPath);
+            // Save the cleared document to the output folder.
+            string fileName = Path.GetFileName(filePath);
+            string outputPath = Path.Combine(outputFolder, fileName);
+            doc.Save(outputPath);
         }
     }
 
